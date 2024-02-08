@@ -19,21 +19,13 @@
 #![allow(clippy::let_unit_value, deprecated)]
 use sp_core::H160;
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum RelayerAccount<AccountId>
-where
-	AccountId: PartialEq + Encode + Debug,
-{
-	Parachain(AccountId),
-	Ethereum(H160),
-}
-
 pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use core_primitives::Identity;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -62,7 +54,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn relayer_public)]
 	pub type RelayerPublic<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::RelayerIndex, RelayerAccount<T::AccountId>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::RelayerIndex, Identity, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
@@ -71,7 +63,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RelayerAdded { index: T::RelayerIndex, account: RelayerAccount<T::AccountId> },
+		RelayerAdded { index: T::RelayerIndex, account: Identity },
 		RelayerRemoved { index: T::RelayerIndex },
 		BitAcrossAdminChanged { account: T::AccountId },
 	}
@@ -97,7 +89,7 @@ pub mod pallet {
 		pub fn add_relayer(
 			origin: OriginFor<T>,
 			index: T::RelayerIndex,
-			account: RelayerAccount<T::AccountId>,
+			account: Identity,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
