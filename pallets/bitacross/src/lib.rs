@@ -20,7 +20,7 @@
 use sp_core::H160;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum RelayerAccount<AccountId> 
+pub enum RelayerAccount<AccountId>
 where
 	AccountId: PartialEq + Encode + Debug,
 {
@@ -61,13 +61,8 @@ pub mod pallet {
 	/// Relayer Index => Relayer Public Address
 	#[pallet::storage]
 	#[pallet::getter(fn relayer_public)]
-	pub type RelayerPublic<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::RelayerIndex,
-		RelayerAccount<T::AccountId>,
-		OptionQuery,
-	>;
+	pub type RelayerPublic<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::RelayerIndex, RelayerAccount<T::AccountId>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
@@ -99,7 +94,11 @@ pub mod pallet {
 		/// add an account to the relayer storage
 		#[pallet::call_index(1)]
 		#[pallet::weight(10000000)]
-		pub fn add_relayer(origin: OriginFor<T>, index: T::RelayerIndex, account: RelayerAccount<T::AccountId>) -> DispatchResult {
+		pub fn add_relayer(
+			origin: OriginFor<T>,
+			index: T::RelayerIndex,
+			account: RelayerAccount<T::AccountId>,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
 			// we don't care if `account` already exists
@@ -130,6 +129,3 @@ pub mod pallet {
 		}
 	}
 }
-
-
-
