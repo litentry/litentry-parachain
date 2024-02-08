@@ -275,7 +275,8 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 4
     // extrac proof and vc without proof json
     const vcPayloadJson = JSON.parse(decryptVcPayload);
-
+    console.log('credential: ', vcPayloadJson);
+    console.log('assertions: ', vcPayloadJson.credentialSubject.assertions);
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
