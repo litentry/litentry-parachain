@@ -1042,8 +1042,9 @@ impl pallet_identity_management::Config for Runtime {
 // NOTE: Use this for bitacross-pallet
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RelayerIndex = u128;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	type RelayerAdminOrigin = EnsureRootOrAllCouncil;
+	type SetAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
@@ -1369,7 +1370,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// So no EVM pallet
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
-			RuntimeCall::AccountFix(_)
+			RuntimeCall::AccountFix(_) |
+			RuntimeCall::BitAcross(_)
 		)
 	}
 }

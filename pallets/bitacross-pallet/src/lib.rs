@@ -52,15 +52,15 @@ pub mod pallet {
 			+ TypeInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// origin to manage authorized delegatee list
-		type RelayerAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// origin to manage Relayer Admin
+		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
 	/// Relayer Index => Relayer Public Address
 	#[pallet::storage]
-	#[pallet::getter(fn delegatee)]
+	#[pallet::getter(fn relayer_public)]
 	pub type RelayerPublic<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -123,7 +123,7 @@ pub mod pallet {
 		#[pallet::call_index(3)]
 		#[pallet::weight(10000000)]
 		pub fn set_bitacross_admin(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
-			let _ = T::RelayerAdminOrigin::ensure_origin(origin)?;
+			let _ = T::SetAdminOrigin::ensure_origin(origin)?;
 			Admin::<T>::set(Some(account.clone()));
 			Self::deposit_event(Event::BitAcrossAdminChanged { account });
 			Ok(())
