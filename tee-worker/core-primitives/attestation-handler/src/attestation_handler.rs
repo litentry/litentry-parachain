@@ -30,7 +30,11 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{cert, Error as EnclaveError, Error, Result as EnclaveResult};
+use crate::{
+	cert,
+	maa::{MAAHandler, MAAService},
+	Error as EnclaveError, Error, Result as EnclaveResult,
+};
 use codec::Encode;
 use core::{convert::TryInto, default::Default};
 use itertools::Itertools;
@@ -283,7 +287,7 @@ where
 		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
 		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
-		let qe_quote = if !skip_ra {
+		let qe_policy = if !skip_ra {
 			let qe_quote = match self.retrieve_qe_dcap_quote(
 				&chain_signer.public().0,
 				quoting_enclave_target_info.unwrap(),
@@ -295,16 +299,20 @@ where
 					return Err(e.into())
 				},
 			};
-			qe_quote
+
+			// TODO:
+			// Here we do MAA servce.
+			let policy = MAAService.azure_attest(&qe_quote)?;
+			policy
 		} else {
 			Default::default()
 		};
 
-		let qe_quote_base_64 = base64::encode(&qe_quote[..]);
+		let qe_policy_base_64 = base64::encode(&qe_policy[..]);
 		// generate an ECC certificate
 		debug!("[Enclave] Generate ECC Certificate");
 		let (key_der, cert_der) =
-			match cert::gen_ecc_cert(&qe_quote_base_64, &prv_k, &pub_k, &ecc_handle) {
+			match cert::gen_ecc_cert(&qe_policy_base_64, &prv_k, &pub_k, &ecc_handle) {
 				Ok(r) => r,
 				Err(e) => {
 					error!("[Enclave] gen_ecc_cert failed: {:?}", e);

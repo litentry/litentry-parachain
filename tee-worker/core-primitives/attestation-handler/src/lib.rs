@@ -29,6 +29,7 @@ extern crate sgx_tstd as std;
 pub mod sgx_reexport_prelude {
 	pub use base64_sgx as base64;
 	pub use chrono_sgx as chrono;
+	pub use http_req_sgx as http_req;
 	pub use rustls_sgx as rustls;
 	pub use serde_json_sgx as serde_json;
 	pub use thiserror_sgx as thiserror;
@@ -38,6 +39,9 @@ pub mod sgx_reexport_prelude {
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod attestation_handler;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod maa;
 
 pub mod collateral;
 
