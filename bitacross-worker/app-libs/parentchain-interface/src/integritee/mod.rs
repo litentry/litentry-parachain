@@ -37,6 +37,7 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
+use litentry_primitives::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use log::trace;
 use sp_core::crypto::AccountId32;
 
@@ -99,7 +100,8 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::error!("Not yet implemented");
+		log::info!("Adding Relayer Account to Registry: {:?}", self.account_id);
+		GLOBAL_RELAYER_REGISTRY.update(self.account_id.clone()).unwrap();
 		Ok(())
 	}
 }
@@ -114,7 +116,8 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::error!("Not yet implemented");
+		log::info!("Remove Relayer Account from Registry: {:?}", self.account_id);
+		GLOBAL_RELAYER_REGISTRY.remove(self.account_id.clone()).unwrap();
 		Ok(())
 	}
 }
