@@ -17,10 +17,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
 #![allow(clippy::let_unit_value, deprecated)]
+use sp_core::H160;
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum RelayerAccount<AccountId> 
+where
+	AccountId: PartialEq + Encode + Debug,
+{
+	Parachain(AccountId),
+	Ethereum(H160),
+}
 
 pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -30,6 +41,15 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		// Index type for distinct relayer
+		type RelayerIndex: Default
+			+ Copy
+			+ PartialEq
+			+ core::fmt::Debug
+			+ codec::FullCodec
+			+ AtLeast32BitUnsigned
+			+ From<u64>
+			+ TypeInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin to manage authorized delegatee list
@@ -38,9 +58,16 @@ pub mod pallet {
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
+	/// Relayer Index => Relayer Public Address
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
-	pub type Relayers<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+	pub type RelayerPublic<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::RelayerIndex,
+		RelayerAccount<T::AccountId>,
+		OptionQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
@@ -103,3 +130,6 @@ pub mod pallet {
 		}
 	}
 }
+
+
+
