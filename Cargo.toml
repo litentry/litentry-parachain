@@ -17,7 +17,7 @@ members = [
     'pallets/parentchain',
     'pallets/test-utils',
     'pallets/group',
-    'pallets/bitacross-pallet',
+    'pallets/bitacross',
     'precompiles/*',
     'primitives/common',
     'primitives/core',

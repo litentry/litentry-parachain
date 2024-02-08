@@ -1039,7 +1039,7 @@ impl pallet_identity_management::Config for Runtime {
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
-// NOTE: Use this for bitacross-pallet
+// NOTE: Use this for bitacross
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RelayerIndex = u128;
