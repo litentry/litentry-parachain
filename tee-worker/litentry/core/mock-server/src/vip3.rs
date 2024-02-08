@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 #![allow(opaque_hidden_inferred_bound)]
 
 use lc_data_providers::vip3::{LevelEntity, VIP3SBTInfoResponse};
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
+
 pub(crate) fn query_user_sbt_level(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
