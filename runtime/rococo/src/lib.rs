@@ -1043,6 +1043,7 @@ impl pallet_identity_management::Config for Runtime {
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type RelayerAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 

@@ -49,6 +49,10 @@ pub enum IndirectCall {
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
 	#[codec(index = 2)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+	#[codec(index = 3)]
+	AddRelayer(AddRelayerArgs),
+	#[codec(index = 4)]
+	RemoveRelayer(RemoveRelayerArgs),
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
@@ -63,6 +67,9 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 				update_scheduled_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_scheduled_enclave_args) =>
 				remove_scheduled_enclave_args.dispatch(executor, ()),
+			IndirectCall::AddRelayer(add_relayer_args) => add_relayer_args.dispatch(executor, ()),
+			IndirectCall::RemoveRelayer(remove_relayer_args) =>
+				remove_relayer_args.dispatch(executor, ()),
 		}
 	}
 }
@@ -74,6 +81,36 @@ pub struct BitAcrossArgs {
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for BitAcrossArgs
+{
+	type Args = ();
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
+		log::error!("Not yet implemented");
+		Ok(())
+	}
+}
+
+#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
+pub struct AddRelayerArgs {
+	account_id: AccountId32,
+}
+
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for AddRelayerArgs
+{
+	type Args = ();
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
+		log::error!("Not yet implemented");
+		Ok(())
+	}
+}
+
+#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
+pub struct RemoveRelayerArgs {
+	account_id: AccountId32,
+}
+
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for RemoveRelayerArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -115,8 +152,10 @@ where
 		};
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
+		log::error!("Parsing the call indexes");
 
 		if index == metadata.placeholder_call_indexes().ok()? {
+			log::error!("Processing Placeholder call index");
 			let args = decode_and_log_error::<BitAcrossArgs>(call_args)?;
 			Some(IndirectCall::BitAcross(args))
 		} else if index == metadata.update_scheduled_enclave().ok()? {
@@ -125,6 +164,14 @@ where
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
+		} else if index == metadata.add_relayer_call_indexes().ok()? {
+			log::error!("Received Add Relayer indirect call");
+			let args = decode_and_log_error::<AddRelayerArgs>(call_args)?;
+			Some(IndirectCall::AddRelayer(args))
+		} else if index == metadata.remove_relayer_call_indexes().ok()? {
+			log::error!("Processing Remove Relayer Call");
+			let args = decode_and_log_error::<RemoveRelayerArgs>(call_args)?;
+			Some(IndirectCall::RemoveRelayer(args))
 		} else {
 			None
 		}

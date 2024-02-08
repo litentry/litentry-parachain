@@ -14,20 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-//! TODO: event/error handling
-//! Currently the errors are synchronously emitted from this pallet itself,
-//! meanwhile we have the `SomeError` **Event** which is callable from TEE
-//! to represent any generic "error".
-//! However, there are so many error cases in TEE that I'm not even sure
-//! if it's a good idea to have a matching extrinsic for error propagation.
-//!
-//! The reasons that we don't use pallet_teerex::call_worker directly are:
-//! - call teerex::call_worker inside IMP won't trigger the handler, because it's not called as
-//!   extrinsics so won't be scraped
-//! - the origin is discarded in call_worker but we need it
-//! - to simplify the F/E usage, we only need to encrypt the needed parameters (see e.g.
-//!   shield_funds)
-
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
 #![allow(clippy::let_unit_value, deprecated)]
@@ -46,15 +32,33 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// origin to manage authorized delegatee list
+		type RelayerAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
+	#[pallet::storage]
+	#[pallet::getter(fn delegatee)]
+	pub type Relayers<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn admin)]
+	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		RelayerAdded { account: T::AccountId },
+		RelayerRemoved { account: T::AccountId },
+		BitAcrossAdminChanged { account: T::AccountId },
+	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		RelayerNotExist,
+		RequireAdmin,
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -62,6 +66,39 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(10000000)]
 		pub fn placeholder(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			Ok(())
+		}
+
+		/// add an account to the delegatees
+		#[pallet::call_index(1)]
+		#[pallet::weight(10000000)]
+		pub fn add_relayer(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
+			// we don't care if `account` already exists
+			Relayers::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::RelayerAdded { account });
+			Ok(())
+		}
+
+		/// remove an account from the delegatees
+		#[pallet::call_index(2)]
+		#[pallet::weight(10000000)]
+		pub fn remove_relayer(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
+			ensure!(Relayers::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
+			Relayers::<T>::remove(account.clone());
+			Self::deposit_event(Event::RelayerRemoved { account });
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(10000000)]
+		pub fn set_bitacross_admin(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::RelayerAdminOrigin::ensure_origin(origin)?;
+			Admin::<T>::set(Some(account.clone()));
+			Self::deposit_event(Event::BitAcrossAdminChanged { account });
 			Ok(())
 		}
 	}

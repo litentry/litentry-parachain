@@ -21,10 +21,20 @@ const BITACROSS: &str = "BitAcross";
 
 pub trait BitAcrossCallIndexes {
 	fn placeholder_call_indexes(&self) -> Result<[u8; 2]>;
+	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]>;
+	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl BitAcrossCallIndexes for NodeMetadata {
 	fn placeholder_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(BITACROSS, "placeholder")
+	}
+
+	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "add_relayer")
+	}
+
+	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "remove_relayer")
 	}
 }
