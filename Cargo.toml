@@ -2,6 +2,7 @@
 members = [
     'node',
     'pallets/account-fix',
+    'pallets/bitacross',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',

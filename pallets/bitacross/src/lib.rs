@@ -15,109 +15,182 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(unused_variables)]
-#![allow(clippy::let_unit_value, deprecated)]
-use sp_core::H160;
+
+use core_primitives::{Address20, Address33, Identity};
+use frame_support::{
+	dispatch::{DispatchResult, DispatchResultWithPostInfo},
+	ensure,
+	pallet_prelude::*,
+	traits::Get,
+};
+use frame_system::pallet_prelude::*;
 
 pub use pallet::*;
+
+mod custodial_wallet;
+pub use custodial_wallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use core_primitives::Identity;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+	#[pallet::without_storage_info]
+	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		// Index type for distinct relayer
-		type RelayerIndex: Default
-			+ Copy
-			+ PartialEq
-			+ core::fmt::Debug
-			+ codec::FullCodec
-			+ AtLeast32BitUnsigned
-			+ From<u64>
-			+ TypeInfo;
 		// some extrinsics should only be called by origins from TEE
-		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 		// origin to manage Relayer Admin
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// origin that is allowed to call extrinsics
-		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
-
-	/// Relayer Index => Relayer Public Address
-	#[pallet::storage]
-	#[pallet::getter(fn relayer_public)]
-	pub type RelayerPublic<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::RelayerIndex, Identity, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
+	// use `Identity` as key to keep the flexibility, however we do further check its type when
+	// adding them
+	#[pallet::storage]
+	#[pallet::getter(fn relayer)]
+	pub type Relayer<T: Config> = StorageMap<_, Blake2_128Concat, Identity, (), OptionQuery>;
+
+	// `ValueQuery` is used as each field in CustodialWallet is optional already
+	// not using Option<CustodialWallet> either as each field is set separately
+	#[pallet::storage]
+	#[pallet::getter(fn vault)]
+	pub type Vault<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, CustodialWallet, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RelayerAdded { index: T::RelayerIndex, account: Identity },
-		RelayerRemoved { index: T::RelayerIndex },
-		BitAcrossAdminChanged { account: T::AccountId },
+		AdminSet { new_admin: Option<T::AccountId> },
+		RelayerAdded { who: Identity },
+		RelayerRemoved { who: Identity },
+		BtcWalletGenerated { address: Address33 },
+		EthWalletGenerated { address: Address20 },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		RequireAdminOrRoot,
 		RelayerNotExist,
-		RequireAdmin,
+		UnsupportedRelayerType,
+		BtcWalletAlreadyExist,
+		EthWalletAlreadyExist,
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub admin: Option<T::AccountId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { admin: None }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			if let Some(ref admin) = self.admin {
+				Admin::<T>::put(admin);
+			}
+		}
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// add an account to the delegatees
+		/// Set the admin account
+		///
+		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::call_index(0)]
-		#[pallet::weight(10000000)]
-		pub fn placeholder(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
-			Ok(())
-		}
-
-		/// add an account to the relayer storage
-		#[pallet::call_index(1)]
-		#[pallet::weight(10000000)]
-		pub fn add_relayer(
+		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
+		pub fn set_admin(
 			origin: OriginFor<T>,
-			index: T::RelayerIndex,
-			account: Identity,
-		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
+			new_admin: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			Admin::<T>::put(new_admin.clone());
+			Self::deposit_event(Event::AdminSet { new_admin: Some(new_admin) });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight({195_000_000})]
+		pub fn add_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(account.is_substrate() || account.is_evm(), Error::<T>::UnsupportedRelayerType);
 			// we don't care if `account` already exists
-			RelayerPublic::<T>::insert(index, account.clone());
-			Self::deposit_event(Event::RelayerAdded { index, account });
+			Relayer::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::RelayerAdded { who: account });
 			Ok(())
 		}
 
-		/// remove an account from the delegatees
 		#[pallet::call_index(2)]
-		#[pallet::weight(10000000)]
-		pub fn remove_relayer(origin: OriginFor<T>, index: T::RelayerIndex) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
-			ensure!(RelayerPublic::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
-			RelayerPublic::<T>::remove(index);
-			Self::deposit_event(Event::RelayerRemoved { index });
+		#[pallet::weight({195_000_000})]
+		pub fn remove_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(Relayer::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
+			Relayer::<T>::remove(account.clone());
+			Self::deposit_event(Event::RelayerRemoved { who: account });
 			Ok(())
 		}
 
-		#[pallet::call_index(3)]
-		#[pallet::weight(10000000)]
-		pub fn set_bitacross_admin(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
-			let _ = T::SetAdminOrigin::ensure_origin(origin)?;
-			Admin::<T>::set(Some(account.clone()));
-			Self::deposit_event(Event::BitAcrossAdminChanged { account });
-			Ok(())
+		/// ---------------------------------------------------
+		/// The following extrinsics are supposed to be called by TEE only
+		/// ---------------------------------------------------
+		#[pallet::call_index(30)]
+		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
+		pub fn btc_wallet_generated(
+			origin: OriginFor<T>,
+			address: Address33,
+		) -> DispatchResultWithPostInfo {
+			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
+			Vault::<T>::try_mutate(tee_account, |v| {
+				ensure!(!v.has_btc(), Error::<T>::BtcWalletAlreadyExist);
+				v.btc = Some(address);
+				Self::deposit_event(Event::BtcWalletGenerated { address });
+				Ok(Pays::No.into())
+			})
 		}
+
+		#[pallet::call_index(31)]
+		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
+		pub fn eth_wallet_generated(
+			origin: OriginFor<T>,
+			address: Address20,
+		) -> DispatchResultWithPostInfo {
+			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
+			Vault::<T>::try_mutate(tee_account, |v| {
+				ensure!(!v.has_eth(), Error::<T>::EthWalletAlreadyExist);
+				v.eth = Some(address);
+				Self::deposit_event(Event::EthWalletGenerated { address });
+				Ok(Pays::No.into())
+			})
+		}
+
+		// TODO: placeholder
+		#[pallet::call_index(32)]
+		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
+		pub fn task_complete(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Ok(Pays::No.into())
+		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn ensure_admin_or_root(origin: OriginFor<T>) -> DispatchResult {
+		ensure!(
+			ensure_root(origin.clone()).is_ok() || Some(ensure_signed(origin)?) == Self::admin(),
+			Error::<T>::RequireAdminOrRoot
+		);
+		Ok(())
 	}
 }
