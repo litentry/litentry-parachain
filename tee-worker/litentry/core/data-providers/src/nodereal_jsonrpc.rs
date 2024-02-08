@@ -50,9 +50,15 @@ impl Web3NetworkNoderealJsonrpcClient for Web3Network {
 	) -> Option<NoderealJsonrpcClient> {
 		match self {
 			Web3Network::Bsc =>
-				Some(NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config)),
+				match NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config) {
+					Ok(client) => Some(client),
+					_ => None,
+				},
 			Web3Network::Ethereum =>
-				Some(NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)),
+				match NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config) {
+					Ok(client) => Some(client),
+					_ => None,
+				},
 			_ => None,
 		}
 	}
@@ -123,7 +129,10 @@ pub struct NoderealJsonrpcClient {
 }
 
 impl NoderealJsonrpcClient {
-	pub fn new(chain: NoderealChain, data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(
+		chain: NoderealChain,
+		data_provider_config: &DataProviderConfig,
+	) -> Result<Self, Error> {
 		let api_key = data_provider_config.nodereal_api_key.clone();
 		let api_retry_delay = data_provider_config.nodereal_api_retry_delay;
 		let api_retry_times = data_provider_config.nodereal_api_retry_times;
@@ -132,9 +141,10 @@ impl NoderealJsonrpcClient {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(base_url.as_str(), headers);
 
-		NoderealJsonrpcClient { api_key, api_retry_delay, api_retry_times, client }
+		let client = build_client(base_url.as_str(), headers)?;
+
+		Ok(NoderealJsonrpcClient { api_key, api_retry_delay, api_retry_times, client })
 	}
 
 	// https://docs.nodereal.io/docs/cups-rate-limit
@@ -435,7 +445,7 @@ mod tests {
 	#[test]
 	fn does_get_nft_holdings_works() {
 		let config = init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config).unwrap();
 		let param = GetNFTHoldingsParam {
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
 			token_type: "ERC721".into(),
@@ -454,7 +464,7 @@ mod tests {
 	#[test]
 	fn does_get_token_balance_721_works() {
 		let config = init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config).unwrap();
 		let param = GetTokenBalance721Param {
 			token_address: "0x07D971C03553011a48E951a53F48632D37652Ba1".into(),
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
@@ -467,7 +477,7 @@ mod tests {
 	#[test]
 	fn does_get_token_balance_20_works() {
 		let config = init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config).unwrap();
 		let param = GetTokenBalance20Param {
 			contract_address: "0x76A797A59Ba2C17726896976B7B3747BfD1d220f".into(),
 			address: "0x85Be4e2ccc9c85BE8783798B6e8A101BDaC6467F".into(),

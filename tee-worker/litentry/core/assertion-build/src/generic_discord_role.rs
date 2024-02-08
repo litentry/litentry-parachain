@@ -38,7 +38,13 @@ pub fn build(
 		})?;
 
 	let mut has_role_value = false;
-	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url)
+		.map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::GenericDiscordRole(rtype.clone()),
+				e.into_error_detail(),
+			)
+		})?;
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp =

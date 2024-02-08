@@ -73,18 +73,14 @@ pub struct LitentryStakingClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for LitentryStakingClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl LitentryStakingClient {
-	pub fn new() -> Self {
+	pub fn new() -> Result<Self> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client("https://litentry-rpc.dwellir.com:443", headers);
-		LitentryStakingClient { client }
+
+		let client = build_client("https://litentry-rpc.dwellir.com:443", headers)
+			.map_err(|e| Error::RequestVCFailed(Assertion::LITStaking, e.into_error_detail()))?;
+		Ok(LitentryStakingClient { client })
 	}
 
 	pub fn send_request(&mut self, data: &JsonRPCRequest) -> Result<JsonRPCResponse> {
@@ -182,7 +178,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			identities.push(identity.0.clone());
 		});
 
-	let mut client = LitentryStakingClient::new();
+	let mut client = LitentryStakingClient::new()?;
 	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

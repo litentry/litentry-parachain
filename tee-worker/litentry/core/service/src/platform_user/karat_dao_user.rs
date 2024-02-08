@@ -34,7 +34,8 @@ pub fn is_user(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
 	let mut is_user = false;
-	let mut client = KaratDaoClient::new(data_provider_config);
+	let mut client =
+		KaratDaoClient::new(data_provider_config).map_err(|e| e.into_error_detail())?;
 	for address in addresses {
 		match client.user_verification(address) {
 			Ok(response) => {

@@ -65,7 +65,10 @@ pub fn build(
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
-	let mut client = build_client(&data_provider_config.litentry_archive_url, headers);
+
+	let mut client = build_client(&data_provider_config.litentry_archive_url, headers)
+		.map_err(|e| Error::RequestVCFailed(Assertion::A20, e.into_error_detail()))?;
+
 	let query = vec![("account", who.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())

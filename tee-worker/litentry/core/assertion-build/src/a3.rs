@@ -59,7 +59,13 @@ pub fn build(
 		)
 	})?;
 
-	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url)
+		.map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+				e.into_error_detail(),
+			)
+		})?;
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp = client

@@ -215,11 +215,13 @@ pub struct CryptoSummaryClient {
 }
 
 impl CryptoSummaryClient {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
-		let eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
-		let bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self, ErrorDetail> {
+		let eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)
+			.map_err(|e| e.into_error_detail())?;
+		let bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config)
+			.map_err(|e| e.into_error_detail())?;
 
-		Self { eth_client, bsc_client }
+		Ok(Self { eth_client, bsc_client })
 	}
 
 	pub fn logic(

@@ -50,16 +50,17 @@ pub struct KaraDaoRequest {
 }
 
 impl KaratDaoClient {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self, Error> {
 		let api_retry_delay = data_provider_config.karat_dao_api_retry_delay;
 		let api_retry_times = data_provider_config.karat_dao_api_retry_times;
 		let api_url = data_provider_config.karat_dao_api_url.clone();
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(api_url.as_str(), headers);
 
-		KaratDaoClient { api_retry_delay, api_retry_times, client }
+		let client = build_client(api_url.as_str(), headers)?;
+
+		Ok(KaratDaoClient { api_retry_delay, api_retry_times, client })
 	}
 
 	fn retry<A, T>(&mut self, action: A) -> Result<T, Error>
@@ -180,7 +181,7 @@ mod tests {
 	#[test]
 	fn does_user_verification_works() {
 		let config = init();
-		let mut client = KaratDaoClient::new(&config);
+		let mut client = KaratDaoClient::new(&config).unwrap();
 		let mut response = client
 			.user_verification("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".into())
 			.unwrap();

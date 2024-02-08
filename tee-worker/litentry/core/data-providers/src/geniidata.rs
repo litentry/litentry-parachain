@@ -29,7 +29,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::ErrorDetail;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
@@ -78,13 +77,13 @@ pub struct GeniidataClient {
 impl GeniidataClient {
 	pub fn new(
 		data_provider_config: &DataProviderConfig,
-	) -> core::result::Result<Self, ErrorDetail> {
+	) -> core::result::Result<Self, DataProviderError> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");
 		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
 
-		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers);
+		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers)?;
 
 		Ok(GeniidataClient { client })
 	}

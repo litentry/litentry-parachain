@@ -483,27 +483,43 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 	Ok(tmp.to_string())
 }
 
-pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
-	debug!("base_url: {}", base_url);
-	let base_url = Url::parse(base_url).unwrap();
-	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
-	RestClient::new(http_client, base_url)
+pub fn build_client(
+	base_url: &str,
+	headers: Headers,
+) -> Result<RestClient<HttpClient<DefaultSend>>, Error> {
+	match Url::parse(base_url) {
+		Ok(url) => {
+			let http_client =
+				HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
+			Ok(RestClient::new(http_client, url))
+		},
+		Err(err) => Err(Error::RequestError(format!(
+			"Build client input base url: {:?}, parse error: {:?}",
+			base_url, err
+		))),
+	}
 }
 
 pub fn build_client_with_cert(
 	base_url: &str,
 	headers: Headers,
-) -> RestClient<HttpClient<SendWithCertificateVerification>> {
-	debug!("base_url: {}", base_url);
-	let base_url = Url::parse(base_url).unwrap();
-	let http_client = HttpClient::new(
-		SendWithCertificateVerification::new(vec![]),
-		true,
-		Some(TIMEOUT),
-		Some(headers),
-		None,
-	);
-	RestClient::new(http_client, base_url)
+) -> Result<RestClient<HttpClient<SendWithCertificateVerification>>, Error> {
+	match Url::parse(base_url) {
+		Ok(url) => {
+			let http_client = HttpClient::new(
+				SendWithCertificateVerification::new(vec![]),
+				true,
+				Some(TIMEOUT),
+				Some(headers),
+				None,
+			);
+			Ok(RestClient::new(http_client, url))
+		},
+		Err(err) => Err(Error::RequestError(format!(
+			"Input base url: {:?}, parse error: {:?}",
+			base_url, err
+		))),
+	}
 }
 
 pub trait ConvertParameterString {

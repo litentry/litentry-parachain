@@ -39,7 +39,7 @@ impl BnbDomainInfo {
 		owners: &[String],
 		config: &DataProviderConfig,
 	) -> core::result::Result<serde_json::Value, ErrorDetail> {
-		let mut client = NoderealClient::new(config);
+		let mut client = NoderealClient::new(config).map_err(|e| e.into_error_detail())?;
 		client.by_owners(owners).map_err(|e| e.into_error_detail())
 	}
 }

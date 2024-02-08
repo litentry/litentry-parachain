@@ -54,11 +54,11 @@ pub struct DiscordLitentryClient {
 }
 
 impl DiscordLitentryClient {
-	pub fn new(url: &str) -> Self {
+	pub fn new(url: &str) -> Result<Self, Error> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(url, headers);
-		DiscordLitentryClient { client }
+		let client = build_client(url, headers)?;
+		Ok(DiscordLitentryClient { client })
 	}
 
 	// user has joined Discord guild
@@ -171,7 +171,8 @@ mod tests {
 		let data_provider_config = init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let handler = "againstwar".as_bytes().to_vec();
-		let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+		let mut client =
+			DiscordLitentryClient::new(&data_provider_config.discord_litentry_url).unwrap();
 		let response = client.check_join(guild_id, handler);
 		assert!(response.is_ok(), "check join discord error: {:?}", response);
 	}
@@ -183,7 +184,8 @@ mod tests {
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let role_id = "1034083718425493544".as_bytes().to_vec();
 		let handler = "ericzhang.eth".as_bytes().to_vec();
-		let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+		let mut client =
+			DiscordLitentryClient::new(&data_provider_config.discord_litentry_url).unwrap();
 		let response = client.check_id_hubber(guild_id, channel_id, role_id, handler);
 		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
 	}

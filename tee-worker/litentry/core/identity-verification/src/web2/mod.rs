@@ -66,7 +66,8 @@ pub fn verify(
 			let mut client = TwitterOfficialClient::v2(
 				config.twitter_official_url.as_str(),
 				config.twitter_auth_token_v2.as_str(),
-			);
+			)
+			.map_err(|e| Error::UnclassifiedError(e.into_error_detail()))?;
 			let tweet: Tweet = client
 				.query_tweet(tweet_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
@@ -88,7 +89,8 @@ pub fn verify(
 			ref message_id,
 			..
 		}) => {
-			let mut client = DiscordOfficialClient::new(config);
+			let mut client = DiscordOfficialClient::new(config)
+				.map_err(|e| Error::UnclassifiedError(e.into_error_detail()))?;
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;

@@ -61,7 +61,10 @@ pub fn build(
 	debug!("WeirdoGhostGang holder");
 
 	let mut has_nft = false;
-	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
+	let mut client =
+		NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::WeirdoGhostGangHolder, e.into_error_detail())
+		})?;
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities

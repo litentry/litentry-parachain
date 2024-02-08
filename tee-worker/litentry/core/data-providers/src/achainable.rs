@@ -42,7 +42,7 @@ pub struct AchainableClient {
 }
 
 impl AchainableClient {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self, Error> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
@@ -50,9 +50,9 @@ impl AchainableClient {
 			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
 		let client =
-			build_client_with_cert(data_provider_config.achainable_url.clone().as_str(), headers);
+			build_client_with_cert(data_provider_config.achainable_url.clone().as_str(), headers)?;
 
-		AchainableClient { client }
+		Ok(AchainableClient { client })
 	}
 
 	pub fn query_system_label(&mut self, address: &str, params: Params) -> Result<bool, Error> {
@@ -1438,7 +1438,7 @@ mod tests {
 
 		let mut data_provider_config = DataProviderConfig::new();
 		data_provider_config.set_achainable_url(url);
-		AchainableClient::new(&data_provider_config)
+		AchainableClient::new(&data_provider_config).unwrap()
 	}
 
 	#[test]

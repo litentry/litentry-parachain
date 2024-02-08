@@ -42,8 +42,8 @@ fn get_holding_balance(
 	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
 ) -> result::Result<f64, DataProviderError> {
-	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
-	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
+	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)?;
+	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config)?;
 	let mut total_balance = 0_u128;
 
 	let decimals = token_type.get_decimals();

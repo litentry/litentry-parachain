@@ -55,7 +55,14 @@ fn fetch_data_from_notion(
 	headers.insert("Notion-Version", "2022-06-28");
 	headers.insert(AUTHORIZATION.as_str(), oneblock_notion_key.as_str());
 
-	let mut client = build_client(oneblock_notion_url.as_str(), headers);
+	let mut client = build_client(oneblock_notion_url.as_str(), headers).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Oneblock(course_type.clone()),
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				format!("{e:?}").as_bytes().to_vec(),
+			)),
+		)
+	})?;
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
 		Error::RequestVCFailed(

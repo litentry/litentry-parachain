@@ -71,16 +71,23 @@ pub struct A14Client {
 }
 
 impl A14Client {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
 			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
+
 		let client =
-			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
-		A14Client { client }
+			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers)
+			.map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::A20,
+					e.into_error_detail()
+				)
+			})?;
+		Ok(A14Client { client })
 	}
 
 	pub fn send_request(&mut self, data: &A14Data) -> Result<A14Response> {
@@ -113,7 +120,7 @@ pub fn build(
 		}
 	}
 	let mut value = false;
-	let mut client = A14Client::new(data_provider_config);
+	let mut client = A14Client::new(data_provider_config)?;
 
 	for address in polkadot_addresses {
 		let data = A14Data {

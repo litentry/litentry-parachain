@@ -33,6 +33,7 @@ pub fn build(
 ) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let (txs, summary) = CryptoSummaryClient::new(data_provider_config)
+		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?
 		.logic(&identities)
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 

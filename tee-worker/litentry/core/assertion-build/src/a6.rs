@@ -42,7 +42,14 @@ pub fn build(
 	let mut client = TwitterOfficialClient::v2(
 		&data_provider_config.twitter_official_url,
 		&data_provider_config.twitter_auth_token_v2,
-	);
+	)
+	.map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::A6,
+			ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", e).into())),
+		)
+	})?;
+
 	let mut sum: u32 = 0;
 
 	for identity in &req.identities {

@@ -39,7 +39,10 @@ pub fn build(
 	// returns the vector which is converted from a BoundedVec
 	let bounded_web3networks: BoundedWeb3Network =
 		req.assertion.get_supported_web3networks().try_into().unwrap();
-	let mut client = AchainableClient::new(data_provider_config);
+	let mut client = AchainableClient::new(data_provider_config).map_err(|e| {
+		Error::RequestVCFailed(Assertion::A8(bounded_web3networks.clone()), e.into_error_detail())
+	})?;
+
 	let mut total_txs: u64 = 0;
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);

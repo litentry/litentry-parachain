@@ -75,7 +75,7 @@ pub struct DiscordOfficialClient {
 }
 
 impl DiscordOfficialClient {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self, Error> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
@@ -85,8 +85,8 @@ impl DiscordOfficialClient {
 		let client = build_client_with_cert(
 			data_provider_config.discord_official_url.clone().as_str(),
 			headers,
-		);
-		DiscordOfficialClient { client }
+		)?;
+		Ok(DiscordOfficialClient { client })
 	}
 
 	pub fn query_message(
@@ -137,7 +137,7 @@ mod tests {
 		let channel_id = "919848392035794945";
 		let message_id = "1";
 
-		let mut client = DiscordOfficialClient::new(&data_provider_config);
+		let mut client = DiscordOfficialClient::new(&data_provider_config).unwrap();
 		let result =
 			client.query_message(channel_id.as_bytes().to_vec(), message_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "query discord error: {:?}", result);

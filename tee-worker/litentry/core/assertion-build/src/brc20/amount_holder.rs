@@ -39,7 +39,7 @@ pub fn build(
 		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
 	})?;
 	let mut client = GeniidataClient::new(data_provider_config)
-		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
+		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail()))?;
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::BRC20AmountHolder,

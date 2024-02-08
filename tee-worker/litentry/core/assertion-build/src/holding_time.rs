@@ -71,7 +71,7 @@ use std::string::ToString;
 /// the operators are mainly for IDHub's parsing, we will **NEVER** have:
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
-///  
+///
 
 pub fn build(
 	req: &AssertionBuildRequest,
@@ -238,7 +238,8 @@ fn search_holding_date(
 	mut accounts: Vec<Account>,
 	q_min_balance: &String,
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
-	let mut client = AchainableClient::new(data_provider_config);
+	let mut client =
+		AchainableClient::new(data_provider_config).map_err(|e| e.into_error_detail())?;
 
 	let mut pred = |date: &&str| {
 		let (outcome, new_accounts) =

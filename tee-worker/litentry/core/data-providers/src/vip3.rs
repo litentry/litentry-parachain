@@ -68,14 +68,14 @@ pub struct VIP3Client {
 }
 
 impl VIP3Client {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Result<Self, Error> {
 		let api_url = data_provider_config.vip3_url.to_string();
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client_with_cert(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers)?;
 
-		VIP3Client { client }
+		Ok(VIP3Client { client })
 	}
 }
 

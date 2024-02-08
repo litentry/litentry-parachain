@@ -67,7 +67,8 @@ pub fn get_balance(
 				}
 			},
 			Web3Network::Litentry | Web3Network::Litmus => {
-				let mut client = AchainableClient::new(data_provider_config);
+				let mut client = AchainableClient::new(data_provider_config)
+					.map_err(|e| e.into_error_detail())?;
 
 				let param =
 					Params::ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken::new(

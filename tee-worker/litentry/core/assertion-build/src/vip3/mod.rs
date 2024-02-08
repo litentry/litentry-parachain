@@ -37,7 +37,7 @@ impl VIP3SBTInfo {
 	pub fn new(
 		data_provider_config: &DataProviderConfig,
 	) -> core::result::Result<VIP3SBTInfo, ErrorDetail> {
-		let client = VIP3Client::new(data_provider_config);
+		let client = VIP3Client::new(data_provider_config).map_err(|e| e.into_error_detail())?;
 
 		Ok(VIP3SBTInfo { client })
 	}

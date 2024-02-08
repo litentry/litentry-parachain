@@ -85,7 +85,10 @@ pub fn request_achainable(
 ) -> Result<bool> {
 	let request_param = Params::try_from(param.clone())?;
 
-	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let mut client: AchainableClient =
+		AchainableClient::new(data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
 
 	for address in &addresses {
 		let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
@@ -109,7 +112,10 @@ pub fn request_uniswap_v2_or_v3_user(
 ) -> Result<(bool, bool)> {
 	let _request_param = Params::try_from(param.clone())?;
 
-	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let mut client: AchainableClient =
+		AchainableClient::new(data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
 
 	let mut v2_user = false;
 	let mut v3_user = false;
@@ -133,7 +139,10 @@ pub fn request_achainable_classofyear(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<(bool, String)> {
 	let request_param = Params::try_from(param.clone())?;
-	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let mut client: AchainableClient =
+		AchainableClient::new(data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
 
 	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
@@ -160,7 +169,11 @@ pub fn request_achainable_balance(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<String> {
 	let request_param = Params::try_from(param.clone())?;
-	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let mut client: AchainableClient =
+		AchainableClient::new(data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
+
 	let balance = client.holding_amount(addresses, request_param).map_err(|e| {
 		Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 	})?;
@@ -174,7 +187,10 @@ pub fn query_lit_holding_amount(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<usize> {
 	let mut total_lit_balance = 0_f64;
-	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let mut client: AchainableClient =
+		AchainableClient::new(data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
+		})?;
 
 	for (network, addresses) in identities {
 		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {

@@ -155,13 +155,13 @@ impl TargetUser {
 
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
-	pub fn v2(url: &str, token: &str) -> Self {
+	pub fn v2(url: &str, token: &str) -> Result<Self, Error> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(AUTHORIZATION.as_str(), token);
-		let client = build_client_with_cert(url, headers.clone());
+		let client = build_client_with_cert(url, headers.clone())?;
 
-		TwitterOfficialClient { client }
+		Ok(TwitterOfficialClient { client })
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
@@ -266,7 +266,7 @@ mod tests {
 		let tweet_id = "100";
 
 		let mut client =
-			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token").unwrap();
 		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 		let tweet = result.unwrap();
@@ -281,7 +281,7 @@ mod tests {
 		let data_provider_config = init();
 
 		let mut client =
-			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token").unwrap();
 		let original_tweet_id = "100".as_bytes().to_vec();
 		let response = client.query_retweeted_by(original_tweet_id);
 
@@ -294,7 +294,7 @@ mod tests {
 
 		let user = "twitterdev";
 		let mut client =
-			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token").unwrap();
 		let result = client.query_user_by_name(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
@@ -305,7 +305,7 @@ mod tests {
 
 		let user_id = "2244994945";
 		let mut client =
-			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token").unwrap();
 		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
