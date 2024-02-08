@@ -1,6 +1,7 @@
-import { WsProvider, ApiPromise, PalletTeebagEnclave } from 'parachain-api';
+import { WsProvider, ApiPromise } from 'parachain-api';
 import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
+import { hexToString } from '@polkadot/util';
 import { ethers } from 'ethers';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
@@ -86,26 +87,23 @@ export async function getEnclave(api: ApiPromise): Promise<{
     teeShieldingKey: KeyObject;
 }> {
     const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
-    const primaryEnclave = (
-        await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])
-    ).toHuman() as unknown as PalletTeebagEnclave;
+    const primaryEnclave = (await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])).unwrap();
+
+    const shieldingPubkeyBytes = api.createType('Option<Bytes>', primaryEnclave.shieldingPubkey).unwrap();
+    const shieldingPubkey = hexToString(shieldingPubkeyBytes.toHex());
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
             alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: Buffer.from(JSON.parse(primaryEnclave.shieldingPubkey as unknown as HexString).n.reverse()).toString(
-                'base64url'
-            ),
-            e: Buffer.from(JSON.parse(primaryEnclave.shieldingPubkey as unknown as HexString).e.reverse()).toString(
-                'base64url'
-            ),
+            n: Buffer.from(JSON.parse(shieldingPubkey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(shieldingPubkey).e.reverse()).toString('base64url'),
         },
         format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
-    const mrEnclave = primaryEnclave.mrenclave as unknown as HexString;
+    const mrEnclave = primaryEnclave.mrenclave.toHex();
     return {
         mrEnclave,
         teeShieldingKey,

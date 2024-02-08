@@ -283,13 +283,10 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // prepare teebag enclave registry data for further checks
     const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
     const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
-    const enclaveIdentifier = context.api.createType(
-        'Vec<AccountId>',
-        await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity')
-    );
+    const enclaveIdentifier = await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity');
     const lastRegisteredEnclave = (
         await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveIdentifier[enclaveIdentifier.length - 1])
-    ).toHuman() as unknown as PalletTeebagEnclave;
+    ).unwrap();
 
     // step 6
     // check vc signature
@@ -303,11 +300,8 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 7
     // check VC mrenclave with enclave's mrenclave from registry
-
-    // this is awful, but I have no idea why base58.encode(registryMrenclave.mrenclave) doesn't work - it's a U8aFixed
-    const registryMrenclave = context.api.createType('[u8; 32]', lastRegisteredEnclave.mrenclave);
     assert.equal(
-        base58.encode(hexToU8a(registryMrenclave.toHex())),
+        base58.encode(lastRegisteredEnclave.mrenclave),
         vcPayloadJson.issuer.mrenclave,
         'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
     );
