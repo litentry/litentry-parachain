@@ -100,7 +100,6 @@ pub(crate) fn init_enclave(
 	untrusted_worker_url: String,
 	base_dir: PathBuf,
 ) -> EnclaveResult<()> {
-	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
 
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
@@ -231,6 +230,8 @@ pub(crate) fn init_enclave(
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
+
+	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 
 	std::thread::spawn(move || run_bit_across_handler().unwrap());
 

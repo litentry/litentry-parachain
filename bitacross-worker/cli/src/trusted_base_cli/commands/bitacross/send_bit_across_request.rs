@@ -36,7 +36,3 @@ impl BitAcrossCommand {
 	}
 }
 
-
-
-// pub(crate) fn send_direct_bit_across_request<T: Debug + Decode>(cli: &Cli, trusted_args: &TrustedCli, shard: ShardIdentifier, key: RequestAesKey, encoded_request: Vec<u8>) -> TrustedOpResult<T>{
-

@@ -89,7 +89,6 @@ pub struct NodeMetadataMock {
 	runtime_transaction_version: u32,
 
 	bitacross_module: u8,
-	bitacross_placeholder: u8,
 	bitacross_add_relayer: u8,
 	bitacross_remove_relayer: u8,
 }
@@ -150,7 +149,6 @@ impl NodeMetadataMock {
 			runtime_transaction_version: 4,
 
 			bitacross_module: 69u8,
-			bitacross_placeholder: 70u8,
 			bitacross_add_relayer: 71u8,
 			bitacross_remove_relayer: 72u8,
 		}
@@ -328,10 +326,6 @@ impl BalancesCallIndexes for NodeMetadataMock {
 }
 
 impl BitAcrossCallIndexes for NodeMetadataMock {
-	fn placeholder_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.bitacross_module, self.bitacross_placeholder])
-	}
-
 	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.bitacross_module, self.bitacross_add_relayer])
 	}

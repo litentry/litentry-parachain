@@ -388,7 +388,7 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 		let enclave_seal = RelayerRegistrySeal::new(self.seal_path.clone());
 		if SgxFile::open(RELAYER_REGISTRY_FILE).is_err() {
 			info!(
-				"[Enclave] ScheduledEnclave file not found, creating new! {}",
+				"[Enclave] RelayerRegistry file not found, creating new! {}",
 				RELAYER_REGISTRY_FILE
 			);
 			let mut registry = GLOBAL_RELAYER_REGISTRY

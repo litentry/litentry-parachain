@@ -157,11 +157,7 @@ where
 		let call_args = &mut &xt.call_args[..];
 		log::error!("Parsing the call indexes");
 
-		if index == metadata.placeholder_call_indexes().ok()? {
-			log::error!("Processing Placeholder call index");
-			let args = decode_and_log_error::<BitAcrossArgs>(call_args)?;
-			Some(IndirectCall::BitAcross(args))
-		} else if index == metadata.update_scheduled_enclave().ok()? {
+		if index == metadata.update_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::UpdateScheduledEnclave(args))
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
