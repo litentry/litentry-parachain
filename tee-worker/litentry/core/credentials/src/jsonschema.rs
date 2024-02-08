@@ -111,5 +111,7 @@ pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String
 			format!("{BASE_URL}/21-token-holding-amount-list/1-0-0.json"),
 
 		Assertion::CryptoSummary => format!("{BASE_URL}/24-crypto-summary/1-0-0.json"),
+
+		Assertion::PlatformUser(_) => format!("{BASE_URL}/25-platform-user/1-0-0.json"),
 	}
 }
