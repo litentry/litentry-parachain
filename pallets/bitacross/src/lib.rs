@@ -23,9 +23,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use core_primitives::Identity;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use core_primitives::Identity;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
