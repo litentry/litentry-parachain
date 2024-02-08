@@ -94,20 +94,13 @@ export const createSignedTrustedCall = async (
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
 
-    let signature;
-
     // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-    // TODO: any better idiomatic way?
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    const signature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type()]: u8aToHex(
+            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
+        ),
+    });
+
     return parachainApi.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
@@ -202,6 +195,7 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
+// TODO: deprecated
 export async function createSignedTrustedCallRequestVc(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -221,6 +215,27 @@ export async function createSignedTrustedCallRequestVc(
         [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
     );
 }
+
+export async function createSignedTrustedCallRequestVcDirect(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    assertion: string,
+    aesKey: string,
+    hash: string
+) {
+    return await createSignedTrustedCall(
+        parachainApi,
+        ['request_vc_direct', '(LitentryIdentity, LitentryIdentity, Assertion, RequestAesKey, H256)'],
+        signer,
+        mrenclave,
+        nonce,
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+    );
+}
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
