@@ -147,8 +147,7 @@ pub struct CredentialSubject {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub data_source: Option<Vec<DataSource>>,
 	/// Several sets of assertions.
-	/// Each assertion contains multiple steps to describe how to fetch data and calculate the
-	/// value
+	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
 	#[serde(skip_deserializing)]
 	pub assertions: Vec<AssertionLogic>,
 	/// Results of each set of assertions
