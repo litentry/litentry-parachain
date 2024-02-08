@@ -26,8 +26,8 @@ use itp_stf_primitives::{
 	types::{AccountId, TrustedOperation},
 };
 use itp_types::{Balance, ShardIdentifier};
-use log::debug;
-use std::{println, vec::Vec};
+use log::{debug, info};
+use std::vec::Vec;
 /// Arguments of the Integritee-Parachain's shield fund dispatchable.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct ShieldFundsArgs {
@@ -41,7 +41,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
-		println!("Found ShieldFunds extrinsic in block: \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
+		info!("Found ShieldFunds extrinsic in block: \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
         	self.account_encrypted, self.amount, bs58::encode(self.shard.encode()).into_string());
 
 		debug!("decrypt the account id");
@@ -49,7 +49,8 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 		let account = AccountId::decode(&mut account_vec.as_slice())?;
 
 		let enclave_account_id = executor.get_enclave_account()?;
-		let trusted_call = TrustedCall::balance_shield(enclave_account_id, account, self.amount);
+		let trusted_call =
+			TrustedCall::balance_shield(enclave_account_id.into(), account, self.amount);
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 		let trusted_operation =
 			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);

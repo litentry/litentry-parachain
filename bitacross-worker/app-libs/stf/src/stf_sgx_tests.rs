@@ -28,7 +28,6 @@ use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
 };
-use sp_runtime::MultiSignature;
 use std::{sync::Arc, vec::Vec};
 
 pub type StfState = Stf<TrustedCallSigned, Getter, State, Runtime>;
@@ -56,7 +55,7 @@ pub fn shield_funds_increments_signer_account_nonce() {
 			500u128,
 		),
 		0,
-		MultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
+		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
 	);
 
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));

@@ -217,7 +217,7 @@ impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
 		let _account = AccountId::decode(&mut account_vec.as_slice())?;
 
 		let enclave_account_id = executor.get_enclave_account()?;
-		let trusted_call = TrustedCallMock::noop(enclave_account_id);
+		let trusted_call = TrustedCallMock::noop(enclave_account_id.into());
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 		let trusted_operation =
 			TrustedOperation::<TrustedCallSignedMock, GetterMock>::indirect_call(

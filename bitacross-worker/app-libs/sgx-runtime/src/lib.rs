@@ -53,7 +53,8 @@ use sp_version::RuntimeVersion;
 pub use itp_sgx_runtime_primitives::{
 	constants::SLOT_DURATION,
 	types::{
-		AccountData, AccountId, Address, Balance, BlockNumber, Hash, Header, Index, Signature,
+		AccountData, AccountId, Address, Balance, BlockNumber, ConvertAccountId, Hash, Header,
+		Index, SgxParentchainTypeConverter, Signature,
 	},
 };
 
