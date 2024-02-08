@@ -89,7 +89,7 @@ use its_sidechain::{
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::BroadcastedRequest;
+use litentry_primitives::{BroadcastedRequest, RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
@@ -100,7 +100,9 @@ pub(crate) fn init_enclave(
 	untrusted_worker_url: String,
 	base_dir: PathBuf,
 ) -> EnclaveResult<()> {
+	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
+
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);

@@ -41,8 +41,10 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
+use lazy_static::lazy_static;
 use litentry_hex_utils::hex_encode;
 use log::error;
+use parentchain_primitives::AccountId;
 pub use parentchain_primitives::{
 	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
@@ -63,8 +65,18 @@ use sp_io::{
 	hashing::{blake2_256, keccak_256},
 };
 use sp_runtime::traits::Verify;
-use std::string::{String, ToString};
+use std::{
+	collections::BTreeMap,
+	path::PathBuf,
+	string::{String, ToString},
+	sync::Arc,
+};
 pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
+
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -249,6 +261,182 @@ pub struct BroadcastedRequest {
 	pub id: String,
 	pub payload: String,
 	pub rpc_method: String,
+}
+
+lazy_static! {
+	/// Global instance of a ScheduledEnclave
+	pub static ref GLOBAL_RELAYER_REGISTRY: Arc<RelayerRegistry> = Default::default();
+}
+
+pub type RelayerRegistryMap = BTreeMap<AccountId, ()>;
+
+#[derive(Default)]
+pub struct RelayerRegistry {
+	pub registry: RwLock<RelayerRegistryMap>,
+	pub seal_path: PathBuf,
+}
+
+pub type RegistryResult<T> = core::result::Result<T, RegistryError>;
+
+#[cfg(feature = "sgx")]
+use thiserror_sgx as thiserror;
+
+#[derive(Debug, thiserror::Error)]
+pub enum RegistryError {
+	#[error("poison lock")]
+	PoisonLock,
+	#[error("empty Relayer registry")]
+	EmptyRegistry,
+	#[error(transparent)]
+	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+}
+
+impl From<std::io::Error> for RegistryError {
+	fn from(e: std::io::Error) -> Self {
+		Self::Other(e.into())
+	}
+}
+
+impl From<codec::Error> for RegistryError {
+	#[cfg(feature = "std")]
+	fn from(e: codec::Error) -> Self {
+		Self::Other(e.into())
+	}
+
+	#[cfg(feature = "sgx")]
+	fn from(e: codec::Error) -> Self {
+		Self::Other(std::format!("{:?}", e).into())
+	}
+}
+
+#[cfg(feature = "sgx")]
+mod sgx {
+	pub use codec::{Decode, Encode};
+	// TODO: Update to relayer registry file
+	use crate::{RegistryError as Error, RegistryResult as Result, RelayerRegistryMap};
+	pub use itp_settings::files::RELAYER_REGISTRY_FILE;
+	pub use itp_sgx_io::{seal, unseal, SealedIO};
+	pub use log::*;
+	pub use std::{boxed::Box, fs, path::PathBuf, sgxfs::SgxFile, sync::Arc};
+
+	#[derive(Clone, Debug)]
+	pub struct RelayerRegistrySeal {
+		base_path: PathBuf,
+	}
+
+	impl RelayerRegistrySeal {
+		pub fn new(base_path: PathBuf) -> Self {
+			Self { base_path }
+		}
+
+		pub fn path(&self) -> PathBuf {
+			self.base_path.join(RELAYER_REGISTRY_FILE)
+		}
+	}
+
+	impl SealedIO for RelayerRegistrySeal {
+		type Error = Error;
+		type Unsealed = RelayerRegistryMap;
+
+		fn unseal(&self) -> Result<Self::Unsealed> {
+			Ok(unseal(self.path()).map(|b| Decode::decode(&mut b.as_slice()))??)
+		}
+
+		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
+			info!("Seal relayer registry to file: {:?}", unsealed);
+			Ok(unsealed.using_encoded(|bytes| seal(bytes, self.path()))?)
+		}
+	}
+}
+
+#[cfg(feature = "sgx")]
+use sgx::*;
+
+pub trait RelayerRegistryUpdater {
+	fn init(&self) -> RegistryResult<()>;
+	fn update(&self, account: AccountId) -> RegistryResult<()>;
+	fn remove(&self, account: AccountId) -> RegistryResult<()>;
+	fn contains_key(&self, account: AccountId) -> bool;
+}
+
+// TODO: unit-test
+impl RelayerRegistryUpdater for RelayerRegistry {
+	#[cfg(feature = "std")]
+	fn init(&self) -> RegistryResult<()> {
+		Ok(())
+	}
+
+	#[cfg(feature = "std")]
+	fn update(&self, account: AccountId) -> RegistryResult<()> {
+		Ok(())
+	}
+
+	#[cfg(feature = "std")]
+	fn remove(&self, account: AccountId) -> RegistryResult<()> {
+		Ok(())
+	}
+
+	#[cfg(feature = "std")]
+	fn contains_key(&self, account: AccountId) -> bool {
+		true
+	}
+
+	// if `RELAYER_REGISTRY_FILE` exists, unseal and init from it
+	// otherwise create a new instance and seal to static file
+	#[cfg(feature = "sgx")]
+	fn init(&self) -> RegistryResult<()> {
+		let enclave_seal = RelayerRegistrySeal::new(self.seal_path.clone());
+		if SgxFile::open(RELAYER_REGISTRY_FILE).is_err() {
+			info!(
+				"[Enclave] ScheduledEnclave file not found, creating new! {}",
+				RELAYER_REGISTRY_FILE
+			);
+			let mut registry = GLOBAL_RELAYER_REGISTRY
+				.registry
+				.write()
+				.map_err(|_| RegistryError::PoisonLock)?;
+			enclave_seal.seal(&*registry)
+		} else {
+			let m = enclave_seal.unseal()?;
+			info!("[Enclave] RelayerRegistry unsealed from file: {:?}", m);
+			let mut registry = GLOBAL_RELAYER_REGISTRY
+				.registry
+				.write()
+				.map_err(|_| RegistryError::PoisonLock)?;
+			*registry = m;
+			Ok(())
+		}
+	}
+
+	#[cfg(feature = "sgx")]
+	fn update(&self, account: AccountId) -> RegistryResult<()> {
+		let mut registry = GLOBAL_RELAYER_REGISTRY
+			.registry
+			.write()
+			.map_err(|_| RegistryError::PoisonLock)?;
+		registry.insert(account, ());
+		RelayerRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
+	}
+
+	#[cfg(feature = "sgx")]
+	fn remove(&self, account: AccountId) -> RegistryResult<()> {
+		let mut registry = GLOBAL_RELAYER_REGISTRY
+			.registry
+			.write()
+			.map_err(|_| RegistryError::PoisonLock)?;
+		let old_value = registry.remove(&account);
+		if old_value.is_some() {
+			return RelayerRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
+		}
+		Ok(())
+	}
+
+	#[cfg(feature = "sgx")]
+	fn contains_key(&self, account: AccountId) -> bool {
+		// Using unwrap becaused poisoned locks are unrecoverable errors
+		let mut registry = GLOBAL_RELAYER_REGISTRY.registry.write().unwrap();
+		registry.contains_key(&account)
+	}
 }
 
 #[cfg(test)]
