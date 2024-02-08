@@ -76,8 +76,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		RelayerAdded { account: T::AccountId },
-		RelayerRemoved { account: T::AccountId },
+		RelayerAdded { index: T::RelayerIndex, account: RelayerAccount<T::AccountId> },
+		RelayerRemoved { index: T::RelayerIndex },
 		BitAcrossAdminChanged { account: T::AccountId },
 	}
 
@@ -96,27 +96,27 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// add an account to the delegatees
+		/// add an account to the relayer storage
 		#[pallet::call_index(1)]
 		#[pallet::weight(10000000)]
-		pub fn add_relayer(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+		pub fn add_relayer(origin: OriginFor<T>, index: T::RelayerIndex, account: RelayerAccount<T::AccountId>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
 			// we don't care if `account` already exists
-			Relayers::<T>::insert(account.clone(), ());
-			Self::deposit_event(Event::RelayerAdded { account });
+			RelayerPublic::<T>::insert(index, account.clone());
+			Self::deposit_event(Event::RelayerAdded { index, account });
 			Ok(())
 		}
 
 		/// remove an account from the delegatees
 		#[pallet::call_index(2)]
 		#[pallet::weight(10000000)]
-		pub fn remove_relayer(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+		pub fn remove_relayer(origin: OriginFor<T>, index: T::RelayerIndex) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Admin::<T>::get(), Error::<T>::RequireAdmin);
-			ensure!(Relayers::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
-			Relayers::<T>::remove(account.clone());
-			Self::deposit_event(Event::RelayerRemoved { account });
+			ensure!(RelayerPublic::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
+			RelayerPublic::<T>::remove(index);
+			Self::deposit_event(Event::RelayerRemoved { index });
 			Ok(())
 		}
 
