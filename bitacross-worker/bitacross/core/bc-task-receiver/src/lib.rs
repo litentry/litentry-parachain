@@ -21,7 +21,8 @@ pub use crate::sgx_reexport_prelude::*;
 use bc_task_sender::init_bit_across_task_sender_storage;
 use codec::Decode;
 use frame_support::ensure;
-use litentry_primitives::{AesRequest, DirectCall};
+use lc_direct_call::{DirectCall, DirectCallSigned};
+use litentry_primitives::AesRequest;
 use log::*;
 use std::{
 	boxed::Box,
@@ -41,7 +42,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use ita_stf::TrustedCallSigned;
 use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, schnorr::Pair as SchnorrPair};
 use litentry_macros::if_production_or;
-use litentry_primitives::{DecryptableRequest, DirectCallSigned};
+use litentry_primitives::DecryptableRequest;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {

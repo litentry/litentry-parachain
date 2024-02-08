@@ -23,7 +23,7 @@ use crate::{
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::FromHexPrefixed;
-use litentry_primitives::DirectCall;
+use lc_direct_call::DirectCall;
 use sp_core::Pair;
 
 #[derive(Parser)]

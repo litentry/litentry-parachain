@@ -613,6 +613,7 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
+ "lc-direct-call",
  "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
@@ -719,6 +720,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "itp-utils",
+ "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -5350,6 +5352,7 @@ name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
  "frame-system",
+ "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -5410,9 +5413,9 @@ dependencies = [
 name = "itp-stf-primitives"
 version = "0.9.0"
 dependencies = [
- "core-primitives",
  "derive_more",
  "itp-sgx-runtime-primitives",
+ "litentry-primitives",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -6266,6 +6269,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
+name = "lc-direct-call"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "itp-stf-primitives",
+ "litentry-primitives",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "sp-runtime",
+ "teerex-primitives",
+]
+
+[[package]]
 name = "lc-scheduled-enclave"
 version = "0.8.0"
 dependencies = [
@@ -6916,7 +6934,6 @@ dependencies = [
  "core-primitives",
  "hex 0.4.3",
  "itp-sgx-crypto",
- "itp-stf-primitives",
  "itp-utils",
  "litentry-hex-utils",
  "log 0.4.20",

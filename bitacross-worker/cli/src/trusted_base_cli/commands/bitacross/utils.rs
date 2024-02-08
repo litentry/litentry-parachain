@@ -25,9 +25,9 @@ use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{Id, RpcRequest};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_utils::ToHexPrefixed;
+use lc_direct_call::DirectCallSigned;
 use litentry_primitives::{
-	aes_encrypt_default, AesRequest, DirectCallSigned, RequestAesKey, ShardIdentifier,
-	REQUEST_AES_KEY_LEN,
+	aes_encrypt_default, AesRequest, RequestAesKey, ShardIdentifier, REQUEST_AES_KEY_LEN,
 };
 
 pub fn random_aes_key() -> RequestAesKey {
