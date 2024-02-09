@@ -133,10 +133,6 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
-	use crate::{ecdsa::Pair, key_repository::AccessKey, std::string::ToString, ToPubkey};
-	use itp_sgx_temp_dir::TempDir;
-	use std::path::{Path, PathBuf};
 
 	#[test]
 	pub fn creating_repository_with_same_path_and_prefix_results_in_same_key() {

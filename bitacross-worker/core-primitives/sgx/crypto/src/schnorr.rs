@@ -55,10 +55,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{
-		schnorr::{signature::Signer, Signature, SigningKey},
-		PublicKey,
-	};
+	use k256::{schnorr::SigningKey, PublicKey};
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -132,11 +129,6 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
-	use crate::{key_repository::AccessKey, schnorr::Pair, std::string::ToString, ToPubkey};
-	use itp_sgx_temp_dir::TempDir;
-	use k256::PublicKey;
-	use std::path::{Path, PathBuf};
 
 	#[test]
 	pub fn creating_repository_with_same_path_and_prefix_results_in_same_key() {
