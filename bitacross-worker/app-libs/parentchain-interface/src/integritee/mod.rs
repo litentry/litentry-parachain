@@ -24,6 +24,7 @@ use crate::{
 	indirect_calls::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
 	integritee::extrinsic_parser::ParseExtrinsic,
 };
+use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
@@ -37,7 +38,7 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
-use litentry_primitives::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use litentry_primitives::Identity;
 use log::trace;
 use sp_core::crypto::AccountId32;
 
@@ -92,7 +93,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct AddRelayerArgs {
-	account_id: AccountId32,
+	account_id: Identity,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
@@ -108,7 +109,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveRelayerArgs {
-	account_id: AccountId32,
+	account_id: Identity,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>

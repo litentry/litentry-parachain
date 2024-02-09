@@ -52,6 +52,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
+use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use core::str::FromStr;
@@ -89,7 +90,7 @@ use its_sidechain::{
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::{BroadcastedRequest, RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;

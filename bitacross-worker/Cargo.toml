@@ -73,6 +73,7 @@ members = [
     "litentry/primitives",
     "bitacross/core/bc-task-receiver",
     "bitacross/core/bc-task-sender",
+    "bitacross/core/bc-relayer-registry",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

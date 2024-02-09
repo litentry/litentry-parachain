@@ -249,6 +249,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "bc-relayer-registry"
+version = "0.1.0"
+dependencies = [
+ "bitcoin",
+ "core-primitives",
+ "hex 0.4.3",
+ "itp-settings",
+ "itp-sgx-crypto",
+ "itp-sgx-io",
+ "itp-utils",
+ "lazy_static",
+ "litentry-hex-utils",
+ "litentry-primitives",
+ "log",
+ "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
+ "parity-scale-codec",
+ "rand 0.7.3",
+ "ring 0.16.20",
+ "scale-info",
+ "secp256k1 0.28.0",
+ "serde 1.0.193",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "strum",
+ "strum_macros",
+ "teerex-primitives 0.1.0",
+ "thiserror",
+]
+
+[[package]]
 name = "bc-task-receiver"
 version = "0.1.0"
 dependencies = [
@@ -881,6 +914,7 @@ name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
+ "bc-relayer-registry",
  "bc-task-receiver",
  "cid",
  "derive_more",
@@ -1853,6 +1887,7 @@ dependencies = [
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
+ "bc-relayer-registry",
  "bs58",
  "ita-sgx-runtime",
  "ita-stf",
