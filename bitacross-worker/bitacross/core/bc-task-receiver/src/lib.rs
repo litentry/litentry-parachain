@@ -57,45 +57,45 @@ pub enum Error {
 }
 
 pub struct BitAcrossTaskContext<
-	ShieldingKeyRepository,
-	EthereumKeyRepository,
-	BitcoinKeyRepository,
+	SKR,
+	EKR,
+	BKR,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > where
-	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
-	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+	SKR: AccessKey,
+	EKR: AccessKey<KeyType = EcdsaPair>,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
-	pub shielding_key: Arc<ShieldingKeyRepository>,
-	pub ethereum_key_repository: Arc<EthereumKeyRepository>,
-	pub bitcoin_key_repository: Arc<BitcoinKeyRepository>,
+	pub shielding_key: Arc<SKR>,
+	pub ethereum_key_repository: Arc<EKR>,
+	pub bitcoin_key_repository: Arc<BKR>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 }
 
 impl<
-		ShieldingKeyRepository,
-		EthereumKeyRepository,
-		BitcoinKeyRepository,
+		SKR,
+		EKR,
+		BKR,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> BitAcrossTaskContext<ShieldingKeyRepository, EthereumKeyRepository, BitcoinKeyRepository, S, H, O>
+	> BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>
 where
-	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
-	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+	SKR: AccessKey,
+	EKR: AccessKey<KeyType = EcdsaPair>,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 {
 	pub fn new(
-		shielding_key: Arc<ShieldingKeyRepository>,
-		ethereum_key_repository: Arc<EthereumKeyRepository>,
-		bitcoin_key_repository: Arc<BitcoinKeyRepository>,
+		shielding_key: Arc<SKR>,
+		ethereum_key_repository: Arc<EKR>,
+		bitcoin_key_repository: Arc<BKR>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
@@ -111,30 +111,13 @@ where
 	}
 }
 
-pub fn run_bit_across_handler_runner<
-	ShieldingKeyRepository,
-	EthereumKeyRepository,
-	BitcoinKeyRepository,
-	S,
-	H,
-	O,
->(
-	context: Arc<
-		BitAcrossTaskContext<
-			ShieldingKeyRepository,
-			EthereumKeyRepository,
-			BitcoinKeyRepository,
-			S,
-			H,
-			O,
-		>,
-	>,
+pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O>(
+	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>>,
 ) where
-	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
-	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
-	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
-	<ShieldingKeyRepository as AccessKey>::KeyType:
-		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	SKR: AccessKey + Send + Sync + 'static,
+	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
+	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
@@ -157,32 +140,15 @@ pub fn run_bit_across_handler_runner<
 	warn!("bit_across_task_receiver loop terminated");
 }
 
-pub fn handle_request<
-	ShieldingKeyRepository,
-	EthereumKeyRepository,
-	BitcoinKeyRepository,
-	S,
-	H,
-	O,
->(
+pub fn handle_request<SKR, EKR, BKR, S, H, O>(
 	request: &mut AesRequest,
-	context: Arc<
-		BitAcrossTaskContext<
-			ShieldingKeyRepository,
-			EthereumKeyRepository,
-			BitcoinKeyRepository,
-			S,
-			H,
-			O,
-		>,
-	>,
+	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>>,
 ) -> Result<Vec<u8>, String>
 where
-	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
-	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
-	<ShieldingKeyRepository as AccessKey>::KeyType:
-		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	SKR: AccessKey,
+	EKR: AccessKey<KeyType = EcdsaPair>,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,

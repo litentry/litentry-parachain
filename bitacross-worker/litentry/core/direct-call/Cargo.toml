@@ -14,7 +14,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
-teerex-primitives = { path = "../../../../primitives/teerex", default-features = false }
 
 # sgx dependencies
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true }
@@ -38,5 +37,4 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "parentchain-primitives/std",
-    "teerex-primitives/std",
 ]

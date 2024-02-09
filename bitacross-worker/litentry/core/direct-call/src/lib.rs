@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -21,11 +21,10 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{LitentryMultiSignature, RequestAesKey};
+use litentry_primitives::{LitentryMultiSignature, RequestAesKey, ShardIdentifier};
 use parentchain_primitives::Identity;
 use sp_io::hashing::blake2_256;
 use std::vec::Vec;
-use teerex_primitives::ShardIdentifier;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct DirectCallSigned {

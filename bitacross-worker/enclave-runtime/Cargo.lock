@@ -2881,7 +2881,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "teerex-primitives 0.1.0",
 ]
 
 [[package]]
