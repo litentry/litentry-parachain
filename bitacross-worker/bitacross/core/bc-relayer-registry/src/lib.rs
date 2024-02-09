@@ -68,9 +68,8 @@ impl From<codec::Error> for RegistryError {
 
 #[cfg(feature = "sgx")]
 mod sgx {
-	pub use codec::{Decode, Encode};
-	// TODO: Update to relayer registry file
 	use crate::{RegistryError as Error, RegistryResult as Result, RelayerRegistryMap};
+	pub use codec::{Decode, Encode};
 	pub use itp_settings::files::RELAYER_REGISTRY_FILE;
 	pub use itp_sgx_io::{seal, unseal, SealedIO};
 	pub use log::*;
@@ -116,7 +115,6 @@ pub trait RelayerRegistryUpdater {
 	fn contains_key(&self, account: Identity) -> bool;
 }
 
-// TODO: unit-test
 impl RelayerRegistryUpdater for RelayerRegistry {
 	#[cfg(feature = "std")]
 	fn init(&self) -> RegistryResult<()> {
@@ -191,7 +189,7 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: Identity) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
-		let mut registry = GLOBAL_RELAYER_REGISTRY.registry.write().unwrap();
+		let registry = GLOBAL_RELAYER_REGISTRY.registry.read().unwrap();
 		registry.contains_key(&account)
 	}
 }
