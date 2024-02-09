@@ -21,9 +21,8 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
-	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes,
-	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
 	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
@@ -37,9 +36,8 @@ pub mod pallet_balances;
 pub mod pallet_bitacross;
 pub mod pallet_imp;
 pub mod pallet_proxy;
-pub mod pallet_sidechain;
 pub mod pallet_system;
-pub mod pallet_teerex;
+pub mod pallet_teebag;
 pub mod pallet_utility;
 pub mod pallet_vcmp;
 pub mod runtime_call;
@@ -48,8 +46,7 @@ pub mod runtime_call;
 pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
-	TeerexCallIndexes
-	+ SidechainCallIndexes
+	TeebagCallIndexes
 	+ IMPCallIndexes
 	+ VCMPCallIndexes
 	+ SystemSs58Prefix
@@ -60,8 +57,7 @@ pub trait NodeMetadataTrait:
 {
 }
 impl<
-		T: TeerexCallIndexes
-			+ SidechainCallIndexes
+		T: TeebagCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
 			+ SystemSs58Prefix

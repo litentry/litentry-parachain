@@ -21,10 +21,12 @@ pub use substrate_api_client::{api::Error as ApiClientError, rpc::TungsteniteRpc
 
 pub mod account;
 pub mod chain;
+pub mod pallet_teebag;
 pub mod pallet_teerex;
 
 pub use account::*;
 pub use chain::*;
+pub use pallet_teebag::*;
 pub use pallet_teerex::*;
 
 pub type ApiResult<T> = Result<T, ApiClientError>;

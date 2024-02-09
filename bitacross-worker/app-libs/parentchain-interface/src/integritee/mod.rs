@@ -21,7 +21,7 @@ mod extrinsic_parser;
 
 use crate::{
 	decode_and_log_error,
-	indirect_calls::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
+	indirect_calls::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
 	integritee::extrinsic_parser::ParseExtrinsic,
 };
 use codec::{Decode, Encode};
@@ -46,7 +46,7 @@ pub enum IndirectCall {
 	#[codec(index = 0)]
 	BitAcross(BitAcrossArgs),
 	#[codec(index = 1)]
-	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+	SetScheduledEnclave(SetScheduledEnclaveArgs),
 	#[codec(index = 2)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
 }
@@ -59,8 +59,8 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 		trace!("dispatching indirect call {:?}", self);
 		match self {
 			IndirectCall::BitAcross(bitacross_args) => bitacross_args.dispatch(executor, ()),
-			IndirectCall::UpdateScheduledEnclave(update_scheduled_enclave_args) =>
-				update_scheduled_enclave_args.dispatch(executor, ()),
+			IndirectCall::SetScheduledEnclave(set_scheduled_enclave_args) =>
+				set_scheduled_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_scheduled_enclave_args) =>
 				remove_scheduled_enclave_args.dispatch(executor, ()),
 		}
@@ -116,12 +116,9 @@ where
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
 
-		if index == metadata.placeholder_call_indexes().ok()? {
-			let args = decode_and_log_error::<BitAcrossArgs>(call_args)?;
-			Some(IndirectCall::BitAcross(args))
-		} else if index == metadata.update_scheduled_enclave().ok()? {
-			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
-			Some(IndirectCall::UpdateScheduledEnclave(args))
+		if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::SetScheduledEnclave(args))
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
