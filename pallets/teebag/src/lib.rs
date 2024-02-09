@@ -413,6 +413,7 @@ pub mod pallet {
 		pub fn register_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
+			worker_mode: WorkerMode,
 			attestation: Vec<u8>,
 			worker_url: Vec<u8>,
 			shielding_pubkey: Option<Vec<u8>>,
@@ -424,6 +425,7 @@ pub mod pallet {
 			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
 
 			let mut enclave = Enclave::new(worker_type)
+				.with_worker_mode(worker_mode)
 				.with_url(worker_url)
 				.with_shielding_pubkey(shielding_pubkey)
 				.with_vc_pubkey(vc_pubkey)

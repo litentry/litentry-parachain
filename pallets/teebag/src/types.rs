@@ -116,6 +116,11 @@ impl Enclave {
 		Enclave { worker_type, ..Default::default() }
 	}
 
+	pub fn with_worker_mode(mut self, worker_mode: WorkerMode) -> Self {
+		self.worker_mode = worker_mode;
+		self
+	}
+
 	pub fn with_mrenclave(mut self, mrenclave: MrEnclave) -> Self {
 		self.mrenclave = mrenclave;
 		self
