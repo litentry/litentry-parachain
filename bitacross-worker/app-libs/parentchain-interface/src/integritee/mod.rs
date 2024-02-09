@@ -156,7 +156,6 @@ where
 		};
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
-		log::error!("Parsing the call indexes");
 
 		if index == metadata.update_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
