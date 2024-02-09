@@ -28,7 +28,6 @@ use sp_core::Pair;
 
 #[derive(Parser)]
 pub struct RequestDirectCallSignEthereumCommand {
-	/// subcommand to define the vc type requested
 	payload: Vec<u8>,
 }
 
@@ -38,7 +37,7 @@ impl RequestDirectCallSignEthereumCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let key: [u8; 32] = random_aes_key();
 
-		let dc = DirectCall::SignBitcoin(alice.public().into(), key, self.payload.clone()).sign(
+		let dc = DirectCall::SignEthereum(alice.public().into(), key, self.payload.clone()).sign(
 			&KeyPair::Sr25519(Box::new(alice)),
 			&mrenclave,
 			&shard,

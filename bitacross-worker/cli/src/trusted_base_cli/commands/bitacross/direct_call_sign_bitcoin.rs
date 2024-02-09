@@ -28,7 +28,6 @@ use sp_core::Pair;
 
 #[derive(Parser)]
 pub struct RequestDirectCallSignBitcoinCommand {
-	/// subcommand to define the vc type requested
 	payload: Vec<u8>,
 }
 

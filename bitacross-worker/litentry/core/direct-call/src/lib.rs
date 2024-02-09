@@ -39,9 +39,7 @@ impl DirectCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		// make it backwards compatible for now - will deprecate the old way later
 		self.signature.verify(blake2_256(&payload).as_slice(), self.call.signer())
-		// true
 	}
 }
 

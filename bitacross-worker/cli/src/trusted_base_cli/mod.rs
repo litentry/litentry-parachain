@@ -70,8 +70,10 @@ pub enum TrustedBaseCommand {
 	/// get shard vault for shielding (if defined for this worker)
 	GetShardVault(GetShardVaultCommand),
 
+	/// sign bitcoin transaction using custodian wallet
 	RequestDirectCallSignBitcoin(RequestDirectCallSignBitcoinCommand),
 
+	/// sign ethereum transaction using custodian wallet
 	RequestDirectCallSignEthereum(RequestDirectCallSignEthereumCommand),
 }
 
