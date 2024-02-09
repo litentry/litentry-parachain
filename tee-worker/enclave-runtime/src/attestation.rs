@@ -47,7 +47,10 @@ use itp_node_api::metadata::{
 	Error as MetadataError,
 };
 use itp_node_api_metadata::NodeMetadata;
-use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_settings::{
+	worker::MR_ENCLAVE_SIZE,
+	worker_mode::{ProvideWorkerMode, WorkerModeProvider},
+};
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
@@ -332,6 +335,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
 		quote,
 		url,
 		shielding_pubkey,
@@ -361,6 +365,7 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
 		quote,
 		url,
 		shielding_pubkey,
@@ -401,6 +406,7 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
 		cert_der,
 		url,
 		shielding_pubkey,
