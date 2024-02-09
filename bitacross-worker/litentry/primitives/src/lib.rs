@@ -44,17 +44,10 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_hex_utils::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
-	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
-	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
-	BoundedWeb3Network, ContestType, EVMTokenType, ErrorDetail, ErrorString,
-	GenericDiscordRoleType, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
-	VCMPError, VIP3MembershipCardLevel, Web3Network, MINUTES,
+	identity::*, AccountId as ParentchainAccountId, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, Index as ParentchainIndex, ParameterString,
+	Signature as ParentchainSignature, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

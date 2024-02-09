@@ -16,7 +16,6 @@
 
 // This file contain the RPC response struct which will be encoded and
 // passed back to the requester of trustedCall direct invocation (DI).
-// They are mostly translated from the callback extrinsics in IMP.
 
 use codec::{Decode, Encode};
 use itp_stf_interface::StfExecutionResult;
