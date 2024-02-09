@@ -38,7 +38,7 @@ impl RequestDirectCallSignBitcoinCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let key: [u8; 32] = random_aes_key();
 
-		let dc = DirectCall::SignBitcoin(alice.public().into(), self.payload.clone()).sign(
+		let dc = DirectCall::SignBitcoin(alice.public().into(), key, self.payload.clone()).sign(
 			&KeyPair::Sr25519(Box::new(alice)),
 			&mrenclave,
 			&shard,

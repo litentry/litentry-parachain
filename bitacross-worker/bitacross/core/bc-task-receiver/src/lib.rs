@@ -19,10 +19,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub use crate::sgx_reexport_prelude::*;
 
 use bc_task_sender::init_bit_across_task_sender_storage;
-use codec::Decode;
+use codec::{Decode, Encode};
 use frame_support::ensure;
 use lc_direct_call::{DirectCall, DirectCallSigned};
-use litentry_primitives::AesRequest;
+use litentry_primitives::{aes_encrypt_default, AesRequest};
 use log::*;
 use std::{
 	boxed::Box,
@@ -203,18 +203,18 @@ where
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	match dc.call {
-		DirectCall::SignBitcoin(_, payload) => {
+		DirectCall::SignBitcoin(_, aes_key, payload) => {
 			if_production_or!(unimplemented!(), {
 				let key = context.bitcoin_key_repository.retrieve_key().unwrap();
 				let signature = key.sign(&payload).unwrap();
-				Ok(signature.to_vec())
+				Ok(aes_encrypt_default(&aes_key, &signature).encode())
 			})
 		},
-		DirectCall::SignEthereum(_, payload) => {
+		DirectCall::SignEthereum(_, aes_key, payload) => {
 			if_production_or!(unimplemented!(), {
 				let key = context.ethereum_key_repository.retrieve_key().unwrap();
 				let signature = key.sign(&payload).unwrap();
-				Ok(signature.to_vec())
+				Ok(aes_encrypt_default(&aes_key, &signature).encode())
 			})
 		},
 	}

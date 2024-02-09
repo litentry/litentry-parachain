@@ -21,7 +21,7 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::LitentryMultiSignature;
+use litentry_primitives::{LitentryMultiSignature, RequestAesKey};
 use parentchain_primitives::Identity;
 use sp_io::hashing::blake2_256;
 use std::vec::Vec;
@@ -47,8 +47,8 @@ impl DirectCallSigned {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum DirectCall {
-	SignBitcoin(Identity, Vec<u8>),
-	SignEthereum(Identity, Vec<u8>),
+	SignBitcoin(Identity, RequestAesKey, Vec<u8>),
+	SignEthereum(Identity, RequestAesKey, Vec<u8>),
 }
 
 impl DirectCall {
