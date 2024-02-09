@@ -19,7 +19,7 @@
 #![allow(dead_code, unused_imports)]
 use crate::{
 	mock::*, AttestationType, DcapProvider, Enclave, EnclaveRegistry, Error, Event as TeebagEvent,
-	MaxEnclaveCount, ScheduledEnclave, SgxBuildMode, WorkerType, H256,
+	ScheduledEnclave, SgxBuildMode, WorkerType, H256,
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
@@ -29,8 +29,12 @@ use test_utils::{get_signer, ias::consts::*};
 
 const VALID_TIMESTAMP: Moment = 1671606747000;
 
+fn alice() -> AccountId32 {
+	AccountKeyring::Alice.to_account_id()
+}
+
 fn default_enclave() -> Enclave {
-	Enclave::default()
+	Enclave::new(WorkerType::Identity)
 		.with_attestation_type(AttestationType::Ignore)
 		.with_url(URL.to_vec())
 		.with_last_seen_timestamp(pallet_timestamp::Pallet::<Test>::now())
@@ -84,7 +88,7 @@ fn register_enclave_dev_works_with_no_scheduled_enclave() {
 	new_test_ext(true).execute_with(|| {
 		// it works with no entry in scheduled_enclave
 		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			RuntimeOrigin::signed(alice()),
 			Default::default(),
 			TEST4_MRENCLAVE.to_vec(),
 			URL.to_vec(),
@@ -97,10 +101,7 @@ fn register_enclave_dev_works_with_no_scheduled_enclave() {
 
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_count(WorkerType::BitAcross), 0);
-		assert_eq!(
-			EnclaveRegistry::<Test>::get(AccountKeyring::Alice.to_account_id()).unwrap(),
-			enclave
-		);
+		assert_eq!(EnclaveRegistry::<Test>::get(alice()).unwrap(), enclave);
 	})
 }
 
@@ -123,7 +124,6 @@ fn register_enclave_dev_works_with_sgx_build_mode_debug() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
 			.with_last_seen_timestamp(TEST4_TIMESTAMP)
-			.with_register_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -216,7 +216,7 @@ fn register_dcap_enclave_works() {
 fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 	new_test_ext(false).execute_with(|| {
 		assert_ok!(Teebag::set_scheduled_enclave(
-			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			RuntimeOrigin::signed(alice()),
 			WorkerType::Identity,
 			0,
 			TEST4_MRENCLAVE
@@ -237,7 +237,6 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
 			.with_last_seen_timestamp(TEST4_TIMESTAMP)
-			.with_register_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -251,7 +250,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 fn register_enclave_prod_works_with_sgx_build_mode_production() {
 	new_test_ext(false).execute_with(|| {
 		assert_ok!(Teebag::set_scheduled_enclave(
-			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			RuntimeOrigin::signed(alice()),
 			WorkerType::Identity,
 			0,
 			TEST8_MRENCLAVE
@@ -272,7 +271,6 @@ fn register_enclave_prod_works_with_sgx_build_mode_production() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST8_MRENCLAVE)
 			.with_last_seen_timestamp(TEST8_TIMESTAMP)
-			.with_register_timestamp(TEST8_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Production)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -287,7 +285,7 @@ fn register_enclave_prod_fails_with_wrong_attestation_type() {
 	new_test_ext(false).execute_with(|| {
 		assert_noop!(
 			Teebag::register_enclave(
-				RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+				RuntimeOrigin::signed(alice()),
 				Default::default(),
 				TEST4_MRENCLAVE.to_vec(),
 				URL.to_vec(),
@@ -323,7 +321,6 @@ fn register_enclave_prod_fails_with_no_scheduled_enclave() {
 #[test]
 fn register_enclave_prod_fails_with_max_limit_reached() {
 	new_test_ext(false).execute_with(|| {
-		MaxEnclaveCount::<Test>::insert(WorkerType::BitAcross, 1u64);
 		ScheduledEnclave::<Test>::insert((WorkerType::BitAcross, 0), TEST5_MRENCLAVE);
 		ScheduledEnclave::<Test>::insert((WorkerType::BitAcross, 1), TEST6_MRENCLAVE);
 		ScheduledEnclave::<Test>::insert((WorkerType::Identity, 0), TEST5_MRENCLAVE);
@@ -353,11 +350,27 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 				None,
 				AttestationType::Ias,
 			),
-			Error::<Test>::MaxEnclaveCountOverflow
+			Error::<Test>::MaxEnclaveIdentifierOverflow
 		);
 
-		// re-register them as WorkerType::Identity should work though
+		// re-register them as WorkerType::Identity is not allowed
 		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		assert_noop!(
+			Teebag::register_enclave(
+				RuntimeOrigin::signed(signer5.clone()),
+				WorkerType::Identity,
+				TEST5_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+				AttestationType::Ias,
+			),
+			Error::<Test>::WorkerTypeNotAllowed
+		);
+
+		// remove and re-register it should work
+		assert_ok!(Teebag::force_remove_enclave(RuntimeOrigin::signed(alice()), signer5.clone(),));
+
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer5),
 			WorkerType::Identity,
@@ -369,20 +382,21 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 		));
 
 		Timestamp::set_timestamp(TEST6_TIMESTAMP);
-		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(signer6),
-			WorkerType::Identity,
-			TEST6_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-			AttestationType::Ias,
-		));
+		assert_noop!(
+			Teebag::register_enclave(
+				RuntimeOrigin::signed(signer6),
+				WorkerType::Identity,
+				TEST6_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+				AttestationType::Ias,
+			),
+			Error::<Test>::MaxEnclaveIdentifierOverflow
+		);
 
-		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 2);
+		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_count(WorkerType::BitAcross), 0);
-		assert_eq!(Teebag::max_enclave_count(WorkerType::Identity), 3);
-		assert_eq!(Teebag::max_enclave_count(WorkerType::BitAcross), 1);
 	})
 }
 

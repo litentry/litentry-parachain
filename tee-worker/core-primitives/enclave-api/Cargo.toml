@@ -26,7 +26,7 @@ itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
+pallet-teebag = { path = "../../../pallets/teebag", default-features = false }
 
 [features]
 default = []
