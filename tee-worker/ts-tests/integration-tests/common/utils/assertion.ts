@@ -6,7 +6,7 @@ import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
 import { parseIdGraph } from './identity-helper';
 import type { PalletIdentityManagementTeeError } from 'sidechain-api';
-import { TeerexPrimitivesEnclave, CorePrimitivesIdentity } from 'parachain-api';
+import { PalletTeebagEnclave, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
@@ -135,14 +135,17 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
 }
 
 export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
-    const count = await api.query.teerex.enclaveCount();
-    const enclaveRegistry = (await api.query.teerex.enclaveRegistry(count)) as unknown as TeerexPrimitivesEnclave;
+    const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
+    const primaryEnclave = (
+        await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])
+    ).toHuman() as unknown as PalletTeebagEnclave;
 
     // Check vc index
     expect(index).to.be.eq(data.id);
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
     const message = Buffer.from(data.issuer.mrenclave);
-    const vcPubkey = Buffer.from(hexToU8a(enclaveRegistry.toHuman()['vcPubkey'] as HexString));
+    const vcPubkeyBytes = api.createType('Option<Bytes>', primaryEnclave.vcPubkey).unwrap();
+    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
 
     const isValid = await ed.verify(signature, message, vcPubkey);
 
@@ -277,19 +280,20 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
-    // prepare teerex enclave registry data for further checks
+    // prepare teebag enclave registry data for further checks
     const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
     const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
-    const enclaveCount = await apiAtVcIssuedBlock.query.teerex.enclaveCount();
-
-    const lastRegisteredEnclave = (await apiAtVcIssuedBlock.query.teerex.enclaveRegistry(enclaveCount))
-        .value as TeerexPrimitivesEnclave;
+    const enclaveIdentifier = await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity');
+    const lastRegisteredEnclave = (
+        await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveIdentifier[enclaveIdentifier.length - 1])
+    ).unwrap();
 
     // step 6
     // check vc signature
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
     const message = Buffer.from(JSON.stringify(vcWithoutProof));
-    const vcPubkey = Buffer.from(lastRegisteredEnclave.vcPubkey.value);
+    const vcPubkeyBytes = context.api.createType('Option<Bytes>', lastRegisteredEnclave.vcPubkey).unwrap();
+    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
 
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
@@ -297,7 +301,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 7
     // check VC mrenclave with enclave's mrenclave from registry
     assert.equal(
-        base58.encode(lastRegisteredEnclave.mrEnclave),
+        base58.encode(lastRegisteredEnclave.mrenclave),
         vcPayloadJson.issuer.mrenclave,
         'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
     );
@@ -305,7 +309,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 8
     // check vc issuer id
     assert.equal(
-        `did:litentry:substrate:${lastRegisteredEnclave.vcPubkey.value.toHex()}`,
+        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
         vcPayloadJson.issuer.id,
         'Check VC id: it should equals enclaves pubkey from parachains enclave registry'
     );

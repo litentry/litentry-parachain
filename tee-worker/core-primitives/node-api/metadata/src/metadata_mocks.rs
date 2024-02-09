@@ -1,7 +1,7 @@
 /*
 	Copyright 2021 Integritee AG and Supercomputing Systems AG
 
-	Licensed under the Apache License, Version 2.0 (the "License");
+	Licensed under the Apache License, Version 2.0 (the "License);
 	you may not use this file except in compliance with the License.
 	You may obtain a copy of the License at
 
@@ -17,9 +17,9 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -35,23 +35,18 @@ impl TryFrom<NodeMetadataMock> for Metadata {
 
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadataMock {
-	teerex_module: u8,
+	// litentry
+	// teebag
+	teebag_module: u8,
+	set_scheduled_enclave: u8,
+	remove_scheduled_enclave: u8,
 	register_enclave: u8,
-	unregister_sovereign_enclave: u8,
-	unregister_proxied_enclave: u8,
+	unregister_enclave: u8,
 	register_quoting_enclave: u8,
 	register_tcb_info: u8,
-	enclave_bridge_module: u8,
-	invoke: u8,
-	confirm_processed_parentchain_block: u8,
-	shield_funds: u8,
-	unshield_funds: u8,
-	publish_hash: u8,
-	update_shard_config: u8,
-	sidechain_module: u8,
-	// litentry
-	update_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
+	post_opaque_task: u8,
+	parentchain_block_processed: u8,
+	sidechain_block_imported: u8,
 	// IMP
 	imp_module: u8,
 	imp_link_identity: u8,
@@ -76,7 +71,6 @@ pub struct NodeMetadataMock {
 	utility_dispatch_as: u8,
 	utility_force_batch: u8,
 
-	imported_sidechain_block: u8,
 	proxy_module: u8,
 	add_proxy: u8,
 	proxy: u8,
@@ -91,23 +85,17 @@ pub struct NodeMetadataMock {
 impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
-			teerex_module: 50u8,
-			register_enclave: 0u8,
-			unregister_sovereign_enclave: 1u8,
-			unregister_proxied_enclave: 2u8,
-			register_quoting_enclave: 3,
-			register_tcb_info: 4,
-			enclave_bridge_module: 54u8,
-			invoke: 0u8,
-			confirm_processed_parentchain_block: 1u8,
-			shield_funds: 2u8,
-			unshield_funds: 3u8,
-			publish_hash: 4u8,
-			update_shard_config: 5u8,
-			sidechain_module: 53u8,
 			// litentry
-			update_scheduled_enclave: 10u8,
-			remove_scheduled_enclave: 11u8,
+			teebag_module: 50u8,
+			set_scheduled_enclave: 0u8,
+			remove_scheduled_enclave: 1u8,
+			register_enclave: 2u8,
+			unregister_enclave: 3u8,
+			register_quoting_enclave: 4u8,
+			register_tcb_info: 5u8,
+			post_opaque_task: 6u8,
+			parentchain_block_processed: 7u8,
+			sidechain_block_imported: 8u8,
 
 			imp_module: 64u8,
 			imp_link_identity: 1u8,
@@ -132,7 +120,6 @@ impl NodeMetadataMock {
 			utility_dispatch_as: 3u8,
 			utility_force_batch: 4u8,
 
-			imported_sidechain_block: 0u8,
 			proxy_module: 7u8,
 			add_proxy: 1u8,
 			proxy: 0u8,
@@ -146,63 +133,33 @@ impl NodeMetadataMock {
 	}
 }
 
-impl TeerexCallIndexes for NodeMetadataMock {
+impl TeebagCallIndexes for NodeMetadataMock {
+	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.set_scheduled_enclave])
+	}
+	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.remove_scheduled_enclave])
+	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_enclave])
+		Ok([self.teebag_module, self.register_enclave])
 	}
-
-	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unregister_sovereign_enclave])
+	fn unregister_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.unregister_enclave])
 	}
-
-	fn unregister_proxied_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unregister_proxied_enclave])
-	}
-
 	fn register_quoting_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_quoting_enclave])
+		Ok([self.teebag_module, self.register_quoting_enclave])
 	}
-
 	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_tcb_info])
+		Ok([self.teebag_module, self.register_tcb_info])
 	}
-
-	fn invoke_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.invoke])
+	fn post_opaque_task_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.post_opaque_task])
 	}
-
-	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.confirm_processed_parentchain_block])
+	fn parentchain_block_processed_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.parentchain_block_processed])
 	}
-
-	fn shield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.shield_funds])
-	}
-
-	fn unshield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unshield_funds])
-	}
-
-	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.publish_hash])
-	}
-
-	// fn update_shard_config_call_indexes(&self) -> Result<[u8; 2]> {
-	// 	Ok([self.teerex_module, self.update_shard_config])
-	// }
-
-	fn update_scheduled_enclave(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.update_scheduled_enclave])
-	}
-
-	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.remove_scheduled_enclave])
-	}
-}
-
-impl SidechainCallIndexes for NodeMetadataMock {
-	fn confirm_imported_sidechain_block_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.sidechain_module, self.imported_sidechain_block])
+	fn sidechain_block_imported_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.sidechain_block_imported])
 	}
 }
 
