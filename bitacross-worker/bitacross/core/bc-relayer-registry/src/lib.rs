@@ -7,20 +7,12 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
+use sp_std::{boxed::Box, fmt::Debug};
 
-use codec::{Decode, Encode, MaxEncodedLen};
 use lazy_static::lazy_static;
 use litentry_primitives::Identity;
 use log::error;
-use scale_info::TypeInfo;
-use sp_runtime::traits::Verify;
-use std::{
-	collections::BTreeMap,
-	path::PathBuf,
-	string::{String, ToString},
-	sync::Arc,
-};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
@@ -28,11 +20,8 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
-
 lazy_static! {
-	/// Global instance of a ScheduledEnclave
+	/// Global instance of a RelayerRegistry
 	pub static ref GLOBAL_RELAYER_REGISTRY: Arc<RelayerRegistry> = Default::default();
 }
 
@@ -135,17 +124,17 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 	}
 
 	#[cfg(feature = "std")]
-	fn update(&self, account: Identity) -> RegistryResult<()> {
+	fn update(&self, _account: Identity) -> RegistryResult<()> {
 		Ok(())
 	}
 
 	#[cfg(feature = "std")]
-	fn remove(&self, account: Identity) -> RegistryResult<()> {
+	fn remove(&self, _account: Identity) -> RegistryResult<()> {
 		Ok(())
 	}
 
 	#[cfg(feature = "std")]
-	fn contains_key(&self, account: Identity) -> bool {
+	fn contains_key(&self, _account: Identity) -> bool {
 		true
 	}
 

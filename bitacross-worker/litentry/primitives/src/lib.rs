@@ -41,10 +41,8 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use lazy_static::lazy_static;
 use litentry_hex_utils::hex_encode;
 use log::error;
-use parentchain_primitives::AccountId;
 pub use parentchain_primitives::{
 	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
@@ -65,18 +63,8 @@ use sp_io::{
 	hashing::{blake2_256, keccak_256},
 };
 use sp_runtime::traits::Verify;
-use std::{
-	collections::BTreeMap,
-	path::PathBuf,
-	string::{String, ToString},
-	sync::Arc,
-};
+use std::string::{String, ToString};
 pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
