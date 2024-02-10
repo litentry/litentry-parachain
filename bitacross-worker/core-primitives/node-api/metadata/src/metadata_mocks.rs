@@ -17,10 +17,9 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
-	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes,
-	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
-	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
+	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
+	pallet_utility::UtilityCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -42,6 +41,8 @@ pub struct NodeMetadataMock {
 	unregister_proxied_enclave: u8,
 	register_quoting_enclave: u8,
 	register_tcb_info: u8,
+	update_scheduled_enclave: u8,
+	remove_scheduled_enclave: u8,
 	enclave_bridge_module: u8,
 	invoke: u8,
 	confirm_processed_parentchain_block: u8,
@@ -50,25 +51,6 @@ pub struct NodeMetadataMock {
 	publish_hash: u8,
 	update_shard_config: u8,
 	sidechain_module: u8,
-	// litentry
-	update_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
-	// IMP
-	imp_module: u8,
-	imp_link_identity: u8,
-	imp_deactivate_identity: u8,
-	imp_activate_identity: u8,
-	imp_update_id_graph_hash: u8,
-	imp_identity_linked: u8,
-	imp_identity_deactivated: u8,
-	imp_identity_activated: u8,
-	imp_identity_networks_set: u8,
-	imp_some_error: u8,
-	// VCMP
-	vcmp_module: u8,
-	vcmp_request_vc: u8,
-	vcmp_vc_issued: u8,
-	vcmp_some_error: u8,
 
 	utility_module: u8,
 	utility_batch: u8,
@@ -101,6 +83,8 @@ impl NodeMetadataMock {
 			unregister_proxied_enclave: 2u8,
 			register_quoting_enclave: 3,
 			register_tcb_info: 4,
+			update_scheduled_enclave: 5,
+			remove_scheduled_enclave: 6,
 			enclave_bridge_module: 54u8,
 			invoke: 0u8,
 			confirm_processed_parentchain_block: 1u8,
@@ -109,25 +93,6 @@ impl NodeMetadataMock {
 			publish_hash: 4u8,
 			update_shard_config: 5u8,
 			sidechain_module: 53u8,
-			// litentry
-			update_scheduled_enclave: 10u8,
-			remove_scheduled_enclave: 11u8,
-
-			imp_module: 64u8,
-			imp_link_identity: 1u8,
-			imp_deactivate_identity: 2u8,
-			imp_activate_identity: 3u8,
-			imp_update_id_graph_hash: 4u8,
-			imp_identity_linked: 6u8,
-			imp_identity_deactivated: 7u8,
-			imp_identity_activated: 8u8,
-			imp_identity_networks_set: 9u8,
-			imp_some_error: 10u8,
-
-			vcmp_module: 66u8,
-			vcmp_request_vc: 0u8,
-			vcmp_vc_issued: 3u8,
-			vcmp_some_error: 9u8,
 
 			utility_module: 80u8,
 			utility_batch: 0u8,
@@ -210,58 +175,6 @@ impl TeerexCallIndexes for NodeMetadataMock {
 impl SidechainCallIndexes for NodeMetadataMock {
 	fn confirm_imported_sidechain_block_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.sidechain_module, self.imported_sidechain_block])
-	}
-}
-
-impl IMPCallIndexes for NodeMetadataMock {
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_link_identity])
-	}
-
-	fn deactivate_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_deactivate_identity])
-	}
-
-	fn activate_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_activate_identity])
-	}
-
-	fn update_id_graph_hash_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_update_id_graph_hash])
-	}
-
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_linked])
-	}
-
-	fn identity_deactivated_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_deactivated])
-	}
-
-	fn identity_activated_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_activated])
-	}
-
-	fn identity_networks_set_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_networks_set])
-	}
-
-	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_some_error])
-	}
-}
-
-impl VCMPCallIndexes for NodeMetadataMock {
-	fn request_vc_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.vcmp_module, self.vcmp_request_vc])
-	}
-
-	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.vcmp_module, self.vcmp_vc_issued])
-	}
-
-	fn vcmp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.vcmp_module, self.vcmp_some_error])
 	}
 }
 
