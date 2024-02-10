@@ -73,8 +73,8 @@ use itp_settings::files::{
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
-	get_aes_repository, get_ed25519_repository, get_rsa3072_repository, key_repository::AccessKey,
-	secp256k1::create_secp256k1_repository,
+	ecdsa::create_ecdsa_repository, get_aes_repository, get_ed25519_repository,
+	get_rsa3072_repository, key_repository::AccessKey, schnorr::create_schnorr_repository,
 };
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
@@ -105,17 +105,15 @@ pub(crate) fn init_enclave(
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
 
-	let bitcoin_key_repository =
-		Arc::new(create_secp256k1_repository(base_dir.clone(), "bitcoin")?);
+	let bitcoin_key_repository = Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin")?);
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
 	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
-	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public.serialize());
+	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public_bytes());
 
-	let ethereum_key_repository =
-		Arc::new(create_secp256k1_repository(base_dir.clone(), "ethereum")?);
+	let ethereum_key_repository = Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum")?);
 	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
 	let ethereum_key = ethereum_key_repository.retrieve_key()?;
-	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public.serialize());
+	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public_bytes());
 
 	let shielding_key_repository = Arc::new(get_rsa3072_repository(base_dir.clone())?);
 	GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.initialize(shielding_key_repository.clone());
@@ -256,6 +254,9 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
+	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
+
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
@@ -267,6 +268,8 @@ fn run_bit_across_handler() -> Result<(), Error> {
 
 	let stf_task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
+		ethereum_key_repository,
+		bitcoin_key_repository,
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,
