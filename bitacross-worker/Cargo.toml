@@ -71,6 +71,7 @@ members = [
     "sidechain/state",
     "sidechain/validateer-fetch",
     "litentry/primitives",
+    "litentry/core/direct-call",
     "bitacross/core/bc-task-receiver",
     "bitacross/core/bc-task-sender",
 ]
