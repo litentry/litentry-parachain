@@ -14,11 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use itc_peer_top_broadcaster::PeerUpdater;
-use sgx_tstd::{string::String, vec::Vec};
+pub mod direct_call_sign_bitcoin;
+pub mod direct_call_sign_ethereum;
 
-pub struct PeerUpdaterMock {}
-
-impl PeerUpdater for PeerUpdaterMock {
-	fn update(&self, _peers: Vec<String>) {}
-}
+pub mod utils;

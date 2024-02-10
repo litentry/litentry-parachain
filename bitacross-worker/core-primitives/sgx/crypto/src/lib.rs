@@ -33,12 +33,13 @@ pub mod sgx_reexport_prelude {
 }
 
 pub mod aes;
+pub mod ecdsa;
 pub mod ed25519;
 pub mod ed25519_derivation;
 pub mod error;
 pub mod key_repository;
 pub mod rsa3072;
-pub mod secp256k1;
+pub mod schnorr;
 pub mod traits;
 
 pub use self::{aes::*, ed25519::*, rsa3072::*};
