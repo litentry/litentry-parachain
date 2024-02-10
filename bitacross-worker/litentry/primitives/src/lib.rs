@@ -221,8 +221,6 @@ fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
 	["\x19Ethereum Signed Message:\n".as_bytes(), msg.len().to_string().as_bytes(), msg].concat()
 }
 
-pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);
-
 // Represent a request that can be decrypted by the enclave
 // Both itp_types::RsaRequest and AesRequest should impelement this
 pub trait DecryptableRequest {

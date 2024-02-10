@@ -15,10 +15,9 @@
 
 */
 use crate::types::{AccountId, Nonce};
-use alloc::{format, string::String};
+use alloc::string::String;
 use codec::{Decode, Encode};
 use derive_more::Display;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString};
 
 pub type StfResult<T> = Result<T, StfError>;
 
@@ -45,4 +44,6 @@ pub enum StfError {
 	InvalidStorageDiff,
 	#[codec(index = 7)]
 	InvalidMetadata,
+	#[codec(index = 8)]
+	InvalidAccount,
 }

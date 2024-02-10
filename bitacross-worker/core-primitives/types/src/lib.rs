@@ -21,7 +21,7 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_primitives::{decl_rsa_request, RequestAesKeyNonce};
+use litentry_primitives::decl_rsa_request;
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
@@ -37,7 +37,7 @@ pub type PalletString = Vec<u8>;
 pub type PalletString = String;
 
 pub use itp_sgx_runtime_primitives::types::*;
-pub use litentry_primitives::{Assertion, DecryptableRequest};
+pub use litentry_primitives::DecryptableRequest;
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];

@@ -51,8 +51,8 @@ use itp_types::{
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, Identity, LitentryMultiSignature,
-	ParentchainBlockNumber, RequestAesKey, RequestAesKeyNonce, ValidationData, Web3Network,
+	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
+	RequestAesKey, RequestAesKeyNonce, ValidationData,
 };
 use log::*;
 use sp_core::{
