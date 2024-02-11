@@ -34,10 +34,7 @@ use frame_support::{ensure, traits::UnfilteredDispatchable};
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 pub use ita_sgx_runtime::{Balance, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{
-	pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes,
-	pallet_teerex::TeerexCallIndexes,
-};
+use itp_node_api_metadata::{pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes};
 use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
 pub use itp_stf_primitives::{
 	error::{StfError, StfResult},

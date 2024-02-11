@@ -46,14 +46,12 @@ use sp_core::crypto::AccountId32;
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
 	#[codec(index = 0)]
-	BitAcross(BitAcrossArgs),
-	#[codec(index = 1)]
 	SetScheduledEnclave(SetScheduledEnclaveArgs),
-	#[codec(index = 2)]
+	#[codec(index = 1)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
-	#[codec(index = 3)]
+	#[codec(index = 2)]
 	AddRelayer(AddRelayerArgs),
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	RemoveRelayer(RemoveRelayerArgs),
 }
 
@@ -64,7 +62,6 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::BitAcross(bitacross_args) => bitacross_args.dispatch(executor, ()),
 			IndirectCall::SetScheduledEnclave(set_scheduled_enclave_args) =>
 				set_scheduled_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_scheduled_enclave_args) =>
@@ -73,21 +70,6 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 			IndirectCall::RemoveRelayer(remove_relayer_args) =>
 				remove_relayer_args.dispatch(executor, ()),
 		}
-	}
-}
-
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct BitAcrossArgs {
-	account_id: AccountId32,
-}
-
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for BitAcrossArgs
-{
-	type Args = ();
-	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::error!("Not yet implemented");
-		Ok(())
 	}
 }
 
@@ -160,7 +142,7 @@ where
 		if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::SetScheduledEnclave(args))
-		} else if index == metadata.remove_scheduled_enclave().ok()? {
+		} else if index == metadata.remove_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else if index == metadata.add_relayer_call_indexes().ok()? {

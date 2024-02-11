@@ -604,6 +604,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
  "num-traits 0.2.16",
+ "serde 1.0.193",
 ]
 
 [[package]]
@@ -798,12 +799,35 @@ checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
 
 [[package]]
 name = "der"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
+dependencies = [
+ "const-oid",
+ "der_derive",
+ "flagset",
+]
+
+[[package]]
+name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fffa369a668c8af7dbf8b5e56c9f744fbd399949ed171606040001947de40b1c"
 dependencies = [
  "const-oid",
  "zeroize",
+]
+
+[[package]]
+name = "der_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ef71ddb5b3a1f53dee24817c8f70dfa1cb29e804c18d88c228d4bc9c86ee3b9"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -866,7 +890,7 @@ version = "0.16.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4b1e0c257a9e9f25f90ff76d7a68360ed497ee519c8e428d1825ef0000799d4"
 dependencies = [
- "der",
+ "der 0.7.8",
  "digest 0.10.7",
  "elliptic-curve",
  "rfc6979",
@@ -1229,6 +1253,12 @@ dependencies = [
  "rustc-hex",
  "static_assertions",
 ]
+
+[[package]]
+name = "flagset"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a7e408202050813e6f1d9addadcaafef3dca7530c7ddfb005d4081cce6779"
 
 [[package]]
 name = "fnv"
@@ -2407,7 +2437,6 @@ name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
  "frame-system",
- "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -2526,14 +2555,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itp-teerex-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "sp-std",
-]
-
-[[package]]
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
@@ -2547,10 +2568,10 @@ dependencies = [
  "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
- "itp-teerex-storage",
  "itp-time-utils",
  "itp-types",
  "jsonrpc-core",
+ "lc-teebag-storage",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2836,10 +2857,9 @@ name = "its-validateer-fetch"
 version = "0.9.0"
 dependencies = [
  "derive_more",
- "frame-support",
  "itp-ocall-api",
- "itp-teerex-storage",
  "itp-types",
+ "lc-teebag-storage",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -2934,6 +2954,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-teebag-storage"
+version = "0.1.0"
+dependencies = [
+ "itp-storage",
+ "itp-types",
+ "sp-std",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3018,6 +3047,7 @@ dependencies = [
  "litentry-hex-utils",
  "log",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
+ "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
  "ring 0.16.20",
@@ -3031,7 +3061,6 @@ dependencies = [
  "sp-std",
  "strum",
  "strum_macros",
- "teerex-primitives 0.1.0",
  "thiserror",
 ]
 
@@ -3371,6 +3400,31 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-teebag"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.1",
+ "chrono 0.4.31",
+ "der 0.6.1",
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "ring 0.16.20",
+ "rustls-webpki",
+ "scale-info",
+ "serde 1.0.193",
+ "serde_json 1.0.107",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "x509-cert",
 ]
 
 [[package]]
@@ -3751,7 +3805,7 @@ dependencies = [
  "cc",
  "sgx_tstd",
  "spin",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -3764,7 +3818,7 @@ dependencies = [
  "libc",
  "once_cell 1.18.0",
  "spin",
- "untrusted",
+ "untrusted 0.7.1",
  "web-sys",
  "winapi",
 ]
@@ -3852,6 +3906,22 @@ dependencies = [
  "sct",
  "sgx_tstd",
  "webpki",
+]
+
+[[package]]
+name = "rustls-pki-types"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0d3edd6cdcdf26eda538757038343986e666d0b8ba4b5ac1de663b78475550d"
+
+[[package]]
+name = "rustls-webpki"
+version = "0.102.0-alpha.3"
+source = "git+https://github.com/rustls/webpki?rev=da923ed#da923edaab56f599971e58773617fb574cd019dc"
+dependencies = [
+ "ring 0.16.20",
+ "rustls-pki-types",
+ "untrusted 0.9.0",
 ]
 
 [[package]]
@@ -3980,7 +4050,7 @@ source = "git+https://github.com/mesalock-linux/sct.rs?branch=mesalock_sgx#c4d85
 dependencies = [
  "ring 0.16.19",
  "sgx_tstd",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -3990,7 +4060,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3e97a565f76233a6003f9f5c54be1d9c5bdfa3eccfb189469f11ec4901c47dc"
 dependencies = [
  "base16ct",
- "der",
+ "der 0.7.8",
  "generic-array 0.14.7",
  "subtle",
  "zeroize",
@@ -4796,6 +4866,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
+name = "spki"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67cf02bbac7a337dc36e4f5a693db6c21e7863f45070f7064577eb4367a3212b"
+dependencies = [
+ "der 0.6.1",
+]
+
+[[package]]
 name = "ss58-registry"
 version = "1.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5212,6 +5291,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
+name = "untrusted"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
+
+[[package]]
 name = "url"
 version = "2.1.1"
 source = "git+https://github.com/mesalock-linux/rust-url-sgx?tag=sgx_1.1.3#23832f3191456c2d4a0faab10952e1747be58ca8"
@@ -5313,7 +5398,7 @@ source = "git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx#8dbe6
 dependencies = [
  "ring 0.16.19",
  "sgx_tstd",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -5372,6 +5457,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
+]
+
+[[package]]
+name = "x509-cert"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99d224a125dec5adda27d0346b9cae9794830279c4f9c27e4ab0b6c408d54012"
+dependencies = [
+ "const-oid",
+ "der 0.6.1",
+ "flagset",
+ "spki",
 ]
 
 [[package]]
