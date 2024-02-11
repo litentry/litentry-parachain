@@ -40,7 +40,6 @@ itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = fals
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
-teerex-primitives = { path = "../../../../primitives/teerex", default-features = false }
 # litentry primities 
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
@@ -72,7 +71,6 @@ std = [
     "sp-runtime/std",
     "ring/std",
     "parentchain-primitives/std",
-    "teerex-primitives/std",
     "rand",
     "log/std",
     "bitcoin/std",

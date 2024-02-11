@@ -40,7 +40,7 @@ impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage 
 	) -> Result<Vec<AccountId>> {
 		let identifiers = self
 			.get_storage_verified(
-				TeebagStorage::enclave_identifier(WorkerType::Identity),
+				TeebagStorage::enclave_identifier(WorkerType::BitAcross),
 				header,
 				&ParentchainId::Litentry,
 			)?

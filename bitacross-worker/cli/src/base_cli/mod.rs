@@ -165,7 +165,7 @@ fn print_sgx_metadata_raw(cli: &Cli) -> CliResult {
 
 fn list_workers(cli: &Cli) -> CliResult {
 	let api = get_chain_api(cli);
-	let enclaves = api.all_enclaves(WorkerType::Identity, None).unwrap();
+	let enclaves = api.all_enclaves(WorkerType::BitAcross, None).unwrap();
 	println!("number of enclaves registered: {}", enclaves.len());
 
 	let mr_enclaves = enclaves

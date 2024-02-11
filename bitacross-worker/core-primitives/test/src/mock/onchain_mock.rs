@@ -60,7 +60,7 @@ impl OnchainMock {
 		let set: Vec<AccountId> = set.unwrap_or_else(validateer_set);
 		self.insert_at_header(
 			header,
-			TeebagStorage::enclave_identifier(WorkerType::Identity),
+			TeebagStorage::enclave_identifier(WorkerType::BitAcross),
 			set.encode(),
 		);
 		self

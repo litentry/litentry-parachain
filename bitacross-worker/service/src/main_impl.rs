@@ -526,7 +526,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	trace!("verified that our enclave is registered: {:?}", my_enclave);
 
 	let is_primary_enclave = match litentry_rpc_api
-		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+		.primary_enclave_identifier_for_shard(WorkerType::BitAcross, shard, None)
 		.unwrap()
 	{
 		Some(account) => account == tee_accountid,
@@ -758,7 +758,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
 			if let Ok(Some(_account)) = node_api.primary_enclave_identifier_for_shard(
-				WorkerType::Identity,
+				WorkerType::BitAcross,
 				&shard_for_initialized,
 				None,
 			) {

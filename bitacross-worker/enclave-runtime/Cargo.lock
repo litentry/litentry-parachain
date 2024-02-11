@@ -277,7 +277,6 @@ dependencies = [
  "sp-std",
  "strum",
  "strum_macros",
- "teerex-primitives 0.1.0",
  "thiserror",
 ]
 
@@ -1018,7 +1017,7 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.0-polkadot-v0.9.42)",
+ "teerex-primitives",
  "webpki",
 ]
 
@@ -2389,6 +2388,9 @@ dependencies = [
 [[package]]
 name = "itp-settings"
 version = "0.9.0"
+dependencies = [
+ "litentry-primitives",
+]
 
 [[package]]
 name = "itp-sgx-crypto"
@@ -3039,7 +3041,6 @@ dependencies = [
  "bitcoin",
  "core-primitives",
  "hex 0.4.3",
- "itp-settings",
  "itp-sgx-crypto",
  "itp-sgx-io",
  "itp-utils",
@@ -5004,16 +5005,6 @@ name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
-
-[[package]]
-name = "teerex-primitives"
-version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-std",
-]
 
 [[package]]
 name = "teerex-primitives"

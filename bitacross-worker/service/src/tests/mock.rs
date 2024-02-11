@@ -26,8 +26,8 @@ pub const W2_URL: &str = "127.0.0.1:33333";
 
 pub fn enclaves() -> Vec<Enclave> {
 	vec![
-		Enclave::new(WorkerType::Identity).with_url(W1_URL.into()),
-		Enclave::new(WorkerType::Identity).with_url(W2_URL.into()),
+		Enclave::new(WorkerType::BitAcross).with_url(W1_URL.into()),
+		Enclave::new(WorkerType::BitAcross).with_url(W2_URL.into()),
 	]
 }
 
