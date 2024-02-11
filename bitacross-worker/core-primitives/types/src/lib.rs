@@ -37,12 +37,12 @@ pub type PalletString = Vec<u8>;
 pub type PalletString = String;
 
 pub use itp_sgx_runtime_primitives::types::*;
-pub use litentry_primitives::DecryptableRequest;
+pub use litentry_primitives::{
+	AttestationType, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave, WorkerType,
+};
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];
-pub type MrEnclave = [u8; 32];
-
 pub type CallIndex = [u8; 2];
 
 // pallet teerex

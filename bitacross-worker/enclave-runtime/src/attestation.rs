@@ -377,7 +377,7 @@ fn generate_ias_ra_extrinsic_internal(
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let cert_der = attestation_handler.generate_ias_ra_cert(skip_ra)?;
 
-	generate_ias_ra_extrinsic_from_der_cert_internal(url, &cert_der)
+	generate_ias_ra_extrinsic_from_der_cert_internal(url, &cert_der, skip_ra)
 }
 
 pub fn generate_ias_ra_extrinsic_from_der_cert_internal(

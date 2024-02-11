@@ -56,7 +56,6 @@ use sp_core::{
 	crypto::{AccountId32, UncheckedFrom},
 	ed25519,
 };
-use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
 use std::{format, prelude::v1::*, sync::Arc};
 

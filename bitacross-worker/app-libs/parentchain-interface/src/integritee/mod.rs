@@ -40,7 +40,6 @@ use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
 use litentry_primitives::Identity;
 use log::trace;
-use sp_core::crypto::AccountId32;
 
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]

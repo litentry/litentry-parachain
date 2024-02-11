@@ -17,8 +17,9 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_utility::UtilityCallIndexes, runtime_call::RuntimeCall,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
+	runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 

@@ -22,20 +22,15 @@ use crate::test::{
 			create_ocall_api, create_top_pool, encrypt_trusted_operation, sign_trusted_call,
 		},
 		initialize_test_state::init_state,
-		test_setup::TestStf,
 	},
 	mocks::types::{
 		TestShieldingKey, TestShieldingKeyRepo, TestSigner, TestStateHandler, TestTopPoolAuthor,
 	},
 };
 use codec::Encode;
-use ita_parentchain_interface::integritee;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
 	Getter, TrustedCall, TrustedCallSigned,
-};
-use itc_parentchain::indirect_calls_executor::{
-	mock::TestEventCreator, ExecuteIndirectCalls, IndirectCallsExecutor,
 };
 use itc_parentchain_test::{
 	parentchain_block_builder::ParentchainBlockBuilder,
@@ -46,14 +41,12 @@ use itp_node_api::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
 		ParentchainUncheckedExtrinsic,
 	},
-	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
+	metadata::metadata_mocks::NodeMetadataMock,
 };
 use itp_node_api_metadata::pallet_teebag::TeebagCallIndexes;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_executor::enclave_signer::StfEnclaveSigner;
-use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
-use itp_stf_state_observer::mock::ObserveStateMock;
+use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},

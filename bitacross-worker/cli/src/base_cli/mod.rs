@@ -17,15 +17,9 @@
 
 use crate::{
 	base_cli::commands::{
-		balance::BalanceCommand,
-		faucet::FaucetCommand,
-		listen::ListenCommand,
-		litentry::{
-			id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand,
-			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-		},
-		register_tcb_info::RegisterTcbInfoCommand,
-		shield_funds::ShieldFundsCommand,
+		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
+		litentry::set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
+		register_tcb_info::RegisterTcbInfoCommand, shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
@@ -88,14 +82,8 @@ pub enum BaseCommand {
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
 
-	/// create idenity graph
-	LinkIdentity(LinkIdentityCommand),
-
 	/// set heartbeat timeout storage
 	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
-
-	/// get the IDGraph hash of the given identity
-	IDGraphHash(IDGraphHashCommand),
 }
 
 impl BaseCommand {
@@ -114,9 +102,7 @@ impl BaseCommand {
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
-			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 		}
 	}
 }
