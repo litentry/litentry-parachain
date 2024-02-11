@@ -135,17 +135,18 @@ pub mod pallet {
 		EnclaveIdentifierNotExist,
 		/// The enclave identifier already exists.
 		EnclaveIdentifierAlreadyExist,
-		/// when we try to re-register an existing enclave with a differnet worker type
-		WorkerTypeNotAllowed,
+		/// The worker type is unexpected, becuase e.g. when we try to re-register an
+		/// existing enclave with a differnet worker type
+		UnexpectedWorkerType,
 		/// The shard doesn't match the enclave.
 		WrongMrenclaveForShard,
 		/// The worker url is too long.
 		EnclaveUrlTooLong,
 		/// The raw attestation data is too long.
 		AttestationTooLong,
-		/// The worker type is unexpected, because e.g. a non-sidechain worker calls sidechain
-		/// specific extrinsic
-		UnexpectedWorkerType,
+		/// The worker mode is unexpected, because e.g. a non-sidechain worker calls
+		/// sidechain specific extrinsic
+		UnexpectedWorkerMode,
 		/// Can not found the desired scheduled enclave.
 		ScheduledEnclaveNotExist,
 		/// Enclave not in the scheduled list, therefore unexpected.
@@ -412,6 +413,7 @@ pub mod pallet {
 		pub fn register_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
+			worker_mode: WorkerMode,
 			attestation: Vec<u8>,
 			worker_url: Vec<u8>,
 			shielding_pubkey: Option<Vec<u8>>,
@@ -423,6 +425,7 @@ pub mod pallet {
 			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
 
 			let mut enclave = Enclave::new(worker_type)
+				.with_worker_mode(worker_mode)
 				.with_url(worker_url)
 				.with_shielding_pubkey(shielding_pubkey)
 				.with_vc_pubkey(vc_pubkey)
@@ -564,7 +567,10 @@ pub mod pallet {
 				Error::<T>::WrongMrenclaveForShard
 			);
 
-			ensure!(sender_enclave.worker_type.is_sidechain(), Error::<T>::UnexpectedWorkerType,);
+			ensure!(
+				sender_enclave.worker_mode == WorkerMode::Sidechain,
+				Error::<T>::UnexpectedWorkerMode
+			);
 
 			sender_enclave.last_seen_timestamp = Self::now().saturated_into();
 
@@ -626,7 +632,7 @@ impl<T: Config> Pallet<T> {
 		match EnclaveRegistry::<T>::get(sender) {
 			Some(old_enclave) => ensure!(
 				old_enclave.worker_type == enclave.worker_type,
-				Error::<T>::WorkerTypeNotAllowed
+				Error::<T>::UnexpectedWorkerType
 			),
 			None => Self::add_enclave_identifier(enclave.worker_type, sender)?,
 		};

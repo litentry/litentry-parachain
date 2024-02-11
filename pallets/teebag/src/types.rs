@@ -74,10 +74,12 @@ pub enum WorkerType {
 	BitAcross,
 }
 
-impl WorkerType {
-	pub fn is_sidechain(&self) -> bool {
-		self == &Self::Identity
-	}
+#[derive(Encode, Decode, Clone, Copy, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub enum WorkerMode {
+	#[default]
+	OffChainWorker,
+	Sidechain,
+	Teeracle,
 }
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
@@ -99,6 +101,7 @@ pub struct SidechainBlockConfirmation {
 #[derive(Encode, Decode, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct Enclave {
 	pub worker_type: WorkerType,
+	pub worker_mode: WorkerMode,
 	pub mrenclave: MrEnclave,
 	pub last_seen_timestamp: u64, // unix epoch in milliseconds when it's last seen
 	pub url: Vec<u8>,             // utf8 encoded url
@@ -111,6 +114,11 @@ pub struct Enclave {
 impl Enclave {
 	pub fn new(worker_type: WorkerType) -> Self {
 		Enclave { worker_type, ..Default::default() }
+	}
+
+	pub fn with_worker_mode(mut self, worker_mode: WorkerMode) -> Self {
+		self.worker_mode = worker_mode;
+		self
 	}
 
 	pub fn with_mrenclave(mut self, mrenclave: MrEnclave) -> Self {
