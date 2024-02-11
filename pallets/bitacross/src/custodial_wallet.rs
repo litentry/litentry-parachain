@@ -14,22 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// TODO: maybe use macros to simplify this
-use crate::{error::Result, NodeMetadata};
+use codec::{Decode, Encode};
+use core_primitives::{Address20, Address33};
+use scale_info::TypeInfo;
 
-const BITACROSS: &str = "Bitacross";
-
-pub trait BitAcrossCallIndexes {
-	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]>;
-	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]>;
+/// custodial wallet that each tee worker generates and holds
+#[derive(Encode, Decode, Clone, Default, Debug, PartialEq, Eq, TypeInfo)]
+pub struct CustodialWallet {
+	pub btc: Option<Address33>,
+	pub eth: Option<Address20>,
 }
 
-impl BitAcrossCallIndexes for NodeMetadata {
-	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(BITACROSS, "add_relayer")
+impl CustodialWallet {
+	pub fn has_btc(&self) -> bool {
+		self.btc.is_some()
 	}
 
-	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(BITACROSS, "remove_relayer")
+	pub fn has_eth(&self) -> bool {
+		self.eth.is_some()
 	}
 }
