@@ -97,6 +97,7 @@ impl TargetASolochainHandler {
 			)?,
 			WorkerMode::Sidechain =>
 				create_sidechain_triggered_import_dispatcher_for_target_a(block_importer),
+			WorkerMode::Teeracle => unreachable!("WorkerMode::Teeracle is not supported"),
 		};
 
 		let solochain_handler = Self {

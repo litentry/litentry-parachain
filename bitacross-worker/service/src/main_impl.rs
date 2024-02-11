@@ -587,6 +587,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
 		},
+		WorkerMode::Teeracle => unreachable!("WorkerMode::Teeracle is not supported"),
 	}
 
 	if let Some(url) = config.target_a_parentchain_rpc_endpoint() {

@@ -10,7 +10,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use sp_std::{boxed::Box, fmt::Debug};
 
 use lazy_static::lazy_static;
-use litentry_primitives::{decl_rsa_request, Identity, ShardIdentifier, SidechainBlockNumber};
+use litentry_primitives::Identity;
 use log::error;
 use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
