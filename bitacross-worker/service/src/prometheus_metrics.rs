@@ -34,7 +34,6 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
-use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_counter_vec, register_histogram, register_histogram_vec,

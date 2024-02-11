@@ -41,7 +41,7 @@ use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
-pub use pallet_teebag;
+pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 pub use pallet_teeracle;
 pub use pallet_teerex;
 
@@ -1029,6 +1029,7 @@ impl pallet_teebag::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type MaxEnclaveIdentifier = ConstU32<3>;
 }
 
 impl pallet_identity_management::Config for Runtime {

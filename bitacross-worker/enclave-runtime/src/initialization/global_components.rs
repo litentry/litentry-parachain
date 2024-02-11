@@ -64,8 +64,9 @@ use itp_node_api::{
 };
 use itp_nonce_cache::NonceCache;
 use itp_sgx_crypto::{
+	ecdsa::{Pair as EcdsaPair, Seal as EcdsaSeal},
 	key_repository::KeyRepository,
-	secp256k1::{Pair as Secp256k1Pair, Seal as Secp256k1Seal},
+	schnorr::{Pair as SchnorrPair, Seal as SchnorrSeal},
 	Aes, AesSeal, Ed25519Seal, Rsa3072Seal,
 };
 use itp_stf_executor::{
@@ -110,8 +111,8 @@ pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Run
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
-pub type EnclaveBitcoinKeyRepository = KeyRepository<Secp256k1Pair, Secp256k1Seal>;
-pub type EnclaveEthereumKeyRepository = KeyRepository<Secp256k1Pair, Secp256k1Seal>;
+pub type EnclaveBitcoinKeyRepository = KeyRepository<SchnorrPair, SchnorrSeal>;
+pub type EnclaveEthereumKeyRepository = KeyRepository<EcdsaPair, EcdsaSeal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;

@@ -17,6 +17,7 @@
 
 //! Interface for direct access to a workers rpc.
 
+pub use crate::error::{Error, Result};
 use crate::ws_client::{WsClient, WsClientControl};
 use base58::ToBase58;
 use codec::{Decode, Encode};
@@ -25,7 +26,7 @@ use ita_stf::{Getter, PublicGetter};
 use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use itp_types::{DirectRequestStatus, RsaRequest};
+use itp_types::{DirectRequestStatus, MrEnclave, RsaRequest};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::Identity;
 use log::*;
@@ -39,9 +40,6 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use teerex_primitives::MrEnclave;
-
-pub use crate::error::{Error, Result};
 
 #[derive(Clone)]
 pub struct DirectClient {

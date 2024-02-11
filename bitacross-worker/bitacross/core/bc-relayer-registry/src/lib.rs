@@ -146,7 +146,7 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 				"[Enclave] RelayerRegistry file not found, creating new! {}",
 				RELAYER_REGISTRY_FILE
 			);
-			let mut registry = GLOBAL_RELAYER_REGISTRY
+			let registry = GLOBAL_RELAYER_REGISTRY
 				.registry
 				.write()
 				.map_err(|_| RegistryError::PoisonLock)?;

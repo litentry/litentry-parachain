@@ -30,9 +30,10 @@ use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
 mod sgx_verify;
-use sgx_verify::{
-	deserialize_enclave_identity, deserialize_tcb_info, extract_certs, verify_certificate_chain,
-	verify_dcap_quote, verify_ias_report, SgxReport,
+pub use sgx_verify::{
+	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
+	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_quote,
+	verify_ias_report, SgxReport,
 };
 
 pub use pallet::*;
@@ -64,6 +65,10 @@ pub mod pallet {
 		type MomentsPerDay: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Maximum number of enclave identifiers allowed to be registered for a specific
+		/// `worker_type`
+		#[pallet::constant]
+		type MaxEnclaveIdentifier: Get<u32>;
 	}
 
 	// TODO: maybe add more sidechain lifecycle events
@@ -75,10 +80,6 @@ pub mod pallet {
 		},
 		AdminSet {
 			new_admin: Option<T::AccountId>,
-		},
-		MaxEnclaveCountSet {
-			worker_type: WorkerType,
-			new_count: u64,
 		},
 		EnclaveAdded {
 			who: T::AccountId,
@@ -130,6 +131,12 @@ pub mod pallet {
 		InvalidSgxMode,
 		/// The enclave doesn't exist.
 		EnclaveNotExist,
+		/// The enclave identifier doesn't exist.
+		EnclaveIdentifierNotExist,
+		/// The enclave identifier already exists.
+		EnclaveIdentifierAlreadyExist,
+		/// when we try to re-register an existing enclave with a differnet worker type
+		WorkerTypeNotAllowed,
 		/// The shard doesn't match the enclave.
 		WrongMrenclaveForShard,
 		/// The worker url is too long.
@@ -143,16 +150,10 @@ pub mod pallet {
 		ScheduledEnclaveNotExist,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
-		/// The provided collateral data is invalid
+		/// The provided collateral data is invalid.
 		CollateralInvalid,
-		/// The number of `extra_topics` passed to `publish_hash` exceeds the limit.
-		TooManyTopics,
-		/// The length of the `data` passed to `publish_hash` exceeds the limit.
-		DataTooLong,
-		/// max_enclave_count overflows
-		MaxEnclaveCountOverflow,
-		/// max_enclave_count underflows (than 0 or currently registered enclave count)
-		MaxEnclaveCountUnderflow,
+		/// MaxEnclaveIdentifier overflow.
+		MaxEnclaveIdentifierOverflow,
 		/// A proposed block is unexpected.
 		ReceivedUnexpectedSidechainBlock,
 		/// The value for the next finalization candidate is invalid.
@@ -167,25 +168,22 @@ pub mod pallet {
 	#[pallet::getter(fn mode)]
 	pub type Mode<T: Config> = StorageValue<_, OperationalMode, ValueQuery>;
 
-	#[pallet::type_value]
-	pub fn DefaultMaxEnclaveCount() -> u64 {
-		3
-	}
-
+	// records the enclave identifier list for each worker_type
+	// T::AccountId is used as identifier as it's unique for each enclave
 	#[pallet::storage]
-	#[pallet::getter(fn max_enclave_count)]
-	pub type MaxEnclaveCount<T: Config> =
-		StorageMap<_, Blake2_128Concat, WorkerType, u64, ValueQuery, DefaultMaxEnclaveCount>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn enclave_count)]
-	pub type EnclaveCount<T: Config> = StorageMap<_, Blake2_128Concat, WorkerType, u64, ValueQuery>;
+	#[pallet::getter(fn enclave_identifier)]
+	pub type EnclaveIdentifier<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		WorkerType,
+		BoundedVec<T::AccountId, T::MaxEnclaveIdentifier>,
+		ValueQuery,
+	>;
 
 	// registry that holds all registered enclaves, using T::AccountId as the key
 	// having `worker_type` and `mrenclave` in each `Enclave` instance might seem a bit redundant,
 	// but it increases flexibility where we **could** allow the same type of worker to have
-	// different mrenclaves - e.g. when more than one version of an enclave is permitted in TEE-node
-	// cluster.
+	// distinct mrenclaves: e.g. when multiple versions of enclave are permitted in TEE cluster.
 	//
 	// It simplifies the lookup a bit too, otherwise we might need several storages.
 	#[pallet::storage]
@@ -224,11 +222,6 @@ pub mod pallet {
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
 		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn worker_for_shard)]
-	pub type WorkerForShard<T: Config> =
-		StorageMap<_, Blake2_128Concat, ShardIdentifier, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn latest_sidechain_block_confirmation)]
@@ -304,24 +297,6 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_max_enclave_count(
-			origin: OriginFor<T>,
-			worker_type: WorkerType,
-			new_count: u64,
-		) -> DispatchResultWithPostInfo {
-			Self::ensure_admin_or_root(origin)?;
-			ensure!(
-				new_count > Self::max_enclave_count(worker_type),
-				Error::<T>::MaxEnclaveCountUnderflow
-			);
-
-			MaxEnclaveCount::<T>::insert(worker_type, new_count);
-			Self::deposit_event(Event::MaxEnclaveCountSet { worker_type, new_count });
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(3)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn force_add_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -332,7 +307,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(3)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn force_remove_enclave(
 			origin: OriginFor<T>,
@@ -343,7 +318,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(4)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn force_remove_enclave_by_mrenclave(
 			origin: OriginFor<T>,
@@ -368,7 +343,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(6)]
+		#[pallet::call_index(5)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn force_remove_enclave_by_worker_type(
 			origin: OriginFor<T>,
@@ -394,7 +369,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(7)]
+		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_scheduled_enclave(
 			origin: OriginFor<T>,
@@ -412,7 +387,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(7)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
@@ -432,7 +407,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(8)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
 		pub fn register_enclave(
 			origin: OriginFor<T>,
@@ -447,13 +422,12 @@ pub mod pallet {
 
 			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
 
-			let mut enclave = Enclave::new(
-				worker_type,
-				worker_url,
-				shielding_pubkey,
-				vc_pubkey,
-				attestation_type,
-			);
+			let mut enclave = Enclave::new(worker_type)
+				.with_url(worker_url)
+				.with_shielding_pubkey(shielding_pubkey)
+				.with_vc_pubkey(vc_pubkey)
+				.with_attestation_type(attestation_type);
+
 			match attestation_type {
 				AttestationType::Ignore => {
 					ensure!(
@@ -493,12 +467,11 @@ pub mod pallet {
 				},
 				OperationalMode::Development => (),
 			};
-			enclave.register_timestamp = Self::now().saturated_into();
 			Self::add_enclave(&sender, &enclave)?;
 			Ok(().into())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(9)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -506,7 +479,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(11)]
+		#[pallet::call_index(10)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn register_quoting_enclave(
 			origin: OriginFor<T>,
@@ -522,7 +495,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(12)]
+		#[pallet::call_index(11)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn register_tcb_info(
 			origin: OriginFor<T>,
@@ -596,13 +569,15 @@ pub mod pallet {
 			sender_enclave.last_seen_timestamp = Self::now().saturated_into();
 
 			// Simple logic for now: only accept blocks from first registered enclave.
-			let primary_enclave = Self::primary_enclave(sender_enclave.worker_type)
-				.ok_or(Error::<T>::EnclaveNotExist)?;
-
-			if sender_enclave.register_timestamp > primary_enclave.register_timestamp {
+			let primary_enclave_identifier =
+				EnclaveIdentifier::<T>::get(sender_enclave.worker_type)
+					.get(0)
+					.cloned()
+					.ok_or(Error::<T>::EnclaveIdentifierNotExist)?;
+			if sender != primary_enclave_identifier {
 				log::debug!(
-					"Ignore block confirmation from registered enclave with timestamp {}",
-					sender_enclave.register_timestamp
+					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
+					sender, primary_enclave_identifier
 				);
 				return Ok(().into())
 			}
@@ -640,40 +615,20 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
-	fn increment_count(worker_type: WorkerType) -> Result<(), DispatchErrorWithPostInfo> {
-		let count = Self::enclave_count(worker_type);
-		ensure!(count < Self::max_enclave_count(worker_type), Error::<T>::MaxEnclaveCountOverflow);
-
-		EnclaveCount::<T>::insert(
-			worker_type,
-			count.checked_add(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
-		);
-
-		Ok(())
+	fn add_enclave_identifier(worker_type: WorkerType, who: &T::AccountId) -> Result<(), Error<T>> {
+		EnclaveIdentifier::<T>::try_mutate(worker_type, |v| {
+			ensure!(!v.contains(who), Error::<T>::EnclaveIdentifierAlreadyExist);
+			v.try_push(who.clone()).map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
+		})
 	}
 
-	fn decrement_count(worker_type: WorkerType) -> Result<(), DispatchErrorWithPostInfo> {
-		let count = Self::enclave_count(worker_type);
-		EnclaveCount::<T>::insert(
-			worker_type,
-			count.checked_sub(1u64).ok_or(Error::<T>::MaxEnclaveCountUnderflow)?,
-		);
-
-		Ok(())
-	}
-
-	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> DispatchResultWithPostInfo {
+	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> Result<(), Error<T>> {
 		match EnclaveRegistry::<T>::get(sender) {
-			Some(old_enclave) => {
-				if old_enclave.worker_type != enclave.worker_type {
-					// a tricky situation - we are re-registering the enclave with a different
-					// worker type
-					Self::decrement_count(old_enclave.worker_type)?;
-					Self::increment_count(enclave.worker_type)?;
-				}
-				// else - do nothing
-			},
-			None => Self::increment_count(enclave.worker_type)?,
+			Some(old_enclave) => ensure!(
+				old_enclave.worker_type == enclave.worker_type,
+				Error::<T>::WorkerTypeNotAllowed
+			),
+			None => Self::add_enclave_identifier(enclave.worker_type, sender)?,
 		};
 		EnclaveRegistry::<T>::insert(sender, enclave);
 		Self::deposit_event(Event::<T>::EnclaveAdded {
@@ -681,29 +636,25 @@ impl<T: Config> Pallet<T> {
 			worker_type: enclave.worker_type,
 			url: enclave.url.clone(),
 		});
-		Ok(().into())
+		Ok(())
 	}
 
 	fn remove_enclave(sender: &T::AccountId) -> DispatchResultWithPostInfo {
 		let enclave = EnclaveRegistry::<T>::get(sender).ok_or(Error::<T>::EnclaveNotExist)?;
-		let count = EnclaveCount::<T>::get(enclave.worker_type);
 
-		EnclaveCount::<T>::insert(
-			enclave.worker_type,
-			count.checked_sub(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
-		);
+		EnclaveIdentifier::<T>::try_mutate(enclave.worker_type, |v| {
+			ensure!(v.contains(sender), Error::<T>::EnclaveIdentifierNotExist);
+			v.retain(|e| e != sender);
+			Ok::<(), DispatchErrorWithPostInfo>(())
+		})?;
 
 		EnclaveRegistry::<T>::remove(sender);
 		Self::deposit_event(Event::<T>::EnclaveRemoved { who: sender.clone() });
 		Ok(().into())
 	}
 
-	pub fn primary_enclave(worker_type: WorkerType) -> Option<Enclave> {
-		let mut enclaves = EnclaveRegistry::<T>::iter_values()
-			.filter(|e| e.worker_type == worker_type)
-			.collect::<Vec<Enclave>>();
-		enclaves.sort_by(|a, b| Ord::cmp(&a.register_timestamp, &b.register_timestamp));
-		enclaves.get(0).cloned()
+	pub fn enclave_count(worker_type: WorkerType) -> u32 {
+		EnclaveIdentifier::<T>::get(worker_type).iter().count() as u32
 	}
 
 	fn verify_ias(
@@ -810,7 +761,6 @@ impl<T: Config> Pallet<T> {
 		confirmation: SidechainBlockConfirmation,
 	) {
 		LatestSidechainBlockConfirmation::<T>::insert(shard, confirmation);
-		WorkerForShard::<T>::insert(shard, sender.clone());
 		Self::deposit_event(Event::SidechainBlockFinalized {
 			who: sender,
 			sidechain_block_number: confirmation.block_number,
