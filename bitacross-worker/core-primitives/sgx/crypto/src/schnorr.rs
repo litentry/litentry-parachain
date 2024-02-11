@@ -129,15 +129,14 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use k256::schnorr::{Signature, VerifyingKey};
-	use k256::schnorr::signature::Verifier;
-	use std::path::PathBuf;
+	use crate::{
+		key_repository::AccessKey,
+		schnorr::{create_schnorr_repository, Pair, Seal},
+		std::string::ToString,
+	};
 	use itp_sgx_temp_dir::TempDir;
-	use crate::schnorr::Pair;
-	use crate::schnorr::Seal;
-	use crate::key_repository::AccessKey;
-	use crate::schnorr::create_schnorr_repository;
-	use crate::std::string::ToString;
+	use k256::schnorr::{signature::Verifier, Signature, VerifyingKey};
+	use std::path::PathBuf;
 
 	pub fn schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key() {
 		//given
@@ -156,10 +155,7 @@ pub mod sgx_tests {
 		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
 
 		//then
-		assert_eq!(
-			first_key.public,
-			second_key.public
-		);
+		assert_eq!(first_key.public, second_key.public);
 	}
 
 	pub fn schnorr_seal_init_should_create_new_key_if_not_present() {
@@ -178,7 +174,8 @@ pub mod sgx_tests {
 
 	pub fn schnorr_seal_init_should_not_change_key_if_exists() {
 		//given
-		let temp_dir = TempDir::with_prefix("schnorr_seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("schnorr_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
 
@@ -203,5 +200,4 @@ pub mod sgx_tests {
 		let verifying_key = VerifyingKey::try_from(&pair.public).unwrap();
 		assert!(verifying_key.verify(&message, &signature).is_ok());
 	}
-
 }

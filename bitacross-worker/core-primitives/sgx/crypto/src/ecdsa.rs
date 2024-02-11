@@ -131,18 +131,13 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use k256::ecdsa::signature::Verifier;
-	use k256::ecdsa::VerifyingKey;
-	use k256::ecdsa::Signature;
 	use super::sgx::*;
-	use sgx_tstd::path::PathBuf;
-	use crate::Pair;
-	use crate::create_ecdsa_repository;
+	use crate::{
+		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
+	};
 	use itp_sgx_temp_dir::TempDir;
-	use crate::key_repository::AccessKey;
-	use crate::Seal;
-	use crate::std::string::ToString;
-
+	use k256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+	use sgx_tstd::path::PathBuf;
 
 	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
 		//given
@@ -161,10 +156,7 @@ pub mod sgx_tests {
 		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
 
 		//then
-		assert_eq!(
-			first_key.public,
-			second_key.public
-		);
+		assert_eq!(first_key.public, second_key.public);
 	}
 
 	pub fn ecdsa_seal_init_should_create_new_key_if_not_present() {
@@ -183,7 +175,8 @@ pub mod sgx_tests {
 
 	pub fn ecdsa_seal_init_should_not_change_key_if_exists() {
 		//given
-		let temp_dir = TempDir::with_prefix("ecdsa_seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("ecdsa_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
 
