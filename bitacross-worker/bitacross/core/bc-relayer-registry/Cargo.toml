@@ -1,8 +1,9 @@
 [package]
-authors = ["Trust Computing GmbH <info@litentry.com>"]
-edition = "2021"
-name = "litentry-primitives"
+name = "bc-relayer-registry"
 version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bitcoin = { version = "0.31.0", default-features = false, features = ["secp-recovery", "no-std"] }
@@ -33,13 +34,15 @@ thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 
 
 # internal dependencies
-itp-settings = { path = "../../core-primitives/settings", default-features = false }
-itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
-itp-sgx-io = { path = "../../core-primitives/sgx/io", default-features = false }
-itp-utils = { path = "../../core-primitives/utils", default-features = false }
-litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
-parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
+itp-settings = { path = "../../../core-primitives/settings", default-features = false }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
+itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
+parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
+teerex-primitives = { path = "../../../../primitives/teerex", default-features = false }
+# litentry primities 
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
 base64 = { version = "0.13", features = ["alloc"] }
@@ -55,6 +58,7 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "thiserror-sgx",
     "itp-sgx-io/sgx",
+    "litentry-primitives/sgx",
 ]
 std = [
     "strum/std",
@@ -75,4 +79,5 @@ std = [
     "secp256k1/std",
     "thiserror",
     "itp-sgx-io/std",
+    "litentry-primitives/std",
 ]

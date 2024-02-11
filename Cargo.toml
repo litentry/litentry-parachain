@@ -2,6 +2,7 @@
 members = [
     'node',
     'pallets/account-fix',
+    'pallets/bitacross',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',
@@ -17,7 +18,7 @@ members = [
     'pallets/parentchain',
     'pallets/test-utils',
     'pallets/group',
-    'pallets/bitacross-pallet',
+    'pallets/bitacross',
     'precompiles/*',
     'primitives/common',
     'primitives/core',

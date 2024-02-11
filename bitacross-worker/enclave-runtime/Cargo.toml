@@ -134,6 +134,7 @@ its-primitives = { path = "../sidechain/primitives", default-features = false }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
 
 # litentry
+bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }

@@ -6945,8 +6945,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-group",
- "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -6954,8 +6952,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
- "test-utils",
 ]
 
 [[package]]
