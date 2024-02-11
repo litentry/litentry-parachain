@@ -52,6 +52,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
+use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use core::str::FromStr;
@@ -101,6 +102,7 @@ pub(crate) fn init_enclave(
 	base_dir: PathBuf,
 ) -> EnclaveResult<()> {
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
+
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
@@ -227,6 +229,8 @@ pub(crate) fn init_enclave(
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
+
+	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 
 	std::thread::spawn(move || run_bit_across_handler().unwrap());
 
