@@ -62,10 +62,6 @@ where
 
 	type StateHandler = HandleStateMock;
 
-	fn logging_target(&self) -> &'static str {
-		"test"
-	}
-
 	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
 		todo!()
 	}
@@ -74,12 +70,7 @@ where
 		todo!()
 	}
 
-	fn epoch_data(
-		&self,
-		_header: &B::Header,
-		_shard: ShardIdentifierFor<Self::Output>,
-		_slot: Slot,
-	) -> Result<Self::EpochData> {
+	fn epoch_data(&self, _header: &B::Header, _slot: Slot) -> Result<Self::EpochData> {
 		todo!()
 	}
 

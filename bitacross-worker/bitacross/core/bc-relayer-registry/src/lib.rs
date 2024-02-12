@@ -13,7 +13,6 @@ use lazy_static::lazy_static;
 use litentry_primitives::Identity;
 use log::error;
 use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;

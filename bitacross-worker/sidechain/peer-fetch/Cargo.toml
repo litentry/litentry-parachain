@@ -16,6 +16,7 @@ thiserror = { version = "1.0" }
 # local
 itc-rpc-client = { path = "../../core/rpc-client" }
 itp-node-api = { path = "../../core-primitives/node-api" }
+itp-types = { path = "../../core-primitives/types" }
 its-primitives = { path = "../primitives" }
 its-rpc-handler = { path = "../rpc-handler" }
 its-storage = { path = "../storage" }

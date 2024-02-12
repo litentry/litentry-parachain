@@ -15,11 +15,7 @@
 
 */
 
-#[derive(Eq, PartialEq, Debug, Clone)]
-pub enum WorkerMode {
-	OffChainWorker,
-	Sidechain,
-}
+pub use litentry_primitives::WorkerMode;
 
 pub trait ProvideWorkerMode {
 	fn worker_mode() -> WorkerMode;

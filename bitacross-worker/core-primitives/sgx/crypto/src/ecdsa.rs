@@ -27,7 +27,7 @@ use std::{string::ToString, vec::Vec};
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Pair {
 	pub public: PublicKey,
 	private: SigningKey,
@@ -93,18 +93,16 @@ pub mod sgx {
 			self.base_path
 				.join(self.key_file_prefix.clone() + "_" + SEALED_SIGNER_SEED_FILE)
 		}
-	}
 
-	impl Seal {
 		fn unseal_pair(&self) -> Result<Pair> {
 			self.unseal()
 		}
 
-		fn exists(&self) -> bool {
+		pub fn exists(&self) -> bool {
 			self.path().exists()
 		}
 
-		fn init(&self) -> Result<Pair> {
+		pub fn init(&self) -> Result<Pair> {
 			if !self.exists() {
 				info!("Keyfile not found, creating new! {}", self.path().display());
 				let mut seed = [0u8; 32];
@@ -136,9 +134,16 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
+	use super::sgx::*;
+	use crate::{
+		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
+	};
+	use itp_sgx_temp_dir::TempDir;
+	use k256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+	use sgx_tstd::path::PathBuf;
 
-	#[test]
-	pub fn creating_repository_with_same_path_and_prefix_results_in_same_key() {
+	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
+		//given
 		let key_file_prefix = "test";
 		fn get_key_from_repo(path: PathBuf, prefix: &str) -> Pair {
 			create_ecdsa_repository(path, prefix).unwrap().retrieve_key().unwrap()
@@ -148,17 +153,19 @@ pub mod sgx_tests {
 		)
 		.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
-		assert_eq!(
-			get_key_from_repo(temp_path.clone(), key_file_prefix),
-			get_key_from_repo(temp_path.clone(), key_file_prefix)
-		);
+
+		//when
+		let first_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+
+		//then
+		assert_eq!(first_key.public, second_key.public);
 	}
 
-	#[test]
-	pub fn seal_init_should_create_new_key_if_not_present() {
+	pub fn ecdsa_seal_init_should_create_new_key_if_not_present() {
 		//given
 		let temp_dir =
-			TempDir::with_prefix("seal_init_should_create_new_key_if_not_present").unwrap();
+			TempDir::with_prefix("ecdsa_seal_init_should_create_new_key_if_not_present").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		assert!(!seal.exists());
 
@@ -169,10 +176,10 @@ pub mod sgx_tests {
 		assert!(seal.exists());
 	}
 
-	#[test]
-	pub fn seal_init_should_not_change_key_if_exists() {
+	pub fn ecdsa_seal_init_should_not_change_key_if_exists() {
 		//given
-		let temp_dir = TempDir::with_prefix("seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("ecdsa_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
 
@@ -180,6 +187,21 @@ pub mod sgx_tests {
 		let new_pair = seal.init().unwrap();
 
 		//then
-		assert!(pair, new_pair);
+		assert_eq!(pair.public, new_pair.public);
+	}
+
+	pub fn ecdsa_sign_should_produce_valid_signature() {
+		//given
+		let temp_dir = TempDir::with_prefix("ecdsa_sign_should_produce_valid_signature").unwrap();
+		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
+		let pair = seal.init().unwrap();
+		let message = [1; 32];
+
+		//when
+		let signature = Signature::from_slice(&pair.sign(&message).unwrap()).unwrap();
+
+		//then
+		let verifying_key = VerifyingKey::from(&pair.private);
+		assert!(verifying_key.verify(&message, &signature).is_ok());
 	}
 }
