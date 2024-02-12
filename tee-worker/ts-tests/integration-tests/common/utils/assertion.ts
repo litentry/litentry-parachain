@@ -150,7 +150,7 @@ export async function verifySignature(data: any, index: HexString, proofJson: an
     const isValid = await ed.verify(signature, message, vcPubkey);
     console.log('🚀 ~ verifySignature ~ isValid:', isValid);
 
-    // expect(isValid).to.be.true;
+    expect(isValid).to.be.true;
     return true;
 }
 

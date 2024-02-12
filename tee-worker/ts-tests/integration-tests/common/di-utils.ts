@@ -195,7 +195,6 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
-// TODO: deprecated
 export async function createSignedTrustedCallRequestVc(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -209,26 +208,6 @@ export async function createSignedTrustedCallRequestVc(
     return await createSignedTrustedCall(
         parachainApi,
         ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)'],
-        signer,
-        mrenclave,
-        nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
-    );
-}
-
-export async function createSignedTrustedCallRequestVcDirect(
-    parachainApi: ApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Signer,
-    primeIdentity: CorePrimitivesIdentity,
-    assertion: string,
-    aesKey: string,
-    hash: string
-) {
-    return await createSignedTrustedCall(
-        parachainApi,
-        ['request_vc_direct', '(LitentryIdentity, LitentryIdentity, Assertion, RequestAesKey, H256)'],
         signer,
         mrenclave,
         nonce,

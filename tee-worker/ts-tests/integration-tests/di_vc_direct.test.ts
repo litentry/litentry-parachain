@@ -52,95 +52,95 @@ describe('Test Vc (direct invocation)', function () {
         );
     });
 
-    // step('linking identities (alice)', async function () {
-    //     let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
-    //     const getNextNonce = () => currentNonce++;
+    step('linking identities (alice)', async function () {
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
 
-    //     const twitterNonce = getNextNonce();
-    //     const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-    //     const [twitterValidation] = await buildValidations(
-    //         context,
-    //         [aliceSubstrateIdentity],
-    //         [twitterIdentity],
-    //         twitterNonce,
-    //         'twitter'
-    //     );
-    //     const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Vec<Web3Network>; // @fixme #1878
-    //     linkIdentityRequestParams.push({
-    //         nonce: twitterNonce,
-    //         identity: twitterIdentity,
-    //         validation: twitterValidation,
-    //         networks: twitterNetworks,
-    //     });
+        const twitterNonce = getNextNonce();
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const [twitterValidation] = await buildValidations(
+            context,
+            [aliceSubstrateIdentity],
+            [twitterIdentity],
+            twitterNonce,
+            'twitter'
+        );
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: twitterNonce,
+            identity: twitterIdentity,
+            validation: twitterValidation,
+            networks: twitterNetworks,
+        });
 
-    //     const evmNonce = getNextNonce();
-    //     const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-    //     const [evmValidation] = await buildValidations(
-    //         context,
-    //         [aliceSubstrateIdentity],
-    //         [evmIdentity],
-    //         evmNonce,
-    //         'ethereum',
-    //         undefined,
-    //         [context.ethersWallet.alice]
-    //     );
-    //     const evmNetworks = context.api.createType('Vec<Web3Network>', [
-    //         'Ethereum',
-    //         'Bsc',
-    //     ]) as unknown as Vec<Web3Network>; // @fixme #1878
-    //     linkIdentityRequestParams.push({
-    //         nonce: evmNonce,
-    //         identity: evmIdentity,
-    //         validation: evmValidation,
-    //         networks: evmNetworks,
-    //     });
+        const evmNonce = getNextNonce();
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        const [evmValidation] = await buildValidations(
+            context,
+            [aliceSubstrateIdentity],
+            [evmIdentity],
+            evmNonce,
+            'ethereum',
+            undefined,
+            [context.ethersWallet.alice]
+        );
+        const evmNetworks = context.api.createType('Vec<Web3Network>', [
+            'Ethereum',
+            'Bsc',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: evmNonce,
+            identity: evmIdentity,
+            validation: evmValidation,
+            networks: evmNetworks,
+        });
 
-    //     const bitcoinNonce = getNextNonce();
-    //     const bitcoinIdentity = await buildIdentityHelper(
-    //         u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
-    //         'Bitcoin',
-    //         context
-    //     );
-    //     console.log('bitcoin id: ', bitcoinIdentity.toHuman());
-    //     const [bitcoinValidation] = await buildValidations(
-    //         context,
-    //         [aliceSubstrateIdentity],
-    //         [bitcoinIdentity],
-    //         bitcoinNonce,
-    //         'bitcoin',
-    //         undefined,
-    //         undefined,
-    //         context.bitcoinWallet.alice
-    //     );
-    //     const bitcoinNetworks = context.api.createType('Vec<Web3Network>', [
-    //         'BitcoinP2tr',
-    //     ]) as unknown as Vec<Web3Network>; // @fixme #1878
-    //     linkIdentityRequestParams.push({
-    //         nonce: bitcoinNonce,
-    //         identity: bitcoinIdentity,
-    //         validation: bitcoinValidation,
-    //         networks: bitcoinNetworks,
-    //     });
+        const bitcoinNonce = getNextNonce();
+        const bitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
+        console.log('bitcoin id: ', bitcoinIdentity.toHuman());
+        const [bitcoinValidation] = await buildValidations(
+            context,
+            [aliceSubstrateIdentity],
+            [bitcoinIdentity],
+            bitcoinNonce,
+            'bitcoin',
+            undefined,
+            undefined,
+            context.bitcoinWallet.alice
+        );
+        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', [
+            'BitcoinP2tr',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: bitcoinNonce,
+            identity: bitcoinIdentity,
+            validation: bitcoinValidation,
+            networks: bitcoinNetworks,
+        });
 
-    //     for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
-    //         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-    //         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
-    //             context.api,
-    //             context.mrEnclave,
-    //             context.api.createType('Index', nonce),
-    //             new PolkadotSigner(context.substrateWallet.alice),
-    //             aliceSubstrateIdentity,
-    //             identity.toHex(),
-    //             validation.toHex(),
-    //             networks.toHex(),
-    //             context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-    //             requestIdentifier
-    //         );
+        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                new PolkadotSigner(context.substrateWallet.alice),
+                aliceSubstrateIdentity,
+                identity.toHex(),
+                validation.toHex(),
+                networks.toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
 
-    //         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-    //         await assertIsInSidechainBlock('linkIdentityCall', res);
-    //     }
-    // });
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+            await assertIsInSidechainBlock('linkIdentityCall', res);
+        }
+    });
 
     defaultAssertions.forEach(({ description, assertion }) => {
         step(`request vc direct ${Object.keys(assertion)[0]} (alice)`, async function () {
