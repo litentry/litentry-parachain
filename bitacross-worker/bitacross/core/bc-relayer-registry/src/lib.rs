@@ -112,6 +112,9 @@ pub trait RelayerRegistryUpdater {
 	fn init(&self) -> RegistryResult<()>;
 	fn update(&self, account: Identity) -> RegistryResult<()>;
 	fn remove(&self, account: Identity) -> RegistryResult<()>;
+}
+
+pub trait RelayerRegistryLookup {
 	fn contains_key(&self, account: Identity) -> bool;
 }
 
@@ -122,18 +125,15 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 	}
 
 	#[cfg(feature = "std")]
-	fn update(&self, _account: Identity) -> RegistryResult<()> {
+	fn update(&self, account: Identity) -> RegistryResult<()> {
+		let mut registry = self.registry.write().unwrap();
+		registry.insert(account, ());
 		Ok(())
 	}
 
 	#[cfg(feature = "std")]
 	fn remove(&self, _account: Identity) -> RegistryResult<()> {
 		Ok(())
-	}
-
-	#[cfg(feature = "std")]
-	fn contains_key(&self, _account: Identity) -> bool {
-		true
 	}
 
 	// if `RELAYER_REGISTRY_FILE` exists, unseal and init from it
@@ -184,6 +184,14 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 			return RelayerRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
 		}
 		Ok(())
+	}
+}
+
+impl RelayerRegistryLookup for RelayerRegistry {
+	#[cfg(feature = "std")]
+	fn contains_key(&self, account: Identity) -> bool {
+		let registry = self.registry.read().unwrap();
+		registry.contains_key(&account)
 	}
 
 	#[cfg(feature = "sgx")]

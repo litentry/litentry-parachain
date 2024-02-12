@@ -34,6 +34,11 @@ pub struct Pair {
 }
 
 impl Pair {
+	pub fn new(private: SigningKey) -> Self {
+		let public = PublicKey::from(private.verifying_key());
+		Self { private, public }
+	}
+
 	pub fn public_bytes(&self) -> Vec<u8> {
 		self.public.as_affine().to_bytes().as_slice().to_vec()
 	}
@@ -55,7 +60,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{schnorr::SigningKey, PublicKey};
+	use k256::schnorr::SigningKey;
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -116,8 +121,7 @@ pub mod sgx {
 			let raw = unseal(self.path())?;
 			let secret = SigningKey::from_bytes(&raw)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-			let public = PublicKey::from(secret.verifying_key().clone());
-			Ok(Pair { public, private: secret })
+			Ok(Pair::new(secret))
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {

@@ -18,7 +18,7 @@ pub use sgx::*;
 
 use crate::error::{Error, Result};
 use k256::{
-	ecdsa::{signature::Signer, Signature, SigningKey},
+	ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
 	elliptic_curve::group::GroupEncoding,
 	PublicKey,
 };
@@ -34,6 +34,11 @@ pub struct Pair {
 }
 
 impl Pair {
+	pub fn new(private: SigningKey) -> Self {
+		let public = PublicKey::from(VerifyingKey::from(&private));
+		Self { private, public }
+	}
+
 	pub fn public_bytes(&self) -> Vec<u8> {
 		self.public.as_affine().to_bytes().as_slice().to_vec()
 	}
@@ -119,9 +124,7 @@ pub mod sgx {
 			let raw = unseal(self.path())?;
 			let secret = SigningKey::from_slice(&raw)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-
-			let public = PublicKey::from(VerifyingKey::from(&secret));
-			Ok(Pair { public, private: secret })
+			Ok(Pair::new(secret))
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {

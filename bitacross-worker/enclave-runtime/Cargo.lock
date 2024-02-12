@@ -285,6 +285,7 @@ dependencies = [
 name = "bc-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "bc-relayer-registry",
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
@@ -304,7 +305,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-direct-call",
- "litentry-macros",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2908,7 +2908,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-direct-call"
 version = "0.1.0"
 dependencies = [
+ "bc-relayer-registry",
  "core-primitives",
+ "itp-sgx-crypto",
  "itp-stf-primitives",
  "litentry-primitives",
  "parity-scale-codec",
