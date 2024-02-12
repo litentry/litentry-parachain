@@ -58,6 +58,7 @@ use sgx_types::*;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
+use teerex_primitives::SgxAttestationMethod;
 
 #[no_mangle]
 pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> sgx_status_t {
@@ -325,7 +326,14 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
 
-	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		quote,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		SgxAttestationMethod::Dcap,
+	));
 
 	info!("    [Enclave] Compose register enclave got extrinsic, returning");
 	create_extrinsics(call)
@@ -346,7 +354,14 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
 
-	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		quote,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		SgxAttestationMethod::Dcap,
+	));
 
 	info!("    [Enclave] Compose register enclave (skip-ra) got extrinsic, returning");
 	create_extrinsics(call)
@@ -376,7 +391,14 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
 
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		cert_der,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		SgxAttestationMethod::IAS,
+	));
 
 	create_extrinsics(call)
 }

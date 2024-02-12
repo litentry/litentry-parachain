@@ -19,16 +19,19 @@ chrono = { version = "0.4.19", features = ["alloc"], optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
 rustls = { version = "0.19", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+serde_json = { version = "1.0", default-features = false, optional = true }
 thiserror = { version = "1.0", optional = true }
 webpki = { version = "0.21", optional = true }
+# serde_derive = "1.0"
 
 # mesalock
 base64_sgx = { package = "base64", rev = "sgx_1.1.3", git = "https://github.com/mesalock-linux/rust-base64-sgx", optional = true }
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 num-bigint = { optional = true, git = "https://github.com/mesalock-linux/num-bigint-sgx" }
 rustls_sgx = { package = "rustls", rev = "sgx_1.1.3", features = ["dangerous_configuration"], git = "https://github.com/mesalock-linux/rustls", optional = true }
-serde_json-sgx = { package = "serde_json", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
+serde_json_sgx = { package = "serde_json", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
+serde_sgx = { package = "serde", tag = "sgx_1.1.3", features = ["rc", "unstable"], git = "https://github.com/mesalock-linux/serde-sgx", optional = true }
+serde_derive_sgx = { package = "serde_derive", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-sgx", optional = true }
 thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
 webpki-roots = { git = "https://github.com/mesalock-linux/webpki-roots", branch = "mesalock_sgx" }
 webpki_sgx = { package = "webpki", git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_sgx", optional = true }
@@ -65,7 +68,7 @@ std = [
     "log/std",
     "itertools/use_std",
     "serde/std",
-    "serde_json",
+    "serde_json/std",
 
     # optional std only
     "base64",
@@ -89,7 +92,9 @@ sgx = [
     "base64_sgx",
     "chrono_sgx",
     "rustls_sgx",
-    "serde_json-sgx",
+    "serde_derive_sgx",
+    "serde_sgx",
+    "serde_json_sgx",
     "thiserror_sgx",
     "webpki_sgx",
     "yasna_sgx",

@@ -64,7 +64,9 @@ use sp_io::{
 };
 use sp_runtime::traits::Verify;
 use std::string::{String, ToString};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
+pub use teerex_primitives::{
+	decl_rsa_request, MAAPolicy, SgxAttestationMethod, ShardIdentifier, SidechainBlockNumber,
+};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

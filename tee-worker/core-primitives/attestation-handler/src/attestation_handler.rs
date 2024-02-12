@@ -32,7 +32,7 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	cert,
-	maa::{MAAHandler, MAAService},
+	maa::{MAAService, MAAHandler},
 	Error as EnclaveError, Error, Result as EnclaveResult,
 };
 use codec::Encode;
@@ -325,8 +325,8 @@ where
 		debug!("[Enclave] Generated ECC cert info:");
 		trace!("[Enclave] Generated ECC cert info: key_der={:?}", &key_der);
 		trace!("[Enclave] Generated ECC cert info: cert_der={:?}", &cert_der);
-		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
-		Ok((key_der, cert_der, qe_quote))
+		trace!("[Enclave] Generated ECC cert info: qe_policy={:?}", &qe_policy);
+		Ok((key_der, cert_der, qe_policy))
 	}
 }
 

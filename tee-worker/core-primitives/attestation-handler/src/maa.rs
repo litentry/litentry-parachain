@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
+use crate::sgx_reexport_prelude::{serde_json, http_req, base64};
 
 use crate::Result as EnclaveResult;
 use http_req::{
@@ -37,85 +37,43 @@ use http_req::{
 	uri::Uri,
 };
 use log::debug;
-use serde::{Deserialize, Serialize};
 use std::{
 	net::TcpStream,
 	string::{String, ToString},
 	vec::Vec,
 };
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MAAPolicy {
-	#[serde(rename = "is-debuggable")]
-	pub is_debuggable: bool,
-
-	#[serde(rename = "product-id")]
-	pub product_id: u32,
-
-	#[serde(rename = "sgx-mrenclave")]
-	pub sgx_mrenclave: String,
-
-	#[serde(rename = "sgx-mrsigner")]
-	pub sgx_mrsigner: String,
-
-	pub svn: u32,
-	pub tee: String,
-}
-
-impl Default for MAAPolicy {
-	fn default() -> Self {
-		MAAPolicy {
-			is_debuggable: true,
-			product_id: 0_u32,
-			sgx_mrenclave: Default::default(),
-			sgx_mrsigner: Default::default(),
-			svn: 0_u32,
-			tee: "sgx".to_string(),
-		}
-	}
-}
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MAAResponse {
 	pub token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AttestationResult {
-	#[serde(rename = "x-ms-policy")]
-	#[serde(flatten)]
-	pub x_ms_policy: MAAPolicy,
-
-	#[serde(rename = "x-ms-sgx-ehd", default, skip_serializing_if = "Option::is_none")]
-	pub x_ms_sgx_ehd: Option<String>,
-}
-
 /// Trait to do Microsoft Azure Attestation
 pub trait MAAHandler {
 	/// Verify DCAP quote from MAA
-	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<MAAPolicy>;
+	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>>;
 }
 
 pub struct MAAService;
 impl MAAService {
-	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<MAAPolicy> {
-		let maa_res: MAAResponse = serde_json_sgx::from_slice(&writer).unwrap();
+	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<Vec<u8>> {
+		let maa_res: MAAResponse = serde_json::from_slice(&writer).unwrap();
 		let decompose_token: Vec<&str> = maa_res.token.split(".").collect();
 		if decompose_token.len() != 3 {
 			log::error!("JSON Web Tokens must have 3 components delimited by '.' characters.");
 		}
-		let token_body = base64::decode(decompose_token[1]).unwrap();
-		let attest_result: AttestationResult = serde_json_sgx::from_slice(&token_body).unwrap();
 
-		Ok(attest_result.x_ms_policy)
+		let policy = base64::decode(decompose_token[1]).unwrap();
+		Ok(policy)
 	}
 }
 
 impl MAAHandler for MAAService {
-	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<MAAPolicy> {
+	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>> {
 		debug!("    [Enclave] Entering azure_attest.");
 
-		let req_body = serde_json_sgx::json!({
+		let req_body = serde_json::json!({
 			"quote": base64::encode(quote.to_vec())
 		})
 		.to_string();
@@ -138,14 +96,8 @@ impl MAAHandler for MAAService {
 			.header("Authorization", &format!("Bearer {}", token))
 			.send(&mut stream, &mut writer)
 			.unwrap();
-		let status_code = response.status_code();
-		let reason = response.reason();
 
-		debug!(">>> response status code: {}", status_code);
-		debug!(">>> response reason: {}", reason);
-
-		let policy = Self::parse_maa_policy(&writer)?;
-		serde_json::to_vec(policy).map_err(|e| EnclaveError::Other(e.into()))
+		Self::parse_maa_policy(&writer)
 	}
 }
 

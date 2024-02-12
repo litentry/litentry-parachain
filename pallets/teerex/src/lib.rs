@@ -224,46 +224,114 @@ pub mod pallet {
 		#[pallet::weight((<T as Config>::WeightInfo::register_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_enclave(
 			origin: OriginFor<T>,
-			ra_report: Vec<u8>,
+			proof: Vec<u8>,
 			worker_url: Vec<u8>,
 			shielding_key: Option<Vec<u8>>,
 			vc_pubkey: Option<Vec<u8>>,
+			attest_method: SgxAttestationMethod,
 		) -> DispatchResultWithPostInfo {
 			log::info!("teerex: called into runtime call register_enclave()");
 
 			let sender = ensure_signed(origin)?;
-			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
+			ensure!(proof.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			log::info!("teerex: parameter length ok");
 
-			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
-				#[cfg(test)]
-				{
-					return Enclave::new(
+			let enclave = match attest_method {
+				SgxAttestationMethod::Ias => {
+					#[cfg(not(feature = "skip-ias-check"))]
+					let enclave = Self::verify_report(&sender, proof.clone()).map(|report| {
+						#[cfg(test)]
+						{
+							return Enclave::new(
+								sender.clone(),
+								report.mr_enclave,
+								report.timestamp,
+								worker_url.clone(),
+								shielding_key,
+								vc_pubkey,
+								report.build_mode,
+								Default::default(),
+							)
+						}
+
+						#[cfg(not(test))]
+						Enclave::new(
+							sender.clone(),
+							report.mr_enclave,
+							report.timestamp,
+							worker_url.clone(),
+							shielding_key,
+							vc_pubkey,
+							report.build_mode,
+							report.metadata,
+						)
+					})?;
+
+					#[cfg(feature = "skip-ias-check")]
+					let enclave = Enclave::new(
 						sender.clone(),
-						report.mr_enclave,
-						report.timestamp,
+						// insert mrenclave if the proof represents one, otherwise insert default
+						<MrEnclave>::decode(&mut proof.as_slice()).unwrap_or_default(),
+						<timestamp::Pallet<T>>::get().saturated_into(),
 						worker_url.clone(),
 						shielding_key,
 						vc_pubkey,
-						report.build_mode,
-						Default::default(),
-					)
-				}
+						SgxBuildMode::default(),
+						SgxEnclaveMetadata::default(),
+					);
 
-				#[cfg(not(test))]
-				Enclave::new(
-					sender.clone(),
-					report.mr_enclave,
-					report.timestamp,
-					worker_url.clone(),
-					shielding_key,
-					vc_pubkey,
-					report.build_mode,
-					report.metadata,
-				)
-			})?;
+					enclave
+				},
+				SgxAttestationMethod::Dcap => {
+					#[cfg(not(feature = "skip-ias-check"))]
+					let enclave = {
+						let verification_time = <timestamp::Pallet<T>>::get();
+
+						let policy = sgx_verify::verify_dcap_maa_policy(
+							&proof,
+							verification_time.saturated_into(),
+						)
+						.map_err(|e| {
+							log::error!("Teerex: verify_dcap_maa_policy failed: {:?}", e);
+							Error::<T>::EnclaveIsNotRegistered
+						})?;
+
+						let sgx_build_mode = if policy.is_debuggable {
+							SgxBuildMode::Debug
+						} else {
+							SgxBuildMode::Production
+						};
+						Enclave::new(
+							sender.clone(),
+							// insert mrenclave if the proof represents one, otherwise insert
+							// default
+							policy.sgx_mrenclave,
+							<timestamp::Pallet<T>>::get().saturated_into(),
+							worker_url.clone(),
+							shielding_key,
+							vc_pubkey,
+							sgx_build_mode,
+							SgxEnclaveMetadata::default(),
+						)
+					};
+
+					#[cfg(feature = "skip-ias-check")]
+					let enclave = Enclave::new(
+						sender.clone(),
+						// insert mrenclave if the proof represents one, otherwise insert default
+						<MrEnclave>::decode(&mut proof.as_slice()).unwrap_or_default(),
+						<timestamp::Pallet<T>>::get().saturated_into(),
+						worker_url.clone(),
+						shielding_key,
+						vc_pubkey,
+						SgxBuildMode::default(),
+						SgxEnclaveMetadata::default(),
+					);
+
+					enclave
+				},
+			};
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
@@ -273,19 +341,6 @@ pub mod pallet {
 
 			#[cfg(feature = "skip-ias-check")]
 			log::warn!("[teerex]: Skipping remote attestation check. Only dev-chains are allowed to do this!");
-
-			#[cfg(feature = "skip-ias-check")]
-			let enclave = Enclave::new(
-				sender.clone(),
-				// insert mrenclave if the ra_report represents one, otherwise insert default
-				<MrEnclave>::decode(&mut ra_report.as_slice()).unwrap_or_default(),
-				<timestamp::Pallet<T>>::get().saturated_into(),
-				worker_url.clone(),
-				shielding_key,
-				vc_pubkey,
-				SgxBuildMode::default(),
-				SgxEnclaveMetadata::default(),
-			);
 
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered

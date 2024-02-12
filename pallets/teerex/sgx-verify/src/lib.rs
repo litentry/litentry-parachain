@@ -50,8 +50,8 @@ use sp_std::{
 	prelude::*,
 };
 use teerex_primitives::{
-	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, SgxEnclaveMetadata,
-	TcbVersionStatus,
+	Cpusvn, Fmspc, MAAPolicy, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode,
+	SgxEnclaveMetadata, TcbVersionStatus,
 };
 use x509_cert::Certificate;
 
@@ -536,6 +536,18 @@ pub fn extract_tcb_info_from_raw_dcap_quote(
 	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
 	Ok((fmspc, tcb_info))
+}
+
+pub fn verify_dcap_maa_policy(
+	dcap_quote_raw: &[u8],
+	verification_time: u64,
+) -> Result<MAAPolicy, &'static str> {
+	let mut dcap_quote_clone = dcap_quote_raw;
+
+	let quote: DcapQuote =
+		Decode::decode(&mut dcap_quote_clone).map_err(|_| "Failed to decode attestation report")?;
+
+	todo!()
 }
 
 pub fn verify_dcap_quote(
