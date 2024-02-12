@@ -299,7 +299,8 @@ export const getIdGraphHash = async (
 export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    call: TrustedCallSigned
+    call: TrustedCallSigned,
+    isVcDirect = false
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
@@ -314,31 +315,10 @@ export const sendRequestFromTrustedCall = async (
         trustedOperation.toU8a()
     );
     const request = createJsonRpcRequest(
-        'author_submitAndWatchAesRequest',
+        isVcDirect ? 'author_requestVc' : 'author_submitAndWatchAesRequest',
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
-    return sendRequest(context.tee, request, context.api);
-};
-
-export const sendRequestFromTrustedCallDirect = async (
-    context: IntegrationTestContext,
-    teeShieldingKey: KeyObject,
-    call: TrustedCallSigned
-) => {
-    // construct trusted operation
-    const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
-    console.log('top: ', trustedOperation.toJSON());
-    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
-    // create the request parameter
-    const requestParam = await createAesRequest(
-        context.api,
-        context.mrEnclave,
-        teeShieldingKey,
-        hexToU8a(aesKey),
-        trustedOperation.toU8a()
-    );
-    const request = createJsonRpcRequest('author_requestVc', [u8aToHex(requestParam)], nextRequestId(context));
     return sendRequest(context.tee, request, context.api);
 };
 

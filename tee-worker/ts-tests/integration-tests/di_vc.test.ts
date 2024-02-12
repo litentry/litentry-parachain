@@ -141,6 +141,7 @@ describe('Test Vc (direct invocation)', function () {
         }
     });
 
+    // Testing VCs with request_vc call - might be obsolete in future due to replacement with request_vc_direct
     defaultAssertions.forEach(({ description, assertion }) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
@@ -163,6 +164,45 @@ describe('Test Vc (direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
             await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+            const events = await eventsPromise;
+            const vcIssuedEvents = events
+                .map(({ event }) => event)
+                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
+
+            assert.equal(
+                vcIssuedEvents.length,
+                1,
+                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
+            );
+            await assertVc(context, aliceSubstrateIdentity, res.value);
+        });
+    });
+
+    // Testing VCs with request_vc_direct call
+    defaultAssertions.forEach(({ description, assertion }) => {
+        step(`request vc direct ${Object.keys(assertion)[0]} (alice)`, async function () {
+            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+            const getNextNonce = () => currentNonce++;
+            const nonce = getNextNonce();
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            console.log(
+                `request vc direct ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`
+            );
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+
+            const requestVcCall = await createSignedTrustedCallRequestVc(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                new PolkadotSigner(context.substrateWallet.alice),
+                aliceSubstrateIdentity,
+                context.api.createType('Assertion', assertion).toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
+
+            const isVcDirect = true;
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
             const events = await eventsPromise;
             const vcIssuedEvents = events
                 .map(({ event }) => event)
