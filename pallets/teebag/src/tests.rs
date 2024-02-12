@@ -90,6 +90,7 @@ fn register_enclave_dev_works_with_no_scheduled_enclave() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(alice()),
 			Default::default(),
+			Default::default(),
 			TEST4_MRENCLAVE.to_vec(),
 			URL.to_vec(),
 			None,
@@ -113,6 +114,7 @@ fn register_enclave_dev_works_with_sgx_build_mode_debug() {
 		let signer4: AccountId32 = get_signer(TEST4_SIGNER_PUB);
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer4.clone()),
+			Default::default(),
 			Default::default(),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
@@ -152,6 +154,7 @@ fn parentchain_block_processed_works() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer7.clone()),
 			WorkerType::BitAcross,
+			Default::default(),
 			TEST7_CERT.to_vec(),
 			URL.to_vec(),
 			None,
@@ -195,6 +198,7 @@ fn register_dcap_enclave_works() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
 			WorkerType::Identity,
+			Default::default(),
 			TEST1_DCAP_QUOTE.to_vec(),
 			URL.to_vec(),
 			None,
@@ -226,6 +230,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 		let signer4: AccountId32 = get_signer(TEST4_SIGNER_PUB);
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer4.clone()),
+			Default::default(),
 			Default::default(),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
@@ -261,6 +266,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_production() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer8.clone()),
 			Default::default(),
+			Default::default(),
 			TEST8_CERT.to_vec(),
 			URL.to_vec(),
 			None,
@@ -287,6 +293,7 @@ fn register_enclave_prod_fails_with_wrong_attestation_type() {
 			Teebag::register_enclave(
 				RuntimeOrigin::signed(alice()),
 				Default::default(),
+				Default::default(),
 				TEST4_MRENCLAVE.to_vec(),
 				URL.to_vec(),
 				None,
@@ -306,6 +313,7 @@ fn register_enclave_prod_fails_with_no_scheduled_enclave() {
 		assert_noop!(
 			Teebag::register_enclave(
 				RuntimeOrigin::signed(signer),
+				Default::default(),
 				Default::default(),
 				TEST4_CERT.to_vec(),
 				URL.to_vec(),
@@ -333,6 +341,7 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer5.clone()),
 			WorkerType::BitAcross,
+			Default::default(),
 			TEST5_CERT.to_vec(),
 			URL.to_vec(),
 			None,
@@ -344,6 +353,7 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 			Teebag::register_enclave(
 				RuntimeOrigin::signed(signer6.clone()),
 				WorkerType::BitAcross,
+				Default::default(),
 				TEST6_CERT.to_vec(),
 				URL.to_vec(),
 				None,
@@ -359,13 +369,14 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 			Teebag::register_enclave(
 				RuntimeOrigin::signed(signer5.clone()),
 				WorkerType::Identity,
+				Default::default(),
 				TEST5_CERT.to_vec(),
 				URL.to_vec(),
 				None,
 				None,
 				AttestationType::Ias,
 			),
-			Error::<Test>::WorkerTypeNotAllowed
+			Error::<Test>::UnexpectedWorkerType
 		);
 
 		// remove and re-register it should work
@@ -374,6 +385,7 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer5),
 			WorkerType::Identity,
+			Default::default(),
 			TEST5_CERT.to_vec(),
 			URL.to_vec(),
 			None,
@@ -386,6 +398,7 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 			Teebag::register_enclave(
 				RuntimeOrigin::signed(signer6),
 				WorkerType::Identity,
+				Default::default(),
 				TEST6_CERT.to_vec(),
 				URL.to_vec(),
 				None,

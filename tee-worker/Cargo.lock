@@ -5156,6 +5156,9 @@ dependencies = [
 [[package]]
 name = "itp-settings"
 version = "0.9.0"
+dependencies = [
+ "litentry-primitives",
+]
 
 [[package]]
 name = "itp-sgx-crypto"
@@ -8736,13 +8739,11 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-teerex",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
