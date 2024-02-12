@@ -14,6 +14,7 @@
         "test-di-bitcoin-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_bitcoin_identity.test.ts'",
         "test-di-bitcoin-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_bitcoin_identity.test.ts'",
         "test-di-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
+        "test-di-vc-direct:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc_direct.test.ts'",
         "test-di-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
         "test-ii-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
         "test-ii-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
