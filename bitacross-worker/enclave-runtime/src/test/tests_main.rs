@@ -151,6 +151,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		sidechain_aura_tests::produce_sidechain_block_and_import_it,
 		sidechain_event_tests::ensure_events_get_reset_upon_block_proposal,
 		top_pool_tests::process_indirect_call_in_top_pool,
+		// TODO: Litentry disables it for now (P-494)
 		// top_pool_tests::submit_shielding_call_to_top_pool,
 		// tls_ra unit tests
 		tls_ra::seal_handler::test::seal_shielding_key_works,

@@ -25,13 +25,14 @@ use async_trait::async_trait;
 use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
-use itp_node_api::{api_client::PalletTeerexApi, node_api_factory::CreateNodeApi};
+use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_rpc_handler::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
 use jsonrpsee::{
 	types::{to_json_value, traits::Client},
 	ws_client::WsClientBuilder,
 };
+use litentry_primitives::WorkerType;
 use log::*;
 use std::{
 	collections::HashSet,
@@ -187,11 +188,11 @@ where
 			.node_api_factory
 			.create_api()
 			.map_err(|e| Error::Custom(format!("Failed to create NodeApi: {:?}", e).into()))?;
-		let enclaves = node_api.all_enclaves(None)?;
+		let enclaves = node_api.all_enclaves(WorkerType::BitAcross, None)?;
 		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
-			let enclave_url = enclave.url.clone();
+			let enclave_url = String::from_utf8_lossy(enclave.url.as_slice()).to_string();
 			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
