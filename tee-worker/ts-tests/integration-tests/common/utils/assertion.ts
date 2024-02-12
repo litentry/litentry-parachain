@@ -134,48 +134,6 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
     });
 }
 
-export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
-    const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
-    const primaryEnclave = (
-        await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])
-    ).toHuman() as unknown as PalletTeebagEnclave;
-
-    // Check vc index
-    expect(index).to.be.eq(data.id);
-    const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
-    const message = Buffer.from(data.issuer.mrenclave);
-    const vcPubkeyBytes = api.createType('Option<Bytes>', primaryEnclave.vcPubkey).unwrap();
-    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
-
-    const isValid = await ed.verify(signature, message, vcPubkey);
-    console.log('🚀 ~ verifySignature ~ isValid:', isValid);
-
-    expect(isValid).to.be.true;
-    return true;
-}
-
-export async function checkVc(vcObj: any, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
-    const vc = JSON.parse(JSON.stringify(vcObj));
-    delete vc.proof;
-    const signatureValid = await verifySignature(vc, index, proof, api);
-    expect(signatureValid).to.be.true;
-
-    const jsonValid = await checkJson(vcObj, proof);
-    expect(jsonValid).to.be.true;
-    return true;
-}
-
-// Check VC json fields
-export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
-    //check jsonSchema
-    const ajv = new Ajv();
-    const validate = ajv.compile(jsonSchema);
-    const isValid = validate(vc);
-    expect(isValid).to.be.true;
-    expect(vc.type[0] === 'VerifiableCredential' && proofJson.type === 'Ed25519Signature2020').to.be.true;
-    return true;
-}
-
 // for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
 export async function assertIdGraphMutationEvent(
     context: IntegrationTestContext,
