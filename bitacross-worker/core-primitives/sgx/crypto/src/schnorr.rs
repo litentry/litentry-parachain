@@ -92,11 +92,11 @@ pub mod sgx {
 			self.unseal()
 		}
 
-		fn exists(&self) -> bool {
+		pub fn exists(&self) -> bool {
 			self.path().exists()
 		}
 
-		fn init(&self) -> Result<Pair> {
+		pub fn init(&self) -> Result<Pair> {
 			if !self.exists() {
 				info!("Keyfile not found, creating new! {}", self.path().display());
 				let mut seed = [0u8; 32];
@@ -129,29 +129,39 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
+	use crate::{
+		key_repository::AccessKey,
+		schnorr::{create_schnorr_repository, Pair, Seal},
+		std::string::ToString,
+	};
+	use itp_sgx_temp_dir::TempDir;
+	use k256::schnorr::{signature::Verifier, Signature, VerifyingKey};
+	use std::path::PathBuf;
 
-	#[test]
-	pub fn creating_repository_with_same_path_and_prefix_results_in_same_key() {
+	pub fn schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key() {
+		//given
 		let key_file_prefix = "test";
 		fn get_key_from_repo(path: PathBuf, prefix: &str) -> Pair {
 			create_schnorr_repository(path, prefix).unwrap().retrieve_key().unwrap()
 		}
 		let temp_dir = TempDir::with_prefix(
-			"creating_repository_with_same_path_and_prefix_results_in_same_key",
+			"schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key",
 		)
 		.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
-		assert_eq!(
-			get_key_from_repo(temp_path.clone(), key_file_prefix),
-			get_key_from_repo(temp_path.clone(), key_file_prefix)
-		);
+
+		//when
+		let first_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+
+		//then
+		assert_eq!(first_key.public, second_key.public);
 	}
 
-	#[test]
-	pub fn seal_init_should_create_new_key_if_not_present() {
+	pub fn schnorr_seal_init_should_create_new_key_if_not_present() {
 		//given
 		let temp_dir =
-			TempDir::with_prefix("seal_init_should_create_new_key_if_not_present").unwrap();
+			TempDir::with_prefix("schnorr_seal_init_should_create_new_key_if_not_present").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		assert!(!seal.exists());
 
@@ -162,10 +172,10 @@ pub mod sgx_tests {
 		assert!(seal.exists());
 	}
 
-	#[test]
-	pub fn seal_init_should_not_change_key_if_exists() {
+	pub fn schnorr_seal_init_should_not_change_key_if_exists() {
 		//given
-		let temp_dir = TempDir::with_prefix("seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("schnorr_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
 
@@ -173,6 +183,21 @@ pub mod sgx_tests {
 		let new_pair = seal.init().unwrap();
 
 		//then
-		assert!(pair, new_pair);
+		assert_eq!(pair.public, new_pair.public);
+	}
+
+	pub fn schnorr_sign_should_produce_valid_signature() {
+		//given
+		let temp_dir = TempDir::with_prefix("ecdsa_sign_should_produce_valid_signature").unwrap();
+		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
+		let pair = seal.init().unwrap();
+		let message = [1; 32];
+
+		//when
+		let signature = Signature::try_from(pair.sign(&message).unwrap().as_slice()).unwrap();
+
+		//then
+		let verifying_key = VerifyingKey::try_from(&pair.public).unwrap();
+		assert!(verifying_key.verify(&message, &signature).is_ok());
 	}
 }
