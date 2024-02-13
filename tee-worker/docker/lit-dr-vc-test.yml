@@ -1,7 +1,7 @@
 services:
-    lit-di-vc-test:
+    lit-dr-vc-test:
         image: litentry/litentry-cli:latest
-        container_name: litentry-di-vc-test
+        container_name: litentry-dr-vc-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
