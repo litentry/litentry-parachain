@@ -28,7 +28,6 @@ use codec::{Decode, Encode};
 use core::time::Duration;
 use lc_stf_task_sender::RequestType;
 use std::{boxed::Box, string::String};
-use substrate_fixed::types::U32F32;
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
