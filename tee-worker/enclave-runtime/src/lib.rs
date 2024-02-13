@@ -71,7 +71,7 @@ use itp_component_container::ComponentGetter;
 use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
