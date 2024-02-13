@@ -79,7 +79,6 @@ pub enum WorkerMode {
 	#[default]
 	OffChainWorker,
 	Sidechain,
-	Teeracle,
 }
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]

@@ -102,9 +102,6 @@ mod sync;
 mod tls_ra;
 pub mod top_pool_execution;
 
-#[cfg(feature = "teeracle")]
-pub mod teeracle;
-
 #[cfg(feature = "test")]
 pub mod test;
 
@@ -590,10 +587,6 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 	id: &ParentchainId,
 	is_syncing: bool,
 ) -> Result<()> {
-	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
-		trace!("Not importing any parentchain blocks");
-		return Ok(())
-	}
 	trace!(
 		"[{:?}] Dispatching Import of {} blocks and {} events",
 		id,
