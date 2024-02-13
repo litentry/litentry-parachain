@@ -22,4 +22,4 @@ echo "Using node endpoint: $NODE_ENDPOINT"
 
 cd /ts-tests
 pnpm install
-pnpm --filter worker run $TEST:staging
+NODE_ENV=staging pnpm --filter worker run $TEST
