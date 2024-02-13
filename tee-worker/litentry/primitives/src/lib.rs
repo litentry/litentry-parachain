@@ -43,6 +43,10 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_hex_utils::hex_encode;
 use log::error;
+pub use pallet_teebag::{
+	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
+	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
+};
 pub use parentchain_primitives::{
 	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
@@ -64,7 +68,6 @@ use sp_io::{
 };
 use sp_runtime::traits::Verify;
 use std::string::{String, ToString};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

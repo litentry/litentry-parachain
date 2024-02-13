@@ -1,0 +1,40 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-direct-call"
+version = "0.1.0"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+
+# internal dependencies
+itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
+litentry-primitives = { path = "../../primitives", default-features = false }
+parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
+
+# sgx dependencies
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true }
+
+
+[dev-dependencies]
+
+[features]
+default = ["std"]
+production = [
+    "parentchain-primitives/production",
+]
+sgx = [
+    "sgx_tstd",
+    "litentry-primitives/sgx",
+]
+std = [
+    "itp-stf-primitives/std",
+    "litentry-primitives/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "parentchain-primitives/std",
+]

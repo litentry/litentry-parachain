@@ -21,9 +21,10 @@ mod extrinsic_parser;
 
 use crate::{
 	decode_and_log_error,
-	indirect_calls::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
+	indirect_calls::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
 	integritee::extrinsic_parser::ParseExtrinsic,
 };
+use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
@@ -37,18 +38,20 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
+use litentry_primitives::Identity;
 use log::trace;
-use sp_core::crypto::AccountId32;
 
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
 	#[codec(index = 0)]
-	BitAcross(BitAcrossArgs),
+	SetScheduledEnclave(SetScheduledEnclaveArgs),
 	#[codec(index = 1)]
-	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
-	#[codec(index = 2)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+	#[codec(index = 2)]
+	AddRelayer(AddRelayerArgs),
+	#[codec(index = 3)]
+	RemoveRelayer(RemoveRelayerArgs),
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
@@ -58,26 +61,45 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::BitAcross(bitacross_args) => bitacross_args.dispatch(executor, ()),
-			IndirectCall::UpdateScheduledEnclave(update_scheduled_enclave_args) =>
-				update_scheduled_enclave_args.dispatch(executor, ()),
+			IndirectCall::SetScheduledEnclave(set_scheduled_enclave_args) =>
+				set_scheduled_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_scheduled_enclave_args) =>
 				remove_scheduled_enclave_args.dispatch(executor, ()),
+			IndirectCall::AddRelayer(add_relayer_args) => add_relayer_args.dispatch(executor, ()),
+			IndirectCall::RemoveRelayer(remove_relayer_args) =>
+				remove_relayer_args.dispatch(executor, ()),
 		}
 	}
 }
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct BitAcrossArgs {
-	account_id: AccountId32,
+pub struct AddRelayerArgs {
+	account_id: Identity,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for BitAcrossArgs
+	IndirectDispatch<Executor, TrustedCallSigned> for AddRelayerArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::error!("Not yet implemented");
+		log::info!("Adding Relayer Account to Registry: {:?}", self.account_id);
+		GLOBAL_RELAYER_REGISTRY.update(self.account_id.clone()).unwrap();
+		Ok(())
+	}
+}
+
+#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
+pub struct RemoveRelayerArgs {
+	account_id: Identity,
+}
+
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for RemoveRelayerArgs
+{
+	type Args = ();
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
+		log::info!("Remove Relayer Account from Registry: {:?}", self.account_id);
+		GLOBAL_RELAYER_REGISTRY.remove(self.account_id.clone()).unwrap();
 		Ok(())
 	}
 }
@@ -116,15 +138,20 @@ where
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
 
-		if index == metadata.placeholder_call_indexes().ok()? {
-			let args = decode_and_log_error::<BitAcrossArgs>(call_args)?;
-			Some(IndirectCall::BitAcross(args))
-		} else if index == metadata.update_scheduled_enclave().ok()? {
-			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
-			Some(IndirectCall::UpdateScheduledEnclave(args))
-		} else if index == metadata.remove_scheduled_enclave().ok()? {
+		if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::SetScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
+		} else if index == metadata.add_relayer_call_indexes().ok()? {
+			log::error!("Received Add Relayer indirect call");
+			let args = decode_and_log_error::<AddRelayerArgs>(call_args)?;
+			Some(IndirectCall::AddRelayer(args))
+		} else if index == metadata.remove_relayer_call_indexes().ok()? {
+			log::error!("Processing Remove Relayer Call");
+			let args = decode_and_log_error::<RemoveRelayerArgs>(call_args)?;
+			Some(IndirectCall::RemoveRelayer(args))
 		} else {
 			None
 		}

@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureRoot;
-use sp_core::H256;
+use sp_core::{ConstU32, H256};
 use sp_keyring::AccountKeyring;
 use sp_runtime::{
 	generic,
@@ -136,6 +136,7 @@ impl pallet_teebag::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
+	type MaxEnclaveIdentifier = ConstU32<1>;
 }
 
 // This function basically just builds a genesis storage key/value store according to

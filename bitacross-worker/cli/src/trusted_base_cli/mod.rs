@@ -17,8 +17,16 @@
 
 use crate::{
 	trusted_base_cli::commands::{
-		balance::BalanceCommand, get_shard::GetShardCommand, get_shard_vault::GetShardVaultCommand,
-		nonce::NonceCommand, set_balance::SetBalanceCommand, transfer::TransferCommand,
+		balance::BalanceCommand,
+		bitacross::{
+			direct_call_sign_bitcoin::RequestDirectCallSignBitcoinCommand,
+			direct_call_sign_ethereum::RequestDirectCallSignEthereumCommand,
+		},
+		get_shard::GetShardCommand,
+		get_shard_vault::GetShardVaultCommand,
+		nonce::NonceCommand,
+		set_balance::SetBalanceCommand,
+		transfer::TransferCommand,
 		unshield_funds::UnshieldFundsCommand,
 	},
 	trusted_cli::TrustedCli,
@@ -61,6 +69,12 @@ pub enum TrustedBaseCommand {
 
 	/// get shard vault for shielding (if defined for this worker)
 	GetShardVault(GetShardVaultCommand),
+
+	/// sign bitcoin transaction using custodian wallet
+	RequestDirectCallSignBitcoin(RequestDirectCallSignBitcoinCommand),
+
+	/// sign ethereum transaction using custodian wallet
+	RequestDirectCallSignEthereum(RequestDirectCallSignEthereumCommand),
 }
 
 impl TrustedBaseCommand {
@@ -75,6 +89,8 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShard(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShardVault(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestDirectCallSignBitcoin(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestDirectCallSignEthereum(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,14 +17,19 @@
 // TODO: maybe use macros to simplify this
 use crate::{error::Result, NodeMetadata};
 
-const BITACROSS: &str = "BitAcross";
+const BITACROSS: &str = "Bitacross";
 
 pub trait BitAcrossCallIndexes {
-	fn placeholder_call_indexes(&self) -> Result<[u8; 2]>;
+	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]>;
+	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl BitAcrossCallIndexes for NodeMetadata {
-	fn placeholder_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(BITACROSS, "placeholder")
+	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "add_relayer")
+	}
+
+	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "remove_relayer")
 	}
 }

@@ -42,16 +42,19 @@ use itp_attestation_handler::{AttestationHandler, RemoteAttestationType, SgxQlQv
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes,
+	pallet_teebag::TeebagCallIndexes,
 	provider::{AccessNodeMetadata, Error as MetadataProviderError},
 	Error as MetadataError,
 };
 use itp_node_api_metadata::NodeMetadata;
-use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_settings::{
+	worker::MR_ENCLAVE_SIZE,
+	worker_mode::{ProvideWorkerMode, WorkerModeProvider},
+};
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
-use itp_types::OpaqueCall;
+use itp_types::{AttestationType, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::*;
@@ -142,7 +145,8 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
-		Ok(url) => url,
+		// Litentry: the teebag extrinsic expects an URL with plain utf8 encoded Vec<u8>, not string scale-encoded
+		Ok(url) => url.as_bytes().to_vec(),
 		Err(_) =>
 			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
 	};
@@ -178,7 +182,8 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
-		Ok(url) => url,
+		// Litentry: the teebag extrinsic expects an URL with plain utf8 encoded Vec<u8>, not string scale-encoded
+		Ok(url) => url.as_bytes().to_vec(),
 		Err(_) =>
 			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
 	};
@@ -204,7 +209,7 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 }
 
 pub fn generate_dcap_ra_extrinsic_internal(
-	url: String,
+	url: Vec<u8>,
 	skip_ra: bool,
 	quoting_enclave_target_info: Option<&sgx_target_info_t>,
 	quote_size: Option<&u32>,
@@ -287,7 +292,8 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
-		Ok(url) => url,
+		// Litentry: the teebag extrinsic expects an URL with plain utf8 encoded Vec<u8>, not string scale-encoded
+		Ok(url) => url.as_bytes().to_vec(),
 		Err(_) =>
 			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
 	};
@@ -311,7 +317,7 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 }
 
 pub fn generate_dcap_ra_extrinsic_from_quote_internal(
-	url: String,
+	url: Vec<u8>,
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
@@ -324,15 +330,25 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
+	let attestation_type = AttestationType::Dcap(Default::default()); // skip_ra should be false here already
 
-	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
+		quote,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		attestation_type,
+	));
 
 	info!("    [Enclave] Compose register enclave got extrinsic, returning");
 	create_extrinsics(call)
 }
 
 pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
-	url: String,
+	url: Vec<u8>,
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
@@ -346,25 +362,35 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
 
-	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
+		quote,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		AttestationType::Ignore,
+	));
 
 	info!("    [Enclave] Compose register enclave (skip-ra) got extrinsic, returning");
 	create_extrinsics(call)
 }
 
 fn generate_ias_ra_extrinsic_internal(
-	url: String,
+	url: Vec<u8>,
 	skip_ra: bool,
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let cert_der = attestation_handler.generate_ias_ra_cert(skip_ra)?;
 
-	generate_ias_ra_extrinsic_from_der_cert_internal(url, &cert_der)
+	generate_ias_ra_extrinsic_from_der_cert_internal(url, &cert_der, skip_ra)
 }
 
 pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
-	url: String,
+	url: Vec<u8>,
 	cert_der: &[u8],
+	skip_ra: bool,
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
@@ -375,8 +401,18 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
+	let attestation_type = if skip_ra { AttestationType::Ignore } else { AttestationType::Ias };
 
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
+	let call = OpaqueCall::from_tuple(&(
+		call_ids,
+		WorkerType::Identity,
+		WorkerModeProvider::worker_mode(),
+		cert_der,
+		url,
+		shielding_pubkey,
+		vc_pubkey,
+		attestation_type,
+	));
 
 	create_extrinsics(call)
 }

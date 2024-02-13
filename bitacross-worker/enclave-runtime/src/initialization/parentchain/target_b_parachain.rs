@@ -104,6 +104,7 @@ impl TargetBParachainHandler {
 			)?,
 			WorkerMode::Sidechain =>
 				create_sidechain_triggered_import_dispatcher_for_target_b(block_importer),
+			WorkerMode::Teeracle => unreachable!("WorkerMode::Teeracle is not supported"),
 		};
 
 		let parachain_handler = Self {

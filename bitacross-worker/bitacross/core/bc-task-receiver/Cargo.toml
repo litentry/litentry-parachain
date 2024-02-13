@@ -43,6 +43,8 @@ itp-types = { path = "../../../core-primitives/types", default-features = false 
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # litentry primities 
+lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
+litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
@@ -54,6 +56,7 @@ sgx = [
     "hex-sgx",
     "sgx_tstd",
     "bc-task-sender/sgx",
+    "lc-direct-call/sgx",
     "litentry-primitives/sgx",
     "ita-stf/sgx",
     "itp-enclave-metrics/sgx",
@@ -72,6 +75,7 @@ std = [
     "threadpool",
     "log/std",
     "bc-task-sender/std",
+    "lc-direct-call/std",
     "litentry-primitives/std",
     "ita-sgx-runtime/std",
     "ita-stf/std",
@@ -89,4 +93,7 @@ std = [
     "itp-utils/std",
     "futures",
     "thiserror",
+]
+production = [
+    "litentry-macros/production",
 ]
