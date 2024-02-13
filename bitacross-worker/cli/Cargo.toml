@@ -55,7 +55,6 @@ ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 lc-direct-call = { path = "../litentry/core/direct-call" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
-pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 scale-value = "0.6.0"
 sp-core-hashing = "6.0.0"
 
