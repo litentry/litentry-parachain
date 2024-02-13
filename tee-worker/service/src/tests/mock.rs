@@ -15,8 +15,8 @@
 
 */
 
-use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
-use itp_types::{Enclave, MrEnclave, ShardIdentifier, H256 as Hash};
+use itp_node_api::api_client::{ApiResult, PalletTeebagApi};
+use itp_types::{AccountId, Enclave, MrEnclave, ShardIdentifier, WorkerType, H256 as Hash};
 use std::collections::HashSet;
 
 pub struct TestNodeApi;
@@ -26,43 +26,44 @@ pub const W2_URL: &str = "127.0.0.1:33333";
 
 pub fn enclaves() -> Vec<Enclave> {
 	vec![
-		Enclave::new([0; 32].into(), [1; 32], 1, format!("wss://{}", W1_URL)),
-		Enclave::new([2; 32].into(), [3; 32], 2, format!("wss://{}", W2_URL)),
+		Enclave::new(WorkerType::Identity).with_url(W1_URL.into()),
+		Enclave::new(WorkerType::Identity).with_url(W2_URL.into()),
 	]
 }
 
-impl PalletTeerexApi for TestNodeApi {
+impl PalletTeebagApi for TestNodeApi {
 	type Hash = Hash;
 
-	fn enclave(&self, index: u64, _at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
-		Ok(Some(enclaves().remove(index as usize)))
+	fn enclave(&self, _account: &AccountId, _at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
+		unreachable!()
 	}
-	fn enclave_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
+	fn enclave_count(&self, _worker_type: WorkerType, _at_block: Option<Hash>) -> ApiResult<u64> {
 		unreachable!()
 	}
 
-	fn all_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
+	fn all_enclaves(
+		&self,
+		_worker_type: WorkerType,
+		_at_block: Option<Hash>,
+	) -> ApiResult<Vec<Enclave>> {
 		Ok(enclaves())
 	}
 
-	fn worker_for_shard(
+	fn primary_enclave_identifier_for_shard(
 		&self,
-		_: &ShardIdentifier,
-		_at_block: Option<Hash>,
-	) -> ApiResult<Option<Enclave>> {
-		unreachable!()
-	}
-	fn latest_ipfs_hash(
-		&self,
-		_: &ShardIdentifier,
-		_at_block: Option<Hash>,
-	) -> ApiResult<Option<[u8; 46]>> {
+		worker_type: WorkerType,
+		shard: &ShardIdentifier,
+		at_block: Option<Self::Hash>,
+	) -> ApiResult<Option<AccountId>> {
 		unreachable!()
 	}
 
-	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let enclaves = enclaves();
-		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();
-		Ok(mr_enclaves.into_iter().collect())
+	fn primary_enclave_for_shard(
+		&self,
+		worker_type: WorkerType,
+		shard: &ShardIdentifier,
+		at_block: Option<Self::Hash>,
+	) -> ApiResult<Option<Enclave>> {
+		unreachable!()
 	}
 }

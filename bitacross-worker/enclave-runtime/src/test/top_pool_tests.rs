@@ -22,20 +22,15 @@ use crate::test::{
 			create_ocall_api, create_top_pool, encrypt_trusted_operation, sign_trusted_call,
 		},
 		initialize_test_state::init_state,
-		test_setup::TestStf,
 	},
 	mocks::types::{
 		TestShieldingKey, TestShieldingKeyRepo, TestSigner, TestStateHandler, TestTopPoolAuthor,
 	},
 };
 use codec::Encode;
-use ita_parentchain_interface::integritee;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
 	Getter, TrustedCall, TrustedCallSigned,
-};
-use itc_parentchain::indirect_calls_executor::{
-	mock::TestEventCreator, ExecuteIndirectCalls, IndirectCallsExecutor,
 };
 use itc_parentchain_test::{
 	parentchain_block_builder::ParentchainBlockBuilder,
@@ -46,22 +41,18 @@ use itp_node_api::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
 		ParentchainUncheckedExtrinsic,
 	},
-	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
+	metadata::metadata_mocks::NodeMetadataMock,
 };
-use itp_node_api_metadata::pallet_teerex::TeerexCallIndexes;
+use itp_node_api_metadata::pallet_teebag::TeebagCallIndexes;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_executor::enclave_signer::StfEnclaveSigner;
-use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
-use itp_stf_state_observer::mock::ObserveStateMock;
+use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
 };
-use itp_types::{
-	parentchain::Address, AccountId, Block, RsaRequest, ShardIdentifier, ShieldFundsFn, H256,
-};
+use itp_types::{parentchain::Address, Block, CallWorkerFn, RsaRequest, ShardIdentifier, H256};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
@@ -106,6 +97,9 @@ pub fn process_indirect_call_in_top_pool() {
 
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }
+
+/*
+// TODO: use our trusted call for testing - see P-494
 
 pub fn submit_shielding_call_to_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
@@ -172,6 +166,8 @@ pub fn submit_shielding_call_to_top_pool() {
 	assert!(trusted_call.verify_signature(&mr_enclave.m, &shard_id));
 }
 
+*/
+
 fn encrypted_indirect_call<
 	AttestationApi: EnclaveAttestationOCallApi,
 	ShieldingKey: ShieldingCryptoEncrypt,
@@ -194,11 +190,10 @@ fn encrypted_indirect_call<
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
 }
 
-fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
-	shard: ShardIdentifier,
-	shielding_key: &ShieldingKey,
+fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
+	_shard: ShardIdentifier,
+	_shielding_key: &ShieldingKey,
 ) -> Block {
-	let target_account = shielding_key.encrypt(&AccountId::new([2u8; 32]).encode()).unwrap();
 	let test_signer = ed25519::Pair::from_seed(b"33345678901234567890123456789012");
 	let signature = test_signer.sign(&[0u8]);
 
@@ -212,15 +207,10 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 
 	let dummy_node_metadata = NodeMetadataMock::new();
 
-	let shield_funds_indexes = dummy_node_metadata.shield_funds_call_indexes().unwrap();
+	let call_index = dummy_node_metadata.post_opaque_task_call_indexes().unwrap();
 	let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
-		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
-			(
-				shield_funds_indexes,
-				target_account,
-				ita_stf::test_genesis::SECOND_ENDOWED_ACC_FUNDS,
-				shard,
-			),
+		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
+			(call_index, RsaRequest::default()),
 			Address::Address32([1u8; 32]),
 			MultiSignature::Ed25519(signature),
 			default_extra_for_test.signed_extra(),

@@ -31,11 +31,11 @@ async function transfer(api: any, Alice: any) {
             });
     });
 }
-async function setTeerexAdmin(api: any, Alice: any) {
+async function teebagSetAdmin(api: any, Alice: any) {
     return new Promise(async (resolve, reject) => {
         // Note: The hardcoded address is that of Alice on dev chain
         await api.tx.sudo
-            .sudo(api.tx.teerex.setAdmin("esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5"))
+            .sudo(api.tx.teebag.setAdmin("esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5"))
             .signAndSend(Alice, ({ status, events, dispatchError }) => {
                 if (status.isInBlock || status.isFinalized) {
                     if (dispatchError) {
@@ -47,23 +47,23 @@ async function setTeerexAdmin(api: any, Alice: any) {
                             const { docs, name, section } = decoded;
 
                             console.log(colors.red(`${section}.${name}: ${docs.join(" ")}`));
-                            reject("updateScheduledEnclave failed");
+                            reject("teebag.setAdmin failed");
                         } else {
                             // Other, CannotLookup, BadOrigin, no extra info
                             console.log(dispatchError.toString());
-                            reject("updateScheduledEnclave failed");
+                            reject("teebag.setAdmin failed");
                         }
                     } else {
-                        console.log(colors.green("updateScheduledEnclave completed"));
-                        resolve("updateScheduledEnclave done");
+                        console.log(colors.green("teebag.setAdmin completed"));
+                        resolve("teebag.setAdmin done");
                     }
                 }
             });
     });
 }
-async function updateScheduledEnclave(api: any, Alice: any, block: any) {
+async function teebagSetScheduledEnclave(api: any, Alice: any, block: any) {
     return new Promise(async (resolve, reject) => {
-        await api.tx.teerex.updateScheduledEnclave(block, hexToU8a(`0x${mrenclave}`))
+        await api.tx.teebag.setScheduledEnclave("Identity", block, hexToU8a(`0x${mrenclave}`))
             .signAndSend(Alice, ({ status, events, dispatchError }) => {
                 if (status.isInBlock || status.isFinalized) {
                     if (dispatchError) {
@@ -75,15 +75,15 @@ async function updateScheduledEnclave(api: any, Alice: any, block: any) {
                             const { docs, name, section } = decoded;
 
                             console.log(colors.red(`${section}.${name}: ${docs.join(" ")}`));
-                            reject("updateScheduledEnclave failed");
+                            reject("teebag.setScheduledEnclave failed");
                         } else {
                             // Other, CannotLookup, BadOrigin, no extra info
                             console.log(dispatchError.toString());
-                            reject("updateScheduledEnclave failed");
+                            reject("teebag.setScheduledEnclave failed");
                         }
                     } else {
-                        console.log(colors.green("updateScheduledEnclave completed"));
-                        resolve("updateScheduledEnclave done");
+                        console.log(colors.green("teebag.setScheduledEnclave completed"));
+                        resolve("teebag.setScheduledEnclave done");
                     }
                 }
             });
@@ -100,8 +100,8 @@ async function main() {
     const Alice = keyring.addFromUri("//Alice", { name: "Alice default" });
 
     await transfer(defaultAPI, Alice);
-    await setTeerexAdmin(defaultAPI, Alice);
-    await updateScheduledEnclave(defaultAPI, Alice, block);
+    await teebagSetAdmin(defaultAPI, Alice);
+    await teebagSetScheduledEnclave(defaultAPI, Alice, block);
 
     console.log(colors.green("done"));
     process.exit();

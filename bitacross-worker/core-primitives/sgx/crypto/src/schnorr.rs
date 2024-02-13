@@ -16,17 +16,33 @@
 #[cfg(feature = "sgx")]
 pub use sgx::*;
 
-pub use libsecp256k1;
-
-use libsecp256k1::{PublicKey, SecretKey};
+use crate::error::{Error, Result};
+use k256::{
+	elliptic_curve::group::GroupEncoding,
+	schnorr::{signature::Signer, Signature, SigningKey},
+	PublicKey,
+};
+use std::{string::ToString, vec::Vec};
 
 /// File name of the sealed seed file.
-pub const SEALED_SIGNER_SEED_FILE: &str = "secp256k1_key_sealed.bin";
+pub const SEALED_SIGNER_SEED_FILE: &str = "schnorr_key_sealed.bin";
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Pair {
 	pub public: PublicKey,
-	pub secret: SecretKey,
+	private: SigningKey,
+}
+
+impl Pair {
+	pub fn public_bytes(&self) -> Vec<u8> {
+		self.public.as_affine().to_bytes().as_slice().to_vec()
+	}
+
+	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
+		let signature: Signature =
+			self.private.try_sign(payload).map_err(|e| Error::Other(e.to_string().into()))?;
+		Ok(signature.to_bytes())
+	}
 }
 
 #[cfg(feature = "sgx")]
@@ -35,18 +51,18 @@ pub mod sgx {
 	use crate::{
 		error::{Error, Result},
 		key_repository::KeyRepository,
-		secp256k1::Pair,
+		schnorr::Pair,
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use libsecp256k1::{PublicKey, SecretKey};
+	use k256::{schnorr::SigningKey, PublicKey};
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
 
-	/// Creates a repository for an secp256k1 keypair and initializes
+	/// Creates a repository for schnorr keypair and initializes
 	/// a fresh private key if it doesn't exist at `path`.
-	pub fn create_secp256k1_repository(
+	pub fn create_schnorr_repository(
 		path: PathBuf,
 		key_file_prefix: &str,
 	) -> Result<KeyRepository<Pair, Seal>> {
@@ -76,11 +92,11 @@ pub mod sgx {
 			self.unseal()
 		}
 
-		fn exists(&self) -> bool {
+		pub fn exists(&self) -> bool {
 			self.path().exists()
 		}
 
-		fn init(&self) -> Result<Pair> {
+		pub fn init(&self) -> Result<Pair> {
 			if !self.exists() {
 				info!("Keyfile not found, creating new! {}", self.path().display());
 				let mut seed = [0u8; 32];
@@ -98,16 +114,14 @@ pub mod sgx {
 
 		fn unseal(&self) -> Result<Self::Unsealed> {
 			let raw = unseal(self.path())?;
-
-			let secret = SecretKey::parse_slice(&raw)
+			let secret = SigningKey::from_bytes(&raw)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-			let public = PublicKey::from_secret_key(&secret);
-
-			Ok(Pair { public, secret })
+			let public = PublicKey::from(secret.verifying_key().clone());
+			Ok(Pair { public, private: secret })
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
-			let raw = unsealed.secret.serialize();
+			let raw = unsealed.private.to_bytes();
 			seal(&raw, self.path()).map_err(|e| e.into())
 		}
 	}
@@ -115,33 +129,39 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
-	use crate::{key_repository::AccessKey, secp256k1::Pair, std::string::ToString, ToPubkey};
+	use crate::{
+		key_repository::AccessKey,
+		schnorr::{create_schnorr_repository, Pair, Seal},
+		std::string::ToString,
+	};
 	use itp_sgx_temp_dir::TempDir;
-	use std::path::{Path, PathBuf};
+	use k256::schnorr::{signature::Verifier, Signature, VerifyingKey};
+	use std::path::PathBuf;
 
-	#[test]
-	pub fn creating_repository_with_same_path_and_prefix_results_in_same_key() {
+	pub fn schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key() {
+		//given
 		let key_file_prefix = "test";
 		fn get_key_from_repo(path: PathBuf, prefix: &str) -> Pair {
-			create_secp256k1_repository(path, prefix).unwrap().retrieve_key().unwrap()
+			create_schnorr_repository(path, prefix).unwrap().retrieve_key().unwrap()
 		}
 		let temp_dir = TempDir::with_prefix(
-			"creating_repository_with_same_path_and_prefix_results_in_same_key",
+			"schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key",
 		)
 		.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
-		assert_eq!(
-			get_key_from_repo(temp_path.clone(), key_file_prefix),
-			get_key_from_repo(temp_path.clone(), key_file_prefix)
-		);
+
+		//when
+		let first_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix);
+
+		//then
+		assert_eq!(first_key.public, second_key.public);
 	}
 
-	#[test]
-	pub fn seal_init_should_create_new_key_if_not_present() {
+	pub fn schnorr_seal_init_should_create_new_key_if_not_present() {
 		//given
 		let temp_dir =
-			TempDir::with_prefix("seal_init_should_create_new_key_if_not_present").unwrap();
+			TempDir::with_prefix("schnorr_seal_init_should_create_new_key_if_not_present").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		assert!(!seal.exists());
 
@@ -152,10 +172,10 @@ pub mod sgx_tests {
 		assert!(seal.exists());
 	}
 
-	#[test]
-	pub fn seal_init_should_not_change_key_if_exists() {
+	pub fn schnorr_seal_init_should_not_change_key_if_exists() {
 		//given
-		let temp_dir = TempDir::with_prefix("seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("schnorr_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
 
@@ -163,6 +183,21 @@ pub mod sgx_tests {
 		let new_pair = seal.init().unwrap();
 
 		//then
-		assert!(pair, new_pair);
+		assert_eq!(pair.public, new_pair.public);
+	}
+
+	pub fn schnorr_sign_should_produce_valid_signature() {
+		//given
+		let temp_dir = TempDir::with_prefix("ecdsa_sign_should_produce_valid_signature").unwrap();
+		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
+		let pair = seal.init().unwrap();
+		let message = [1; 32];
+
+		//when
+		let signature = Signature::try_from(pair.sign(&message).unwrap().as_slice()).unwrap();
+
+		//then
+		let verifying_key = VerifyingKey::try_from(&pair.public).unwrap();
+		assert!(verifying_key.verify(&message, &signature).is_ok());
 	}
 }

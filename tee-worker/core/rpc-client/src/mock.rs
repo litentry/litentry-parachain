@@ -23,10 +23,10 @@ use frame_metadata::RuntimeMetadataPrefixed;
 use ita_stf::H256;
 use itp_api_client_types::Metadata;
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
+use itp_types::MrEnclave;
 use litentry_primitives::Identity;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
-use teerex_primitives::MrEnclave;
 
 #[derive(Clone, Default)]
 pub struct DirectClientMock {

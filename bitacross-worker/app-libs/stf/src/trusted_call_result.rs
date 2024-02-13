@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 
 // This file contain the RPC response struct which will be encoded and
 // passed back to the requester of trustedCall direct invocation (DI).
-// They are mostly translated from the callback extrinsics in IMP.
 
 use codec::{Decode, Encode};
 use itp_stf_interface::StfExecutionResult;

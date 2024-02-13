@@ -21,10 +21,8 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
-	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes,
-	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -35,23 +33,17 @@ pub use itp_api_client_types::{Metadata, MetadataError};
 pub mod error;
 pub mod pallet_balances;
 pub mod pallet_bitacross;
-pub mod pallet_imp;
 pub mod pallet_proxy;
-pub mod pallet_sidechain;
 pub mod pallet_system;
-pub mod pallet_teerex;
+pub mod pallet_teebag;
 pub mod pallet_utility;
-pub mod pallet_vcmp;
 pub mod runtime_call;
 
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
-	TeerexCallIndexes
-	+ SidechainCallIndexes
-	+ IMPCallIndexes
-	+ VCMPCallIndexes
+	TeebagCallIndexes
 	+ SystemSs58Prefix
 	+ UtilityCallIndexes
 	+ ProxyCallIndexes
@@ -60,10 +52,7 @@ pub trait NodeMetadataTrait:
 {
 }
 impl<
-		T: TeerexCallIndexes
-			+ SidechainCallIndexes
-			+ IMPCallIndexes
-			+ VCMPCallIndexes
+		T: TeebagCallIndexes
 			+ SystemSs58Prefix
 			+ UtilityCallIndexes
 			+ ProxyCallIndexes
