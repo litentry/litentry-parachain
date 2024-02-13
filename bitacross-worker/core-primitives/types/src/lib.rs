@@ -36,6 +36,8 @@ pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 pub type IpfsHash = [u8; 46];
 pub type CallIndex = [u8; 2];
 
+pub type PostOpaqueTaskFn = (CallIndex, RsaRequest);
+
 /// Simple blob to hold an encoded call
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct OpaqueCall(pub Vec<u8>);
