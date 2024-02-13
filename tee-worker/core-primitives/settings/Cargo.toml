@@ -13,4 +13,3 @@ production = [
 ]
 sidechain = []
 offchain-worker = []
-teeracle = []

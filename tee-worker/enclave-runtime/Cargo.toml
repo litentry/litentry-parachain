@@ -31,10 +31,6 @@ offchain-worker = [
     "itp-settings/offchain-worker",
     "itp-top-pool-author/offchain-worker",
 ]
-teeracle = [
-    "itp-settings/teeracle",
-    "itp-top-pool-author/teeracle",
-]
 test = [
     "ita-stf/test",
     "itc-parentchain/test",
