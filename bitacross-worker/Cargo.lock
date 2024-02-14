@@ -8877,13 +8877,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-teerex",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -9239,12 +9238,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
