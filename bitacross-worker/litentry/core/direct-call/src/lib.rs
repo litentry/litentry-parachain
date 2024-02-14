@@ -26,6 +26,8 @@ use parentchain_primitives::Identity;
 use sp_io::hashing::blake2_256;
 use std::vec::Vec;
 
+pub mod handler;
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct DirectCallSigned {
 	pub call: DirectCall,
