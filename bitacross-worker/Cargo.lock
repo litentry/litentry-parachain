@@ -630,6 +630,7 @@ dependencies = [
 name = "bc-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "bc-relayer-registry",
  "bc-task-sender",
  "frame-support",
  "futures 0.3.28",
@@ -650,7 +651,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-direct-call",
- "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -1424,13 +1424,6 @@ dependencies = [
  "mime_guess",
  "rand 0.8.5",
  "thiserror 1.0.44",
-]
-
-[[package]]
-name = "common-primitives"
-version = "0.1.0"
-dependencies = [
- "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -6308,10 +6301,14 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-direct-call"
 version = "0.1.0"
 dependencies = [
+ "bc-relayer-registry",
  "core-primitives",
+ "itp-sgx-crypto",
  "itp-stf-primitives",
+ "k256",
  "litentry-primitives",
  "parity-scale-codec",
+ "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sgx_tstd",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -9127,24 +9124,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-teeracle"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "log 0.4.20",
- "pallet-teerex",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "sp-runtime",
- "sp-std 5.0.0",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
- "teeracle-primitives",
-]
-
-[[package]]
 name = "pallet-teerex"
 version = "0.9.0"
 dependencies = [
@@ -10999,7 +10978,6 @@ dependencies = [
  "pallet-sidechain",
  "pallet-sudo",
  "pallet-teebag",
- "pallet-teeracle",
  "pallet-teerex",
  "pallet-timestamp",
  "pallet-tips",
@@ -14220,14 +14198,6 @@ name = "target-lexicon"
 version = "0.12.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d2faeef5759ab89935255b1a4cd98e0baf99d1085e37d36599c625dac49ae8e"
-
-[[package]]
-name = "teeracle-primitives"
-version = "0.1.0"
-dependencies = [
- "common-primitives",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
-]
 
 [[package]]
 name = "teerex-primitives"

@@ -24,14 +24,11 @@ pub mod chain;
 pub mod pallet_teebag;
 
 // TODO: part of P-487 - these will be removed anyway so I haven't spent time adjust them
-
-// pub mod pallet_teeracle;
 pub mod pallet_teerex;
 
 pub use account::*;
 pub use chain::*;
 pub use pallet_teebag::*;
-// pub use pallet_teeracle::*;
 pub use pallet_teerex::*;
 
 pub type ApiResult<T> = Result<T, ApiClientError>;
