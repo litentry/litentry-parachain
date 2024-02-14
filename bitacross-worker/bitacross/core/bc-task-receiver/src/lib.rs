@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -17,6 +18,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
+use core::ops::Deref;
 
 use bc_task_sender::init_bit_across_task_sender_storage;
 use codec::{Decode, Encode};
@@ -39,9 +41,10 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 
+use bc_relayer_registry::RelayerRegistryLookup;
 use ita_stf::TrustedCallSigned;
 use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, schnorr::Pair as SchnorrPair};
-use litentry_macros::if_production_or;
+use lc_direct_call::handler::{sign_bitcoin, sign_ethereum};
 use litentry_primitives::DecryptableRequest;
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -60,6 +63,7 @@ pub struct BitAcrossTaskContext<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	RRL: RelayerRegistryLookup,
 > where
 	SKR: AccessKey,
 	EKR: AccessKey<KeyType = EcdsaPair>,
@@ -72,6 +76,7 @@ pub struct BitAcrossTaskContext<
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
+	pub relayer_registry_lookup: Arc<RRL>,
 }
 
 impl<
@@ -81,7 +86,8 @@ impl<
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>
+		RRL: RelayerRegistryLookup,
+	> BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL>
 where
 	SKR: AccessKey,
 	EKR: AccessKey<KeyType = EcdsaPair>,
@@ -96,6 +102,7 @@ where
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
+		relayer_registry_lookup: Arc<RRL>,
 	) -> Self {
 		Self {
 			shielding_key,
@@ -104,12 +111,13 @@ where
 			enclave_signer,
 			state_handler,
 			ocall_api,
+			relayer_registry_lookup,
 		}
 	}
 }
 
-pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O>(
-	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>>,
+pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL>(
+	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL>>,
 ) where
 	SKR: AccessKey + Send + Sync + 'static,
 	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
@@ -119,6 +127,7 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	RRL: RelayerRegistryLookup + Send + Sync + 'static,
 {
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
 	let n_workers = 2;
@@ -137,9 +146,9 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O>(
 	warn!("bit_across_task_receiver loop terminated");
 }
 
-pub fn handle_request<SKR, EKR, BKR, S, H, O>(
+pub fn handle_request<SKR, EKR, BKR, S, H, O, RRL>(
 	request: &mut AesRequest,
-	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O>>,
+	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL>>,
 ) -> Result<Vec<u8>, String>
 where
 	SKR: AccessKey,
@@ -149,6 +158,7 @@ where
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	RRL: RelayerRegistryLookup + 'static,
 {
 	let enclave_shielding_key = context
 		.shielding_key
@@ -166,19 +176,19 @@ where
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	match dc.call {
-		DirectCall::SignBitcoin(_, aes_key, payload) => {
-			if_production_or!(unimplemented!(), {
-				let key = context.bitcoin_key_repository.retrieve_key().unwrap();
-				let signature = key.sign(&payload).unwrap();
-				Ok(aes_encrypt_default(&aes_key, &signature).encode())
-			})
-		},
-		DirectCall::SignEthereum(_, aes_key, payload) => {
-			if_production_or!(unimplemented!(), {
-				let key = context.ethereum_key_repository.retrieve_key().unwrap();
-				let signature = key.sign(&payload).unwrap();
-				Ok(aes_encrypt_default(&aes_key, &signature).encode())
-			})
-		},
+		DirectCall::SignBitcoin(signer, aes_key, payload) => sign_bitcoin::handle(
+			signer,
+			payload,
+			context.relayer_registry_lookup.deref(),
+			context.bitcoin_key_repository.deref(),
+		)
+		.map(|r| aes_encrypt_default(&aes_key, &r).encode()),
+		DirectCall::SignEthereum(signer, aes_key, payload) => sign_ethereum::handle(
+			signer,
+			payload,
+			context.relayer_registry_lookup.deref(),
+			context.ethereum_key_repository.deref(),
+		)
+		.map(|r| aes_encrypt_default(&aes_key, &r).encode()),
 	}
 }

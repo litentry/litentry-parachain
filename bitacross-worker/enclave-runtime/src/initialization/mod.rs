@@ -256,6 +256,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.clone();
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
@@ -277,6 +278,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,
+		relayer_registry_lookup,
 	);
 	run_bit_across_handler_runner(Arc::new(stf_task_context));
 	Ok(())

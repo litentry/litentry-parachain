@@ -116,7 +116,11 @@ pub(crate) fn get_pair_from_str(
 ) -> sr25519_core::Pair {
 	info!("getting pair for {}", account);
 	match &account[..2] {
-		"//" => sr25519_core::Pair::from_string(account, None).unwrap(),
+		"//" => {
+			let pair = sr25519_core::Pair::from_string(account, None).unwrap();
+			info!("public_key: {:?}", &pair.public().to_hex());
+			pair
+		},
 		_ => {
 			info!("fetching from keystore at {}", &TRUSTED_KEYSTORE_PATH);
 			// open store without password protection
