@@ -1,7 +1,7 @@
 services:
-    lit-di-bitcoin-identity-test:
+    lit-dr-vc-test:
         image: litentry/litentry-cli:latest
-        container_name: litentry-di-bitcoin-identity-test
+        container_name: litentry-dr-vc-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
@@ -17,7 +17,7 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh di_bitcoin_identity.test.ts 2>&1' "
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh dr_vc.test.ts 2>&1' "
         restart: "no"
 networks:
     litentry-test-network:

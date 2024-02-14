@@ -29,14 +29,18 @@ pnpm install
 
 ## Usage(ts-tests folder)
 
-II identity test: `pnpm --filter integration-tests run test-ii-identity:local`
+```
+pnpm --filter integration-tests run test your-testfile.test.ts
+```
 
-II vc test: `pnpm --filter integration-tests run test-ii-vc:local`
+II identity test: `pnpm --filter integration-tests run test ii_identity.test.ts`
 
-II batch identity test: `pnpm --filter integration-tests run test-ii-batch:local`
+II vc test: `pnpm --filter integration-tests run test ii_vc.test.ts`
 
-Direct invocation substrate identity test: `pnpm --filter integration-tests run test-di-substrate-identity:local`
+II batch identity test: `pnpm --filter integration-tests run test ii_batch.test.ts`
 
-Direct invocation evm identity test: `pnpm --filter integration-tests run test-di-evm-identity:local`
+Direct invocation substrate identity test: `pnpm --filter integration-tests run test di_substrate_identity.test.ts`
 
-Direct invocation vc test: `pnpm --filter integration-tests run test-di-vc:local`
+Direct invocation evm identity test: `pnpm --filter integration-tests run test di_evm_identity.test.ts`
+
+Direct invocation vc test: `pnpm --filter integration-tests run test di_vc.test.ts`

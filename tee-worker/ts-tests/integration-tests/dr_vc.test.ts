@@ -20,7 +20,7 @@ import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-hel
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec } from '@polkadot/types';
 
-describe('Test Vc (direct invocation)', function () {
+describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
@@ -142,12 +142,14 @@ describe('Test Vc (direct invocation)', function () {
     });
 
     defaultAssertions.forEach(({ description, assertion }) => {
-        step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+        step(`request vc direct ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            console.log(`request vc ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`);
+            console.log(
+                `request vc direct ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`
+            );
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
             const requestVcCall = await createSignedTrustedCallRequestVc(
@@ -161,8 +163,8 @@ describe('Test Vc (direct invocation)', function () {
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+            const isVcDirect = true;
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
             const events = await eventsPromise;
             const vcIssuedEvents = events
                 .map(({ event }) => event)
@@ -176,7 +178,6 @@ describe('Test Vc (direct invocation)', function () {
             await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });
-
     unconfiguredAssertions.forEach(({ description, assertion }) => {
         it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();

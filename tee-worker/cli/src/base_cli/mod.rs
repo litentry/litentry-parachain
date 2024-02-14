@@ -20,10 +20,7 @@ use crate::{
 		balance::BalanceCommand,
 		faucet::FaucetCommand,
 		listen::ListenCommand,
-		litentry::{
-			id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand,
-			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-		},
+		litentry::{id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand},
 		register_tcb_info::RegisterTcbInfoCommand,
 		transfer::TransferCommand,
 	},
@@ -87,9 +84,6 @@ pub enum BaseCommand {
 	/// create idenity graph
 	LinkIdentity(LinkIdentityCommand),
 
-	/// set heartbeat timeout storage
-	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
-
 	/// get the IDGraph hash of the given identity
 	IDGraphHash(IDGraphHashCommand),
 }
@@ -110,7 +104,6 @@ impl BaseCommand {
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
-			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 		}
 	}

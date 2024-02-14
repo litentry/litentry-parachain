@@ -27,15 +27,6 @@ use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub mod parentchain;
 pub mod storage;
 
-/// Substrate runtimes provide no string type. Hence, for arbitrary data of varying length the
-/// `Vec<u8>` is used. In the polkadot-js the typedef `Text` is used to automatically
-/// utf8 decode bytes into a string.
-#[cfg(not(feature = "std"))]
-pub type PalletString = Vec<u8>;
-
-#[cfg(feature = "std")]
-pub type PalletString = String;
-
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{
 	AttestationType, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave, WorkerType,
@@ -45,13 +36,7 @@ pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 pub type IpfsHash = [u8; 46];
 pub type CallIndex = [u8; 2];
 
-// pallet teerex
-pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
-pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
-pub type CallWorkerFn = (CallIndex, RsaRequest);
-
-pub type SetScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
-pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
+pub type PostOpaqueTaskFn = (CallIndex, RsaRequest);
 
 /// Simple blob to hold an encoded call
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

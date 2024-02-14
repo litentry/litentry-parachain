@@ -18,7 +18,6 @@
 use crate::{
 	base_cli::commands::{
 		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
-		litentry::set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
 		register_tcb_info::RegisterTcbInfoCommand, transfer::TransferCommand,
 	},
 	command_utils::*,
@@ -77,9 +76,6 @@ pub enum BaseCommand {
 	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
-
-	/// set heartbeat timeout storage
-	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
 }
 
 impl BaseCommand {
@@ -97,7 +93,6 @@ impl BaseCommand {
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
 	}
 }
