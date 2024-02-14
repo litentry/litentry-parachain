@@ -888,7 +888,6 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "ipfs-unixfs",
- "ita-oracle",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
@@ -1869,23 +1868,6 @@ dependencies = [
  "multihash",
  "quick-protobuf",
  "sha2 0.9.9",
-]
-
-[[package]]
-name = "ita-oracle"
-version = "0.9.0"
-dependencies = [
- "itc-rest-client",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "lazy_static",
- "log",
- "parity-scale-codec",
- "serde 1.0.193",
- "sgx_tstd",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
- "thiserror",
- "url",
 ]
 
 [[package]]

@@ -57,7 +57,6 @@ impl From<WorkerMode> for ProvisioningPayload {
 		match m {
 			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
-			WorkerMode::Teeracle => unreachable!("WorkerMode::Teeracle is not supported"),
 		}
 	}
 }

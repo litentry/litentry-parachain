@@ -43,8 +43,8 @@ itp-types = { path = "../../../core-primitives/types", default-features = false 
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # litentry primities 
+bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
-litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
@@ -56,6 +56,7 @@ sgx = [
     "hex-sgx",
     "sgx_tstd",
     "bc-task-sender/sgx",
+    "bc-relayer-registry/sgx",
     "lc-direct-call/sgx",
     "litentry-primitives/sgx",
     "ita-stf/sgx",
@@ -75,6 +76,7 @@ std = [
     "threadpool",
     "log/std",
     "bc-task-sender/std",
+    "bc-relayer-registry/std",
     "lc-direct-call/std",
     "litentry-primitives/std",
     "ita-sgx-runtime/std",
@@ -95,5 +97,4 @@ std = [
     "thiserror",
 ]
 production = [
-    "litentry-macros/production",
 ]
