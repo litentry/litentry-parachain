@@ -68,15 +68,10 @@ pub type AuthorTopFilter<TCS, G> = crate::top_filter::IndirectCallsOnlyFilter<TC
 #[cfg(feature = "offchain-worker")]
 pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
 
-#[cfg(feature = "teeracle")] // Teeracle currently does not process any trusted operations
-pub type AuthorTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
-#[cfg(feature = "teeracle")]
-pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
-
-#[cfg(not(any(feature = "sidechain", feature = "offchain-worker", feature = "teeracle")))]
+#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
 pub type AuthorTopFilter<TCS, G> = crate::top_filter::CallsOnlyFilter<TCS, G>;
 
-#[cfg(not(any(feature = "sidechain", feature = "offchain-worker", feature = "teeracle")))]
+#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
 pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
 
 /// Currently we treat all RPC operations as externals.
