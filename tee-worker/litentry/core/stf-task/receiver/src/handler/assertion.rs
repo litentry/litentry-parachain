@@ -146,13 +146,13 @@ where
 			{
 				std::thread::sleep(core::time::Duration::from_secs(5));
 			}
-			lc_assertion_build::a1::build(&req)
+			lc_assertion_build::a1::build(req)
 		},
 		Assertion::A2(guild_id) =>
-			lc_assertion_build::a2::build(&req, guild_id, &context.data_provider_config),
+			lc_assertion_build::a2::build(req, guild_id, &context.data_provider_config),
 
 		Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
-			&req,
+			req,
 			guild_id,
 			channel_id,
 			role_id,
@@ -160,16 +160,16 @@ where
 		),
 
 		Assertion::A4(min_balance) => build_holding_time(
-			&req,
+			req,
 			AmountHoldingTimeType::LIT,
 			min_balance,
 			&context.data_provider_config,
 		),
 
-		Assertion::A6 => lc_assertion_build::a6::build(&req, &context.data_provider_config),
+		Assertion::A6 => lc_assertion_build::a6::build(req, &context.data_provider_config),
 
 		Assertion::A7(min_balance) => build_holding_time(
-			&req,
+			req,
 			AmountHoldingTimeType::DOT,
 			min_balance,
 			&context.data_provider_config,
@@ -177,91 +177,91 @@ where
 
 		// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
 		Assertion::A8(_networks) =>
-			lc_assertion_build::a8::build(&req, &context.data_provider_config),
+			lc_assertion_build::a8::build(req, &context.data_provider_config),
 
 		Assertion::A10(min_balance) => build_holding_time(
-			&req,
+			req,
 			AmountHoldingTimeType::WBTC,
 			min_balance,
 			&context.data_provider_config,
 		),
 
 		Assertion::A11(min_balance) => build_holding_time(
-			&req,
+			req,
 			AmountHoldingTimeType::ETH,
 			min_balance,
 			&context.data_provider_config,
 		),
 
 		Assertion::A13(owner) =>
-			lc_assertion_build::a13::build(&req, context.ocall_api.clone(), &owner),
+			lc_assertion_build::a13::build(req, context.ocall_api.clone(), &owner),
 
-		Assertion::A14 => lc_assertion_build::a14::build(&req, &context.data_provider_config),
+		Assertion::A14 => lc_assertion_build::a14::build(req, &context.data_provider_config),
 
 		Assertion::Achainable(param) =>
-			lc_assertion_build::achainable::build(&req, param, &context.data_provider_config),
+			lc_assertion_build::achainable::build(req, param, &context.data_provider_config),
 
-		Assertion::A20 => lc_assertion_build::a20::build(&req, &context.data_provider_config),
+		Assertion::A20 => lc_assertion_build::a20::build(req, &context.data_provider_config),
 
 		Assertion::Oneblock(course_type) => lc_assertion_build::oneblock::course::build(
-			&req,
+			req,
 			course_type,
 			&context.data_provider_config,
 		),
 
 		Assertion::GenericDiscordRole(role_type) =>
 			lc_assertion_build::generic_discord_role::build(
-				&req,
+				req,
 				role_type,
 				&context.data_provider_config,
 			),
 
 		Assertion::BnbDomainHolding =>
 			lc_assertion_build::nodereal::bnb_domain::bnb_domain_holding_amount::build(
-				&req,
+				req,
 				&context.data_provider_config,
 			),
 
 		Assertion::BnbDigitDomainClub(digit_domain_type) =>
 			lc_assertion_build::nodereal::bnb_domain::bnb_digit_domain_club_amount::build(
-				&req,
+				req,
 				digit_domain_type,
 				&context.data_provider_config,
 			),
 
 		Assertion::VIP3MembershipCard(level) =>
-			lc_assertion_build::vip3::card::build(&req, level, &context.data_provider_config),
+			lc_assertion_build::vip3::card::build(req, level, &context.data_provider_config),
 
 		Assertion::WeirdoGhostGangHolder =>
 			lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(
-				&req,
+				req,
 				&context.data_provider_config,
 			),
 
-		Assertion::LITStaking => lc_assertion_build::lit_staking::build(&req),
+		Assertion::LITStaking => lc_assertion_build::lit_staking::build(req),
 
 		Assertion::EVMAmountHolding(token_type) =>
 			lc_assertion_build::nodereal::amount_holding::evm_amount_holding::build(
-				&req,
+				req,
 				token_type,
 				&context.data_provider_config,
 			),
 
 		Assertion::BRC20AmountHolder =>
-			lc_assertion_build::brc20::amount_holder::build(&req, &context.data_provider_config),
+			lc_assertion_build::brc20::amount_holder::build(req, &context.data_provider_config),
 
 		Assertion::CryptoSummary =>
-			lc_assertion_build::nodereal::crypto_summary::build(&req, &context.data_provider_config),
+			lc_assertion_build::nodereal::crypto_summary::build(req, &context.data_provider_config),
 
 		Assertion::TokenHoldingAmount(token_type) =>
 			lc_assertion_build_v2::token_holding_amount::build(
-				&req,
+				req,
 				token_type,
 				&context.data_provider_config,
 			),
 
 		Assertion::PlatformUser(platform_user_type) => lc_assertion_build_v2::platform_user::build(
-			&req,
+			req,
 			platform_user_type,
 			&context.data_provider_config,
 		),
