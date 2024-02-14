@@ -320,7 +320,7 @@ mod test {
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, RsaRequest, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -411,12 +411,12 @@ mod test {
 		assert_ne!(call.0, zero_root_call);
 	}
 
-	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
+	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<PostOpaqueTaskFn> {
 		let request = RsaRequest::new(shard_id(), vec![1u8, 2u8]);
 		let dummy_metadata = NodeMetadataMock::new();
 		let call_worker_indexes = dummy_metadata.post_opaque_task_call_indexes().unwrap();
 
-		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
+		ParentchainUncheckedExtrinsic::<PostOpaqueTaskFn>::new_signed(
 			(call_worker_indexes, request),
 			MultiAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(default_signature()),

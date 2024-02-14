@@ -16,7 +16,6 @@
 
 pub mod id_graph_hash;
 pub mod link_identity;
-pub mod set_heartbeat_timeout;
 
 // TODO: maybe move it to use itp_node_api::api_client
 pub const IMP: &str = "IdentityManagement";
