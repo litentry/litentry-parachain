@@ -193,12 +193,12 @@ fn send_indirect_request<T: Decode + Debug>(
 		let event_result = subscription.next_events::<RuntimeEvent, Hash>();
 		if let Some(Ok(event_records)) = event_result {
 			for event_record in event_records {
-				if let RuntimeEvent::Teebag(TeebagEvent::ParentchainBlockProcessed(
-					_signer,
-					confirmed_block_number,
-					confirmed_block_hash,
-					trusted_calls_merkle_root,
-				)) = event_record.event
+				if let RuntimeEvent::Teebag(TeebagEvent::ParentchainBlockProcessed {
+					who: _signer,
+					block_number: confirmed_block_number,
+					block_hash: confirmed_block_hash,
+					task_merkle_root: trusted_calls_merkle_root,
+				}) = event_record.event
 				{
 					info!("Confirmation of ParentchainBlockProcessed received");
 					debug!("shard: {:?}", shard);
