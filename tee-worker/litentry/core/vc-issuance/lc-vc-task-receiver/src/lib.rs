@@ -16,7 +16,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
@@ -62,8 +61,6 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
-
-mod vc_handling;
 
 pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
