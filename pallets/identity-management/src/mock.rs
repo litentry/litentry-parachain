@@ -45,7 +45,7 @@ type SystemAccountId = <Test as frame_system::Config>::AccountId;
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teerex::Config + pallet_timestamp::Config<Moment = u64>,
+	T: frame_system::Config + pallet_teebag::Config + pallet_timestamp::Config<Moment = u64>,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
@@ -53,7 +53,7 @@ where
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
-				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(&who) == Ok(()) =>
+				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
 				Ok(who),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
@@ -61,17 +61,17 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		use pallet_teebag::WorkerType;
 		use test_utils::ias::{
 			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
 			TestEnclave,
 		};
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST8_SIGNER_PUB);
-		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {
-			assert_ok!(pallet_teerex::Pallet::<T>::add_enclave(
+		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
+			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(
 				&signer,
-				&teerex_primitives::Enclave::test_enclave(signer.clone())
-					.with_mr_enclave(TEST8_MRENCLAVE),
+				&pallet_teebag::Enclave::new(WorkerType::Identity).with_mrenclave(TEST8_MRENCLAVE),
 			));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
@@ -87,8 +87,8 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
+		Teebag: pallet_teebag,
 		Timestamp: pallet_timestamp,
-		Teerex: pallet_teerex,
 		IdentityManagement: pallet_identity_management,
 		IMPExtrinsicWhitelist: pallet_group,
 	}
@@ -150,16 +150,13 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 }
 
-impl pallet_teerex::Config for Test {
+impl pallet_teebag::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
+	type MaxEnclaveIdentifier = ConstU32<3>;
 }
 
 impl pallet_identity_management::Config for Test {
@@ -184,21 +181,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		let _ = IdentityManagement::add_delegatee(RuntimeOrigin::root(), eddie);
 		System::set_block_number(1);
 		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), teerex_signer.clone()));
-		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
-			RuntimeOrigin::signed(teerex_signer.clone()),
-			true
+		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
+		assert_ok!(Teebag::set_admin(RuntimeOrigin::root(), signer.clone()));
+		assert_ok!(Teebag::set_mode(
+			RuntimeOrigin::signed(signer.clone()),
+			pallet_teebag::OperationalMode::Development
 		));
 
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);
-		if !pallet_teerex::EnclaveIndex::<Test>::contains_key(teerex_signer.clone()) {
-			assert_ok!(Teerex::register_enclave(
-				RuntimeOrigin::signed(teerex_signer),
+		if !pallet_teebag::EnclaveRegistry::<Test>::contains_key(signer.clone()) {
+			assert_ok!(Teebag::register_enclave(
+				RuntimeOrigin::signed(signer),
+				pallet_teebag::WorkerType::Identity,
+				pallet_teebag::WorkerMode::Sidechain,
 				TEST8_CERT.to_vec(),
 				URL.to_vec(),
 				None,
 				None,
+				pallet_teebag::AttestationType::Ias,
 			));
 		}
 	});
