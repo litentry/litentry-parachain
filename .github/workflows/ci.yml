@@ -699,6 +699,7 @@ jobs:
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
           - test_name: lit-di-vc-test
+          - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
     steps:
@@ -780,6 +781,7 @@ jobs:
           - test_name: lit-di-evm-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
+          - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-ii-batch-test-multiworker
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test
