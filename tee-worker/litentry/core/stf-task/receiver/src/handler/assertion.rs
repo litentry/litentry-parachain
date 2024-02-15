@@ -25,6 +25,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
@@ -283,6 +284,8 @@ where
 		context.data_provider_config.credential_endpoint.to_string();
 
 	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
+
+	credential.credential_schema.id = credential_schema::get_schema_url(&req.assertion);
 
 	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 		VCMPError::RequestVCFailed(
