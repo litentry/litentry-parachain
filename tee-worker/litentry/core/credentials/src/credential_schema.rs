@@ -15,7 +15,7 @@
 // along with Litentry. If not, see <https://www.gnu.org/licenses/>.
 
 use litentry_primitives::{AchainableParams, Assertion};
-use std::string::String;
+use std::string::{String, ToString};
 
 const BASE_URL: &str = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas";
 const NOT_IMPLEMENTED: &str =
