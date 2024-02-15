@@ -22,6 +22,8 @@ const BITACROSS: &str = "Bitacross";
 pub trait BitAcrossCallIndexes {
 	fn add_relayer_call_indexes(&self) -> Result<[u8; 2]>;
 	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]>;
+	fn btc_wallet_generated_indexes(&self) -> Result<[u8; 2]>;
+	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl BitAcrossCallIndexes for NodeMetadata {
@@ -31,5 +33,13 @@ impl BitAcrossCallIndexes for NodeMetadata {
 
 	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(BITACROSS, "remove_relayer")
+	}
+
+	fn btc_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "btc_wallet_generated")
+	}
+
+	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "eth_wallet_generated")
 	}
 }

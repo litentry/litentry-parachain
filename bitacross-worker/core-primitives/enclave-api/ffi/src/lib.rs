@@ -252,4 +252,6 @@ extern "C" {
 		until: *const u32,
 	) -> sgx_status_t;
 
+	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
 }
