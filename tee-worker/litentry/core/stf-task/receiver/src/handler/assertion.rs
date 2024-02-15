@@ -285,7 +285,7 @@ where
 
 	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
 
-	credential.jsonschema = jsonschema::get_json_schema_url(req.assertion.clone());
+	credential.jsonschema = jsonschema::get_json_schema_url(&req.assertion);
 
 	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 		VCMPError::RequestVCFailed(
