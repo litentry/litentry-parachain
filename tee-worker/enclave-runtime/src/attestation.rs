@@ -58,7 +58,7 @@ use itp_types::{AttestationType, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::*;
-use sp_core::Pair;
+use sp_core::{ed25519::Public as Ed25519Public, Pair};
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
 
@@ -572,13 +572,13 @@ fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
 	Ok(shielding_pubkey)
 }
 
-fn get_vc_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
+fn get_vc_pubkey() -> EnclaveResult<Option<Ed25519Public>> {
 	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
 			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
+			keypair.derive_ed25519().map(|keypair| keypair.public())
 		})
 		.ok();
 
