@@ -58,20 +58,7 @@ use std::{
 };
 
 /// Define type of TOP filter that is used in the Author
-#[cfg(feature = "sidechain")]
-pub type AuthorTopFilter<TCS, G> = crate::top_filter::CallsOnlyFilter<TCS, G>;
-#[cfg(feature = "sidechain")]
-pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DirectCallsOnlyFilter<TCS, G>;
-
-#[cfg(feature = "offchain-worker")]
 pub type AuthorTopFilter<TCS, G> = crate::top_filter::IndirectCallsOnlyFilter<TCS, G>;
-#[cfg(feature = "offchain-worker")]
-pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
-
-#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
-pub type AuthorTopFilter<TCS, G> = crate::top_filter::CallsOnlyFilter<TCS, G>;
-
-#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
 pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
 
 /// Currently we treat all RPC operations as externals.

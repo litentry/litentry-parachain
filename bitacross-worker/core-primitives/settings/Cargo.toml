@@ -11,5 +11,4 @@ litentry-primitives = { path = "../../litentry/primitives", default-features = f
 production = [
     "litentry-primitives/production",
 ]
-sidechain = []
 offchain-worker = []

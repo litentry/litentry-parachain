@@ -24,24 +24,8 @@ pub trait ProvideWorkerMode {
 #[derive(Default, Copy, Clone)]
 pub struct WorkerModeProvider;
 
-#[cfg(feature = "offchain-worker")]
 impl ProvideWorkerMode for WorkerModeProvider {
 	fn worker_mode() -> WorkerMode {
 		WorkerMode::OffChainWorker
-	}
-}
-
-#[cfg(feature = "sidechain")]
-impl ProvideWorkerMode for WorkerModeProvider {
-	fn worker_mode() -> WorkerMode {
-		WorkerMode::Sidechain
-	}
-}
-
-// Default to `Sidechain` worker mode when no cargo features are set.
-#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
-impl ProvideWorkerMode for WorkerModeProvider {
-	fn worker_mode() -> WorkerMode {
-		WorkerMode::Sidechain
 	}
 }

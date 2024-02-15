@@ -62,7 +62,6 @@ sp-core-hashing = "6.0.0"
 [features]
 default = []
 evm = ["ita-stf/evm_std", "pallet-evm"]
-sidechain = []
 offchain-worker = []
 production = []
 # dcap feature flag is not used in this crate, but for easier build purposes only it present here as well

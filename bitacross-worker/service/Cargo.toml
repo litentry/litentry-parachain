@@ -79,7 +79,6 @@ my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/
 [features]
 default = []
 evm = []
-sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = [
     "ita-stf/production",

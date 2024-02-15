@@ -76,7 +76,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(feature = "link-binary")]
 pub type EnclaveWorker =
-	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
+	Worker<Config, NodeApiFactory, Enclave, InitializationHandler>;
 pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
 
 pub(crate) fn main() {
@@ -323,11 +323,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let run_config = config.run_config().clone().expect("Run config missing");
 	let skip_ra = run_config.skip_ra();
 
-	#[cfg(feature = "sidechain")]
-	let flavor_str = "sidechain";
-	#[cfg(feature = "offchain-worker")]
-	let flavor_str = "offchain-worker";
-	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain")))]
 	let flavor_str = "offchain-worker";
 
 	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
