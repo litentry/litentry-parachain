@@ -1,6 +1,3 @@
-#[cfg(feature = "teeracle")]
-use crate::teeracle::{schedule_periodic_reregistration_thread, start_periodic_market_update};
-
 #[cfg(not(feature = "dcap"))]
 use crate::utils::check_files;
 use crate::{
@@ -36,7 +33,6 @@ use itp_enclave_api::{
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
-	teeracle_api::TeeracleApi,
 };
 use itp_node_api::{
 	api_client::{AccountApi, PalletTeebagApi, ParentchainApi},
@@ -336,13 +332,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase
-		+ DirectRequest
-		+ Sidechain
-		+ RemoteAttestation
-		+ TlsRemoteAttestation
-		+ TeeracleApi
-		+ Clone,
+	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
@@ -350,13 +340,11 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let run_config = config.run_config().clone().expect("Run config missing");
 	let skip_ra = run_config.skip_ra();
 
-	#[cfg(feature = "teeracle")]
-	let flavor_str = "teeracle";
 	#[cfg(feature = "sidechain")]
 	let flavor_str = "sidechain";
 	#[cfg(feature = "offchain-worker")]
 	let flavor_str = "offchain-worker";
-	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain", feature = "teeracle")))]
+	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain")))]
 	let flavor_str = "offchain-worker";
 
 	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
@@ -571,23 +559,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	initialization_handler.registered_on_parentchain();
 
 	match WorkerModeProvider::worker_mode() {
-		WorkerMode::Teeracle => {
-			// ------------------------------------------------------------------------
-			// initialize teeracle interval
-			#[cfg(feature = "teeracle")]
-			schedule_periodic_reregistration_thread(
-				send_register_xt,
-				run_config.reregister_teeracle_interval(),
-			);
-
-			#[cfg(feature = "teeracle")]
-			start_periodic_market_update(
-				&litentry_rpc_api,
-				run_config.teeracle_update_interval(),
-				enclave.as_ref(),
-				&tokio_handle,
-			);
-		},
 		WorkerMode::OffChainWorker => {
 			println!("*** [+] Finished initializing light client, syncing parentchain...");
 
@@ -717,18 +688,17 @@ fn init_target_parentchain<E>(
 	let (parentchain_handler, last_synched_header) =
 		init_parentchain(enclave, &node_api, tee_account_id, parentchain_id);
 
-	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
-		println!(
-			"*** [+] [{:?}] Finished initializing light client, syncing parentchain...",
-			parentchain_id
-		);
+	println!(
+		"*** [+] [{:?}] Finished initializing light client, syncing parentchain...",
+		parentchain_id
+	);
 
-		// Syncing all parentchain blocks, this might take a while..
-		let last_synched_header =
-			parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
+	// Syncing all parentchain blocks, this might take a while..
+	let last_synched_header =
+		parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
 
-		start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header)
-	}
+	start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header);
+
 	println!("[{:?}] initializing proxied shard vault account now", parentchain_id);
 	enclave.init_proxied_shard_vault(shard, &parentchain_id).unwrap();
 
@@ -767,7 +737,7 @@ where
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	println!("[{:?}] last synced parentchain block: {}", parentchain_id, last_synced_header.number);
 
-	let nonce = node_api.get_nonce_of(tee_account_id).unwrap();
+	let nonce = node_api.get_account_next_index(tee_account_id).unwrap();
 	info!("[{:?}] Enclave nonce = {:?}", parentchain_id, nonce);
 	enclave.set_nonce(nonce, parentchain_id).unwrap_or_else(|_| {
 		panic!("[{:?}] Could not set nonce of enclave. Returning here...", parentchain_id)

@@ -8,7 +8,6 @@ function worker_clippy() {
     cargo clippy --release -- -D warnings
     cargo clippy --release --features evm -- -D warnings
     cargo clippy --release --features sidechain -- -D warnings
-    cargo clippy --release --features teeracle -- -D warnings
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
@@ -64,7 +63,7 @@ RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 echo "[Step 5], tee-worker service test"
 clean_up
 cd "$root_dir/tee-worker"
-#SGX_MODE=SW SKIP_WASM_BUILD=1 make
+SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
 ./litentry-worker test --all
 

@@ -59,7 +59,7 @@ use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
 };
-use itp_types::{parentchain::Address, Block, CallWorkerFn, RsaRequest, ShardIdentifier, H256};
+use itp_types::{parentchain::Address, Block, RsaRequest, ShardIdentifier, H256};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
@@ -197,6 +197,7 @@ fn encrypted_indirect_call<
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
 }
 
+/*
 fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	_shard: ShardIdentifier,
 	_shielding_key: &ShieldingKey,
@@ -231,3 +232,5 @@ fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 		.with_extrinsics(vec![opaque_extrinsic])
 		.build()
 }
+
+*/

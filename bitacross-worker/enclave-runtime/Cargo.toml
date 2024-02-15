@@ -23,6 +23,7 @@ production = [
     "itp-attestation-handler/production",
     "litentry-primitives/production",
     "litentry-macros/production",
+    "bc-task-receiver/production",
 ]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
@@ -88,7 +89,6 @@ base58 = { rev = "sgx_1.1.3", package = "rust-base58", default-features = false,
 
 cid = { default-features = false, git = "https://github.com/whalelephant/rust-cid", branch = "nstd" }
 multibase = { default-features = false, git = "https://github.com/whalelephant/rust-multibase", branch = "nstd" }
-teerex-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.12.0-polkadot-v0.9.42" }
 
 # local deps
 ita-parentchain-interface = { path = "../app-libs/parentchain-interface", default-features = false, features = ["sgx"] }
@@ -133,6 +133,7 @@ its-primitives = { path = "../sidechain/primitives", default-features = false }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
 
 # litentry
+bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }

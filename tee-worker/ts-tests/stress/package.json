@@ -3,11 +3,10 @@
     "license": "ISC",
     "type": "module",
     "scripts": {
-        "format": "pnpm exec prettier --write .",
-        "check-format": "pnpm exec prettier --check .",
-        "run-script": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm exec ts-node bin/stress.ts",
-        "test-stress-script:local": "pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'",
-        "test-stress-script:staging": "pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'"
+        "format": "prettier --write .",
+        "check-format": "prettier --check .",
+        "run-script": "NODE_TLS_REJECT_UNAUTHORIZED=0 ts-node bin/stress.ts",
+        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm"
     },
     "dependencies": {
         "@noble/ed25519": "^1.7.3",

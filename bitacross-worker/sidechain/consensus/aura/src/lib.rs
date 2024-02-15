@@ -47,7 +47,7 @@ use its_primitives::{
 use its_validateer_fetch::ValidateerFetch;
 use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use litentry_hex_utils::hex_encode;
-use sp_core::ByteArray;
+use sp_core::crypto::UncheckedFrom;
 use sp_runtime::{
 	app_crypto::{sp_core::H256, Pair},
 	generic::SignedBlock as SignedParentchainBlock,
@@ -189,6 +189,7 @@ impl<
 		StateHandler,
 	> where
 	AuthorityPair: Pair,
+	AuthorityPair::Public: UncheckedFrom<[u8; 32]>,
 	// todo: Relax hash trait bound, but this needs a change to some other parts in the code.
 	ParentchainBlock: ParentchainBlockTrait<Hash = BlockHash>,
 	E: Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError>,
@@ -211,10 +212,6 @@ impl<
 	type ScheduledEnclave = ScheduledEnclave;
 	type StateHandler = StateHandler;
 
-	fn logging_target(&self) -> &'static str {
-		"aura"
-	}
-
 	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
 		self.scheduled_enclave.clone()
 	}
@@ -226,7 +223,6 @@ impl<
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
-		_shard: ShardIdentifierFor<Self::Output>,
 		_slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError> {
 		authorities::<_, AuthorityPair, ParentchainBlock::Header>(&self.ocall_api, header)
@@ -246,15 +242,12 @@ impl<
 		let expected_author = slot_author::<AuthorityPair>(slot, epoch_data)?;
 
 		if expected_author == &self.authority_pair.public() {
-			log::info!(target: self.logging_target(), "Claiming slot ({})", *slot);
+			log::info!("Claiming slot ({})", *slot);
 			return Some(self.authority_pair.public())
 		}
 
 		if self.claim_strategy == SlotClaimStrategy::Always {
-			log::debug!(
-				target: self.logging_target(),
-				"Not our slot but we still claim it."
-			);
+			log::debug!("Not our slot but we still claim it.");
 			return Some(self.authority_pair.public())
 		}
 
@@ -281,7 +274,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import Integritee blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import Integritee blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.parentchain_integritee_import_trigger
 			.import_until(|parentchain_block| {
@@ -296,7 +292,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import TargetA blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import TargetA blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.maybe_parentchain_target_a_import_trigger
 			.clone()
@@ -313,7 +312,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import TargetB blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import TargetB blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.maybe_parentchain_target_b_import_trigger
 			.clone()
@@ -389,13 +391,14 @@ fn authorities<ValidateerFetcher, P, ParentchainHeader>(
 where
 	ValidateerFetcher: ValidateerFetch + EnclaveOnChainOCallApi,
 	P: Pair,
+	P::Public: UncheckedFrom<[u8; 32]>,
 	ParentchainHeader: ParentchainHeaderTrait<Hash = H256>,
 {
 	Ok(ocall_api
-		.current_validateers(header)
+		.current_validateers::<ParentchainHeader>(header)
 		.map_err(|e| ConsensusError::CouldNotGetAuthorities(e.to_string()))?
-		.into_iter()
-		.filter_map(|e| AuthorityId::<P>::from_slice(e.pubkey.as_ref()).ok())
+		.iter()
+		.map(|account| P::Public::unchecked_from(*account.as_ref()))
 		.collect())
 }
 
@@ -409,14 +412,14 @@ pub enum AnyImportTrigger<Integritee, TargetA, TargetB> {
 mod tests {
 	use super::*;
 	use crate::test::{
-		fixtures::{types::TestAura, validateer, SLOT_DURATION},
+		fixtures::{types::TestAura, SLOT_DURATION},
 		mocks::environment_mock::{EnvironmentMock, OutdatedBlockEnvironmentMock},
 	};
 	use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
 	use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
 	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 	use itp_types::{
-		Block as ParentchainBlock, Enclave, Header as ParentchainHeader, ShardIdentifier,
+		AccountId, Block as ParentchainBlock, Header as ParentchainHeader, ShardIdentifier,
 		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
@@ -481,8 +484,8 @@ mod tests {
 		vec![Keyring::Alice.public(), Keyring::Bob.public(), Keyring::Charlie.public()]
 	}
 
-	fn create_validateer_set_from_publics(authorities: Vec<Public>) -> Vec<Enclave> {
-		authorities.iter().map(|a| validateer(a.clone().into())).collect()
+	fn create_validateer_set_from_publics(authorities: Vec<Public>) -> Vec<AccountId> {
+		authorities.iter().map(|a| AccountId::from(a.clone())).collect()
 	}
 
 	fn onchain_mock(

@@ -5,10 +5,11 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [features]
-production = []
+production = [
+    "litentry-primitives/production",
+]
 sidechain = []
 offchain-worker = []
-teeracle = []

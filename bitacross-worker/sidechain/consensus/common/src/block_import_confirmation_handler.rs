@@ -20,7 +20,7 @@ use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, NumberFor,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api_metadata::{pallet_sidechain::SidechainCallIndexes, NodeMetadataTrait};
+use itp_node_api_metadata::{pallet_teebag::TeebagCallIndexes, NodeMetadataTrait};
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_settings::worker::BLOCK_NUMBER_FINALIZATION_DIFF;
 use itp_types::{OpaqueCall, ShardIdentifier};
@@ -102,7 +102,7 @@ impl<
 	fn confirm_import(&self, header: &SidechainHeader, shard: &ShardIdentifier) -> Result<()> {
 		let call = self
 			.metadata_repository
-			.get_from_metadata(|m| m.confirm_imported_sidechain_block_indexes())
+			.get_from_metadata(|m| m.sidechain_block_imported_call_indexes())
 			.map_err(|e| Error::Other(e.into()))?
 			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
 

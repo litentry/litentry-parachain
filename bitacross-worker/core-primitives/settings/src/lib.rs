@@ -48,6 +48,9 @@ pub mod files {
 	// litentry
 	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
 
+	// bitacross
+	pub const RELAYER_REGISTRY_FILE: &str = "relayer_registry_sealed.bin";
+
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
 	// used by worker and enclave
@@ -98,6 +101,3 @@ pub mod sidechain {
 
 	pub static SLOT_DURATION: Duration = Duration::from_millis(6000);
 }
-
-/// Settings concerning the enclave
-pub mod enclave {}
