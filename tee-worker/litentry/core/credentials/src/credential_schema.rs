@@ -66,12 +66,12 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 
 			// The following assertions are Unused and produce no specific claims. They Generates
 			// generic JSON Credentials
-			AchainableParams::Amounts(_) => format!("{}", NOT_IMPLEMENTED),
-			AchainableParams::BetweenPercents(_) => format!("{}", NOT_IMPLEMENTED),
-			AchainableParams::Date(_) => format!("{}", NOT_IMPLEMENTED),
-			AchainableParams::DateInterval(_) => format!("{}", NOT_IMPLEMENTED),
-			AchainableParams::DatePercent(_) => format!("{}", NOT_IMPLEMENTED),
-			AchainableParams::Token(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::Amounts(_) => NOT_IMPLEMENTED.to_string(),
+			AchainableParams::BetweenPercents(_) => NOT_IMPLEMENTED.to_string(),
+			AchainableParams::Date(_) => NOT_IMPLEMENTED.to_string(),
+			AchainableParams::DateInterval(_) => NOT_IMPLEMENTED.to_string(),
+			AchainableParams::DatePercent(_) => NOT_IMPLEMENTED.to_string(),
+			AchainableParams::Token(_) => NOT_IMPLEMENTED.to_string(),
 		},
 
 		Assertion::A20 => format!("{BASE_URL}/12-idhub-evm-version-early-bird/1-0-0.json"),
