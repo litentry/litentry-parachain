@@ -27,7 +27,6 @@ use itp_enclave_api::{
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 };
 use itp_node_api::api_client::PalletTeebagApi;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use itp_types::{ShardIdentifier, WorkerType};
 use sgx_types::sgx_quote_sign_type_t;
 use std::string::String;
@@ -35,7 +34,6 @@ use std::string::String;
 pub(crate) fn sync_state<
 	E: TlsRemoteAttestation + EnclaveBase + RemoteAttestation,
 	NodeApi: PalletTeebagApi,
-	WorkerModeProvider: ProvideWorkerMode,
 >(
 	node_api: &NodeApi,
 	shard: &ShardIdentifier,
@@ -43,13 +41,9 @@ pub(crate) fn sync_state<
 	skip_ra: bool,
 ) {
 	// FIXME: we now assume that keys are equal for all shards.
-	let provider_url = match WorkerModeProvider::worker_mode() {
-		WorkerMode::Sidechain =>
-			executor::block_on(get_author_url_of_last_finalized_sidechain_block(node_api, shard))
-				.expect("Author of last finalized sidechain block could not be found"),
-		_ => executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
-			.expect("Author of last finalized sidechain block could not be found"),
-	};
+	let provider_url =
+		executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
+			.expect("Author of last finalized sidechain block could not be found");
 
 	println!("Requesting state provisioning from worker at {}", &provider_url);
 

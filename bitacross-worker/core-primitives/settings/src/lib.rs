@@ -19,8 +19,6 @@
 
 #![no_std]
 
-pub mod worker_mode;
-
 pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";

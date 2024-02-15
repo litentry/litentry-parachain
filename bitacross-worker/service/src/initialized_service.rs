@@ -19,7 +19,6 @@
 //! hosted on a http server.
 
 use crate::error::ServiceResult;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use log::*;
 use parking_lot::RwLock;
 use std::{default::Default, marker::PhantomData, net::SocketAddr, sync::Arc};
@@ -66,24 +65,11 @@ pub trait TrackInitialization {
 	fn worker_for_shard_registered(&self);
 }
 
+#[derive(Default)]
 pub struct InitializationHandler {
 	registered_on_parentchain: RwLock<bool>,
 	sidechain_block_produced: RwLock<bool>,
 	worker_for_shard_registered: RwLock<bool>,
-}
-
-// Cannot use #[derive(Default)], because the compiler complains that WorkerModeProvider then
-// also needs to implement Default. Which does not make sense, since it's only used in PhantomData.
-// Explicitly implementing Default solves the problem
-// (see https://stackoverflow.com/questions/59538071/the-trait-bound-t-stddefaultdefault-is-not-satisfied-when-using-phantomda).
-impl Default for InitializationHandler {
-	fn default() -> Self {
-		Self {
-			registered_on_parentchain: Default::default(),
-			sidechain_block_produced: Default::default(),
-			worker_for_shard_registered: Default::default(),
-		}
-	}
 }
 
 impl TrackInitialization for InitializationHandler {
@@ -103,9 +89,7 @@ impl TrackInitialization for InitializationHandler {
 	}
 }
 
-impl IsInitialized for InitializationHandler
-where
-{
+impl IsInitialized for InitializationHandler {
 	fn is_initialized(&self) -> bool {
 		*self.registered_on_parentchain.read()
 	}
@@ -115,20 +99,6 @@ where
 mod tests {
 
 	use super::*;
-
-	struct OffchainWorkerMode;
-	impl ProvideWorkerMode for OffchainWorkerMode {
-		fn worker_mode() -> WorkerMode {
-			WorkerMode::OffChainWorker
-		}
-	}
-
-	struct SidechainWorkerMode;
-	impl ProvideWorkerMode for SidechainWorkerMode {
-		fn worker_mode() -> WorkerMode {
-			WorkerMode::Sidechain
-		}
-	}
 
 	#[test]
 	fn default_handler_is_initialized_returns_false() {
@@ -146,5 +116,4 @@ mod tests {
 
 		assert!(initialization_handler.is_initialized());
 	}
-
 }
