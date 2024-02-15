@@ -24,7 +24,7 @@ const UNISWAP_USER_DESCRIPTIONS: &str =
 	"You are a trader or liquidity provider of Uniswap V2 or V3.
 Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f.
 Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984.";
-pub const UNISWAP_USER_TYPE: &str = "Uniswap V2/V3 User";
+const UNISWAP_USER_TYPE: &str = "Uniswap V2/V3 User";
 
 pub trait UpdateUniswapUser {
 	fn update_uniswap_user(&mut self, is_v2_holder: bool, is_v3_holder: bool);
