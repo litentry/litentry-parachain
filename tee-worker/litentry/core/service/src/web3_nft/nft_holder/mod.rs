@@ -14,28 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use thiserror_sgx as thiserror;
+use core::result::Result;
+
+use crate::*;
+
+mod common;
+
+pub fn has_nft(
+	nft_type: Web3NftType,
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	match nft_type {
+		Web3NftType::WeirdoGhostGang =>
+			common::has_nft_721(addresses, nft_type, data_provider_config),
+		Web3NftType::Club3Sbt => common::has_nft_1155(addresses, nft_type, data_provider_config),
+	}
 }
-
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-use std::{string::String, vec, vec::Vec};
-
-use litentry_primitives::{
-	ErrorDetail as Error, IntoErrorDetail, Web3Network, Web3NftType, Web3TokenType,
-};
-
-pub use lc_data_providers::DataProviderConfig;
-
-pub mod platform_user;
-pub mod web3_nft;
-pub mod web3_token;

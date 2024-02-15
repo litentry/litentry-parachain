@@ -284,6 +284,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::CryptoSummary => "CryptoSummary",
 			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
 			Assertion::PlatformUser(_) => "PlatformUser",
+			Assertion::NftHolder(_) => "NftHolder",
 		},
 	};
 	inc_stf_calls(category, label);

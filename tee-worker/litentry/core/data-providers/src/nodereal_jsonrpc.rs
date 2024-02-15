@@ -17,7 +17,9 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, convert_balance_hex_to_u128, DataProviderConfig, Error, HttpError};
+use crate::{
+	build_client, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error, HttpError,
+};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -53,6 +55,8 @@ impl Web3NetworkNoderealJsonrpcClient for Web3Network {
 				Some(NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config)),
 			Web3Network::Ethereum =>
 				Some(NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)),
+			Web3Network::Polygon =>
+				Some(NoderealJsonrpcClient::new(NoderealChain::Polygon, data_provider_config)),
 			_ => None,
 		}
 	}
@@ -236,6 +240,49 @@ pub struct GetTokenBalance721Param {
 	pub block_number: String,
 }
 
+#[derive(Serialize, Debug)]
+pub struct GetTokenBalance1155Param {
+	// The address of the ERC1155/BEP1155 token
+	pub token_address: String,
+	// Account address whose balance will be checked
+	pub account_address: String,
+	// The block number in hex format or the string 'latest' or 'earliest' on which the balance will be checked
+	pub block_number: String,
+	// The tokenId in hex format of the ERC1155/BEP1155 token
+	pub token_id: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct GetNFTInventoryParam {
+	// The address of the account in hex format
+	pub account_address: String,
+	// The address of the contract
+	pub contract_address: String,
+	// pageSize is hex encoded and should be less equal than 100 (each page return at most pageSize items)
+	pub page_size: String,
+	// It should be empty for the first page. If more results are available, a pageKey will be returned in the response. Pass the pageKey to fetch the next pageSize items.
+	pub page_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetNFTInventoryResult {
+	// example: 100_342
+	pub page_key: String,
+	pub details: Vec<GetNFTInventoryResultDetail>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetNFTInventoryResultDetail {
+	// the address of the token
+	pub token_address: String,
+	// the id of the token
+	pub token_id: String,
+	// the balance of the token
+	pub balance: String,
+}
+
 pub trait NftApiList {
 	fn get_nft_holdings(
 		&mut self,
@@ -243,6 +290,13 @@ pub trait NftApiList {
 	) -> Result<GetNFTHoldingsResult, Error>;
 
 	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<u128, Error>;
+
+	fn get_token_balance_1155(&mut self, param: &GetTokenBalance1155Param) -> Result<u128, Error>;
+
+	fn get_token_nft_inventory(
+		&mut self,
+		param: &GetNFTInventoryParam,
+	) -> Result<GetNFTInventoryResult, Error>;
 }
 
 // NFT API
@@ -292,7 +346,64 @@ impl NftApiList for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_721, response: {:?}", resp);
-				convert_balance_hex_to_u128(resp.result)
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	// https://docs.nodereal.io/reference/nr_gettokenbalance1155
+	fn get_token_balance_1155(&mut self, param: &GetTokenBalance1155Param) -> Result<u128, Error> {
+		let params: Vec<String> = vec![
+			param.token_address.clone(),
+			param.account_address.clone(),
+			param.block_number.clone(),
+			param.token_id.clone(),
+		];
+		debug!("get_token_balance_1155: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance1155".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("get_token_balance_1155, response: {:?}", resp);
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	// https://docs.nodereal.io/reference/nr_getnftinventory
+	fn get_token_nft_inventory(
+		&mut self,
+		param: &GetNFTInventoryParam,
+	) -> Result<GetNFTInventoryResult, Error> {
+		let params: Vec<String> = vec![
+			param.account_address.clone(),
+			param.contract_address.clone(),
+			param.page_size.clone(),
+			param.page_key.clone(),
+		];
+		debug!("get_token_nft_inventory: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getNFTInventory".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				debug!("get_token_nft_inventory, response: {:?}", resp);
+				match serde_json::from_value::<GetNFTInventoryResult>(resp.result) {
+					Ok(result) => Ok(result),
+					Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+				}
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -332,7 +443,7 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_20, response: {:?}", resp);
-				convert_balance_hex_to_u128(resp.result)
+				convert_balance_hex_json_value_to_u128(resp.result)
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -372,7 +483,7 @@ impl EthBalance for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("eth_getBalance, response: {:?}", resp);
-				convert_balance_hex_to_u128(resp.result)
+				convert_balance_hex_json_value_to_u128(resp.result)
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -407,7 +518,7 @@ impl TransactionCount for NoderealJsonrpcClient {
 						))),
 					},
 					None => Err(Error::RequestError(format!(
-						"Cannot tansform response result {:?} to &str",
+						"Cannot transform response result {:?} to &str",
 						resp.result
 					))),
 				}
@@ -475,5 +586,37 @@ mod tests {
 		};
 		let result = client.get_token_balance_20(&param).unwrap();
 		assert_eq!(result, 800);
+	}
+
+	#[test]
+	fn does_get_token_balance_1155_works() {
+		let config = init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
+		let param = GetTokenBalance1155Param {
+			token_address: "0x07D971C03553011a48E951a53F48632D37652Ba1".into(),
+			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
+			block_number: "latest".into(),
+			token_id: "0x0000000000000000000000000000000000000000f".into(),
+		};
+		let result = client.get_token_balance_1155(&param).unwrap();
+		assert_eq!(result, 1);
+	}
+
+	#[test]
+	fn does_get_token_nft_inventory_works() {
+		let config = init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
+		let param = GetNFTInventoryParam {
+			account_address: "0x0042f9b78c67eb30c020a56d07f9a2fc83bc2514".into(),
+			contract_address: "0x64aF96778bA83b7d4509123146E2B3b07F7deF52".into(),
+			page_size: "0x14".into(),
+			page_key: "".into(),
+		};
+		let result = client.get_token_nft_inventory(&param).unwrap();
+		assert_eq!(result.page_key, "100_342");
+		assert_eq!(result.details.len(), 1);
+		assert_eq!(result.details[0].token_address, "0x5e74094cd416f55179dbd0e45b1a8ed030e396a1");
+		assert_eq!(result.details[0].token_id, "0x0000000000000000000000000000000000000000f");
+		assert_eq!(result.details[0].balance, "0x00000000000000000000000000000000000000001");
 	}
 }

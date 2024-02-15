@@ -266,6 +266,9 @@ where
 			platform_user_type,
 			&context.data_provider_config,
 		),
+
+		Assertion::NftHolder(nft_type) =>
+			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 	}?;
 
 	// post-process the credential
