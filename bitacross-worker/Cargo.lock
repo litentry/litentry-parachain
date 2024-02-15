@@ -761,7 +761,6 @@ dependencies = [
  "log 0.4.20",
  "pallet-balances",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
- "pallet-teerex",
  "parity-scale-codec",
  "rand 0.8.5",
  "rayon",
@@ -5508,14 +5507,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itp-teerex-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
@@ -8886,13 +8877,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-teerex",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -9248,12 +9238,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
