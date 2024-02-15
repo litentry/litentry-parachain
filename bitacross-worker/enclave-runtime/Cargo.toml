@@ -99,6 +99,7 @@ itc-direct-rpc-server = { path = "../core/direct-rpc-server", default-features =
 itc-offchain-worker-executor = { path = "../core/offchain-worker-executor", default-features = false, features = ["sgx"] }
 itc-parentchain = { path = "../core/parentchain/parentchain-crate", default-features = false, features = ["sgx"] }
 itc-parentchain-block-import-dispatcher = { path = "../core/parentchain/block-import-dispatcher", default-features = false, features = ["sgx"] }
+itc-parentchain-light-client = { path = "../core/parentchain/light-client", default-features = false }
 itc-parentchain-test = { path = "../core/parentchain/test", default-features = false }
 itc-peer-top-broadcaster = { path = "../core/peer-top-broadcaster", default-features = false, features = ["sgx"] }
 itc-tls-websocket-server = { path = "../core/tls-websocket-server", default-features = false, features = ["sgx"] }
@@ -109,6 +110,7 @@ itp-extrinsics-factory = { path = "../core-primitives/extrinsics-factory", defau
 itp-import-queue = { path = "../core-primitives/import-queue", default-features = false, features = ["sgx"] }
 itp-node-api = { path = "../core-primitives/node-api", default-features = false, features = ["sgx"] }
 itp-node-api-metadata = { path = "../core-primitives/node-api/metadata", default-features = false }
+itp-node-api-metadata-provider = { path = "../core-primitives/node-api/metadata-provider", default-features = false }
 itp-nonce-cache = { path = "../core-primitives/nonce-cache", default-features = false, features = ["sgx"] }
 itp-ocall-api = { path = "../core-primitives/ocall-api", default-features = false }
 itp-primitives-cache = { path = "../core-primitives/primitives-cache", default-features = false, features = ["sgx"] }

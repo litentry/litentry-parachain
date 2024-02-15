@@ -15,14 +15,15 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use core_primitives::{Address20, Address33};
 use scale_info::TypeInfo;
+
+pub type PubKey = [u8; 33];
 
 /// custodial wallet that each tee worker generates and holds
 #[derive(Encode, Decode, Clone, Default, Debug, PartialEq, Eq, TypeInfo)]
 pub struct CustodialWallet {
-	pub btc: Option<Address33>,
-	pub eth: Option<Address20>,
+	pub btc: Option<PubKey>,
+	pub eth: Option<PubKey>,
 }
 
 impl CustodialWallet {
