@@ -367,6 +367,16 @@ fn sidechain_rpc_int(request: &str) -> Result<String> {
 		.unwrap_or_else(|| format!("Empty rpc response for request: {}", request)))
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn publish_wallets() -> sgx_status_t {
+	if let Err(e) = initialization::publish_wallets() {
+		error!("Failed to publish generated wallets: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
 /// Initialize sidechain enclave components.
 ///
 /// Call this once at startup. Has to be called AFTER the light-client

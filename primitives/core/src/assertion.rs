@@ -29,100 +29,68 @@ use sp_std::{vec, vec::Vec};
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableAmountHolding {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub amount: ParameterString,
-	pub date: ParameterString,
-	pub token: Option<ParameterString>,
+macro_rules! AchainableRequestParams {
+	($type_name:ident, {$( $field_name:ident : $field_type:ty , )* }) => {
+		#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+		pub struct $type_name {
+			pub name: ParameterString,
+			pub chain: BoundedWeb3Network,
+			$( pub $field_name: $field_type ),*
+		}
+	};
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableAmountToken {
-	pub name: ParameterString,
+AchainableRequestParams!(AchainableAmountHolding, {
+	amount: ParameterString,
+	date: ParameterString,
+	token: Option<ParameterString>,
+});
 
-	// Considering the uniformity of the structure, all relevant chain structures should be changed
-	// to BoundedWeb3Network. However, this would be a significant modification for the previous
-	// VC. Considering the tight timeline for this New Year compain, we will temporarily only
-	// change this AchainableAmountToken' chain field to BoundedWeb3Network. Afterwards, it needs
-	// to be modified to be consistent.
-	pub chain: BoundedWeb3Network,
+AchainableRequestParams!(AchainableAmountToken, {
+	amount: ParameterString,
+	token: Option<ParameterString>,
+});
 
-	pub amount: ParameterString,
-	pub token: Option<ParameterString>,
-}
+AchainableRequestParams!(AchainableAmount, {
+	amount: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableAmount {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub amount: ParameterString,
-}
+AchainableRequestParams!(AchainableAmounts, {
+	amount1: ParameterString,
+	amount2: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableAmounts {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub amount1: ParameterString,
-	pub amount2: ParameterString,
-}
+AchainableRequestParams!(AchainableBasic, {});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableBasic {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-}
+AchainableRequestParams!(AchainableBetweenPercents, {
+	greater_than_or_equal_to: ParameterString,
+	less_than_or_equal_to: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableBetweenPercents {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub greater_than_or_equal_to: ParameterString,
-	pub less_than_or_equal_to: ParameterString,
-}
+AchainableRequestParams!(AchainableClassOfYear, {});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableClassOfYear {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-}
+AchainableRequestParams!(AchainableDateInterval, {
+	start_date: ParameterString,
+	end_date: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableDateInterval {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub start_date: ParameterString,
-	pub end_date: ParameterString,
-}
+AchainableRequestParams!(AchainableDatePercent, {
+	token: ParameterString,
+	date: ParameterString,
+	percent: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableDatePercent {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub token: ParameterString,
-	pub date: ParameterString,
-	pub percent: ParameterString,
-}
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableDate {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub date: ParameterString,
-}
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableToken {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub token: ParameterString,
-}
+AchainableRequestParams!(AchainableDate, {
+	date: ParameterString,
+});
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableMirror {
-	pub name: ParameterString,
-	pub chain: Web3Network,
-	pub post_quantity: Option<ParameterString>,
-}
+AchainableRequestParams!(AchainableToken, {
+	token: ParameterString,
+});
+
+AchainableRequestParams!(AchainableMirror, {
+	post_quantity: Option<ParameterString>,
+});
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -173,18 +141,18 @@ impl AchainableParams {
 
 	pub fn chains(&self) -> Vec<Web3Network> {
 		match self {
-			AchainableParams::AmountHolding(arg) => vec![arg.chain],
+			AchainableParams::AmountHolding(arg) => arg.chain.to_vec(),
 			AchainableParams::AmountToken(arg) => arg.chain.to_vec(),
-			AchainableParams::Amount(arg) => vec![arg.chain],
-			AchainableParams::Amounts(arg) => vec![arg.chain],
-			AchainableParams::Basic(arg) => vec![arg.chain],
-			AchainableParams::BetweenPercents(arg) => vec![arg.chain],
-			AchainableParams::ClassOfYear(arg) => vec![arg.chain],
-			AchainableParams::DateInterval(arg) => vec![arg.chain],
-			AchainableParams::DatePercent(arg) => vec![arg.chain],
-			AchainableParams::Date(arg) => vec![arg.chain],
-			AchainableParams::Token(arg) => vec![arg.chain],
-			AchainableParams::Mirror(arg) => vec![arg.chain],
+			AchainableParams::Amount(arg) => arg.chain.to_vec(),
+			AchainableParams::Amounts(arg) => arg.chain.to_vec(),
+			AchainableParams::Basic(arg) => arg.chain.to_vec(),
+			AchainableParams::BetweenPercents(arg) => arg.chain.to_vec(),
+			AchainableParams::ClassOfYear(arg) => arg.chain.to_vec(),
+			AchainableParams::DateInterval(arg) => arg.chain.to_vec(),
+			AchainableParams::DatePercent(arg) => arg.chain.to_vec(),
+			AchainableParams::Date(arg) => arg.chain.to_vec(),
+			AchainableParams::Token(arg) => arg.chain.to_vec(),
+			AchainableParams::Mirror(arg) => arg.chain.to_vec(),
 		}
 	}
 }
