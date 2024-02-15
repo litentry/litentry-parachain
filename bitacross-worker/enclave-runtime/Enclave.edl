@@ -43,6 +43,8 @@ enclave {
 			[in, size=encoded_base_dir_size] uint8_t* encoded_base_dir_str, uint32_t encoded_base_dir_size
 		);
 
+		public sgx_status_t publish_wallets();
+
 		public sgx_status_t init_enclave_sidechain_components(
 		    [in, size=fail_mode_size] uint8_t* fail_mode, uint32_t fail_mode_size,
 		    [in, size=fail_at_size] uint8_t* fail_at, uint32_t fail_at_size
@@ -174,7 +176,7 @@ enclave {
 			[in, size=shard_size] uint8_t* new_shard, 
 			uint32_t shard_size
 		);
-		
+
 		public sgx_status_t ignore_parentchain_block_import_validation_until(
 			[in] uint32_t* until
 		);
