@@ -16,7 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core_primitives::{Address20, Address33, Identity};
+use core_primitives::Identity;
 use frame_support::{
 	dispatch::{DispatchResult, DispatchResultWithPostInfo},
 	ensure,
@@ -70,8 +70,8 @@ pub mod pallet {
 		AdminSet { new_admin: Option<T::AccountId> },
 		RelayerAdded { who: Identity },
 		RelayerRemoved { who: Identity },
-		BtcWalletGenerated { address: Address33 },
-		EthWalletGenerated { address: Address20 },
+		BtcWalletGenerated { pub_key: PubKey },
+		EthWalletGenerated { pub_key: PubKey },
 	}
 
 	#[pallet::error]
@@ -149,13 +149,13 @@ pub mod pallet {
 		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
 		pub fn btc_wallet_generated(
 			origin: OriginFor<T>,
-			address: Address33,
+			pub_key: PubKey,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
 			Vault::<T>::try_mutate(tee_account, |v| {
 				ensure!(!v.has_btc(), Error::<T>::BtcWalletAlreadyExist);
-				v.btc = Some(address);
-				Self::deposit_event(Event::BtcWalletGenerated { address });
+				v.btc = Some(pub_key);
+				Self::deposit_event(Event::BtcWalletGenerated { pub_key });
 				Ok(Pays::No.into())
 			})
 		}
@@ -164,13 +164,13 @@ pub mod pallet {
 		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
 		pub fn eth_wallet_generated(
 			origin: OriginFor<T>,
-			address: Address20,
+			pub_key: PubKey,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
 			Vault::<T>::try_mutate(tee_account, |v| {
 				ensure!(!v.has_eth(), Error::<T>::EthWalletAlreadyExist);
-				v.eth = Some(address);
-				Self::deposit_event(Event::EthWalletGenerated { address });
+				v.eth = Some(pub_key);
+				Self::deposit_event(Event::EthWalletGenerated { pub_key });
 				Ok(Pays::No.into())
 			})
 		}
