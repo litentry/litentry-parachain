@@ -82,8 +82,8 @@ pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
 pub mod brc20;
+pub mod credential_schema;
 pub mod generic_discord_role;
-pub mod jsonschema;
 pub mod nodereal;
 pub mod vip3;
 
@@ -167,9 +167,9 @@ impl CredentialSubject {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct CredentialSchema {
-	/// Schema ID that is maintained by Parentchain VCMP
+	/// Schema ID that is maintained in https://github.com/litentry/vc-jsonschema
 	pub id: String,
-	/// The schema type, generally it is
+	/// The schema type, generally it is JSON Schema Draft 7 (JSONSchema7/JSONSchema2018)
 	#[serde(rename = "type")]
 	pub types: String,
 }
@@ -214,8 +214,6 @@ pub struct Credential {
 	pub context: Vec<String>,
 	/// The specific UUID of the credential, it is used for onchain verification
 	pub id: String,
-	/// The JSON Schema information the credential follows
-	pub jsonschema: String,
 	/// Uniquely identifier of the type of the credential
 	#[serde(rename = "type")]
 	pub types: Vec<CredentialType>,
@@ -230,9 +228,8 @@ pub struct Credential {
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
-	#[serde(skip_deserializing)]
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub credential_schema: Option<CredentialSchema>,
+	/// The JSON Schema information the credential follows
+	pub credential_schema: CredentialSchema,
 }
 
 impl Credential {
@@ -256,7 +253,6 @@ impl Credential {
 		vc.credential_subject.id =
 			subject.to_did().map_err(|err| Error::ParseError(err.to_string()))?;
 		vc.issuance_date = now_as_iso8601();
-		vc.credential_schema = None;
 		vc.proof = None;
 
 		vc.generate_id();

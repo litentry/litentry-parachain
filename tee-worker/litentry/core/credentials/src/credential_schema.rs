@@ -22,8 +22,8 @@ const NOT_IMPLEMENTED: &str =
 	"https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/0-base.json";
 
 /// Returns the respective JSON Schema for the given assertion and its credential.
-/// JSON Schemas can be found on https://github.com/litentry/vc-jsonschema
-pub fn get_json_schema_url(assertion: &Assertion) -> String {
+/// JSON Schemas can be found at https://github.com/litentry/vc-jsonschema
+pub fn get_schema_url(assertion: &Assertion) -> String {
 	match assertion {
 		Assertion::A1 => format!("{BASE_URL}/1-basic-identity-verification/1-0-0.json"),
 
