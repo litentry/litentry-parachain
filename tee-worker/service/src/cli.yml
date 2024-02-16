@@ -166,6 +166,11 @@ subcommands:
                 long: reregister
                 help: Set the teeracle reregistration interval. Example of accepted syntax <5 seconds 15 minutes 2 hours 1 days> or short <5s15m2h1d>
                 takes_value: true
+            - marblerun-url:
+                required: false
+                long: marblerun-url
+                help: Set the URL for prometheus metrics. Probably put some meaningful description
+                takes_value: true
     - request-state:
         about: join a shard by requesting key provisioning from another worker
         args:
@@ -235,3 +240,6 @@ subcommands:
                     long: provisioning-client
                     help: Run TEE client for MU-RA key provisioning
                     takes_value: false
+                - skip-ra:
+                    long: skip-ra
+                    help: skip remote attestation. Set this flag if running enclave in SW mode
