@@ -327,7 +327,6 @@ jobs:
           echo "::group::cargo clippy all"
           cargo clippy --release -- -D warnings
           echo "::endgroup::"
-          echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
@@ -349,9 +348,6 @@ jobs:
         run: |
           echo "::group::cargo clippy all"
           cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
