@@ -33,7 +33,7 @@ use crate::{
 use codec::Decode;
 use ita_sgx_runtime::Parentchain;
 use ita_stf::{
-	helpers::{set_block_number},
+	helpers::set_block_number,
 	stf_sgx_tests,
 	test_genesis::{endowed_account as funded_pair, unendowed_account},
 	Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,

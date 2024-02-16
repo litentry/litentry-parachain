@@ -23,9 +23,9 @@ use std::sync::RwLock;
 
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
-use itp_ocall_api::{EnclaveMetricsOCallApi};
-use sgx_types::{SgxResult};
-use std::{vec::Vec};
+use itp_ocall_api::EnclaveMetricsOCallApi;
+use sgx_types::SgxResult;
+use std::vec::Vec;
 
 pub struct SidechainOCallApiMock<SignedSidechainBlockType> {
 	fetch_from_peer_blocks: Option<Vec<SignedSidechainBlockType>>,

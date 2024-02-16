@@ -26,7 +26,6 @@ use base58::ToBase58;
 use clap::{load_yaml, App, ArgMatches};
 use codec::{Decode, Encode};
 use itp_enclave_api::{
-	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
@@ -287,7 +286,7 @@ fn start_worker<E, T, InitializationHandler>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+	E: EnclaveBase + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 {
 	let run_config = config.run_config().clone().expect("Run config missing");

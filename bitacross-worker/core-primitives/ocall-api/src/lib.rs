@@ -19,14 +19,14 @@
 
 pub extern crate alloc;
 
-use alloc::{vec::Vec};
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::result::Result as StdResult;
 use derive_more::{Display, From};
 use itp_storage::Error as StorageError;
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified,
-	TrustedOperationStatus, WorkerRequest, WorkerResponse,
+	parentchain::ParentchainId, storage::StorageEntryVerified, TrustedOperationStatus,
+	WorkerRequest, WorkerResponse,
 };
 use sgx_types::*;
 use sp_core::H256;

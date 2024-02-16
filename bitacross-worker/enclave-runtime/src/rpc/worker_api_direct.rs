@@ -20,13 +20,16 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
+	std::string::ToString,
 	utils::{
 		get_stf_enclave_signer_from_solo_or_parachain,
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
+use bc_task_sender::{BitAcrossRequest, BitAcrossRequestSender};
 use codec::Encode;
 use core::result::Result;
+use futures_sgx::channel::oneshot;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
@@ -44,7 +47,7 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_not_production;
-use litentry_primitives::DecryptableRequest;
+use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -125,6 +128,18 @@ where
 		};
 
 		Ok(json!(json_value.to_hex()))
+	});
+
+	// Submit BitAcross Request
+	io.add_method("bitacross_submitRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_submitRequest");
+		async move {
+			let json_value = match request_bit_across_inner(params).await {
+				Ok(value) => value.to_hex(),
+				Err(error) => compute_hex_encoded_return_error(&error),
+			};
+			Ok(json!(json_value))
+		}
 	});
 
 	// let local_top_pool_author = top_pool_author.clone();
@@ -526,6 +541,41 @@ fn attesteer_forward_ias_attestation_report_inner(
 		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(ext)
+}
+
+async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, String> {
+	let payload = get_request_payload(params)?;
+	let request = AesRequest::from_hex(&payload)
+		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+
+	let bit_across_request_sender = BitAcrossRequestSender::new();
+	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+
+	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
+
+	// we only expect one response, hence no loop
+	match receiver.await {
+		Ok(Ok(response)) =>
+			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
+		Ok(Err(e)) => {
+			log::error!("Received error in jsonresponse: {:?} ", e);
+			Err(compute_hex_encoded_return_error(&e))
+		},
+		Err(_) => {
+			// This case will only happen if the sender has been dropped
+			Err(compute_hex_encoded_return_error("The sender has been dropped"))
+		},
+	}
+}
+
+// we expect our `params` to be "by-position array"
+// see https://www.jsonrpc.org/specification#parameter_structures
+fn get_request_payload(params: Params) -> Result<String, String> {
+	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
+
+	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
+	debug!("Request payload: {}", s);
+	Ok(s.to_owned())
 }
 
 pub fn sidechain_io_handler<Error>() -> IoHandler

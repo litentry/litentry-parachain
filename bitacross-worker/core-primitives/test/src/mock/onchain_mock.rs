@@ -18,20 +18,18 @@
 
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use itp_ocall_api::{
-	EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi,
-};
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_storage::Error::StorageValueUnavailable;
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId,
-	WorkerRequest, WorkerResponse, WorkerType,
+	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId, WorkerRequest,
+	WorkerResponse, WorkerType,
 };
 use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
 use sgx_types::*;
 use sp_core::H256;
 use sp_runtime::{traits::Header as HeaderTrait, OpaqueExtrinsic};
 use sp_std::prelude::*;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 #[derive(Default, Clone, Debug)]
 pub struct OnchainMock {

@@ -18,9 +18,7 @@
 
 //! Type definitions for testing. Includes various mocks.
 
-use crate::test::mocks::{
-	rpc_responder_mock::RpcResponderMock,
-};
+use crate::test::mocks::rpc_responder_mock::RpcResponderMock;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, Stf, TrustedCallSigned};
 use itc_parentchain::block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;

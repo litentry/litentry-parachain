@@ -66,10 +66,12 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 array-bytes = { version = "6.0.0" }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 derive_more = { version = "0.99.5" }
+futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx" }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 ipfs-unixfs = { default-features = false, git = "https://github.com/whalelephant/rust-ipfs", branch = "w-nstd" }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "serde_no_std"] }
+
 
 # scs / integritee
 jsonrpc-core = { default-features = false, git = "https://github.com/scs/jsonrpc", branch = "no_std_v18" }
@@ -131,6 +133,7 @@ itp-utils = { path = "../core-primitives/utils", default-features = false }
 
 # litentry
 bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
+bc-task-sender = { path = "../bitacross/core/bc-task-sender", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }

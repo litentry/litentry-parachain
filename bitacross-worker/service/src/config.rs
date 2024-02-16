@@ -91,7 +91,7 @@ impl Config {
 		untrusted_http_port: String,
 		data_dir: PathBuf,
 		run_config: Option<RunConfig>,
-		parentchain_start_block: String
+		parentchain_start_block: String,
 	) -> Self {
 		Self {
 			litentry_rpc_url,
@@ -112,7 +112,7 @@ impl Config {
 			untrusted_http_port,
 			data_dir,
 			run_config,
-			parentchain_start_block
+			parentchain_start_block,
 		}
 	}
 
