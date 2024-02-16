@@ -21,9 +21,9 @@
 //! However, there are so many error cases in TEE that I'm not even sure
 //! if it's a good idea to have a matching extrinsic for error propagation.
 //!
-//! The reasons that we don't use pallet_teerex::call_worker directly are:
-//! - call teerex::call_worker inside IMP won't trigger the handler, because it's not called as
-//!   extrinsics so won't be scraped
+//! The reasons that we don't use pallet_teebag::post_opaque_task directly are:
+//! - call pallet_teebag::post_opaque_task inside IMP won't trigger the handler, because it's not
+//!   called as extrinsics so won't be scraped
 //! - the origin is discarded in call_worker but we need it
 //! - to simplify the F/E usage, we only need to encrypt the needed parameters (see e.g.
 //!   shield_funds)
@@ -43,9 +43,9 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
+use pallet_teebag::ShardIdentifier;
 use sp_core::H256;
 use sp_std::vec::Vec;
-pub use teerex_primitives::ShardIdentifier;
 
 #[frame_support::pallet]
 pub mod pallet {

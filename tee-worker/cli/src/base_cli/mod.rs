@@ -22,7 +22,6 @@ use crate::{
 		listen::ListenCommand,
 		litentry::{id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand},
 		register_tcb_info::RegisterTcbInfoCommand,
-		shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
@@ -76,9 +75,6 @@ pub enum BaseCommand {
 	/// Register TCB info for FMSPC
 	RegisterTcbInfo(RegisterTcbInfoCommand),
 
-	/// Transfer funds from an parentchain account to an incognito account
-	ShieldFunds(ShieldFundsCommand),
-
 	// Litentry's commands below
 	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
 	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
@@ -105,7 +101,6 @@ impl BaseCommand {
 			BaseCommand::ListWorkers => list_workers(cli),
 			BaseCommand::Listen(cmd) => cmd.run(cli),
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
-			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),

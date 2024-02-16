@@ -42,7 +42,6 @@ use runtime_common::EnsureEnclaveSigner;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
 pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
-pub use pallet_teeracle;
 pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
@@ -246,7 +245,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9173,
+	spec_version: 9174,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1004,13 +1003,6 @@ impl pallet_sidechain::Config for Runtime {
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
 }
 
-impl pallet_teeracle::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
-	type MaxWhitelistedReleases = ConstU32<10>;
-	type MaxOracleBlobLen = ConstU32<4096>;
-}
-
 impl pallet_teebag::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
@@ -1254,7 +1246,6 @@ construct_runtime! {
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
-		Teeracle: pallet_teeracle = 92,
 		Teebag: pallet_teebag = 93,
 
 		// Frontier
@@ -1332,7 +1323,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// TEE pallets
 			RuntimeCall::Teerex(_) |
 			RuntimeCall::Sidechain(_) |
-			RuntimeCall::Teeracle(_) |
 			RuntimeCall::Teebag(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
@@ -1384,7 +1374,6 @@ mod benches {
 		[pallet_vc_management, VCManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
-		[pallet_teeracle, Teeracle]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 	);

@@ -101,6 +101,3 @@ pub mod sidechain {
 
 	pub static SLOT_DURATION: Duration = Duration::from_millis(6000);
 }
-
-/// Settings concerning the enclave
-pub mod enclave {}
