@@ -20,19 +20,18 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_ocall_api::{
 	EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi,
-	EnclaveSidechainOCallApi,
 };
 use itp_storage::Error::StorageValueUnavailable;
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId, BlockHash,
-	ShardIdentifier, WorkerRequest, WorkerResponse, WorkerType,
+	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId,
+	WorkerRequest, WorkerResponse, WorkerType,
 };
 use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
 use sgx_types::*;
 use sp_core::H256;
 use sp_runtime::{traits::Header as HeaderTrait, OpaqueExtrinsic};
 use sp_std::prelude::*;
-use std::{collections::HashMap, string::String};
+use std::{collections::HashMap};
 
 #[derive(Default, Clone, Debug)]
 pub struct OnchainMock {
@@ -136,35 +135,6 @@ impl EnclaveAttestationOCallApi for OnchainMock {
 
 	fn get_mrenclave_of_self(&self) -> SgxResult<sgx_measurement_t> {
 		Ok(sgx_measurement_t { m: self.mr_enclave })
-	}
-}
-
-impl EnclaveSidechainOCallApi for OnchainMock {
-	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn store_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn fetch_sidechain_blocks_from_peer<SignedSidechainBlock: Decode>(
-		&self,
-		_last_imported_block_hash: BlockHash,
-		_maybe_until_block_hash: Option<BlockHash>,
-		_shard_identifier: ShardIdentifier,
-	) -> SgxResult<Vec<SignedSidechainBlock>> {
-		Ok(Vec::new())
-	}
-
-	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
-		Ok(Vec::default())
 	}
 }
 

@@ -212,23 +212,6 @@ pub trait MetricsBridge {
 	fn update_metric(&self, metric_encoded: Vec<u8>) -> OCallBridgeResult<()>;
 }
 
-/// Trait for all the OCalls related to sidechain operations
-#[cfg_attr(test, automock)]
-pub trait SidechainBridge {
-	fn propose_sidechain_blocks(&self, signed_blocks_encoded: Vec<u8>) -> OCallBridgeResult<()>;
-
-	fn store_sidechain_blocks(&self, signed_blocks_encoded: Vec<u8>) -> OCallBridgeResult<()>;
-
-	fn fetch_sidechain_blocks_from_peer(
-		&self,
-		last_imported_block_hash_encoded: Vec<u8>,
-		maybe_until_block_hash_encoded: Vec<u8>,
-		shard_identifier_encoded: Vec<u8>,
-	) -> OCallBridgeResult<Vec<u8>>;
-
-	fn get_trusted_peers_urls(&self) -> OCallBridgeResult<Vec<u8>>;
-}
-
 /// type for IPFS
 pub type Cid = [u8; 46];
 

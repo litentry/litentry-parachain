@@ -19,7 +19,7 @@
 //! Type definitions for testing. Includes various mocks.
 
 use crate::test::mocks::{
-	peer_updater_mock::PeerUpdaterMock, rpc_responder_mock::RpcResponderMock,
+	rpc_responder_mock::RpcResponderMock,
 };
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, Stf, TrustedCallSigned};

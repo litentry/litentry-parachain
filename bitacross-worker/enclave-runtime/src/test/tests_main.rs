@@ -26,7 +26,6 @@ use crate::{
 		fixtures::test_setup::{
 			enclave_call_signer, test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor,
 		},
-		mocks::types::TestStateKeyRepo,
 		state_getter_tests, top_pool_tests,
 	},
 	tls_ra,
@@ -34,14 +33,14 @@ use crate::{
 use codec::Decode;
 use ita_sgx_runtime::Parentchain;
 use ita_stf::{
-	helpers::{account_key_hash, set_block_number},
+	helpers::{set_block_number},
 	stf_sgx_tests,
 	test_genesis::{endowed_account as funded_pair, unendowed_account},
-	AccountInfo, Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
+	Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{Aes, StateCrypto};
-use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait, StateHash};
+use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
@@ -57,7 +56,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Balance, Block, Header};
+use itp_types::{AccountId, Header};
 use litentry_primitives::Identity;
 use sgx_tunittest::*;
 use sgx_types::size_t;
@@ -588,7 +587,7 @@ fn execute_trusted_calls(
 			&latest_parentchain_header(),
 			shard,
 			Duration::from_millis(600),
-			|mut s| s,
+			|s| s,
 		)
 		.unwrap()
 }

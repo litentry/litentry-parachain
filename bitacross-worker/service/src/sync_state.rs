@@ -58,24 +58,6 @@ pub(crate) fn sync_state<
 	println!("[+] State provisioning successfully performed.");
 }
 
-/// Returns the url of the last sidechain block author that has been stored
-/// in the parentchain state as "worker for shard".
-///
-/// Note: The sidechainblock author will only change whenever a new parentchain block is
-/// produced. And even then, it might be the same as the last block. So if several workers
-/// are started in a timely manner, they will all get the same url.
-async fn get_author_url_of_last_finalized_sidechain_block<NodeApi: PalletTeebagApi>(
-	node_api: &NodeApi,
-	shard: &ShardIdentifier,
-) -> Result<String> {
-	let enclave = node_api
-		.primary_enclave_for_shard(WorkerType::BitAcross, shard, None)?
-		.ok_or_else(|| Error::NoWorkerForShardFound(*shard))?;
-	let worker_api_direct =
-		DirectWorkerApi::new(String::from_utf8_lossy(enclave.url.as_slice()).to_string());
-	Ok(worker_api_direct.get_mu_ra_url()?)
-}
-
 /// Returns the url of the first Enclave that matches our own MRENCLAVE.
 ///
 /// This should be run before we register ourselves as enclave, to ensure we don't get our own url.

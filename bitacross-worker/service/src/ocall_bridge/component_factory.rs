@@ -21,7 +21,7 @@ use crate::{
 	ocall_bridge::{
 		bridge_api::{
 			GetOCallBridgeComponents, IpfsBridge, MetricsBridge, RemoteAttestationBridge,
-			SidechainBridge, WorkerOnChainBridge,
+			WorkerOnChainBridge,
 		},
 		ipfs_ocall::IpfsOCall,
 		metrics_ocall::MetricsOCall,

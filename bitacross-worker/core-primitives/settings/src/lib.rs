@@ -25,10 +25,6 @@ pub mod files {
 	pub static ENCLAVE_FILE: &str = "enclave.signed.so";
 	pub static SHIELDING_KEY_FILE: &str = "enclave-shielding-pubkey.json";
 	pub static SIGNING_KEY_FILE: &str = "enclave-signing-pubkey.bin";
-	/// sidechain database path
-	pub static SIDECHAIN_STORAGE_PATH: &str = "sidechain_db";
-	pub static SIDECHAIN_PURGE_INTERVAL: u64 = 7200; // purge sidechain every .. s
-	pub static SIDECHAIN_PURGE_LIMIT: u64 = 100; // keep the last.. sidechainblocks when purging
 
 	// used by enclave
 	/// Path to the light-client db for the Integritee parentchain.

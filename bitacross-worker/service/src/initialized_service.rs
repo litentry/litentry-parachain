@@ -60,15 +60,12 @@ pub trait IsInitialized {
 pub trait TrackInitialization {
 	fn registered_on_parentchain(&self);
 
-	fn sidechain_block_produced(&self);
-
 	fn worker_for_shard_registered(&self);
 }
 
 #[derive(Default)]
 pub struct InitializationHandler {
 	registered_on_parentchain: RwLock<bool>,
-	sidechain_block_produced: RwLock<bool>,
 	worker_for_shard_registered: RwLock<bool>,
 }
 
@@ -76,11 +73,6 @@ impl TrackInitialization for InitializationHandler {
 	fn registered_on_parentchain(&self) {
 		let mut registered_lock = self.registered_on_parentchain.write();
 		*registered_lock = true;
-	}
-
-	fn sidechain_block_produced(&self) {
-		let mut block_produced_lock = self.sidechain_block_produced.write();
-		*block_produced_lock = true;
 	}
 
 	fn worker_for_shard_registered(&self) {
@@ -103,10 +95,8 @@ mod tests {
 	#[test]
 	fn default_handler_is_initialized_returns_false() {
 		let offchain_worker_handler = InitializationHandler::default();
-		let sidechain_handler = InitializationHandler::default();
 
 		assert!(!offchain_worker_handler.is_initialized());
-		assert!(!sidechain_handler.is_initialized());
 	}
 
 	#[test]
