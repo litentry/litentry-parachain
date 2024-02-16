@@ -78,7 +78,6 @@ pub mod tests {
 	use crate::builders::{
 		rpc_response_builder::RpcResponseBuilder, rpc_return_value_builder::RpcReturnValueBuilder,
 	};
-	use codec::Encode;
 	use itp_rpc::Id;
 	use itp_types::{TrustedOperationStatus, H256};
 
