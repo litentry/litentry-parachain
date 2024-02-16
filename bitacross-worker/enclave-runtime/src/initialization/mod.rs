@@ -21,6 +21,8 @@ pub mod global_components;
 pub mod parentchain;
 use crate::{
 	error::{Error, Result as EnclaveResult},
+	get_node_metadata_repository_from_integritee_solo_or_parachain,
+	get_validator_accessor_from_integritee_solo_or_parachain,
 	initialization::global_components::{
 		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveOCallApi, EnclaveRpcResponder,
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
@@ -39,6 +41,7 @@ use crate::{
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
+	utils::get_extrinsic_factory_from_integritee_solo_or_parachain,
 	Hash,
 };
 use base58::ToBase58;
@@ -50,6 +53,7 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
+use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
@@ -57,6 +61,9 @@ use itc_tls_websocket_server::{
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
 use itp_component_container::{ComponentGetter, ComponentInitializer};
+use itp_extrinsics_factory::CreateExtrinsics;
+use itp_node_api_metadata::pallet_bitacross::BitAcrossCallIndexes;
+use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
 	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
@@ -73,7 +80,7 @@ use itp_stf_state_handler::{
 };
 use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
-use itp_types::{parentchain::ParentchainId, ShardIdentifier};
+use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::BroadcastedRequest;
 use log::*;
@@ -210,6 +217,42 @@ pub(crate) fn init_enclave(
 	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 
 	std::thread::spawn(move || run_bit_across_handler().unwrap());
+
+	Ok(())
+}
+
+pub(crate) fn publish_wallets() -> EnclaveResult<()> {
+	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let validator_accessor = get_validator_accessor_from_integritee_solo_or_parachain()?;
+
+	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
+	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
+
+	let bitcoin_call = metadata_repository
+		.get_from_metadata(|m| m.btc_wallet_generated_indexes())
+		.map_err(|e| Error::Other(e.into()))?
+		.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+
+	let bitcoin_opaque_call = OpaqueCall::from_tuple(&(bitcoin_call, bitcoin_key.public_bytes()));
+
+	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
+	let ethereum_key = ethereum_key_repository.retrieve_key()?;
+
+	let ethereum_call = metadata_repository
+		.get_from_metadata(|m| m.eth_wallet_generated_indexes())
+		.map_err(|e| Error::Other(e.into()))?
+		.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+
+	let ethereum_opaque_call =
+		OpaqueCall::from_tuple(&(ethereum_call, ethereum_key.public_bytes()));
+
+	let xts = extrinsics_factory
+		.create_extrinsics(&[bitcoin_opaque_call, ethereum_opaque_call], None)
+		.map_err(|e| Error::Other(e.into()))?;
+	validator_accessor
+		.execute_mut_on_validator(|v| v.send_extrinsics(xts))
+		.map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
 }

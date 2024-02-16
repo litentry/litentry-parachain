@@ -76,6 +76,9 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	// litentry
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
+	/// Publish generated wallets on parachain
+	fn publish_wallets(&self) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -354,6 +357,17 @@ mod impl_ffi {
 					old_shard.len() as u32,
 				)
 			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn publish_wallets(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::publish_wallets(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

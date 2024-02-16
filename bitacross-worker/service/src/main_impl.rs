@@ -520,6 +520,8 @@ fn start_worker<E, T, InitializationHandler>(
 			is_development_mode,
 		)
 	}
+	// Publish generated custiodian wallets
+	enclave.publish_wallets();
 
 	// ------------------------------------------------------------------------
 	// Subscribe to events and print them.

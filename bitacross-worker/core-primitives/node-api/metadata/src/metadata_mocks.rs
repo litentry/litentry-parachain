@@ -68,6 +68,8 @@ pub struct NodeMetadataMock {
 	bitacross_module: u8,
 	bitacross_add_relayer: u8,
 	bitacross_remove_relayer: u8,
+	btc_wallet_generated: u8,
+	eth_wallet_generated: u8,
 }
 
 impl NodeMetadataMock {
@@ -105,6 +107,8 @@ impl NodeMetadataMock {
 			bitacross_module: 69u8,
 			bitacross_add_relayer: 0u8,
 			bitacross_remove_relayer: 1u8,
+			btc_wallet_generated: 2u8,
+			eth_wallet_generated: 3u8,
 		}
 	}
 }
@@ -204,5 +208,13 @@ impl BitAcrossCallIndexes for NodeMetadataMock {
 
 	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.bitacross_module, self.bitacross_remove_relayer])
+	}
+
+	fn btc_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.bitacross_module, self.btc_wallet_generated])
+	}
+
+	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.bitacross_module, self.eth_wallet_generated])
 	}
 }

@@ -19,7 +19,7 @@ use crate::{
 	command_utils::{get_chain_api, *},
 	Cli, CliResult, CliResultOk,
 };
-use itp_node_api::api_client::TEEREX;
+use itp_node_api::api_client::TEEBAG;
 use itp_types::{parentchain::Hash, OpaqueCall};
 use itp_utils::ToHexPrefixed;
 use log::*;
@@ -106,7 +106,7 @@ impl RegisterTcbInfoCommand {
 
 				let call = OpaqueCall::from_tuple(&compose_call!(
 					chain_api.metadata(),
-					TEEREX,
+					TEEBAG,
 					"register_tcb_info",
 					tcb_info,
 					intel_signature,

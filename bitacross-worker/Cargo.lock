@@ -5417,14 +5417,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itp-teerex-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "sp-std",
-]
-
-[[package]]
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
@@ -8473,13 +8465,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-teerex",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -8835,12 +8826,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
 ]
 
 [[package]]

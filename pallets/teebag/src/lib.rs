@@ -25,7 +25,7 @@ use frame_support::{
 	traits::Get,
 };
 use frame_system::pallet_prelude::*;
-use sp_core::H256;
+use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
@@ -417,7 +417,7 @@ pub mod pallet {
 			attestation: Vec<u8>,
 			worker_url: Vec<u8>,
 			shielding_pubkey: Option<Vec<u8>>,
-			vc_pubkey: Option<Vec<u8>>,
+			vc_pubkey: Option<Ed25519Public>,
 			attestation_type: AttestationType,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
