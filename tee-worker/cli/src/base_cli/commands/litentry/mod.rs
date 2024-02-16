@@ -15,6 +15,3 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod id_graph_hash;
-
-// TODO: maybe move it to use itp_node_api::api_client
-pub const IMP: &str = "IdentityManagement";
