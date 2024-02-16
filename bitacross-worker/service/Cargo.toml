@@ -33,7 +33,6 @@ warp = "0.3"
 ipfs-api = "0.11.0"
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-primitive-types = { version = "0.12.1", default-features = false, features = ["codec"] }
 
 sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
@@ -42,7 +41,6 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { path = "../core/rest-client" }
 itc-rpc-client = { path = "../core/rpc-client" }
-itc-rpc-server = { path = "../core/rpc-server" }
 itp-api-client-types = { path = "../core-primitives/node-api/api-client-types" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
@@ -51,18 +49,12 @@ itp-settings = { path = "../core-primitives/settings" }
 itp-storage = { path = "../core-primitives/storage" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
-its-consensus-slots = { path = "../sidechain/consensus/slots" }
-its-peer-fetch = { path = "../sidechain/peer-fetch" }
-its-primitives = { path = "../sidechain/primitives" }
-its-rpc-handler = { path = "../sidechain/rpc-handler" }
-its-storage = { path = "../sidechain/storage" }
 
 # `default-features = false` to remove the jsonrpsee dependency.
 substrate-api-client = { default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # Substrate dependencies
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", features = ["full_crypto"] }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -70,8 +62,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 # litentry
 config = "0.13.3"
-ita-stf = { path = "../app-libs/stf", default-features = false }
-litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
@@ -79,10 +69,8 @@ my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/
 [features]
 default = []
 evm = []
-sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = [
-    "ita-stf/production",
     "itp-settings/production",
     "litentry-macros/production",
     "litentry-primitives/production",
@@ -107,5 +95,3 @@ anyhow = "1.0.40"
 mockall = "0.11"
 # local
 itc-parentchain-test = { path = "../core/parentchain/test" }
-its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
-its-test = { path = "../sidechain/test" }
