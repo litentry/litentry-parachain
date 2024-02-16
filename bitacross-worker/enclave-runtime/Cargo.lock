@@ -986,9 +986,6 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "its-block-verification",
- "its-primitives",
- "its-sidechain",
  "jsonrpc-core",
  "lazy_static",
  "lc-scheduled-enclave",
@@ -2603,7 +2600,6 @@ dependencies = [
  "itc-direct-rpc-server",
  "itp-stf-primitives",
  "itp-types",
- "its-primitives",
  "jsonrpc-core",
  "linked-hash-map",
  "log",
@@ -2662,210 +2658,6 @@ dependencies = [
  "hex 0.4.3",
  "litentry-hex-utils",
  "parity-scale-codec",
-]
-
-[[package]]
-name = "its-block-composer"
-version = "0.9.0"
-dependencies = [
- "itp-node-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-stf-primitives",
- "itp-time-utils",
- "itp-top-pool-author",
- "itp-types",
- "its-primitives",
- "its-state",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sgx_types",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-block-verification"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "itp-types",
- "itp-utils",
- "its-primitives",
- "log",
- "sgx_tstd",
- "sp-consensus-slots",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-consensus-aura"
-version = "0.9.0"
-dependencies = [
- "finality-grandpa",
- "ita-stf",
- "itc-parentchain-block-import-dispatcher",
- "itc-peer-top-broadcaster",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-stf-primitives",
- "itp-stf-state-handler",
- "itp-time-utils",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "its-block-composer",
- "its-block-verification",
- "its-consensus-common",
- "its-consensus-slots",
- "its-primitives",
- "its-state",
- "its-validateer-fetch",
- "lc-scheduled-enclave",
- "litentry-hex-utils",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
-name = "its-consensus-common"
-version = "0.9.0"
-dependencies = [
- "itc-parentchain-light-client",
- "itp-enclave-metrics",
- "itp-extrinsics-factory",
- "itp-import-queue",
- "itp-node-api-metadata",
- "itp-node-api-metadata-provider",
- "itp-ocall-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-types",
- "its-block-verification",
- "its-primitives",
- "its-state",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sgx_types",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-consensus-slots"
-version = "0.9.0"
-dependencies = [
- "derive_more",
- "hex 0.4.3",
- "itp-settings",
- "itp-sgx-externalities",
- "itp-stf-state-handler",
- "itp-time-utils",
- "itp-types",
- "its-block-verification",
- "its-consensus-common",
- "its-primitives",
- "its-state",
- "lazy_static",
- "lc-scheduled-enclave",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-consensus-slots",
- "sp-runtime",
-]
-
-[[package]]
-name = "its-primitives"
-version = "0.1.0"
-dependencies = [
- "itp-types",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "its-rpc-handler"
-version = "0.9.0"
-dependencies = [
- "bc-task-sender",
- "futures 0.3.8",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "its-primitives",
- "jsonrpc-core",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "rust-base58",
- "sgx_tstd",
- "sp-core",
-]
-
-[[package]]
-name = "its-sidechain"
-version = "0.9.0"
-dependencies = [
- "its-block-composer",
- "its-consensus-aura",
- "its-consensus-common",
- "its-consensus-slots",
- "its-primitives",
- "its-rpc-handler",
- "its-state",
- "its-validateer-fetch",
-]
-
-[[package]]
-name = "its-state"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "itp-sgx-externalities",
- "itp-storage",
- "its-primitives",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-validateer-fetch"
-version = "0.9.0"
-dependencies = [
- "derive_more",
- "itp-ocall-api",
- "itp-types",
- "lc-teebag-storage",
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -4574,17 +4366,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "sp-consensus-slots"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-std",
- "sp-timestamp",
 ]
 
 [[package]]

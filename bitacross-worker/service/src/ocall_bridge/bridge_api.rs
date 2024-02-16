@@ -52,14 +52,6 @@ impl Bridge {
 			.get_ra_api()
 	}
 
-	pub fn get_sidechain_api() -> Arc<dyn SidechainBridge> {
-		COMPONENT_FACTORY
-			.read()
-			.as_ref()
-			.expect("Component factory has not been set. Use `initialize()`")
-			.get_sidechain_api()
-	}
-
 	pub fn get_oc_api() -> Arc<dyn WorkerOnChainBridge> {
 		debug!("Requesting WorkerOnChain OCall API instance");
 
@@ -100,9 +92,6 @@ impl Bridge {
 pub trait GetOCallBridgeComponents {
 	/// remote attestation OCall API
 	fn get_ra_api(&self) -> Arc<dyn RemoteAttestationBridge>;
-
-	/// side chain OCall API
-	fn get_sidechain_api(&self) -> Arc<dyn SidechainBridge>;
 
 	/// on chain (parentchain) OCall API
 	fn get_oc_api(&self) -> Arc<dyn WorkerOnChainBridge>;

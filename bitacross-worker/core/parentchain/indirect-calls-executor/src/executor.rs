@@ -300,7 +300,7 @@ pub fn hash_of<T: Encode>(xt: &T) -> H256 {
 mod test {
 	use super::*;
 	use crate::mock::*;
-	use codec::{Decode, Encode};
+	use codec::Encode;
 	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
 		api_client::{
@@ -311,10 +311,6 @@ mod test {
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
-	use itp_stf_primitives::{
-		traits::TrustedCallVerification,
-		types::{AccountId, TrustedOperation},
-	};
 	use itp_test::mock::{
 		shielding_crypto_mock::ShieldingCryptoMock,
 		stf_mock::{GetterMock, TrustedCallSignedMock},

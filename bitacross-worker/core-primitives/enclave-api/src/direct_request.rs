@@ -35,24 +35,8 @@ mod impl_ffi {
 	impl DirectRequest for Enclave {
 		fn rpc(&self, request: Vec<u8>) -> EnclaveResult<Vec<u8>> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let response_len = 8192;
-			let mut response: Vec<u8> = vec![0u8; response_len as usize];
 
-			let res = unsafe {
-				ffi::call_rpc_methods(
-					self.eid,
-					&mut retval,
-					request.as_ptr(),
-					request.len() as u32,
-					response.as_mut_ptr(),
-					response_len,
-				)
-			};
-
-			ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
-			Ok(response)
+			Ok(vec![])
 		}
 	}
 }

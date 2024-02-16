@@ -558,7 +558,5 @@ impl<
 {
 	type Hash = TxHash;
 
-	fn on_block_imported(&self, hashes: &[Self::Hash], block_hash: SidechainBlockHash) {
-		self.top_pool.on_block_imported(hashes, block_hash)
-	}
+	fn on_block_imported(&self, _hashes: &[Self::Hash], _block_hash: SidechainBlockHash) {}
 }

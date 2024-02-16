@@ -134,9 +134,6 @@ mod tests {
 
 	type TestChainApi = SidechainApi<ParentchainBlock, TrustedCallSignedMock>;
 
-	type Seed = [u8; 32];
-	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
-
 	pub fn endowed_account() -> ed25519::Pair {
 		ed25519::Pair::from_seed(&[42u8; 32].into())
 	}

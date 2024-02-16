@@ -22,10 +22,8 @@ pub mod parentchain;
 use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{
-		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveLightClientSeal,
-		EnclaveOCallApi, EnclaveRpcResponder, EnclaveShieldingKeyRepository, EnclaveSidechainApi,
-		EnclaveSidechainBlockImportQueue, EnclaveSidechainBlockImportQueueWorker,
-		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
+		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveOCallApi, EnclaveRpcResponder,
+		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
 		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
@@ -33,29 +31,20 @@ use crate::{
 		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
-	utils::{
-		get_extrinsic_factory_from_integritee_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
-		get_triggered_dispatcher_from_integritee_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain,
-	},
 	Hash,
 };
 use base58::ToBase58;
 use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
-use core::str::FromStr;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
@@ -85,14 +74,9 @@ use itp_stf_state_handler::{
 use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
 use itp_types::{parentchain::ParentchainId, ShardIdentifier};
-use its_sidechain::{
-	block_composer::BlockComposer,
-	slots::{FailSlotMode, FailSlotOnDemand},
-};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::BroadcastedRequest;
 use log::*;
-use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
 
@@ -203,7 +187,7 @@ pub(crate) fn init_enclave(
 
 	let top_pool_author = create_top_pool_author(
 		rpc_responder,
-		state_handler.clone(),
+		state_handler,
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
 		request_sink_cloned,
@@ -214,17 +198,10 @@ pub(crate) fn init_enclave(
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
-	let io_handler = public_api_rpc_handler(
-		top_pool_author,
-		getter_executor,
-		shielding_key_repository,
-		Some(state_handler),
-	);
+	let io_handler =
+		public_api_rpc_handler(top_pool_author, getter_executor, shielding_key_repository);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
-
-	let sidechain_block_import_queue = Arc::new(EnclaveSidechainBlockImportQueue::default());
-	GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.initialize(sidechain_block_import_queue);
 
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
@@ -284,73 +261,11 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	Ok(())
 }
 
-pub(crate) fn init_enclave_sidechain_components(
-	fail_mode: Option<String>,
-	fail_at: u64,
-) -> EnclaveResult<()> {
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
-	let direct_rpc_broadcaster = GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.get()?;
-
-	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
-	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
-
+pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let mrenclave = attestation_handler.get_mrenclave()?;
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
-
-	let parentchain_block_import_dispatcher =
-		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;
-
-	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
-
-	let sidechain_block_importer = Arc::new(EnclaveSidechainBlockImporter::new(
-		state_handler,
-		state_key_repository.clone(),
-		top_pool_author,
-		parentchain_block_import_dispatcher,
-		ocall_api.clone(),
-		direct_rpc_broadcaster,
-	));
-
-	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	let validator_accessor = get_validator_accessor_from_integritee_solo_or_parachain()?;
-
-	let sidechain_block_import_confirmation_handler =
-		Arc::new(EnclaveBlockImportConfirmationHandler::new(
-			metadata_repository,
-			extrinsics_factory,
-			validator_accessor,
-		));
-
-	let sidechain_block_syncer = Arc::new(EnclaveSidechainBlockSyncer::new(
-		sidechain_block_importer,
-		ocall_api,
-		sidechain_block_import_confirmation_handler,
-	));
-	GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT.initialize(sidechain_block_syncer.clone());
-
-	let sidechain_block_import_queue_worker =
-		Arc::new(EnclaveSidechainBlockImportQueueWorker::new(
-			sidechain_block_import_queue,
-			sidechain_block_syncer,
-		));
-	GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT.initialize(sidechain_block_import_queue_worker);
-
-	let block_composer = Arc::new(BlockComposer::new(signer, state_key_repository));
-	GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.initialize(block_composer);
-	if let Some(fail_mode) = fail_mode {
-		let fail_mode = FailSlotMode::from_str(&fail_mode)
-			.map_err(|_| Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
-		let fail_on_demand = Arc::new(Some(FailSlotOnDemand::new(fail_at, fail_mode)));
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(fail_on_demand);
-	} else {
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
-	}
-
 	Ok(())
 }
 

@@ -17,10 +17,7 @@ use crate::{
 	},
 	parentchain_handler::{HandleParentchain, ParentchainHandler},
 	prometheus_metrics::{start_metrics_server, EnclaveMetricsReceiver, MetricsHandler},
-	setup,
-	sidechain_setup::{sidechain_init_block_production, sidechain_start_untrusted_rpc_server},
-	sync_block_broadcaster::SyncBlockBroadcaster,
-	sync_state, tests,
+	setup, sync_state, tests,
 	utils::extract_shard,
 	worker::Worker,
 	worker_peers_registry::WorkerPeersRegistry,
@@ -39,11 +36,6 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use its_peer_fetch::{
-	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
-};
-use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
-use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use litentry_macros::if_production_or;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
@@ -102,12 +94,6 @@ pub(crate) fn main() {
 
 	// build the entire dependency tree
 	let tokio_handle = Arc::new(GlobalTokioHandle {});
-	let sidechain_blockstorage = Arc::new(
-		SidechainStorageLock::<SignedSidechainBlock>::from_base_path(
-			config.data_dir().to_path_buf(),
-		)
-		.unwrap(),
-	);
 	let node_api_factory =
 		Arc::new(NodeApiFactory::new(config.litentry_rpc_endpoint(), AccountKeyring::Alice.pair()));
 	let enclave = Arc::new(enclave_init(&config).unwrap());
@@ -119,12 +105,7 @@ pub(crate) fn main() {
 		initialization_handler.clone(),
 		HashSet::new(),
 	));
-	let sync_block_broadcaster =
-		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
 	let peer_updater = Arc::new(WorkerPeersRegistry::new(worker));
-	let untrusted_peer_fetcher = UntrustedPeerFetcher::new(node_api_factory.clone());
-	let peer_sidechain_block_fetcher =
-		Arc::new(BlockFetcher::<SignedSidechainBlock, _>::new(untrusted_peer_fetcher));
 	let enclave_metrics_receiver = Arc::new(EnclaveMetricsReceiver {});
 
 	let maybe_target_a_parentchain_api_factory = config
@@ -140,11 +121,8 @@ pub(crate) fn main() {
 		node_api_factory.clone(),
 		maybe_target_a_parentchain_api_factory,
 		maybe_target_b_parentchain_api_factory,
-		sync_block_broadcaster,
 		enclave.clone(),
-		sidechain_blockstorage.clone(),
 		peer_updater,
-		peer_sidechain_block_fetcher,
 		tokio_handle.clone(),
 		enclave_metrics_receiver,
 	)));
@@ -192,11 +170,10 @@ pub(crate) fn main() {
 			);
 		}
 
-		start_worker::<_, _, _, _>(
+		start_worker::<_, _, _>(
 			config,
 			&shard,
 			enclave,
-			sidechain_blockstorage,
 			node_api,
 			tokio_handle,
 			initialization_handler,
@@ -299,11 +276,10 @@ pub(crate) fn main() {
 
 /// FIXME: needs some discussion (restructuring?)
 #[allow(clippy::too_many_arguments)]
-fn start_worker<E, T, D, InitializationHandler>(
+fn start_worker<E, T, InitializationHandler>(
 	config: Config,
 	shard: &ShardIdentifier,
 	enclave: Arc<E>,
-	sidechain_storage: Arc<D>,
 	litentry_rpc_api: ParentchainApi,
 	tokio_handle_getter: Arc<T>,
 	initialization_handler: Arc<InitializationHandler>,
@@ -312,7 +288,6 @@ fn start_worker<E, T, D, InitializationHandler>(
 ) where
 	T: GetTokioHandle,
 	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
-	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 {
 	let run_config = config.run_config().clone().expect("Run config missing");

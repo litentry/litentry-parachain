@@ -85,16 +85,6 @@ use itp_top_pool_author::{
 	author::{Author, AuthorTopFilter, BroadcastedTopFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
-use its_primitives::{
-	traits::{Block as SidechainBlockTrait, SignedBlock as SignedSidechainBlockTrait},
-	types::block::SignedBlock as SignedSidechainBlock,
-};
-use its_sidechain::{
-	aura::block_importer::BlockImporter as SidechainBlockImporter,
-	block_composer::BlockComposer,
-	consensus_common::{BlockImportConfirmationHandler, BlockImportQueueWorker, PeerBlockSync},
-	slots::FailSlotOnDemand,
-};
 use lazy_static::lazy_static;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
@@ -316,43 +306,6 @@ pub type EnclaveTopPoolAuthor = Author<
 	EnclaveGetter,
 >;
 pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<DirectRpcClientFactory>;
-pub type EnclaveSidechainBlockComposer =
-	BlockComposer<ParentchainBlock, SignedSidechainBlock, Pair, EnclaveStateKeyRepository>;
-pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
-	Pair,
-	ParentchainBlock,
-	SignedSidechainBlock,
-	EnclaveOCallApi,
-	EnclaveStateHandler,
-	EnclaveStateKeyRepository,
-	EnclaveTopPoolAuthor,
-	// For now the sidechain does only support one parentchain.
-	IntegriteeParentchainTriggeredBlockImportDispatcher,
-	EnclaveDirectRpcBroadcaster,
-	EnclaveTrustedCallSigned,
-	EnclaveGetter,
->;
-pub type EnclaveSidechainBlockImportQueue = ImportQueue<SignedSidechainBlock>;
-pub type EnclaveBlockImportConfirmationHandler = BlockImportConfirmationHandler<
-	ParentchainBlock,
-	<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as SidechainBlockTrait>::HeaderType,
-	EnclaveNodeMetadataRepository,
-	EnclaveExtrinsicsFactory,
-	EnclaveValidatorAccessor,
->;
-pub type EnclaveSidechainBlockSyncer = PeerBlockSync<
-	ParentchainBlock,
-	SignedSidechainBlock,
-	EnclaveSidechainBlockImporter,
-	EnclaveOCallApi,
-	EnclaveBlockImportConfirmationHandler,
->;
-pub type EnclaveSidechainBlockImportQueueWorker = BlockImportQueueWorker<
-	ParentchainBlock,
-	SignedSidechainBlock,
-	EnclaveSidechainBlockImportQueue,
-	EnclaveSidechainBlockSyncer,
->;
 pub type EnclaveSealHandler = SealHandler<
 	EnclaveShieldingKeyRepository,
 	EnclaveStateKeyRepository,
@@ -491,28 +444,3 @@ pub static GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
 /// Enclave RPC WS handler.
 pub static GLOBAL_RPC_WS_HANDLER_COMPONENT: ComponentContainer<EnclaveRpcWsHandler> =
 	ComponentContainer::new("rpc_ws_handler");
-
-/// Sidechain import queue.
-pub static GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT: ComponentContainer<
-	EnclaveSidechainBlockImportQueue,
-> = ComponentContainer::new("sidechain_import_queue");
-
-/// Sidechain import queue worker - processes the import queue.
-pub static GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT: ComponentContainer<
-	EnclaveSidechainBlockImportQueueWorker,
-> = ComponentContainer::new("sidechain_import_queue_worker");
-
-/// Sidechain block composer.
-pub static GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT: ComponentContainer<
-	EnclaveSidechainBlockComposer,
-> = ComponentContainer::new("sidechain_block_composer");
-
-/// Sidechain block syncer.
-pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
-	EnclaveSidechainBlockSyncer,
-> = ComponentContainer::new("sidechain_block_syncer");
-
-/// Sidechain fail slot on demand.
-pub static GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT: ComponentContainer<
-	Option<FailSlotOnDemand>,
-> = ComponentContainer::new("sidechain_fail_slot_on_demand");

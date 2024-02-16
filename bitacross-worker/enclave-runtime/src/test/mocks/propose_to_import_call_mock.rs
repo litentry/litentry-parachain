@@ -16,7 +16,6 @@
 
 */
 
-use crate::test::mocks::types::TestBlockImporter;
 use codec::{Decode, Encode};
 use itc_parentchain::primitives::ParentchainId;
 use itp_ocall_api::{
@@ -26,8 +25,6 @@ use itp_types::{
 	storage::StorageEntryVerified, BlockHash, Header as ParentchainHeader, ShardIdentifier,
 	WorkerRequest, WorkerResponse, H256,
 };
-use its_primitives::types::block::SignedBlock as SignedSidechainBlockType;
-use its_sidechain::consensus_common::BlockImport;
 use sgx_types::SgxResult;
 use sp_runtime::{traits::Header as ParentchainHeaderTrait, OpaqueExtrinsic};
 use std::{string::String, sync::Arc, vec::Vec};
@@ -37,15 +34,11 @@ use std::{string::String, sync::Arc, vec::Vec};
 #[derive(Clone)]
 pub struct ProposeToImportOCallApi {
 	parentchain_header: ParentchainHeader,
-	block_importer: Arc<TestBlockImporter>,
 }
 
 impl ProposeToImportOCallApi {
-	pub fn new(
-		parentchain_header: ParentchainHeader,
-		block_importer: Arc<TestBlockImporter>,
-	) -> Self {
-		ProposeToImportOCallApi { parentchain_header, block_importer }
+	pub fn new(parentchain_header: ParentchainHeader) -> Self {
+		ProposeToImportOCallApi { parentchain_header }
 	}
 }
 
@@ -87,46 +80,6 @@ impl EnclaveOnChainOCallApi for ProposeToImportOCallApi {
 
 	fn get_storage_keys(&self, _key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>> {
 		todo!()
-	}
-}
-
-impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {
-	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		let decoded_signed_blocks: Vec<SignedSidechainBlockType> = signed_blocks
-			.iter()
-			.map(|sb| sb.encode())
-			.map(|e| SignedSidechainBlockType::decode(&mut e.as_slice()).unwrap())
-			.collect();
-
-		for signed_block in decoded_signed_blocks {
-			self.block_importer
-				.import_block(signed_block, &self.parentchain_header)
-				.unwrap();
-		}
-		Ok(())
-	}
-
-	fn store_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn fetch_sidechain_blocks_from_peer<SignedSidechainBlock: Decode>(
-		&self,
-		_last_imported_block_hash: BlockHash,
-		_maybe_until_block_hash: Option<BlockHash>,
-		_shard_identifier: ShardIdentifier,
-	) -> SgxResult<Vec<SignedSidechainBlock>> {
-		Ok(Vec::new())
-	}
-
-	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
-		Ok(vec![])
 	}
 }
 

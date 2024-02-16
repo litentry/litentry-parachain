@@ -27,7 +27,7 @@ use crate::{
 };
 use codec::Encode;
 use core::result::Result;
-use ita_sgx_runtime::{Runtime, System};
+use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
@@ -37,17 +37,10 @@ use itp_sgx_crypto::{
 	key_repository::{AccessKey, AccessPubkey},
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
-use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
-use itp_stf_primitives::types::AccountId;
-use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
+use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use its_primitives::types::block::SignedBlock;
-use its_sidechain::rpc_handler::{
-	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
-};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_not_production;
@@ -72,11 +65,10 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>(
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
-	state: Option<Arc<State>>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -84,13 +76,8 @@ where
 	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
-	State: HandleState + Send + Sync + 'static,
-	State::StateT: SgxExternalitiesTrait,
 {
-	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(
-		top_pool_author.clone(),
-		IoHandler::new(),
-	);
+	let mut io = IoHandler::new();
 
 	let shielding_key_cloned = shielding_key.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
@@ -140,66 +127,66 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
-	let local_top_pool_author = top_pool_author.clone();
-	let local_state = state.clone();
-	io.add_sync_method("author_getNextNonce", move |params: Params| {
-		let local_state = match local_state.clone() {
-			Some(s) => s,
-			None =>
-				return Ok(json!(compute_hex_encoded_return_error(
-					"author_getNextNonce is not avaiable"
-				))),
-		};
-
-		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
-				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
-					Err(msg) => {
-						let error_msg: String = format!(
-							"Could not retrieve author_getNextNonce calls due to: {:?}",
-							msg
-						);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-
-				match local_state.load_cloned(&shard) {
-					Ok((mut state, _hash)) => {
-						let trusted_calls =
-							local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
-						let pending_tx_count = trusted_calls.len();
-						#[allow(clippy::unwrap_used)]
-						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = state.execute_with(|| System::account_nonce(&account));
-						let json_value = RpcReturnValue {
-							do_watch: false,
-							value: (nonce.saturating_add(pending_tx_count)).encode(),
-							status: DirectRequestStatus::Ok,
-						};
-						Ok(json!(json_value.to_hex()))
-					},
-					Err(e) => {
-						let error_msg = format!("load shard failure due to: {:?}", e);
-						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				}
-			},
-			Err(e) => {
-				let error_msg: String =
-					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
-				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-			},
-		}
-	});
+	// let local_top_pool_author = top_pool_author.clone();
+	// let local_state = state.clone();
+	// io.add_sync_method("author_getNextNonce", move |params: Params| {
+	// 	let local_state = match local_state.clone() {
+	// 		Some(s) => s,
+	// 		None =>
+	// 			return Ok(json!(compute_hex_encoded_return_error(
+	// 				"author_getNextNonce is not avaiable"
+	// 			))),
+	// 	};
+	//
+	// 	match params.parse::<(String, String)>() {
+	// 		Ok((shard_base58, account_hex)) => {
+	// 			let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+	// 				Ok(id) => id,
+	// 				Err(msg) => {
+	// 					let error_msg: String =
+	// 						format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+	// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+	// 				},
+	// 			};
+	// 			let account = match AccountId::from_hex(account_hex.as_str()) {
+	// 				Ok(acc) => acc,
+	// 				Err(msg) => {
+	// 					let error_msg: String = format!(
+	// 						"Could not retrieve author_getNextNonce calls due to: {:?}",
+	// 						msg
+	// 					);
+	// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+	// 				},
+	// 			};
+	//
+	// 			match local_state.load_cloned(&shard) {
+	// 				Ok((mut state, _hash)) => {
+	// 					let trusted_calls =
+	// 						local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
+	// 					let pending_tx_count = trusted_calls.len();
+	// 					#[allow(clippy::unwrap_used)]
+	// 					let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+	// 					let nonce = state.execute_with(|| System::account_nonce(&account));
+	// 					let json_value = RpcReturnValue {
+	// 						do_watch: false,
+	// 						value: (nonce.saturating_add(pending_tx_count)).encode(),
+	// 						status: DirectRequestStatus::Ok,
+	// 					};
+	// 					Ok(json!(json_value.to_hex()))
+	// 				},
+	// 				Err(e) => {
+	// 					let error_msg = format!("load shard failure due to: {:?}", e);
+	// 					Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+	// 				},
+	// 			}
+	// 		},
+	// 		Err(e) => {
+	// 			let error_msg: String =
+	// 				format!("Could not retrieve author_getNextNonce calls due to: {}", e);
+	// 			Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+	// 		},
+	// 	}
+	// });
 
 	let local_top_pool_author = top_pool_author.clone();
 	io.add_sync_method("author_getShardVault", move |_: Params| {
@@ -377,54 +364,54 @@ where
 		});
 
 		// state_getStorage
-		io.add_sync_method("state_getStorage", move |params: Params| {
-			let local_state = match state.clone() {
-				Some(s) => s,
-				None =>
-					return Ok(json!(compute_hex_encoded_return_error(
-						"state_getStorage is not avaiable"
-					))),
-			};
-			match params.parse::<(String, String)>() {
-				Ok((shard_str, key_hash)) => {
-					let key_hash = if key_hash.starts_with("0x") {
-						#[allow(clippy::unwrap_used)]
-						key_hash.strip_prefix("0x").unwrap()
-					} else {
-						key_hash.as_str()
-					};
-					let key_hash = match hex::decode(key_hash) {
-						Ok(key_hash) => key_hash,
-						Err(_) =>
-							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
-					};
-
-					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
-					{
-						Ok(id) => id,
-						Err(msg) => {
-							let error_msg = format!("decode shard failure due to: {}", msg);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					};
-					match local_state.load_cloned(&shard) {
-						Ok((state, _)) => {
-							// Get storage by key hash
-							let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
-							debug!("query storage value:{:?}", &value);
-							let json_value =
-								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
-							Ok(json!(json_value.to_hex()))
-						},
-						Err(e) => {
-							let error_msg = format!("load shard failure due to: {:?}", e);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					}
-				},
-				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-			}
-		});
+		// io.add_sync_method("state_getStorage", move |params: Params| {
+		// 	let local_state = match state.clone() {
+		// 		Some(s) => s,
+		// 		None =>
+		// 			return Ok(json!(compute_hex_encoded_return_error(
+		// 				"state_getStorage is not avaiable"
+		// 			))),
+		// 	};
+		// 	match params.parse::<(String, String)>() {
+		// 		Ok((shard_str, key_hash)) => {
+		// 			let key_hash = if key_hash.starts_with("0x") {
+		// 				#[allow(clippy::unwrap_used)]
+		// 				key_hash.strip_prefix("0x").unwrap()
+		// 			} else {
+		// 				key_hash.as_str()
+		// 			};
+		// 			let key_hash = match hex::decode(key_hash) {
+		// 				Ok(key_hash) => key_hash,
+		// 				Err(_) =>
+		// 					return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+		// 			};
+		//
+		// 			let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
+		// 			{
+		// 				Ok(id) => id,
+		// 				Err(msg) => {
+		// 					let error_msg = format!("decode shard failure due to: {}", msg);
+		// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+		// 				},
+		// 			};
+		// 			match local_state.load_cloned(&shard) {
+		// 				Ok((state, _)) => {
+		// 					// Get storage by key hash
+		// 					let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
+		// 					debug!("query storage value:{:?}", &value);
+		// 					let json_value =
+		// 						RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
+		// 					Ok(json!(json_value.to_hex()))
+		// 				},
+		// 				Err(e) => {
+		// 					let error_msg = format!("load shard failure due to: {:?}", e);
+		// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+		// 				},
+		// 			}
+		// 		},
+		// 		Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
+		// 	}
+		// });
 	});
 
 	// system_health
@@ -541,13 +528,11 @@ fn attesteer_forward_ias_attestation_report_inner(
 	Ok(ext)
 }
 
-pub fn sidechain_io_handler<ImportFn, Error>(import_fn: ImportFn) -> IoHandler
+pub fn sidechain_io_handler<Error>() -> IoHandler
 where
-	ImportFn: Fn(SignedBlock) -> Result<(), Error> + Sync + Send + 'static,
 	Error: std::fmt::Debug,
 {
-	let io = IoHandler::new();
-	import_block_api::add_import_block_rpc_method(import_fn, io)
+	IoHandler::new()
 }
 
 #[cfg(feature = "test")]

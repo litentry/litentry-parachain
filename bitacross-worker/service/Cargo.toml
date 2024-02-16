@@ -42,7 +42,6 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { path = "../core/rest-client" }
 itc-rpc-client = { path = "../core/rpc-client" }
-itc-rpc-server = { path = "../core/rpc-server" }
 itp-api-client-types = { path = "../core-primitives/node-api/api-client-types" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
@@ -51,11 +50,6 @@ itp-settings = { path = "../core-primitives/settings" }
 itp-storage = { path = "../core-primitives/storage" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
-its-consensus-slots = { path = "../sidechain/consensus/slots" }
-its-peer-fetch = { path = "../sidechain/peer-fetch" }
-its-primitives = { path = "../sidechain/primitives" }
-its-rpc-handler = { path = "../sidechain/rpc-handler" }
-its-storage = { path = "../sidechain/storage" }
 
 # `default-features = false` to remove the jsonrpsee dependency.
 substrate-api-client = { default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
@@ -106,5 +100,3 @@ anyhow = "1.0.40"
 mockall = "0.11"
 # local
 itc-parentchain-test = { path = "../core/parentchain/test" }
-its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
-its-test = { path = "../sidechain/test" }
