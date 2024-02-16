@@ -142,67 +142,6 @@ where
 		}
 	});
 
-	// let local_top_pool_author = top_pool_author.clone();
-	// let local_state = state.clone();
-	// io.add_sync_method("author_getNextNonce", move |params: Params| {
-	// 	let local_state = match local_state.clone() {
-	// 		Some(s) => s,
-	// 		None =>
-	// 			return Ok(json!(compute_hex_encoded_return_error(
-	// 				"author_getNextNonce is not avaiable"
-	// 			))),
-	// 	};
-	//
-	// 	match params.parse::<(String, String)>() {
-	// 		Ok((shard_base58, account_hex)) => {
-	// 			let shard = match decode_shard_from_base58(shard_base58.as_str()) {
-	// 				Ok(id) => id,
-	// 				Err(msg) => {
-	// 					let error_msg: String =
-	// 						format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
-	// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-	// 				},
-	// 			};
-	// 			let account = match AccountId::from_hex(account_hex.as_str()) {
-	// 				Ok(acc) => acc,
-	// 				Err(msg) => {
-	// 					let error_msg: String = format!(
-	// 						"Could not retrieve author_getNextNonce calls due to: {:?}",
-	// 						msg
-	// 					);
-	// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-	// 				},
-	// 			};
-	//
-	// 			match local_state.load_cloned(&shard) {
-	// 				Ok((mut state, _hash)) => {
-	// 					let trusted_calls =
-	// 						local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
-	// 					let pending_tx_count = trusted_calls.len();
-	// 					#[allow(clippy::unwrap_used)]
-	// 					let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-	// 					let nonce = state.execute_with(|| System::account_nonce(&account));
-	// 					let json_value = RpcReturnValue {
-	// 						do_watch: false,
-	// 						value: (nonce.saturating_add(pending_tx_count)).encode(),
-	// 						status: DirectRequestStatus::Ok,
-	// 					};
-	// 					Ok(json!(json_value.to_hex()))
-	// 				},
-	// 				Err(e) => {
-	// 					let error_msg = format!("load shard failure due to: {:?}", e);
-	// 					Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-	// 				},
-	// 			}
-	// 		},
-	// 		Err(e) => {
-	// 			let error_msg: String =
-	// 				format!("Could not retrieve author_getNextNonce calls due to: {}", e);
-	// 			Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-	// 		},
-	// 	}
-	// });
-
 	let local_top_pool_author = top_pool_author.clone();
 	io.add_sync_method("author_getShardVault", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShardVault");
@@ -377,56 +316,6 @@ where
 				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
-
-		// state_getStorage
-		// io.add_sync_method("state_getStorage", move |params: Params| {
-		// 	let local_state = match state.clone() {
-		// 		Some(s) => s,
-		// 		None =>
-		// 			return Ok(json!(compute_hex_encoded_return_error(
-		// 				"state_getStorage is not avaiable"
-		// 			))),
-		// 	};
-		// 	match params.parse::<(String, String)>() {
-		// 		Ok((shard_str, key_hash)) => {
-		// 			let key_hash = if key_hash.starts_with("0x") {
-		// 				#[allow(clippy::unwrap_used)]
-		// 				key_hash.strip_prefix("0x").unwrap()
-		// 			} else {
-		// 				key_hash.as_str()
-		// 			};
-		// 			let key_hash = match hex::decode(key_hash) {
-		// 				Ok(key_hash) => key_hash,
-		// 				Err(_) =>
-		// 					return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
-		// 			};
-		//
-		// 			let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
-		// 			{
-		// 				Ok(id) => id,
-		// 				Err(msg) => {
-		// 					let error_msg = format!("decode shard failure due to: {}", msg);
-		// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-		// 				},
-		// 			};
-		// 			match local_state.load_cloned(&shard) {
-		// 				Ok((state, _)) => {
-		// 					// Get storage by key hash
-		// 					let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
-		// 					debug!("query storage value:{:?}", &value);
-		// 					let json_value =
-		// 						RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
-		// 					Ok(json!(json_value.to_hex()))
-		// 				},
-		// 				Err(e) => {
-		// 					let error_msg = format!("load shard failure due to: {:?}", e);
-		// 					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-		// 				},
-		// 			}
-		// 		},
-		// 		Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-		// 	}
-		// });
 	});
 
 	// system_health
