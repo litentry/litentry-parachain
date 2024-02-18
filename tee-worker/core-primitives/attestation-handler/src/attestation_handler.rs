@@ -32,7 +32,7 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	cert,
-	maa::{MAAService, MAAHandler},
+	maa::{MAAHandler, MAAService},
 	Error as EnclaveError, Error, Result as EnclaveResult,
 };
 use codec::Encode;

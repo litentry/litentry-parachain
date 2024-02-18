@@ -287,10 +287,11 @@ pub mod pallet {
 					#[cfg(not(feature = "skip-ias-check"))]
 					let enclave = {
 						let verification_time = <timestamp::Pallet<T>>::get();
-
+						let qe = <QuotingEnclaveRegistry<T>>::get();
 						let policy = sgx_verify::verify_dcap_maa_policy(
 							&proof,
 							verification_time.saturated_into(),
+							&qe,
 						)
 						.map_err(|e| {
 							log::error!("Teerex: verify_dcap_maa_policy failed: {:?}", e);

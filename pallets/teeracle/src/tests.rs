@@ -23,6 +23,7 @@ use pallet_teerex::Error;
 use sp_runtime::DispatchError::BadOrigin;
 use substrate_fixed::types::U32F32;
 use teeracle_primitives::*;
+use teerex_primitives::SgxAttestationMethod;
 use test_utils::ias::consts::{
 	TEST4_CERT, TEST4_MRENCLAVE, TEST4_SIGNER_PUB, TEST4_TIMESTAMP, TEST5_MRENCLAVE,
 	TEST5_SIGNER_PUB, TEST8_MRENCLAVE, URL,
@@ -47,6 +48,7 @@ fn register_enclave_and_add_oracle_to_whitelist_ok(src: &str) {
 		URL.to_vec(),
 		None,
 		None,
+		SgxAttestationMethod::Ias,
 	));
 	let mrenclave = Teerex::enclave(1).unwrap().mr_enclave;
 	assert_ok!(Teeracle::add_to_whitelist(RuntimeOrigin::root(), src.to_owned(), mrenclave));
@@ -232,6 +234,7 @@ fn update_exchange_rate_from_not_whitelisted_oracle_fails() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		let rate = U32F32::from_num(43.65);
@@ -258,6 +261,7 @@ fn update_oracle_from_not_whitelisted_oracle_fails() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		assert_noop!(

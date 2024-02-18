@@ -18,6 +18,7 @@ use crate::{mock::*, Error, ShardIdentifier};
 use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
+use teerex_primitives::SgxAttestationMethod;
 
 #[cfg(feature = "skip-ias-check")]
 use test_utils::ias::consts::TEST8_CERT;
@@ -133,6 +134,7 @@ fn tee_callback_with_registered_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		assert_ok!(IdentityManagement::some_error(

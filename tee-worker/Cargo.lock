@@ -9387,6 +9387,7 @@ dependencies = [
  "sp-std 5.0.0",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
  "teeracle-primitives",
+ "teerex-primitives",
 ]
 
 [[package]]

@@ -16,6 +16,7 @@ scale-info = { version = "2.10.0", default-features = false, features = ["derive
 # local
 pallet-teerex = { path = "../teerex", default-features = false }
 teeracle-primitives = { path = "../../primitives/teeracle", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # encointer
 substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git" }
@@ -55,6 +56,7 @@ std = [
     # local
     "pallet-teerex/std",
     "teeracle-primitives/std",
+    "teerex-primitives/std",
     # encointer
     "substrate-fixed/std",
     # substrate
@@ -64,6 +66,7 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "sp-std/std",
+
 ]
 runtime-benchmarks = [
     "frame-benchmarking",

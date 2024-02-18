@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::{serde_json, http_req, base64};
+use crate::sgx_reexport_prelude::{base64, http_req, serde_json};
 
 use crate::Result as EnclaveResult;
 use http_req::{
@@ -37,12 +37,12 @@ use http_req::{
 	uri::Uri,
 };
 use log::debug;
+use serde::{Deserialize, Serialize};
 use std::{
 	net::TcpStream,
 	string::{String, ToString},
 	vec::Vec,
 };
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MAAResponse {

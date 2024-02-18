@@ -100,9 +100,10 @@ benchmarks! {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		).unwrap();
 
-	}: _(RawOrigin::Signed(signer), TEST4_SETUP.cert.to_vec(), URL.to_vec(), None, None)
+	}: _(RawOrigin::Signed(signer), TEST4_SETUP.cert.to_vec(), URL.to_vec(), None, None, SgxAttestationMethod::Ias)
 	verify {
 		assert_eq!(Teerex::<T>::enclave_count(), 1);
 	}

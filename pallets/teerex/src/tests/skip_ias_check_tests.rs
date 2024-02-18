@@ -19,6 +19,7 @@
 use crate::{mock::*, Enclave, EnclaveRegistry};
 use frame_support::assert_ok;
 use sp_keyring::AccountKeyring;
+use teerex_primitives::SgxAttestationMethod;
 use test_utils::ias::{
 	consts::{TEST4_MRENCLAVE, URL},
 	TestEnclave,
@@ -43,6 +44,7 @@ fn register_enclave_with_empty_mrenclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -59,6 +61,7 @@ fn register_enclave_with_mrenclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		let enc = test_enclave().with_mr_enclave(TEST4_MRENCLAVE);
@@ -77,6 +80,7 @@ fn register_enclave_with_faulty_mrenclave_inserts_default() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -93,6 +97,7 @@ fn register_enclave_with_empty_url_inserts_default() {
 			Vec::new(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		let enc = test_enclave().with_url(Default::default());
@@ -116,6 +121,7 @@ fn register_enclave_with_scheduled_enclave_works() {
 			Vec::new(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 	})
 }
@@ -136,6 +142,7 @@ fn register_enclave_without_scheduled_enclave_fails() {
 				Vec::new(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			),
 			Error::<Test>::EnclaveNotInSchedule
 		);

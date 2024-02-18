@@ -38,7 +38,8 @@ pub enum SgxAttestationMethod {
 }
 
 /// Microsoft Azure Attestaion Policy
-/// After the MAA service verifies the Dcap quote, it returns it to the client's policy, which can be configured on the MAA according to requirements.
+/// After the MAA service verifies the Dcap quote, it returns it to the client's policy, which can
+/// be configured on the MAA according to requirements.
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct MAAPolicy {
 	pub is_debuggable: bool,

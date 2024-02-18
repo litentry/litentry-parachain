@@ -28,6 +28,7 @@ use pallet_teerex::Pallet as Teerex;
 use sp_runtime::traits::CheckedConversion;
 use sp_std::prelude::*;
 use teeracle_primitives::{DataSource, OracleDataName, TradingPairString};
+use teerex_primitives::SgxAttestationMethod;
 
 use test_utils::{
 	get_signer,
@@ -74,6 +75,7 @@ benchmarks! {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		).unwrap();
 		let mrenclave = Teerex::<T>::enclave(1).unwrap().mr_enclave;
 		Teeracle::<T>::add_to_whitelist(RawOrigin::Root.into(), data_source.clone(), mrenclave).unwrap();
@@ -121,6 +123,7 @@ benchmarks! {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		).unwrap();
 		let mrenclave = Teerex::<T>::enclave(1).unwrap().mr_enclave;
 		Teeracle::<T>::add_to_whitelist(RawOrigin::Root.into(), data_source.clone(), mrenclave).unwrap();
