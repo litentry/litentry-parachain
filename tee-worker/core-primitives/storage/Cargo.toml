@@ -6,27 +6,27 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["chain-error"] }
-derive_more = { version = "0.99.5" }
+derive_more = { workspace = true }
 frame-metadata = { version = "15.1.0", features = ["v14"], default-features = false }
 hash-db = { version = "0.15.2", default-features = false }
-thiserror = { version = "1.0.26", optional = true }
+thiserror = { workspace = true, optional = true }
 
 # sgx deps
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
+sgx_tstd = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 # substrate deps
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-trie = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+frame-support = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+sp-trie = { workspace = true }
 
 # integritee
-itp-types = { default-features = false, path = "../types" }
+itp-types = { workspace = true }
 
 [dev-dependencies]
-sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-state-machine = { workspace = true }
 
 [features]
 default = ["std"]
@@ -44,6 +44,6 @@ std = [
 ]
 sgx = [
     "sgx_tstd",
-    "thiserror-sgx",
+    "thiserror_sgx",
 ]
 test = []

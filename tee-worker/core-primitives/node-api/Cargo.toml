@@ -5,11 +5,11 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-itp-api-client-extensions = { optional = true, path = "api-client-extensions" }
-itp-api-client-types = { default-features = false, path = "api-client-types" }
-itp-node-api-factory = { optional = true, path = "factory" }
-itp-node-api-metadata = { default-features = false, path = "metadata" }
-itp-node-api-metadata-provider = { default-features = false, path = "metadata-provider" }
+itp-api-client-extensions = { optional = true, workspace = true }
+itp-api-client-types = { workspace = true }
+itp-node-api-factory = { optional = true, workspace = true }
+itp-node-api-metadata = { workspace = true }
+itp-node-api-metadata-provider = { workspace = true }
 
 [features]
 default = ["std"]

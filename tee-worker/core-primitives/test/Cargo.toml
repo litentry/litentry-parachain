@@ -5,37 +5,37 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-log = { version = "0.4", default-features = false }
-sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
+log = { workspace = true }
+sgx-crypto-helper = { workspace = true }
 
 # sgx deps
-jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+jsonrpc-core_sgx = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
 
 # substrate deps
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-io = { default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 # local deps
-itp-node-api = { path = "../node-api", default-features = false }
-itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
-itp-ocall-api = { path = "../ocall-api", default-features = false }
-itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
-itp-sgx-externalities = { default-features = false, path = "../substrate-sgx/externalities" }
-itp-stf-interface = { path = "../stf-interface", default-features = false }
-itp-stf-primitives = { path = "../stf-primitives", default-features = false }
-itp-stf-state-handler = { path = "../stf-state-handler", default-features = false }
-itp-storage = { path = "../storage", default-features = false }
-itp-time-utils = { path = "../time-utils", default-features = false }
-itp-types = { path = "../types", default-features = false, features = ["test"] }
+itp-node-api = { workspace = true }
+itp-node-api-metadata-provider = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-sgx-externalities = { workspace = true }
+itp-stf-interface = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-stf-state-handler = { workspace = true }
+itp-storage = { workspace = true }
+itp-time-utils = { workspace = true }
+itp-types = { workspace = true, features = ["test"] }
 
 # litentry
-hex = { version = "0.4.3", default-features = false }
-lc-teebag-storage = { path = "../../litentry/core/teebag-storage", default-features = false }
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+hex = { workspace = true }
+lc-teebag-storage = { workspace = true }
+litentry-primitives = { workspace = true }
 
 [features]
 default = ["std"]

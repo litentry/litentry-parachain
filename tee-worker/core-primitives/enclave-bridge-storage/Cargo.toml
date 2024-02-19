@@ -6,10 +6,10 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-std = { workspace = true }
 
 #local deps
-itp-storage = { path = "../storage", default-features = false }
+itp-storage = { workspace = true }
 
 [features]
 default = ["std"]

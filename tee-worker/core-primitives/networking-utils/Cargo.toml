@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 [features]
 default = ["std"]

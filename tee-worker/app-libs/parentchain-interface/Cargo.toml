@@ -6,41 +6,41 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 # local dependencies
-ita-sgx-runtime = { path = "../sgx-runtime", default-features = false }
-ita-stf = { path = "../stf", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "../../core/parentchain/indirect-calls-executor", default-features = false }
-itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types", default-features = false }
-itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
-itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
-itp-types = { path = "../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../core-primitives/utils", default-features = false }
+ita-sgx-runtime = { workspace = true }
+ita-stf = { workspace = true }
+itc-parentchain-indirect-calls-executor = { workspace = true }
+itp-api-client-types = { workspace = true }
+itp-node-api = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
 
 # no-std compatible libraries
-bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
+bs58 = { workspace = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-log = { version = "0.4", default-features = false }
+log = { workspace = true }
 
 # substrate dep
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 
 # litentry
-lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false, optional = true }
-litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+lc-scheduled-enclave = { workspace = true, optional = true }
+litentry-hex-utils = { workspace = true }
+litentry-primitives = { workspace = true }
+sp-std = { workspace = true }
 
 [dev-dependencies]
 env_logger = "0.9.0"
-itp-node-api = { path = "../../core-primitives/node-api", features = ["mocks"] }
-itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", features = ["mocks"] }
-itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["mocks"] }
-itp-test = { path = "../../core-primitives/test" }
-itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["mocks"] }
-itc-parentchain-test = { path = "../../core/parentchain/test" }
+itp-node-api = { workspace = true, features = ["mocks"] }
+itp-sgx-crypto = { workspace = true, features = ["mocks"] }
+itp-stf-executor = { workspace = true, features = ["mocks"] }
+itp-test = { workspace = true }
+itp-top-pool-author = { workspace = true, features = ["mocks"] }
+itc-parentchain-test = { workspace = true }
 
 
 [features]

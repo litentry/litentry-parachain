@@ -6,44 +6,44 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 # local dependencies
-itp-enclave-metrics = { path = "../enclave-metrics", default-features = false }
-itp-ocall-api = { path = "../ocall-api", default-features = false }
-itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
-itp-stf-primitives = { path = "../stf-primitives", default-features = false }
-itp-stf-state-handler = { path = "../stf-state-handler", default-features = false }
-itp-test = { path = "../test", default-features = false, optional = true }
-itp-top-pool = { path = "../top-pool", default-features = false }
-itp-types = { path = "../types", default-features = false }
+itp-enclave-metrics = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-stf-state-handler = { workspace = true }
+itp-test = { workspace = true, optional = true }
+itp-top-pool = { workspace = true }
+itp-types = { workspace = true }
 
 # sgx enabled external libraries
-jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
+jsonrpc-core_sgx = { workspace = true, optional = true }
 
 # std compatible external libraries (make sure these versions match with the sgx-enabled ones above)
-jsonrpc-core = { version = "18", optional = true }
+jsonrpc-core = { workspace = true, optional = true }
 
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-derive_more = { version = "0.99.5" }
-log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+derive_more = { workspace = true }
+log = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 
-lazy_static = { version = "1.1.0", optional = true }
+lazy_static = { workspace = true, optional = true }
 
 # litentry
-itp-utils = { path = "../utils", default-features = false }
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+itp-utils = { workspace = true }
+litentry-primitives = { workspace = true }
 
 [dev-dependencies]
-futures = { version = "0.3" }
-itp-sgx-crypto = { path = "../sgx/crypto", features = ["mocks"] }
-itp-test = { path = "../test" }
-itp-top-pool = { path = "../top-pool", features = ["mocks"] }
-sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+futures = { workspace = true }
+itp-sgx-crypto = { workspace = true, features = ["mocks"] }
+itp-test = { workspace = true }
+itp-top-pool = { workspace = true, features = ["mocks"] }
+sgx-crypto-helper = { workspace = true }
+sp-keyring = { workspace = true }
 
 
 [features]

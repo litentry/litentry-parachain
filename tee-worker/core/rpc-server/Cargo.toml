@@ -5,19 +5,19 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.40"
-jsonrpsee = { version = "0.2.0-alpha.7", features = ["full"] }
-log = "0.4"
-tokio = { version = "1.6.1", features = ["full"] }
+anyhow = { workspace = true }
+jsonrpsee = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
 
 # local
-itp-enclave-api = { path = "../../core-primitives/enclave-api" }
-itp-rpc = { path = "../../core-primitives/rpc" }
-itp-utils = { path = "../../core-primitives/utils" }
-its-peer-fetch = { path = "../../sidechain/peer-fetch" }
-its-primitives = { path = "../../sidechain/primitives" }
-its-rpc-handler = { path = "../../sidechain/rpc-handler" }
-its-storage = { path = "../../sidechain/storage" }
+itp-enclave-api = { workspace = true }
+itp-rpc = { workspace = true }
+itp-utils = { workspace = true }
+its-peer-fetch = { workspace = true }
+its-primitives = { workspace = true }
+its-rpc-handler = { workspace = true }
+its-storage = { workspace = true }
 
 [features]
 default = ["std"]

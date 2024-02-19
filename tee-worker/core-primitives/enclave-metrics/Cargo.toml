@@ -8,12 +8,12 @@ edition = "2021"
 
 [dependencies]
 # sgx
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 # no-std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full"] }
-lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
-substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", tag = "v0.5.9" }
+lc-stf-task-sender = { workspace = true, default-features = false }
+substrate-fixed = { workspace = true }
 
 [features]
 default = ["std"]

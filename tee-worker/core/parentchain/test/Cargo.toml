@@ -8,8 +8,8 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
-itp-types = { path = "../../../core-primitives/types", default-features = false }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+itp-types = { workspace = true }
+sp-runtime = { workspace = true }
 
 [features]
 default = ["std"]

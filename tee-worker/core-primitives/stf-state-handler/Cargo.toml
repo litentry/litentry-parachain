@@ -6,19 +6,19 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
 
 # local dependencies
-itp-hashing = { path = "../../core-primitives/hashing", default-features = false }
-itp-settings = { path = "../../core-primitives/settings" }
-itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
-itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
-itp-sgx-io = { path = "../../core-primitives/sgx/io", default-features = false }
-itp-stf-interface = { default-features = false, path = "../../core-primitives/stf-interface" }
-itp-stf-state-observer = { path = "../stf-state-observer", default-features = false }
-itp-time-utils = { path = "../../core-primitives/time-utils", default-features = false }
-itp-types = { path = "../types", default-features = false }
+itp-hashing = { workspace = true }
+itp-settings = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-sgx-externalities = { workspace = true }
+itp-sgx-io = { workspace = true }
+itp-stf-interface = { workspace = true }
+itp-stf-state-observer = { workspace = true }
+itp-time-utils = { workspace = true }
+itp-types = { workspace = true }
 
 # for tests
 itp-sgx-temp-dir = { version = "0.1", default-features = false, optional = true, path = "../../core-primitives/sgx/temp-dir" }

@@ -6,34 +6,34 @@ edition = "2021"
 
 [dependencies]
 # crates.io
-base58 = "0.2"
+base58 = { workspace = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
-log = "0.4"
-openssl = { version = "0.10" }
-parking_lot = "0.12.1"
-serde_json = "1.0"
-sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-thiserror = { version = "1.0" }
-url = { version = "2.0.0" }
-ws = { version = "0.9.1", features = ["ssl"] }
+log = { workspace = true }
+openssl = { workspace = true }
+parking_lot = { workspace = true }
+serde_json = { workspace = true }
+sgx_crypto_helper = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+ws = { workspace = true }
 
 # parity
-frame-metadata = { version = "15.1.0", features = ["v14"] }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", default-features = false }
+frame-metadata = { workspace = true }
+sp-core = { workspace = true }
 
 # local
-itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types" }
-itp-rpc = { path = "../../core-primitives/rpc" }
-itp-types = { path = "../../core-primitives/types" }
-itp-utils = { path = "../../core-primitives/utils" }
+itp-api-client-types = { workspace = true }
+itp-rpc = { workspace = true }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
 
 # litentry
-ita-stf = { path = "../../app-libs/stf" }
-itp-stf-primitives = { path = "../../core-primitives/stf-primitives" }
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+ita-stf = { workspace = true, features = ["std"] }
+itp-stf-primitives = { workspace = true }
+litentry-primitives = { workspace = true }
 
 [dev-dependencies]
-env_logger = "0.9.0"
-itc-tls-websocket-server = { path = "../tls-websocket-server", features = ["mocks"] }
-itp-networking-utils = { path = "../../core-primitives/networking-utils" }
-rustls = { version = "0.19", features = ["dangerous_configuration"] }
+env_logger = { workspace = true }
+itc-tls-websocket-server = { workspace = true, features = ["mocks"] }
+itp-networking-utils = { workspace = true }
+rustls = { workspace = true }

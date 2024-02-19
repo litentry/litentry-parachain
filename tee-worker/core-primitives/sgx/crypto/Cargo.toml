@@ -6,28 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aes = { version = "0.6.0" }
+aes = { workspace = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-derive_more = { version = "0.99.5" }
-log = { version = "0.4", default-features = false }
-ofb = { version = "0.4.0" }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+derive_more = { workspace = true }
+log = { workspace = true }
+ofb = { workspace = true }
+serde_json = { workspace = true, features = ["alloc"], optional = true }
 
 # sgx deps
-serde_json-sgx = { package = "serde_json", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
-sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
-sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+serde_json_sgx = { workspace = true, optional = true }
+sgx-crypto-helper = { workspace = true }
+sgx_rand = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
 
 # substrate 
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { workspace = true }
 
 # local deps
-itp-sgx-io = { path = "../io", default-features = false }
+itp-sgx-io = { workspace = true }
 
 # test sgx deps
-itp-sgx-temp-dir = { default-features = false, optional = true, path = "../temp-dir" }
+itp-sgx-temp-dir = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -44,7 +44,7 @@ sgx = [
     "sgx_tstd",
     "sgx_rand",
     "itp-sgx-io/sgx",
-    "serde_json-sgx",
+    "serde_json_sgx",
 ]
 mocks = []
 test = [

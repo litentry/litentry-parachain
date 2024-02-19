@@ -5,10 +5,10 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-thiserror = { version = "1.0" }
+thiserror = { workspace = true }
 
 # substrate
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { workspace = true }
 
 # local
-itp-api-client-types = { path = "../api-client-types" }
+itp-api-client-types = { workspace = true }

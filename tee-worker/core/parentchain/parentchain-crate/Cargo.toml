@@ -8,14 +8,14 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "chain-error"] }
 
 # Parity
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { workspace = true }
 
 # local
-itc-parentchain-block-import-dispatcher = { path = "../block-import-dispatcher", default-features = false }
-itc-parentchain-block-importer = { path = "../block-importer", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
-itc-parentchain-light-client = { path = "../light-client", default-features = false }
-itp-types = { default-features = false, path = "../../../core-primitives/types" }
+itc-parentchain-block-import-dispatcher = { workspace = true }
+itc-parentchain-block-importer = { workspace = true }
+itc-parentchain-indirect-calls-executor = { workspace = true }
+itc-parentchain-light-client = { workspace = true }
+itp-types = { workspace = true }
 
 [features]
 default = ["std"]

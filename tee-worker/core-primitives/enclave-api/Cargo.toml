@@ -6,24 +6,24 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
-hex = "0.4"
-log = "0.4"
-serde_json = "1.0"
-thiserror = "1.0.25"
+hex = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 
-sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_urts = { optional = true, branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_crypto_helper = { workspace = true }
+sgx_types = { workspace = true }
+sgx_urts = { optional = true, workspace = true }
 
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+frame-support = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 
-itc-parentchain = { path = "../../core/parentchain/parentchain-crate" }
-itp-enclave-api-ffi = { path = "ffi" }
-itp-settings = { path = "../settings" }
-itp-storage = { path = "../storage" }
-itp-types = { path = "../types" }
+itc-parentchain = { workspace = true }
+itp-enclave-api-ffi = { workspace = true }
+itp-settings = { workspace = true }
+itp-storage = { workspace = true }
+itp-types = { workspace = true }
 
 # litentry
 pallet-teebag = { path = "../../../pallets/teebag", default-features = false }

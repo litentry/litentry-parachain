@@ -5,10 +5,10 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-chrono = { version = "0.4.19", features = ["alloc"], optional = true }
+chrono = { workspace = true, optional = true }
 
-chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+chrono_sgx = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
