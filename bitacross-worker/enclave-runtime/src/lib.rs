@@ -244,44 +244,60 @@ pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u3
 
 #[no_mangle]
 pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
-	let bitcoin_key_repository = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
-		Ok(s) => s,
-		Err(e) => {
-			error!("{:?}", e);
+	if_production_or!(
+		{
+			error!("Bitcoin wallet can only be retrieved in non-prod");
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
-	};
+		{
+			let bitcoin_key_repository = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(s) => s,
+				Err(e) => {
+					error!("{:?}", e);
+					return sgx_status_t::SGX_ERROR_UNEXPECTED
+				},
+			};
 
-	let pair = match bitcoin_key_repository.retrieve_key() {
-		Ok(p) => p,
-		Err(e) => return e.into(),
-	};
+			let keypair = match bitcoin_key_repository.retrieve_key() {
+				Ok(p) => p,
+				Err(e) => return e.into(),
+			};
 
-	let privkey_slice = slice::from_raw_parts_mut(pair, pair_size);
-	privkey_slice.clone_from_slice(&pair.private_bytes());
+			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
+			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
-	sgx_status_t::SGX_SUCCESS
+			return sgx_status_t::SGX_SUCCESS
+		}
+	);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
-	let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
-		Ok(s) => s,
-		Err(e) => {
-			error!("{:?}", e);
+	if_production_or!(
+		{
+			error!("Ethereum wallet can only be retrieved in non-prod");
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
-	};
+		{
+			let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(s) => s,
+				Err(e) => {
+					error!("{:?}", e);
+					return sgx_status_t::SGX_ERROR_UNEXPECTED
+				},
+			};
 
-	let pair = match ethereum_key_repository.retrieve_key() {
-		Ok(p) => p,
-		Err(e) => return e.into(),
-	};
+			let keypair = match ethereum_key_repository.retrieve_key() {
+				Ok(p) => p,
+				Err(e) => return e.into(),
+			};
 
-	let privkey_slice = slice::from_raw_parts_mut(pair, pair_size);
-	privkey_slice.clone_from_slice(&pair.private_bytes());
+			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
+			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
-	sgx_status_t::SGX_SUCCESS
+			return sgx_status_t::SGX_SUCCESS
+		}
+	)
 }
 
 #[no_mangle]
