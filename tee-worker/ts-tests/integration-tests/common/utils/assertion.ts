@@ -198,7 +198,7 @@ export async function assertIdGraphMutationResult(
     3. check subject
     4. compare vc index with vcPayload id
     5. check vc signature
-    6. compare vc wtih jsonSchema
+    6. check vc schema
 
     TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
 */
