@@ -17,13 +17,15 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, DataProviderConfig, Error, HttpError};
+use crate::{
+	build_client, DataProviderConfig, Error, HttpError, ReqPath, RetryOption, RetryableRestGet,
+};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath,
+	RestPath,
 };
 use litentry_primitives::Web3Network;
 use log::debug;
@@ -31,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
 	string::{String, ToString},
-	thread, time, vec,
+	vec,
 	vec::Vec,
 };
 
@@ -42,8 +44,7 @@ pub struct MoralisRequest {
 }
 
 pub struct MoralisClient {
-	api_retry_delay: u64,
-	api_retry_times: u16,
+	retry_option: RetryOption,
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
@@ -53,68 +54,34 @@ impl MoralisClient {
 		let api_retry_delay = data_provider_config.moralis_api_retry_delay;
 		let api_retry_times = data_provider_config.moralis_api_retry_times;
 		let api_url = data_provider_config.moralis_api_url.clone();
+		let retry_option =
+			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert("X-API-Key", api_key.as_str());
 		let client = build_client(api_url.as_str(), headers);
 
-		MoralisClient { api_retry_delay, api_retry_times, client }
+		MoralisClient { retry_option, client }
 	}
 
-	fn retry<A, T>(&mut self, action: A) -> Result<T, Error>
+	fn get<T>(&mut self, params: MoralisRequest, fast_fail: bool) -> Result<T, Error>
 	where
-		A: Fn(&mut MoralisClient) -> Result<T, HttpError>,
+		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
 	{
-		let mut retries = 0;
-		// retry delay 1 second
-		let base_delay = time::Duration::from_millis(self.api_retry_delay);
-		// maximum 5 retry times
-		let maximum_retries = self.api_retry_times;
-
-		loop {
-			if retries > 0 {
-				debug!("Fail to call moralis api, begin retry: {}", retries);
-			}
-
-			if retries > maximum_retries {
-				return Err(Error::RequestError(format!(
-					"Fail to call call moralis api within {} retries",
-					maximum_retries
-				)))
-			}
-
-			match action(self) {
-				Ok(response) => return Ok(response),
-				Err(err) => {
-					let req_err: Error = Error::RequestError(format!("moralis api error: {}", err));
-					match err {
-						HttpError::HttpError(code, _) =>
-							if code == 429 {
-								// Too Many Requests
-								// exponential back off
-								thread::sleep(base_delay * 2u32.pow(retries as u32));
-								retries += 1;
-							} else {
-								return Err(req_err)
-							},
-						_ => return Err(req_err),
-					}
-				},
-			}
-		}
-	}
-
-	fn get<T>(&mut self, params: MoralisRequest) -> Result<T, Error>
-	where
-		T: serde::de::DeserializeOwned + RestPath<String>,
-	{
+		let retry_option: Option<RetryOption> =
+			if fast_fail { None } else { Some(self.retry_option.clone()) };
 		if let Some(query) = params.query {
 			let transformed_query: Vec<(&str, &str)> =
 				query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
-			self.retry(|c| c.client.get_with::<String, T>(params.path.clone(), &transformed_query))
+			self.client.get_with_retry::<ReqPath, T>(
+				ReqPath::new(params.path.as_str()),
+				&transformed_query,
+				retry_option,
+			)
 		} else {
-			self.retry(|c| c.client.get::<String, T>(params.path.clone()))
+			self.client
+				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
 		}
 	}
 }
@@ -176,9 +143,9 @@ pub struct GetNftsByWalletResult {
 
 pub type GetNftsByWalletResponse = MoralisPageResponse<GetNftsByWalletResult>;
 
-impl RestPath<String> for GetNftsByWalletResponse {
-	fn get_path(path: String) -> Result<String, HttpError> {
-		Ok(path)
+impl<'a> RestPath<ReqPath<'a>> for GetNftsByWalletResponse {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
 	}
 }
 
@@ -186,6 +153,7 @@ pub trait NftApiList {
 	fn get_nfts_by_wallet(
 		&mut self,
 		param: &GetNftsByWalletParam,
+		fast_fail: bool,
 	) -> Result<GetNftsByWalletResponse, Error>;
 }
 
@@ -194,6 +162,7 @@ impl NftApiList for MoralisClient {
 	fn get_nfts_by_wallet(
 		&mut self,
 		param: &GetNftsByWalletParam,
+		fast_fail: bool,
 	) -> Result<GetNftsByWalletResponse, Error> {
 		let mut query: Vec<(String, String)> =
 			vec![("chain".to_string(), param.chain.value.clone())];
@@ -215,14 +184,14 @@ impl NftApiList for MoralisClient {
 
 		debug!("get_nfts_by_wallet, params: {:?}", params);
 
-		match self.get::<GetNftsByWalletResponse>(params) {
+		match self.get::<GetNftsByWalletResponse>(params, fast_fail) {
 			Ok(resp) => {
 				debug!("get_nfts_by_wallet, response: {:?}", resp);
 				Ok(resp)
 			},
 			Err(e) => {
 				debug!("get_nfts_by_wallet, error: {:?}", e);
-				Err(Error::RequestError(format!("{:?}", e)))
+				Err(e)
 			},
 		}
 	}
@@ -254,7 +223,7 @@ mod tests {
 			limit: None,
 			cursor: None,
 		};
-		let result = client.get_nfts_by_wallet(&param).unwrap();
+		let result = client.get_nfts_by_wallet(&param, true).unwrap();
 		assert_eq!(result.cursor.unwrap(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9");
 		assert_eq!(result.page, 1);
 		assert_eq!(result.page_size, 100);

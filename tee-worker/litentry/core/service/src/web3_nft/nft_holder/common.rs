@@ -55,7 +55,7 @@ pub fn has_nft_721(
 						account_address: address.1.clone(),
 						block_number: "latest".into(),
 					};
-					match client.get_token_balance_721(&param) {
+					match client.get_token_balance_721(&param, false) {
 						Ok(balance) =>
 							if balance > 0 {
 								return Ok(true)
@@ -96,7 +96,7 @@ pub fn has_nft_1155(
 						limit: None,
 						cursor,
 					};
-					match client.get_nfts_by_wallet(&param) {
+					match client.get_nfts_by_wallet(&param, false) {
 						Ok(resp) => {
 							cursor = resp.cursor;
 							for item in &resp.result {

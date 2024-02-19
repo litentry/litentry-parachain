@@ -41,13 +41,14 @@ use core::time::Duration;
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient},
+	http_client::{DefaultSend, HttpClient, Send},
 	rest_client::RestClient,
+	Query, RestGet, RestPath, RestPost,
 };
 use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use std::vec;
+use std::{thread, vec};
 
 use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
@@ -497,6 +498,9 @@ pub enum Error {
 
 	#[error("GeniiData error: {0}")]
 	GeniiDataError(String),
+
+	#[error("Retryable error: {0}")]
+	RetryableError(String),
 }
 
 impl IntoErrorDetail for Error {
@@ -541,6 +545,161 @@ pub fn build_client_with_cert(
 		None,
 	);
 	RestClient::new(http_client, base_url)
+}
+
+#[derive(Serialize, Debug, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqPath<'a> {
+	path: &'a str,
+}
+
+impl<'a> ReqPath<'a> {
+	pub fn new(path: &'a str) -> Self {
+		Self { path }
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct RetryOption {
+	// default delay is 0
+	retry_delay: Option<u64>,
+	// set retry_times to 0 or None for fail fast
+	retry_times: Option<u16>,
+}
+
+const DEFAULT_RETRY_OPTION: RetryOption = RetryOption { retry_delay: None, retry_times: None };
+
+pub type RestHttpClient<T> = RestClient<HttpClient<T>>;
+
+pub trait RetryableRestClient<T> {
+	fn retry<A, R>(&mut self, action: A, retry_option: RetryOption) -> Result<R, Error>
+	where
+		A: Fn(&mut RestHttpClient<T>) -> Result<R, HttpError>;
+}
+
+impl<T> RetryableRestClient<T> for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn retry<A, R>(&mut self, action: A, retry_option: RetryOption) -> Result<R, Error>
+	where
+		A: Fn(&mut RestHttpClient<T>) -> Result<R, HttpError>,
+	{
+		let mut retries = 0;
+		let base_delay = Duration::from_millis(retry_option.retry_delay.unwrap_or_default());
+		let maximum_retries = retry_option.retry_times.unwrap_or_default();
+
+		loop {
+			if retries > 0 {
+				debug!("Fail to call rest api, begin retry: {}", retries);
+			}
+
+			if retries > maximum_retries {
+				return Err(Error::RetryableError(format!(
+					"Fail to call rest api within {} retries",
+					maximum_retries
+				)))
+			}
+
+			match action(self) {
+				Ok(response) => return Ok(response),
+				Err(err) => {
+					let req_err: Error =
+						Error::RequestError(format!("call rest api error: {}", err));
+					match err {
+						HttpError::HttpError(code, _) =>
+							if code == 429 {
+								// Too Many Requests
+								// exponential back off
+								thread::sleep(base_delay * 2u32.pow(retries as u32));
+								retries += 1;
+							} else {
+								return Err(req_err)
+							},
+						_ => return Err(req_err),
+					}
+				},
+			}
+		}
+	}
+}
+
+pub trait RetryableRestGet {
+	// set retry_option to None for fail fast
+	fn get_retry<U, R>(&mut self, params: U, retry_option: Option<RetryOption>) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>;
+
+	// set retry_option to None for fail fast
+	fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>;
+}
+
+impl<T> RetryableRestGet for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn get_retry<U, R>(&mut self, params: U, retry_option: Option<RetryOption>) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.retry(|c| c.get(params), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+
+	fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.retry(|c| c.get_with(params, query), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+}
+
+pub trait RetryableRestPost {
+	// set retry_option to None for fail fast
+	fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy,
+		D: serde::Serialize + RestPath<U>,
+		K: serde::de::DeserializeOwned;
+}
+
+impl<T> RetryableRestPost for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy,
+		D: serde::Serialize + RestPath<U>,
+		K: serde::de::DeserializeOwned,
+	{
+		self.retry(|c| c.post_capture(params, data), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
 }
 
 pub trait ConvertParameterString {

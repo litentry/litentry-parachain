@@ -19,13 +19,14 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	build_client, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error, HttpError,
+	ReqPath, RetryOption, RetryableRestPost,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestPath, RestPost,
+	RestPath,
 };
 use itp_rpc::{Id, RpcRequest};
 use litentry_primitives::Web3Network;
@@ -34,7 +35,7 @@ use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
 	string::{String, ToString},
-	thread, time, vec,
+	vec,
 	vec::Vec,
 };
 
@@ -94,21 +95,9 @@ impl NoderealChain {
 	}
 }
 
-#[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ReqPath {
-	path: String,
-}
-
-impl ReqPath {
-	pub fn new(api_key: &str) -> Self {
-		Self { path: "v1/".to_string() + api_key }
-	}
-}
-
-impl RestPath<ReqPath> for RpcRequest {
+impl<'a> RestPath<ReqPath<'a>> for RpcRequest {
 	fn get_path(req: ReqPath) -> core::result::Result<String, HttpError> {
-		Ok(req.path)
+		Ok(req.path.into())
 	}
 }
 
@@ -120,9 +109,8 @@ pub struct RpcResponse {
 }
 
 pub struct NoderealJsonrpcClient {
-	api_key: String,
-	api_retry_delay: u64,
-	api_retry_times: u16,
+	path: String,
+	retry_option: RetryOption,
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
@@ -133,67 +121,22 @@ impl NoderealJsonrpcClient {
 		let api_retry_times = data_provider_config.nodereal_api_retry_times;
 		let api_url = data_provider_config.nodereal_api_chain_network_url.clone();
 		let base_url = api_url.replace("{chain}", chain.to_string());
+		let retry_option =
+			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
+		let path = format!("v1/{}", api_key);
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		let client = build_client(base_url.as_str(), headers);
 
-		NoderealJsonrpcClient { api_key, api_retry_delay, api_retry_times, client }
+		NoderealJsonrpcClient { path, retry_option, client }
 	}
 
-	// https://docs.nodereal.io/docs/cups-rate-limit
-	// add retry functionality to handle situations where requests may surpass predefined constraints.
-	fn retry<A>(&mut self, action: A) -> Result<RpcResponse, Error>
-	where
-		A: Fn(&mut NoderealJsonrpcClient) -> Result<RpcResponse, HttpError>,
-	{
-		let mut retries = 0;
-		// retry delay 1 second
-		let base_delay = time::Duration::from_millis(self.api_retry_delay);
-		// maximum 5 retry times
-		let maximum_retries = self.api_retry_times;
-
-		loop {
-			if retries > 0 {
-				debug!("Fail to call nodereal enhanced api, begin retry: {}", retries);
-			}
-
-			if retries > maximum_retries {
-				return Err(Error::RequestError(format!(
-					"Fail to call call nodereal enhanced api within {} retries",
-					maximum_retries
-				)))
-			}
-
-			match action(self) {
-				Ok(response) => return Ok(response),
-				Err(err) => {
-					let req_err: Error =
-						Error::RequestError(format!("Nodereal enhanced api error: {}", err));
-					match err {
-						HttpError::HttpError(code, _) =>
-							if code == 429 {
-								// Too Many Requests
-								// exponential back off
-								thread::sleep(base_delay * 2u32.pow(retries as u32));
-								retries += 1;
-							} else {
-								return Err(req_err)
-							},
-						_ => return Err(req_err),
-					}
-				},
-			}
-		}
-	}
-
-	fn post(&mut self, body: &RpcRequest) -> Result<RpcResponse, Error> {
-		self.retry(|c| {
-			c.client.post_capture::<ReqPath, RpcRequest, RpcResponse>(
-				ReqPath::new(c.api_key.as_str()),
-				body,
-			)
-		})
+	fn post(&mut self, body: &RpcRequest, fast_fail: bool) -> Result<RpcResponse, Error> {
+		let path = ReqPath::new(self.path.as_str());
+		let retry_option = if fast_fail { None } else { Some(self.retry_option.clone()) };
+		self.client
+			.post_capture_retry::<ReqPath, RpcRequest, RpcResponse>(path, body, retry_option)
 	}
 }
 
@@ -287,15 +230,25 @@ pub trait NftApiList {
 	fn get_nft_holdings(
 		&mut self,
 		param: &GetNFTHoldingsParam,
+		fast_fail: bool,
 	) -> Result<GetNFTHoldingsResult, Error>;
 
-	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<u128, Error>;
+	fn get_token_balance_721(
+		&mut self,
+		param: &GetTokenBalance721Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
 
-	fn get_token_balance_1155(&mut self, param: &GetTokenBalance1155Param) -> Result<u128, Error>;
+	fn get_token_balance_1155(
+		&mut self,
+		param: &GetTokenBalance1155Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
 
 	fn get_token_nft_inventory(
 		&mut self,
 		param: &GetNFTInventoryParam,
+		fast_fail: bool,
 	) -> Result<GetNFTInventoryResult, Error>;
 }
 
@@ -305,6 +258,7 @@ impl NftApiList for NoderealJsonrpcClient {
 	fn get_nft_holdings(
 		&mut self,
 		param: &GetNFTHoldingsParam,
+		fast_fail: bool,
 	) -> Result<GetNFTHoldingsResult, Error> {
 		let params: Vec<String> = vec![
 			param.account_address.clone(),
@@ -319,16 +273,23 @@ impl NftApiList for NoderealJsonrpcClient {
 			params,
 			id: Id::Number(1),
 		};
-		self.post(&req_body).map_err(|e| Error::RequestError(format!("{:?}", e))).map(
-			|resp: RpcResponse| {
+		self.post(&req_body, fast_fail)
+			.map_err(|e| {
+				debug!("get_nft_holdings, error: {:?}", e);
+				e
+			})
+			.map(|resp: RpcResponse| {
 				debug!("get_nft_holdings, response: {:?}", resp);
 				serde_json::from_value(resp.result).unwrap()
-			},
-		)
+			})
 	}
 
 	// https://docs.nodereal.io/reference/nr_gettokenbalance721
-	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<u128, Error> {
+	fn get_token_balance_721(
+		&mut self,
+		param: &GetTokenBalance721Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
 		let params: Vec<String> = vec![
 			param.token_address.clone(),
 			param.account_address.clone(),
@@ -342,18 +303,25 @@ impl NftApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_721, response: {:?}", resp);
 				convert_balance_hex_json_value_to_u128(resp.result)
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("get_token_balance_721, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 
 	// https://docs.nodereal.io/reference/nr_gettokenbalance1155
-	fn get_token_balance_1155(&mut self, param: &GetTokenBalance1155Param) -> Result<u128, Error> {
+	fn get_token_balance_1155(
+		&mut self,
+		param: &GetTokenBalance1155Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
 		let params: Vec<String> = vec![
 			param.token_address.clone(),
 			param.account_address.clone(),
@@ -368,13 +336,16 @@ impl NftApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_1155, response: {:?}", resp);
 				convert_balance_hex_json_value_to_u128(resp.result)
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("get_token_balance_1155, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 
@@ -382,6 +353,7 @@ impl NftApiList for NoderealJsonrpcClient {
 	fn get_token_nft_inventory(
 		&mut self,
 		param: &GetNFTInventoryParam,
+		fast_fail: bool,
 	) -> Result<GetNFTInventoryResult, Error> {
 		let params: Vec<String> = vec![
 			param.account_address.clone(),
@@ -397,7 +369,7 @@ impl NftApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				debug!("get_token_nft_inventory, response: {:?}", resp);
 				match serde_json::from_value::<GetNFTInventoryResult>(resp.result) {
@@ -405,7 +377,10 @@ impl NftApiList for NoderealJsonrpcClient {
 					Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 				}
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("get_token_nft_inventory, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 }
@@ -422,13 +397,21 @@ pub struct GetTokenBalance20Param {
 
 // Fungible Tokens API
 pub trait FungibleApiList {
-	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<u128, Error>;
-	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error>;
+	fn get_token_balance_20(
+		&mut self,
+		param: &GetTokenBalance20Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
+	fn get_token_holdings(&mut self, address: &str, fast_fail: bool) -> Result<RpcResponse, Error>;
 }
 
 impl FungibleApiList for NoderealJsonrpcClient {
 	// https://docs.nodereal.io/reference/nr_gettokenbalance20
-	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<u128, Error> {
+	fn get_token_balance_20(
+		&mut self,
+		param: &GetTokenBalance20Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
 		let params: Vec<String> =
 			vec![param.contract_address.clone(), param.address.clone(), param.block_number.clone()];
 		debug!("get_token_balance_20: {:?}", param);
@@ -439,17 +422,20 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_20, response: {:?}", resp);
 				convert_balance_hex_json_value_to_u128(resp.result)
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("get_token_balance_20, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 
-	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error> {
+	fn get_token_holdings(&mut self, address: &str, fast_fail: bool) -> Result<RpcResponse, Error> {
 		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(), "0x64".to_string()];
 		debug!("get_token_holdings: {:?}", params);
 
@@ -460,16 +446,16 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		self.post(&req_body)
+		self.post(&req_body, fast_fail)
 	}
 }
 
 pub trait EthBalance {
-	fn get_balance(&mut self, address: &str) -> Result<u128, Error>;
+	fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error>;
 }
 
 impl EthBalance for NoderealJsonrpcClient {
-	fn get_balance(&mut self, address: &str) -> Result<u128, Error> {
+	fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error> {
 		let params = vec![address.to_string(), "latest".to_string()];
 
 		let req_body = RpcRequest {
@@ -479,23 +465,26 @@ impl EthBalance for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("eth_getBalance, response: {:?}", resp);
 				convert_balance_hex_json_value_to_u128(resp.result)
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("eth_getBalance, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 }
 
 pub trait TransactionCount {
-	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error>;
+	fn get_transaction_count(&mut self, address: &str, fast_fail: bool) -> Result<u64, Error>;
 }
 
 impl TransactionCount for NoderealJsonrpcClient {
-	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error> {
+	fn get_transaction_count(&mut self, address: &str, fast_fail: bool) -> Result<u64, Error> {
 		let params = vec![address.to_string(), "latest".to_string()];
 
 		let req_body = RpcRequest {
@@ -505,7 +494,7 @@ impl TransactionCount for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		match self.post(&req_body) {
+		match self.post(&req_body, fast_fail) {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("eth_getTransactionCount, response: {:?}", resp);
@@ -523,7 +512,10 @@ impl TransactionCount for NoderealJsonrpcClient {
 					))),
 				}
 			},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+			Err(e) => {
+				debug!("get_transaction_count, error: {:?}", e);
+				Err(e)
+			},
 		}
 	}
 }
@@ -553,7 +545,7 @@ mod tests {
 			page: 1,
 			page_size: 2,
 		};
-		let result = client.get_nft_holdings(&param).unwrap();
+		let result = client.get_nft_holdings(&param, false).unwrap();
 		assert_eq!(result.total_count, "0x1");
 		assert_eq!(result.details.len(), 1);
 		assert_eq!(result.details[0].token_address, "0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197");
@@ -571,7 +563,7 @@ mod tests {
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
 			block_number: "latest".into(),
 		};
-		let result = client.get_token_balance_721(&param).unwrap();
+		let result = client.get_token_balance_721(&param, false).unwrap();
 		assert_eq!(result, 1);
 	}
 
@@ -584,7 +576,7 @@ mod tests {
 			address: "0x85Be4e2ccc9c85BE8783798B6e8A101BDaC6467F".into(),
 			block_number: "latest".into(),
 		};
-		let result = client.get_token_balance_20(&param).unwrap();
+		let result = client.get_token_balance_20(&param, false).unwrap();
 		assert_eq!(result, 800);
 	}
 
@@ -598,7 +590,7 @@ mod tests {
 			block_number: "latest".into(),
 			token_id: "0x0000000000000000000000000000000000000000f".into(),
 		};
-		let result = client.get_token_balance_1155(&param).unwrap();
+		let result = client.get_token_balance_1155(&param, false).unwrap();
 		assert_eq!(result, 1);
 	}
 
@@ -612,7 +604,7 @@ mod tests {
 			page_size: "0x14".into(),
 			page_key: "".into(),
 		};
-		let result = client.get_token_nft_inventory(&param).unwrap();
+		let result = client.get_token_nft_inventory(&param, false).unwrap();
 		assert_eq!(result.page_key, "100_342");
 		assert_eq!(result.details.len(), 1);
 		assert_eq!(result.details[0].token_address, "0x5e74094cd416f55179dbd0e45b1a8ed030e396a1");

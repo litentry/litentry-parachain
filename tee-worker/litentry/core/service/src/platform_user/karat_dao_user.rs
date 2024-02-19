@@ -36,7 +36,7 @@ pub fn is_user(
 	let mut is_user = false;
 	let mut client = KaratDaoClient::new(data_provider_config);
 	for address in addresses {
-		match client.user_verification(address) {
+		match client.user_verification(address, true) {
 			Ok(response) => {
 				is_user = response.result.is_valid;
 				if is_user {
