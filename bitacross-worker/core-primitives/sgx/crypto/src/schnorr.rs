@@ -40,8 +40,8 @@ impl Pair {
 	}
 
 	pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
-		let private_key = SigningKey::from_bytes(bytes.into())
-			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+		let private_key =
+			SigningKey::from_bytes(bytes).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
 		Ok(Self::new(private_key))
 	}
 

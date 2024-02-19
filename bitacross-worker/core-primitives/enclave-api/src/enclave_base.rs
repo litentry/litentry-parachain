@@ -73,10 +73,10 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// retrieve vault account from shard state
 	fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public>;
 
-	/// retrieve the btc wallet key pair, the private key will contain default value in prod
+	/// retrieve the btc wallet key pair, only works in non-prod
 	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair>;
 
-	/// retrieve the eth wallet key pair, the private key will contain default value in prod
+	/// retrieve the eth wallet key pair, only works in non-prod
 	fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair>;
 
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;

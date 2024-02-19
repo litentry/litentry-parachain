@@ -268,16 +268,16 @@ pub(crate) fn main() {
 		} else {
 			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
 		}
-	} else if let Some(sub_matches) = matches.subcommand_matches("dump-wallet") {
+	} else if let Some(sub_matches) = matches.subcommand_matches("wallet") {
 		println!("Bitcoin wallet:");
 		let bitcoin_keypair = enclave.get_bitcoin_wallet_pair().unwrap();
-		println!("public : {:?}", hex::encode(bitcoin_keypair.public_bytes()));
-		println!("private: {:?}", hex::encode(bitcoin_keypair.private_bytes()));
+		println!("public : 0x{}", hex::encode(bitcoin_keypair.public_bytes()));
+		println!("private: 0x{}", hex::encode(bitcoin_keypair.private_bytes()));
 
 		println!("Ethereum wallet:");
 		let ethereum_keypair = enclave.get_ethereum_wallet_pair().unwrap();
-		println!("public : {:?}", hex::encode(ethereum_keypair.public_bytes()));
-		println!("private: {:?}", hex::encode(ethereum_keypair.private_bytes()));
+		println!("public : 0x{}", hex::encode(ethereum_keypair.public_bytes()));
+		println!("private: 0x{}", hex::encode(ethereum_keypair.private_bytes()));
 	} else {
 		println!("For options: use --help");
 	}
