@@ -14,7 +14,7 @@ Wallets (private keys) are generated during the initialization (on first startup
 
 ## Transaction signing
 
-Signing requests are processed by dedicated JSON-RPC `bitacross_submitRequest` method and results in raw signature bytes. Only requests signed by registered relayers are permitted.
+Signing requests are processed by a dedicated JSON-RPC `bitacross_submitRequest` method and results in raw signature bytes. Only requests signed by registered relayers are permitted.
 
 A lot of typescript code related to RPC integration and can be found in [tee-worker's ts-tests](https://github.com/litentry/litentry-parachain/blob/a6b78ed68396280655271f9cd30e17535d54da81/tee-worker/ts-tests/integration-tests/common/di-utils.ts).
 
