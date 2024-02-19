@@ -78,7 +78,7 @@ export const defaultAssertions = [
             Achainable: {
                 Basic: {
                     name: 'Uniswap V2/V3 user',
-                    chain: 'Ethereum',
+                    chain: ['Ethereum'],
                 },
             },
         },
@@ -89,7 +89,7 @@ export const defaultAssertions = [
             Achainable: {
                 Amount: {
                     name: 'Balance over {amount}',
-                    chain: 'Ethereum',
+                    chain: ['Ethereum'],
 
                     amount: '0',
                 },
@@ -102,7 +102,7 @@ export const defaultAssertions = [
             Achainable: {
                 ClassOfYear: {
                     name: 'Account created between {dates}',
-                    chain: 'Ethereum',
+                    chain: ['Ethereum'],
                 },
             },
         },
@@ -113,7 +113,7 @@ export const defaultAssertions = [
             Achainable: {
                 Amount: {
                     name: 'Created over {amount} contracts',
-                    chain: 'Ethereum',
+                    chain: ['Ethereum'],
                     amount: '0',
                 },
             },

@@ -83,36 +83,6 @@ extern "C" {
 		metric_size: u32,
 	) -> sgx_status_t;
 
-	pub fn ocall_propose_sidechain_blocks(
-		ret_val: *mut sgx_status_t,
-		signed_blocks: *const u8,
-		signed_blocks_size: u32,
-	) -> sgx_status_t;
-
-	pub fn ocall_store_sidechain_blocks(
-		ret_val: *mut sgx_status_t,
-		signed_blocks: *const u8,
-		signed_blocks_size: u32,
-	) -> sgx_status_t;
-
-	pub fn ocall_fetch_sidechain_blocks_from_peer(
-		ret_val: *mut sgx_status_t,
-		last_imported_block_hash: *const u8,
-		last_imported_block_hash_size: u32,
-		maybe_until_block_hash: *const u8,
-		maybe_until_block_hash_encoded_size: u32,
-		shard_identifier: *const u8,
-		shard_identifier_size: u32,
-		sidechain_blocks: *mut u8,
-		sidechain_blocks_size: u32,
-	) -> sgx_status_t;
-
-	pub fn ocall_get_trusted_peers_urls(
-		ret_val: *mut sgx_status_t,
-		peers: *mut u8,
-		peers_size: u32,
-	) -> sgx_status_t;
-
 	pub fn ocall_send_to_parentchain(
 		ret_val: *mut sgx_status_t,
 		extrinsics: *const u8,

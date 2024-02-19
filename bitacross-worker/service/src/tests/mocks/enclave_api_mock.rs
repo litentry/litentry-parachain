@@ -36,11 +36,7 @@ impl EnclaveBase for EnclaveMock {
 		Ok(())
 	}
 
-	fn init_enclave_sidechain_components(
-		&self,
-		_fail_mode: Option<String>,
-		_fail_at: u64,
-	) -> EnclaveResult<()> {
+	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
 		Ok(())
 	}
 
@@ -99,6 +95,10 @@ impl EnclaveBase for EnclaveMock {
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn publish_wallets(&self) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {
@@ -111,10 +111,6 @@ impl Sidechain for EnclaveMock {
 		_: bool,
 	) -> EnclaveResult<()> {
 		Ok(())
-	}
-
-	fn execute_trusted_calls(&self) -> EnclaveResult<()> {
-		todo!()
 	}
 
 	fn ignore_parentchain_block_import_validation_until(&self, _until: u32) -> EnclaveResult<()> {

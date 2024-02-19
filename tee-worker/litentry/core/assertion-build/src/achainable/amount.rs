@@ -140,8 +140,10 @@ pub fn build_amount(
 			if bname == AchainableNameAmount::BalanceUnderAmount {
 				credential_unsigned.update_eth_holding_amount(balance);
 			} else {
-				let (desc, subtype, content) =
-					get_assertion_content(&achainable_param.to_string(&param.name)?, &param.chain);
+				let (desc, subtype, content) = get_assertion_content(
+					&achainable_param.to_string(&param.name)?,
+					&param.chain[0],
+				);
 				credential_unsigned.add_subject_info(desc, subtype);
 				credential_unsigned.update_content(flag, content);
 			}

@@ -22,7 +22,7 @@ use k256::{
 	elliptic_curve::group::GroupEncoding,
 	PublicKey,
 };
-use std::{string::ToString, vec::Vec};
+use std::string::ToString;
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
@@ -39,8 +39,8 @@ impl Pair {
 		Self { private, public }
 	}
 
-	pub fn public_bytes(&self) -> Vec<u8> {
-		self.public.as_affine().to_bytes().as_slice().to_vec()
+	pub fn public_bytes(&self) -> [u8; 33] {
+		self.public.as_affine().to_bytes().as_slice().try_into().unwrap()
 	}
 
 	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
@@ -60,10 +60,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{
-		ecdsa::{SigningKey, VerifyingKey},
-		PublicKey,
-	};
+	use k256::ecdsa::SigningKey;
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -134,7 +131,6 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
 	use crate::{
 		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
 	};

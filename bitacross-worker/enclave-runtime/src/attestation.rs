@@ -47,18 +47,16 @@ use itp_node_api::metadata::{
 	Error as MetadataError,
 };
 use itp_node_api_metadata::NodeMetadata;
-use itp_settings::{
-	worker::MR_ENCLAVE_SIZE,
-	worker_mode::{ProvideWorkerMode, WorkerModeProvider},
-};
+use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
 use itp_types::{AttestationType, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
+use litentry_primitives::WorkerMode;
 use log::*;
 use sgx_types::*;
-use sp_core::Pair;
+use sp_core::{ed25519::Public as Ed25519Public, Pair};
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
 
@@ -335,7 +333,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::BitAcross,
-		WorkerModeProvider::worker_mode(),
+		WorkerMode::OffChainWorker,
 		quote,
 		url,
 		shielding_pubkey,
@@ -364,7 +362,7 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::BitAcross,
-		WorkerModeProvider::worker_mode(),
+		WorkerMode::OffChainWorker,
 		quote,
 		url,
 		shielding_pubkey,
@@ -404,7 +402,7 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
 		WorkerType::BitAcross,
-		WorkerModeProvider::worker_mode(),
+		WorkerMode::OffChainWorker,
 		cert_der,
 		url,
 		shielding_pubkey,
@@ -569,13 +567,13 @@ fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
 	Ok(shielding_pubkey)
 }
 
-fn get_vc_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
+fn get_vc_pubkey() -> EnclaveResult<Option<Ed25519Public>> {
 	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
 			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
+			keypair.derive_ed25519().map(|keypair| keypair.public())
 		})
 		.ok();
 
