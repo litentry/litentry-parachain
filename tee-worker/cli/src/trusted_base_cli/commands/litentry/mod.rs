@@ -20,5 +20,4 @@ pub mod id_graph_stats;
 pub mod link_identity;
 pub mod remove_identity;
 pub mod request_vc;
-pub mod request_vc_direct;
 pub mod send_erroneous_parentchain_call;

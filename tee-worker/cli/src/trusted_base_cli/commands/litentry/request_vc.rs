@@ -18,7 +18,7 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_trusted_operation,
+	trusted_operation::{perform_direct_operation, perform_trusted_operation},
 	Cli, CliResult, CliResultOk,
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
@@ -75,6 +75,9 @@ pub struct RequestVcCommand {
 	/// subcommand to define the vc type requested
 	#[clap(subcommand)]
 	command: Command,
+	/// mode for the request-vc
+	#[clap(short = 'i', long, default_value_t = false)]
+	isolated: bool,
 }
 
 // see `assertion.rs`
@@ -570,17 +573,33 @@ impl RequestVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-			Ok(mut vc) => {
-				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-				println!("----Generated VC-----");
-				println!("{}", credential_str);
-			},
-			Err(e) => {
-				println!("{:?}", e);
-			},
+		if !self.isolated {
+			match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+				Ok(mut vc) => {
+					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+					println!("----Generated VC-----");
+					println!("{}", credential_str);
+				},
+				Err(e) => {
+					println!("{:?}", e);
+				},
+			}
+		} else {
+			// This should contain the AES Key for AESRequest
+			match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
+				Ok(mut vc) => {
+					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+					println!("----Generated VC-----");
+					println!("{}", credential_str);
+				},
+				Err(e) => {
+					println!("{:?}", e);
+				},
+			}
 		}
+
 		Ok(CliResultOk::None)
 	}
 
