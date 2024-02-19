@@ -268,6 +268,7 @@ pub(crate) fn main() {
 		} else {
 			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
 		}
+	} else if let Some(sub_matches) = matches.subcommand_matches("dump-wallet") {
 	} else {
 		println!("For options: use --help");
 	}

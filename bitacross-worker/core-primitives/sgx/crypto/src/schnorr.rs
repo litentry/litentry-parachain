@@ -39,9 +39,20 @@ impl Pair {
 		Self { private, public }
 	}
 
+	pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
+		let private_key = SigningKey::from_bytes(bytes.into())
+			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+		Ok(Self::new(private_key))
+	}
+
 	pub fn public_bytes(&self) -> [u8; 33] {
 		// safe to unwrap here
 		self.public.as_affine().to_bytes().as_slice().try_into().unwrap()
+	}
+
+	pub fn private_bytes(&self) -> [u8; 32] {
+		// safe to unwrap here
+		self.private.to_bytes().as_slice().try_into().unwrap()
 	}
 
 	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
