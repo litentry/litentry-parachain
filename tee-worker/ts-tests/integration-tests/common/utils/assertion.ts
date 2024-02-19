@@ -1,7 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
-import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
 import { parseIdGraph } from './identity-helper';
@@ -10,7 +9,6 @@ import { PalletTeebagEnclave, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
-import { jsonSchema } from './vc-helper';
 import { aesKey } from '../call';
 import colors from 'colors';
 import {
@@ -23,6 +21,7 @@ import {
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
+import { validateVcSchema } from '@litentry/vc-schema-validator'
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
@@ -38,7 +37,7 @@ export async function assertFailedEvent(
     type EventLike = Parameters<typeof isFailed>[0];
     const ievents: EventLike[] = events.map(({ event }) => event);
     const failedEvent = ievents.filter(isFailed);
-    /* 
+    /*
       @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
     */
     const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
@@ -191,7 +190,7 @@ export async function assertIdGraphMutationResult(
     return u8aToHex(decodedResult.id_graph_hash);
 }
 
-/* 
+/*
     assert vc
     steps:
     1. check vc status should be Active
@@ -234,8 +233,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 4
     // extrac proof and vc without proof json
     const vcPayloadJson = JSON.parse(decryptVcPayload);
-    console.log('credential: ', vcPayloadJson);
-    console.log('assertions: ', vcPayloadJson.credentialSubject.assertions);
+    console.log('credential: ', JSON.stringify(vcPayloadJson, null, 2));
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
@@ -275,13 +273,13 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 9
     // validate VC aganist schema
-    const ajv = new Ajv();
 
-    const validate = ajv.compile(jsonSchema);
+    const schemaResult = await validateVcSchema(vcPayloadJson);
 
-    const isValid = validate(vcPayloadJson);
+    if (schemaResult.errors) console.log("Schema Validation errors: ", schemaResult.errors)
 
-    assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
+    assert.isTrue(schemaResult.isValid, 'Check Vc payload error: vcPayload should be valid');
+
     assert.equal(
         vcWithoutProof.type[0],
         'VerifiableCredential',

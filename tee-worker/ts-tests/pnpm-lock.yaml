@@ -10,6 +10,9 @@ importers:
 
   integration-tests:
     dependencies:
+      '@litentry/vc-schema-validator':
+        specifier: ^0.0.1
+        version: 0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2)
       '@noble/ed25519':
         specifier: ^1.7.3
         version: 1.7.3
@@ -58,9 +61,6 @@ importers:
       add:
         specifier: ^2.0.6
         version: 2.0.6
-      ajv:
-        specifier: ^8.12.0
-        version: 8.12.0
       bitcore-lib:
         specifier: ^10.0.21
         version: 10.0.21
@@ -779,6 +779,20 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
+  /@litentry/vc-schema-validator@0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2):
+    resolution: {integrity: sha512-Utnu2m/IPcGbqpopNsEdB1AvRimoL300dGpk/9g/8P16OemCHYxHE8j+n2JrHS+BUvH9upDiNMy5sbZPmDAAfQ==}
+    peerDependencies:
+      ajv: ^8.12.0
+      ajv-formats: ^2.1.1
+      fast-glob: ^3.3.2
+      tslib: ^2.3.0
+    dependencies:
+      ajv: 8.12.0
+      ajv-formats: 2.1.1(ajv@8.12.0)
+      fast-glob: 3.3.2
+      tslib: 2.6.2
+    dev: false
+
   /@noble/curves@1.2.0:
     resolution: {integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==}
     dependencies:
@@ -1496,6 +1510,17 @@ packages:
     resolution: {integrity: sha512-H7wUZRn8WpTq9jocdxQ2c8x2sKo9ZVmzfRE13GiNJXfp7NcKYEdvl3vspKjXox6RIG2VtaRe4JFvxG4rqp2Zuw==}
     dev: true
 
+  /ajv-formats@2.1.1(ajv@8.12.0):
+    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    peerDependencies:
+      ajv: ^8.0.0
+    peerDependenciesMeta:
+      ajv:
+        optional: true
+    dependencies:
+      ajv: 8.12.0
+    dev: false
+
   /ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
     dependencies:
@@ -2133,6 +2158,17 @@ packages:
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.5
+
+  /fast-glob@3.3.2:
+    resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
+    engines: {node: '>=8.6.0'}
+    dependencies:
+      '@nodelib/fs.stat': 2.0.5
+      '@nodelib/fs.walk': 1.2.8
+      glob-parent: 5.1.2
+      merge2: 1.4.1
+      micromatch: 4.0.5
+    dev: false
 
   /fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
