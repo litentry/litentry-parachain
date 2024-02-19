@@ -15,8 +15,6 @@
 
 */
 
-pub mod broadcast_blocks_mock;
-pub mod direct_request_mock;
 pub mod enclave_api_mock;
 pub mod initialization_handler_mock;
 pub mod parentchain_api_mock;

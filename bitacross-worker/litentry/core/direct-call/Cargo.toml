@@ -8,7 +8,6 @@ version = "0.1.0"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # internal dependencies
 bc-relayer-registry = { path = "../../../bitacross/core/bc-relayer-registry", default-features = false }
@@ -42,7 +41,6 @@ std = [
     "litentry-primitives/std",
     "sp-core/std",
     "sp-io/std",
-    "sp-runtime/std",
     "parentchain-primitives/std",
 ]
 test = [

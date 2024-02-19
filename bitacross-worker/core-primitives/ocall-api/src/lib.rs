@@ -19,14 +19,14 @@
 
 pub extern crate alloc;
 
-use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::result::Result as StdResult;
 use derive_more::{Display, From};
 use itp_storage::Error as StorageError;
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash, ShardIdentifier,
-	TrustedOperationStatus, WorkerRequest, WorkerResponse,
+	parentchain::ParentchainId, storage::StorageEntryVerified, TrustedOperationStatus,
+	WorkerRequest, WorkerResponse,
 };
 use sgx_types::*;
 use sp_core::H256;
@@ -124,27 +124,6 @@ pub trait EnclaveOnChainOCallApi: Clone + Send + Sync {
 /// Trait for sending metric updates.
 pub trait EnclaveMetricsOCallApi: Clone + Send + Sync {
 	fn update_metric<Metric: Encode>(&self, metric: Metric) -> SgxResult<()>;
-}
-
-pub trait EnclaveSidechainOCallApi: Clone + Send + Sync {
-	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()>;
-
-	fn store_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()>;
-
-	fn fetch_sidechain_blocks_from_peer<SignedSidechainBlock: Decode>(
-		&self,
-		last_imported_block_hash: BlockHash,
-		maybe_until_block_hash: Option<BlockHash>,
-		shard_identifier: ShardIdentifier,
-	) -> SgxResult<Vec<SignedSidechainBlock>>;
-
-	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>>;
 }
 
 /// Newtype for IPFS CID

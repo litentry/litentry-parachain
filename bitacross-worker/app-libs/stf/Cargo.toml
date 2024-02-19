@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
-hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }
@@ -39,7 +38,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
-itp-node-api-metadata-provider = { path = "../../core-primitives/node-api/metadata-provider", default-features = false }
 litentry-macros = { path = "../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
@@ -58,7 +56,6 @@ sgx = [
     "itp-node-api/sgx",
     # litentry
     "litentry-primitives/sgx",
-    "itp-node-api-metadata-provider/sgx",
 ]
 std = [
     # crates.io
@@ -85,7 +82,6 @@ std = [
     "sp-io/std",
     # litentry
     "litentry-primitives/std",
-    "itp-node-api-metadata-provider/std",
 ]
 test = []
 production = [

@@ -26,8 +26,8 @@ pub mod test {
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use k256::elliptic_curve::rand_core;
-	use parentchain_primitives::{Address32, Identity};
-	use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, sr25519, Pair};
+	use parentchain_primitives::Identity;
+	use sp_core::{sr25519, Pair};
 
 	#[test]
 	pub fn it_should_return_ok_for_relayer_signer() {

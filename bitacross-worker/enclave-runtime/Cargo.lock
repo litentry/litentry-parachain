@@ -252,31 +252,14 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 name = "bc-relayer-registry"
 version = "0.1.0"
 dependencies = [
- "bitcoin",
- "core-primitives",
- "hex 0.4.3",
  "itp-settings",
- "itp-sgx-crypto",
  "itp-sgx-io",
- "itp-utils",
  "lazy_static",
- "litentry-hex-utils",
  "litentry-primitives",
  "log",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
- "rand 0.7.3",
- "ring 0.16.20",
- "scale-info",
- "secp256k1 0.28.0",
- "serde 1.0.193",
  "sgx_tstd",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
- "strum",
- "strum_macros",
  "thiserror",
 ]
 
@@ -289,26 +272,17 @@ dependencies = [
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
- "ita-sgx-runtime",
  "ita-stf",
- "itp-enclave-metrics",
- "itp-extrinsics-factory",
- "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
- "itp-storage",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
- "sp-core",
  "thiserror",
  "threadpool",
 ]
@@ -320,7 +294,6 @@ dependencies = [
  "futures 0.3.8",
  "lazy_static",
  "litentry-primitives",
- "log",
  "parity-scale-codec",
  "sgx_tstd",
 ]
@@ -713,7 +686,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
 dependencies = [
  "generic-array 0.14.7",
- "typenum 1.17.0",
+ "typenum",
 ]
 
 [[package]]
@@ -928,11 +901,12 @@ dependencies = [
  "array-bytes 6.1.0",
  "bc-relayer-registry",
  "bc-task-receiver",
+ "bc-task-sender",
  "cid",
  "derive_more",
  "env_logger",
  "frame-support",
- "frame-system",
+ "futures 0.3.8",
  "hex 0.4.3",
  "ipfs-unixfs",
  "ita-parentchain-interface",
@@ -949,7 +923,6 @@ dependencies = [
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-component-container",
- "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-import-queue",
  "itp-node-api",
@@ -970,14 +943,10 @@ dependencies = [
  "itp-stf-state-observer",
  "itp-storage",
  "itp-test",
- "itp-time-utils",
  "itp-top-pool",
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "its-block-verification",
- "its-primitives",
- "its-sidechain",
  "jsonrpc-core",
  "lazy_static",
  "lc-scheduled-enclave",
@@ -1611,7 +1580,7 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffdf9f34f1447443d37393cc6c2b8313aebddcd96906caf34e54c68d8e57d7bd"
 dependencies = [
- "typenum 1.17.0",
+ "typenum",
 ]
 
 [[package]]
@@ -1620,7 +1589,7 @@ version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
- "typenum 1.17.0",
+ "typenum",
  "version_check",
  "zeroize",
 ]
@@ -1915,7 +1884,6 @@ dependencies = [
  "itp-node-api",
  "itp-stf-primitives",
  "itp-types",
- "itp-utils",
  "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
@@ -1924,7 +1892,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -1956,13 +1923,11 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "hex 0.4.3",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
- "itp-node-api-metadata-provider",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -1992,7 +1957,6 @@ dependencies = [
  "itp-rpc",
  "itp-types",
  "itp-utils",
- "litentry-primitives",
  "log",
  "parity-scale-codec",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",
@@ -2090,7 +2054,6 @@ version = "0.9.0"
 dependencies = [
  "binary-merkle-tree",
  "bs58",
- "core-primitives",
  "futures 0.3.8",
  "itp-api-client-types",
  "itp-node-api",
@@ -2101,7 +2064,6 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
- "itp-utils",
  "lc-scheduled-enclave",
  "litentry-primitives",
  "log",
@@ -2110,7 +2072,6 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "sp-std",
  "thiserror",
 ]
 
@@ -2265,7 +2226,6 @@ version = "0.9.0"
 dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
- "substrate-fixed",
 ]
 
 [[package]]
@@ -2376,9 +2336,6 @@ dependencies = [
 [[package]]
 name = "itp-settings"
 version = "0.9.0"
-dependencies = [
- "litentry-primitives",
-]
 
 [[package]]
 name = "itp-sgx-crypto"
@@ -2446,7 +2403,6 @@ version = "0.9.0"
 dependencies = [
  "hex 0.4.3",
  "itc-parentchain-test",
- "itp-enclave-metrics",
  "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
@@ -2459,7 +2415,6 @@ dependencies = [
  "itp-time-utils",
  "itp-top-pool-author",
  "itp-types",
- "litentry-primitives",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2558,7 +2513,6 @@ dependencies = [
  "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
- "itp-time-utils",
  "itp-types",
  "jsonrpc-core",
  "lc-teebag-storage",
@@ -2591,7 +2545,6 @@ dependencies = [
  "itc-direct-rpc-server",
  "itp-stf-primitives",
  "itp-types",
- "its-primitives",
  "jsonrpc-core",
  "linked-hash-map",
  "log",
@@ -2650,210 +2603,6 @@ dependencies = [
  "hex 0.4.3",
  "litentry-hex-utils",
  "parity-scale-codec",
-]
-
-[[package]]
-name = "its-block-composer"
-version = "0.9.0"
-dependencies = [
- "itp-node-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-stf-primitives",
- "itp-time-utils",
- "itp-top-pool-author",
- "itp-types",
- "its-primitives",
- "its-state",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sgx_types",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-block-verification"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "itp-types",
- "itp-utils",
- "its-primitives",
- "log",
- "sgx_tstd",
- "sp-consensus-slots",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-consensus-aura"
-version = "0.9.0"
-dependencies = [
- "finality-grandpa",
- "ita-stf",
- "itc-parentchain-block-import-dispatcher",
- "itc-peer-top-broadcaster",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-stf-primitives",
- "itp-stf-state-handler",
- "itp-time-utils",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "its-block-composer",
- "its-block-verification",
- "its-consensus-common",
- "its-consensus-slots",
- "its-primitives",
- "its-state",
- "its-validateer-fetch",
- "lc-scheduled-enclave",
- "litentry-hex-utils",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
-name = "its-consensus-common"
-version = "0.9.0"
-dependencies = [
- "itc-parentchain-light-client",
- "itp-enclave-metrics",
- "itp-extrinsics-factory",
- "itp-import-queue",
- "itp-node-api-metadata",
- "itp-node-api-metadata-provider",
- "itp-ocall-api",
- "itp-settings",
- "itp-sgx-crypto",
- "itp-types",
- "its-block-verification",
- "its-primitives",
- "its-state",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sgx_types",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-consensus-slots"
-version = "0.9.0"
-dependencies = [
- "derive_more",
- "hex 0.4.3",
- "itp-settings",
- "itp-sgx-externalities",
- "itp-stf-state-handler",
- "itp-time-utils",
- "itp-types",
- "its-block-verification",
- "its-consensus-common",
- "its-primitives",
- "its-state",
- "lazy_static",
- "lc-scheduled-enclave",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-consensus-slots",
- "sp-runtime",
-]
-
-[[package]]
-name = "its-primitives"
-version = "0.1.0"
-dependencies = [
- "itp-types",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "its-rpc-handler"
-version = "0.9.0"
-dependencies = [
- "bc-task-sender",
- "futures 0.3.8",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "its-primitives",
- "jsonrpc-core",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "rust-base58",
- "sgx_tstd",
- "sp-core",
-]
-
-[[package]]
-name = "its-sidechain"
-version = "0.9.0"
-dependencies = [
- "its-block-composer",
- "its-consensus-aura",
- "its-consensus-common",
- "its-consensus-slots",
- "its-primitives",
- "its-rpc-handler",
- "its-state",
- "its-validateer-fetch",
-]
-
-[[package]]
-name = "its-state"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "itp-sgx-externalities",
- "itp-storage",
- "its-primitives",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "its-validateer-fetch"
-version = "0.9.0"
-dependencies = [
- "derive_more",
- "itp-ocall-api",
- "itp-types",
- "lc-teebag-storage",
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -2927,7 +2676,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -3032,12 +2780,8 @@ dependencies = [
  "core-primitives",
  "hex 0.4.3",
  "itp-sgx-crypto",
- "itp-sgx-io",
- "itp-utils",
- "lazy_static",
  "litentry-hex-utils",
  "log",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -3050,9 +2794,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "strum",
- "strum_macros",
- "thiserror",
 ]
 
 [[package]]
@@ -4565,17 +4306,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-slots"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-std",
- "sp-timestamp",
-]
-
-[[package]]
 name = "sp-core"
 version = "7.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -4933,16 +4663,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-fixed"
-version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed?tag=v0.5.9#a4fb461aae6205ffc55bed51254a40c52be04e5d"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "typenum 1.16.0",
-]
-
-[[package]]
 name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5179,15 +4899,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.7",
  "static_assertions",
-]
-
-[[package]]
-name = "typenum"
-version = "1.16.0"
-source = "git+https://github.com/encointer/typenum?tag=v1.16.0#4c8dddaa8bdd13130149e43b4085ad14e960617f"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
 ]
 
 [[package]]

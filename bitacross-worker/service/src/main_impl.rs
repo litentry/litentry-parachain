@@ -17,10 +17,7 @@ use crate::{
 	},
 	parentchain_handler::{HandleParentchain, ParentchainHandler},
 	prometheus_metrics::{start_metrics_server, EnclaveMetricsReceiver, MetricsHandler},
-	setup,
-	sidechain_setup::{sidechain_init_block_production, sidechain_start_untrusted_rpc_server},
-	sync_block_broadcaster::SyncBlockBroadcaster,
-	sync_state, tests,
+	setup, sync_state, tests,
 	utils::extract_shard,
 	worker::Worker,
 	worker_peers_registry::WorkerPeersRegistry,
@@ -29,7 +26,6 @@ use base58::ToBase58;
 use clap::{load_yaml, App, ArgMatches};
 use codec::{Decode, Encode};
 use itp_enclave_api::{
-	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
@@ -39,12 +35,6 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
-use its_peer_fetch::{
-	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
-};
-use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
-use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use litentry_macros::if_production_or;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
@@ -75,8 +65,7 @@ use substrate_api_client::ac_node_api::{EventRecord, Phase::ApplyExtrinsic};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(feature = "link-binary")]
-pub type EnclaveWorker =
-	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
+pub type EnclaveWorker = Worker<Config, NodeApiFactory, Enclave, InitializationHandler>;
 pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
 
 pub(crate) fn main() {
@@ -97,8 +86,6 @@ pub(crate) fn main() {
 	#[cfg(not(feature = "production"))]
 	info!("*** Starting service in SGX debug mode");
 
-	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
-
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		crate::setup::purge_files_from_dir(config.data_dir()).unwrap();
@@ -106,12 +93,6 @@ pub(crate) fn main() {
 
 	// build the entire dependency tree
 	let tokio_handle = Arc::new(GlobalTokioHandle {});
-	let sidechain_blockstorage = Arc::new(
-		SidechainStorageLock::<SignedSidechainBlock>::from_base_path(
-			config.data_dir().to_path_buf(),
-		)
-		.unwrap(),
-	);
 	let node_api_factory =
 		Arc::new(NodeApiFactory::new(config.litentry_rpc_endpoint(), AccountKeyring::Alice.pair()));
 	let enclave = Arc::new(enclave_init(&config).unwrap());
@@ -123,12 +104,7 @@ pub(crate) fn main() {
 		initialization_handler.clone(),
 		HashSet::new(),
 	));
-	let sync_block_broadcaster =
-		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
 	let peer_updater = Arc::new(WorkerPeersRegistry::new(worker));
-	let untrusted_peer_fetcher = UntrustedPeerFetcher::new(node_api_factory.clone());
-	let peer_sidechain_block_fetcher =
-		Arc::new(BlockFetcher::<SignedSidechainBlock, _>::new(untrusted_peer_fetcher));
 	let enclave_metrics_receiver = Arc::new(EnclaveMetricsReceiver {});
 
 	let maybe_target_a_parentchain_api_factory = config
@@ -144,11 +120,8 @@ pub(crate) fn main() {
 		node_api_factory.clone(),
 		maybe_target_a_parentchain_api_factory,
 		maybe_target_b_parentchain_api_factory,
-		sync_block_broadcaster,
 		enclave.clone(),
-		sidechain_blockstorage.clone(),
 		peer_updater,
-		peer_sidechain_block_fetcher,
 		tokio_handle.clone(),
 		enclave_metrics_receiver,
 	)));
@@ -188,7 +161,7 @@ pub(crate) fn main() {
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 
 		if run_config.request_state() {
-			sync_state::sync_state::<_, _, WorkerModeProvider>(
+			sync_state::sync_state::<_, _>(
 				&node_api,
 				&shard,
 				enclave.as_ref(),
@@ -196,11 +169,10 @@ pub(crate) fn main() {
 			);
 		}
 
-		start_worker::<_, _, _, _, WorkerModeProvider>(
+		start_worker::<_, _, _>(
 			config,
 			&shard,
 			enclave,
-			sidechain_blockstorage,
 			node_api,
 			tokio_handle,
 			initialization_handler,
@@ -211,7 +183,7 @@ pub(crate) fn main() {
 		println!("*** Requesting state from a registered worker \n");
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
-		sync_state::sync_state::<_, _, WorkerModeProvider>(
+		sync_state::sync_state::<_, _>(
 			&node_api,
 			&extract_shard(smatches.value_of("shard"), enclave.as_ref()),
 			enclave.as_ref(),
@@ -303,11 +275,10 @@ pub(crate) fn main() {
 
 /// FIXME: needs some discussion (restructuring?)
 #[allow(clippy::too_many_arguments)]
-fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
+fn start_worker<E, T, InitializationHandler>(
 	config: Config,
 	shard: &ShardIdentifier,
 	enclave: Arc<E>,
-	sidechain_storage: Arc<D>,
 	litentry_rpc_api: ParentchainApi,
 	tokio_handle_getter: Arc<T>,
 	initialization_handler: Arc<InitializationHandler>,
@@ -315,19 +286,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
-	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
+	E: EnclaveBase + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
-	WorkerModeProvider: ProvideWorkerMode,
 {
 	let run_config = config.run_config().clone().expect("Run config missing");
 	let skip_ra = run_config.skip_ra();
 
-	#[cfg(feature = "sidechain")]
-	let flavor_str = "sidechain";
-	#[cfg(feature = "offchain-worker")]
-	let flavor_str = "offchain-worker";
-	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain")))]
 	let flavor_str = "offchain-worker";
 
 	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
@@ -418,34 +382,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Start trusted worker rpc server
-	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain
-		|| WorkerModeProvider::worker_mode() == WorkerMode::OffChainWorker
-	{
-		let direct_invocation_server_addr = config.trusted_worker_url_internal();
-		let enclave_for_direct_invocation = enclave.clone();
-		thread::spawn(move || {
-			println!(
-				"[+] Trusted RPC direct invocation server listening on {}",
-				direct_invocation_server_addr
-			);
-			enclave_for_direct_invocation
-				.init_direct_invocation_server(direct_invocation_server_addr)
-				.unwrap();
-			println!("[+] RPC direct invocation server shut down");
-		});
-	}
-
-	// ------------------------------------------------------------------------
-	// Start untrusted worker rpc server.
-	// i.e move sidechain block importing to trusted worker.
-	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-		sidechain_start_untrusted_rpc_server(
-			&config,
-			enclave.clone(),
-			sidechain_storage.clone(),
-			&tokio_handle,
+	let direct_invocation_server_addr = config.trusted_worker_url_internal();
+	let enclave_for_direct_invocation = enclave.clone();
+	thread::spawn(move || {
+		println!(
+			"[+] Trusted RPC direct invocation server listening on {}",
+			direct_invocation_server_addr
 		);
-	}
+		enclave_for_direct_invocation
+			.init_direct_invocation_server(direct_invocation_server_addr)
+			.unwrap();
+		println!("[+] RPC direct invocation server shut down");
+	});
 
 	// ------------------------------------------------------------------------
 	// Init parentchain specific stuff. Needed for parentchain communication.
@@ -541,53 +489,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	initialization_handler.registered_on_parentchain();
 
-	match WorkerModeProvider::worker_mode() {
-		WorkerMode::OffChainWorker => {
-			println!("*** [+] Finished initializing light client, syncing parentchain...");
+	println!("*** [+] Finished initializing light client, syncing parentchain...");
 
-			// Syncing all parentchain blocks, this might take a while..
-			let last_synced_header =
-				parentchain_handler.sync_parentchain(last_synced_header, 0, true).unwrap();
+	// Syncing all parentchain blocks, this might take a while..
+	let last_synced_header =
+		parentchain_handler.sync_parentchain(last_synced_header, 0, true).unwrap();
 
-			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
+	start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
-			info!("skipping shard vault check because not yet supported for offchain worker");
-		},
-		WorkerMode::Sidechain => {
-			println!("*** [+] Finished initializing light client, syncing parentchain...");
-
-			// Litentry: apply skipped parentchain block
-			let parentchain_start_block = config
-				.try_parse_parentchain_start_block()
-				.expect("parentchain start block to be a valid number");
-
-			println!(
-				"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
-				last_synced_header.number, parentchain_start_block
-			);
-
-			// ------------------------------------------------------------------------
-			// Initialize the sidechain
-			let last_synced_header = sidechain_init_block_production(
-				enclave.clone(),
-				register_enclave_xt_header,
-				is_primary_enclave,
-				parentchain_handler.clone(),
-				sidechain_storage,
-				&last_synced_header,
-				parentchain_start_block,
-				config.clone().fail_slot_mode,
-				config.fail_at,
-			)
-			.unwrap();
-
-			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
-
-			init_provided_shard_vault(shard, &enclave, is_primary_enclave);
-
-			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
-		},
-	}
+	info!("skipping shard vault check because not yet supported for offchain worker");
 
 	if let Some(url) = config.target_a_parentchain_rpc_endpoint() {
 		init_target_parentchain(

@@ -16,7 +16,6 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
-log = { version = "0.4", default-features = false }
 
 # litentry primities 
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
@@ -31,7 +30,6 @@ sgx = [
 ]
 std = [
     "futures",
-    "log/std",
     "futures",
     "litentry-primitives/std",
 ]
