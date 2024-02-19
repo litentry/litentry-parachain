@@ -19,7 +19,6 @@ ws = { version = "0.9.1", features = ["ssl"] }
 
 # parity
 frame-metadata = { version = "15.1.0", features = ["v14"] }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", default-features = false }
 
 # local
 itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types" }
@@ -30,8 +29,6 @@ itp-utils = { path = "../../core-primitives/utils" }
 # litentry
 ita-stf = { path = "../../app-libs/stf" }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives" }
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"

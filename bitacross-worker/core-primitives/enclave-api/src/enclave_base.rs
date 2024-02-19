@@ -21,9 +21,9 @@ use codec::Decode;
 use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_types::ShardIdentifier;
+use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {
@@ -36,11 +36,7 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	) -> EnclaveResult<()>;
 
 	/// Initialize the enclave sidechain components.
-	fn init_enclave_sidechain_components(
-		&self,
-		fail_mode: Option<String>,
-		fail_at: u64,
-	) -> EnclaveResult<()>;
+	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()>;
 
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
@@ -80,6 +76,9 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	// litentry
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
+	/// Publish generated wallets on parachain
+	fn publish_wallets(&self) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -97,10 +96,10 @@ mod impl_ffi {
 	};
 	use itp_types::ShardIdentifier;
 	use log::*;
+	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
 	use sp_core::ed25519;
-	use teerex_primitives::EnclaveFingerprint;
 
 	impl EnclaveBase for Enclave {
 		fn init(
@@ -134,25 +133,10 @@ mod impl_ffi {
 			Ok(())
 		}
 
-		fn init_enclave_sidechain_components(
-			&self,
-			fail_mode: Option<String>,
-			fail_at: u64,
-		) -> EnclaveResult<()> {
+		fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let encoded_fail_mode = fail_mode.encode();
-			let encoded_fail_at = fail_at.encode();
 
-			let result = unsafe {
-				ffi::init_enclave_sidechain_components(
-					self.eid,
-					&mut retval,
-					encoded_fail_mode.as_ptr(),
-					encoded_fail_mode.len() as u32,
-					encoded_fail_at.as_ptr(),
-					encoded_fail_at.len() as u32,
-				)
-			};
+			let result = unsafe { ffi::init_enclave_sidechain_components(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
@@ -373,6 +357,17 @@ mod impl_ffi {
 					old_shard.len() as u32,
 				)
 			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn publish_wallets(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::publish_wallets(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

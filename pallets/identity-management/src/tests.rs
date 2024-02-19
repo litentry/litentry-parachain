@@ -128,13 +128,15 @@ fn tee_callback_with_registered_enclave_works() {
 		&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		assert_ok!(Teerex::register_enclave(
+		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(alice.clone()),
+			Default::default(),
+			Default::default(),
 			TEST8_CERT.to_vec(),
 			URL.to_vec(),
 			None,
 			None,
-			SgxAttestationMethod::Ias,
+			Default::default(),
 		));
 
 		assert_ok!(IdentityManagement::some_error(

@@ -19,14 +19,8 @@
 
 #![no_std]
 
-#[cfg(any(
-	all(feature = "sidechain", feature = "offchain-worker"),
-	all(feature = "sidechain", feature = "teeracle"),
-	all(feature = "teeracle", feature = "offchain-worker")
-))]
-compile_error!(
-	"feature \"sidechain\" , \"offchain-worker\" or \"teeracle\" cannot be enabled at the same time"
-);
+#[cfg(any(all(feature = "sidechain", feature = "offchain-worker"),))]
+compile_error!("feature \"sidechain\" or \"offchain-worker\" cannot be enabled at the same time");
 
 pub mod worker_mode;
 
@@ -42,8 +36,8 @@ pub mod files {
 	pub static SIDECHAIN_PURGE_LIMIT: u64 = 100; // keep the last.. sidechainblocks when purging
 
 	// used by enclave
-	/// Path to the light-client db for the Integritee parentchain.
-	pub const LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "integritee_lcdb";
+	/// Path to the light-client db for the Litentry parentchain.
+	pub const LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "litentry_lcdb";
 
 	/// Path to the light-client db for the Target A parentchain.
 	pub const TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_a_lcdb";
@@ -103,18 +97,4 @@ pub mod sidechain {
 	use core::time::Duration;
 
 	pub static SLOT_DURATION: Duration = Duration::from_millis(6000);
-}
-
-/// Settings concerning the enclave
-pub mod enclave {}
-
-/// Settings for the Teeracle
-pub mod teeracle {
-	use core::time::Duration;
-	// Send extrinsic to update market exchange rate on the parentchain once per day
-	pub static DEFAULT_MARKET_DATA_UPDATE_INTERVAL: Duration = ONE_DAY;
-
-	pub static ONE_DAY: Duration = Duration::from_secs(86400);
-
-	pub static THIRTY_MINUTES: Duration = Duration::from_secs(1800);
 }

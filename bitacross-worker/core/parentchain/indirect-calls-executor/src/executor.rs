@@ -29,7 +29,7 @@ use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
@@ -217,10 +217,10 @@ impl<
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
-			meta_data.confirm_processed_parentchain_block_call_indexes()
+			meta_data.parentchain_block_processed_call_indexes()
 		})??;
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-		trace!("prepared confirm_processed_parentchain_block() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
+		trace!("prepared parentchain_block_processed() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
 		// Litentry: we don't include `shard` in the extrinsic parameter to be backwards compatible,
 		//           however, we should not forget it in case we need it later
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
@@ -300,7 +300,7 @@ pub fn hash_of<T: Encode>(xt: &T) -> H256 {
 mod test {
 	use super::*;
 	use crate::mock::*;
-	use codec::{Decode, Encode};
+	use codec::Encode;
 	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
 		api_client::{
@@ -311,16 +311,12 @@ mod test {
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
-	use itp_stf_primitives::{
-		traits::TrustedCallVerification,
-		types::{AccountId, TrustedOperation},
-	};
 	use itp_test::mock::{
 		shielding_crypto_mock::ShieldingCryptoMock,
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, RsaRequest, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -367,41 +363,6 @@ mod test {
 	}
 
 	#[test]
-	fn shielding_call_can_be_added_to_pool_successfully() {
-		let _ = env_logger::builder().is_test(true).try_init();
-
-		let mr_enclave = [33u8; 32];
-		let (indirect_calls_executor, top_pool_author, shielding_key_repo) =
-			test_fixtures(mr_enclave.clone(), NodeMetadataMock::new());
-		let shielding_key = shielding_key_repo.retrieve_key().unwrap();
-
-		let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
-			shield_funds_unchecked_extrinsic(&shielding_key).encode().as_slice(),
-		)
-		.unwrap();
-
-		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
-			.build();
-
-		indirect_calls_executor
-			.execute_indirect_calls_in_extrinsics(&parentchain_block, &Vec::new())
-			.unwrap();
-
-		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
-		let submitted_extrinsic =
-			top_pool_author.pending_tops(shard_id()).unwrap().first().cloned().unwrap();
-		let decrypted_extrinsic = shielding_key.decrypt(&submitted_extrinsic).unwrap();
-		let decoded_operation = TrustedOperation::<TrustedCallSignedMock, GetterMock>::decode(
-			&mut decrypted_extrinsic.as_slice(),
-		)
-		.unwrap();
-		assert_matches!(decoded_operation, TrustedOperation::indirect_call(_));
-		let trusted_call_signed = decoded_operation.to_call().unwrap();
-		assert!(trusted_call_signed.verify_signature(&mr_enclave, &shard_id()));
-	}
-
-	#[test]
 	fn ensure_empty_extrinsic_vec_triggers_zero_filled_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
@@ -409,11 +370,10 @@ mod test {
 
 		let block_hash = H256::from([1; 32]);
 		let extrinsics = Vec::new();
-		let confirm_processed_parentchain_block_indexes =
-			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
+		let parentchain_block_processed_call_indexes =
+			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 		let expected_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1u32, H256::default())
-				.encode();
+			(parentchain_block_processed_call_indexes, block_hash, 1u32, H256::default()).encode();
 
 		// when
 		let call = indirect_calls_executor
@@ -432,12 +392,11 @@ mod test {
 
 		let block_hash = H256::from([1; 32]);
 		let extrinsics = vec![H256::from([4; 32]), H256::from([9; 32])];
-		let confirm_processed_parentchain_block_indexes =
-			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
+		let parentchain_block_processed_call_indexes =
+			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 
 		let zero_root_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1u32, H256::default())
-				.encode();
+			(parentchain_block_processed_call_indexes, block_hash, 1u32, H256::default()).encode();
 
 		// when
 		let call = indirect_calls_executor
@@ -448,27 +407,12 @@ mod test {
 		assert_ne!(call.0, zero_root_call);
 	}
 
-	fn shield_funds_unchecked_extrinsic(
-		shielding_key: &ShieldingCryptoMock,
-	) -> ParentchainUncheckedExtrinsic<ShieldFundsFn> {
-		let target_account = shielding_key.encrypt(&AccountId::new([2u8; 32]).encode()).unwrap();
-		let dummy_metadata = NodeMetadataMock::new();
-
-		let shield_funds_indexes = dummy_metadata.shield_funds_call_indexes().unwrap();
-		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
-			(shield_funds_indexes, target_account, 1000u128, shard_id()),
-			MultiAddress::Address32([1u8; 32]),
-			MultiSignature::Ed25519(default_signature()),
-			default_extrinsic_params().signed_extra(),
-		)
-	}
-
-	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
+	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<PostOpaqueTaskFn> {
 		let request = RsaRequest::new(shard_id(), vec![1u8, 2u8]);
 		let dummy_metadata = NodeMetadataMock::new();
-		let call_worker_indexes = dummy_metadata.invoke_call_indexes().unwrap();
+		let call_worker_indexes = dummy_metadata.post_opaque_task_call_indexes().unwrap();
 
-		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
+		ParentchainUncheckedExtrinsic::<PostOpaqueTaskFn>::new_signed(
 			(call_worker_indexes, request),
 			MultiAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(default_signature()),

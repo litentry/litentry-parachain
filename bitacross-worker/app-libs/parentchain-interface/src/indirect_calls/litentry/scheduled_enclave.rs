@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -21,29 +21,35 @@ use itc_parentchain_indirect_calls_executor::{
 	IndirectDispatch,
 };
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::{MrEnclave, SidechainBlockNumber};
+use itp_types::{MrEnclave, SidechainBlockNumber, WorkerType};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use log::debug;
+use log::*;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct UpdateScheduledEnclaveArgs {
+pub struct SetScheduledEnclaveArgs {
+	worker_type: WorkerType,
 	sbn: codec::Compact<SidechainBlockNumber>,
 	mrenclave: MrEnclave,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for UpdateScheduledEnclaveArgs
+	IndirectDispatch<Executor, TrustedCallSigned> for SetScheduledEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {:?}, mrenclave: {:?}", self.sbn, self.mrenclave);
-		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn.into(), self.mrenclave)?;
+		debug!("execute indirect call: SetScheduledEnclave, worker_type: {:?}, sidechain_block_number: {:?}, mrenclave: {:?}", self.worker_type, self.sbn, self.mrenclave);
+		if self.worker_type == WorkerType::BitAcross {
+			GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn.into(), self.mrenclave)?;
+		} else {
+			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
+		}
 		Ok(())
 	}
 }
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveScheduledEnclaveArgs {
+	worker_type: WorkerType,
 	sbn: codec::Compact<SidechainBlockNumber>,
 }
 
@@ -53,10 +59,15 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!(
-			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {:?}",
+			"execute indirect call: RemoveScheduledEnclave, worker_type: {:?}, sidechain_block_number: {:?}",
+			self.worker_type,
 			self.sbn
 		);
-		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn.into())?;
+		if self.worker_type == WorkerType::BitAcross {
+			GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn.into())?;
+		} else {
+			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
+		}
 		Ok(())
 	}
 }

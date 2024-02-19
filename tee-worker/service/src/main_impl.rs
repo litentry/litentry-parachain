@@ -1,6 +1,3 @@
-#[cfg(feature = "teeracle")]
-use crate::teeracle::{schedule_periodic_reregistration_thread, start_periodic_market_update};
-
 #[cfg(not(feature = "dcap"))]
 use crate::utils::check_files;
 use crate::{
@@ -36,10 +33,9 @@ use itp_enclave_api::{
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
-	teeracle_api::TeeracleApi,
 };
 use itp_node_api::{
-	api_client::{AccountApi, PalletTeerexApi, ParentchainApi},
+	api_client::{AccountApi, PalletTeebagApi, ParentchainApi},
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
@@ -51,6 +47,7 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
 use litentry_macros::if_production_or;
+use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
@@ -61,10 +58,9 @@ use substrate_api_client::{
 	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
 	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
-use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 
 #[cfg(feature = "dcap")]
-use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
+use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 
 use itc_parentchain::primitives::ParentchainId;
 use itp_enclave_api::Enclave;
@@ -336,13 +332,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase
-		+ DirectRequest
-		+ Sidechain
-		+ RemoteAttestation
-		+ TlsRemoteAttestation
-		+ TeeracleApi
-		+ Clone,
+	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
@@ -350,13 +340,11 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let run_config = config.run_config().clone().expect("Run config missing");
 	let skip_ra = run_config.skip_ra();
 
-	#[cfg(feature = "teeracle")]
-	let flavor_str = "teeracle";
 	#[cfg(feature = "sidechain")]
 	let flavor_str = "sidechain";
 	#[cfg(feature = "offchain-worker")]
 	let flavor_str = "offchain-worker";
-	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain", feature = "teeracle")))]
+	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain")))]
 	let flavor_str = "offchain-worker";
 
 	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
@@ -521,108 +509,56 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(feature = "dcap")]
 	let register_xt = move || enclave2.generate_dcap_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
 
-	let mut register_enclave_xt_header: Option<Header> = None;
-	let mut we_are_primary_validateer: bool = false;
-
 	let send_register_xt = move || {
 		println!("[+] Send register enclave extrinsic");
 		send_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
 	};
 
-	// litentry: check if the enclave is already registered
-	// TODO: revisit the registration process (P-10)
-	match litentry_rpc_api.get_keys(storage_key("Teerex", "EnclaveRegistry"), None) {
-		Ok(Some(keys)) => {
-			let trusted_url = trusted_url.as_bytes().to_vec();
-			let mrenclave = mrenclave.0.to_vec();
-			let mut found = false;
-			for key in keys {
-				let key = if key.starts_with("0x") {
-					let bytes = &key.as_bytes()[b"0x".len()..];
-					hex::decode(bytes).unwrap()
-				} else {
-					hex::decode(key.as_bytes()).unwrap()
-				};
-				match litentry_rpc_api.get_storage_by_key::<TeerexEnclave<AccountId32, Vec<u8>>>(
-					StorageKey(key.clone()),
-					None,
-				) {
-					Ok(Some(value)) => {
-						if value.mr_enclave.to_vec() == mrenclave && value.url == trusted_url {
-							// After calling the perform_ra function, the nonce will be incremented by 1,
-							// so enclave is already registered, we should reset the nonce_cache
-							let nonce =
-								litentry_rpc_api.get_account_next_index(&tee_accountid).unwrap();
-							enclave
-								.set_nonce(nonce, ParentchainId::Litentry)
-								.expect("Could not set nonce of enclave. Returning here...");
-							found = true;
-							info!("fond enclave: {:?}", value);
-							break
-						}
-					},
-					Ok(None) => {
-						warn!("not found from key: {:?}", key);
-					},
-					Err(_) => {},
-				}
-			}
-			if !found {
-				// Todo: Can't unwrap here because the extrinsic is for some reason not found in the block
-				// even if it was successful: https://github.com/scs/substrate-api-client/issues/624.
-				let register_enclave_block_hash = send_register_xt();
-				let api_register_enclave_xt_header =
-					litentry_rpc_api.get_header(register_enclave_block_hash).unwrap().unwrap();
+	// Litentry: send the registration extrinsic regardless of being registered or not,
+	//           the reason is the mrenclave could change in between, so we rely on the
+	//           on-chain logic to handle everything.
+	//           this is the same behavior as upstream
+	let register_enclave_block_hash =
+		send_register_xt().expect("enclave RA registration must be successful to continue");
 
-				// TODO: #1451: Fix api-client type hacks
-				// TODO(Litentry): keep an eye on it - it's a hacky way to convert `SubstrateHeader` to `Header`
-				let header =
-					Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
-						.expect("Can decode previously encoded header; qed");
+	let api_register_enclave_xt_header =
+		litentry_rpc_api.get_header(Some(register_enclave_block_hash)).unwrap().unwrap();
 
-				println!(
-					"[+] Enclave registered at block number: {:?}, hash: {:?}",
-					header.number(),
-					header.hash()
-				);
+	// TODO: #1451: Fix api-client type hacks
+	let register_enclave_xt_header =
+		Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
+			.expect("Can decode previously encoded header; qed");
 
-				register_enclave_xt_header = Some(header);
-			}
-		},
-		_ => panic!("unknown error"),
-	}
+	println!(
+		"[+] Enclave registered at block number: {:?}, hash: {:?}",
+		register_enclave_xt_header.number(),
+		register_enclave_xt_header.hash()
+	);
 
-	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
-		we_are_primary_validateer =
-			we_are_primary_worker(&litentry_rpc_api, &register_enclave_xt_header).unwrap();
-	}
+	// double-check
+	let my_enclave = litentry_rpc_api
+		.enclave(&tee_accountid, None)
+		.unwrap()
+		.expect("our enclave should be registered at this point");
+	trace!("verified that our enclave is registered: {:?}", my_enclave);
 
-	if we_are_primary_validateer {
-		println!("[+] We are the primary worker");
+	let is_primary_enclave = match litentry_rpc_api
+		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+		.unwrap()
+	{
+		Some(account) => account == tee_accountid,
+		None => false,
+	};
+
+	if is_primary_enclave {
+		println!("[+] We are the primary enclave");
 	} else {
-		println!("[+] We are NOT the primary worker");
+		println!("[+] We are NOT the primary enclave");
 	}
 
 	initialization_handler.registered_on_parentchain();
 
 	match WorkerModeProvider::worker_mode() {
-		WorkerMode::Teeracle => {
-			// ------------------------------------------------------------------------
-			// initialize teeracle interval
-			#[cfg(feature = "teeracle")]
-			schedule_periodic_reregistration_thread(
-				send_register_xt,
-				run_config.reregister_teeracle_interval(),
-			);
-
-			#[cfg(feature = "teeracle")]
-			start_periodic_market_update(
-				&litentry_rpc_api,
-				run_config.teeracle_update_interval(),
-				enclave.as_ref(),
-				&tokio_handle,
-			);
-		},
 		WorkerMode::OffChainWorker => {
 			println!("*** [+] Finished initializing light client, syncing parentchain...");
 
@@ -652,7 +588,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			let last_synced_header = sidechain_init_block_production(
 				enclave.clone(),
 				register_enclave_xt_header,
-				we_are_primary_validateer,
+				is_primary_enclave,
 				parentchain_handler.clone(),
 				sidechain_storage,
 				&last_synced_header,
@@ -664,7 +600,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
-			init_provided_shard_vault(shard, &enclave, we_are_primary_validateer);
+			init_provided_shard_vault(shard, &enclave, is_primary_enclave);
 
 			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
 		},
@@ -707,14 +643,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 fn init_provided_shard_vault<E: EnclaveBase>(
 	shard: &ShardIdentifier,
 	enclave: &Arc<E>,
-	we_are_primary_validateer: bool,
+	is_primary_enclave: bool,
 ) {
 	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
 		println!(
 			"[Litentry] shard vault account is already initialized in state: {}",
 			shard_vault.to_ss58check()
 		);
-	} else if we_are_primary_validateer {
+	} else if is_primary_enclave {
 		println!("[Litentry] initializing proxied shard vault account now");
 		enclave.init_proxied_shard_vault(shard, &ParentchainId::Litentry).unwrap();
 		println!(
@@ -752,18 +688,17 @@ fn init_target_parentchain<E>(
 	let (parentchain_handler, last_synched_header) =
 		init_parentchain(enclave, &node_api, tee_account_id, parentchain_id);
 
-	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
-		println!(
-			"*** [+] [{:?}] Finished initializing light client, syncing parentchain...",
-			parentchain_id
-		);
+	println!(
+		"*** [+] [{:?}] Finished initializing light client, syncing parentchain...",
+		parentchain_id
+	);
 
-		// Syncing all parentchain blocks, this might take a while..
-		let last_synched_header =
-			parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
+	// Syncing all parentchain blocks, this might take a while..
+	let last_synched_header =
+		parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
 
-		start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header)
-	}
+	start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header);
+
 	println!("[{:?}] initializing proxied shard vault account now", parentchain_id);
 	enclave.init_proxied_shard_vault(shard, &parentchain_id).unwrap();
 
@@ -802,7 +737,7 @@ where
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	println!("[{:?}] last synced parentchain block: {}", parentchain_id, last_synced_header.number);
 
-	let nonce = node_api.get_nonce_of(tee_account_id).unwrap();
+	let nonce = node_api.get_account_next_index(tee_account_id).unwrap();
 	info!("[{:?}] Enclave nonce = {:?}", parentchain_id, nonce);
 	enclave.set_nonce(nonce, parentchain_id).unwrap_or_else(|_| {
 		panic!("[{:?}] Could not set nonce of enclave. Returning here...", parentchain_id)
@@ -824,9 +759,8 @@ where
 }
 
 /// Start polling loop to wait until we have a worker for a shard registered on
-/// the parentchain (TEEREX WorkerForShard). This is the pre-requisite to be
+/// the parentchain (TEEBAG EnclaveIdentifier). This is the pre-requisite to be
 /// considered initialized and ready for the next worker to start (in sidechain mode only).
-/// considered initialized and ready for the next worker to start.
 fn spawn_worker_for_shard_polling<InitializationHandler>(
 	shard: &ShardIdentifier,
 	node_api: ParentchainApi,
@@ -840,7 +774,11 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
-			if let Ok(Some(_enclave)) = node_api.worker_for_shard(&shard_for_initialized, None) {
+			if let Ok(Some(_account)) = node_api.primary_enclave_identifier_for_shard(
+				WorkerType::Identity,
+				&shard_for_initialized,
+				None,
+			) {
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
 				println!("[+] Found `WorkerForShard` on parentchain state",);
@@ -1052,14 +990,4 @@ pub fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 	let tee_public = enclave_api.get_ecc_signing_pubkey().unwrap();
 	trace!("[+] Got ed25519 account of TEE = {}", tee_public.to_ss58check());
 	AccountId32::from(*tee_public.as_array_ref())
-}
-
-/// Checks if we are the first validateer to register on the parentchain.
-fn we_are_primary_worker(
-	node_api: &ParentchainApi,
-	register_enclave_xt_header: &Header,
-) -> Result<bool, Error> {
-	let enclave_count_of_previous_block =
-		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;
-	Ok(enclave_count_of_previous_block == 0)
 }

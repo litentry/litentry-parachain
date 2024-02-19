@@ -144,7 +144,8 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		sidechain_aura_tests::produce_sidechain_block_and_import_it,
 		sidechain_event_tests::ensure_events_get_reset_upon_block_proposal,
 		top_pool_tests::process_indirect_call_in_top_pool,
-		top_pool_tests::submit_shielding_call_to_top_pool,
+		// TODO: Litentry disables it for now (P-494)
+		// top_pool_tests::submit_shielding_call_to_top_pool,
 		// tls_ra unit tests
 		tls_ra::seal_handler::test::seal_shielding_key_works,
 		tls_ra::seal_handler::test::seal_shielding_key_fails_for_invalid_key,
@@ -172,22 +173,8 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		// ipfs::test_verification_ok_for_correct_content,
 		// ipfs::test_verification_fails_for_incorrect_content,
 		// test_ocall_read_write_ipfs,
-
-		// Teeracle tests
-		run_teeracle_tests,
 	)
 }
-
-#[cfg(feature = "teeracle")]
-fn run_teeracle_tests() {
-	use super::teeracle_tests::*;
-	test_verify_get_exchange_rate_from_coin_gecko_works();
-	// Disabled - requires API key, cannot run locally
-	//test_verify_get_exchange_rate_from_coin_market_cap_works();
-}
-
-#[cfg(not(feature = "teeracle"))]
-fn run_teeracle_tests() {}
 
 #[cfg(feature = "evm")]
 fn run_evm_tests() {

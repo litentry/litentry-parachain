@@ -33,10 +33,6 @@ extern "C" {
 	pub fn init_enclave_sidechain_components(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		fail_mode: *const u8,
-		fail_mode_size: u32,
-		fail_at: *const u8,
-		fail_at_size: u32,
 	) -> sgx_status_t;
 
 	pub fn init_direct_invocation_server(
@@ -70,8 +66,6 @@ extern "C" {
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
 	) -> sgx_status_t;
-
-	pub fn execute_trusted_calls(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
 	pub fn sync_parentchain(
 		eid: sgx_enclave_id_t,
@@ -206,15 +200,6 @@ extern "C" {
 
 	pub fn test_main_entrance(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
-	pub fn call_rpc_methods(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		request: *const u8,
-		request_len: u32,
-		response: *mut u8,
-		response_len: u32,
-	) -> sgx_status_t;
-
 	pub fn run_state_provisioning_server(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -251,5 +236,7 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		until: *const u32,
 	) -> sgx_status_t;
+
+	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
 }

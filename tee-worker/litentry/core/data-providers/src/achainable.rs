@@ -235,7 +235,8 @@ impl TryFrom<AchainableParams> for Params {
 				let token =
 					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
-				let p = ParamsBasicTypeWithAmountHolding::one(name, network, amount, date, token);
+				let p =
+					ParamsBasicTypeWithAmountHolding::one(name, &network[0], amount, date, token);
 				Ok(Params::ParamsBasicTypeWithAmountHolding(p))
 			},
 			AchainableParams::AmountToken(p) => {
@@ -255,7 +256,7 @@ impl TryFrom<AchainableParams> for Params {
 				let network = &p.chain;
 				let amount = ap.to_string(&p.amount)?;
 
-				let p = ParamsBasicTypeWithAmount::new(name, network, amount);
+				let p = ParamsBasicTypeWithAmount::new(name, &network[0], amount);
 				Ok(Params::ParamsBasicTypeWithAmount(p))
 			},
 			AchainableParams::Amounts(p) => {
@@ -264,14 +265,14 @@ impl TryFrom<AchainableParams> for Params {
 				let amount1 = ap.to_string(&p.amount1)?;
 				let amount2 = ap.to_string(&p.amount2)?;
 
-				let p = ParamsBasicTypeWithAmounts::new(name, network, amount1, amount2);
+				let p = ParamsBasicTypeWithAmounts::new(name, &network[0], amount1, amount2);
 				Ok(Params::ParamsBasicTypeWithAmounts(p))
 			},
 			AchainableParams::Basic(p) => {
 				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
 
-				let p = ParamsBasicType::new(name, network);
+				let p = ParamsBasicType::new(name, &network[0]);
 				Ok(Params::ParamsBasicType(p))
 			},
 			AchainableParams::BetweenPercents(p) => {
@@ -282,7 +283,7 @@ impl TryFrom<AchainableParams> for Params {
 
 				let p = ParamsBasicTypeWithBetweenPercents::new(
 					name,
-					network,
+					&network[0],
 					greater_than_or_equal_to,
 					less_than_or_equal_to,
 				);
@@ -299,7 +300,7 @@ impl TryFrom<AchainableParams> for Params {
 				let date1 = "2015-01-01".into();
 				let date2 = "2023-01-01".into();
 
-				let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
+				let p = ParamsBasicTypeWithClassOfYear::new(name, &network[0], date1, date2);
 				Ok(Params::ParamsBasicTypeWithClassOfYear(p))
 			},
 			AchainableParams::DateInterval(p) => {
@@ -308,7 +309,8 @@ impl TryFrom<AchainableParams> for Params {
 				let start_date = ap.to_string(&p.start_date)?;
 				let end_date = ap.to_string(&p.end_date)?;
 
-				let p = ParamsBasicTypeWithDateInterval::new(name, network, start_date, end_date);
+				let p =
+					ParamsBasicTypeWithDateInterval::new(name, &network[0], start_date, end_date);
 				Ok(Params::ParamsBasicTypeWithDateInterval(p))
 			},
 			AchainableParams::DatePercent(p) => {
@@ -318,7 +320,8 @@ impl TryFrom<AchainableParams> for Params {
 				let date = ap.to_string(&p.date)?;
 				let percent = ap.to_string(&p.percent)?;
 
-				let p = ParamsBasicTypeWithDatePercent::new(name, network, token, date, percent);
+				let p =
+					ParamsBasicTypeWithDatePercent::new(name, &network[0], token, date, percent);
 				Ok(Params::ParamsBasicTypeWithDatePercent(p))
 			},
 			AchainableParams::Date(p) => {
@@ -326,7 +329,7 @@ impl TryFrom<AchainableParams> for Params {
 				let network = &p.chain;
 				let date = ap.to_string(&p.date)?;
 
-				let p = ParamsBasicTypeWithDate::new(name, network, date);
+				let p = ParamsBasicTypeWithDate::new(name, &network[0], date);
 				Ok(Params::ParamsBasicTypeWithDate(p))
 			},
 			AchainableParams::Token(p) => {
@@ -334,7 +337,7 @@ impl TryFrom<AchainableParams> for Params {
 				let network = &p.chain;
 				let token = ap.to_string(&p.token)?;
 
-				let p = ParamsBasicTypeWithToken::new(name, network, token);
+				let p = ParamsBasicTypeWithToken::new(name, &network[0], token);
 				Ok(Params::ParamsBasicTypeWithToken(p))
 			},
 			AchainableParams::Mirror(p) => {
@@ -348,7 +351,7 @@ impl TryFrom<AchainableParams> for Params {
 					None
 				};
 
-				let p = ParamsBasicTypeWithMirror::new(name, network, post_quantity);
+				let p = ParamsBasicTypeWithMirror::new(name, &network[0], post_quantity);
 				Ok(Params::ParamsBasicTypeWithMirror(p))
 			},
 		}

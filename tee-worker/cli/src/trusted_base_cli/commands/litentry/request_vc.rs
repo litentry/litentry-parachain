@@ -29,8 +29,9 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, RequestAesKey,
-	SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3TokenType, REQUEST_AES_KEY_LEN,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
+	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3TokenType,
+	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -108,6 +109,8 @@ pub enum Command {
 	BRC20AmountHolder,
 	#[clap(subcommand)]
 	TokenHoldingAmount(TokenHoldingAmountCommand),
+	#[clap(subcommand)]
+	PlatformUser(PlatformUserCommand),
 }
 
 #[derive(Args, Debug)]
@@ -220,14 +223,9 @@ pub enum TokenHoldingAmountCommand {
 	Trx,
 }
 
-// I haven't found a good way to use common args for subcommands
-#[derive(Args, Debug)]
-pub struct AmountHoldingArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-	pub date: String,
-	pub token: Option<String>,
+#[derive(Subcommand, Debug)]
+pub enum PlatformUserCommand {
+	KaratDaoUser,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -236,85 +234,70 @@ pub struct AmountHoldingArg {
 // the best bet is to use a flag explicitly, be sure to use euqal form for `chain`, e.g.:
 // -- name -c=bsc,ethereum 10
 // -- name -c=bsc,ethereum 10 token
-#[derive(Args, Debug)]
-pub struct AmountTokenArg {
-	pub name: String,
-	#[clap(
-		short, long,
-		num_args = 1..,
-		required = true,
-		value_delimiter = ',',
-	)]
-	pub chain: Vec<String>,
-	pub amount: String,
-	pub token: Option<String>,
+macro_rules! AchainableCommandArgs {
+	($type_name:ident, {$( $field_name:ident : $field_type:ty , )* }) => {
+		#[derive(Args, Debug)]
+		pub struct $type_name {
+			pub name: String,
+			#[clap(
+				short, long,
+				num_args = 1..,
+				required = true,
+				value_delimiter = ',',
+			)]
+			pub chain: Vec<String>,
+			$( pub $field_name: $field_type ),*
+		}
+	};
 }
 
-#[derive(Args, Debug)]
-pub struct AmountArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-}
+AchainableCommandArgs!(AmountHoldingArg, {
+	amount: String,
+	date: String,
+	token: Option<String>,
+});
 
-#[derive(Args, Debug)]
-pub struct AmountsArg {
-	pub name: String,
-	pub chain: String,
-	pub amount1: String,
-	pub amount2: String,
-}
+AchainableCommandArgs!(AmountTokenArg, {
+	amount: String,
+	token: Option<String>,
+});
 
-#[derive(Args, Debug)]
-pub struct BasicArg {
-	pub name: String,
-	pub chain: String,
-}
+AchainableCommandArgs!(AmountArg, {
+	amount: String,
+});
 
-#[derive(Args, Debug)]
-pub struct BetweenPercentsArg {
-	pub name: String,
-	pub chain: String,
-	pub greater_than_or_equal_to: String,
-	pub less_than_or_equal_to: String,
-}
+AchainableCommandArgs!(AmountsArg, {
+	amount1: String,
+	amount2: String,
+});
 
-#[derive(Args, Debug)]
-pub struct ClassOfYearArg {
-	pub name: String,
-	pub chain: String,
-}
+AchainableCommandArgs!(BasicArg, {});
 
-#[derive(Args, Debug)]
-pub struct DateIntervalArg {
-	pub name: String,
-	pub chain: String,
-	pub start_date: String,
-	pub end_date: String,
-}
+AchainableCommandArgs!(BetweenPercentsArg, {
+	greater_than_or_equal_to: String,
+	less_than_or_equal_to: String,
+});
 
-#[derive(Args, Debug)]
-pub struct DatePercentArg {
-	pub name: String,
-	pub chain: String,
-	pub token: String,
-	pub date: String,
-	pub percent: String,
-}
+AchainableCommandArgs!(ClassOfYearArg, {});
 
-#[derive(Args, Debug)]
-pub struct DateArg {
-	pub name: String,
-	pub chain: String,
-	pub date: String,
-}
+AchainableCommandArgs!(DateIntervalArg, {
+	start_date: String,
+	end_date: String,
+});
 
-#[derive(Args, Debug)]
-pub struct TokenArg {
-	pub name: String,
-	pub chain: String,
-	pub token: String,
-}
+AchainableCommandArgs!(DatePercentArg, {
+	token: String,
+	date: String,
+	percent: String,
+});
+
+AchainableCommandArgs!(DateArg, {
+	date: String,
+});
+
+AchainableCommandArgs!(TokenArg, {
+	token: String,
+});
 
 impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
@@ -361,11 +344,7 @@ impl RequestVcCommand {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(
 					AchainableParams::AmountHolding(AchainableAmountHolding {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						date: to_para_str(&arg.date),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
@@ -381,41 +360,25 @@ impl RequestVcCommand {
 				AchainableCommand::Amount(arg) =>
 					Assertion::Achainable(AchainableParams::Amount(AchainableAmount {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 					})),
 				AchainableCommand::Amounts(arg) =>
 					Assertion::Achainable(AchainableParams::Amounts(AchainableAmounts {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount1: to_para_str(&arg.amount1),
 						amount2: to_para_str(&arg.amount2),
 					})),
 				AchainableCommand::Basic(arg) =>
 					Assertion::Achainable(AchainableParams::Basic(AchainableBasic {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 					})),
 				AchainableCommand::BetweenPercents(arg) => Assertion::Achainable(
 					AchainableParams::BetweenPercents(AchainableBetweenPercents {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						greater_than_or_equal_to: to_para_str(&arg.greater_than_or_equal_to),
 						less_than_or_equal_to: to_para_str(&arg.less_than_or_equal_to),
 					}),
@@ -423,31 +386,19 @@ impl RequestVcCommand {
 				AchainableCommand::ClassOfYear(arg) =>
 					Assertion::Achainable(AchainableParams::ClassOfYear(AchainableClassOfYear {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 					})),
 				AchainableCommand::DateInterval(arg) =>
 					Assertion::Achainable(AchainableParams::DateInterval(AchainableDateInterval {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						start_date: to_para_str(&arg.start_date),
 						end_date: to_para_str(&arg.end_date),
 					})),
 				AchainableCommand::DatePercent(arg) =>
 					Assertion::Achainable(AchainableParams::DatePercent(AchainableDatePercent {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						date: to_para_str(&arg.date),
 						percent: to_para_str(&arg.percent),
 						token: to_para_str(&arg.token),
@@ -455,21 +406,13 @@ impl RequestVcCommand {
 				AchainableCommand::Date(arg) =>
 					Assertion::Achainable(AchainableParams::Date(AchainableDate {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						date: to_para_str(&arg.date),
 					})),
 				AchainableCommand::Token(arg) =>
 					Assertion::Achainable(AchainableParams::Token(AchainableToken {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						token: to_para_str(&arg.token),
 					})),
 			},
@@ -543,6 +486,10 @@ impl RequestVcCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+			},
+			Command::PlatformUser(arg) => match arg {
+				PlatformUserCommand::KaratDaoUser =>
+					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
 			},
 		};
 

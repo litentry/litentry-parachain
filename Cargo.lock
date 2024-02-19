@@ -961,9 +961,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.33"
+version = "0.4.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f13690e35a5e4ace198e7beea2895d29f3a9cc55015fcebe6336bd2010af9eb"
+checksum = "5bc015644b92d5890fab7489e49d21f879d5c990186827d42ec511919404f38b"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -1114,13 +1114,6 @@ dependencies = [
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "unicode-width",
-]
-
-[[package]]
-name = "common-primitives"
-version = "0.1.0"
-dependencies = [
- "sp-std",
 ]
 
 [[package]]
@@ -5590,7 +5583,6 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-sidechain",
- "pallet-teeracle",
  "pallet-teerex",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -6945,8 +6937,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-group",
- "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -6954,8 +6944,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
- "test-utils",
 ]
 
 [[package]]
@@ -7461,7 +7449,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "pallet-group",
- "pallet-teerex",
+ "pallet-teebag",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7469,7 +7457,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
  "test-utils",
 ]
 
@@ -7686,7 +7673,7 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed)",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -7999,32 +7986,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-teeracle"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal 0.4.1",
- "log",
- "pallet-balances",
- "pallet-teerex",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-externalities",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-std",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
- "teeracle-primitives",
- "teerex-primitives",
- "test-utils",
-]
-
-[[package]]
 name = "pallet-teerex"
 version = "0.9.0"
 dependencies = [
@@ -8174,7 +8135,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "pallet-group",
- "pallet-teerex",
+ "pallet-teebag",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8182,7 +8143,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "teerex-primitives",
  "test-utils",
 ]
 
@@ -10607,7 +10567,6 @@ dependencies = [
  "pallet-sidechain",
  "pallet-sudo",
  "pallet-teebag",
- "pallet-teeracle",
  "pallet-teerex",
  "pallet-timestamp",
  "pallet-tips",
@@ -13638,17 +13597,6 @@ dependencies = [
 [[package]]
 name = "substrate-fixed"
 version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9#a4fb461aae6205ffc55bed51254a40c52be04e5d"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "typenum 1.16.0 (git+https://github.com/encointer/typenum?tag=v1.16.0)",
-]
-
-[[package]]
-name = "substrate-fixed"
-version = "0.5.9"
 source = "git+https://github.com/encointer/substrate-fixed#df67f97a6db9b40215f105613b381ca82f1e2ff4"
 dependencies = [
  "parity-scale-codec",
@@ -13817,14 +13765,6 @@ name = "target-lexicon"
 version = "0.12.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d2faeef5759ab89935255b1a4cd98e0baf99d1085e37d36599c625dac49ae8e"
-
-[[package]]
-name = "teeracle-primitives"
-version = "0.1.0"
-dependencies = [
- "common-primitives",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
-]
 
 [[package]]
 name = "teerex-primitives"
@@ -14488,15 +14428,6 @@ checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 name = "typenum"
 version = "1.16.0"
 source = "git+https://github.com/encointer/typenum?tag=polkadot-v1.0.0#4cba9a73f7e94ba38c824616efab93f177c9a556"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
-]
-
-[[package]]
-name = "typenum"
-version = "1.16.0"
-source = "git+https://github.com/encointer/typenum?tag=v1.16.0#4c8dddaa8bdd13130149e43b4085ad14e960617f"
 dependencies = [
  "parity-scale-codec",
  "scale-info",

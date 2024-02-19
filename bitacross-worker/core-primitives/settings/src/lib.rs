@@ -19,21 +19,12 @@
 
 #![no_std]
 
-#[cfg(any(all(feature = "sidechain", feature = "offchain-worker"),))]
-compile_error!("feature \"sidechain\" or \"offchain-worker\" cannot be enabled at the same time");
-
-pub mod worker_mode;
-
 pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";
 	pub static ENCLAVE_FILE: &str = "enclave.signed.so";
 	pub static SHIELDING_KEY_FILE: &str = "enclave-shielding-pubkey.json";
 	pub static SIGNING_KEY_FILE: &str = "enclave-signing-pubkey.bin";
-	/// sidechain database path
-	pub static SIDECHAIN_STORAGE_PATH: &str = "sidechain_db";
-	pub static SIDECHAIN_PURGE_INTERVAL: u64 = 7200; // purge sidechain every .. s
-	pub static SIDECHAIN_PURGE_LIMIT: u64 = 100; // keep the last.. sidechainblocks when purging
 
 	// used by enclave
 	/// Path to the light-client db for the Integritee parentchain.
@@ -47,6 +38,9 @@ pub mod files {
 
 	// litentry
 	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
+
+	// bitacross
+	pub const RELAYER_REGISTRY_FILE: &str = "relayer_registry_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
@@ -98,6 +92,3 @@ pub mod sidechain {
 
 	pub static SLOT_DURATION: Duration = Duration::from_millis(6000);
 }
-
-/// Settings concerning the enclave
-pub mod enclave {}

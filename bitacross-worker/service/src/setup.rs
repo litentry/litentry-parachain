@@ -19,8 +19,7 @@
 use crate::error::{Error, ServiceResult};
 use itp_settings::files::{
 	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH,
-	SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
-	TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use std::{fs, path::Path};
 
@@ -37,7 +36,7 @@ mod needs_enclave {
 	use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 	use itp_settings::files::{
 		LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SHARDS_PATH, SHIELDING_KEY_FILE,
-		SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+		SIGNING_KEY_FILE, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 		TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 	};
 	use itp_types::ShardIdentifier;
@@ -139,7 +138,6 @@ pub(crate) fn purge_files_from_dir(dir: &Path) -> ServiceResult<()> {
 /// Purge all worker files in a given path.
 fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_dir_if_it_exists(root_directory, SHARDS_PATH)?;
-	remove_dir_if_it_exists(root_directory, SIDECHAIN_STORAGE_PATH)?;
 
 	remove_dir_if_it_exists(root_directory, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 	remove_dir_if_it_exists(root_directory, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
@@ -182,12 +180,6 @@ mod tests {
 		fs::File::create(&shards_path.join("state_1.bin")).unwrap();
 		fs::File::create(&shards_path.join("state_2.bin")).unwrap();
 
-		let sidechain_db_path = root_directory.join(SIDECHAIN_STORAGE_PATH);
-		fs::create_dir_all(&sidechain_db_path).unwrap();
-		fs::File::create(&sidechain_db_path.join("sidechain_db_1.bin")).unwrap();
-		fs::File::create(&sidechain_db_path.join("sidechain_db_2.bin")).unwrap();
-		fs::File::create(&sidechain_db_path.join("sidechain_db_3.bin")).unwrap();
-
 		fs::create_dir_all(&root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
 			.unwrap();
 		fs::create_dir_all(&root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
@@ -198,7 +190,6 @@ mod tests {
 		purge_files(&root_directory).unwrap();
 
 		assert!(!shards_path.exists());
-		assert!(!sidechain_db_path.exists());
 		assert!(!root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());

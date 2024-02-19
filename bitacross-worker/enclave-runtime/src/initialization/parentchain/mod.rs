@@ -42,7 +42,6 @@ use itc_parentchain::{
 	primitives::{ParentchainId, ParentchainInitParams},
 };
 use itp_component_container::ComponentInitializer;
-use itp_settings::worker_mode::ProvideWorkerMode;
 use std::{path::PathBuf, vec::Vec};
 
 mod common;
@@ -53,15 +52,14 @@ pub mod target_a_solochain;
 pub mod target_b_parachain;
 pub mod target_b_solochain;
 
-pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>(
+pub(crate) fn init_parentchain_components(
 	base_path: PathBuf,
 	encoded_params: Vec<u8>,
 ) -> Result<Vec<u8>> {
 	match ParentchainInitParams::decode(&mut encoded_params.as_slice())? {
 		ParentchainInitParams::Parachain { id, params } => match id {
 			ParentchainId::Litentry => {
-				let handler =
-					IntegriteeParachainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = IntegriteeParachainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;
@@ -69,8 +67,7 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 				Ok(header.encode())
 			},
 			ParentchainId::TargetA => {
-				let handler =
-					TargetAParachainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = TargetAParachainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;
@@ -78,8 +75,7 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 				Ok(header.encode())
 			},
 			ParentchainId::TargetB => {
-				let handler =
-					TargetBParachainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = TargetBParachainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;
@@ -89,8 +85,7 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 		},
 		ParentchainInitParams::Solochain { id, params } => match id {
 			ParentchainId::Litentry => {
-				let handler =
-					IntegriteeSolochainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = IntegriteeSolochainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;
@@ -98,8 +93,7 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 				Ok(header.encode())
 			},
 			ParentchainId::TargetA => {
-				let handler =
-					TargetASolochainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = TargetASolochainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;
@@ -107,8 +101,7 @@ pub(crate) fn init_parentchain_components<WorkerModeProvider: ProvideWorkerMode>
 				Ok(header.encode())
 			},
 			ParentchainId::TargetB => {
-				let handler =
-					TargetBSolochainHandler::init::<WorkerModeProvider>(base_path, params)?;
+				let handler = TargetBSolochainHandler::init(base_path, params)?;
 				let header = handler
 					.validator_accessor
 					.execute_on_validator(|v| v.latest_finalized_header())?;

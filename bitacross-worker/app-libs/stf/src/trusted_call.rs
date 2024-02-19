@@ -34,10 +34,7 @@ use frame_support::{ensure, traits::UnfilteredDispatchable};
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 pub use ita_sgx_runtime::{Balance, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{
-	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-};
+use itp_node_api_metadata::{pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes};
 use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
 pub use itp_stf_primitives::{
 	error::{StfError, StfResult},
@@ -51,9 +48,8 @@ use itp_types::{
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
-	RequestAesKeyNonce, VCMPError, ValidationData, Web3Network,
+	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
+	RequestAesKey, RequestAesKeyNonce, ValidationData,
 };
 use log::*;
 use sp_core::{
@@ -160,7 +156,8 @@ impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(payload.as_slice()) }
+		// use blake2_256 hash to shorten the payload - see `verify_signature` below
+		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(&blake2_256(&payload)) }
 	}
 }
 
@@ -213,7 +210,8 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
+			|| self.signature.verify(&payload, self.call.sender_identity())
 	}
 }
 
@@ -266,7 +264,6 @@ where
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
-		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
@@ -413,16 +410,7 @@ where
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
-				// Send proof of execution on chain.
-				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.publish_hash_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					call_hash,
-					Vec::<itp_types::H256>::new(),
-					b"shielded some funds!".to_vec(),
-				))));
+				// Litentry: we don't have publish_hash call in teebag
 				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]
@@ -607,53 +595,6 @@ where
 	AccountId: PartialEq,
 {
 	pallet_sudo::Pallet::<Runtime>::key().map_or(false, |k| account == &k)
-}
-
-pub fn push_call_imp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	identity: Option<Identity>,
-	e: IMPError,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing IMP::some_error call ...");
-	// TODO: anyway to simplify this? `and_then` won't be applicable here
-	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			identity,
-			e,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
-	}
-}
-
-pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	identity: Option<Identity>,
-	e: VCMPError,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing VCMP::some_error call ...");
-	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			identity,
-			e,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-	}
 }
 
 #[cfg(test)]

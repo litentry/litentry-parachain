@@ -24,9 +24,9 @@
 #![cfg_attr(not(target_env = "sgx"), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 #![allow(clippy::missing_safety_doc)]
+#![allow(clippy::unreachable)]
 #![warn(
 	clippy::unwrap_used,
-	clippy::unreachable,
 	/* comment out for the moment. There are some upstream code `unimplemented` */
 	// clippy::unimplemented,
 	// clippy::panic_in_result_fn,
@@ -46,18 +46,16 @@ use crate::{
 	initialization::global_components::{
 		GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE,
 		GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT,
-		GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT,
-		GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT, GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE,
-		GLOBAL_TARGET_B_SOLOCHAIN_HANDLER_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT,
+		GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_B_SOLOCHAIN_HANDLER_COMPONENT,
 	},
-	rpc::worker_api_direct::sidechain_io_handler,
 	utils::{
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
 		get_node_metadata_repository_from_target_a_solo_or_parachain,
 		get_node_metadata_repository_from_target_b_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
+		get_validator_accessor_from_integritee_solo_or_parachain, DecodeRaw,
 	},
 };
 use codec::Decode;
@@ -68,10 +66,8 @@ use itc_parentchain::{
 	primitives::ParentchainId,
 };
 use itp_component_container::ComponentGetter;
-use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
@@ -102,7 +98,6 @@ mod sync;
 #[cfg(feature = "test")]
 pub mod test;
 mod tls_ra;
-pub mod top_pool_execution;
 
 pub type Hash = sp_core::H256;
 pub type AuthorityPair = sp_core::ed25519::Pair;
@@ -321,50 +316,14 @@ pub unsafe extern "C" fn set_node_metadata(
 	sgx_status_t::SGX_SUCCESS
 }
 
-/// This is reduced to the sidechain block import RPC interface (i.e. worker-worker communication).
-/// The entire rest of the RPC server is run inside the enclave and does not use this e-call function anymore.
 #[no_mangle]
-pub unsafe extern "C" fn call_rpc_methods(
-	request: *const u8,
-	request_len: u32,
-	response: *mut u8,
-	response_len: u32,
-) -> sgx_status_t {
-	let request = match utf8_str_from_raw(request, request_len as usize) {
-		Ok(req) => req,
-		Err(e) => {
-			error!("[SidechainRpc] FFI: Invalid utf8 request: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
-		},
-	};
-
-	let res = match sidechain_rpc_int(request) {
-		Ok(res) => res,
-		Err(e) => {
-			error!("RPC request failed: {:?}", e);
-			return e.into()
-		},
-	};
-
-	let response_slice = slice::from_raw_parts_mut(response, response_len as usize);
-	if let Err(e) = write_slice_and_whitespace_pad(response_slice, res.into_bytes()) {
-		return Error::BufferError(e).into()
-	};
+pub unsafe extern "C" fn publish_wallets() -> sgx_status_t {
+	if let Err(e) = initialization::publish_wallets() {
+		error!("Failed to publish generated wallets: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
 
 	sgx_status_t::SGX_SUCCESS
-}
-
-fn sidechain_rpc_int(request: &str) -> Result<String> {
-	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-
-	let io = sidechain_io_handler(move |signed_block| {
-		sidechain_block_import_queue.push_single(signed_block)
-	});
-
-	// note: errors are still returned as Option<String>
-	Ok(io
-		.handle_request_sync(request)
-		.unwrap_or_else(|| format!("Empty rpc response for request: {}", request)))
 }
 
 /// Initialize sidechain enclave components.
@@ -373,27 +332,8 @@ fn sidechain_rpc_int(request: &str) -> Result<String> {
 /// (parentchain components) have been initialized (because we need the parentchain
 /// block import dispatcher).
 #[no_mangle]
-pub unsafe extern "C" fn init_enclave_sidechain_components(
-	fail_mode: *const u8,
-	fail_mode_size: u32,
-	fail_at: *const u8,
-	fail_at_size: u32,
-) -> sgx_status_t {
-	let fail_mode = match Option::<String>::decode_raw(fail_mode, fail_mode_size as usize) {
-		Ok(s) => s,
-		Err(e) => {
-			error!("failed to decode fail mode {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
-		},
-	};
-	let fail_at = match u64::decode_raw(fail_at, fail_at_size as usize) {
-		Ok(v) => v,
-		Err(e) => {
-			error!("failed to decode fail at {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
-		},
-	};
-	if let Err(e) = initialization::init_enclave_sidechain_components(fail_mode, fail_at) {
+pub unsafe extern "C" fn init_enclave_sidechain_components() -> sgx_status_t {
+	if let Err(e) = initialization::init_enclave_sidechain_components() {
 		error!("Failed to initialize sidechain components: {:?}", e);
 		return sgx_status_t::SGX_ERROR_UNEXPECTED
 	}
@@ -451,8 +391,7 @@ pub unsafe extern "C" fn init_parentchain_components(
 fn init_parentchain_params_internal(params: Vec<u8>, latest_header: &mut [u8]) -> Result<()> {
 	use initialization::parentchain::init_parentchain_components;
 
-	let encoded_latest_header =
-		init_parentchain_components::<WorkerModeProvider>(get_base_path()?, params)?;
+	let encoded_latest_header = init_parentchain_components(get_base_path()?, params)?;
 
 	write_slice_and_whitespace_pad(latest_header, encoded_latest_header)?;
 
@@ -547,7 +486,7 @@ unsafe fn sync_parentchain_internal(
 
 	let events_to_sync = Vec::<Vec<u8>>::decode_raw(events_to_sync, events_to_sync_size)?;
 
-	dispatch_parentchain_blocks_for_import::<WorkerModeProvider>(
+	dispatch_parentchain_blocks_for_import(
 		blocks_to_sync,
 		events_to_sync,
 		&parentchain_id,
@@ -580,7 +519,7 @@ pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
 /// * The sidechain uses a triggered dispatcher, where the import of a parentchain block is
 ///   synchronized and triggered by the sidechain block production cycle.
 ///
-fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>(
+fn dispatch_parentchain_blocks_for_import(
 	blocks_to_sync: Vec<SignedBlock>,
 	events_to_sync: Vec<Vec<u8>>,
 	id: &ParentchainId,

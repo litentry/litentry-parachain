@@ -6,8 +6,7 @@ edition = "2021"
 
 [dependencies]
 
-
 [features]
-production = []
-sidechain = []
+production = [
+]
 offchain-worker = []

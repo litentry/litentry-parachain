@@ -184,7 +184,7 @@ jobs:
       - name: bitacross-worker enclave-runtime fmt check
         working-directory: ./bitacross-worker/enclave-runtime
         run: |
-          cargo fmt --all -- --check          
+          cargo fmt --all -- --check
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
@@ -311,7 +311,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-#    todo: we might want to change this image in the future
+    #    todo: we might want to change this image in the future
     container: "litentry/litentry-tee-dev:latest"
     steps:
       - uses: actions/checkout@v4
@@ -326,9 +326,6 @@ jobs:
         run: |
           echo "::group::cargo clippy all"
           cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
@@ -351,9 +348,6 @@ jobs:
         run: |
           echo "::group::cargo clippy all"
           cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
@@ -692,20 +686,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - test_name: demo-shielding-unshielding-multiworker
-          - test_name: demo-direct-call
           # Litentry
-          - test_name: lit-set-heartbeat-timeout
           - test_name: lit-ii-vc-test
           - test_name: lit-ii-identity-test
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
           - test_name: lit-di-vc-test
+          - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
-          - test_name: lit-test-stress-script
-          - test_name: lit-data-providers-test
     steps:
       - uses: actions/checkout@v4
 
@@ -785,6 +775,7 @@ jobs:
           - test_name: lit-di-evm-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
+          - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-ii-batch-test-multiworker
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test

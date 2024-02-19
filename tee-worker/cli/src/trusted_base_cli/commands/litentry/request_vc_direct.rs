@@ -30,8 +30,8 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
-	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
-	Web3TokenType, REQUEST_AES_KEY_LEN,
+	OneBlockCourseType, PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
+	Web3Network, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -110,11 +110,7 @@ impl RequestVcDirectCommand {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(
 					AchainableParams::AmountHolding(AchainableAmountHolding {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						date: to_para_str(&arg.date),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
@@ -130,41 +126,25 @@ impl RequestVcDirectCommand {
 				AchainableCommand::Amount(arg) =>
 					Assertion::Achainable(AchainableParams::Amount(AchainableAmount {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 					})),
 				AchainableCommand::Amounts(arg) =>
 					Assertion::Achainable(AchainableParams::Amounts(AchainableAmounts {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount1: to_para_str(&arg.amount1),
 						amount2: to_para_str(&arg.amount2),
 					})),
 				AchainableCommand::Basic(arg) =>
 					Assertion::Achainable(AchainableParams::Basic(AchainableBasic {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 					})),
 				AchainableCommand::BetweenPercents(arg) => Assertion::Achainable(
 					AchainableParams::BetweenPercents(AchainableBetweenPercents {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						greater_than_or_equal_to: to_para_str(&arg.greater_than_or_equal_to),
 						less_than_or_equal_to: to_para_str(&arg.less_than_or_equal_to),
 					}),
@@ -172,31 +152,19 @@ impl RequestVcDirectCommand {
 				AchainableCommand::ClassOfYear(arg) =>
 					Assertion::Achainable(AchainableParams::ClassOfYear(AchainableClassOfYear {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 					})),
 				AchainableCommand::DateInterval(arg) =>
 					Assertion::Achainable(AchainableParams::DateInterval(AchainableDateInterval {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						start_date: to_para_str(&arg.start_date),
 						end_date: to_para_str(&arg.end_date),
 					})),
 				AchainableCommand::DatePercent(arg) =>
 					Assertion::Achainable(AchainableParams::DatePercent(AchainableDatePercent {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						date: to_para_str(&arg.date),
 						percent: to_para_str(&arg.percent),
 						token: to_para_str(&arg.token),
@@ -204,21 +172,13 @@ impl RequestVcDirectCommand {
 				AchainableCommand::Date(arg) =>
 					Assertion::Achainable(AchainableParams::Date(AchainableDate {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						date: to_para_str(&arg.date),
 					})),
 				AchainableCommand::Token(arg) =>
 					Assertion::Achainable(AchainableParams::Token(AchainableToken {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						token: to_para_str(&arg.token),
 					})),
 			},
@@ -292,6 +252,10 @@ impl RequestVcDirectCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+			},
+			Command::PlatformUser(arg) => match arg {
+				PlatformUserCommand::KaratDaoUser =>
+					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
 			},
 		};
 
