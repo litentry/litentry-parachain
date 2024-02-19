@@ -193,7 +193,7 @@ They take single argument representing raw payload bytes to sign.
 
 Mrencalve, worker's url and public shielding key can be obtained during the runtime from parachain's teebag pallet registry. 
 
-The following gif ilustrated how it can be done manually:
+The following gif ilustrates how it can be done manually:
 
 ![demo](./assets/teebag_registry.gif)
 
