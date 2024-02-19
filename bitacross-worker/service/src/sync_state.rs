@@ -27,7 +27,6 @@ use itp_enclave_api::{
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 };
 use itp_node_api::api_client::PalletTeebagApi;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use itp_types::{ShardIdentifier, WorkerType};
 use sgx_types::sgx_quote_sign_type_t;
 use std::string::String;
@@ -35,7 +34,6 @@ use std::string::String;
 pub(crate) fn sync_state<
 	E: TlsRemoteAttestation + EnclaveBase + RemoteAttestation,
 	NodeApi: PalletTeebagApi,
-	WorkerModeProvider: ProvideWorkerMode,
 >(
 	node_api: &NodeApi,
 	shard: &ShardIdentifier,
@@ -43,13 +41,9 @@ pub(crate) fn sync_state<
 	skip_ra: bool,
 ) {
 	// FIXME: we now assume that keys are equal for all shards.
-	let provider_url = match WorkerModeProvider::worker_mode() {
-		WorkerMode::Sidechain =>
-			executor::block_on(get_author_url_of_last_finalized_sidechain_block(node_api, shard))
-				.expect("Author of last finalized sidechain block could not be found"),
-		_ => executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
-			.expect("Author of last finalized sidechain block could not be found"),
-	};
+	let provider_url =
+		executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
+			.expect("Author of last finalized sidechain block could not be found");
 
 	println!("Requesting state provisioning from worker at {}", &provider_url);
 
@@ -62,24 +56,6 @@ pub(crate) fn sync_state<
 	)
 	.unwrap();
 	println!("[+] State provisioning successfully performed.");
-}
-
-/// Returns the url of the last sidechain block author that has been stored
-/// in the parentchain state as "worker for shard".
-///
-/// Note: The sidechainblock author will only change whenever a new parentchain block is
-/// produced. And even then, it might be the same as the last block. So if several workers
-/// are started in a timely manner, they will all get the same url.
-async fn get_author_url_of_last_finalized_sidechain_block<NodeApi: PalletTeebagApi>(
-	node_api: &NodeApi,
-	shard: &ShardIdentifier,
-) -> Result<String> {
-	let enclave = node_api
-		.primary_enclave_for_shard(WorkerType::BitAcross, shard, None)?
-		.ok_or_else(|| Error::NoWorkerForShardFound(*shard))?;
-	let worker_api_direct =
-		DirectWorkerApi::new(String::from_utf8_lossy(enclave.url.as_slice()).to_string());
-	Ok(worker_api_direct.get_mu_ra_url()?)
 }
 
 /// Returns the url of the first Enclave that matches our own MRENCLAVE.

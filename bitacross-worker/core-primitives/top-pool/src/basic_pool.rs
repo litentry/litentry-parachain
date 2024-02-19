@@ -40,7 +40,6 @@ use codec::Encode;
 use core::{marker::PhantomData, pin::Pin};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_stf_primitives::{traits::PoolTransactionValidation, types::ShardIdentifier};
-use its_primitives::types::BlockHash as SidechainBlockHash;
 use jsonrpc_core::futures::{
 	channel::oneshot,
 	future::{ready, Future, FutureExt},
@@ -242,10 +241,6 @@ where
 		shard: ShardIdentifier,
 	) -> Option<Arc<Self::InPoolOperation>> {
 		self.pool.validated_pool().ready_by_hash(hash, shard)
-	}
-
-	fn on_block_imported(&self, hashes: &[TxHash], block_hash: SidechainBlockHash) {
-		self.pool.validated_pool().on_block_imported(hashes, block_hash);
 	}
 
 	fn update_connection_state(&self, updates: Vec<(TxHash, (Vec<u8>, bool))>) {

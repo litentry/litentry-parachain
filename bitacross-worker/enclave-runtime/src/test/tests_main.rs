@@ -26,22 +26,21 @@ use crate::{
 		fixtures::test_setup::{
 			enclave_call_signer, test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor,
 		},
-		mocks::types::TestStateKeyRepo,
-		sidechain_aura_tests, sidechain_event_tests, state_getter_tests, top_pool_tests,
+		state_getter_tests, top_pool_tests,
 	},
 	tls_ra,
 };
 use codec::Decode;
 use ita_sgx_runtime::Parentchain;
 use ita_stf::{
-	helpers::{account_key_hash, set_block_number},
+	helpers::set_block_number,
 	stf_sgx_tests,
 	test_genesis::{endowed_account as funded_pair, unendowed_account},
-	AccountInfo, Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
+	Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{Aes, StateCrypto};
-use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait, StateHash};
+use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
@@ -57,18 +56,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Balance, Block, Header};
-use its_primitives::{
-	traits::{
-		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
-		SignedBlock as SignedBlockTrait,
-	},
-	types::block::SignedBlock,
-};
-use its_sidechain::{
-	block_composer::{BlockComposer, ComposeBlock},
-	state::SidechainSystemExt,
-};
+use itp_types::{AccountId, Header};
 use litentry_primitives::Identity;
 use sgx_tunittest::*;
 use sgx_types::size_t;
@@ -107,12 +95,9 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_sgx_crypto::tests::schnorr_seal_init_should_create_new_key_if_not_present,
 		itp_sgx_crypto::tests::schnorr_seal_init_should_not_change_key_if_exists,
 		itp_sgx_crypto::tests::schnorr_sign_should_produce_valid_signature,
-		test_compose_block,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
 		test_differentiate_getter_and_call_works,
-		test_create_block_and_confirmation_works,
-		test_create_state_diff,
 		test_executing_call_updates_account_nonce,
 		test_call_set_update_parentchain_block,
 		test_invalid_nonce_call_is_not_executed,
@@ -148,8 +133,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		enclave_signer_tests::nonce_is_computed_correctly,
 		state_getter_tests::state_getter_works,
 		// sidechain integration tests
-		sidechain_aura_tests::produce_sidechain_block_and_import_it,
-		sidechain_event_tests::ensure_events_get_reset_upon_block_proposal,
 		top_pool_tests::process_indirect_call_in_top_pool,
 		// TODO: Litentry disables it for now (P-494)
 		// top_pool_tests::submit_shielding_call_to_top_pool,
@@ -192,36 +175,6 @@ fn run_evm_tests() {
 }
 #[cfg(not(feature = "evm"))]
 fn run_evm_tests() {}
-
-fn test_compose_block() {
-	// given
-	let (_, _, shard, _, _, state_handler, _) = test_setup();
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
-		test_account(),
-		Arc::new(TestStateKeyRepo::new(state_key())),
-	);
-
-	let signed_top_hashes: Vec<H256> = vec![[94; 32].into(), [1; 32].into()].to_vec();
-
-	let (mut state, _) = state_handler.load_cloned(&shard).unwrap();
-	state.set_block_number(&1);
-	let state_hash_before_execution = state.hash();
-
-	// when
-	let signed_block = block_composer
-		.compose_block(
-			&latest_parentchain_header(),
-			signed_top_hashes,
-			shard,
-			state_hash_before_execution,
-			&state,
-		)
-		.unwrap();
-
-	// then
-	assert!(signed_block.verify_signature());
-	assert_eq!(signed_block.block().header().block_number(), 1);
-}
 
 fn test_submit_trusted_call_to_top_pool() {
 	// given
@@ -332,122 +285,6 @@ fn test_differentiate_getter_and_call_works() {
 	assert_eq!(
 		getters[0],
 		TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter))
-	);
-}
-
-fn test_create_block_and_confirmation_works() {
-	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
-
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
-		test_account(),
-		Arc::new(TestStateKeyRepo::new(state_key())),
-	);
-
-	let sender = funded_pair();
-	let receiver = unfunded_public();
-
-	let signed_call = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
-		receiver.into(),
-		1000,
-	)
-	.sign(&sender.into(), 0, &mrenclave, &shard);
-	let trusted_operation = direct_top(signed_call);
-
-	let (top_hash, _) = submit_operation_to_top_pool(
-		top_pool_author.as_ref(),
-		&trusted_operation,
-		&shielding_key,
-		shard,
-		false,
-	)
-	.unwrap();
-
-	// when
-	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
-
-	let executed_operation_hashes = execution_result.get_executed_operation_hashes().to_vec();
-
-	let signed_block = block_composer
-		.compose_block(
-			&latest_parentchain_header(),
-			executed_operation_hashes,
-			shard,
-			execution_result.state_hash_before_execution,
-			&execution_result.state_after_execution,
-		)
-		.unwrap();
-
-	// then
-	assert!(signed_block.verify_signature());
-	assert_eq!(signed_block.block().header().block_number(), 1);
-	assert_eq!(signed_block.block().block_data().signed_top_hashes()[0], top_hash);
-}
-
-fn test_create_state_diff() {
-	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
-
-	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
-		test_account(),
-		Arc::new(TestStateKeyRepo::new(state_key())),
-	);
-
-	let sender = funded_pair();
-	let receiver = unfunded_public();
-	const TX_AMOUNT: Balance = 1_000_000_000_000;
-	let signed_call = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
-		receiver.into(),
-		TX_AMOUNT,
-	)
-	.sign(&sender.into(), 0, &mrenclave, &shard);
-	let trusted_operation = direct_top(signed_call);
-
-	submit_operation_to_top_pool(
-		top_pool_author.as_ref(),
-		&trusted_operation,
-		&shielding_key,
-		shard,
-		false,
-	)
-	.unwrap();
-
-	// when
-	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
-
-	let executed_operation_hashes = execution_result.get_executed_operation_hashes().to_vec();
-
-	let signed_block = block_composer
-		.compose_block(
-			&latest_parentchain_header(),
-			executed_operation_hashes,
-			shard,
-			execution_result.state_hash_before_execution,
-			&execution_result.state_after_execution,
-		)
-		.unwrap();
-
-	let encrypted_state_diff = encrypted_state_diff_from_encrypted(
-		signed_block.block().block_data().encrypted_state_diff(),
-	);
-	let state_diff = encrypted_state_diff.state_update();
-
-	// then
-	let sender_acc_info: AccountInfo =
-		get_from_state_diff(state_diff, &account_key_hash::<AccountId>(&sender.public().into()));
-
-	let receiver_acc_info: AccountInfo =
-		get_from_state_diff(state_diff, &account_key_hash::<AccountId>(&receiver.into()));
-
-	// state diff should consist of the following updates:
-	// (last_hash, sidechain block_number, sender_funds, receiver_funds, fee_recipient account [no clear, after polkadot_v0.9.26 update], events, frame_system::LastRuntimeUpgradeInfo,)
-	assert_eq!(state_diff.len(), 8);
-	assert_eq!(receiver_acc_info.data.free, TX_AMOUNT);
-	assert_eq!(
-		sender_acc_info.data.free,
-		ita_stf::test_genesis::ENDOWED_ACC_FUNDS - TX_AMOUNT - ita_stf::STF_TX_FEE
 	);
 }
 
@@ -750,10 +587,7 @@ fn execute_trusted_calls(
 			&latest_parentchain_header(),
 			shard,
 			Duration::from_millis(600),
-			|mut s| {
-				s.set_block_number(&s.get_block_number().map_or(1, |n| n + 1));
-				s
-			},
+			|s| s,
 		)
 		.unwrap()
 }

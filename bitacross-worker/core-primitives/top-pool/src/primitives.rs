@@ -10,7 +10,6 @@ use byteorder::{BigEndian, ByteOrder};
 use codec::{Decode, Encode};
 use core::pin::Pin;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::BlockHash as SidechainBlockHash;
 use jsonrpc_core::futures::{channel::mpsc::Receiver, Future, Stream};
 use sp_core::H256;
 use sp_runtime::{
@@ -249,9 +248,6 @@ pub trait TrustedOperationPool<TOP>: Send + Sync {
 		hash: &TxHash,
 		shard: ShardIdentifier,
 	) -> Option<Arc<Self::InPoolOperation>>;
-
-	/// Notify the listener of top inclusion in sidechain block
-	fn on_block_imported(&self, hashes: &[TxHash], block_hash: SidechainBlockHash);
 
 	/// Litentry: set the rpc response value
 	#[allow(clippy::type_complexity)]

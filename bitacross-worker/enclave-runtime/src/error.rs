@@ -34,7 +34,6 @@ pub enum Error {
 	NodeMetadataProvider(itp_node_api::metadata::provider::Error),
 	Sgx(sgx_status_t),
 	SgxQuote(sgx_quote3_error_t),
-	Consensus(its_sidechain::consensus_common::Error),
 	Stf(String),
 	StfStateHandler(itp_stf_state_handler::error::Error),
 	StfExecution(itp_stf_executor::error::Error),

@@ -60,10 +60,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{
-		ecdsa::{SigningKey, VerifyingKey},
-		PublicKey,
-	};
+	use k256::ecdsa::SigningKey;
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -134,7 +131,6 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
 	use crate::{
 		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
 	};

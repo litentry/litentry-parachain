@@ -18,9 +18,7 @@
 
 //! Type definitions for testing. Includes various mocks.
 
-use crate::test::mocks::{
-	peer_updater_mock::PeerUpdaterMock, rpc_responder_mock::RpcResponderMock,
-};
+use crate::test::mocks::rpc_responder_mock::RpcResponderMock;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, Stf, TrustedCallSigned};
 use itc_parentchain::block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -40,8 +38,6 @@ use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
-use its_primitives::types::SignedBlock as SignedSidechainBlock;
-use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
 use primitive_types::H256;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sp_core::ed25519 as spEd25519;
@@ -92,23 +88,6 @@ pub type TestTopPoolAuthor = Author<
 	TestStateHandler,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,
-	TrustedCallSigned,
-	Getter,
->;
-
-pub type TestBlockComposer =
-	BlockComposer<ParentchainBlock, SignedSidechainBlock, TestSigner, TestStateKeyRepo>;
-
-pub type TestBlockImporter = BlockImporter<
-	TestSigner,
-	ParentchainBlock,
-	SignedSidechainBlock,
-	TestOCallApi,
-	HandleStateMock,
-	TestStateKeyRepo,
-	TestTopPoolAuthor,
-	TestParentchainBlockImportTrigger,
-	PeerUpdaterMock,
 	TrustedCallSigned,
 	Getter,
 >;
