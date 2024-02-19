@@ -295,7 +295,7 @@ pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32)
 			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
 			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
-			return sgx_status_t::SGX_SUCCESS
+			sgx_status_t::SGX_SUCCESS
 		}
 	)
 }
