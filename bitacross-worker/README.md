@@ -191,7 +191,7 @@ They take single argument representing raw payload bytes to sign.
 
 ### Obtaining data from parachain's teebag pallet
 
-Mrencalve, worker's url and public shielding key can be obtained during the runtime from parachain's teebag palelt registry. 
+Mrencalve, worker's url and public shielding key can be obtained during the runtime from parachain's teebag pallet registry. 
 
 The following gif ilustrated how it can be done manually:
 
