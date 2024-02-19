@@ -30,7 +30,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::{base64, http_req, serde_json};
 
-use crate::Result as EnclaveResult;
+use crate::{Error as EnclaveError, Result as EnclaveResult};
 use http_req::{
 	request::{Method, RequestBuilder},
 	tls,
@@ -58,13 +58,15 @@ pub trait MAAHandler {
 pub struct MAAService;
 impl MAAService {
 	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<Vec<u8>> {
-		let maa_res: MAAResponse = serde_json::from_slice(&writer).unwrap();
+		let maa_res: MAAResponse = serde_json::from_slice(&writer)
+			.map_err(|e| EnclaveError::Other(format!("MAA serde json error: {:?}", e).into()))?;
 		let decompose_token: Vec<&str> = maa_res.token.split(".").collect();
 		if decompose_token.len() != 3 {
 			log::error!("JSON Web Tokens must have 3 components delimited by '.' characters.");
 		}
 
-		let policy = base64::decode(decompose_token[1]).unwrap();
+		let policy = base64::decode(decompose_token[1])
+			.map_err(|e| EnclaveError::Other(format!("MAA decode policy error: {:?}", e).into()))?;
 		Ok(policy)
 	}
 }
@@ -81,10 +83,17 @@ impl MAAHandler for MAAService {
 		let endpoint = "";
 		let token = "";
 		let url = endpoint.to_string() + "/attest/SgxEnclave?api-version=2020-10-01";
-		let addr = Uri::try_from(&url[..]).unwrap();
+		let addr = Uri::try_from(&url[..])
+			.map_err(|e| EnclaveError::Other(format!("MAA parse url error: {:?}", e).into()))?;
 
-		let sock = TcpStream::connect((addr.host().unwrap(), addr.corr_port())).unwrap();
-		let mut stream = tls::Config::default().connect(addr.host().unwrap_or(""), sock).unwrap();
+		let host = addr
+			.host()
+			.map_err(|e| EnclaveError::Other(format!("MAA got host error: {:?}", e).into()))?;
+		let sock = TcpStream::connect((host, addr.corr_port()))
+			.map_err(|e| EnclaveError::Other(format!("MAA connect error: {:?}", e).into()))?;
+		let mut stream = tls::Config::default()
+			.connect(addr.host().unwrap_or(""), sock)
+			.map_err(|e| EnclaveError::Other(format!("{:?}", e).into()))?;
 
 		let mut writer = Vec::new();
 		let response = RequestBuilder::new(&addr)
@@ -95,7 +104,7 @@ impl MAAHandler for MAAService {
 			.header("Content-Type", "application/json")
 			.header("Authorization", &format!("Bearer {}", token))
 			.send(&mut stream, &mut writer)
-			.unwrap();
+			.map_err(|e| EnclaveError::Other(format!("MAA request error: {:?}", e).into()));
 
 		Self::parse_maa_policy(&writer)
 	}
