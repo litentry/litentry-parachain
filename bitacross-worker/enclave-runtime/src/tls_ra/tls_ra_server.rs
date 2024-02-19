@@ -34,8 +34,8 @@ use codec::Decode;
 use itp_attestation_handler::RemoteAttestationType;
 use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_types::ShardIdentifier;
+use litentry_primitives::WorkerMode;
 use log::*;
 use rustls::{ServerConfig, ServerSession, StreamOwned};
 use sgx_types::*;
@@ -57,7 +57,6 @@ impl From<WorkerMode> for ProvisioningPayload {
 		match m {
 			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
-			WorkerMode::Teeracle => unreachable!("WorkerMode::Teeracle is not supported"),
 		}
 	}
 }
@@ -232,7 +231,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		light_client_seal,
 	);
 
-	if let Err(e) = run_state_provisioning_server_internal::<_, WorkerModeProvider>(
+	if let Err(e) = run_state_provisioning_server_internal::<_>(
 		socket_fd,
 		sign_type,
 		quoting_enclave_target_info,
@@ -248,10 +247,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 }
 
 /// Internal [`run_state_provisioning_server`] function to be able to use the handy `?` operator.
-pub(crate) fn run_state_provisioning_server_internal<
-	StateAndKeyUnsealer: UnsealStateAndKeys,
-	WorkerModeProvider: ProvideWorkerMode,
->(
+pub(crate) fn run_state_provisioning_server_internal<StateAndKeyUnsealer: UnsealStateAndKeys>(
 	socket_fd: c_int,
 	sign_type: sgx_quote_sign_type_t,
 	quoting_enclave_target_info: Option<&sgx_target_info_t>,
@@ -268,7 +264,7 @@ pub(crate) fn run_state_provisioning_server_internal<
 	)?;
 	let (server_session, tcp_stream) = tls_server_session_stream(socket_fd, server_config)?;
 
-	let provisioning = ProvisioningPayload::from(WorkerModeProvider::worker_mode());
+	let provisioning = ProvisioningPayload::ShieldingKeyAndLightClient;
 
 	let mut server =
 		TlsServer::new(StreamOwned::new(server_session, tcp_stream), seal_handler, provisioning);

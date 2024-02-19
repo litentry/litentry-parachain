@@ -40,7 +40,6 @@ use hex_literal::hex;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
-pub use pallet_teeracle;
 pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
@@ -151,7 +150,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9173,
+	spec_version: 9174,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -778,20 +777,6 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const SlashPercent: Percent = Percent::from_percent(20);
-}
-
-impl pallet_drop3::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PoolId = u64;
-	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-	type Currency = Balances;
-	type WeightInfo = weights::pallet_drop3::WeightInfo<Runtime>;
-	type SlashPercent = SlashPercent;
-	type MaximumNameLength = ConstU32<16>;
-}
-
 impl pallet_extrinsic_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
@@ -818,13 +803,6 @@ impl pallet_teerex::Config for Runtime {
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
-}
-
-impl pallet_teeracle::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
-	type MaxWhitelistedReleases = ConstU32<10>;
-	type MaxOracleBlobLen = ConstU32<4096>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -894,14 +872,12 @@ construct_runtime! {
 		// Litmus pallets
 		ChainBridge: pallet_bridge = 60,
 		BridgeTransfer: pallet_bridge_transfer = 61,
-		Drop3: pallet_drop3 = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		AssetManager: pallet_asset_manager = 65,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
-		Teeracle: pallet_teeracle = 92,
 	}
 }
 
@@ -984,7 +960,6 @@ mod benches {
 		[pallet_proxy, Proxy]
 		[pallet_membership, CouncilMembership]
 		[pallet_multisig, Multisig]
-		[pallet_drop3, Drop3]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
@@ -994,7 +969,6 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
-		[pallet_teeracle, Teeracle]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 	);

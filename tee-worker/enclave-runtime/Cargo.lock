@@ -568,19 +568,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.0-polkadot-v0.9.42#eaf611b79bc9d56b20c155150e99b549bf98436b"
-dependencies = [
- "derive_more",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "const-oid"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -888,7 +875,6 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "ipfs-unixfs",
- "ita-oracle",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
@@ -961,7 +947,6 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "teerex-primitives",
  "webpki",
 ]
 
@@ -1869,23 +1854,6 @@ dependencies = [
  "multihash",
  "quick-protobuf",
  "sha2 0.9.9",
-]
-
-[[package]]
-name = "ita-oracle"
-version = "0.9.0"
-dependencies = [
- "itc-rest-client",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "lazy_static",
- "log",
- "parity-scale-codec",
- "serde 1.0.193",
- "sgx_tstd",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
- "thiserror",
- "url",
 ]
 
 [[package]]
@@ -5363,22 +5331,6 @@ name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
-
-[[package]]
-name = "teerex-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.0-polkadot-v0.9.42#eaf611b79bc9d56b20c155150e99b549bf98436b"
-dependencies = [
- "common-primitives",
- "derive_more",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
 
 [[package]]
 name = "termcolor"

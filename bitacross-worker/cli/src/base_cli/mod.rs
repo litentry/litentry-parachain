@@ -18,9 +18,7 @@
 use crate::{
 	base_cli::commands::{
 		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
-		litentry::set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-		register_tcb_info::RegisterTcbInfoCommand, shield_funds::ShieldFundsCommand,
-		transfer::TransferCommand,
+		register_tcb_info::RegisterTcbInfoCommand, transfer::TransferCommand,
 	},
 	command_utils::*,
 	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
@@ -73,17 +71,11 @@ pub enum BaseCommand {
 	/// Register TCB info for FMSPC
 	RegisterTcbInfo(RegisterTcbInfoCommand),
 
-	/// Transfer funds from an parentchain account to an incognito account
-	ShieldFunds(ShieldFundsCommand),
-
 	// Litentry's commands below
 	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
 	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
-
-	/// set heartbeat timeout storage
-	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
 }
 
 impl BaseCommand {
@@ -99,10 +91,8 @@ impl BaseCommand {
 			BaseCommand::ListWorkers => list_workers(cli),
 			BaseCommand::Listen(cmd) => cmd.run(cli),
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
-			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
 	}
 }

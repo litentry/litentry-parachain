@@ -18,11 +18,11 @@ pub use sgx::*;
 
 use crate::error::{Error, Result};
 use k256::{
-	ecdsa::{signature::Signer, Signature, SigningKey},
+	ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
 	elliptic_curve::group::GroupEncoding,
 	PublicKey,
 };
-use std::{string::ToString, vec::Vec};
+use std::string::ToString;
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
@@ -34,8 +34,13 @@ pub struct Pair {
 }
 
 impl Pair {
-	pub fn public_bytes(&self) -> Vec<u8> {
-		self.public.as_affine().to_bytes().as_slice().to_vec()
+	pub fn new(private: SigningKey) -> Self {
+		let public = PublicKey::from(VerifyingKey::from(&private));
+		Self { private, public }
+	}
+
+	pub fn public_bytes(&self) -> [u8; 33] {
+		self.public.as_affine().to_bytes().as_slice().try_into().unwrap()
 	}
 
 	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
@@ -55,10 +60,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{
-		ecdsa::{SigningKey, VerifyingKey},
-		PublicKey,
-	};
+	use k256::ecdsa::SigningKey;
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -117,9 +119,7 @@ pub mod sgx {
 			let raw = unseal(self.path())?;
 			let secret = SigningKey::from_slice(&raw)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-
-			let public = PublicKey::from(VerifyingKey::from(&secret));
-			Ok(Pair { public, private: secret })
+			Ok(Pair::new(secret))
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
@@ -131,7 +131,6 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::sgx::*;
 	use crate::{
 		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
 	};

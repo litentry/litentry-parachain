@@ -33,7 +33,6 @@ static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
 static DEFAULT_PARENTCHAIN_START_BLOCK: &str = "0";
-static DEFAULT_FAIL_AT: &str = "0";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
@@ -69,10 +68,6 @@ pub struct Config {
 
 	/// the parentchain block number to start syncing with
 	pub parentchain_start_block: String,
-	/// mode to use for failing sidechain slot
-	pub fail_slot_mode: Option<String>,
-	/// slot number to fail at
-	pub fail_at: u64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -97,8 +92,6 @@ impl Config {
 		data_dir: PathBuf,
 		run_config: Option<RunConfig>,
 		parentchain_start_block: String,
-		fail_slot_mode: Option<String>,
-		fail_at: u64,
 	) -> Self {
 		Self {
 			litentry_rpc_url,
@@ -120,8 +113,6 @@ impl Config {
 			data_dir,
 			run_config,
 			parentchain_start_block,
-			fail_slot_mode,
-			fail_at,
 		}
 	}
 
@@ -253,8 +244,6 @@ impl From<&ArgMatches<'_>> for Config {
 
 		let parentchain_start_block =
 			m.value_of("parentchain-start-block").unwrap_or(DEFAULT_PARENTCHAIN_START_BLOCK);
-		let fail_slot_mode = m.value_of("fail-slot-mode").map(|v| v.to_string());
-		let fail_at = m.value_of("fail-at").unwrap_or(DEFAULT_FAIL_AT).parse().unwrap();
 		Self::new(
 			m.value_of("node-url").unwrap_or(DEFAULT_NODE_URL).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -278,8 +267,6 @@ impl From<&ArgMatches<'_>> for Config {
 			data_dir,
 			run_config,
 			parentchain_start_block.to_string(),
-			fail_slot_mode,
-			fail_at,
 		)
 	}
 }
@@ -391,8 +378,6 @@ mod test {
 		assert_eq!(config.data_dir, pwd());
 		assert!(config.run_config.is_none());
 		assert_eq!(config.parentchain_start_block, DEFAULT_PARENTCHAIN_START_BLOCK);
-		assert_matches!(config.fail_slot_mode, Option::None);
-		assert_eq!(config.fail_at, DEFAULT_FAIL_AT.parse::<u64>().unwrap())
 	}
 
 	#[test]

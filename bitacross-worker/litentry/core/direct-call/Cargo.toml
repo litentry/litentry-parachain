@@ -8,9 +8,10 @@ version = "0.1.0"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # internal dependencies
+bc-relayer-registry = { path = "../../../bitacross/core/bc-relayer-registry", default-features = false }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
@@ -18,8 +19,9 @@ parentchain-primitives = { package = "core-primitives", path = "../../../../prim
 # sgx dependencies
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true }
 
-
 [dev-dependencies]
+k256 = { version = "0.13.3", features = ["ecdsa-core", "schnorr"] }
+rand = { version = "0.7" }
 
 [features]
 default = ["std"]
@@ -28,13 +30,19 @@ production = [
 ]
 sgx = [
     "sgx_tstd",
+    "bc-relayer-registry/sgx",
     "litentry-primitives/sgx",
+    "itp-sgx-crypto/sgx",
 ]
 std = [
+    "bc-relayer-registry/std",
     "itp-stf-primitives/std",
+    "itp-sgx-crypto/std",
     "litentry-primitives/std",
     "sp-core/std",
     "sp-io/std",
-    "sp-runtime/std",
     "parentchain-primitives/std",
+]
+test = [
+    "itp-sgx-crypto/mocks",
 ]

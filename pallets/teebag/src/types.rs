@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::Ed25519Public;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
@@ -79,7 +80,6 @@ pub enum WorkerMode {
 	#[default]
 	OffChainWorker,
 	Sidechain,
-	Teeracle,
 }
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
@@ -106,7 +106,7 @@ pub struct Enclave {
 	pub last_seen_timestamp: u64, // unix epoch in milliseconds when it's last seen
 	pub url: Vec<u8>,             // utf8 encoded url
 	pub shielding_pubkey: Option<Vec<u8>>, // JSON serialised enclave shielding pub key
-	pub vc_pubkey: Option<Vec<u8>>,
+	pub vc_pubkey: Option<Ed25519Public>,
 	pub sgx_build_mode: SgxBuildMode,
 	pub attestation_type: AttestationType,
 }
@@ -136,7 +136,7 @@ impl Enclave {
 		self
 	}
 
-	pub fn with_vc_pubkey(mut self, vc_pubkey: Option<Vec<u8>>) -> Self {
+	pub fn with_vc_pubkey(mut self, vc_pubkey: Option<Ed25519Public>) -> Self {
 		self.vc_pubkey = vc_pubkey;
 		self
 	}

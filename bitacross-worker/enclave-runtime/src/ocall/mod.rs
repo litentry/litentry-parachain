@@ -20,7 +20,6 @@ mod ffi;
 mod ipfs_ocall;
 mod metrics_ocall;
 mod on_chain_ocall;
-mod sidechain_ocall;
 
 #[derive(Clone, Debug, Default)]
 pub struct OcallApi;

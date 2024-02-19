@@ -52,14 +52,6 @@ impl Bridge {
 			.get_ra_api()
 	}
 
-	pub fn get_sidechain_api() -> Arc<dyn SidechainBridge> {
-		COMPONENT_FACTORY
-			.read()
-			.as_ref()
-			.expect("Component factory has not been set. Use `initialize()`")
-			.get_sidechain_api()
-	}
-
 	pub fn get_oc_api() -> Arc<dyn WorkerOnChainBridge> {
 		debug!("Requesting WorkerOnChain OCall API instance");
 
@@ -100,9 +92,6 @@ impl Bridge {
 pub trait GetOCallBridgeComponents {
 	/// remote attestation OCall API
 	fn get_ra_api(&self) -> Arc<dyn RemoteAttestationBridge>;
-
-	/// side chain OCall API
-	fn get_sidechain_api(&self) -> Arc<dyn SidechainBridge>;
 
 	/// on chain (parentchain) OCall API
 	fn get_oc_api(&self) -> Arc<dyn WorkerOnChainBridge>;
@@ -221,23 +210,6 @@ pub trait WorkerOnChainBridge {
 #[cfg_attr(test, automock)]
 pub trait MetricsBridge {
 	fn update_metric(&self, metric_encoded: Vec<u8>) -> OCallBridgeResult<()>;
-}
-
-/// Trait for all the OCalls related to sidechain operations
-#[cfg_attr(test, automock)]
-pub trait SidechainBridge {
-	fn propose_sidechain_blocks(&self, signed_blocks_encoded: Vec<u8>) -> OCallBridgeResult<()>;
-
-	fn store_sidechain_blocks(&self, signed_blocks_encoded: Vec<u8>) -> OCallBridgeResult<()>;
-
-	fn fetch_sidechain_blocks_from_peer(
-		&self,
-		last_imported_block_hash_encoded: Vec<u8>,
-		maybe_until_block_hash_encoded: Vec<u8>,
-		shard_identifier_encoded: Vec<u8>,
-	) -> OCallBridgeResult<Vec<u8>>;
-
-	fn get_trusted_peers_urls(&self) -> OCallBridgeResult<Vec<u8>>;
 }
 
 /// type for IPFS

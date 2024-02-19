@@ -12,7 +12,6 @@ threadpool = { version = "1.8.0", optional = true }
 
 thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
 
-futures = { version = "0.3.8", optional = true }
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
 
 # sgx dependencies
@@ -23,28 +22,20 @@ threadpool_sgx = { git = "https://github.com/mesalock-linux/rust-threadpool-sgx"
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # internal dependencies 
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
+
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
-itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
-itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
-itp-node-api = { path = "../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
-itp-storage = { path = "../../../core-primitives/storage", default-features = false }
-itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
-itp-types = { path = "../../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # litentry primities 
+bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
-litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
@@ -56,18 +47,14 @@ sgx = [
     "hex-sgx",
     "sgx_tstd",
     "bc-task-sender/sgx",
+    "bc-relayer-registry/sgx",
     "lc-direct-call/sgx",
     "litentry-primitives/sgx",
     "ita-stf/sgx",
-    "itp-enclave-metrics/sgx",
-    "itp-extrinsics-factory/sgx",
-    "itp-node-api/sgx",
     "itp-sgx-crypto/sgx",
     "itp-sgx-externalities/sgx",
     "itp-stf-executor/sgx",
     "itp-stf-state-handler/sgx",
-    "itp-storage/sgx",
-    "itp-top-pool-author/sgx",
     "thiserror_sgx",
     "futures_sgx",
 ]
@@ -75,25 +62,16 @@ std = [
     "threadpool",
     "log/std",
     "bc-task-sender/std",
+    "bc-relayer-registry/std",
     "lc-direct-call/std",
     "litentry-primitives/std",
-    "ita-sgx-runtime/std",
     "ita-stf/std",
-    "itp-enclave-metrics/std",
-    "itp-extrinsics-factory/std",
-    "itp-node-api/std",
     "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-sgx-externalities/std",
     "itp-stf-executor/std",
     "itp-stf-state-handler/std",
-    "itp-storage/std",
-    "itp-top-pool-author/std",
-    "itp-types/std",
-    "itp-utils/std",
-    "futures",
     "thiserror",
 ]
 production = [
-    "litentry-macros/production",
 ]

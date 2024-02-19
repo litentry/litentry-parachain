@@ -22,7 +22,7 @@ use k256::{
 	schnorr::{signature::Signer, Signature, SigningKey},
 	PublicKey,
 };
-use std::{string::ToString, vec::Vec};
+use std::string::ToString;
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "schnorr_key_sealed.bin";
@@ -34,8 +34,14 @@ pub struct Pair {
 }
 
 impl Pair {
-	pub fn public_bytes(&self) -> Vec<u8> {
-		self.public.as_affine().to_bytes().as_slice().to_vec()
+	pub fn new(private: SigningKey) -> Self {
+		let public = PublicKey::from(private.verifying_key());
+		Self { private, public }
+	}
+
+	pub fn public_bytes(&self) -> [u8; 33] {
+		// safe to unwrap here
+		self.public.as_affine().to_bytes().as_slice().try_into().unwrap()
 	}
 
 	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
@@ -55,7 +61,7 @@ pub mod sgx {
 		std::string::ToString,
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
-	use k256::{schnorr::SigningKey, PublicKey};
+	use k256::schnorr::SigningKey;
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
@@ -116,8 +122,7 @@ pub mod sgx {
 			let raw = unseal(self.path())?;
 			let secret = SigningKey::from_bytes(&raw)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-			let public = PublicKey::from(secret.verifying_key().clone());
-			Ok(Pair { public, private: secret })
+			Ok(Pair::new(secret))
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {

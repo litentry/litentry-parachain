@@ -45,24 +45,18 @@ itp-node-api = { path = "../core-primitives/node-api" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
-itp-time-utils = { path = "../core-primitives/time-utils" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
 
 # litentry
-frame-metadata = "15.0.0"
-ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 lc-direct-call = { path = "../litentry/core/direct-call" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
-scale-value = "0.6.0"
-sp-core-hashing = "6.0.0"
 
 [features]
 default = []
 evm = ["ita-stf/evm_std", "pallet-evm"]
-sidechain = []
 offchain-worker = []
 production = []
 # dcap feature flag is not used in this crate, but for easier build purposes only it present here as well

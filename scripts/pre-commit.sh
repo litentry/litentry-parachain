@@ -8,14 +8,12 @@ function worker_clippy() {
     cargo clippy --release -- -D warnings
     cargo clippy --release --features evm -- -D warnings
     cargo clippy --release --features sidechain -- -D warnings
-    cargo clippy --release --features teeracle -- -D warnings
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
 function bitacross_clippy() {
     cargo clippy --release -- -D warnings
     cargo clippy --release --features evm -- -D warnings
-    cargo clippy --release --features sidechain -- -D warnings
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
