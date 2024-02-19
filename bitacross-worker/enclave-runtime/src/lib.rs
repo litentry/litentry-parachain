@@ -247,7 +247,7 @@ pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) 
 	if_production_or!(
 		{
 			error!("Bitcoin wallet can only be retrieved in non-prod");
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 		{
 			let bitcoin_key_repository = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
@@ -266,9 +266,9 @@ pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) 
 			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
 			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
-			return sgx_status_t::SGX_SUCCESS
+			sgx_status_t::SGX_SUCCESS
 		}
-	);
+	)
 }
 
 #[no_mangle]
@@ -276,7 +276,7 @@ pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32)
 	if_production_or!(
 		{
 			error!("Ethereum wallet can only be retrieved in non-prod");
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 		{
 			let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
