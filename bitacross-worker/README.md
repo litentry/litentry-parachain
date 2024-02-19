@@ -16,7 +16,7 @@ Wallets (private keys) are generated during the initialization (on first startup
 
 Signing requests are processed by a dedicated JSON-RPC `bitacross_submitRequest` method and results in raw signature bytes. Only requests signed by registered relayers are permitted.
 
-A lot of typescript code related to RPC integration and can be found in [tee-worker's ts-tests](https://github.com/litentry/litentry-parachain/blob/a6b78ed68396280655271f9cd30e17535d54da81/tee-worker/ts-tests/integration-tests/common/di-utils.ts).
+Typescript code related to the RPC integration and can be found in [tee-worker's ts-tests](https://github.com/litentry/litentry-parachain/blob/a6b78ed68396280655271f9cd30e17535d54da81/tee-worker/ts-tests/integration-tests/common/di-utils.ts).
 
 Rust code used in CLI module can also be used as a reference and can be found [here](https://github.com/litentry/litentry-parachain/blob/a6b78ed68396280655271f9cd30e17535d54da81/bitacross-worker/cli/src/trusted_base_cli/commands/bitacross/utils.rs).
 
