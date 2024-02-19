@@ -17,7 +17,6 @@
 */
 
 use crate::error::{Error, ServiceResult};
-use frame_support::storage::child::root;
 use itp_settings::files::{
 	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, RELAYER_REGISTRY_FILE, SCHEDULED_ENCLAVE_FILE,
 	SHARDS_PATH, SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
