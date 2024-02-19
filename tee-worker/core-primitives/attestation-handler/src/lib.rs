@@ -31,9 +31,8 @@ pub mod sgx_reexport_prelude {
 	pub use chrono_sgx as chrono;
 	pub use http_req_sgx as http_req;
 	pub use rustls_sgx as rustls;
-	// pub use serde_derive_sgx as serde_derive;
 	pub use serde_json_sgx as serde_json;
-	pub use serde_sgx as serde;
+	// pub use serde_sgx as serde;
 	pub use thiserror_sgx as thiserror;
 	pub use webpki_sgx as webpki;
 	pub use yasna_sgx as yasna;
@@ -42,7 +41,6 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod attestation_handler;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod maa;
 
 pub mod collateral;
@@ -63,5 +61,6 @@ pub enum RemoteAttestationType {
 	Dcap,
 }
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate serde_derive_sgx as serde_derive;
+// #[cfg(all(not(feature = "std"), feature = "sgx"))]
+// #[macro_use]
+// extern crate serde_derive_sgx as serde_derive;

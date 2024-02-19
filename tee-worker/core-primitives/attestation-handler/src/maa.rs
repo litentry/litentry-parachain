@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::{base64, http_req, serde_json};
+use crate::sgx_reexport_prelude::*;
 
 use crate::{Error as EnclaveError, Result as EnclaveResult};
 use http_req::{
@@ -37,14 +37,14 @@ use http_req::{
 	uri::Uri,
 };
 use log::debug;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{
 	net::TcpStream,
 	string::{String, ToString},
 	vec::Vec,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct MAAResponse {
 	pub token: String,
 }
@@ -58,9 +58,9 @@ pub trait MAAHandler {
 pub struct MAAService;
 impl MAAService {
 	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<Vec<u8>> {
-		let maa_res: MAAResponse = serde_json::from_slice(&writer)
+		let maa_res: MAAResponse = serde_json::from_slice(writer)
 			.map_err(|e| EnclaveError::Other(format!("MAA serde json error: {:?}", e).into()))?;
-		let decompose_token: Vec<&str> = maa_res.token.split(".").collect();
+		let decompose_token: Vec<&str> = maa_res.token.split('.').collect();
 		if decompose_token.len() != 3 {
 			log::error!("JSON Web Tokens must have 3 components delimited by '.' characters.");
 		}
@@ -75,10 +75,7 @@ impl MAAHandler for MAAService {
 	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>> {
 		debug!("    [Enclave] Entering azure_attest.");
 
-		let req_body = serde_json::json!({
-			"quote": base64::encode(quote.to_vec())
-		})
-		.to_string();
+		let req_body = serde_json::json!({ "quote": base64::encode(quote) }).to_string();
 
 		let endpoint = "";
 		let token = "";
@@ -88,7 +85,7 @@ impl MAAHandler for MAAService {
 
 		let host = addr
 			.host()
-			.map_err(|e| EnclaveError::Other(format!("MAA got host error: {:?}", e).into()))?;
+			.ok_or_else(|| EnclaveError::Other("MAA got host error".to_string().into()))?;
 		let sock = TcpStream::connect((host, addr.corr_port()))
 			.map_err(|e| EnclaveError::Other(format!("MAA connect error: {:?}", e).into()))?;
 		let mut stream = tls::Config::default()
@@ -104,7 +101,14 @@ impl MAAHandler for MAAService {
 			.header("Content-Type", "application/json")
 			.header("Authorization", &format!("Bearer {}", token))
 			.send(&mut stream, &mut writer)
-			.map_err(|e| EnclaveError::Other(format!("MAA request error: {:?}", e).into()));
+			.map_err(|e| EnclaveError::Other(format!("MAA request error: {:?}", e).into()))?;
+
+		let status_code = response.status_code();
+		if !status_code.is_success() {
+			return Err(EnclaveError::Other(
+				format!("MAA response error code {:?}", status_code).into(),
+			))
+		}
 
 		Self::parse_maa_policy(&writer)
 	}
