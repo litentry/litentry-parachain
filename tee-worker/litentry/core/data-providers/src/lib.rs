@@ -215,10 +215,10 @@ impl DataProviderConfig {
 		// default prod config
 		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
-			twitter_litentry_url: "http://127.0.0.1:9527”".to_string(),
+			twitter_litentry_url: "http://127.0.0.1:9527".to_string(),
 			twitter_auth_token_v2: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
-			discord_litentry_url: "http://127.0.0.1:9527”".to_string(),
+			discord_litentry_url: "http://127.0.0.1:9527".to_string(),
 			discord_auth_token: "".to_string(),
 			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
