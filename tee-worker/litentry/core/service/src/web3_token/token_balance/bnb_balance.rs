@@ -47,7 +47,7 @@ pub fn get_balance(
 					network.create_nodereal_jsonrpc_client(data_provider_config)
 				{
 					let result = if network == Web3Network::Bsc {
-						client.get_balance(address.1.as_str())
+						client.get_balance(address.1.as_str(), false)
 					} else {
 						let param = GetTokenBalance20Param {
 							contract_address: Web3TokenType::Bnb
@@ -57,7 +57,7 @@ pub fn get_balance(
 							address: address.1.clone(),
 							block_number: "latest".into(),
 						};
-						client.get_token_balance_20(&param)
+						client.get_token_balance_20(&param, false)
 					};
 
 					match result {

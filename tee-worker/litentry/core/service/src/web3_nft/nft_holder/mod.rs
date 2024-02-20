@@ -22,29 +22,18 @@ extern crate sgx_tstd as std;
 
 use core::result::Result;
 
-use lc_data_providers::{
-	karat_dao::{KaraDaoApi, KaratDaoClient},
-	DataProviderConfig,
-};
-
 use crate::*;
 
-pub fn is_user(
-	addresses: Vec<String>,
+mod common;
+
+pub fn has_nft(
+	nft_type: Web3NftType,
+	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
-	let mut is_user = false;
-	let mut client = KaratDaoClient::new(data_provider_config);
-	for address in addresses {
-		match client.user_verification(address, true) {
-			Ok(response) => {
-				is_user = response.result.is_valid;
-				if is_user {
-					break
-				}
-			},
-			Err(err) => return Err(err.into_error_detail()),
-		}
+	match nft_type {
+		Web3NftType::WeirdoGhostGang =>
+			common::has_nft_721(addresses, nft_type, data_provider_config),
+		Web3NftType::Club3Sbt => common::has_nft_1155(addresses, nft_type, data_provider_config),
 	}
-	Ok(is_user)
 }

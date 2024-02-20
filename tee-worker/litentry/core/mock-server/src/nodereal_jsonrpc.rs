@@ -17,7 +17,8 @@
 
 use itp_rpc::Id;
 use lc_data_providers::nodereal_jsonrpc::{
-	GetNFTHoldingsResult, GetNFTHoldingsResultDetail, RpcResponse,
+	GetNFTHoldingsResult, GetNFTHoldingsResultDetail, GetNFTInventoryResult,
+	GetNFTInventoryResultDetail, RpcResponse,
 };
 use warp::{http::Response, hyper::body::Bytes, Filter};
 
@@ -62,6 +63,14 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
+				"nr_getTokenBalance1155" => {
+					let body = RpcResponse {
+						jsonrpc: "2.0".into(),
+						id: Id::Number(1),
+						result: serde_json::to_value("0x1").unwrap(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
 				"nr_getTokenBalance20" => {
 					let value = match params[1].as_str() {
 						// 100_000_000_000
@@ -81,6 +90,22 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						jsonrpc: "2.0".into(),
 						id: Id::Number(1),
 						result: serde_json::to_value(value).unwrap(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+				"nr_getNFTInventory" => {
+					let result = GetNFTInventoryResult {
+						page_key: "100_342".into(),
+						details: vec![GetNFTInventoryResultDetail {
+							token_address: "0x5e74094cd416f55179dbd0e45b1a8ed030e396a1".into(),
+							token_id: "0x0000000000000000000000000000000000000000f".into(),
+							balance: "0x00000000000000000000000000000000000000001".into(),
+						}],
+					};
+					let body = RpcResponse {
+						jsonrpc: "2.0".into(),
+						id: Id::Number(1),
+						result: serde_json::to_value(result).unwrap(),
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},

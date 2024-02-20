@@ -243,7 +243,7 @@ impl CryptoSummaryClient {
 				for address in addresses {
 					let res = self
 						.bsc_client
-						.get_token_holdings(address)
+						.get_token_holdings(address, false)
 						.map_err(|e| e.into_error_detail())?;
 
 					let result: ResponseTokenResult =
@@ -272,7 +272,7 @@ impl CryptoSummaryClient {
 					// Total txs on BSC
 					let tx = self
 						.bsc_client
-						.get_transaction_count(address)
+						.get_transaction_count(address, false)
 						.map_err(|e| e.into_error_detail())?;
 					total_txs += tx;
 				}
@@ -283,7 +283,7 @@ impl CryptoSummaryClient {
 					// Query Token
 					let res_token = self
 						.eth_client
-						.get_token_holdings(address)
+						.get_token_holdings(address, false)
 						.map_err(|e| e.into_error_detail())?;
 					let result: ResponseTokenResult = serde_json::from_value(res_token.result)
 						.map_err(|_| ErrorDetail::ParseError)?;
@@ -319,7 +319,7 @@ impl CryptoSummaryClient {
 
 					let res_nft = self
 						.eth_client
-						.get_nft_holdings(&param)
+						.get_nft_holdings(&param, false)
 						.map_err(|e| e.into_error_detail())?;
 
 					let details = res_nft.details;
@@ -338,7 +338,7 @@ impl CryptoSummaryClient {
 					// Total txs on Ethereum
 					let tx = self
 						.eth_client
-						.get_transaction_count(address)
+						.get_transaction_count(address, false)
 						.map_err(|e| e.into_error_detail())?;
 					total_txs += tx;
 				}

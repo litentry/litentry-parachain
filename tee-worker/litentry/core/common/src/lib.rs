@@ -25,6 +25,7 @@ extern crate sgx_tstd as std;
 use litentry_primitives::Web3Network;
 
 pub mod platform_user;
+pub mod web3_nft;
 pub mod web3_token;
 
 pub fn web3_network_to_chain(network: &Web3Network) -> &'static str {
@@ -43,5 +44,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> &'static str {
 		Web3Network::BitcoinP2sh => "bitcoin_p2sh",
 		Web3Network::BitcoinP2wpkh => "bitcoin_p2wpkh",
 		Web3Network::BitcoinP2wsh => "bitcoin_p2wsh",
+		Web3Network::Polygon => "polygon",
+		Web3Network::Arbitrum => "arbitrum",
 	}
 }

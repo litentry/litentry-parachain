@@ -33,6 +33,7 @@ export default {
                 CyptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
+                NftHolder: "Web3NftType",
             },
         },
         AssertionSupportedNetwork: {
@@ -177,6 +178,10 @@ export default {
         // PlatformUserType
         PlatformUserType: {
             _enum: ["KaratDaoUser"],
+        },
+        // Web3NftType
+        Web3NftType: {
+            _enum: ["WeirdoGhostGang", "Club3Sbt"],
         },
     },
 };
