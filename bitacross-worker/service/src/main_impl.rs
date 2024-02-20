@@ -314,10 +314,6 @@ fn start_worker<E, T, InitializationHandler>(
 	println!("  Production Mode is enabled");
 	#[cfg(not(feature = "production"))]
 	println!("  Production Mode is disabled");
-	#[cfg(feature = "evm")]
-	println!("  EVM is enabled");
-	#[cfg(not(feature = "evm"))]
-	println!("  EVM is disabled");
 
 	info!("starting worker on shard {}", shard.encode().to_base58());
 	// ------------------------------------------------------------------------
