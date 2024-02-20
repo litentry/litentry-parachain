@@ -30,7 +30,7 @@ use litentry_primitives::{
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
 	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
-	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3TokenType,
+	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
@@ -114,6 +114,8 @@ pub enum Command {
 	TokenHoldingAmount(TokenHoldingAmountCommand),
 	#[clap(subcommand)]
 	PlatformUser(PlatformUserCommand),
+	#[clap(subcommand)]
+	NftHolder(NftHolderCommand),
 }
 
 #[derive(Args, Debug)]
@@ -229,6 +231,12 @@ pub enum TokenHoldingAmountCommand {
 #[derive(Subcommand, Debug)]
 pub enum PlatformUserCommand {
 	KaratDaoUser,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum NftHolderCommand {
+	WeirdoGhostGang,
+	Club3Sbt,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -493,6 +501,11 @@ impl RequestVcCommand {
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser =>
 					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
+			},
+			Command::NftHolder(arg) => match arg {
+				NftHolderCommand::WeirdoGhostGang =>
+					Assertion::NftHolder(Web3NftType::WeirdoGhostGang),
+				NftHolderCommand::Club3Sbt => Assertion::NftHolder(Web3NftType::Club3Sbt),
 			},
 		};
 

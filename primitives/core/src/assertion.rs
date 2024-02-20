@@ -20,7 +20,7 @@
 use crate::{
 	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
 	GenericDiscordRoleType, OneBlockCourseType, PlatformUserType, VIP3MembershipCardLevel,
-	Web3Network, Web3TokenType,
+	Web3Network, Web3NftType, Web3TokenType,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -232,6 +232,9 @@ pub enum Assertion {
 
 	#[codec(index = 25)]
 	PlatformUser(PlatformUserType),
+
+	#[codec(index = 26)]
+	NftHolder(Web3NftType),
 }
 
 impl Assertion {
@@ -281,6 +284,7 @@ impl Assertion {
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
+			Self::NftHolder(t_type) => t_type.get_supported_networks(),
 		}
 	}
 }

@@ -121,6 +121,20 @@ extern "C" {
 		pubkey_size: u32,
 	) -> sgx_status_t;
 
+	pub fn get_bitcoin_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_ethereum_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
+	) -> sgx_status_t;
+
 	pub fn get_mrenclave(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
