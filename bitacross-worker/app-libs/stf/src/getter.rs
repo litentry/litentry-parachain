@@ -26,15 +26,7 @@ use log::*;
 use sp_std::vec;
 use std::prelude::v1::*;
 
-#[cfg(feature = "evm")]
-use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-
-#[cfg(feature = "evm")]
-use crate::evm_helpers::{get_evm_account, get_evm_account_codes, get_evm_account_storages};
-
 use itp_stf_primitives::traits::PoolTransactionValidation;
-#[cfg(feature = "evm")]
-use sp_core::{H160, H256};
 use sp_runtime::transaction_validity::{
 	TransactionValidityError, UnknownTransaction, ValidTransaction,
 };
@@ -109,15 +101,6 @@ pub enum TrustedGetter {
 	free_balance(Identity),
 	#[codec(index = 1)]
 	reserved_balance(Identity),
-	#[cfg(feature = "evm")]
-	#[codec(index = 2)]
-	evm_nonce(Identity),
-	#[cfg(feature = "evm")]
-	#[codec(index = 3)]
-	evm_account_codes(Identity, H160),
-	#[cfg(feature = "evm")]
-	#[codec(index = 4)]
-	evm_account_storages(Identity, H160, H256),
 }
 
 impl TrustedGetter {
@@ -125,12 +108,6 @@ impl TrustedGetter {
 		match self {
 			TrustedGetter::free_balance(sender_identity) => sender_identity,
 			TrustedGetter::reserved_balance(sender_identity) => sender_identity,
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_nonce(sender_identity) => sender_identity,
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_codes(sender_identity, _) => sender_identity,
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -205,38 +182,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 					debug!("Account reserved balance is {}", info.data.reserved);
 					Some(info.data.reserved.encode())
-				} else {
-					None
-				},
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_nonce(who) =>
-				if let Some(account_id) = who.to_account_id() {
-					let evm_account = get_evm_account(&account_id);
-					let evm_account = HashedAddressMapping::into_account_id(evm_account);
-					let nonce = System::account_nonce(&evm_account);
-					debug!("TrustedGetter evm_nonce");
-					debug!("Account nonce is {}", nonce);
-					Some(nonce.encode())
-				} else {
-					None
-				},
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_codes(_who, evm_account) =>
-			// TODO: This probably needs some security check if who == evm_account (or assosciated)
-				if let Some(info) = get_evm_account_codes(&evm_account) {
-					debug!("TrustedGetter Evm Account Codes");
-					debug!("AccountCodes for {} is {:?}", evm_account, info);
-					Some(info) // TOOD: encoded?
-				} else {
-					None
-				},
-			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_storages(_who, evm_account, index) =>
-			// TODO: This probably needs some security check if who == evm_account (or assosciated)
-				if let Some(value) = get_evm_account_storages(&evm_account, &index) {
-					debug!("TrustedGetter Evm Account Storages");
-					debug!("AccountStorages for {} is {:?}", evm_account, value);
-					Some(value.encode())
 				} else {
 					None
 				},

@@ -33,8 +33,6 @@ mod base_cli;
 mod benchmark;
 mod command_utils;
 mod error;
-#[cfg(feature = "evm")]
-mod evm;
 mod trusted_base_cli;
 mod trusted_cli;
 mod trusted_command_utils;
@@ -46,7 +44,7 @@ use crate::commands::Commands;
 use clap::Parser;
 use itp_node_api::api_client::Metadata;
 use sp_application_crypto::KeyTypeId;
-use sp_core::{H160, H256};
+use sp_core::H256;
 use thiserror::Error;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -82,26 +80,11 @@ pub struct Cli {
 }
 
 pub enum CliResultOk {
-	PubKeysBase58 {
-		pubkeys_sr25519: Option<Vec<String>>,
-		pubkeys_ed25519: Option<Vec<String>>,
-	},
-	Balance {
-		balance: u128,
-	},
-	MrEnclaveBase58 {
-		mr_enclaves: Vec<String>,
-	},
-	Metadata {
-		metadata: Metadata,
-	},
-	H256 {
-		hash: H256,
-	},
-	/// Result of "EvmCreateCommands": execution_address
-	H160 {
-		hash: H160,
-	},
+	PubKeysBase58 { pubkeys_sr25519: Option<Vec<String>>, pubkeys_ed25519: Option<Vec<String>> },
+	Balance { balance: u128 },
+	MrEnclaveBase58 { mr_enclaves: Vec<String> },
+	Metadata { metadata: Metadata },
+	H256 { hash: H256 },
 	// TODO should ideally be removed; or at least drastically less used
 	// We WANT all commands exposed by the cli to return something useful for the caller(ie instead of printing)
 	None,
@@ -113,8 +96,6 @@ pub enum CliError {
 	Extrinsic { msg: String },
 	#[error("trusted operation error: {:?}", msg)]
 	TrustedOp { msg: String },
-	#[error("EvmReadCommands error: {:?}", msg)]
-	EvmRead { msg: String },
 	#[error("worker rpc api error: {:?}", msg)]
 	WorkerRpcApi { msg: String },
 }
