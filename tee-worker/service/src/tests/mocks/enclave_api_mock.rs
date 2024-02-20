@@ -44,6 +44,10 @@ impl EnclaveBase for EnclaveMock {
 		Ok(())
 	}
 
+	fn init_mr_enclave(&self) -> EnclaveResult<()> {
+		Ok(())
+	}
+
 	fn init_direct_invocation_server(&self, _rpc_server_addr: String) -> EnclaveResult<()> {
 		unreachable!()
 	}

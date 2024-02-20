@@ -30,10 +30,7 @@ extern "C" {
 		encoded_base_dir_size: u32,
 	) -> sgx_status_t;
 
-	pub fn init_enclave_sidechain_components(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-	) -> sgx_status_t;
+	pub fn init_mr_enclave(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
 	pub fn init_direct_invocation_server(
 		eid: sgx_enclave_id_t,

@@ -628,6 +628,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		)
 	}
 
+	enclave.init_mr_enclave().unwrap();
+
 	// ------------------------------------------------------------------------
 	// Subscribe to events and print them.
 	println!("*** [{:?}] Subscribing to events", ParentchainId::Litentry);

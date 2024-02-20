@@ -42,6 +42,8 @@ pub trait EnclaveBase: Send + Sync + 'static {
 		fail_at: u64,
 	) -> EnclaveResult<()>;
 
+	fn init_mr_enclave(&self) -> EnclaveResult<()>;
+
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
 
@@ -153,6 +155,16 @@ mod impl_ffi {
 					encoded_fail_at.len() as u32,
 				)
 			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn init_mr_enclave(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let result = unsafe { ffi::init_mr_enclave(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

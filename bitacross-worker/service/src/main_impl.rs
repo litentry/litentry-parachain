@@ -530,8 +530,10 @@ fn start_worker<E, T, InitializationHandler>(
 			is_development_mode,
 		)
 	}
-	// Publish generated custiodian wallets
+	// Publish generated custodian wallets
 	enclave.publish_wallets();
+
+	enclave.init_mr_enclave().unwrap();
 
 	// ------------------------------------------------------------------------
 	// Subscribe to events and print them.

@@ -304,11 +304,13 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	Ok(())
 }
 
-pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
+pub(crate) fn init_mr_enclave() -> EnclaveResult<()> {
 	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let mrenclave = attestation_handler.get_mrenclave()?;
+	println!("Initializing global scheduled enclave with mrenclave: {:?}", mrenclave);
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
+
 	Ok(())
 }
 

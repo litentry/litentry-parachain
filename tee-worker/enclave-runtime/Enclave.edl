@@ -48,6 +48,8 @@ enclave {
 		    [in, size=fail_at_size] uint8_t* fail_at, uint32_t fail_at_size
 		);
 
+		public sgx_status_t init_mr_enclave();
+
 		public sgx_status_t init_direct_invocation_server(
 			[in, size=server_addr_size] uint8_t* server_addr, uint32_t server_addr_size
 		);
