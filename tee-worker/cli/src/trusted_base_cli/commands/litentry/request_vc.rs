@@ -41,9 +41,9 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
-// oneblock VC:
+// OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 one-block completion
 //
 // achainable VC:
 // ./bin/litentry-cli trusted -d request-vc \
@@ -94,7 +94,7 @@ pub enum Command {
 	A20,
 	BnbDomainHolding,
 	#[clap(subcommand)]
-	Oneblock(OneblockCommand),
+	OneBlock(OneblockCommand),
 	#[clap(subcommand)]
 	Achainable(AchainableCommand),
 	#[clap(subcommand)]
@@ -340,13 +340,13 @@ impl RequestVcCommand {
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
 			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
-			Command::Oneblock(c) => match c {
+			Command::OneBlock(c) => match c {
 				OneblockCommand::Completion =>
-					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
+					Assertion::OneBlock(OneBlockCourseType::CourseCompletion),
 				OneblockCommand::Outstanding =>
-					Assertion::Oneblock(OneBlockCourseType::CourseOutstanding),
+					Assertion::OneBlock(OneBlockCourseType::CourseOutstanding),
 				OneblockCommand::Participation =>
-					Assertion::Oneblock(OneBlockCourseType::CourseParticipation),
+					Assertion::OneBlock(OneBlockCourseType::CourseParticipation),
 			},
 			Command::Achainable(c) => match c {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(

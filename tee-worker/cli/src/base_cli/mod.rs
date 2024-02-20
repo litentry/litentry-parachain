@@ -17,11 +17,8 @@
 
 use crate::{
 	base_cli::commands::{
-		balance::BalanceCommand,
-		faucet::FaucetCommand,
-		listen::ListenCommand,
-		litentry::{id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand},
-		register_tcb_info::RegisterTcbInfoCommand,
+		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
+		litentry::id_graph_hash::IDGraphHashCommand, register_tcb_info::RegisterTcbInfoCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
@@ -81,9 +78,6 @@ pub enum BaseCommand {
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
 
-	/// create idenity graph
-	LinkIdentity(LinkIdentityCommand),
-
 	/// get the IDGraph hash of the given identity
 	IDGraphHash(IDGraphHashCommand),
 }
@@ -103,7 +97,6 @@ impl BaseCommand {
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 		}
 	}

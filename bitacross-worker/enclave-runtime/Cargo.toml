@@ -13,10 +13,6 @@ crate-type = ["staticlib"]
 
 [features]
 default = []
-evm = [
-    "ita-sgx-runtime/evm",
-    "ita-stf/evm",
-]
 production = [
     "ita-stf/production",
     "itp-settings/production",
