@@ -88,7 +88,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			if p.as_str() != "/v1/run/system-labels" {
 				return Response::builder().status(400).body(RES_ERRBODY.to_string())
 			}
-
 			if body.name == "Account total transactions under {amount}" {
 				// Total transaction
 				Response::builder().body(RES_TOTALTRANSACTIONS.to_string())
@@ -116,13 +115,19 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					|| body.address == "0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA"
 				{
 					Response::builder().body(RES_BODY_TRUE.to_string())
+				} else if body.address == "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5" {
+					Response::builder().body(RES_BODY_TRUE.to_string())
 				} else {
 					Response::builder().body(RES_BODY_FALSE.to_string())
 				}
 			}
 			// HoldingAmount
 			else if body.name == "Balance over {amount}" {
-				Response::builder().body(RES_BODY_OK_HOLDING_AMOUNT.to_string())
+				if body.address == "0xff93b45308fd417df303d6515ab04d9e89a750ca" {
+					Response::builder().body(RES_BODY_OK_HOLDING_AMOUNT.to_string())
+				} else {
+					Response::builder().body(RES_BODY_FALSE.to_string())
+				}
 			} else {
 				Response::builder().body(RES_BODY_TRUE.to_string())
 			}

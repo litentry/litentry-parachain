@@ -29,7 +29,6 @@ use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
 use lc_data_providers::{build_client, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct OneBlockResponse {
@@ -38,8 +37,8 @@ pub struct OneBlockResponse {
 }
 
 impl RestPath<String> for OneBlockResponse {
-	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
-		Ok(path)
+	fn get_path(_path: String) -> core::result::Result<String, RestClientError> {
+		Ok("v1/blocks/e4068e6a326243468f35dcdc0c43f686/children".to_string())
 	}
 }
 
