@@ -48,7 +48,6 @@ pub mod test {
 		let result =
 			handle(relayer_account, Default::default(), &relayer_registry, &key_repository);
 
-		println!("result is {:?}", result);
 		//then
 		assert!(result.is_ok())
 	}
