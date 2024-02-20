@@ -18,13 +18,13 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error, HttpError,
-	ReqPath, RetryOption, RetryableRestPost,
+	build_client_with_cert, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error,
+	HttpError, ReqPath, RetryOption, RetryableRestPost,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath,
 };
@@ -111,7 +111,7 @@ pub struct RpcResponse {
 pub struct NoderealJsonrpcClient {
 	path: String,
 	retry_option: RetryOption,
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl NoderealJsonrpcClient {
@@ -127,7 +127,7 @@ impl NoderealJsonrpcClient {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(base_url.as_str(), headers);
+		let client = build_client_with_cert(base_url.as_str(), headers);
 
 		NoderealJsonrpcClient { path, retry_option, client }
 	}

@@ -28,11 +28,11 @@ use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as RestClientError,
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use lc_data_providers::{build_client, DataProviderConfig};
+use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
@@ -67,7 +67,7 @@ pub struct A14Response {
 
 // TODO: merge it to new achainable API client once the migration is done
 pub struct A14Client {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl A14Client {
@@ -79,7 +79,7 @@ impl A14Client {
 			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
 		let client =
-			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
+			build_client_with_cert("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
 		A14Client { client }
 	}
 

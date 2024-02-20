@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::{build_client, DataProviderConfig};
+use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -65,7 +65,7 @@ pub fn build(
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
-	let mut client = build_client(&data_provider_config.litentry_archive_url, headers);
+	let mut client = build_client_with_cert(&data_provider_config.litentry_archive_url, headers);
 	let query = vec![("account", who.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())

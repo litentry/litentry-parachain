@@ -17,11 +17,11 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError};
+use crate::{build_client_with_cert, vec_to_string, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
@@ -50,14 +50,14 @@ impl RestPath<String> for DiscordResponse {
 }
 
 pub struct DiscordLitentryClient {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl DiscordLitentryClient {
 	pub fn new(url: &str) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(url, headers);
+		let client = build_client_with_cert(url, headers);
 		DiscordLitentryClient { client }
 	}
 

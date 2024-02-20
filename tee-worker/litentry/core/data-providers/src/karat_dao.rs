@@ -21,12 +21,13 @@ use crate::sgx_reexport_prelude::*;
 extern crate sgx_tstd as std;
 
 use crate::{
-	build_client, DataProviderConfig, Error, HttpError, ReqPath, RetryOption, RetryableRestGet,
+	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
+	RetryableRestGet,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath,
 };
@@ -41,7 +42,7 @@ use std::{
 
 pub struct KaratDaoClient {
 	retry_option: RetryOption,
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 #[derive(Debug)]
@@ -60,7 +61,7 @@ impl KaratDaoClient {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		KaratDaoClient { retry_option, client }
 	}
