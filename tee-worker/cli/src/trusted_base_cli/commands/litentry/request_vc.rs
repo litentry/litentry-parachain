@@ -76,8 +76,8 @@ pub struct RequestVcCommand {
 	#[clap(subcommand)]
 	command: Command,
 	/// mode for the request-vc
-	#[clap(short = 'i', long, default_value_t = false)]
-	isolated: bool,
+	#[clap(short = 's', long, default_value_t = false)]
+	stf: bool,
 }
 
 // see `assertion.rs`
@@ -508,31 +508,22 @@ impl RequestVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		if !self.isolated {
-			match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-				Ok(mut vc) => {
-					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-					println!("----Generated VC-----");
-					println!("{}", credential_str);
-				},
-				Err(e) => {
-					println!("{:?}", e);
-				},
-			}
+		let maybe_vc = if self.stf {
+			perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top)
 		} else {
-			// This should contain the AES Key for AESRequest
-			match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
-				Ok(mut vc) => {
-					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-					println!("----Generated VC-----");
-					println!("{}", credential_str);
-				},
-				Err(e) => {
-					println!("{:?}", e);
-				},
-			}
+			perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key)
+		};
+
+		match maybe_vc {
+			Ok(mut vc) => {
+				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+				println!("----Generated VC-----");
+				println!("{}", credential_str);
+			},
+			Err(e) => {
+				println!("{:?}", e);
+			},
 		}
 
 		Ok(CliResultOk::None)
