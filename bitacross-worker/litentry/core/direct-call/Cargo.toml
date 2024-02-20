@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, features = ["full_crypto"] }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # internal dependencies
@@ -22,6 +22,7 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 [dev-dependencies]
 k256 = { version = "0.13.3", features = ["ecdsa-core", "schnorr"] }
 rand = { version = "0.7" }
+hex = { version = "0.4" }
 
 [features]
 default = ["std"]

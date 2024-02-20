@@ -6,11 +6,11 @@ use std::{
 	vec::Vec,
 };
 
-pub fn handle<RRL: RelayerRegistryLookup, BKR: AccessKey<KeyType = Pair>>(
+pub fn handle<RRL: RelayerRegistryLookup, EKR: AccessKey<KeyType = Pair>>(
 	signer: Identity,
 	payload: Vec<u8>,
 	relayer_registry: &RRL,
-	key_repository: &BKR,
+	key_repository: &EKR,
 ) -> Result<[u8; 64], String> {
 	if relayer_registry.contains_key(signer) {
 		let key = key_repository.retrieve_key().unwrap();
@@ -66,5 +66,21 @@ pub mod test {
 
 		//then
 		assert!(result.is_err())
+	}
+
+	#[test]
+	pub fn sign_ethereum_works() {
+		let private_key =
+			hex::decode("038a5c907573ea7f61a7dcce5ebb2e233a6e9376e5a6f077729bd732d6cab620")
+				.unwrap();
+		let key_pair = sp_core::ecdsa::Pair::from_seed_slice(&private_key).unwrap();
+		let payload =
+			hex::decode("3b08e117290fdd2617ea0e457a8eeebe373c456ecd3f6dc6dc4089380f486516")
+				.unwrap();
+		let result = key_pair.sign_prehashed(&payload.try_into().unwrap());
+		let ref_result: &[u8] = result.as_ref();
+		let expected_result = hex::decode("e733e8e3cd4f90d8fc10c2f8eeb7183623451b8e1d55b5ab6c4724c5428264955289fac3da7ce2095e12f19b4eb157c55be5c58a09ac8ae3358af0b7ec266a7201").unwrap();
+
+		assert!(ref_result == &expected_result)
 	}
 }
