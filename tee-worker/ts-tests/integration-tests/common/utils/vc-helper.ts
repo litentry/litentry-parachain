@@ -140,15 +140,15 @@ export const defaultAssertions = [
 ];
 
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
-// For the 'oneblock' assertion, need to configure the Polkadot/Kusma address,
+// For the 'OneBlock' assertion, need to configure the Polkadot/Kusma address,
 // and for 'bnb,' need to configure the NODEREAL_API_KEY
 // We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
 export const unconfiguredAssertions = [
-    // Oneblock
+    // OneBlock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
         assertion: {
-            oneblock: 'CourseParticipation',
+            OneBlock: 'CourseParticipation',
         },
     },
 
