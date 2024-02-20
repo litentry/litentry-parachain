@@ -186,7 +186,7 @@ They take single argument representing raw payload bytes to sign.
 #### Example usage
 
 ```bash
-./bitacross-cli trusted -m 7ppBUcnjGir4szRHCG59p2dTnbtRwKRbLZPpR32ACjbK request-direct-call-sign-bitcoin 00
+./bitacross-cli trusted request-direct-call-sign-bitcoin 00
 ```
 
 ### Obtaining data from parachain's teebag pallet
