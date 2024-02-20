@@ -222,7 +222,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
-		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
+		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn latest_sidechain_block_confirmation)]
