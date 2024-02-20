@@ -272,7 +272,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A14 => "A14",
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
-			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::OneBlock(..) => "OneBlock",
 			Assertion::BnbDomainHolding => "BnbDomainHolding",
 			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
