@@ -249,6 +249,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "base64ct"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
 name = "bc-relayer-registry"
 version = "0.1.0"
 dependencies = [
@@ -854,6 +860,7 @@ dependencies = [
  "elliptic-curve",
  "rfc6979",
  "signature",
+ "spki 0.7.3",
 ]
 
 [[package]]
@@ -888,6 +895,7 @@ dependencies = [
  "ff",
  "generic-array 0.14.7",
  "group",
+ "pkcs8",
  "rand_core 0.6.4",
  "sec1",
  "subtle",
@@ -3146,6 +3154,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
+name = "pkcs8"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
+dependencies = [
+ "der 0.7.8",
+ "spki 0.7.3",
+]
+
+[[package]]
 name = "postcard"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3688,6 +3706,7 @@ dependencies = [
  "base16ct",
  "der 0.7.8",
  "generic-array 0.14.7",
+ "pkcs8",
  "subtle",
  "zeroize",
 ]
@@ -4490,6 +4509,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "spki"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
+dependencies = [
+ "base64ct",
+ "der 0.7.8",
+]
+
+[[package]]
 name = "ss58-registry"
 version = "1.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5038,7 +5067,7 @@ dependencies = [
  "const-oid",
  "der 0.6.1",
  "flagset",
- "spki",
+ "spki 0.6.0",
 ]
 
 [[package]]

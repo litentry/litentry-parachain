@@ -9,7 +9,7 @@ edition = "2021"
 aes = { version = "0.6.0" }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 derive_more = { version = "0.99.5" }
-k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr"] }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr", "alloc"] }
 log = { version = "0.4", default-features = false }
 ofb = { version = "0.4.0" }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }

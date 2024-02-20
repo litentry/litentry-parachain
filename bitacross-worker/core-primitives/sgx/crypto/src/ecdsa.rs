@@ -18,7 +18,7 @@ pub use sgx::*;
 
 use crate::error::{Error, Result};
 use k256::{
-	ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
+	ecdsa::{SigningKey, VerifyingKey},
 	elliptic_curve::group::GroupEncoding,
 	PublicKey,
 };
@@ -53,10 +53,16 @@ impl Pair {
 		self.private.to_bytes().as_slice().try_into().unwrap()
 	}
 
-	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
-		let signature: Signature =
-			self.private.try_sign(payload).map_err(|e| Error::Other(e.to_string().into()))?;
-		Ok(signature.to_bytes().into())
+	// sign the prehashed message
+	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 65]> {
+		let (signature, rid) = self
+			.private
+			.sign_prehash_recoverable(payload)
+			.map_err(|e| Error::Other(e.to_string().into()))?;
+		let mut bytes = [0u8; 65];
+		bytes[..64].copy_from_slice(signature.to_vec().as_slice());
+		bytes[64] = rid.to_byte();
+		Ok(bytes)
 	}
 }
 
