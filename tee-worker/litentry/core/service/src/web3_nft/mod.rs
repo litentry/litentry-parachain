@@ -20,31 +20,4 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use core::result::Result;
-
-use lc_data_providers::{
-	karat_dao::{KaraDaoApi, KaratDaoClient},
-	DataProviderConfig,
-};
-
-use crate::*;
-
-pub fn is_user(
-	addresses: Vec<String>,
-	data_provider_config: &DataProviderConfig,
-) -> Result<bool, Error> {
-	let mut is_user = false;
-	let mut client = KaratDaoClient::new(data_provider_config);
-	for address in addresses {
-		match client.user_verification(address, true) {
-			Ok(response) => {
-				is_user = response.result.is_valid;
-				if is_user {
-					break
-				}
-			},
-			Err(err) => return Err(err.into_error_detail()),
-		}
-	}
-	Ok(is_user)
-}
+pub mod nft_holder;
