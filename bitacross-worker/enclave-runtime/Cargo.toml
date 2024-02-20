@@ -146,7 +146,6 @@ itp-sgx-temp-dir = { version = "0.1", default-features = false, optional = true,
 
 [patch.crates-io]
 env_logger = { git = "https://github.com/integritee-network/env_logger-sgx" }
-getrandom = { git = "https://github.com/integritee-network/getrandom-sgx", branch = "update-v2.3" }
 log = { git = "https://github.com/integritee-network/log-sgx" }
 
 [patch."https://github.com/mesalock-linux/log-sgx"]

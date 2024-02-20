@@ -28,6 +28,8 @@ use std::vec::Vec;
 
 pub mod handler;
 
+pub type PrehashedEthereumMessage = [u8; 32];
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct DirectCallSigned {
 	pub call: DirectCall,
@@ -47,7 +49,7 @@ impl DirectCallSigned {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum DirectCall {
 	SignBitcoin(Identity, RequestAesKey, Vec<u8>),
-	SignEthereum(Identity, RequestAesKey, Vec<u8>),
+	SignEthereum(Identity, RequestAesKey, PrehashedEthereumMessage),
 }
 
 impl DirectCall {

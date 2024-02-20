@@ -23,7 +23,7 @@ use crate::{
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::FromHexPrefixed;
-use lc_direct_call::DirectCall;
+use lc_direct_call::{DirectCall, PrehashedEthereumMessage};
 use sp_core::Pair;
 
 #[derive(Parser)]
@@ -36,8 +36,10 @@ impl RequestDirectCallSignEthereumCommand {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let key: [u8; 32] = random_aes_key();
+		let msg: PrehashedEthereumMessage =
+			self.payload.clone().try_into().expect("Unable to convert payload to [u8; 32]");
 
-		let dc = DirectCall::SignEthereum(alice.public().into(), key, self.payload.clone()).sign(
+		let dc = DirectCall::SignEthereum(alice.public().into(), key, msg).sign(
 			&KeyPair::Sr25519(Box::new(alice)),
 			&mrenclave,
 			&shard,

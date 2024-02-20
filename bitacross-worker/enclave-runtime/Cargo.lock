@@ -5100,8 +5100,3 @@ dependencies = [
  "quote 1.0.33",
  "syn 2.0.37",
 ]
-
-[[patch.unused]]
-name = "getrandom"
-version = "0.2.3"
-source = "git+https://github.com/integritee-network/getrandom-sgx?branch=update-v2.3#0a4af01fe1df0e6200192e7a709fd18da413466e"

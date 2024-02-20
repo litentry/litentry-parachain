@@ -54,7 +54,7 @@ impl Pair {
 	}
 
 	// sign the prehashed message
-	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 65]> {
+	pub fn sign_prehash_recoverable(&self, payload: &[u8]) -> Result<[u8; 65]> {
 		let (signature, rid) = self
 			.private
 			.sign_prehash_recoverable(payload)
@@ -151,7 +151,7 @@ pub mod sgx_tests {
 		create_ecdsa_repository, key_repository::AccessKey, std::string::ToString, Pair, Seal,
 	};
 	use itp_sgx_temp_dir::TempDir;
-	use k256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+	use k256::ecdsa::VerifyingKey;
 	use sgx_tstd::path::PathBuf;
 
 	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
@@ -207,13 +207,13 @@ pub mod sgx_tests {
 		let temp_dir = TempDir::with_prefix("ecdsa_sign_should_produce_valid_signature").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init().unwrap();
-		let message = [1; 32];
+		let message = [1u8; 32];
 
 		//when
-		let signature = Signature::from_slice(&pair.sign(&message).unwrap()).unwrap();
+		let (signature, rid) = &pair.private.sign_prehash_recoverable(&message).unwrap();
 
 		//then
-		let verifying_key = VerifyingKey::from(&pair.private);
-		assert!(verifying_key.verify(&message, &signature).is_ok());
+		let verifying_key = VerifyingKey::recover_from_prehash(&message, signature, *rid).unwrap();
+		assert_eq!(verifying_key, VerifyingKey::from(&pair.private));
 	}
 }
