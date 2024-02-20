@@ -41,7 +41,7 @@ use core::time::Duration;
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient, Send},
+	http_client::{HttpClient, Send, SendWithCertificateVerification},
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
@@ -50,7 +50,6 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
 
-use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
@@ -200,12 +199,6 @@ pub struct DataProviderConfig {
 	pub moralis_api_retry_delay: u64,
 	pub moralis_api_retry_times: u16,
 	pub moralis_api_key: String,
-}
-
-impl Default for DataProviderConfig {
-	fn default() -> Self {
-		Self::new()
-	}
 }
 
 impl DataProviderConfig {
