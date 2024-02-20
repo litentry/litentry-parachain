@@ -147,6 +147,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		tls_ra::tests::test_tls_ra_server_client_networking,
 		// RPC tests
 		direct_rpc_tests::get_state_request_works,
+		direct_rpc_tests::state_get_mrenclave_works,
 
 		// light-client-test
 		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
