@@ -349,11 +349,11 @@ async fn request_vc_inner(params: Params) -> Result<RpcReturnValue, String> {
 			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
 		Ok(Err(e)) => {
 			log::error!("Received error in jsonresponse: {:?} ", e);
-			Err(compute_hex_encoded_return_error(&e))
+			Err(e)
 		},
 		Err(_) => {
 			// This case will only happen if the sender has been dropped
-			Err(compute_hex_encoded_return_error("The sender has been dropped"))
+			Err("The sender has been dropped".to_string())
 		},
 	}
 }
