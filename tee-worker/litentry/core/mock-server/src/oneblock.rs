@@ -16,31 +16,15 @@
 
 #![allow(opaque_hidden_inferred_bound)]
 
-use lc_data_providers::vip3::{LevelEntity, VIP3SBTInfoResponse};
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
 pub(crate) fn query_one_block_course(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::get()
-		.and(warp::path!("v1" / "blocks" / "e4068e6a326243468f35dcdc0c43f686" / "children"))
-		.map(move |p: HashMap<String, String>| {
-			let default = String::default();
-			let account = p.get("addr").unwrap_or(&default);
-			if account == "0xff93b45308fd417df303d6515ab04d9e89a750ca" {
-				let body = VIP3SBTInfoResponse {
-					code: 0,
-					msg: "success".to_string(),
-					data: LevelEntity { level: 1 },
-				};
-				Response::builder().body(serde_json::to_string(&body).unwrap())
-			} else {
-				let body = VIP3SBTInfoResponse {
-					code: 0,
-					msg: "success".to_string(),
-					data: LevelEntity { level: 0 },
-				};
-				Response::builder().body(serde_json::to_string(&body).unwrap())
-			}
-		})
+    warp::get()
+        .and(warp::path!("v1" / "blocks" / "e4068e6a326243468f35dcdc0c43f686" / "children"))
+        .map(move || {
+            println!("oneblock mock service");
+            "OK"
+        })
 }
