@@ -85,7 +85,7 @@ describe('Test Identity (evm direct invocation)', function () {
             undefined,
             [context.ethersWallet.bob]
         );
-        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']); // @fixme #1878
+        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
@@ -107,7 +107,7 @@ describe('Test Identity (evm direct invocation)', function () {
             'substrate',
             context.substrateWallet.eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']); // @fixme #1878
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']);
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,

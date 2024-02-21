@@ -103,7 +103,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']); // @fixme #1878
+        const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: aliceEvmNonce,
             identity: aliceEvmIdentity,
@@ -123,7 +123,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             undefined,
             context.bitcoinWallet.bob
         );
-        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']); // @fixme #1878
+        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bobBitcoinNonce,
             identity: bobBitcoinIdentity,

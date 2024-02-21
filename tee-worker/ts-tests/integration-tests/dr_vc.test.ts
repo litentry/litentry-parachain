@@ -64,7 +64,7 @@ describe('Test Vc (direct request)', function () {
             twitterNonce,
             'twitter'
         );
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []); // @fixme #1878
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
@@ -83,7 +83,7 @@ describe('Test Vc (direct request)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']); // @fixme #1878
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
@@ -108,7 +108,7 @@ describe('Test Vc (direct request)', function () {
             undefined,
             context.bitcoinWallet.alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']); // @fixme #1878
+        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,

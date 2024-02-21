@@ -4,7 +4,6 @@ import Ajv from 'ajv';
 import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
 import { parseIdGraph } from './identity-helper';
-import type { PalletIdentityManagementTeeError } from 'sidechain-api';
 import { CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
@@ -12,44 +11,13 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from './vc-helper';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, StfError } from 'parachain-api';
+import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
-
-export async function assertFailedEvent(
-    context: IntegrationTestContext,
-    events: FrameSystemEventRecord[],
-    eventType: 'LinkIdentityFailed' | 'DeactivateIdentityFailed',
-    expectedEvent: CorePrimitivesErrorErrorDetail['type'] | PalletIdentityManagementTeeError['type']
-) {
-    const failedType = context.api.events.identityManagement[eventType];
-    const isFailed = failedType.is.bind(failedType);
-    type EventLike = Parameters<typeof isFailed>[0];
-    const ievents: EventLike[] = events.map(({ event }) => event);
-    const failedEvent = ievents.filter(isFailed);
-    /* 
-      @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
-    */
-    const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
-    assert.lengthOf(failedEvent, 1);
-    if (eventData.isStfError) {
-        assert.equal(
-            eventData.asStfError.toHuman(),
-            expectedEvent,
-            `check event detail is ${expectedEvent}, but is ${eventData.asStfError.toHuman()}`
-        );
-    } else {
-        assert.equal(
-            eventData.type,
-            expectedEvent,
-            `check event detail is  ${expectedEvent}, but is ${eventData.type}`
-        );
-    }
-}
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
