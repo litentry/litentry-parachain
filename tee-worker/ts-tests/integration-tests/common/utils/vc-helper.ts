@@ -144,7 +144,6 @@ export const defaultAssertions = [
 // and for 'bnb,' need to configure the NODEREAL_API_KEY
 // We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
 export const unconfiguredAssertions = [
-
     // Oneblock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
