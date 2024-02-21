@@ -37,8 +37,8 @@ pub struct OneBlockResponse {
 }
 
 impl RestPath<String> for OneBlockResponse {
-	fn get_path(_path: String) -> core::result::Result<String, RestClientError> {
-		Ok("v1/blocks/e4068e6a326243468f35dcdc0c43f686/children".to_string())
+	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
+		Ok(path)
 	}
 }
 

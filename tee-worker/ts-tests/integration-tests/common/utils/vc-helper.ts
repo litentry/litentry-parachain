@@ -154,18 +154,18 @@ export const unconfiguredAssertions = [
     },
 
     // BNB domain
-    {
-        description: 'Holding a certain amount of bnb domain names',
-        assertion: {
-            BnbDomainHolding: 'BnbDomainHolding',
-        },
-    },
-    {
-        description: 'Holding a certain amount of 000-999.bnb domain names',
-        assertion: {
-            BnbDigitDomainClub: 'Bnb999ClubMember',
-        },
-    },
+    // {
+    //     description: 'Holding a certain amount of bnb domain names',
+    //     assertion: {
+    //         BnbDomainHolding: 'BnbDomainHolding',
+    //     },
+    // },
+    // {
+    //     description: 'Holding a certain amount of 000-999.bnb domain names',
+    //     assertion: {
+    //         BnbDigitDomainClub: 'Bnb999ClubMember',
+    //     },
+    // },
 ];
 export const jsonSchema = {
     type: 'object',
