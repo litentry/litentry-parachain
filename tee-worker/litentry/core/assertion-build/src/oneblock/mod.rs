@@ -59,7 +59,7 @@ fn fetch_data_from_notion(
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
 		Error::RequestVCFailed(
-			Assertion::Oneblock(course_type.clone()),
+			Assertion::OneBlock(course_type.clone()),
 			ErrorDetail::DataProviderError(ErrorString::truncate_from(
 				format!("{e:?}").as_bytes().to_vec(),
 			)),

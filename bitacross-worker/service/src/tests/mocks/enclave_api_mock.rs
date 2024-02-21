@@ -23,6 +23,7 @@ use itc_parentchain::primitives::{
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
 use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_storage::StorageProof;
 use itp_types::{EnclaveFingerprint, ShardIdentifier};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -85,6 +86,14 @@ impl EnclaveBase for EnclaveMock {
 	}
 
 	fn get_ecc_vault_pubkey(&self, _shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
+		unreachable!()
+	}
+
+	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
+		unreachable!()
+	}
+
+	fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair> {
 		unreachable!()
 	}
 

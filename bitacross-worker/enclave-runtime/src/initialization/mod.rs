@@ -205,8 +205,12 @@ pub(crate) fn init_enclave(
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
-	let io_handler =
-		public_api_rpc_handler(top_pool_author, getter_executor, shielding_key_repository);
+	let io_handler = public_api_rpc_handler(
+		top_pool_author,
+		getter_executor,
+		shielding_key_repository,
+		ocall_api.clone(),
+	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 

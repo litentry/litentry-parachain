@@ -150,6 +150,8 @@ subcommands:
         about: Get the public ed25519 key the TEE uses to sign messages and extrinsics
     - dump-ra:
         about: Perform RA and dump cert to disk
+    - wallet:
+        about: Print the bitcoin and ethereum custodian wallet key information, only works in non-prod
     - mrenclave:
         about: Dump mrenclave to stdout. base58 encoded.
     - init-shard:

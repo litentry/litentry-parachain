@@ -38,8 +38,8 @@ pub fn build(
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
-		.flat_map(|(newtwork_type, addresses)| {
-			addresses.into_iter().map(move |address| (newtwork_type, address))
+		.flat_map(|(network_type, addresses)| {
+			addresses.into_iter().map(move |address| (network_type, address))
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 

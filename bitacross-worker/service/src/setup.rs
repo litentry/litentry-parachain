@@ -18,8 +18,9 @@
 
 use crate::error::{Error, ServiceResult};
 use itp_settings::files::{
-	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH,
-	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, RELAYER_REGISTRY_FILE, SCHEDULED_ENCLAVE_FILE,
+	SHARDS_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use std::{fs, path::Path};
 
@@ -144,6 +145,7 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_dir_if_it_exists(root_directory, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 
 	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
+	remove_file_if_it_exists(root_directory, RELAYER_REGISTRY_FILE)?;
 	Ok(())
 }
 
@@ -180,6 +182,9 @@ mod tests {
 		fs::File::create(&shards_path.join("state_1.bin")).unwrap();
 		fs::File::create(&shards_path.join("state_2.bin")).unwrap();
 
+		fs::File::create(&root_directory.join(SCHEDULED_ENCLAVE_FILE)).unwrap();
+		fs::File::create(&root_directory.join(RELAYER_REGISTRY_FILE)).unwrap();
+
 		fs::create_dir_all(&root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
 			.unwrap();
 		fs::create_dir_all(&root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
@@ -193,6 +198,8 @@ mod tests {
 		assert!(!root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(SCHEDULED_ENCLAVE_FILE).exists());
+		assert!(!root_directory.join(RELAYER_REGISTRY_FILE).exists());
 	}
 
 	#[test]

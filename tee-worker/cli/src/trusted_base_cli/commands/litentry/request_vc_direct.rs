@@ -31,7 +31,7 @@ use litentry_primitives::{
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
 	OneBlockCourseType, PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
-	Web3Network, Web3TokenType, REQUEST_AES_KEY_LEN,
+	Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -41,9 +41,9 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
-// oneblock VC:
+// OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc-direct \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 one-block completion
 //
 // achainable VC:
 // ./bin/litentry-cli trusted -d request-vc-direct \
@@ -98,13 +98,13 @@ impl RequestVcDirectCommand {
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
 			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
-			Command::Oneblock(c) => match c {
+			Command::OneBlock(c) => match c {
 				OneblockCommand::Completion =>
-					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
+					Assertion::OneBlock(OneBlockCourseType::CourseCompletion),
 				OneblockCommand::Outstanding =>
-					Assertion::Oneblock(OneBlockCourseType::CourseOutstanding),
+					Assertion::OneBlock(OneBlockCourseType::CourseOutstanding),
 				OneblockCommand::Participation =>
-					Assertion::Oneblock(OneBlockCourseType::CourseParticipation),
+					Assertion::OneBlock(OneBlockCourseType::CourseParticipation),
 			},
 			Command::Achainable(c) => match c {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(
@@ -256,6 +256,11 @@ impl RequestVcDirectCommand {
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser =>
 					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
+			},
+			Command::NftHolder(arg) => match arg {
+				NftHolderCommand::WeirdoGhostGang =>
+					Assertion::NftHolder(Web3NftType::WeirdoGhostGang),
+				NftHolderCommand::Club3Sbt => Assertion::NftHolder(Web3NftType::Club3Sbt),
 			},
 		};
 

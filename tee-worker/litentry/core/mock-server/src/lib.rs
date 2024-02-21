@@ -26,6 +26,7 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod karat_dao;
 pub mod litentry_archive;
+pub mod moralis;
 pub mod nodereal_jsonrpc;
 pub mod twitter_litentry;
 pub mod twitter_official;
@@ -66,6 +67,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(discord_litentry::has_role())
 					.or(nodereal_jsonrpc::query())
 					.or(karat_dao::query())
+					.or(moralis::query())
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())

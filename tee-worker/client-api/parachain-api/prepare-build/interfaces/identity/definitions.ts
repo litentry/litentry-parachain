@@ -49,6 +49,8 @@ export default {
                 "BitcoinP2sh",
                 "BitcoinP2wpkh",
                 "BitcoinP2wsh",
+                "Polygon",
+                "Arbitrum",
             ],
         },
         LitentryValidationData: {

@@ -41,13 +41,14 @@ use core::time::Duration;
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient},
+	http_client::{DefaultSend, HttpClient, Send},
 	rest_client::RestClient,
+	Query, RestGet, RestPath, RestPost,
 };
 use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use std::vec;
+use std::{thread, vec};
 
 use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
@@ -70,6 +71,7 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
 pub mod karat_dao;
+pub mod moralis;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
 pub mod twitter_official;
@@ -194,6 +196,10 @@ pub struct DataProviderConfig {
 	pub karat_dao_api_retry_delay: u64,
 	pub karat_dao_api_retry_times: u16,
 	pub karat_dao_api_url: String,
+	pub moralis_api_url: String,
+	pub moralis_api_retry_delay: u64,
+	pub moralis_api_retry_times: u16,
+	pub moralis_api_key: String,
 }
 
 impl Default for DataProviderConfig {
@@ -238,6 +244,10 @@ impl DataProviderConfig {
 			karat_dao_api_retry_delay: 5000,
 			karat_dao_api_retry_times: 2,
 			karat_dao_api_url: "https://api.karatdao.com/".to_string(),
+			moralis_api_key: "".to_string(),
+			moralis_api_retry_delay: 5000,
+			moralis_api_retry_times: 2,
+			moralis_api_url: "https://deep-index.moralis.io/api/v2.2/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -308,6 +318,15 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("KARAT_DAO_API_URL") {
 				config.set_karat_dao_api_url(v);
 			}
+			if let Ok(v) = env::var("MORALIS_API_URL") {
+				config.set_moralis_api_url(v);
+			}
+			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
+				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("MORALIS_API_RETRY_TIME") {
+				config.set_moralis_api_retry_times(v.parse::<u16>().unwrap());
+			}
 		});
 		// set secrets from env variables
 		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
@@ -327,6 +346,9 @@ impl DataProviderConfig {
 		}
 		if let Ok(v) = env::var("GENIIDATA_API_KEY") {
 			config.set_geniidata_api_key(v);
+		}
+		if let Ok(v) = env::var("MORALIS_API_KEY") {
+			config.set_moralis_api_key(v);
 		}
 		config
 	}
@@ -442,6 +464,22 @@ impl DataProviderConfig {
 		debug!("set_karat_dao_api_url: {:?}", v);
 		self.karat_dao_api_url = v;
 	}
+	pub fn set_moralis_api_key(&mut self, v: String) {
+		debug!("set_moralis_api_key: {:?}", v);
+		self.moralis_api_key = v;
+	}
+	pub fn set_moralis_api_retry_delay(&mut self, v: u64) {
+		debug!("set_moralis_api_retry_delay: {:?}", v);
+		self.moralis_api_retry_delay = v;
+	}
+	pub fn set_moralis_api_retry_times(&mut self, v: u16) {
+		debug!("set_moralis_api_retry_times: {:?}", v);
+		self.moralis_api_retry_times = v;
+	}
+	pub fn set_moralis_api_url(&mut self, v: String) {
+		debug!("set_moralis_api_url: {:?}", v);
+		self.moralis_api_url = v;
+	}
 }
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -460,6 +498,9 @@ pub enum Error {
 
 	#[error("GeniiData error: {0}")]
 	GeniiDataError(String),
+
+	#[error("Retryable error: {0}")]
+	RetryableError(String),
 }
 
 impl IntoErrorDetail for Error {
@@ -506,6 +547,161 @@ pub fn build_client_with_cert(
 	RestClient::new(http_client, base_url)
 }
 
+#[derive(Serialize, Debug, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqPath<'a> {
+	path: &'a str,
+}
+
+impl<'a> ReqPath<'a> {
+	pub fn new(path: &'a str) -> Self {
+		Self { path }
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct RetryOption {
+	// default delay is 0
+	retry_delay: Option<u64>,
+	// set retry_times to 0 or None for fail fast
+	retry_times: Option<u16>,
+}
+
+const DEFAULT_RETRY_OPTION: RetryOption = RetryOption { retry_delay: None, retry_times: None };
+
+pub type RestHttpClient<T> = RestClient<HttpClient<T>>;
+
+pub trait RetryableRestClient<T> {
+	fn retry<A, R>(&mut self, action: A, retry_option: RetryOption) -> Result<R, Error>
+	where
+		A: Fn(&mut RestHttpClient<T>) -> Result<R, HttpError>;
+}
+
+impl<T> RetryableRestClient<T> for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn retry<A, R>(&mut self, action: A, retry_option: RetryOption) -> Result<R, Error>
+	where
+		A: Fn(&mut RestHttpClient<T>) -> Result<R, HttpError>,
+	{
+		let mut retries = 0;
+		let base_delay = Duration::from_millis(retry_option.retry_delay.unwrap_or_default());
+		let maximum_retries = retry_option.retry_times.unwrap_or_default();
+
+		loop {
+			if retries > 0 {
+				debug!("Fail to call rest api, begin retry: {}", retries);
+			}
+
+			if retries > maximum_retries {
+				return Err(Error::RetryableError(format!(
+					"Fail to call rest api within {} retries",
+					maximum_retries
+				)))
+			}
+
+			match action(self) {
+				Ok(response) => return Ok(response),
+				Err(err) => {
+					let req_err: Error =
+						Error::RequestError(format!("call rest api error: {}", err));
+					match err {
+						HttpError::HttpError(code, _) =>
+							if code == 429 {
+								// Too Many Requests
+								// exponential back off
+								thread::sleep(base_delay * 2u32.pow(retries as u32));
+								retries += 1;
+							} else {
+								return Err(req_err)
+							},
+						_ => return Err(req_err),
+					}
+				},
+			}
+		}
+	}
+}
+
+pub trait RetryableRestGet {
+	// set retry_option to None for fail fast
+	fn get_retry<U, R>(&mut self, params: U, retry_option: Option<RetryOption>) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>;
+
+	// set retry_option to None for fail fast
+	fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>;
+}
+
+impl<T> RetryableRestGet for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn get_retry<U, R>(&mut self, params: U, retry_option: Option<RetryOption>) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.retry(|c| c.get(params), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+
+	fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy,
+		R: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.retry(|c| c.get_with(params, query), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+}
+
+pub trait RetryableRestPost {
+	// set retry_option to None for fail fast
+	fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy,
+		D: serde::Serialize + RestPath<U>,
+		K: serde::de::DeserializeOwned;
+}
+
+impl<T> RetryableRestPost for RestHttpClient<T>
+where
+	T: Send,
+{
+	fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy,
+		D: serde::Serialize + RestPath<U>,
+		K: serde::de::DeserializeOwned,
+	{
+		self.retry(|c| c.post_capture(params, data), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+}
+
 pub trait ConvertParameterString {
 	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError>;
 }
@@ -518,13 +714,20 @@ impl ConvertParameterString for AchainableParams {
 	}
 }
 
-pub fn convert_balance_hex_to_u128(result: serde_json::Value) -> Result<u128, Error> {
-	match result.as_str() {
-		Some(result) => match u128::from_str_radix(&result[2..], 16) {
+pub fn convert_balance_hex_to_u128(hex: &str) -> Result<u128, String> {
+	match u128::from_str_radix(&hex[2..], 16) {
+		Ok(balance) => Ok(balance),
+		Err(_) => Err(format!("Cannot parse hex {:?} to u128", hex)),
+	}
+}
+
+pub fn convert_balance_hex_json_value_to_u128(value: serde_json::Value) -> Result<u128, Error> {
+	match value.as_str() {
+		Some(str) => match convert_balance_hex_to_u128(str) {
 			Ok(balance) => Ok(balance),
-			Err(_) => Err(Error::RequestError(format!("Cannot parse result {:?} to u128", result))),
+			Err(err) => Err(Error::RequestError(err)),
 		},
-		None => Err(Error::RequestError(format!("Cannot tansform result {:?} to &str", result))),
+		None => Err(Error::RequestError(format!("Cannot transform value {:?} to &str", value))),
 	}
 }
 
@@ -535,39 +738,43 @@ mod tests {
 	#[test]
 	fn should_return_correct_value_when_param_is_valid() {
 		assert_eq!(
-			convert_balance_hex_to_u128(serde_json::Value::String("0x0".into())).unwrap(),
+			convert_balance_hex_json_value_to_u128(serde_json::Value::String("0x0".into()))
+				.unwrap(),
 			0_u128
 		);
 
 		assert_eq!(
-			convert_balance_hex_to_u128(serde_json::Value::String("0x320".into())).unwrap(),
+			convert_balance_hex_json_value_to_u128(serde_json::Value::String("0x320".into()))
+				.unwrap(),
 			800_u128
 		);
 
 		assert_eq!(
-			convert_balance_hex_to_u128(serde_json::Value::String("0x2b5e3af16b1880000".into()))
-				.unwrap(),
+			convert_balance_hex_json_value_to_u128(serde_json::Value::String(
+				"0x2b5e3af16b1880000".into()
+			))
+			.unwrap(),
 			50_000_000_000_000_000_000_u128
 		);
 	}
 
 	#[test]
-	fn shoud_return_error_when_param_is_not_a_str() {
-		match convert_balance_hex_to_u128(serde_json::Value::Bool(true)) {
+	fn should_return_error_when_param_is_not_a_str() {
+		match convert_balance_hex_json_value_to_u128(serde_json::Value::Bool(true)) {
 			Ok(_) => panic!("Expected an error, but got Ok"),
 			Err(err) => assert_eq!(
 				err.to_string(),
-				"Request error: Cannot tansform result Bool(true) to &str"
+				"Request error: Cannot transform value Bool(true) to &str"
 			),
 		}
 	}
 
 	#[test]
-	fn shoud_return_error_when_param_is_not_a_hex_str() {
-		match convert_balance_hex_to_u128(serde_json::Value::String("qwexyz".into())) {
+	fn should_return_error_when_param_is_not_a_hex_str() {
+		match convert_balance_hex_json_value_to_u128(serde_json::Value::String("qwexyz".into())) {
 			Ok(_) => panic!("Expected an error, but got Ok"),
 			Err(err) =>
-				assert_eq!(err.to_string(), "Request error: Cannot parse result \"qwexyz\" to u128"),
+				assert_eq!(err.to_string(), "Request error: Cannot parse hex \"qwexyz\" to u128"),
 		}
 	}
 }

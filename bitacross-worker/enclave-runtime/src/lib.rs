@@ -60,6 +60,9 @@ use crate::{
 };
 use codec::Decode;
 use core::ffi::c_int;
+use initialization::global_components::{
+	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+};
 use itc_parentchain::{
 	block_import_dispatcher::DispatchBlockImport,
 	light_client::{concurrent_access::ValidatorAccess, Validator},
@@ -68,7 +71,7 @@ use itc_parentchain::{
 use itp_component_container::ComponentGetter;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_sgx_crypto::key_repository::AccessPubkey;
+use itp_sgx_crypto::key_repository::{AccessKey, AccessPubkey};
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
@@ -237,6 +240,64 @@ pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u3
 	pubkey_slice.clone_from_slice(&signer_public);
 
 	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
+	if_production_or!(
+		{
+			error!("Bitcoin wallet can only be retrieved in non-prod");
+			sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+		{
+			let bitcoin_key_repository = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(s) => s,
+				Err(e) => {
+					error!("{:?}", e);
+					return sgx_status_t::SGX_ERROR_UNEXPECTED
+				},
+			};
+
+			let keypair = match bitcoin_key_repository.retrieve_key() {
+				Ok(p) => p,
+				Err(e) => return e.into(),
+			};
+
+			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
+			privkey_slice.clone_from_slice(&keypair.private_bytes());
+
+			sgx_status_t::SGX_SUCCESS
+		}
+	)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
+	if_production_or!(
+		{
+			error!("Ethereum wallet can only be retrieved in non-prod");
+			sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+		{
+			let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(s) => s,
+				Err(e) => {
+					error!("{:?}", e);
+					return sgx_status_t::SGX_ERROR_UNEXPECTED
+				},
+			};
+
+			let keypair = match ethereum_key_repository.retrieve_key() {
+				Ok(p) => p,
+				Err(e) => return e.into(),
+			};
+
+			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
+			privkey_slice.clone_from_slice(&keypair.private_bytes());
+
+			sgx_status_t::SGX_SUCCESS
+		}
+	)
 }
 
 #[no_mangle]

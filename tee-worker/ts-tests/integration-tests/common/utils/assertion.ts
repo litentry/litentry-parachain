@@ -1,23 +1,15 @@
-import { ApiPromise } from '@polkadot/api';
 import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
-import { assert, expect } from 'chai';
+import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
 import { parseIdGraph } from './identity-helper';
-import type { PalletIdentityManagementTeeError } from 'sidechain-api';
-import { PalletTeebagEnclave, CorePrimitivesIdentity } from 'parachain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
 import { aesKey } from '../call';
 import colors from 'colors';
-import {
-    CorePrimitivesErrorErrorDetail,
-    FrameSystemEventRecord,
-    WorkerRpcReturnValue,
-    RequestVCResult,
-    StfError,
-} from 'parachain-api';
+import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
@@ -25,37 +17,6 @@ import { validateVcSchema } from '@litentry/vc-schema-validator'
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
-
-export async function assertFailedEvent(
-    context: IntegrationTestContext,
-    events: FrameSystemEventRecord[],
-    eventType: 'LinkIdentityFailed' | 'DeactivateIdentityFailed',
-    expectedEvent: CorePrimitivesErrorErrorDetail['type'] | PalletIdentityManagementTeeError['type']
-) {
-    const failedType = context.api.events.identityManagement[eventType];
-    const isFailed = failedType.is.bind(failedType);
-    type EventLike = Parameters<typeof isFailed>[0];
-    const ievents: EventLike[] = events.map(({ event }) => event);
-    const failedEvent = ievents.filter(isFailed);
-    /*
-      @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
-    */
-    const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
-    assert.lengthOf(failedEvent, 1);
-    if (eventData.isStfError) {
-        assert.equal(
-            eventData.asStfError.toHuman(),
-            expectedEvent,
-            `check event detail is ${expectedEvent}, but is ${eventData.asStfError.toHuman()}`
-        );
-    } else {
-        assert.equal(
-            eventData.type,
-            expectedEvent,
-            `check event detail is  ${expectedEvent}, but is ${eventData.type}`
-        );
-    }
-}
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -161,7 +122,7 @@ export function assertWorkerError(
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errValueDecoded = context.api.createType('StfError', returnValue.value) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', returnValue.value);
     check(errValueDecoded);
 }
 
@@ -179,7 +140,7 @@ export async function assertIdGraphMutationResult(
         | 'SetIdentityNetworksResult',
     expectedIdGraph: [CorePrimitivesIdentity, boolean][]
 ): Promise<HexString> {
-    const decodedResult = context.api.createType(resultType, returnValue.value) as any;
+    const decodedResult = context.api.createType(resultType, returnValue.value);
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
     assertIdGraph(idGraph, expectedIdGraph);
@@ -204,7 +165,7 @@ export async function assertIdGraphMutationResult(
 */
 
 export async function assertVc(context: IntegrationTestContext, subject: CorePrimitivesIdentity, data: Bytes) {
-    const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
+    const results = context.api.createType('RequestVCResult', data);
     // step 1
     // decryptWithAes function added 0x prefix
     const vcPayload = results.vc_payload;
