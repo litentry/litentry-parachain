@@ -76,7 +76,7 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 
 		Assertion::A20 => format!("{BASE_URL}/12-idhub-evm-version-early-bird/1-0-0.json"),
 
-		Assertion::Oneblock(_) => format!("{BASE_URL}/13-oneblock-student-phase-12/1-0-0.json"),
+		Assertion::OneBlock(_) => format!("{BASE_URL}/13-oneblock-student-phase-12/1-0-0.json"),
 
 		Assertion::GenericDiscordRole(_) =>
 			format!("{BASE_URL}/14-generic-discord-role/1-0-0.json"),
@@ -103,5 +103,7 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 		Assertion::CryptoSummary => format!("{BASE_URL}/23-crypto-summary/1-0-0.json"),
 
 		Assertion::PlatformUser(_) => format!("{BASE_URL}/24-platform-user/1-0-0.json"),
+
+		Assertion::NftHolder(_) => format!("{BASE_URL}/26-nft-holder/1-0-0.json"),
 	}
 }

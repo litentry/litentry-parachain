@@ -268,6 +268,16 @@ pub(crate) fn main() {
 		} else {
 			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
 		}
+	} else if let Some(sub_matches) = matches.subcommand_matches("wallet") {
+		println!("Bitcoin wallet:");
+		let bitcoin_keypair = enclave.get_bitcoin_wallet_pair().unwrap();
+		println!("public : 0x{}", hex::encode(bitcoin_keypair.public_bytes()));
+		println!("private: 0x{}", hex::encode(bitcoin_keypair.private_bytes()));
+
+		println!("Ethereum wallet:");
+		let ethereum_keypair = enclave.get_ethereum_wallet_pair().unwrap();
+		println!("public : 0x{}", hex::encode(ethereum_keypair.public_bytes()));
+		println!("private: 0x{}", hex::encode(ethereum_keypair.private_bytes()));
 	} else {
 		println!("For options: use --help");
 	}
@@ -304,10 +314,6 @@ fn start_worker<E, T, InitializationHandler>(
 	println!("  Production Mode is enabled");
 	#[cfg(not(feature = "production"))]
 	println!("  Production Mode is disabled");
-	#[cfg(feature = "evm")]
-	println!("  EVM is enabled");
-	#[cfg(not(feature = "evm"))]
-	println!("  EVM is disabled");
 
 	info!("starting worker on shard {}", shard.encode().to_base58());
 	// ------------------------------------------------------------------------

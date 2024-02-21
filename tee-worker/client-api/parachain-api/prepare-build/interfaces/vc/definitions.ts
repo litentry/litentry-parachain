@@ -20,7 +20,7 @@ export default {
                 A14: "Null",
                 Achainable: "AchainableParams",
                 A20: "Null",
-                Oneblock: "OneBlockCourseType",
+                OneBlock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
                 __Unused15: "Null",
                 BnbDomainHolding: "Null",
@@ -33,6 +33,7 @@ export default {
                 CyptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
+                NftHolder: "Web3NftType",
             },
         },
         AssertionSupportedNetwork: {
@@ -118,7 +119,7 @@ export default {
             chain: "Vec<Web3Network>",
             token: "Bytes",
         },
-        // Oneblock
+        // OneBlock
         OneBlockCourseType: {
             _enum: ["CourseCompletion", "CourseOutstanding", "CourseParticipation"],
         },
@@ -177,6 +178,10 @@ export default {
         // PlatformUserType
         PlatformUserType: {
             _enum: ["KaratDaoUser"],
+        },
+        // Web3NftType
+        Web3NftType: {
+            _enum: ["WeirdoGhostGang", "Club3Sbt"],
         },
     },
 };

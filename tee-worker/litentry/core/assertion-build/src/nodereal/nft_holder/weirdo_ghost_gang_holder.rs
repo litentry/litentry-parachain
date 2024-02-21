@@ -42,7 +42,7 @@ fn check_has_nft(
 		block_number: "latest".into(),
 	};
 
-	match client.get_token_balance_721(&param) {
+	match client.get_token_balance_721(&param, false) {
 		Ok(res) => {
 			debug!("Get token balance 721 response: {:?}", res);
 			Ok(res > 0)

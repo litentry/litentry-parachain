@@ -68,7 +68,6 @@ my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/
 
 [features]
 default = []
-evm = []
 offchain-worker = ["itp-settings/offchain-worker"]
 production = [
     "itp-settings/production",
@@ -95,3 +94,4 @@ anyhow = "1.0.40"
 mockall = "0.11"
 # local
 itc-parentchain-test = { path = "../core/parentchain/test" }
+itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }

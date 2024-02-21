@@ -968,7 +968,7 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	// - we might have multiple `sync_parentchain` running concurrently, which causes chaos in enclave side
 	// - I still feel it's only a workaround, not a perfect solution
 	//
-	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
+	// TODO: now the sync will panic if disconnected - it heavily relies on the worker-restart to work (even manually)
 	let parentchain_id = parentchain_handler.parentchain_id();
 	loop {
 		let new_header = subscription

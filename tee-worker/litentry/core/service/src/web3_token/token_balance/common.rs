@@ -51,7 +51,7 @@ pub fn get_balance_from_evm(
 				if let Some(mut client) =
 					network.create_nodereal_jsonrpc_client(data_provider_config)
 				{
-					match client.get_token_balance_20(&param) {
+					match client.get_token_balance_20(&param, false) {
 						Ok(balance) => {
 							total_balance += calculate_balance_with_decimals(balance, decimals);
 						},
