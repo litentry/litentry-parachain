@@ -44,4 +44,7 @@ pub enum EnclaveMetric {
 	SidechainSlotStfExecutionTime(Duration),
 	SidechainSlotBlockCompositionTime(Duration),
 	SidechainBlockBroadcastingTime(Duration),
+	VcBuildTime(String, Duration),
+	SuccessfullVCIssuance,
+	FailedVCIssuance,
 }

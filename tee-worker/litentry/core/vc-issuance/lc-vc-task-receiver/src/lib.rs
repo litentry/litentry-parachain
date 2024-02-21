@@ -25,6 +25,7 @@ use ita_stf::{
 	aes_encrypt_default, helpers::ensure_self, trusted_call_result::RequestVCResult, Getter,
 	OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation, H256,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
@@ -58,6 +59,7 @@ use std::{
 		Arc,
 	},
 	thread,
+	time::Instant,
 	vec::Vec,
 };
 use threadpool::ThreadPool;
@@ -104,14 +106,28 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		let sender_pool = sender.clone();
 
 		pool.execute(move || {
-			if let Err(e) = req.sender.send(handle_request(
+			let response = handle_request(
 				&mut req.request,
-				context_pool,
+				context_pool.clone(),
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
 				sender_pool,
-			)) {
+			);
+			if let Err(e) = req.sender.send(response.clone()) {
 				warn!("Unable to submit response back to the handler: {:?}", e);
+			}
+			if response.is_err() {
+				if let Err(e) =
+					context_pool.ocall_api.update_metric(EnclaveMetric::FailedVCIssuance)
+				{
+					warn!("Failed to update metric for VC Issuance: {:?}", e);
+				}
+			} else {
+				if let Err(e) =
+					context_pool.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance)
+				{
+					warn!("Failed to update metric for VC Issuance: {:?}", e);
+				}
 			}
 		});
 	}
@@ -140,6 +156,7 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
+	let start_time = Instant::now();
 	let enclave_shielding_key = context
 		.shielding_key
 		.retrieve_key()
@@ -288,7 +305,7 @@ where
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			who.clone(),
-			assertion,
+			assertion.clone(),
 			id_graph_hash,
 			req_ext_hash,
 		));
@@ -320,6 +337,13 @@ where
 			.ocall_api
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::VcBuildTime(
+			format!("{:?}", assertion),
+			start_time.elapsed(),
+		)) {
+			warn!("Failed to update metric for vc build time: {:?}", e);
+		}
 
 		Ok(res.encode())
 	} else {
