@@ -216,8 +216,11 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
-	let data_provider_config = DataProviderConfig::new();
-	GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
 
 	Ok(())
 }

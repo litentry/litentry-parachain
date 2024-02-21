@@ -169,7 +169,7 @@ mod tests {
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
-		let mut data_provider_config = DataProviderConfig::new();
+		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
 		data_provider_config.set_nodereal_api_chain_network_url(url);

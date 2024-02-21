@@ -108,7 +108,7 @@ mod tests {
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		let mut data_provider_conifg = DataProviderConfig::new();
+		let mut data_provider_conifg = DataProviderConfig::new().unwrap();
 
 		data_provider_conifg.set_discord_litentry_url(url);
 		data_provider_conifg.set_contest_legend_discord_role_id("1034083718425493544".to_string());

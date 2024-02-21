@@ -207,7 +207,7 @@ mod tests {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/moralis/";
 
-		let mut config = DataProviderConfig::new();
+		let mut config = DataProviderConfig::new().unwrap();
 		config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
 		config.set_moralis_api_url(url);
 		config
