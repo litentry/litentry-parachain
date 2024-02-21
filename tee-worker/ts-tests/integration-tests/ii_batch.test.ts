@@ -12,13 +12,13 @@ import { sendTxsWithUtility } from './common/transactions';
 import { generateWeb3Wallets, assertIdGraphMutationEvent, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Vec } from '@polkadot/types';
+import { Vec, Bytes } from '@polkadot/types';
 
 describeLitentry('Test Batch Utility', (context) => {
     let identities: CorePrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     let evmSigners: ethers.Wallet[] = [];
-    const we3networks: Web3Network[][] = [];
+    const web3networks: (Bytes | Vec<Web3Network>)[] = [];
     const signerIdentities: CorePrimitivesIdentity[] = [];
 
     step('generate web3 wallets', async function () {
@@ -39,7 +39,7 @@ describeLitentry('Test Batch Utility', (context) => {
             const signer = evmSigners[index];
             const evmIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
             identities.push(evmIdentity);
-            we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
+            web3networks.push(defaultNetworks);
             signerIdentities.push(aliceSubstrateIdentity);
         }
 
@@ -60,7 +60,7 @@ describeLitentry('Test Batch Utility', (context) => {
             identities,
             'linkIdentity',
             validations,
-            we3networks
+            web3networks
         );
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',

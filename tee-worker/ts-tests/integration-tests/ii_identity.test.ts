@@ -24,6 +24,7 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
+import { Bytes, Vec } from '@polkadot/types';
 
 async function getEnclaveSignerPublicKey(context: IntegrationTestContext): Promise<string> {
     const request = createJsonRpcRequest('author_getEnclaveSignerAccount', [], nextRequestId(context));
@@ -58,7 +59,7 @@ describeLitentry('Test Identity', (context) => {
     let charlieIdentities: CorePrimitivesIdentity[] = [];
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
-    let web3networks: Web3Network[][] = [];
+    let web3networks: (Bytes | Vec<Web3Network>)[] = [];
     let base58mrEnclave: string;
     let workerAddress: string;
     let identityLinkedEvents;
@@ -127,12 +128,9 @@ describeLitentry('Test Identity', (context) => {
 
         eveValidations = [...evmValidations, ...eveSubstrateValidations, ...twitterValidations];
 
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Web3Network[];
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']) as unknown as Web3Network[];
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', [
-            'Litentry',
-            'Polkadot',
-        ]) as unknown as Web3Network[];
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']);
 
         web3networks = [evmNetworks, eveSubstrateNetworks, twitterNetworks];
 
@@ -194,13 +192,10 @@ describeLitentry('Test Identity', (context) => {
         const bobSubstrateValidation = context.api.createType(
             'LitentryValidationData',
             substrateExtensionValidationData
-        ) as unknown as LitentryValidationData;
+        );
         bobValidations = [bobSubstrateValidation];
 
-        const bobSubstrateNetworks = context.api.createType('Vec<Web3Network>', [
-            'Litentry',
-            'Polkadot',
-        ]) as unknown as Web3Network[];
+        const bobSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']);
 
         const bobTxs = await buildIdentityTxs(
             context,
@@ -290,10 +285,7 @@ describeLitentry('Test Identity', (context) => {
                 },
             },
         };
-        const evmValidationData: LitentryValidationData = context.api.createType(
-            'LitentryValidationData',
-            validation
-        ) as unknown as LitentryValidationData;
+        const evmValidationData: LitentryValidationData = context.api.createType('LitentryValidationData', validation);
         const aliceTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,

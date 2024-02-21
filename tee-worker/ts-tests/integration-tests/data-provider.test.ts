@@ -104,7 +104,7 @@ describe('Test Vc (direct invocation)', function () {
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
         await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
 
-        const vcResults = context.api.createType('RequestVCResult', res.value) as unknown as RequestVCResult;
+        const vcResults = context.api.createType('RequestVCResult', res.value);
         const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
         const vcPayloadJson = JSON.parse(decryptVcPayload);
         console.log('vcPayload: ', vcPayloadJson);

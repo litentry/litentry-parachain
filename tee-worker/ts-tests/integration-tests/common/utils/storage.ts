@@ -105,9 +105,6 @@ export async function checkIdGraph(
 
     const request = createJsonRpcRequest('state_getStorage', [base58mrEnclave, storageKey], nextRequestId(context));
     const resp = await sendRequest(context.tee, request, context.api);
-    const idGraph = context.sidechainRegistry.createType(
-        'PalletIdentityManagementTeeIdentityContext',
-        resp.value
-    ) as unknown as PalletIdentityManagementTeeIdentityContext;
+    const idGraph = context.sidechainRegistry.createType('PalletIdentityManagementTeeIdentityContext', resp.value);
     return idGraph;
 }

@@ -27,7 +27,7 @@ import {
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Vec } from '@polkadot/types';
+import { Bytes, Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
@@ -44,7 +44,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Vec<Web3Network>;
+        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     const deactivateIdentityRequestParams: {
@@ -103,10 +103,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', [
-            'Ethereum',
-            'Bsc',
-        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']); // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: aliceEvmNonce,
             identity: aliceEvmIdentity,
@@ -126,9 +123,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             undefined,
             context.bitcoinWallet.bob
         );
-        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', [
-            'BitcoinP2tr',
-        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']); // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: bobBitcoinNonce,
             identity: bobBitcoinIdentity,
