@@ -31,7 +31,6 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 use system::EnsureRoot;
-use teerex_primitives::SgxAttestationMethod;
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;

@@ -552,7 +552,7 @@ pub fn verify_dcap_maa_policy(
 	dcap_quote_raw: &[u8],
 	verification_time: u64,
 	qe: &QuotingEnclave,
-) -> Result<MAAPolicy, &'static str> {
+) -> Result<(Fmspc, TcbVersionStatus, SgxReport), &'static str> {
 	let mut dcap_quote_clone = dcap_quote_raw;
 
 	let quote: MAADcapQuote =
@@ -577,6 +577,8 @@ pub fn verify_dcap_maa_policy(
 	let leaf_cert = webpki::EndEntityCert::try_from(&leaf_cert_der)
 		.map_err(|_| "Failed to parse leaf certificate")?;
 	verify_certificate_chain(&leaf_cert, &intermediate_certificate_slices, verification_time)?;
+
+	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
 	// For this part some understanding of the document (Especially chapter A.4: Quote Format)
 	// Intel® Software Guard Extensions (Intel® SGX) Data Center Attestation Primitives: ECDSA Quote
@@ -639,7 +641,22 @@ pub fn verify_dcap_maa_policy(
 
 	ensure!(dcap_quote_clone.is_empty(), "There should be no bytes left over after decoding");
 
-	Ok(quote.body)
+	let policy = quote.body;
+	let build_mode =
+		if policy.is_debuggable { SgxBuildMode::Debug } else { SgxBuildMode::Production };
+	let mut xt_signer_array = [0u8; 32];
+	xt_signer_array.copy_from_slice(&policy.sgx_mrsigner[..32]);
+
+	let report = SgxReport {
+		mr_enclave: policy.sgx_mrenclave,
+		status: SgxStatus::Ok,
+		pubkey: xt_signer_array,
+		timestamp: verification_time,
+		build_mode,
+		metadata: SgxEnclaveMetadata::default(),
+	};
+
+	Ok((fmspc, tcb_info, report))
 }
 
 pub fn verify_dcap_quote(

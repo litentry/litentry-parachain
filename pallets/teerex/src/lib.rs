@@ -288,7 +288,8 @@ pub mod pallet {
 					let enclave = {
 						let verification_time = <timestamp::Pallet<T>>::get();
 						let qe = <QuotingEnclaveRegistry<T>>::get();
-						let policy = sgx_verify::verify_dcap_maa_policy(
+
+						let (_fmspc, _tcb_info, report) = sgx_verify::verify_dcap_maa_policy(
 							&proof,
 							verification_time.saturated_into(),
 							&qe,
@@ -298,21 +299,16 @@ pub mod pallet {
 							Error::<T>::EnclaveIsNotRegistered
 						})?;
 
-						let sgx_build_mode = if policy.is_debuggable {
-							SgxBuildMode::Debug
-						} else {
-							SgxBuildMode::Production
-						};
 						Enclave::new(
 							sender.clone(),
 							// insert mrenclave if the proof represents one, otherwise insert
 							// default
-							policy.sgx_mrenclave,
+							report.mr_enclave,
 							<timestamp::Pallet<T>>::get().saturated_into(),
 							worker_url.clone(),
 							shielding_key,
 							vc_pubkey,
-							sgx_build_mode,
+							report.build_mode,
 							SgxEnclaveMetadata::default(),
 						)
 					};

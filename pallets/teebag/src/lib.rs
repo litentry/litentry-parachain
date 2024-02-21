@@ -32,8 +32,8 @@ use sp_std::{prelude::*, str};
 mod sgx_verify;
 pub use sgx_verify::{
 	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
-	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_quote,
-	verify_ias_report, SgxReport,
+	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_maa_policy,
+	verify_dcap_quote, verify_ias_report, SgxReport,
 };
 
 pub use pallet::*;
@@ -688,7 +688,7 @@ impl<T: Config> Pallet<T> {
 		let timestamp = Self::now();
 		let qe = <QuotingEnclaveRegistry<T>>::get();
 		let (fmspc, tcb_info, report) =
-			verify_dcap_quote(&dcap_quote, timestamp.saturated_into(), &qe).map_err(|e| {
+			verify_dcap_maa_policy(&dcap_quote, timestamp.saturated_into(), &qe).map_err(|e| {
 				log::warn!("verify_dcap_quote failed: {:?}", e);
 				Error::<T>::RemoteAttestationVerificationFailed
 			})?;

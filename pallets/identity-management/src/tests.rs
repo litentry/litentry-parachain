@@ -18,7 +18,6 @@ use crate::{mock::*, Error, ShardIdentifier};
 use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
-use teerex_primitives::SgxAttestationMethod;
 
 #[cfg(feature = "skip-ias-check")]
 use test_utils::ias::consts::TEST8_CERT;

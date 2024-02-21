@@ -30,7 +30,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
 use sp_std::marker::PhantomData;
-use teerex_primitives::SgxAttestationMethod;
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;

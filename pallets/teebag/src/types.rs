@@ -60,6 +60,19 @@ pub enum DcapProvider {
 	Integritee,
 }
 
+/// Microsoft Azure Attestaion Policy
+/// After the MAA service verifies the Dcap quote, it returns it to the client's policy, which can
+/// be configured on the MAA according to requirements.
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct MAAPolicy {
+	pub is_debuggable: bool,
+	pub product_id: u32,
+	pub sgx_mrenclave: MrEnclave,
+	pub sgx_mrsigner: MrSigner,
+	pub svn: u32,
+	pub tee: Vec<u8>, // should always be `sgx`
+}
+
 #[derive(Encode, Decode, Clone, Copy, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum AttestationType {
 	#[default]
