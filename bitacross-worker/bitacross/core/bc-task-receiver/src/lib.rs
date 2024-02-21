@@ -183,9 +183,9 @@ where
 			context.bitcoin_key_repository.deref(),
 		)
 		.map(|r| aes_encrypt_default(&aes_key, &r).encode()),
-		DirectCall::SignEthereum(signer, aes_key, payload) => sign_ethereum::handle(
+		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
 			signer,
-			payload,
+			msg,
 			context.relayer_registry_lookup.deref(),
 			context.ethereum_key_repository.deref(),
 		)
