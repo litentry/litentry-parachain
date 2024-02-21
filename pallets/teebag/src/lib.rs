@@ -469,7 +469,7 @@ pub mod pallet {
 					);
 				},
 				OperationalMode::Development => {
-					// populate the `ScheduledEnclave` registry if the entry doesn't exist
+					// populate the registry if the entry doesn't exist
 					if !ScheduledEnclave::<T>::contains_key((worker_type, 0)) {
 						ScheduledEnclave::<T>::insert((worker_type, 0), enclave.mrenclave);
 					}
