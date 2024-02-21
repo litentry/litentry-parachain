@@ -68,4 +68,4 @@ pnpm run build
 
 cd /ts-tests
 pnpm install
-NODE_ENV=staging pnpm --filter integration-tests run $TEST
+NODE_ENV=staging pnpm --filter integration-tests test $TEST
