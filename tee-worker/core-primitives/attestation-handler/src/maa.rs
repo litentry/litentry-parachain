@@ -37,13 +37,16 @@ use http_req::{
 	uri::Uri,
 };
 use itp_settings::files::{AZURE_ATTEST_KEY_FILE, AZURE_ATTEST_URL_FILE};
+use itp_sgx_io as io;
 use log::debug;
 use serde::Deserialize;
 use std::{
 	borrow::ToOwned,
-	env, net::TcpStream, string::{String, ToString}, vec::Vec, 
+	env,
+	net::TcpStream,
+	string::{String, ToString},
+	vec::Vec,
 };
-use itp_sgx_io as io;
 
 #[derive(Debug, Deserialize)]
 pub struct MAAResponse {
@@ -80,7 +83,7 @@ impl MAAHandler for MAAService {
 
 		let endpoint = get_azure_attest_url()?;
 		let token = get_azure_attest_api_key()?;
-		let url = endpoint.to_string() + "/attest/SgxEnclave?api-version=2020-10-01";
+		let url = endpoint + "/attest/SgxEnclave?api-version=2020-10-01";
 		let addr = Uri::try_from(&url[..])
 			.map_err(|e| EnclaveError::Other(format!("MAA parse url error: {:?}", e).into()))?;
 
