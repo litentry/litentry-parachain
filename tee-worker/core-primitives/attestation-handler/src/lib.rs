@@ -60,7 +60,3 @@ pub enum RemoteAttestationType {
 	Epid,
 	Dcap,
 }
-
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// #[macro_use]
-// extern crate serde_derive_sgx as serde_derive;

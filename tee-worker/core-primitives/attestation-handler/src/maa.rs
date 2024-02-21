@@ -36,13 +36,14 @@ use http_req::{
 	tls,
 	uri::Uri,
 };
+use itp_settings::files::{AZURE_ATTEST_KEY_FILE, AZURE_ATTEST_URL_FILE};
 use log::debug;
 use serde::Deserialize;
 use std::{
-	net::TcpStream,
-	string::{String, ToString},
-	vec::Vec,
+	borrow::ToOwned,
+	env, net::TcpStream, string::{String, ToString}, vec::Vec, 
 };
+use itp_sgx_io as io;
 
 #[derive(Debug, Deserialize)]
 pub struct MAAResponse {
@@ -77,8 +78,8 @@ impl MAAHandler for MAAService {
 
 		let req_body = serde_json::json!({ "quote": base64::encode(quote) }).to_string();
 
-		let endpoint = "";
-		let token = "";
+		let endpoint = get_azure_attest_url()?;
+		let token = get_azure_attest_api_key()?;
 		let url = endpoint.to_string() + "/attest/SgxEnclave?api-version=2020-10-01";
 		let addr = Uri::try_from(&url[..])
 			.map_err(|e| EnclaveError::Other(format!("MAA parse url error: {:?}", e).into()))?;
@@ -112,6 +113,22 @@ impl MAAHandler for MAAService {
 
 		Self::parse_maa_policy(&writer)
 	}
+}
+
+fn get_azure_attest_url() -> EnclaveResult<String> {
+	// Check if set as an environment variable
+	env::var("AZURE_ATTEST_URL")
+		.or_else(|_| io::read_to_string(AZURE_ATTEST_URL_FILE))
+		.map(|key| key.trim_end().to_owned())
+		.map_err(|e| EnclaveError::Other(e.into()))
+}
+
+fn get_azure_attest_api_key() -> EnclaveResult<String> {
+	// Check if set as an environment variable
+	env::var("AZURE_ATTEST_KEY")
+		.or_else(|_| io::read_to_string(AZURE_ATTEST_KEY_FILE))
+		.map(|key| key.trim_end().to_owned())
+		.map_err(|e| EnclaveError::Other(e.into()))
 }
 
 #[cfg(feature = "test")]
