@@ -140,11 +140,19 @@ itp-stf-state-observer = { path = "core-primitives/stf-state-observer", default-
 itp-top-pool = { path = "core-primitives/top-pool", default-features = false }
 itp-api-client-extensions = { path = "core-primitives/node-api/api-client-extensions" }
 itp-node-api-factory = { path = "core-primitives/node-api/factory", default-features = false }
+itc-rest-client = { path = "core/rest-client", default-features = false }
 
 lc-stf-task-sender = { path = "litentry/core/stf-task/sender", default-features = false }
 litentry-macros = { path = "../primitives/core/macros", default-features = false }
 lc-credentials = { path = "litentry/core/credentials" }
 lc-teebag-storage = { path = "litentry/core/teebag-storage", default-features = false }
+lc-data-providers = { path = "litentry/core/data-providers", default-features = false }
+pallet-parachain-staking = { path = "../pallets/parachain-staking", default-features = false }
+lc-mock-server = { path = "litentry/core/mock-server" }
+lc-service = { path = "litentry/core/service", default-features = false }
+# lc-credentials-v2 = { path = "litentry/core/credentials-v2", default-features = false }
+lc-common = { path = "litentry/core/common", default-features = false }
+lc-assertion-build = { path = "litentry/core/assertion-build", default-features = false }
 
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
@@ -152,7 +160,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 log = { version = "0.4", default-features = false }
 env_logger = "0.9.0"
 hex = { version = "0.4", default-features = false }
-hex-literal = { version = "0.4" }
+hex-literal = { version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 array-bytes = { version = "6.0.0" }
@@ -196,7 +204,10 @@ linked-hash-map = { version = "0.5.2" }
 byteorder = { version = "1.4.2", default-features = false }
 aes = { version = "0.6.0", default-features = false }
 ofb = { version = "0.4.0", default-features = false }
-
+blake2-rfc = { version = "0.2.18", default-features = false }
+rust-base58 = { package = "rust-base58", version = "0.0.4", default-features = false }
+ss58-registry = { version = "1.40", default-features = false }
+http = { version = "0.2", default-features = false }
 
 mio-extras = { default-features = false, git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b" }
 mio_sgx = { package = "mio", git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
@@ -221,7 +232,9 @@ sgx_tcrypto = { branch = "master", git = "https://github.com/apache/teaclave-sgx
 sgx_tse = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
 linked-hash-map_sgx = { package = "linked-hash-map", git = "https://github.com/mesalock-linux/linked-hash-map-sgx" }
-
+hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
+rust-base58-sgx = { git = "https://github.com/mesalock-linux/rust-base58-sgx", package = "rust-base58", features = ["mesalock_sgx"] }
+rand-sgx = { package = "rand", git = "https://github.com/mesalock-linux/rand-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 # Substrate dependencies
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

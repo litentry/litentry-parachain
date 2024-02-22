@@ -8,35 +8,35 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
-thiserror = { version = "1.0.38", optional = true }
+thiserror = { workspace = true, optional = true }
 
 # sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
-thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
+sgx_tstd = { workspace = true, optional = true, features = ["net", "thread"] }
+thiserror_sgx = { workspace = true, optional = true }
 
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-log = { version = "0.4", default-features = false }
+log = { workspace = true }
 
 # internal dependencies
-itc-rest-client = { path = "../../../core/rest-client", default-features = false }
-itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
-itp-stf-primitives = { default-features = false, path = "../../../core-primitives/stf-primitives" }
-itp-types = { path = "../../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+itc-rest-client = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
 
 # litentry
-lc-assertion-build = { path = "../assertion-build", default-features = false }
-lc-common = { path = "../common", default-features = false }
+lc-assertion-build = { workspace = true }
+lc-common = { workspace = true }
 lc-credentials-v2 = { path = "../credentials-v2", default-features = false }
-lc-service = { path = "../service", default-features = false }
+lc-service = { workspace = true }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
-litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
-litentry-primitives = { path = "../../primitives", default-features = false }
+litentry-hex-utils = { workspace = true }
+litentry-primitives = { workspace = true }
 
 [dev-dependencies]
-env_logger = "0.10.0"
-lc-mock-server = { path = "../mock-server" }
+env_logger = { workspace = true }
+lc-mock-server = { workspace = true }
 
 [features]
 default = ["std"]
