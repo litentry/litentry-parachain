@@ -122,12 +122,10 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				{
 					warn!("Failed to update metric for VC Issuance: {:?}", e);
 				}
-			} else {
-				if let Err(e) =
-					context_pool.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance)
-				{
-					warn!("Failed to update metric for VC Issuance: {:?}", e);
-				}
+			} else if let Err(e) =
+				context_pool.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance)
+			{
+				warn!("Failed to update metric for VC Issuance: {:?}", e);
 			}
 		});
 	}
