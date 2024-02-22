@@ -393,7 +393,7 @@ export const createAesRequest = async (
                     ciphertext: compactAddLength(
                         hexToU8a(encryptWithAes(u8aToHex(aesKey), hexToU8a(keyNonce), Buffer.from(top)))
                     ),
-                    add: hexToU8a('0x'),
+                    aad: hexToU8a('0x'),
                     nonce: hexToU8a(keyNonce),
                 })
                 .toU8a(),
