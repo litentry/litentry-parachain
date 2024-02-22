@@ -31,7 +31,6 @@ itp-utils = { path = "../../core-primitives/utils" }
 ita-stf = { path = "../../app-libs/stf" }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives" }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"

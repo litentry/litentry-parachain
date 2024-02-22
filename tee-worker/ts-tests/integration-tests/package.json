@@ -3,24 +3,10 @@
     "license": "ISC",
     "type": "module",
     "scripts": {
-        "check-format": "pnpm exec prettier --check .",
-        "format": "pnpm exec prettier --write .",
-        "test-ii-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_identity.test.ts'",
-        "test-ii-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm --loader=ts-node/esm 'ii_identity.test.ts'",
-        "test-di-substrate-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
-        "test-di-substrate-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
-        "test-di-evm-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
-        "test-di-evm-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
-        "test-di-bitcoin-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_bitcoin_identity.test.ts'",
-        "test-di-bitcoin-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_bitcoin_identity.test.ts'",
-        "test-di-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
-        "test-di-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
-        "test-ii-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
-        "test-ii-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
-        "test-ii-batch:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-        "test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-        "test-data-providers:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'data-providers.test.ts'",
-        "test-data-providers:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'data-providers.test.ts'"
+        "check-format": "prettier --check .",
+        "format": "prettier --write .",
+        "pretest": "eslint .",
+        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm"
     },
     "dependencies": {
         "@noble/ed25519": "^1.7.3",

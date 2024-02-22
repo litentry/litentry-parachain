@@ -53,8 +53,7 @@ use sp_version::RuntimeVersion;
 pub use itp_sgx_runtime_primitives::{
 	constants::SLOT_DURATION,
 	types::{
-		AccountData, AccountId, Address, Balance, BlockNumber, ConvertAccountId, Hash, Header,
-		Index, SgxParentchainTypeConverter, Signature,
+		AccountData, AccountId, Address, Balance, BlockNumber, Hash, Header, Index, Signature,
 	},
 };
 
@@ -131,7 +130,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
 	impl_name: create_runtime_str!("node-template"),
 	authoring_version: 1,
-	spec_version: 102,
+	spec_version: 104,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

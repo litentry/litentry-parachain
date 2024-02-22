@@ -29,13 +29,11 @@ use crate::{
 		parentchain::common::{
 			create_extrinsics_factory, create_integritee_offchain_immediate_import_dispatcher,
 			create_integritee_parentchain_block_importer,
-			create_sidechain_triggered_import_dispatcher,
 		},
 	},
 };
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 use itp_component_container::ComponentGetter;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use itp_types::parentchain::ParentchainId;
 use std::{path::PathBuf, sync::Arc};
 
@@ -51,10 +49,7 @@ pub struct IntegriteeSolochainHandler {
 }
 
 impl IntegriteeSolochainHandler {
-	pub fn init<WorkerModeProvider: ProvideWorkerMode>(
-		_base_path: PathBuf,
-		params: SolochainParams,
-	) -> Result<Self> {
+	pub fn init(_base_path: PathBuf, params: SolochainParams) -> Result<Self> {
 		let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 		let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 		let light_client_seal = GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
@@ -91,15 +86,12 @@ impl IntegriteeSolochainHandler {
 			node_metadata_repository.clone(),
 		)?;
 
-		let import_dispatcher = match WorkerModeProvider::worker_mode() {
-			WorkerMode::OffChainWorker => create_integritee_offchain_immediate_import_dispatcher(
-				stf_executor.clone(),
-				block_importer,
-				validator_accessor.clone(),
-				extrinsics_factory.clone(),
-			)?,
-			WorkerMode::Sidechain => create_sidechain_triggered_import_dispatcher(block_importer),
-		};
+		let import_dispatcher = create_integritee_offchain_immediate_import_dispatcher(
+			stf_executor.clone(),
+			block_importer,
+			validator_accessor.clone(),
+			extrinsics_factory.clone(),
+		)?;
 
 		let solochain_handler = Self {
 			genesis_header,

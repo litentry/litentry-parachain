@@ -34,7 +34,6 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
-use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_counter_vec, register_histogram, register_histogram_vec,
@@ -212,16 +211,6 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 			EnclaveMetric::ParentchainBlockImportTime(time) =>
 				ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainBlockImportTime(time) =>
-				ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotPrepareTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_PREPARE_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotStfExecutionTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_STF_EXECUTION_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotBlockCompositionTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
-				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
 		}
 		Ok(())
 	}

@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-/// A morphling of itp_types::RsaRequest which stems from teerex_primitives::RsaRequest
+/// A morphling of itp_types::RsaRequest which stems from teebag::RsaRequest
 ///
 /// Instead of encrypting the TrustedCallSigned with the TEE's shielding key, we encrypt
 /// it with a 32-byte ephemeral AES key which is generated from the client's side, and

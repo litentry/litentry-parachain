@@ -36,7 +36,7 @@ use crate::{
 use codec::Encode;
 use core::{future::Future, pin::Pin};
 
-use itp_types::{Block, BlockHash as SidechainBlockHash, ShardIdentifier, H256};
+use itp_types::{Block, ShardIdentifier, H256};
 use jsonrpc_core::futures::future::ready;
 use sp_runtime::{
 	generic::BlockId,
@@ -210,8 +210,6 @@ where
 	) -> Option<Arc<Self::InPoolOperation>> {
 		unimplemented!()
 	}
-
-	fn on_block_imported(&self, _hashes: &[TxHash], _block_hash: SidechainBlockHash) {}
 
 	fn update_connection_state(&self, _updates: Vec<(TxHash, (Vec<u8>, bool))>) {}
 

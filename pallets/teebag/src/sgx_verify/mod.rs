@@ -28,7 +28,6 @@
 //!
 //! * https://download.01.org/intel-sgx/linux-1.5/docs/Intel_SGX_Developer_Guide.pdf
 
-#![cfg_attr(not(feature = "std"), no_std)]
 pub extern crate alloc;
 
 use self::{

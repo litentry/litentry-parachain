@@ -26,7 +26,7 @@ pub use litentry::{
 	deactivate_identity::DeactivateIdentityArgs,
 	link_identity::LinkIdentityArgs,
 	request_vc::RequestVCArgs,
-	scheduled_enclave::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
+	scheduled_enclave::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
 };
 pub use shield_funds::ShieldFundsArgs;
 pub use transfer_to_alice_shields_funds::{TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID};

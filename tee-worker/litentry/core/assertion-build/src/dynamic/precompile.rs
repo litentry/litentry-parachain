@@ -28,6 +28,7 @@ use std::{
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
+use std::println;
 
 /* This is precompile contract for making http get requests.
 It will send HTTP GET request to hardcoded URL, parse JSON response, extract value using JSON Pointer and pass it back to calle contract.

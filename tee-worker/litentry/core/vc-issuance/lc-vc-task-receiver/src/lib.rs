@@ -16,7 +16,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
@@ -40,9 +39,9 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
 };
-use lc_stf_task_receiver::StfTaskContext;
+use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::init_vc_task_sender_storage;
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCResponse};
 use litentry_macros::if_production_or;
 use litentry_primitives::{
 	AesRequest, Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
@@ -62,8 +61,6 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
-
-mod vc_handling;
 
 pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
@@ -278,10 +275,9 @@ where
 			req_ext_hash,
 		};
 
-		let vc_request_handler = VCRequestHandler { req, context: context.clone() };
-		let res = vc_request_handler
-			.process()
+		let credential_str = create_credential_str(&req, &context)
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
+		let res = VCResponse { vc_payload: credential_str };
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())

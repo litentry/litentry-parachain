@@ -22,8 +22,6 @@ pub struct TrackInitializationMock;
 impl TrackInitialization for TrackInitializationMock {
 	fn registered_on_parentchain(&self) {}
 
-	fn sidechain_block_produced(&self) {}
-
 	fn worker_for_shard_registered(&self) {}
 }
 

@@ -28,8 +28,6 @@ mod ocall_bridge;
 mod parentchain_handler;
 mod prometheus_metrics;
 mod setup;
-mod sidechain_setup;
-mod sync_block_broadcaster;
 mod sync_state;
 mod tests;
 mod utils;

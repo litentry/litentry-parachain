@@ -3,10 +3,9 @@
     "license": "ISC",
     "type": "module",
     "scripts": {
-        "format": "pnpm exec prettier --write .",
-        "check-format": "pnpm exec prettier --check .",
-        "test-resuming-worker:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --trace-warnings --full-trace --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
-        "test-resuming-worker:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'"
+        "format": "prettier --write .",
+        "check-format": "prettier --check .",
+        "test": "mocha --trace-warnings --full-trace --exit --sort -r ts-node/register --loader=ts-node/esm"
     },
     "dependencies": {
         "chai": "^4.3.6",

@@ -114,17 +114,6 @@ args:
         takes_value: true
         required: false
         default_value: "0"
-    - fail-slot-mode:
-        long: fail-slot-mode
-        help: Set the mode of failing a slot, values [BeforeOnSlot, AfterOnSlot]
-        takes_value: true
-        required: false
-    - fail-at:
-        long: fail-at
-        help: Set the slot to fail on
-        takes_value: true
-        required: false
-        default_value: "0"
 
 subcommands:
     - run:
@@ -161,6 +150,8 @@ subcommands:
         about: Get the public ed25519 key the TEE uses to sign messages and extrinsics
     - dump-ra:
         about: Perform RA and dump cert to disk
+    - wallet:
+        about: Print the bitcoin and ethereum custodian wallet key information, only works in non-prod
     - mrenclave:
         about: Dump mrenclave to stdout. base58 encoded.
     - init-shard:

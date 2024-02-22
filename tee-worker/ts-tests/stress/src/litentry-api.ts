@@ -8,6 +8,7 @@ import {
     u8aToHex,
     u8aConcat,
     stringToU8a,
+    hexToString,
 } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import crypto, { KeyObject, createPublicKey } from 'crypto';
@@ -341,27 +342,25 @@ export async function getEnclave(api: ParachainApiPromise): Promise<{
     mrEnclave: `0x${string}`;
     teeShieldingKey: KeyObject;
 }> {
-    const count = await api.query.teerex.enclaveCount();
+    const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
+    const primaryEnclave = (await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])).unwrap();
 
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as {
-        mrEnclave: `0x${string}`;
-        shieldingKey: `0x${string}`;
-        vcPubkey: `0x${string}`;
-        sgxMetadata: object;
-    };
+    const shieldingPubkeyBytes = api.createType('Option<Bytes>', primaryEnclave.shieldingPubkey).unwrap();
+    const shieldingPubkey = hexToString(shieldingPubkeyBytes.toHex());
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
             alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
-            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+            n: Buffer.from(JSON.parse(shieldingPubkey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(shieldingPubkey).e.reverse()).toString('base64url'),
         },
         format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
-    const mrEnclave = res.mrEnclave;
+    const mrEnclave = primaryEnclave.mrenclave.toHex();
+
     return {
         mrEnclave,
         teeShieldingKey,

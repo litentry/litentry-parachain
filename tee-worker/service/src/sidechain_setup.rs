@@ -57,7 +57,7 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage, ParentchainHandler>(
 	enclave: Arc<Enclave>,
-	register_enclave_xt_header: Option<Header>,
+	register_enclave_xt_header: Header,
 	we_are_primary_validateer: bool,
 	parentchain_handler: Arc<ParentchainHandler>,
 	sidechain_storage: Arc<SidechainStorage>,
@@ -80,7 +80,7 @@ where
 		);
 		updated_header = Some(parentchain_handler.sync_and_import_parentchain_until(
 			last_synced_header,
-			&register_enclave_xt_header.unwrap(),
+			&register_enclave_xt_header,
 			overriden_start_block,
 		)?);
 	}

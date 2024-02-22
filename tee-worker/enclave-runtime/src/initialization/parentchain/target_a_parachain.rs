@@ -104,8 +104,6 @@ impl TargetAParachainHandler {
 			)?,
 			WorkerMode::Sidechain =>
 				create_sidechain_triggered_import_dispatcher_for_target_a(block_importer),
-			WorkerMode::Teeracle =>
-				Arc::new(TargetAParentchainBlockImportDispatcher::new_empty_dispatcher()),
 		};
 
 		let parachain_handler = Self {

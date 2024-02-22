@@ -23,11 +23,11 @@ use itc_parentchain::primitives::{
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
 use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_storage::StorageProof;
-use itp_types::ShardIdentifier;
+use itp_types::{EnclaveFingerprint, ShardIdentifier};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
 
 /// mock for EnclaveBase - use in tests
 pub struct EnclaveMock;
@@ -37,11 +37,7 @@ impl EnclaveBase for EnclaveMock {
 		Ok(())
 	}
 
-	fn init_enclave_sidechain_components(
-		&self,
-		_fail_mode: Option<String>,
-		_fail_at: u64,
-	) -> EnclaveResult<()> {
+	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
 		Ok(())
 	}
 
@@ -93,11 +89,23 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
+	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
+		unreachable!()
+	}
+
+	fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair> {
+		unreachable!()
+	}
+
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
+		unimplemented!()
+	}
+
+	fn publish_wallets(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 }
@@ -112,10 +120,6 @@ impl Sidechain for EnclaveMock {
 		_: bool,
 	) -> EnclaveResult<()> {
 		Ok(())
-	}
-
-	fn execute_trusted_calls(&self) -> EnclaveResult<()> {
-		todo!()
 	}
 
 	fn ignore_parentchain_block_import_validation_until(&self, _until: u32) -> EnclaveResult<()> {

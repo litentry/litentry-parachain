@@ -33,15 +33,16 @@ pub mod sgx_reexport_prelude {
 }
 
 pub mod aes;
+pub mod ecdsa;
 pub mod ed25519;
 pub mod ed25519_derivation;
 pub mod error;
 pub mod key_repository;
 pub mod rsa3072;
-pub mod secp256k1;
+pub mod schnorr;
 pub mod traits;
 
-pub use self::{aes::*, ed25519::*, rsa3072::*};
+pub use self::{aes::*, ecdsa::*, ed25519::*, rsa3072::*};
 pub use error::*;
 pub use traits::*;
 
@@ -60,5 +61,18 @@ pub mod tests {
 
 	pub use super::aes::sgx_tests::{
 		aes_sealing_works, using_get_aes_repository_twice_initializes_key_only_once,
+	};
+
+	pub use super::ecdsa::sgx_tests::{
+		ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key,
+		ecdsa_seal_init_should_create_new_key_if_not_present,
+		ecdsa_seal_init_should_not_change_key_if_exists, ecdsa_sign_should_produce_valid_signature,
+	};
+
+	pub use super::schnorr::sgx_tests::{
+		schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key,
+		schnorr_seal_init_should_create_new_key_if_not_present,
+		schnorr_seal_init_should_not_change_key_if_exists,
+		schnorr_sign_should_produce_valid_signature,
 	};
 }

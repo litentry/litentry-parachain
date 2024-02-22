@@ -35,9 +35,9 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
+use pallet_teebag::ShardIdentifier;
 use sp_core::H256;
 use sp_std::vec::Vec;
-use teerex_primitives::ShardIdentifier;
 
 mod schema;
 pub use schema::*;

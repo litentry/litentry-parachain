@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -43,18 +43,15 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_hex_utils::hex_encode;
 use log::error;
+pub use pallet_teebag::{
+	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
+	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
+};
 pub use parentchain_primitives::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
-	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
-	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
-	BoundedWeb3Network, ContestType, EVMTokenType, ErrorDetail, ErrorString,
-	GenericDiscordRoleType, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
-	VCMPError, VIP3MembershipCardLevel, Web3Network, MINUTES,
+	identity::*, AccountId as ParentchainAccountId, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, Index as ParentchainIndex, ParameterString,
+	Signature as ParentchainSignature, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
@@ -64,7 +61,6 @@ use sp_io::{
 };
 use sp_runtime::traits::Verify;
 use std::string::{String, ToString};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -227,8 +223,6 @@ fn substrate_wrap(msg: &[u8]) -> Vec<u8> {
 fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
 	["\x19Ethereum Signed Message:\n".as_bytes(), msg.len().to_string().as_bytes(), msg].concat()
 }
-
-pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);
 
 // Represent a request that can be decrypted by the enclave
 // Both itp_types::RsaRequest and AesRequest should impelement this

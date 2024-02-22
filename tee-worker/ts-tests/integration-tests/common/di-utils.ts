@@ -94,20 +94,13 @@ export const createSignedTrustedCall = async (
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
 
-    let signature;
-
     // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-    // TODO: any better idiomatic way?
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    const signature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type()]: u8aToHex(
+            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
+        ),
+    });
+
     return parachainApi.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
@@ -221,6 +214,7 @@ export async function createSignedTrustedCallRequestVc(
         [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
     );
 }
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -305,7 +299,8 @@ export const getIdGraphHash = async (
 export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    call: TrustedCallSigned
+    call: TrustedCallSigned,
+    isVcDirect = false
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
@@ -320,7 +315,7 @@ export const sendRequestFromTrustedCall = async (
         trustedOperation.toU8a()
     );
     const request = createJsonRpcRequest(
-        'author_submitAndWatchAesRequest',
+        isVcDirect ? 'author_requestVc' : 'author_submitAndWatchAesRequest',
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );

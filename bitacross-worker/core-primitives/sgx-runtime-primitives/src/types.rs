@@ -21,8 +21,6 @@ use sp_runtime::{
 	MultiSignature, OpaqueExtrinsic,
 };
 
-use litentry_primitives::ParentchainAccountId;
-
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this sgx-runtime.
@@ -66,21 +64,3 @@ pub type Block = BlockG<Header, OpaqueExtrinsic>;
 pub type SignedBlock = SignedBlockG<Block>;
 pub type BlockHash = sp_core::H256;
 pub type ShardIdentifier = sp_core::H256;
-
-// litentry
-pub trait ConvertAccountId {
-	type Input;
-	type Output;
-	fn convert(input: Self::Input) -> Self::Output;
-}
-
-pub struct SgxParentchainTypeConverter;
-
-impl ConvertAccountId for SgxParentchainTypeConverter {
-	type Input = AccountId;
-	type Output = ParentchainAccountId;
-	fn convert(a: AccountId) -> ParentchainAccountId {
-		// it's an identity converter
-		a as ParentchainAccountId
-	}
-}

@@ -21,16 +21,12 @@
 //! These should just be wrappers that transform the C-API structures and call the
 //! actual implementation of the OCalls (using the traits defined in the bridge_api).
 
-pub mod fetch_sidechain_blocks_from_peer;
 pub mod get_ias_socket;
-pub mod get_peers;
 pub mod get_quote;
 pub mod get_qve_report_on_quote;
 pub mod get_update_info;
 pub mod init_quote;
 pub mod ipfs;
-pub mod propose_sidechain_blocks;
 pub mod send_to_parentchain;
-pub mod store_sidechain_blocks;
 pub mod update_metric;
 pub mod worker_request;

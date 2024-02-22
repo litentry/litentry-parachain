@@ -12,7 +12,6 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 itc-direct-rpc-server = { path = "../../core/direct-rpc-server", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }
 itp-types = { path = "../types", default-features = false }
-its-primitives = { path = "../../sidechain/primitives", default-features = false }
 
 # sgx enabled external libraries
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
@@ -52,7 +51,6 @@ sgx = [
 std = [
     "itc-direct-rpc-server/std",
     "itp-types/std",
-    "its-primitives/std",
     "jsonrpc-core",
     "linked-hash-map",
     "log/std",

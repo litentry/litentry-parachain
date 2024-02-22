@@ -176,6 +176,7 @@ describe('Test Vc (direct invocation)', function () {
             await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });
+
     unconfiguredAssertions.forEach(({ description, assertion }) => {
         it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();

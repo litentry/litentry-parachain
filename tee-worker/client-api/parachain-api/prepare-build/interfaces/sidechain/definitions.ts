@@ -79,7 +79,6 @@ export default {
                 NoEligibleIdentity: "Null",
             },
         },
-        // teerex
         ShardIdentifier: "H256",
     },
 };

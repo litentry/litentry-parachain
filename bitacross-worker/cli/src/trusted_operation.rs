@@ -25,7 +25,7 @@ use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
 use ita_stf::{Getter, StfError, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_node_api::api_client::{ParentchainApi, TEEREX};
+use itp_node_api::api_client::{ParentchainApi, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
@@ -33,8 +33,7 @@ use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationSt
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
-use my_node_runtime::RuntimeEvent;
-use pallet_teerex::Event as TeerexEvent;
+use my_node_runtime::{pallet_teebag::Event as TeebagEvent, RuntimeEvent};
 use sp_core::H256;
 use std::{
 	fmt::Debug,
@@ -150,7 +149,7 @@ fn send_indirect_request<T: Decode + Debug>(
 	chain_api.set_signer(signer.into());
 
 	let request = RsaRequest::new(shard, call_encrypted);
-	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
+	let xt = compose_extrinsic!(&chain_api, TEEBAG, "post_opaque_task", request);
 
 	let block_hash = match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock) {
 		Ok(xt_report) => {
@@ -176,14 +175,14 @@ fn send_indirect_request<T: Decode + Debug>(
 		let event_result = subscription.next_events::<RuntimeEvent, Hash>();
 		if let Some(Ok(event_records)) = event_result {
 			for event_record in event_records {
-				if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
-					_signer,
-					confirmed_block_hash,
-					trusted_calls_merkle_root,
-					confirmed_block_number,
-				)) = event_record.event
+				if let RuntimeEvent::Teebag(TeebagEvent::ParentchainBlockProcessed {
+					who: _signer,
+					block_number: confirmed_block_number,
+					block_hash: confirmed_block_hash,
+					task_merkle_root: trusted_calls_merkle_root,
+				}) = event_record.event
 				{
-					info!("Confirmation of ProcessedParentchainBlock received");
+					info!("Confirmation of ParentchainBlockProcessed received");
 					debug!("shard: {:?}", shard);
 					debug!("confirmed parentchain block Hash: {:?}", block_hash);
 					debug!("trusted calls merkle root: {:?}", trusted_calls_merkle_root);
@@ -194,9 +193,9 @@ fn send_indirect_request<T: Decode + Debug>(
 						confirmed_block_hash,
 						confirmed_block_number,
 					) {
-						error!("ProcessedParentchainBlock event: {:?}", e);
+						error!("ParentchainBlockProcessed event: {:?}", e);
 						return Err(TrustedOperationError::Default {
-							msg: format!("ProcessedParentchainBlock event: {:?}", e),
+							msg: format!("ParentchainBlockProcessed event: {:?}", e),
 						})
 					};
 

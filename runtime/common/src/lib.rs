@@ -338,7 +338,7 @@ where
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teerex::Config + pallet_teebag::Config,
+	T: frame_system::Config + pallet_teebag::Config + pallet_teebag::Config,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
@@ -346,8 +346,7 @@ where
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
-				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(&who).is_ok() ||
-					pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
+				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
 				Ok(who),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
@@ -355,22 +354,11 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use test_utils::ias::{
-			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
-			TestEnclave,
-		};
+		use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST8_SIGNER_PUB);
-		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {
-			assert_ok!(pallet_teerex::Pallet::<T>::add_enclave(
-				&signer,
-				&teerex_primitives::Enclave::test_enclave(signer.clone())
-					.with_mr_enclave(TEST8_MRENCLAVE),
-			));
-		}
-
+		let enclave = pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE);
 		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
-			let enclave = pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE);
 			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(&signer, &enclave));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())

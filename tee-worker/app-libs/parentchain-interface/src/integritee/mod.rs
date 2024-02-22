@@ -23,7 +23,7 @@ use crate::{
 	decode_and_log_error,
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, ShieldFundsArgs, UpdateScheduledEnclaveArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
 	},
 	integritee::extrinsic_parser::ParseExtrinsic,
 };
@@ -63,7 +63,7 @@ pub enum IndirectCall {
 	#[codec(index = 5)]
 	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	#[codec(index = 6)]
-	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+	SetScheduledEnclave(SetScheduledEnclaveArgs),
 	#[codec(index = 7)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
 	#[codec(index = 8)]
@@ -88,7 +88,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 				activate_identity.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::RequestVC(request_vc, address, hash) =>
 				request_vc.dispatch(executor, (address.clone(), *hash)),
-			IndirectCall::UpdateScheduledEnclave(update_enclave_args) =>
+			IndirectCall::SetScheduledEnclave(update_enclave_args) =>
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
 				remove_enclave_args.dispatch(executor, ()),
@@ -143,11 +143,7 @@ where
 			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
 			index
 		);
-		if index == metadata.shield_funds_call_indexes().ok()? {
-			log::debug!("executing shield funds call");
-			let args = decode_and_log_error::<ShieldFundsArgs>(call_args)?;
-			Some(IndirectCall::ShieldFunds(args))
-		} else if index == metadata.invoke_call_indexes().ok()? {
+		if index == metadata.post_opaque_task_call_indexes().ok()? {
 			log::debug!("executing invoke call");
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
@@ -168,10 +164,10 @@ where
 			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::RequestVC(args, address, hashed_extrinsic))
-		} else if index == metadata.update_scheduled_enclave().ok()? {
-			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
-			Some(IndirectCall::UpdateScheduledEnclave(args))
-		} else if index == metadata.remove_scheduled_enclave().ok()? {
+		} else if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::SetScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else if index == metadata.batch_all_call_indexes().ok()? {
@@ -193,10 +189,7 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	log::debug!("Received BatchAll including {} calls", call_count.len());
 	for _i in 0..call_count.len() {
 		let index: CallIndex = Decode::decode(call_args).ok()?;
-		if index == metadata.shield_funds_call_indexes().ok()? {
-			let args = decode_and_log_error::<ShieldFundsArgs>(call_args)?;
-			calls.push(IndirectCall::ShieldFunds(args))
-		} else if index == metadata.invoke_call_indexes().ok()? {
+		if index == metadata.post_opaque_task_call_indexes().ok()? {
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			calls.push(IndirectCall::Invoke(args))
 		} else if index == metadata.link_identity_call_indexes().ok()? {
@@ -215,10 +208,10 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
 			let hashed_extrinsic = hash;
 			calls.push(IndirectCall::RequestVC(args, address.clone(), hashed_extrinsic))
-		} else if index == metadata.update_scheduled_enclave().ok()? {
-			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
-			calls.push(IndirectCall::UpdateScheduledEnclave(args))
-		} else if index == metadata.remove_scheduled_enclave().ok()? {
+		} else if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
+			calls.push(IndirectCall::SetScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			calls.push(IndirectCall::RemoveScheduledEnclave(args))
 		}

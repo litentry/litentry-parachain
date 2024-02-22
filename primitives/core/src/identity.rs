@@ -59,7 +59,7 @@ impl Encode for IdentityString {
 	}
 }
 
-#[derive(Eq, PartialEq, Clone, MaxEncodedLen, Default)]
+#[derive(Eq, PartialEq, Clone, MaxEncodedLen, Default, Ord, PartialOrd)]
 pub struct IdentityString {
 	pub inner: IdentityInnerString,
 }
@@ -91,7 +91,9 @@ impl Debug for IdentityString {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen, Ord, PartialOrd,
+)]
 pub struct Address20([u8; 20]);
 
 impl AsRef<[u8; 20]> for Address20 {
@@ -128,7 +130,9 @@ impl Debug for Address20 {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen, Ord, PartialOrd,
+)]
 pub struct Address32([u8; 32]);
 impl AsRef<[u8; 32]> for Address32 {
 	fn as_ref(&self) -> &[u8; 32] {
@@ -197,7 +201,7 @@ impl Debug for Address32 {
 }
 
 // TODO: maybe use macros to reduce verbosity
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, PartialOrd, Ord)]
 pub struct Address33([u8; 33]);
 impl AsRef<[u8; 33]> for Address33 {
 	fn as_ref(&self) -> &[u8; 33] {
@@ -261,7 +265,9 @@ impl Debug for Address33 {
 /// Web2 and Web3 Identity based on handle/public key
 /// We only include the network categories (substrate/evm) without concrete types
 /// see https://github.com/litentry/litentry-parachain/issues/1841
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, EnumIter)]
+#[derive(
+	Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, EnumIter, Ord, PartialOrd,
+)]
 pub enum Identity {
 	// web2
 	#[codec(index = 0)]

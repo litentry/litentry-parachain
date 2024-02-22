@@ -55,13 +55,13 @@ fn get_holding_balance(
 			block_number: "latest".into(),
 		};
 		match address.0 {
-			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param) {
+			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
 				Ok(balance) => {
 					total_balance += balance;
 				},
 				Err(err) => return Err(err),
 			},
-			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param) {
+			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
 				Ok(balance) => {
 					total_balance += balance;
 				},

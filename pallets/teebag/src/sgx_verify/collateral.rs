@@ -15,7 +15,6 @@
 
 */
 
-#![cfg_attr(not(feature = "std"), no_std)]
 pub extern crate alloc;
 
 use crate::{Fmspc, MrSigner, Pcesvn, QeTcb, QuotingEnclave, TcbInfoOnChain, TcbVersionStatus};

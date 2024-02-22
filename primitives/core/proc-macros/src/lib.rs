@@ -35,7 +35,7 @@ This works similar with `#[cfg(..)]` that sets the target only appear on the spe
 ```
 use litentry_proc_macros::reuse;
 
-#[reuse(x, y)] . // Define the cases that the following implementation expands for each one
+#[reuse(x, y)] // Define the cases that the following implementation expands for each one
 mod __ {  // Leave mod name with double discards, which is to be replaced by the cases
 	#[x]  // This item would only appear on case `x`
 	fn u() {

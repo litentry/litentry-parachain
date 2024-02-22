@@ -1226,13 +1226,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-primitives"
-version = "0.1.0"
-dependencies = [
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "concurrent-queue"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4568,25 +4561,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ita-oracle"
-version = "0.9.0"
-dependencies = [
- "itc-rest-client",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "lazy_static",
- "log 0.4.20",
- "parity-scale-codec",
- "serde 1.0.193",
- "sgx_tstd",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.4.0",
-]
-
-[[package]]
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
@@ -4910,7 +4884,6 @@ dependencies = [
  "serde_json 1.0.103",
  "sgx_crypto_helper",
  "sp-core",
- "teerex-primitives",
  "thiserror 1.0.44",
  "url 2.4.0",
  "ws",
@@ -5079,6 +5052,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "log 0.4.20",
+ "pallet-teebag",
  "parity-scale-codec",
  "serde_json 1.0.103",
  "sgx_crypto_helper",
@@ -5086,7 +5060,6 @@ dependencies = [
  "sgx_urts",
  "sp-core",
  "sp-runtime",
- "teerex-primitives",
  "thiserror 1.0.44",
 ]
 
@@ -5238,6 +5211,9 @@ dependencies = [
 [[package]]
 name = "itp-settings"
 version = "0.9.0"
+dependencies = [
+ "litentry-primitives",
+]
 
 [[package]]
 name = "itp-sgx-crypto"
@@ -5287,7 +5263,6 @@ name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
  "frame-system",
- "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -5414,14 +5389,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itp-teerex-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
@@ -5435,10 +5402,10 @@ dependencies = [
  "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
- "itp-teerex-storage",
  "itp-time-utils",
  "itp-types",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
+ "lc-teebag-storage",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -5699,6 +5666,7 @@ dependencies = [
  "itc-rpc-client",
  "itp-node-api",
  "itp-test",
+ "itp-types",
  "its-primitives",
  "its-rpc-handler",
  "its-storage",
@@ -5815,12 +5783,11 @@ name = "its-validateer-fetch"
 version = "0.9.0"
 dependencies = [
  "derive_more",
- "frame-support",
  "itc-parentchain-test",
  "itp-ocall-api",
- "itp-teerex-storage",
  "itp-test",
  "itp-types",
+ "lc-teebag-storage",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -6489,6 +6456,15 @@ dependencies = [
  "thiserror 1.0.9",
  "url 2.1.1",
  "url 2.4.0",
+]
+
+[[package]]
+name = "lc-teebag-storage"
+version = "0.1.0"
+dependencies = [
+ "itp-storage",
+ "itp-types",
+ "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -7189,7 +7165,6 @@ dependencies = [
  "log 0.4.20",
  "pallet-balances",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
- "pallet-teerex",
  "parity-scale-codec",
  "rand 0.8.5",
  "rayon",
@@ -7237,6 +7212,7 @@ dependencies = [
  "litentry-hex-utils",
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
+ "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
@@ -7251,7 +7227,6 @@ dependencies = [
  "sp-std 5.0.0",
  "strum 0.26.1",
  "strum_macros 0.26.1",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -7321,7 +7296,6 @@ dependencies = [
  "serde 1.0.193",
  "serde_derive 1.0.193",
  "serde_json 1.0.103",
- "sgx-verify",
  "sgx_crypto_helper",
  "sgx_types",
  "sp-consensus-grandpa",
@@ -7329,7 +7303,6 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "substrate-api-client",
- "teerex-primitives",
  "thiserror 1.0.44",
  "tokio",
  "warp",
@@ -8810,6 +8783,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-bitacross"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -9196,13 +9184,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-teerex",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -9452,24 +9439,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-teeracle"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "log 0.4.20",
- "pallet-teerex",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "sp-runtime",
- "sp-std 5.0.0",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
- "teeracle-primitives",
-]
-
-[[package]]
 name = "pallet-teerex"
 version = "0.9.0"
 dependencies = [
@@ -9594,12 +9563,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-teebag",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -11292,6 +11261,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-bitacross",
  "pallet-bounties",
  "pallet-bridge",
  "pallet-bridge-transfer",
@@ -11323,7 +11293,6 @@ dependencies = [
  "pallet-sidechain",
  "pallet-sudo",
  "pallet-teebag",
- "pallet-teeracle",
  "pallet-teerex",
  "pallet-timestamp",
  "pallet-tips",
@@ -14553,14 +14522,6 @@ name = "target-lexicon"
 version = "0.12.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d2faeef5759ab89935255b1a4cd98e0baf99d1085e37d36599c625dac49ae8e"
-
-[[package]]
-name = "teeracle-primitives"
-version = "0.1.0"
-dependencies = [
- "common-primitives",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
-]
 
 [[package]]
 name = "teerex-primitives"

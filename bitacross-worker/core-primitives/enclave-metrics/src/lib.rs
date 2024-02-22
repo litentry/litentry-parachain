@@ -37,9 +37,4 @@ pub enum EnclaveMetric {
 	SuccessfulTrustedOperationIncrement(String),
 	FailedTrustedOperationIncrement(String),
 	ParentchainBlockImportTime(Duration),
-	SidechainBlockImportTime(Duration),
-	SidechainSlotPrepareTime(Duration),
-	SidechainSlotStfExecutionTime(Duration),
-	SidechainSlotBlockCompositionTime(Duration),
-	SidechainBlockBroadcastingTime(Duration),
 }

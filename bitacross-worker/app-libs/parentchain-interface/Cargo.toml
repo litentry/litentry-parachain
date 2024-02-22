@@ -16,7 +16,6 @@ itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types
 itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
 # no-std compatible libraries
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
@@ -28,10 +27,11 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
+bc-relayer-registry = { path = "../../bitacross/core/bc-relayer-registry", default-features = false }
 lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -58,14 +58,13 @@ std = [
     "itp-stf-primitives/std",
     "itp-top-pool-author/std",
     "itp-types/std",
-    "itp-utils/std",
     "log/std",
     #substrate
     "sp-core/std",
     "sp-runtime/std",
     "litentry-primitives/std",
     "lc-scheduled-enclave/std",
-    "sp-std/std",
+    "bc-relayer-registry/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -77,4 +76,5 @@ sgx = [
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
+    "bc-relayer-registry/sgx",
 ]

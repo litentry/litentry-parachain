@@ -22,11 +22,12 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 itc-parentchain = { path = "../../core/parentchain/parentchain-crate" }
 itp-enclave-api-ffi = { path = "ffi" }
 itp-settings = { path = "../settings" }
+itp-sgx-crypto = { path = "../sgx/crypto" }
 itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
+pallet-teebag = { path = "../../../pallets/teebag", default-features = false }
 
 [features]
 default = []

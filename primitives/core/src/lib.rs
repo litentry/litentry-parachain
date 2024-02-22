@@ -62,6 +62,12 @@ pub use evm_amount_holding::*;
 mod web3_token;
 pub use web3_token::*;
 
+mod platform_user;
+pub use platform_user::*;
+
+mod web3_nft;
+pub use web3_nft::*;
+
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{

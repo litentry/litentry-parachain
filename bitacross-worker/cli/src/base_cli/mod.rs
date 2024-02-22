@@ -18,9 +18,7 @@
 use crate::{
 	base_cli::commands::{
 		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
-		litentry::set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-		register_tcb_info::RegisterTcbInfoCommand, shield_funds::ShieldFundsCommand,
-		transfer::TransferCommand,
+		register_tcb_info::RegisterTcbInfoCommand, transfer::TransferCommand,
 	},
 	command_utils::*,
 	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
@@ -29,7 +27,8 @@ use base58::ToBase58;
 use chrono::{DateTime, Utc};
 use clap::Subcommand;
 use itc_rpc_client::direct_client::DirectApi;
-use itp_node_api::api_client::PalletTeerexApi;
+use itp_node_api::api_client::PalletTeebagApi;
+use itp_types::WorkerType;
 use sp_core::crypto::Ss58Codec;
 use sp_keystore::Keystore;
 use std::{
@@ -72,17 +71,11 @@ pub enum BaseCommand {
 	/// Register TCB info for FMSPC
 	RegisterTcbInfo(RegisterTcbInfoCommand),
 
-	/// Transfer funds from an parentchain account to an incognito account
-	ShieldFunds(ShieldFundsCommand),
-
 	// Litentry's commands below
 	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
 	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
-
-	/// set heartbeat timeout storage
-	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
 }
 
 impl BaseCommand {
@@ -98,10 +91,8 @@ impl BaseCommand {
 			BaseCommand::ListWorkers => list_workers(cli),
 			BaseCommand::Listen(cmd) => cmd.run(cli),
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
-			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
 	}
 }
@@ -164,29 +155,22 @@ fn print_sgx_metadata_raw(cli: &Cli) -> CliResult {
 
 fn list_workers(cli: &Cli) -> CliResult {
 	let api = get_chain_api(cli);
-	let wcount = api.enclave_count(None).unwrap();
-	println!("number of workers registered: {}", wcount);
+	let enclaves = api.all_enclaves(WorkerType::BitAcross, None).unwrap();
+	println!("number of enclaves registered: {}", enclaves.len());
 
-	let mut mr_enclaves = Vec::with_capacity(wcount as usize);
-
-	for w in 1..=wcount {
-		let enclave = api.enclave(w, None).unwrap();
-		if enclave.is_none() {
-			println!("error reading enclave data");
-			continue
-		};
-		let enclave = enclave.unwrap();
-		let timestamp =
-			DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_millis(enclave.timestamp));
-		let mr_enclave = enclave.mr_enclave.to_base58();
-		println!("Enclave {}", w);
-		println!("   AccountId: {}", enclave.pubkey.to_ss58check());
-		println!("   MRENCLAVE: {}", mr_enclave);
-		println!("   RA timestamp: {}", timestamp);
-		println!("   URL: {}", enclave.url);
-
-		mr_enclaves.push(mr_enclave);
-	}
+	let mr_enclaves = enclaves
+		.iter()
+		.map(|enclave| {
+			println!("Enclave");
+			println!("   MRENCLAVE: {}", enclave.mrenclave.to_base58());
+			let timestamp = DateTime::<Utc>::from(
+				UNIX_EPOCH + Duration::from_millis(enclave.last_seen_timestamp),
+			);
+			println!("   Last seen: {}", timestamp);
+			println!("   URL: {}", String::from_utf8_lossy(enclave.url.as_slice()));
+			enclave.mrenclave.to_base58()
+		})
+		.collect();
 
 	Ok(CliResultOk::MrEnclaveBase58 { mr_enclaves })
 }

@@ -1,0 +1,311 @@
+[
+    {
+        "id": "bnb-domain-holding-amount",
+        "name": ".bnb Holding Amount",
+        "description": "You are holding a certain amount of bnb domain names",
+
+        "assertion": {
+            "id": "BnbDomainHolding",
+            "payload": []
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xf813361F1FADC5c51EFdd0ba5b93e2760a5537EC",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "bnb-999-club-member",
+        "name": "000-999.bnb Domain Holding Amount",
+        "description": "You are holding a certain amount of 000-999.bnb domain names",
+        "assertion": {
+            "id": "BnbDigitDomainClub",
+            "payload": "Bnb999ClubMember"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xA6E3d8B20a5DC12c986AF63E496B8D585117aBBd",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "bnb-10k-club-member",
+        "name": "0000-9999.bnb Holding Amount",
+        "description": "You are holding a certain amount of 0000-9999.bnb domain names",
+        "assertion": {
+            "id": "BnbDigitDomainClub",
+            "payload": "Bnb10KClubMember"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xD673b52E4c560f5d2BD41fd92e7566Ef445DC5AB",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-amp",
+        "name": "AMP Holding Amount",
+        "description": "The number of AMP tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Amp"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x5029bC78f84Fc7F1568FbA1A7808e753691E6675",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-comp",
+        "name": "COMP Holding Amount",
+        "description": "The number of COMP tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Comp"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xA5044e67f0c35b31fe82F2Ded6606b0b91545e98",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-crv",
+        "name": "CRV Holding Amount",
+        "description": "The number of CRV tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Crv"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xd14A1dB9B2Bfe0cE9cC175C24d6B01a16aB84f42",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-cvx",
+        "name": "CVX Holding Amount",
+        "description": "The number of CVX tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Cvx"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xAA1582084c4f588eF9BE86F5eA1a919F86A3eE57",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-dydx",
+        "name": "DYDX Holding Amount",
+        "description": "The number of DYDX tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Dydx"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xe7DAE0cEd7a64d50136D466945257b600e718ACa",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-grt",
+        "name": "GRT Holding Amount",
+        "description": "The number of GRT tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Grt"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x46f80018211D5cBBc988e853A8683501FCA4ee9b",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-gtc",
+        "name": "GTC Holding Amount",
+        "description": "The number of GTC tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Gtc"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x310E035d176ccB589511eD16af7aE7BAc4fc7f83",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-gusd",
+        "name": "GUSD Holding Amount",
+        "description": "The number of GUSD tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Gusd"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x94CFF34005A073911C3179abE89F1677f0D37d42",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-link",
+        "name": "LINK Holding Amount",
+        "description": "The number of LINK tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Link"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xB4e9275827B5f049196f5337F69533937475A3de",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-lit",
+        "name": "LIT Holding Amount",
+        "description": "The number of LIT tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Lit"
+        },
+        "dataProvider": "nodereal",
+        "network": "litentry",
+        "mockDid": "litentry:evm:0xcFD97648df7fB75A545c69106d2049aa3D540334",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-people",
+        "name": "PEOPLE Holding Amount",
+        "description": "The number of PEOPLE tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "People"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x60E4F4bF50204dEeeD8bF4C6216b41BA2e5e453a",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-ton",
+        "name": "TON Holding Amount",
+        "description": "The number of TON tokens you hold > 0",
+        "assertion": {
+            "id": "EvmAmountHolding",
+            "payload": "Ton"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x8BaE6C9EA994d18e6b05cE33aE3e54Fa6F7FcE82",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-trx",
+        "name": "TRX Holding Amount",
+        "description": "The number of TRX tokens you hold > 0",
+        "assertion": {
+            "id": "EvmAmountHolding",
+            "payload": "Trx"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x2d23D597b21F88c55fC6f1E2a84f42b06b7915dF",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-tusd",
+        "name": "TUSD Holding Amount",
+        "description": "The number of TUSD tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Tusd"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xDebc74120F822C0F0e6Eb69dB5F347F574d2D446",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-usdd",
+        "name": "USDD Holding Amount",
+        "description": "The number of USDD tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Usdd"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x31743a08D895d01a49dB98b8F9c8469D92f63745",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-usdt",
+        "name": "USDT Holding Amount",
+        "description": "The number of USDT tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Usdt"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x67aB29354a70732CDC97f372Be81d657ce8822cd",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-holding-amount-matic",
+        "name": "MATIC Holding Amount",
+        "description": "The number of MATIC tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "Matic"
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x3B7BB88dB769923dC2eE1e9e6A83c00A74c407D2",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "token-staking-amount-lit",
+        "name": "LIT Staking Amount",
+        "description": "You are staking a certain amount of LIT",
+        "assertion": {
+            "id": "LitStaking",
+            "payload": []
+        },
+        "dataProvider": "nodereal",
+        "network": "litentry",
+        "mockDid": "litentry:substrate:0xfc7a9dd32be14db4695555aa9a2abd240a8c2160f84ccb403a985701dd13fe50",
+        "mockWeb3Network": "litentry,polkadot",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "weirdo-ghost-gang-holder",
+        "name": "WeirdoGhostGang Holder",
+        "description": "You are WeirdoGhostGang NFT holder",
+        "assertion": {
+            "id": "WeirdoGhostGangHolder",
+            "payload": []
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0xCaA18Cd73E2756c680859F0A97E2C4846D50f71B",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    }
+]
