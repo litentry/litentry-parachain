@@ -32,7 +32,7 @@ use lc_credentials::{
 	Credential,
 };
 
-const TYPE: &str = "NFT Holder";
+const TYPE: &str = "Generic NFT Holder";
 const DESCRIPTION: &str = "You are a holder of a certain kind of NFT";
 
 struct AssertionKeys {

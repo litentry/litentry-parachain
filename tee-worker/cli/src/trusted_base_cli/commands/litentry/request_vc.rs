@@ -18,7 +18,7 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_trusted_operation,
+	trusted_operation::{perform_direct_operation, perform_trusted_operation},
 	Cli, CliResult, CliResultOk,
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
@@ -75,6 +75,9 @@ pub struct RequestVcCommand {
 	/// subcommand to define the vc type requested
 	#[clap(subcommand)]
 	command: Command,
+	/// mode for the request-vc
+	#[clap(short = 's', long, default_value_t = false)]
+	stf: bool,
 }
 
 // see `assertion.rs`
@@ -518,7 +521,13 @@ impl RequestVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+		let maybe_vc = if self.stf {
+			perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top)
+		} else {
+			perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key)
+		};
+
+		match maybe_vc {
 			Ok(mut vc) => {
 				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
 				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
@@ -529,6 +538,7 @@ impl RequestVcCommand {
 				println!("{:?}", e);
 			},
 		}
+
 		Ok(CliResultOk::None)
 	}
 

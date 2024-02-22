@@ -222,7 +222,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
-		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
+		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn latest_sidechain_block_confirmation)]
@@ -468,7 +468,12 @@ pub mod pallet {
 						Error::<T>::EnclaveNotInSchedule
 					);
 				},
-				OperationalMode::Development => (),
+				OperationalMode::Development => {
+					// populate the registry if the entry doesn't exist
+					if !ScheduledEnclave::<T>::contains_key((worker_type, 0)) {
+						ScheduledEnclave::<T>::insert((worker_type, 0), enclave.mrenclave);
+					}
+				},
 			};
 			Self::add_enclave(&sender, &enclave)?;
 			Ok(().into())

@@ -5801,6 +5801,7 @@ version = "0.1.0"
 dependencies = [
  "bc-relayer-registry",
  "core-primitives",
+ "hex 0.4.3",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "k256",
