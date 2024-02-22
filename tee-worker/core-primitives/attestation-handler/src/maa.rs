@@ -39,7 +39,6 @@ use http_req::{
 use itp_settings::files::{AZURE_ATTEST_KEY_FILE, AZURE_ATTEST_URL_FILE};
 use itp_sgx_io as io;
 use log::debug;
-use serde::Deserialize;
 use std::{
 	borrow::ToOwned,
 	env,
@@ -47,11 +46,6 @@ use std::{
 	string::{String, ToString},
 	vec::Vec,
 };
-
-#[derive(Debug, Deserialize)]
-pub struct MAAResponse {
-	pub token: String,
-}
 
 /// Trait to do Microsoft Azure Attestation
 pub trait MAAHandler {
@@ -62,16 +56,23 @@ pub trait MAAHandler {
 pub struct MAAService;
 impl MAAService {
 	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<Vec<u8>> {
-		let maa_res: MAAResponse = serde_json::from_slice(writer)
+		let res: serde_json::Value = serde_json::from_slice(writer)
 			.map_err(|e| EnclaveError::Other(format!("MAA serde json error: {:?}", e).into()))?;
-		let decompose_token: Vec<&str> = maa_res.token.split('.').collect();
-		if decompose_token.len() != 3 {
-			log::error!("JSON Web Tokens must have 3 components delimited by '.' characters.");
+
+		if let Some(token) = res.as_object().and_then(|m| m.get("token").and_then(|v| v.as_str())) {
+			let decompose_token: Vec<&str> = token.split('.').collect();
+			if decompose_token.len() != 3 {
+				log::error!("JSON Web Tokens must have 3 components delimited by '.' characters.");
+			}
+
+			let policy = base64::decode(decompose_token[1]).map_err(|e| {
+				EnclaveError::Other(format!("MAA decode policy error: {:?}", e).into())
+			})?;
+
+			return Ok(policy)
 		}
 
-		let policy = base64::decode(decompose_token[1])
-			.map_err(|e| EnclaveError::Other(format!("MAA decode policy error: {:?}", e).into()))?;
-		Ok(policy)
+		Err(EnclaveError::Other("MAA parse policy error".to_string().into()))
 	}
 }
 
@@ -149,8 +150,8 @@ pub mod tests {
 	// },
 
 	pub fn azure_attest_works() {
-		pub const sample: &[u8] = include_bytes!("./maa_response_sample.json");
-		let ret = MAAService::parse_maa_policy(sample);
+		pub const MAA_SAMPLE: &[u8] = include_bytes!("./maa_response_sample.json");
+		let ret = MAAService::parse_maa_policy(MAA_SAMPLE);
 		assert!(ret.is_ok());
 	}
 }
