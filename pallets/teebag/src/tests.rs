@@ -103,6 +103,10 @@ fn register_enclave_dev_works_with_no_scheduled_enclave() {
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_count(WorkerType::BitAcross), 0);
 		assert_eq!(EnclaveRegistry::<Test>::get(alice()).unwrap(), enclave);
+		assert_eq!(
+			ScheduledEnclave::<Test>::get((WorkerType::default(), 0)).unwrap().to_vec(),
+			TEST4_MRENCLAVE.to_vec()
+		);
 	})
 }
 

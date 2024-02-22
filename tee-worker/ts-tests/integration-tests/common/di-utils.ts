@@ -11,7 +11,6 @@ import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -35,7 +34,7 @@ async function sendRequest(
             const parsed = JSON.parse(data);
             if (parsed.id === request.id) {
                 const result = parsed.result;
-                const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
+                const res = api.createType('WorkerRpcReturnValue', result);
 
                 console.log('Got response: ' + JSON.stringify(res.toHuman()));
 
@@ -105,7 +104,7 @@ export const createSignedTrustedCall = async (
         call: call,
         index: nonce,
         signature: signature,
-    }) as unknown as TrustedCallSigned;
+    });
 };
 
 export const createSignedTrustedGetter = async (
@@ -265,7 +264,7 @@ export async function createSignedTrustedGetterIdGraph(
         signer,
         primeIdentity.toHuman()
     );
-    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter; // @fixme 1878;
+    return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
 export const getSidechainNonce = async (
@@ -274,7 +273,7 @@ export const getSidechainNonce = async (
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
-    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const getter = context.api.createType('Getter', { public: getterPublic });
     const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('Index', nonce);
@@ -290,7 +289,7 @@ export const getIdGraphHash = async (
         ['id_graph_hash', '(LitentryIdentity)'],
         primeIdentity.toHuman()
     );
-    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const getter = context.api.createType('Getter', { public: getterPublic });
     const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('H256', hash);
@@ -407,7 +406,7 @@ export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
     return sidechainRegistry.createType(
         'Vec<(CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()
-    ) as unknown as [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    );
 }
 
 export function getTopHash(parachainApi: ApiPromise, call: TrustedCallSigned) {
