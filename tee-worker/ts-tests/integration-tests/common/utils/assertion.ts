@@ -13,7 +13,7 @@ import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { validateVcSchema } from '@litentry/vc-schema-validator'
+import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
@@ -237,7 +237,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     const schemaResult = await validateVcSchema(vcPayloadJson);
 
-    if (schemaResult.errors) console.log("Schema Validation errors: ", schemaResult.errors)
+    if (schemaResult.errors) console.log('Schema Validation errors: ', schemaResult.errors);
 
     assert.isTrue(schemaResult.isValid, 'Check Vc payload error: vcPayload should be valid');
 
