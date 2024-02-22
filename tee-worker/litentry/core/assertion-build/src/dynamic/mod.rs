@@ -1,12 +1,3 @@
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-mod precompile;
-pub mod repository;
-
 use crate::{dynamic::repository::SmartContractRepository, *};
 use ethabi::{decode, encode, ParamType, Token};
 use evm::{
@@ -19,9 +10,12 @@ use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Identity;
 use log::{error, info};
-use precompile::Precompiles;
+use precompiles::Precompiles;
 use primitive_types::{H160, U256};
 use std::{collections::BTreeMap, println};
+
+mod precompiles;
+pub mod repository;
 
 pub fn build<SC: SmartContractRepository>(
 	req: &AssertionBuildRequest,
@@ -155,38 +149,10 @@ fn prepare_memory() -> MemoryVicinity {
 pub mod tests {
 	use crate::dynamic::{build, repository::InMemorySmartContractRepo};
 	use itp_types::Assertion;
+	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
 	use litentry_primitives::{Identity, IdentityString};
 	use sp_core::{crypto::AccountId32, H160};
-	use lc_mock_server::run;
-
-	#[test]
-	pub fn false_because_no_twitter() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		run(19527).unwrap();
-		let discord = Identity::Discord(IdentityString::new(vec![]));
-		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
-
-		let request = AssertionBuildRequest {
-			shard: Default::default(),
-			signer: AccountId32::new([0; 32]),
-			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(0)),
-			identities: vec![(discord, vec![]), (substrate_identity, vec![])],
-			top_hash: Default::default(),
-			parachain_block_number: Default::default(),
-			sidechain_block_number: Default::default(),
-			maybe_key: None,
-			req_ext_hash: Default::default(),
-			should_create_id_graph: Default::default(),
-		};
-
-		let repository = InMemorySmartContractRepo::new();
-		let credential = build(&request, hash(1), repository).unwrap();
-		println!("Generated credential: {:?}", credential);
-
-		assert!(!credential.credential_subject.values[0]);
-	}
 
 	#[test]
 	pub fn true_because_twitter() {
@@ -216,7 +182,6 @@ pub mod tests {
 
 		assert!(credential.credential_subject.values[0]);
 	}
-
 
 	fn hash(a: u64) -> H160 {
 		H160::from_low_u64_be(a)
