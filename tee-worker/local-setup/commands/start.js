@@ -1,11 +1,10 @@
 import inquirer from "inquirer";
 import { isPortAvailable } from "../utils/port.js";
 import fs from "fs";
-import { $, cd, sleep } from "zx";
+import { $, cd, echo, sleep } from "zx";
 
 const homePath = process.env.PWD.substring(0, process.env.PWD.indexOf("/tee-worker"));
 const sidechainPath = `${homePath}/tee-worker`;
-// NOTE: maybe automatically bump ports if busy?
 
 const envDefaultServicesWithPorts = [
 	"AliceWSPort",
@@ -37,21 +36,65 @@ async function setAwailablePorts() {
 	);
 }
 
+async function genereateLocalConfig() {
+	const today = new Date();
+	const parachainDir = `/tmp/parachain_dev_${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
+
+	echo("Directory has been assigned to:", parachainDir);
+
+	const data = {
+		eth_endpoint: "http://127.0.0.1:8545",
+		eth_address: "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
+		private_key: "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
+		ocw_account: "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
+		genesis_state_path: `${parachainDir}/genesis-state`,
+		genesis_wasm_path: `${parachainDir}/genesis-wasm`,
+		parachain_ws: `ws://localhost:${process.env.CollatorWSPort}`,
+		relaychain_ws: `ws://localhost:${process.env.AliceWSPort}`,
+		bridge_path: "/tmp/parachain_dev/chainbridge",
+	};
+
+	const config_file = `${homePath}/ts-tests/config.local.json`;
+
+	fs.writeFileSync(config_file, JSON.stringify(data, null, 4));
+	echo("Successfully written ", config_file);
+}
+
+async function generateConfigFiles() {
+	const envLocalExampleFile = `${sidechainPath}/ts-tests/integration-tests/.env.local.example`;
+	const envLocalFile = envLocalExampleFile.slice(0, -".example".length);
+
+	const data = fs.readFileSync(envLocalExampleFile, "utf8");
+	const updatedData = data
+		.replace(":2000", `:${process.env.TrustedWorkerPort}`)
+		.replace(":9944", `:${process.env.CollatorWSPort}`);
+
+	fs.writeFileSync(envLocalFile, updatedData);
+	echo("Successfully written ", envLocalFile);
+}
+
 export async function runParachainAndWorker() {
 	await setAwailablePorts();
 
 	const answers = await questionary();
 
+	await generateConfigFiles();
+	if (answers.type !== "remote") {
+		await genereateLocalConfig();
+	}
+
 	await runParachain(answers);
+
 	const workers = await runWorkers(answers);
+
 	process.on("SIGINT", () => {
 		workers.map((worker) => {
-			console.log("killing worker");
-			console.log(worker);
+			echo("killing worker");
+			echo(worker);
 
 			worker.kill();
 		});
-
+		echo("======================TERMINATING======================");
 		process.exit();
 	});
 
@@ -59,25 +102,28 @@ export async function runParachainAndWorker() {
 }
 
 function buildWorkerOpts(workerNumber) {
+	const offset = workerNumber * 10;
 	// run worker
 	const flags = [
 		"--clean-reset",
 		"-T",
 		"wss://localhost",
 		"-P",
-		Number(process.env.TrustedWorkerPort) + workerNumber * 10,
+		Number(process.env.TrustedWorkerPort) + offset,
 		"-w",
-		Number(process.env.UntrustedWorkerPort) + workerNumber * 10,
+		Number(process.env.UntrustedWorkerPort) + offset,
 		"-r",
-		Number(process.env.MuRaPort) + workerNumber * 10,
+		Number(process.env.MuRaPort) + offset,
 		"-h",
-		Number(process.env.UntrustedHttpPort) + workerNumber * 10,
+		Number(process.env.UntrustedHttpPort) + offset,
+		"-p",
+		Number(process.env.CollatorWSPort) + offset,
 		"--enable-mock-server",
 		"--parentchain-start-block",
 		"0",
 		workerNumber === 0 && "--enable-metrics",
 	].filter(Boolean);
-	console.log("index", workerNumber, flags);
+	echo("index", workerNumber, flags);
 
 	const subcommandFlags = ["--skip-ra", "--dev", workerNumber !== 0 && "--request-state"].filter(
 		Boolean
@@ -92,7 +138,7 @@ async function runWorker(index, { flags, subcommandFlags }) {
 	const logFile = `${logDir}/log-${index}.txt`;
 
 	if (!fs.existsSync(cwd)) {
-		console.log("creating dir");
+		echo("creating dir");
 
 		fs.mkdirSync(cwd);
 	}
@@ -108,7 +154,7 @@ async function runWorker(index, { flags, subcommandFlags }) {
 	workerProcess.stdout.on("data", (data) => {
 		logStream.write(data);
 	});
-	await sleep(5000);
+	// await sleep(50000);
 	return workerProcess;
 }
 
@@ -119,7 +165,7 @@ async function runWorkers(answers) {
 		const result = await runWorker(index, options);
 		workers.push(result);
 	}
-	console.log("PROCESS ENV", workers);
+	echo("PROCESS ENV", workers);
 
 	return workers;
 }
