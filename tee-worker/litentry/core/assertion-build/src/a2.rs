@@ -25,7 +25,7 @@ use lc_data_providers::{
 	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
 };
 
-const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
+const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord.
 Server link: https://discord.gg/phBSa3eMX9
 Guild ID: 807161594245152800.";
 const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
@@ -44,7 +44,8 @@ pub fn build(
 		Error::RequestVCFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
@@ -94,7 +95,8 @@ mod tests {
 	#[test]
 	fn build_a2_works() {
 		let mut data_provider_config = DataProviderConfig::new();
-		data_provider_config.set_discord_litentry_url("http://localhost:19527".to_string());
+		data_provider_config
+			.set_litentry_discord_microservice_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
