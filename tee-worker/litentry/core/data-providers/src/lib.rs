@@ -41,7 +41,7 @@ use core::time::Duration;
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as HttpError,
-	http_client::{DefaultSend, HttpClient, Send},
+	http_client::{HttpClient, Send, SendWithCertificateVerification},
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
@@ -50,7 +50,6 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
 
-use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
@@ -201,14 +200,8 @@ pub struct DataProviderConfig {
 	pub moralis_api_key: String,
 }
 
-impl Default for DataProviderConfig {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl DataProviderConfig {
-	pub fn new() -> Self {
+	pub fn new() -> Result<Self, Error> {
 		log::debug!("Initializing data providers config");
 
 		// default prod config
@@ -252,22 +245,22 @@ impl DataProviderConfig {
 		// we allow to override following config properties for non prod dev
 		if_not_production!({
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
-				config.set_twitter_official_url(v);
+				config.set_twitter_official_url(v)?;
 			}
 			if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
-				config.set_discord_official_url(v);
+				config.set_discord_official_url(v)?;
 			}
 			if let Ok(v) = env::var("LITENTRY_DISCORD_MICROSERVICE_URL") {
-				config.set_litentry_discord_microservice_url(v);
+				config.set_litentry_discord_microservice_url(v)?;
 			}
 			if let Ok(v) = env::var("ACHAINABLE_URL") {
-				config.set_achainable_url(v);
+				config.set_achainable_url(v)?;
 			}
 			if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
 				config.set_credential_endpoint(v);
 			}
 			if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
-				config.set_oneblock_notion_url(v);
+				config.set_oneblock_notion_url(v)?;
 			}
 			if let Ok(v) = env::var("SORA_QUIZ_MASTER_ID") {
 				config.set_sora_quiz_master_id(v);
@@ -276,7 +269,7 @@ impl DataProviderConfig {
 				config.set_sora_quiz_attendee_id(v);
 			}
 			if let Ok(v) = env::var("NODEREAL_API_URL") {
-				config.set_nodereal_api_url(v);
+				config.set_nodereal_api_url(v)?;
 			}
 			if let Ok(v) = env::var("NODEREAL_API_RETRY_DELAY") {
 				config.set_nodereal_api_retry_delay(v.parse::<u64>().unwrap());
@@ -285,7 +278,7 @@ impl DataProviderConfig {
 				config.set_nodereal_api_retry_times(v.parse::<u16>().unwrap());
 			}
 			if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
-				config.set_nodereal_api_chain_network_url(v);
+				config.set_nodereal_api_chain_network_url(v)?;
 			}
 			if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
 				config.set_contest_legend_discord_role_id(v);
@@ -297,13 +290,13 @@ impl DataProviderConfig {
 				config.set_contest_participant_discord_role_id(v);
 			}
 			if let Ok(v) = env::var("VIP3_URL") {
-				config.set_vip3_url(v);
+				config.set_vip3_url(v)?;
 			}
 			if let Ok(v) = env::var("GENIIDATA_URL") {
-				config.set_geniidata_url(v);
+				config.set_geniidata_url(v)?;
 			}
 			if let Ok(v) = env::var("LITENTRY_ARCHIVE_URL") {
-				config.set_litentry_archive_url(v);
+				config.set_litentry_archive_url(v)?;
 			}
 			if let Ok(v) = env::var("KARAT_DAO_API_RETRY_DELAY") {
 				config.set_karat_dao_api_retry_delay(v.parse::<u64>().unwrap());
@@ -312,10 +305,10 @@ impl DataProviderConfig {
 				config.set_karat_dao_api_retry_times(v.parse::<u16>().unwrap());
 			}
 			if let Ok(v) = env::var("KARAT_DAO_API_URL") {
-				config.set_karat_dao_api_url(v);
+				config.set_karat_dao_api_url(v)?;
 			}
 			if let Ok(v) = env::var("MORALIS_API_URL") {
-				config.set_moralis_api_url(v);
+				config.set_moralis_api_url(v)?;
 			}
 			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
 				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
@@ -346,31 +339,39 @@ impl DataProviderConfig {
 		if let Ok(v) = env::var("MORALIS_API_KEY") {
 			config.set_moralis_api_key(v);
 		}
-		config
+		Ok(config)
 	}
-	pub fn set_twitter_official_url(&mut self, v: String) {
+	pub fn set_twitter_official_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_twitter_official_url: {:?}", v);
 		self.twitter_official_url = v;
+		Ok(())
 	}
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
 	}
-	pub fn set_discord_official_url(&mut self, v: String) {
+	pub fn set_discord_official_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_discord_official_url: {:?}", v);
 		self.discord_official_url = v;
+		Ok(())
 	}
-	pub fn set_litentry_discord_microservice_url(&mut self, v: String) {
+	pub fn set_litentry_discord_microservice_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_litentry_discord_microservice_url: {:?}", v);
 		self.litentry_discord_microservice_url = v;
+		Ok(())
 	}
 	pub fn set_discord_auth_token(&mut self, v: String) {
 		debug!("set_discord_auth_token: {:?}", v);
 		self.discord_auth_token = v;
 	}
-	pub fn set_achainable_url(&mut self, v: String) {
+	pub fn set_achainable_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_achainable_url: {:?}", v);
 		self.achainable_url = v;
+		Ok(())
 	}
 	pub fn set_achainable_auth_key(&mut self, v: String) {
 		debug!("set_achainable_auth_key: {:?}", v);
@@ -384,9 +385,11 @@ impl DataProviderConfig {
 		debug!("set_oneblock_notion_key: {:?}", v);
 		self.oneblock_notion_key = v;
 	}
-	pub fn set_oneblock_notion_url(&mut self, v: String) {
+	pub fn set_oneblock_notion_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_oneblock_notion_url: {:?}", v);
 		self.oneblock_notion_url = v;
+		Ok(())
 	}
 	pub fn set_sora_quiz_master_id(&mut self, v: String) {
 		debug!("set_sora_quiz_master_id: {:?}", v);
@@ -408,13 +411,17 @@ impl DataProviderConfig {
 		debug!("set_nodereal_api_retry_times: {:?}", v);
 		self.nodereal_api_retry_times = v;
 	}
-	pub fn set_nodereal_api_url(&mut self, v: String) {
+	pub fn set_nodereal_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_nodereal_api_url: {:?}", v);
 		self.nodereal_api_url = v;
+		Ok(())
 	}
-	pub fn set_nodereal_api_chain_network_url(&mut self, v: String) {
+	pub fn set_nodereal_api_chain_network_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_nodereal_api_chain_network_url: {:?}", v);
 		self.nodereal_api_chain_network_url = v;
+		Ok(())
 	}
 	pub fn set_contest_legend_discord_role_id(&mut self, v: String) {
 		debug!("set_contest_legend_discord_role_id: {:?}", v);
@@ -428,21 +435,27 @@ impl DataProviderConfig {
 		debug!("set_contest_participant_discord_role_id: {:?}", v);
 		self.contest_participant_discord_role_id = v;
 	}
-	pub fn set_vip3_url(&mut self, v: String) {
+	pub fn set_vip3_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_vip3_url: {:?}", v);
 		self.vip3_url = v;
+		Ok(())
 	}
-	pub fn set_geniidata_url(&mut self, v: String) {
+	pub fn set_geniidata_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_geniidata_url: {:?}", v);
 		self.geniidata_url = v;
+		Ok(())
 	}
 	pub fn set_geniidata_api_key(&mut self, v: String) {
 		debug!("set_geniidata_api_key: {:?}", v);
 		self.geniidata_api_key = v;
 	}
-	pub fn set_litentry_archive_url(&mut self, v: String) {
+	pub fn set_litentry_archive_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_litentry_archive_url: {:?}", v);
 		self.litentry_archive_url = v;
+		Ok(())
 	}
 	pub fn set_karat_dao_api_retry_delay(&mut self, v: u64) {
 		debug!("set_karat_dao_api_retry_delay: {:?}", v);
@@ -452,9 +465,11 @@ impl DataProviderConfig {
 		debug!("set_karat_dao_api_retry_times: {:?}", v);
 		self.karat_dao_api_retry_times = v;
 	}
-	pub fn set_karat_dao_api_url(&mut self, v: String) {
+	pub fn set_karat_dao_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_karat_dao_api_url: {:?}", v);
 		self.karat_dao_api_url = v;
+		Ok(())
 	}
 	pub fn set_moralis_api_key(&mut self, v: String) {
 		debug!("set_moralis_api_key: {:?}", v);
@@ -468,9 +483,18 @@ impl DataProviderConfig {
 		debug!("set_moralis_api_retry_times: {:?}", v);
 		self.moralis_api_retry_times = v;
 	}
-	pub fn set_moralis_api_url(&mut self, v: String) {
+	pub fn set_moralis_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
 		debug!("set_moralis_api_url: {:?}", v);
 		self.moralis_api_url = v;
+		Ok(())
+	}
+}
+
+fn check_url(v: &String) -> Result<(), Error> {
+	match Url::parse(v) {
+		Ok(_) => Ok(()),
+		Err(err) => Err(Error::Utf8Error(format!("Input url: {:?}, parse error: {:?}", v, err))),
 	}
 }
 
@@ -514,13 +538,6 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 		return Err(Error::Utf8Error("empty string".to_string()))
 	}
 	Ok(tmp.to_string())
-}
-
-pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
-	debug!("base_url: {}", base_url);
-	let base_url = Url::parse(base_url).unwrap();
-	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
-	RestClient::new(http_client, base_url)
 }
 
 pub fn build_client_with_cert(

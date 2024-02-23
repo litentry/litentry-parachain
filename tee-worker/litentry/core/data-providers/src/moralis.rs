@@ -18,12 +18,13 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client, DataProviderConfig, Error, HttpError, ReqPath, RetryOption, RetryableRestGet,
+	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
+	RetryableRestGet,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath,
 };
@@ -45,7 +46,7 @@ pub struct MoralisRequest {
 
 pub struct MoralisClient {
 	retry_option: RetryOption,
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl MoralisClient {
@@ -60,7 +61,7 @@ impl MoralisClient {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert("X-API-Key", api_key.as_str());
-		let client = build_client(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		MoralisClient { retry_option, client }
 	}
@@ -206,7 +207,7 @@ mod tests {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/moralis/";
 
-		let mut config = DataProviderConfig::new();
+		let mut config = DataProviderConfig::new().unwrap();
 		config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
 		config.set_moralis_api_url(url);
 		config
