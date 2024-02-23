@@ -8,7 +8,11 @@ function worker_clippy() {
     cargo clippy --release -- -D warnings
     cargo clippy --release --features evm -- -D warnings
     cargo clippy --release --features sidechain -- -D warnings
-    cargo clippy --release --features teeracle -- -D warnings
+    cargo clippy --release --features offchain-worker -- -D warnings
+}
+
+function bitacross_clippy() {
+    cargo clippy --release -- -D warnings
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
@@ -62,10 +66,10 @@ cd "$root_dir/tee-worker/bin"
 ./litentry-worker test --all
 
 echo "[Step 6], bitacross-worker clippy"
-cd "$root_dir/bitacross-worker" && worker_clippy
+cd "$root_dir/bitacross-worker" && bitacross_clippy
 
 echo "[Step 7], bitacross-worker enclave clippy"
-cd "$root_dir/bitacross-worker/enclave-runtime" && worker_clippy
+cd "$root_dir/bitacross-worker/enclave-runtime" && bitacross_clippy
 
 echo "[Step 8], bitacross-worker cargo test"
 cd "$root_dir/bitacross-worker"

@@ -55,13 +55,13 @@ fn get_holding_balance(
 			block_number: "latest".into(),
 		};
 		match address.0 {
-			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param) {
+			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
 				Ok(balance) => {
 					total_balance += balance;
 				},
 				Err(err) => return Err(err),
 			},
-			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param) {
+			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
 				Ok(balance) => {
 					total_balance += balance;
 				},
@@ -169,7 +169,7 @@ mod tests {
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
-		let mut data_provider_config = DataProviderConfig::default();
+		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
 		data_provider_config.set_nodereal_api_chain_network_url(url);

@@ -114,17 +114,6 @@ args:
         takes_value: true
         required: false
         default_value: "0"
-    - fail-slot-mode:
-        long: fail-slot-mode
-        help: Set the mode of failing a slot, values [BeforeOnSlot, AfterOnSlot]
-        takes_value: true
-        required: false
-    - fail-at:
-        long: fail-at
-        help: Set the slot to fail on
-        takes_value: true
-        required: false
-        default_value: "0"
 
 subcommands:
     - run:
@@ -145,17 +134,6 @@ subcommands:
                 long: request-state
                 short: r
                 help: Run the worker and request key and state provisioning from another worker.
-            - teeracle-interval:
-                required: false
-                long: teeracle-interval
-                short: i
-                help: Set the teeracle exchange rate update interval. Example of accepted syntax <5 seconds 15 minutes 2 hours 1 days> or short <5s15m2h1d>
-                takes_value: true
-            - reregister-teeracle-interval:
-                required: false
-                long: reregister
-                help: Set the teeracle reregistration interval. Example of accepted syntax <5 seconds 15 minutes 2 hours 1 days> or short <5s15m2h1d>
-                takes_value: true
     - request-state:
         about: join a shard by requesting key provisioning from another worker
         args:
@@ -172,6 +150,8 @@ subcommands:
         about: Get the public ed25519 key the TEE uses to sign messages and extrinsics
     - dump-ra:
         about: Perform RA and dump cert to disk
+    - wallet:
+        about: Print the bitcoin and ethereum custodian wallet key information, only works in non-prod
     - mrenclave:
         about: Dump mrenclave to stdout. base58 encoded.
     - init-shard:

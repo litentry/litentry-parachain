@@ -13,13 +13,11 @@
 
 use crate::error::Error;
 
-pub mod direct_request;
 pub mod enclave_base;
 pub mod enclave_test;
 pub mod error;
 pub mod remote_attestation;
 pub mod sidechain;
-pub mod teeracle_api;
 pub mod utils;
 
 #[cfg(feature = "implement-ffi")]

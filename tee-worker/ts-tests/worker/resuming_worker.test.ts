@@ -141,7 +141,7 @@ async function spawnWorkerJob(
             let shard: HexString | undefined = undefined;
 
             const job = spawn(
-                `./litentry-worker`,
+                `RUST_LOG=info ./litentry-worker`,
                 [generateWorkerCommandArguments(command, nodeConfig, workerConfig)],
                 {
                     cwd: workingDir,

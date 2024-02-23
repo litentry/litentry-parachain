@@ -8,6 +8,7 @@ import {
     u8aToHex,
     u8aConcat,
     stringToU8a,
+    hexToString,
 } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import crypto, { KeyObject, createPublicKey } from 'crypto';
@@ -106,7 +107,7 @@ export async function buildValidation(
                           },
                       },
                   },
-    }) as unknown as LitentryValidationData;
+    });
 }
 
 export async function buildIdentityFromWallet(
@@ -118,7 +119,7 @@ export async function buildIdentityFromWallet(
             Evm: wallet.wallet.address,
         };
 
-        return api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
+        return api.createType('CorePrimitivesIdentity', identity);
     }
 
     const { keyringPair } = wallet;
@@ -142,7 +143,7 @@ export async function buildIdentityFromWallet(
         [type]: address,
     };
 
-    return api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
+    return api.createType('CorePrimitivesIdentity', identity);
 }
 
 export function decodeRpcBytesAsString(value: Bytes): string {
@@ -220,7 +221,7 @@ const createPublicGetter = (
     const [variant, argType] = publicGetter;
     const getter = parachainApi.createType('PublicGetter', {
         [variant]: parachainApi.createType(argType, params),
-    }) as unknown as PublicGetter;
+    });
 
     return getter;
 };
@@ -256,7 +257,7 @@ export function createSignedTrustedGetterUserShieldingKey(
         signer,
         subject.toHuman()
     );
-    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
+    return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
 const sendRequestFromGetter = async (
@@ -331,7 +332,7 @@ export const getSidechainNonce = async (
     log: WritableStream<string>
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject.toHuman());
-    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter;
+    const getter = parachainApi.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(teeWorker, parachainApi, mrenclave, teeShieldingKey, getter, log);
     const nonceValue = decodeNonce(nonce.value.toHex());
     return parachainApi.createType('Index', nonceValue) as Index;
@@ -341,27 +342,25 @@ export async function getEnclave(api: ParachainApiPromise): Promise<{
     mrEnclave: `0x${string}`;
     teeShieldingKey: KeyObject;
 }> {
-    const count = await api.query.teerex.enclaveCount();
+    const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
+    const primaryEnclave = (await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])).unwrap();
 
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as {
-        mrEnclave: `0x${string}`;
-        shieldingKey: `0x${string}`;
-        vcPubkey: `0x${string}`;
-        sgxMetadata: object;
-    };
+    const shieldingPubkeyBytes = api.createType('Option<Bytes>', primaryEnclave.shieldingPubkey).unwrap();
+    const shieldingPubkey = hexToString(shieldingPubkeyBytes.toHex());
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
             alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
-            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+            n: Buffer.from(JSON.parse(shieldingPubkey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(shieldingPubkey).e.reverse()).toString('base64url'),
         },
         format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
-    const mrEnclave = res.mrEnclave;
+    const mrEnclave = primaryEnclave.mrenclave.toHex();
+
     return {
         mrEnclave,
         teeShieldingKey,
@@ -404,7 +403,7 @@ const createSignedTrustedCall = async (
         call: call,
         index: nonce,
         signature: signature,
-    }) as unknown as TrustedCallSigned;
+    });
 };
 
 export const subscribeToEventsWithExtHash = async (

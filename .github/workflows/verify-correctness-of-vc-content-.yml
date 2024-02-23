@@ -1,0 +1,73 @@
+name: Verify the correctness of VC content
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker-tag:
+        description: "client tag(e.g. p1.2.0-9701-w0.0.1-101)"
+        required: true
+        default: "latest"
+jobs:
+  test-data-provider:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set ENV
+        run: |
+          # extracting parachain version and worker version from release tag
+          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}} | sed 's/p/v/;s/\(.*\)-w.*/\1/')" >> $GITHUB_ENV
+          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}} | sed 's/.*\(w.*\)/\1/;s/w/v/')" >> $GITHUB_ENV
+
+      - name: Pull litentry image optionally
+        run: |
+          docker pull parity/polkadot
+          docker pull litentry/litentry-worker:$WORKER_TAG
+          docker pull litentry/litentry-cli:$WORKER_TAG
+          docker pull litentry/litentry-parachain:$PARACHAIN_TAG
+
+      - name: Re-tag docker image
+        run: |
+          docker tag litentry/litentry-worker:$WORKER_TAG litentry/litentry-worker:latest
+          docker tag litentry/litentry-cli:$WORKER_TAG litentry/litentry-cli:latest
+          docker tag litentry/litentry-parachain:$PARACHAIN_TAG litentry/litentry-parachain:latest
+
+      - run: docker images --all
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+
+      - name: Run data-provider-test
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-data-provider-test.yml up --no-build --exit-code-from lit-data-provider-test lit-data-provider-test
+
+      - name: Stop docker containers
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-data-provider-test.yml stop
+
+      - name: Collect Docker Logs
+        continue-on-error: true
+        if: always()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          tail: all
+          dest: logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-lit-data-provider-test
+          path: logs
+          if-no-files-found: ignore

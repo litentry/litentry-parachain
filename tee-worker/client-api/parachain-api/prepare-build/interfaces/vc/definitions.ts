@@ -20,7 +20,7 @@ export default {
                 A14: "Null",
                 Achainable: "AchainableParams",
                 A20: "Null",
-                Oneblock: "OneBlockCourseType",
+                OneBlock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
                 __Unused15: "Null",
                 BnbDomainHolding: "Null",
@@ -32,6 +32,8 @@ export default {
                 BRC20AmountHolder: "Null",
                 CyptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
+                PlatformUser: "PlatformUserType",
+                NftHolder: "Web3NftType",
             },
         },
         AssertionSupportedNetwork: {
@@ -58,66 +60,66 @@ export default {
         },
         AchainableAmountHolding: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             amount: "Bytes",
             date: "Bytes",
             token: "Option<Bytes>",
         },
         AchainableAmountToken: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             amount: "Bytes",
             token: "Option<Bytes>",
         },
         AchainableAmount: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             amount: "Bytes",
         },
         AchainableAmounts: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             amount1: "Bytes",
             amount2: "Bytes",
         },
         AchainableBasic: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
         },
         AchainableBetweenPercents: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             greaterThanOrEqualTo: "Bytes",
             lessThanOrEqualTo: "Bytes",
         },
         AchainableClassOfYear: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
         },
         AchainableDateInterval: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             startDate: "Bytes",
             endDate: "Bytes",
         },
         AchainableDatePercent: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             token: "Bytes",
             date: "Bytes",
             percent: "Bytes",
         },
         AchainableDate: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             date: "Bytes",
         },
         AchainableToken: {
             name: "Bytes",
-            chain: "Web3Network",
+            chain: "Vec<Web3Network>",
             token: "Bytes",
         },
-        // Oneblock
+        // OneBlock
         OneBlockCourseType: {
             _enum: ["CourseCompletion", "CourseOutstanding", "CourseParticipation"],
         },
@@ -172,6 +174,14 @@ export default {
                 "Ton",
                 "Trx",
             ],
+        },
+        // PlatformUserType
+        PlatformUserType: {
+            _enum: ["KaratDaoUser"],
+        },
+        // Web3NftType
+        Web3NftType: {
+            _enum: ["WeirdoGhostGang", "Club3Sbt"],
         },
     },
 };

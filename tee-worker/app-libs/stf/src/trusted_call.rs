@@ -43,7 +43,7 @@ pub use ita_sgx_runtime::{Balance, IDGraph, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{
 	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
 use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
 pub use itp_stf_primitives::{
@@ -264,7 +264,8 @@ impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(payload.as_slice()) }
+		// use blake2_256 hash to shorten the payload - see `verify_signature` below
+		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(&blake2_256(&payload)) }
 	}
 }
 
@@ -317,7 +318,9 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+		// make it backwards compatible for now - will deprecate the old way later
+		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
+			|| self.signature.verify(&payload, self.call.sender_identity())
 	}
 
 	fn metric_name(&self) -> &'static str {
@@ -374,7 +377,6 @@ where
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
-		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
@@ -521,16 +523,7 @@ where
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
-				// Send proof of execution on chain.
-				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.publish_hash_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					call_hash,
-					Vec::<itp_types::H256>::new(),
-					b"shielded some funds!".to_vec(),
-				))));
+				// Litentry: we don't have publish_hash call in teebag
 				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]

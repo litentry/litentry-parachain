@@ -478,7 +478,6 @@ pub mod tests {
 		primitives::from_low_u64_to_be_h256,
 	};
 	use codec::{Decode, Encode};
-	use itp_stf_primitives::types::Nonce;
 	use itp_test::mock::stf_mock::{
 		mock_top_direct_trusted_call_signed, mock_trusted_call_signed, TrustedOperationMock,
 	};
@@ -492,7 +491,6 @@ pub mod tests {
 	use sp_application_crypto::ed25519;
 	use sp_core::hash::H256;
 	use sp_runtime::traits::{BlakeTwo256, Extrinsic as ExtrinsicT, Hash, Verify};
-	use std::{collections::HashSet, sync::Mutex};
 
 	#[derive(Clone, PartialEq, Eq, Encode, Decode, core::fmt::Debug, Serialize, MallocSizeOf)]
 	pub enum Extrinsic {
@@ -541,16 +539,10 @@ pub mod tests {
 	/// Test RPC responder
 	pub type TestRpcResponder = RpcResponderMock<H256>;
 
-	const INVALID_NONCE: Nonce = 254;
 	const SOURCE: TrustedOperationSource = TrustedOperationSource::External;
 
 	#[derive(Clone, Debug, Default)]
-	struct TestApi {
-		delay: Arc<Mutex<Option<std::sync::mpsc::Receiver<()>>>>,
-		invalidate: Arc<Mutex<HashSet<H256>>>,
-		clear_requirements: Arc<Mutex<HashSet<H256>>>,
-		add_requirements: Arc<Mutex<HashSet<H256>>>,
-	}
+	struct TestApi {}
 
 	impl ChainApi for TestApi {
 		type Block = tests::Block;

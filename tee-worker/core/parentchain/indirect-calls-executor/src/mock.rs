@@ -58,11 +58,7 @@ where
 			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
 			index
 		);
-		if index == metadata.shield_funds_call_indexes().ok()? {
-			log::debug!("executing shield funds call");
-			let args = ShieldFundsArgs::decode(call_args).unwrap();
-			Some(IndirectCall::ShieldFunds(args))
-		} else if index == metadata.invoke_call_indexes().ok()? {
+		if index == metadata.post_opaque_task_call_indexes().ok()? {
 			log::debug!("executing invoke call");
 			let args = InvokeArgs::decode(call_args).unwrap();
 			Some(IndirectCall::Invoke(args))

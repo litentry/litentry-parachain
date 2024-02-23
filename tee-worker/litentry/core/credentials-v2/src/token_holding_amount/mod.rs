@@ -75,9 +75,9 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 	));
 
 	let mut network_assertion: AssertionLogic = AssertionLogic::new_or();
-	for newtork in token_type.get_supported_networks() {
+	for network in token_type.get_supported_networks() {
 		network_assertion =
-			network_assertion.add_item(create_network_assertion_logic(newtork, token_type.clone()));
+			network_assertion.add_item(create_network_assertion_logic(network, token_type.clone()));
 	}
 
 	assertion = assertion.add_item(network_assertion);

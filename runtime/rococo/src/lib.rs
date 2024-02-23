@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
@@ -41,7 +41,7 @@ use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
-pub use pallet_teeracle;
+pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
@@ -245,7 +245,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9173,
+	spec_version: 9174,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -968,20 +968,6 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const SlashPercent: Percent = Percent::from_percent(20);
-}
-
-impl pallet_drop3::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type PoolId = u64;
-	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-	type Currency = Balances;
-	type WeightInfo = weights::pallet_drop3::WeightInfo<Runtime>;
-	type SlashPercent = SlashPercent;
-	type MaximumNameLength = ConstU32<16>;
-}
-
 impl pallet_extrinsic_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
@@ -1017,11 +1003,11 @@ impl pallet_sidechain::Config for Runtime {
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
 }
 
-impl pallet_teeracle::Config for Runtime {
+impl pallet_teebag::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
-	type MaxWhitelistedReleases = ConstU32<10>;
-	type MaxOracleBlobLen = ConstU32<4096>;
+	type MomentsPerDay = MomentsPerDay;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type MaxEnclaveIdentifier = ConstU32<3>;
 }
 
 impl pallet_identity_management::Config for Runtime {
@@ -1030,6 +1016,12 @@ impl pallet_identity_management::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
+impl pallet_bitacross::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
@@ -1243,18 +1235,18 @@ construct_runtime! {
 		// Rococo pallets
 		ChainBridge: pallet_bridge = 60,
 		BridgeTransfer: pallet_bridge_transfer = 61,
-		Drop3: pallet_drop3 = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
 		VCManagement: pallet_vc_management = 66,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
+		Bitacross: pallet_bitacross = 70,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
-		Teeracle: pallet_teeracle = 92,
+		Teebag: pallet_teebag = 93,
 
 		// Frontier
 		EVM: pallet_evm = 120,
@@ -1331,7 +1323,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// TEE pallets
 			RuntimeCall::Teerex(_) |
 			RuntimeCall::Sidechain(_) |
-			RuntimeCall::Teeracle(_) |
+			RuntimeCall::Teebag(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
@@ -1351,7 +1343,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// So no EVM pallet
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
-			RuntimeCall::AccountFix(_)
+			RuntimeCall::AccountFix(_) |
+			RuntimeCall::Bitacross(_)
 		)
 	}
 }
@@ -1370,7 +1363,6 @@ mod benches {
 		[pallet_proxy, Proxy]
 		[pallet_membership, CouncilMembership]
 		[pallet_multisig, Multisig]
-		[pallet_drop3, Drop3]
 		[paleet_evm, EVM]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
 		[pallet_scheduler, Scheduler]
@@ -1382,7 +1374,6 @@ mod benches {
 		[pallet_vc_management, VCManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
-		[pallet_teeracle, Teeracle]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 	);

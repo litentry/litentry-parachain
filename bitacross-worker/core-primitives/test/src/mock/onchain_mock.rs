@@ -18,21 +18,18 @@
 
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use itp_ocall_api::{
-	EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi,
-	EnclaveSidechainOCallApi,
-};
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_storage::Error::StorageValueUnavailable;
-use itp_teerex_storage::{TeeRexStorage, TeerexStorageKeys};
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash, Enclave, ShardIdentifier,
-	WorkerRequest, WorkerResponse,
+	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId, WorkerRequest,
+	WorkerResponse, WorkerType,
 };
+use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
 use sgx_types::*;
 use sp_core::H256;
-use sp_runtime::{traits::Header as HeaderTrait, AccountId32, OpaqueExtrinsic};
+use sp_runtime::{traits::Header as HeaderTrait, OpaqueExtrinsic};
 use sp_std::prelude::*;
-use std::{collections::HashMap, string::String};
+use std::collections::HashMap;
 
 #[derive(Default, Clone, Debug)]
 pub struct OnchainMock {
@@ -55,11 +52,15 @@ impl OnchainMock {
 	pub fn add_validateer_set<Header: HeaderTrait<Hash = H256>>(
 		mut self,
 		header: &Header,
-		set: Option<Vec<Enclave>>,
+		set: Option<Vec<AccountId>>,
 	) -> Self {
-		let set = set.unwrap_or_else(validateer_set);
-		self.insert_at_header(header, TeeRexStorage::enclave_count(), (set.len() as u64).encode());
-		self.with_storage_entries_at_header(header, into_key_value_storage(set))
+		let set: Vec<AccountId> = set.unwrap_or_else(validateer_set);
+		self.insert_at_header(
+			header,
+			TeebagStorage::enclave_identifier(WorkerType::BitAcross),
+			set.encode(),
+		);
+		self
 	}
 
 	pub fn with_mr_enclave(mut self, mr_enclave: [u8; SGX_HASH_SIZE]) -> Self {
@@ -135,35 +136,6 @@ impl EnclaveAttestationOCallApi for OnchainMock {
 	}
 }
 
-impl EnclaveSidechainOCallApi for OnchainMock {
-	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn store_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn fetch_sidechain_blocks_from_peer<SignedSidechainBlock: Decode>(
-		&self,
-		_last_imported_block_hash: BlockHash,
-		_maybe_until_block_hash: Option<BlockHash>,
-		_shard_identifier: ShardIdentifier,
-	) -> SgxResult<Vec<SignedSidechainBlock>> {
-		Ok(Vec::new())
-	}
-
-	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
-		Ok(Vec::default())
-	}
-}
-
 impl EnclaveMetricsOCallApi for OnchainMock {
 	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
 		Ok(())
@@ -224,20 +196,11 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 	}
 }
 
-pub fn validateer_set() -> Vec<Enclave> {
-	let default_enclave = Enclave::new(
-		AccountId32::from([0; 32]),
-		Default::default(),
-		Default::default(),
-		Default::default(),
-	);
-	vec![default_enclave.clone(), default_enclave.clone(), default_enclave.clone(), default_enclave]
-}
-
-fn into_key_value_storage(validateers: Vec<Enclave>) -> Vec<(Vec<u8>, Enclave)> {
-	validateers
-		.into_iter()
-		.enumerate()
-		.map(|(i, e)| (TeeRexStorage::enclave(i as u64 + 1), e))
-		.collect()
+pub fn validateer_set() -> Vec<AccountId> {
+	vec![
+		AccountId::from([0; 32]),
+		AccountId::from([1; 32]),
+		AccountId::from([2; 32]),
+		AccountId::from([3; 32]),
+	]
 }

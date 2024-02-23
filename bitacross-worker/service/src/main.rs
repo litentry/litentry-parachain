@@ -28,11 +28,7 @@ mod ocall_bridge;
 mod parentchain_handler;
 mod prometheus_metrics;
 mod setup;
-mod sidechain_setup;
-mod sync_block_broadcaster;
 mod sync_state;
-#[cfg(feature = "teeracle")]
-mod teeracle;
 mod tests;
 mod utils;
 mod worker;

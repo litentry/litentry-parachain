@@ -17,10 +17,10 @@
 use super::*;
 use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
-	AccountId, AuraId, Balance, BalancesConfig, CouncilMembershipConfig, GenesisConfig,
-	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig, SudoConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeerexConfig, VCManagementConfig, UNIT,
-	WASM_BINARY,
+	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
+	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
+	SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
+	TeebagOperationalMode, TeerexConfig, VCManagementConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -245,10 +245,16 @@ fn generate_genesis(
 			admin: Some(root_key.clone()),
 			skip_scheduled_enclave_check,
 		},
-		vc_management: VCManagementConfig { admin: Some(root_key) },
+		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
 		ethereum: Default::default(),
 		evm: Default::default(),
+		teebag: TeebagConfig {
+			allow_sgx_debug_mode: true,
+			admin: Some(root_key.clone()),
+			mode: TeebagOperationalMode::Development,
+		},
+		bitacross: BitacrossConfig { admin: Some(root_key) },
 	}
 }

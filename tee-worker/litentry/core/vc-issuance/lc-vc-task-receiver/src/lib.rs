@@ -16,7 +16,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
@@ -26,6 +25,7 @@ use ita_stf::{
 	aes_encrypt_default, helpers::ensure_self, trusted_call_result::RequestVCResult, Getter,
 	OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation, H256,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
@@ -40,9 +40,9 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
 };
-use lc_stf_task_receiver::StfTaskContext;
+use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::init_vc_task_sender_storage;
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCResponse};
 use litentry_macros::if_production_or;
 use litentry_primitives::{
 	AesRequest, Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
@@ -59,11 +59,10 @@ use std::{
 		Arc,
 	},
 	thread,
+	time::Instant,
 	vec::Vec,
 };
 use threadpool::ThreadPool;
-
-mod vc_handling;
 
 pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
@@ -107,14 +106,26 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		let sender_pool = sender.clone();
 
 		pool.execute(move || {
-			if let Err(e) = req.sender.send(handle_request(
+			let response = handle_request(
 				&mut req.request,
-				context_pool,
+				context_pool.clone(),
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
 				sender_pool,
-			)) {
+			);
+			if let Err(e) = req.sender.send(response.clone()) {
 				warn!("Unable to submit response back to the handler: {:?}", e);
+			}
+			if response.is_err() {
+				if let Err(e) =
+					context_pool.ocall_api.update_metric(EnclaveMetric::FailedVCIssuance)
+				{
+					warn!("Failed to update metric for VC Issuance: {:?}", e);
+				}
+			} else if let Err(e) =
+				context_pool.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance)
+			{
+				warn!("Failed to update metric for VC Issuance: {:?}", e);
 			}
 		});
 	}
@@ -143,6 +154,7 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
+	let start_time = Instant::now();
 	let enclave_shielding_key = context
 		.shielding_key
 		.retrieve_key()
@@ -278,10 +290,9 @@ where
 			req_ext_hash,
 		};
 
-		let vc_request_handler = VCRequestHandler { req, context: context.clone() };
-		let res = vc_request_handler
-			.process()
+		let credential_str = create_credential_str(&req, &context)
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
+		let res = VCResponse { vc_payload: credential_str };
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
@@ -292,7 +303,7 @@ where
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			who.clone(),
-			assertion,
+			assertion.clone(),
 			id_graph_hash,
 			req_ext_hash,
 		));
@@ -324,6 +335,13 @@ where
 			.ocall_api
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::VCBuildTime(
+			format!("{:?}", assertion),
+			start_time.elapsed(),
+		)) {
+			warn!("Failed to update metric for vc build time: {:?}", e);
+		}
 
 		Ok(res.encode())
 	} else {

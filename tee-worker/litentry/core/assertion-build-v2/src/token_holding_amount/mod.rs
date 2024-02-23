@@ -38,8 +38,8 @@ pub fn build(
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
-		.flat_map(|(newtwork_type, addresses)| {
-			addresses.into_iter().map(move |address| (newtwork_type, address))
+		.flat_map(|(network_type, addresses)| {
+			addresses.into_iter().map(move |address| (network_type, address))
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 
@@ -287,7 +287,7 @@ mod tests {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
 
-		let mut data_provider_config = DataProviderConfig::default();
+		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
 		data_provider_config.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/");

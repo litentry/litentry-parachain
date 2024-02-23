@@ -19,7 +19,6 @@
 //! hosted on a http server.
 
 use crate::error::ServiceResult;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use log::*;
 use parking_lot::RwLock;
 use std::{default::Default, marker::PhantomData, net::SocketAddr, sync::Arc};
@@ -61,42 +60,19 @@ pub trait IsInitialized {
 pub trait TrackInitialization {
 	fn registered_on_parentchain(&self);
 
-	fn sidechain_block_produced(&self);
-
 	fn worker_for_shard_registered(&self);
 }
 
-pub struct InitializationHandler<WorkerModeProvider> {
+#[derive(Default)]
+pub struct InitializationHandler {
 	registered_on_parentchain: RwLock<bool>,
-	sidechain_block_produced: RwLock<bool>,
 	worker_for_shard_registered: RwLock<bool>,
-	_phantom: PhantomData<WorkerModeProvider>,
 }
 
-// Cannot use #[derive(Default)], because the compiler complains that WorkerModeProvider then
-// also needs to implement Default. Which does not make sense, since it's only used in PhantomData.
-// Explicitly implementing Default solves the problem
-// (see https://stackoverflow.com/questions/59538071/the-trait-bound-t-stddefaultdefault-is-not-satisfied-when-using-phantomda).
-impl<WorkerModeProvider> Default for InitializationHandler<WorkerModeProvider> {
-	fn default() -> Self {
-		Self {
-			registered_on_parentchain: Default::default(),
-			sidechain_block_produced: Default::default(),
-			worker_for_shard_registered: Default::default(),
-			_phantom: Default::default(),
-		}
-	}
-}
-
-impl<WorkerModeProvider> TrackInitialization for InitializationHandler<WorkerModeProvider> {
+impl TrackInitialization for InitializationHandler {
 	fn registered_on_parentchain(&self) {
 		let mut registered_lock = self.registered_on_parentchain.write();
 		*registered_lock = true;
-	}
-
-	fn sidechain_block_produced(&self) {
-		let mut block_produced_lock = self.sidechain_block_produced.write();
-		*block_produced_lock = true;
 	}
 
 	fn worker_for_shard_registered(&self) {
@@ -105,18 +81,9 @@ impl<WorkerModeProvider> TrackInitialization for InitializationHandler<WorkerMod
 	}
 }
 
-impl<WorkerModeProvider> IsInitialized for InitializationHandler<WorkerModeProvider>
-where
-	WorkerModeProvider: ProvideWorkerMode,
-{
+impl IsInitialized for InitializationHandler {
 	fn is_initialized(&self) -> bool {
-		match WorkerModeProvider::worker_mode() {
-			WorkerMode::Sidechain =>
-				*self.registered_on_parentchain.read()
-					&& *self.worker_for_shard_registered.read()
-					&& *self.sidechain_block_produced.read(),
-			_ => *self.registered_on_parentchain.read(),
-		}
+		*self.registered_on_parentchain.read()
 	}
 }
 
@@ -125,48 +92,18 @@ mod tests {
 
 	use super::*;
 
-	struct OffchainWorkerMode;
-	impl ProvideWorkerMode for OffchainWorkerMode {
-		fn worker_mode() -> WorkerMode {
-			WorkerMode::OffChainWorker
-		}
-	}
-
-	struct SidechainWorkerMode;
-	impl ProvideWorkerMode for SidechainWorkerMode {
-		fn worker_mode() -> WorkerMode {
-			WorkerMode::Sidechain
-		}
-	}
-
 	#[test]
 	fn default_handler_is_initialized_returns_false() {
-		let offchain_worker_handler = InitializationHandler::<OffchainWorkerMode>::default();
-		let sidechain_handler = InitializationHandler::<SidechainWorkerMode>::default();
+		let offchain_worker_handler = InitializationHandler::default();
 
 		assert!(!offchain_worker_handler.is_initialized());
-		assert!(!sidechain_handler.is_initialized());
 	}
 
 	#[test]
-	fn in_offchain_worker_mode_parentchain_registration_is_enough_for_initialized() {
-		let initialization_handler = InitializationHandler::<OffchainWorkerMode>::default();
+	fn parentchain_registration_is_enough_for_initialized() {
+		let initialization_handler = InitializationHandler::default();
 		initialization_handler.registered_on_parentchain();
 
 		assert!(initialization_handler.is_initialized());
-	}
-
-	#[test]
-	fn in_sidechain_mode_all_condition_have_to_be_met() {
-		let sidechain_handler = InitializationHandler::<SidechainWorkerMode>::default();
-
-		sidechain_handler.registered_on_parentchain();
-		assert!(!sidechain_handler.is_initialized());
-
-		sidechain_handler.worker_for_shard_registered();
-		assert!(!sidechain_handler.is_initialized());
-
-		sidechain_handler.sidechain_block_produced();
-		assert!(sidechain_handler.is_initialized());
 	}
 }

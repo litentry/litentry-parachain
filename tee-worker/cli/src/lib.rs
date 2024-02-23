@@ -35,8 +35,6 @@ mod command_utils;
 mod error;
 #[cfg(feature = "evm")]
 mod evm;
-#[cfg(feature = "teeracle")]
-mod oracle;
 mod trusted_base_cli;
 mod trusted_cli;
 mod trusted_command_utils;
@@ -61,7 +59,6 @@ pub(crate) const ED25519_KEY_TYPE: KeyTypeId = KeyTypeId(*b"ed25");
 #[clap(version = VERSION)]
 #[clap(author = "Trust Computing GmbH <info@litentry.com>")]
 #[clap(about = "cli tool to interact with litentry-parachain and workers", long_about = None)]
-#[cfg_attr(feature = "teeracle", clap(about = "interact with litentry-parachain and teeracle", long_about = None))]
 #[cfg_attr(feature = "sidechain", clap(about = "interact with litentry-parachain and sidechain", long_about = None))]
 #[cfg_attr(feature = "offchain-worker", clap(about = "interact with litentry-parachain and offchain-worker", long_about = None))]
 #[clap(after_help = "stf subcommands depend on the stf crate this has been built against")]

@@ -25,7 +25,6 @@ thiserror = "1.0"
 urlencoding = "2.1.3"
 
 # scs / integritee
-pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "bar/polkadot-v0.9.42" }
 # `default-features = false` to remove the jsonrpsee dependency.
 substrate-api-client = { default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
@@ -45,24 +44,17 @@ itp-node-api = { path = "../core-primitives/node-api" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
-itp-time-utils = { path = "../core-primitives/time-utils" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
 
 # litentry
-frame-metadata = "15.0.0"
-ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+lc-direct-call = { path = "../litentry/core/direct-call" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
-scale-value = "0.6.0"
-sp-core-hashing = "6.0.0"
 
 [features]
 default = []
-evm = ["ita-stf/evm_std", "pallet-evm"]
-teeracle = []
-sidechain = []
 offchain-worker = []
 production = []
 # dcap feature flag is not used in this crate, but for easier build purposes only it present here as well

@@ -21,9 +21,9 @@ use codec::Decode;
 use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_types::ShardIdentifier;
+use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {
@@ -97,10 +97,10 @@ mod impl_ffi {
 	};
 	use itp_types::ShardIdentifier;
 	use log::*;
+	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
 	use sp_core::ed25519;
-	use teerex_primitives::EnclaveFingerprint;
 
 	impl EnclaveBase for Enclave {
 		fn init(

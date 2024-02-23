@@ -90,6 +90,12 @@ pub enum Web3Network {
 	BitcoinP2wpkh,
 	#[codec(index = 13)]
 	BitcoinP2wsh,
+
+	// evm
+	#[codec(index = 14)]
+	Polygon,
+	#[codec(index = 15)]
+	Arbitrum,
 }
 
 // mainly used in CLI
@@ -114,7 +120,7 @@ impl Web3Network {
 	}
 
 	pub fn is_evm(&self) -> bool {
-		matches!(self, Self::Ethereum | Self::Bsc)
+		matches!(self, Self::Ethereum | Self::Bsc | Self::Polygon | Self::Arbitrum)
 	}
 
 	pub fn is_bitcoin(&self) -> bool {
@@ -175,6 +181,8 @@ mod tests {
 					Web3Network::BitcoinP2sh => false,
 					Web3Network::BitcoinP2wpkh => false,
 					Web3Network::BitcoinP2wsh => false,
+					Web3Network::Polygon => true,
+					Web3Network::Arbitrum => true,
 				}
 			)
 		})
@@ -200,6 +208,8 @@ mod tests {
 					Web3Network::BitcoinP2sh => false,
 					Web3Network::BitcoinP2wpkh => false,
 					Web3Network::BitcoinP2wsh => false,
+					Web3Network::Polygon => false,
+					Web3Network::Arbitrum => false,
 				}
 			)
 		})
@@ -225,6 +235,8 @@ mod tests {
 					Web3Network::BitcoinP2sh => true,
 					Web3Network::BitcoinP2wpkh => true,
 					Web3Network::BitcoinP2wsh => true,
+					Web3Network::Polygon => false,
+					Web3Network::Arbitrum => false,
 				}
 			)
 		})

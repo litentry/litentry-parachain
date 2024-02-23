@@ -29,6 +29,3 @@ pub mod sidechain_event_tests;
 mod state_getter_tests;
 pub mod tests_main;
 pub mod top_pool_tests;
-
-#[cfg(feature = "teeracle")]
-pub mod teeracle_tests;

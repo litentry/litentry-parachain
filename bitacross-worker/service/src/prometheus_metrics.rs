@@ -17,9 +17,6 @@
 
 //! Service for prometheus metrics, hosted on a http server.
 
-#[cfg(feature = "teeracle")]
-use crate::teeracle::teeracle_metrics::update_teeracle_metrics;
-
 use crate::{
 	account_funding::EnclaveAccountInfo,
 	error::{Error, ServiceResult},
@@ -37,7 +34,6 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
-use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_counter_vec, register_histogram, register_histogram_vec,
@@ -215,22 +211,6 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 			EnclaveMetric::ParentchainBlockImportTime(time) =>
 				ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainBlockImportTime(time) =>
-				ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotPrepareTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_PREPARE_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotStfExecutionTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_STF_EXECUTION_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainSlotBlockCompositionTime(time) =>
-				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
-				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			#[cfg(feature = "teeracle")]
-			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
-			#[cfg(not(feature = "teeracle"))]
-			EnclaveMetric::ExchangeRateOracle(_) => {
-				error!("Received Teeracle metric, but Teeracle feature is not enabled, ignoring metric item.")
-			},
 		}
 		Ok(())
 	}

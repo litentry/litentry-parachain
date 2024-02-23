@@ -71,7 +71,7 @@ use itp_component_container::ComponentGetter;
 use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
@@ -101,9 +101,6 @@ pub mod rpc;
 mod sync;
 mod tls_ra;
 pub mod top_pool_execution;
-
-#[cfg(feature = "teeracle")]
-pub mod teeracle;
 
 #[cfg(feature = "test")]
 pub mod test;
@@ -590,10 +587,6 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 	id: &ParentchainId,
 	is_syncing: bool,
 ) -> Result<()> {
-	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
-		trace!("Not importing any parentchain blocks");
-		return Ok(())
-	}
 	trace!(
 		"[{:?}] Dispatching Import of {} blocks and {} events",
 		id,

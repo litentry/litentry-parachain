@@ -206,7 +206,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
-		shard: ShardIdentifierFor<Self::Output>,
 		slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError>;
 
@@ -329,7 +328,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			maybe_latest_target_b_parentchain_header.clone().map(|h| *h.number())
 		);
 
-		let epoch_data = match self.epoch_data(&latest_integritee_parentchain_header, shard, slot) {
+		let epoch_data = match self.epoch_data(&latest_integritee_parentchain_header, slot) {
 			Ok(epoch_data) => epoch_data,
 			Err(e) => {
 				warn!(
@@ -467,7 +466,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 
 		if is_single_worker {
-			error!("Running as single worker, skipping timestamp within slot check")
+			warn!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",

@@ -15,14 +15,6 @@
 
 */
 
-#[cfg(feature = "evm")]
-use sp_core::{H160, U256};
-
-#[cfg(feature = "evm")]
-use std::vec::Vec;
-
-#[cfg(feature = "evm")]
-use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 use crate::{
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, get_storage_by_key_hash},
 	trusted_call_result::TrustedCallResult,
@@ -30,14 +22,9 @@ use crate::{
 };
 use codec::{Compact, Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
-#[cfg(feature = "evm")]
-use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 pub use ita_sgx_runtime::{Balance, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{
-	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-};
+use itp_node_api_metadata::{pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes};
 use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
 pub use itp_stf_primitives::{
 	error::{StfError, StfResult},
@@ -51,9 +38,8 @@ use itp_types::{
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
-	RequestAesKeyNonce, VCMPError, ValidationData, Web3Network,
+	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
+	RequestAesKey, RequestAesKeyNonce, ValidationData,
 };
 use log::*;
 use sp_core::{
@@ -78,53 +64,6 @@ pub enum TrustedCall {
 	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	#[codec(index = 54)]
 	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
-	#[cfg(feature = "evm")]
-	#[codec(index = 55)]
-	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
-	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 56)]
-	evm_call(
-		Identity,
-		H160,
-		H160,
-		Vec<u8>,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
-	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 57)]
-	evm_create(
-		Identity,
-		H160,
-		Vec<u8>,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
-	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 58)]
-	evm_create2(
-		Identity,
-		H160,
-		Vec<u8>,
-		H256,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
 }
 
 impl TrustedCall {
@@ -135,14 +74,6 @@ impl TrustedCall {
 			Self::balance_transfer(sender_identity, ..) => sender_identity,
 			Self::balance_unshield(sender_identity, ..) => sender_identity,
 			Self::balance_shield(sender_identity, ..) => sender_identity,
-			#[cfg(feature = "evm")]
-			Self::evm_withdraw(sender_identity, ..) => sender_identity,
-			#[cfg(feature = "evm")]
-			Self::evm_call(sender_identity, ..) => sender_identity,
-			#[cfg(feature = "evm")]
-			Self::evm_create(sender_identity, ..) => sender_identity,
-			#[cfg(feature = "evm")]
-			Self::evm_create2(sender_identity, ..) => sender_identity,
 		}
 	}
 }
@@ -160,7 +91,8 @@ impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(payload.as_slice()) }
+		// use blake2_256 hash to shorten the payload - see `verify_signature` below
+		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(&blake2_256(&payload)) }
 	}
 }
 
@@ -213,7 +145,8 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
+			|| self.signature.verify(&payload, self.call.sender_identity())
 	}
 }
 
@@ -266,7 +199,6 @@ where
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
-		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
@@ -413,141 +345,7 @@ where
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
-				// Send proof of execution on chain.
-				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.publish_hash_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					call_hash,
-					Vec::<itp_types::H256>::new(),
-					b"shielded some funds!".to_vec(),
-				))));
-				Ok(TrustedCallResult::Empty)
-			},
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_withdraw(from, address, value) => {
-				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
-				ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-						from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					))
-					.map_err(|e| {
-						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
-					})?;
-				Ok(TrustedCallResult::Empty)
-			},
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_call(
-				from,
-				source,
-				target,
-				input,
-				value,
-				gas_limit,
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list,
-			) => {
-				debug!(
-					"evm_call(from: {}, source: {}, target: {})",
-					account_id_to_string(&from),
-					source,
-					target
-				);
-				ita_sgx_runtime::EvmCall::<Runtime>::call {
-					source,
-					target,
-					input,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
-				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
-				Ok(TrustedCallResult::Empty)
-			},
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_create(
-				from,
-				source,
-				init,
-				value,
-				gas_limit,
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list,
-			) => {
-				debug!(
-					"evm_create(from: {}, source: {}, value: {})",
-					account_id_to_string(&from),
-					source,
-					value
-				);
-				let nonce_evm_account =
-					System::account_nonce(&HashedAddressMapping::into_account_id(source));
-				ita_sgx_runtime::EvmCall::<Runtime>::create {
-					source,
-					init,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
-				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
-				let contract_address = evm_create_address(source, nonce_evm_account);
-				info!("Trying to create evm contract with address {:?}", contract_address);
-				Ok(TrustedCallResult::Empty)
-			},
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_create2(
-				from,
-				source,
-				init,
-				salt,
-				value,
-				gas_limit,
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
-				nonce,
-				access_list,
-			) => {
-				debug!(
-					"evm_create2(from: {}, source: {}, value: {})",
-					account_id_to_string(&from),
-					source,
-					value
-				);
-				let code_hash = create_code_hash(&init);
-				ita_sgx_runtime::EvmCall::<Runtime>::create2 {
-					source,
-					init,
-					salt,
-					value,
-					gas_limit,
-					max_fee_per_gas,
-					max_priority_fee_per_gas,
-					nonce,
-					access_list,
-				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
-				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
-				let contract_address = evm_create2_address(source, salt, code_hash);
-				info!("Trying to create evm contract with address {:?}", contract_address);
+				// Litentry: we don't have publish_hash call in teebag
 				Ok(TrustedCallResult::Empty)
 			},
 		}
@@ -607,53 +405,6 @@ where
 	AccountId: PartialEq,
 {
 	pallet_sudo::Pallet::<Runtime>::key().map_or(false, |k| account == &k)
-}
-
-pub fn push_call_imp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	identity: Option<Identity>,
-	e: IMPError,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing IMP::some_error call ...");
-	// TODO: anyway to simplify this? `and_then` won't be applicable here
-	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			identity,
-			e,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
-	}
-}
-
-pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	identity: Option<Identity>,
-	e: VCMPError,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing VCMP::some_error call ...");
-	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			identity,
-			e,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-	}
 }
 
 #[cfg(test)]

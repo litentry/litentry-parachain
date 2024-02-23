@@ -1,62 +1,22 @@
-import { ApiPromise } from '@polkadot/api';
 import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
-import Ajv from 'ajv';
-import { assert, expect } from 'chai';
+import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
 import { parseIdGraph } from './identity-helper';
-import type { PalletIdentityManagementTeeError } from 'sidechain-api';
-import { TeerexPrimitivesEnclave, CorePrimitivesIdentity } from 'parachain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
-import { jsonSchema } from './vc-helper';
 import { aesKey } from '../call';
 import colors from 'colors';
-import {
-    CorePrimitivesErrorErrorDetail,
-    FrameSystemEventRecord,
-    WorkerRpcReturnValue,
-    RequestVCResult,
-    StfError,
-} from 'parachain-api';
+import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
+import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
-
-export async function assertFailedEvent(
-    context: IntegrationTestContext,
-    events: FrameSystemEventRecord[],
-    eventType: 'LinkIdentityFailed' | 'DeactivateIdentityFailed',
-    expectedEvent: CorePrimitivesErrorErrorDetail['type'] | PalletIdentityManagementTeeError['type']
-) {
-    const failedType = context.api.events.identityManagement[eventType];
-    const isFailed = failedType.is.bind(failedType);
-    type EventLike = Parameters<typeof isFailed>[0];
-    const ievents: EventLike[] = events.map(({ event }) => event);
-    const failedEvent = ievents.filter(isFailed);
-    /* 
-      @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
-    */
-    const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
-    assert.lengthOf(failedEvent, 1);
-    if (eventData.isStfError) {
-        assert.equal(
-            eventData.asStfError.toHuman(),
-            expectedEvent,
-            `check event detail is ${expectedEvent}, but is ${eventData.asStfError.toHuman()}`
-        );
-    } else {
-        assert.equal(
-            eventData.type,
-            expectedEvent,
-            `check event detail is  ${expectedEvent}, but is ${eventData.type}`
-        );
-    }
-}
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -134,44 +94,6 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
     });
 }
 
-export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
-    const count = await api.query.teerex.enclaveCount();
-    const enclaveRegistry = (await api.query.teerex.enclaveRegistry(count)) as unknown as TeerexPrimitivesEnclave;
-
-    // Check vc index
-    expect(index).to.be.eq(data.id);
-    const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
-    const message = Buffer.from(data.issuer.mrenclave);
-    const vcPubkey = Buffer.from(hexToU8a(enclaveRegistry.toHuman()['vcPubkey'] as HexString));
-
-    const isValid = await ed.verify(signature, message, vcPubkey);
-
-    expect(isValid).to.be.true;
-    return true;
-}
-
-export async function checkVc(vcObj: any, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
-    const vc = JSON.parse(JSON.stringify(vcObj));
-    delete vc.proof;
-    const signatureValid = await verifySignature(vc, index, proof, api);
-    expect(signatureValid).to.be.true;
-
-    const jsonValid = await checkJson(vcObj, proof);
-    expect(jsonValid).to.be.true;
-    return true;
-}
-
-// Check VC json fields
-export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
-    //check jsonSchema
-    const ajv = new Ajv();
-    const validate = ajv.compile(jsonSchema);
-    const isValid = validate(vc);
-    expect(isValid).to.be.true;
-    expect(vc.type[0] === 'VerifiableCredential' && proofJson.type === 'Ed25519Signature2020').to.be.true;
-    return true;
-}
-
 // for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
 export async function assertIdGraphMutationEvent(
     context: IntegrationTestContext,
@@ -200,7 +122,7 @@ export function assertWorkerError(
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errValueDecoded = context.api.createType('StfError', returnValue.value) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', returnValue.value);
     check(errValueDecoded);
 }
 
@@ -218,7 +140,7 @@ export async function assertIdGraphMutationResult(
         | 'SetIdentityNetworksResult',
     expectedIdGraph: [CorePrimitivesIdentity, boolean][]
 ): Promise<HexString> {
-    const decodedResult = context.api.createType(resultType, returnValue.value) as any;
+    const decodedResult = context.api.createType(resultType, returnValue.value);
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
     assertIdGraph(idGraph, expectedIdGraph);
@@ -229,7 +151,7 @@ export async function assertIdGraphMutationResult(
     return u8aToHex(decodedResult.id_graph_hash);
 }
 
-/* 
+/*
     assert vc
     steps:
     1. check vc status should be Active
@@ -237,13 +159,13 @@ export async function assertIdGraphMutationResult(
     3. check subject
     4. compare vc index with vcPayload id
     5. check vc signature
-    6. compare vc wtih jsonSchema
+    6. check vc schema
 
     TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
 */
 
 export async function assertVc(context: IntegrationTestContext, subject: CorePrimitivesIdentity, data: Bytes) {
-    const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
+    const results = context.api.createType('RequestVCResult', data);
     // step 1
     // decryptWithAes function added 0x prefix
     const vcPayload = results.vc_payload;
@@ -272,23 +194,24 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 4
     // extrac proof and vc without proof json
     const vcPayloadJson = JSON.parse(decryptVcPayload);
-
+    console.log('credential: ', JSON.stringify(vcPayloadJson, null, 2));
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
-    // prepare teerex enclave registry data for further checks
+    // prepare teebag enclave registry data for further checks
     const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
     const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
-    const enclaveCount = await apiAtVcIssuedBlock.query.teerex.enclaveCount();
-
-    const lastRegisteredEnclave = (await apiAtVcIssuedBlock.query.teerex.enclaveRegistry(enclaveCount))
-        .value as TeerexPrimitivesEnclave;
+    const enclaveIdentifier = await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity');
+    const lastRegisteredEnclave = (
+        await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveIdentifier[enclaveIdentifier.length - 1])
+    ).unwrap();
 
     // step 6
     // check vc signature
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
     const message = Buffer.from(JSON.stringify(vcWithoutProof));
-    const vcPubkey = Buffer.from(lastRegisteredEnclave.vcPubkey.value);
+    const vcPubkeyBytes = context.api.createType('Option<Bytes>', lastRegisteredEnclave.vcPubkey).unwrap();
+    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
 
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
@@ -296,7 +219,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 7
     // check VC mrenclave with enclave's mrenclave from registry
     assert.equal(
-        base58.encode(lastRegisteredEnclave.mrEnclave),
+        base58.encode(lastRegisteredEnclave.mrenclave),
         vcPayloadJson.issuer.mrenclave,
         'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
     );
@@ -304,20 +227,20 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 8
     // check vc issuer id
     assert.equal(
-        `did:litentry:substrate:${lastRegisteredEnclave.vcPubkey.value.toHex()}`,
+        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
         vcPayloadJson.issuer.id,
         'Check VC id: it should equals enclaves pubkey from parachains enclave registry'
     );
 
     // step 9
     // validate VC aganist schema
-    const ajv = new Ajv();
 
-    const validate = ajv.compile(jsonSchema);
+    const schemaResult = await validateVcSchema(vcPayloadJson);
 
-    const isValid = validate(vcPayloadJson);
+    if (schemaResult.errors) console.log('Schema Validation errors: ', schemaResult.errors);
 
-    assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
+    assert.isTrue(schemaResult.isValid, 'Check Vc payload error: vcPayload should be valid');
+
     assert.equal(
         vcWithoutProof.type[0],
         'VerifiableCredential',

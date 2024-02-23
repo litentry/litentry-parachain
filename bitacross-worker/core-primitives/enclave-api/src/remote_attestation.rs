@@ -18,8 +18,8 @@
 
 use crate::EnclaveResult;
 use itp_types::ShardIdentifier;
+use pallet_teebag::Fmspc;
 use sgx_types::*;
-use teerex_primitives::Fmspc;
 
 /// Struct that unites all relevant data reported by the QVE
 pub struct QveReport {
@@ -128,8 +128,8 @@ mod impl_ffi {
 	use itp_settings::worker::EXTRINSIC_MAX_SIZE;
 	use itp_types::ShardIdentifier;
 	use log::*;
+	use pallet_teebag::Fmspc;
 	use sgx_types::*;
-	use teerex_primitives::Fmspc;
 
 	const OS_SYSTEM_PATH: &str = "/usr/lib/x86_64-linux-gnu/";
 	const C_STRING_ENDING: &str = "\0";

@@ -18,25 +18,9 @@
 use codec::Encode;
 use itp_stf_primitives::types::ShardIdentifier;
 
-use sp_core::{ed25519, Pair};
 use sp_runtime::traits::{BlakeTwo256, Hash};
 use std::vec;
 
-type Seed = [u8; 32];
-const TEST_SEED: Seed = *b"12345678901234567890123456789012";
-
-pub(crate) fn mr_enclave() -> [u8; 32] {
-	[1u8; 32]
-}
-
 pub(crate) fn shard_id() -> ShardIdentifier {
 	BlakeTwo256::hash(vec![1u8, 2u8, 3u8].as_slice().encode().as_slice())
-}
-
-fn alice_pair() -> ed25519::Pair {
-	ed25519::Pair::from_seed(b"22222678901234567890123456789012")
-}
-
-fn bob_pair() -> ed25519::Pair {
-	ed25519::Pair::from_seed(b"33333378901234567890123456789012")
 }

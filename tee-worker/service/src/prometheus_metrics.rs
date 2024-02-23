@@ -17,9 +17,6 @@
 
 //! Service for prometheus metrics, hosted on a http server.
 
-#[cfg(feature = "teeracle")]
-use crate::teeracle::teeracle_metrics::update_teeracle_metrics;
-
 use crate::{
 	account_funding::EnclaveAccountInfo,
 	error::{Error, ServiceResult},
@@ -41,9 +38,9 @@ use lc_stf_task_sender::RequestType;
 use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
-	proto::MetricFamily, register_counter_vec, register_histogram, register_histogram_vec,
-	register_int_gauge, register_int_gauge_vec, CounterVec, Histogram, HistogramVec, IntGauge,
-	IntGaugeVec,
+	proto::MetricFamily, register_counter, register_counter_vec, register_histogram,
+	register_histogram_vec, register_int_gauge, register_int_gauge_vec, Counter, CounterVec,
+	Histogram, HistogramVec, IntGauge, IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
@@ -90,6 +87,15 @@ lazy_static! {
 			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME: Histogram =
 		register_histogram!("litentry_worker_enclave_sidechain_block_broadcasting_time", "Time taken to broadcast sidechain block")
+			.unwrap();
+	static ref VC_BUILD_TIME: HistogramVec =
+		register_histogram_vec!("litentry_worker_vc_build_time", "Time taken to build a vc", &["variant"])
+			.unwrap();
+	static ref SUCCESSFULL_VC_ISSUANCE_TASKS: Counter =
+		register_counter!("litentry_worker_vc_successfull_issuances_tasks", "Succesfull VC Issuance tasks")
+			.unwrap();
+	static ref FAILED_VC_ISSUANCE_TASKS: Counter =
+		register_counter!("litentry_worker_vc_failed_issuances_tasks", "Failed VC Issuance tasks")
 			.unwrap();
 
 }
@@ -229,11 +235,13 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			#[cfg(feature = "teeracle")]
-			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
-			#[cfg(not(feature = "teeracle"))]
-			EnclaveMetric::ExchangeRateOracle(_) => {
-				error!("Received Teeracle metric, but Teeracle feature is not enabled, ignoring metric item.")
+			EnclaveMetric::VCBuildTime(assertion, time) =>
+				VC_BUILD_TIME.with_label_values(&[&assertion]).observe(time.as_secs_f64()),
+			EnclaveMetric::SuccessfullVCIssuance => {
+				SUCCESSFULL_VC_ISSUANCE_TASKS.inc();
+			},
+			EnclaveMetric::FailedVCIssuance => {
+				FAILED_VC_ISSUANCE_TASKS.inc();
 			},
 		}
 		Ok(())
@@ -281,7 +289,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A14 => "A14",
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
-			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::OneBlock(..) => "OneBlock",
 			Assertion::BnbDomainHolding => "BnbDomainHolding",
 			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
@@ -292,6 +300,8 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
 			Assertion::CryptoSummary => "CryptoSummary",
 			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
+			Assertion::PlatformUser(_) => "PlatformUser",
+			Assertion::NftHolder(_) => "NftHolder",
 		},
 	};
 	inc_stf_calls(category, label);

@@ -11,7 +11,6 @@ import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -35,7 +34,7 @@ async function sendRequest(
             const parsed = JSON.parse(data);
             if (parsed.id === request.id) {
                 const result = parsed.result;
-                const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
+                const res = api.createType('WorkerRpcReturnValue', result);
 
                 console.log('Got response: ' + JSON.stringify(res.toHuman()));
 
@@ -94,25 +93,18 @@ export const createSignedTrustedCall = async (
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
 
-    let signature;
-
     // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-    // TODO: any better idiomatic way?
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    const signature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type()]: u8aToHex(
+            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
+        ),
+    });
+
     return parachainApi.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
         signature: signature,
-    }) as unknown as TrustedCallSigned;
+    });
 };
 
 export const createSignedTrustedGetter = async (
@@ -221,6 +213,7 @@ export async function createSignedTrustedCallRequestVc(
         [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
     );
 }
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -271,7 +264,7 @@ export async function createSignedTrustedGetterIdGraph(
         signer,
         primeIdentity.toHuman()
     );
-    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter; // @fixme 1878;
+    return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
 export const getSidechainNonce = async (
@@ -280,7 +273,7 @@ export const getSidechainNonce = async (
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
-    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const getter = context.api.createType('Getter', { public: getterPublic });
     const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('Index', nonce);
@@ -296,7 +289,7 @@ export const getIdGraphHash = async (
         ['id_graph_hash', '(LitentryIdentity)'],
         primeIdentity.toHuman()
     );
-    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const getter = context.api.createType('Getter', { public: getterPublic });
     const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('H256', hash);
@@ -305,7 +298,8 @@ export const getIdGraphHash = async (
 export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    call: TrustedCallSigned
+    call: TrustedCallSigned,
+    isVcDirect = false
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
@@ -320,7 +314,7 @@ export const sendRequestFromTrustedCall = async (
         trustedOperation.toU8a()
     );
     const request = createJsonRpcRequest(
-        'author_submitAndWatchAesRequest',
+        isVcDirect ? 'author_requestVc' : 'author_submitAndWatchAesRequest',
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
@@ -399,7 +393,7 @@ export const createAesRequest = async (
                     ciphertext: compactAddLength(
                         hexToU8a(encryptWithAes(u8aToHex(aesKey), hexToU8a(keyNonce), Buffer.from(top)))
                     ),
-                    add: hexToU8a('0x'),
+                    aad: hexToU8a('0x'),
                     nonce: hexToU8a(keyNonce),
                 })
                 .toU8a(),
@@ -412,7 +406,7 @@ export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
     return sidechainRegistry.createType(
         'Vec<(CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()
-    ) as unknown as [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    );
 }
 
 export function getTopHash(parachainApi: ApiPromise, call: TrustedCallSigned) {

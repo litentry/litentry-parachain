@@ -20,10 +20,11 @@ use crate::EnclaveResult;
 use codec::Decode;
 use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
+use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_types::ShardIdentifier;
+use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {
@@ -36,11 +37,7 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	) -> EnclaveResult<()>;
 
 	/// Initialize the enclave sidechain components.
-	fn init_enclave_sidechain_components(
-		&self,
-		fail_mode: Option<String>,
-		fail_at: u64,
-	) -> EnclaveResult<()>;
+	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()>;
 
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
@@ -76,16 +73,25 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// retrieve vault account from shard state
 	fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public>;
 
+	/// retrieve the btc wallet key pair, only works in non-prod
+	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair>;
+
+	/// retrieve the eth wallet key pair, only works in non-prod
+	fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair>;
+
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 
 	// litentry
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
+	/// Publish generated wallets on parachain
+	fn publish_wallets(&self) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
 #[cfg(feature = "implement-ffi")]
 mod impl_ffi {
-	use super::EnclaveBase;
+	use super::{ecdsa, schnorr, EnclaveBase};
 	use crate::{error::Error, Enclave, EnclaveResult};
 	use codec::{Decode, Encode};
 	use core::fmt::Debug;
@@ -97,10 +103,10 @@ mod impl_ffi {
 	};
 	use itp_types::ShardIdentifier;
 	use log::*;
+	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
 	use sp_core::ed25519;
-	use teerex_primitives::EnclaveFingerprint;
 
 	impl EnclaveBase for Enclave {
 		fn init(
@@ -134,25 +140,10 @@ mod impl_ffi {
 			Ok(())
 		}
 
-		fn init_enclave_sidechain_components(
-			&self,
-			fail_mode: Option<String>,
-			fail_at: u64,
-		) -> EnclaveResult<()> {
+		fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let encoded_fail_mode = fail_mode.encode();
-			let encoded_fail_at = fail_at.encode();
 
-			let result = unsafe {
-				ffi::init_enclave_sidechain_components(
-					self.eid,
-					&mut retval,
-					encoded_fail_mode.as_ptr(),
-					encoded_fail_mode.len() as u32,
-					encoded_fail_at.as_ptr(),
-					encoded_fail_at.len() as u32,
-				)
-			};
+			let result = unsafe { ffi::init_enclave_sidechain_components(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
@@ -342,6 +333,46 @@ mod impl_ffi {
 			Ok(ed25519::Public::from_raw(pubkey))
 		}
 
+		fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut private_key = [0u8; 32];
+
+			let result = unsafe {
+				ffi::get_bitcoin_wallet_pair(
+					self.eid,
+					&mut retval,
+					private_key.as_mut_ptr(),
+					private_key.len() as u32,
+				)
+			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			schnorr::Pair::from_bytes(&private_key)
+				.map_err(|e| Error::Other(format!("{:?}", e).into()))
+		}
+
+		fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut private_key = [0u8; 32];
+
+			let result = unsafe {
+				ffi::get_ethereum_wallet_pair(
+					self.eid,
+					&mut retval,
+					private_key.as_mut_ptr(),
+					private_key.len() as u32,
+				)
+			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			ecdsa::Pair::from_bytes(&private_key)
+				.map_err(|e| Error::Other(format!("{:?}", e).into()))
+		}
+
 		fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 			let mut mr_enclave = [0u8; MR_ENCLAVE_SIZE];
@@ -373,6 +404,17 @@ mod impl_ffi {
 					old_shard.len() as u32,
 				)
 			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn publish_wallets(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::publish_wallets(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

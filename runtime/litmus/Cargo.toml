@@ -96,7 +96,6 @@ runtime-common = { path = '../common', default-features = false }
 # TEE pallets
 pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
-pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 [dev-dependencies]
@@ -149,7 +148,6 @@ runtime-benchmarks = [
     "pallet-identity-management/runtime-benchmarks",
     "pallet-teerex/runtime-benchmarks",
     "pallet-sidechain/runtime-benchmarks",
-    "pallet-teeracle/runtime-benchmarks",
     "pallet-vc-management/runtime-benchmarks",
 ]
 std = [
@@ -223,7 +221,6 @@ std = [
     "pallet-identity-management/std",
     "pallet-teerex/std",
     "pallet-sidechain/std",
-    "pallet-teeracle/std",
     "pallet-vc-management/std",
 ]
 try-runtime = [
@@ -259,7 +256,6 @@ try-runtime = [
     "pallet-scheduler/try-runtime",
     "pallet-session/try-runtime",
     "pallet-sidechain/try-runtime",
-    "pallet-teeracle/try-runtime",
     "pallet-teerex/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-transaction-payment/try-runtime",

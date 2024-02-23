@@ -25,7 +25,6 @@ pub mod buffer;
 pub mod error;
 pub mod hex;
 pub mod hex_display;
-pub mod macros;
 pub mod stringify;
 
 // Public re-exports.

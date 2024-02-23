@@ -23,10 +23,9 @@ use std::sync::RwLock;
 
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
-use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
-use itp_types::{BlockHash, ShardIdentifier};
-use sgx_types::{sgx_status_t, SgxResult};
-use std::{string::String, vec::Vec};
+use itp_ocall_api::EnclaveMetricsOCallApi;
+use sgx_types::SgxResult;
+use std::vec::Vec;
 
 pub struct SidechainOCallApiMock<SignedSidechainBlockType> {
 	fetch_from_peer_blocks: Option<Vec<SignedSidechainBlockType>>,
@@ -78,47 +77,5 @@ where
 {
 	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
 		Ok(())
-	}
-}
-
-impl<SignedSidechainBlockType> EnclaveSidechainOCallApi
-	for SidechainOCallApiMock<SignedSidechainBlockType>
-where
-	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
-{
-	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn store_sidechain_blocks<SignedSidechainBlock: Encode>(
-		&self,
-		_signed_blocks: Vec<SignedSidechainBlock>,
-	) -> SgxResult<()> {
-		Ok(())
-	}
-
-	fn fetch_sidechain_blocks_from_peer<SignedSidechainBlock: Decode>(
-		&self,
-		_last_imported_block_hash: BlockHash,
-		_maybe_until_block_hash: Option<BlockHash>,
-		_shard_identifier: ShardIdentifier,
-	) -> SgxResult<Vec<SignedSidechainBlock>> {
-		let mut number_of_fetch_calls_lock = self.number_of_fetch_calls.write().unwrap();
-		*number_of_fetch_calls_lock += 1;
-
-		match &self.fetch_from_peer_blocks {
-			Some(blocks) => Ok(blocks
-				.iter()
-				.map(|b| SignedSidechainBlock::decode(&mut b.encode().as_slice()).unwrap())
-				.collect()),
-			None => Err(sgx_status_t::SGX_ERROR_UNEXPECTED),
-		}
-	}
-
-	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
-		Ok(Vec::default())
 	}
 }

@@ -39,11 +39,8 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
-parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -76,7 +73,6 @@ std = [
     "thiserror",
     # litentry
     "litentry-primitives/std",
-    "itp-utils/std",
     "lc-scheduled-enclave/std",
 ]
 sgx = [

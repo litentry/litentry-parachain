@@ -339,8 +339,8 @@ where
 
 	if_not_production!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
-		// state_updateScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
-		io.add_sync_method("state_updateScheduledEnclave", move |params: Params| {
+		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
+		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {
 				Ok((bn, mrenclave)) =>
 					return match hex::decode(&mrenclave) {
@@ -492,8 +492,11 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
-	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
-		.map_err(|e| format!("{:?}", e))?;
+	let ext = generate_dcap_ra_extrinsic_from_quote_internal(
+		url.as_bytes().to_vec(),
+		&encoded_quote_to_forward,
+	)
+	.map_err(|e| format!("{:?}", e))?;
 
 	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain()
 		.map_err(|e| format!("{:?}", e))?;
@@ -522,8 +525,12 @@ fn attesteer_forward_ias_attestation_report_inner(
 		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
-	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
-		.map_err(|e| format!("{:?}", e))?;
+	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(
+		url.as_bytes().to_vec(),
+		&ias_attestation_report,
+		false,
+	)
+	.map_err(|e| format!("{:?}", e))?;
 
 	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain()
 		.map_err(|e| format!("{:?}", e))?;
