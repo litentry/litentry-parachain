@@ -141,6 +141,7 @@ itp-top-pool = { path = "core-primitives/top-pool", default-features = false }
 itp-api-client-extensions = { path = "core-primitives/node-api/api-client-extensions" }
 itp-node-api-factory = { path = "core-primitives/node-api/factory", default-features = false }
 itc-rest-client = { path = "core/rest-client", default-features = false }
+itc-peer-top-broadcaster = { path = "core/peer-top-broadcaster", default-features = false }
 
 lc-stf-task-sender = { path = "litentry/core/stf-task/sender", default-features = false }
 litentry-macros = { path = "../primitives/core/macros", default-features = false }
@@ -208,6 +209,8 @@ blake2-rfc = { version = "0.2.18", default-features = false }
 rust-base58 = { package = "rust-base58", version = "0.0.4", default-features = false }
 ss58-registry = { version = "1.40", default-features = false }
 http = { version = "0.2", default-features = false }
+warp = "0.3"
+threadpool = { version = "1.8.0", default-features = false }
 
 mio-extras = { default-features = false, git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b" }
 mio_sgx = { package = "mio", git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
@@ -235,6 +238,9 @@ linked-hash-map_sgx = { package = "linked-hash-map", git = "https://github.com/m
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 rust-base58-sgx = { git = "https://github.com/mesalock-linux/rust-base58-sgx", package = "rust-base58", features = ["mesalock_sgx"] }
 rand-sgx = { package = "rand", git = "https://github.com/mesalock-linux/rand-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
+threadpool_sgx = { git = "https://github.com/mesalock-linux/rust-threadpool-sgx", package = "threadpool", tag = "sgx_1.1.3" }
+
+
 # Substrate dependencies
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -266,6 +272,7 @@ substrate-fixed = { default-features = false, git = "https://github.com/encointe
 sp-trie = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 parity-util-mem = { version = "0.12.0", default-features = false, features = ["primitive-types"] }
+
 
 # Integritee depdendencies 
 pallet-evm = { default-features = false, git = "https://github.com/integritee-network/frontier.git", branch = "bar/polkadot-v0.9.42" }

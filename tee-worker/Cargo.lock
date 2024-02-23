@@ -6222,7 +6222,7 @@ version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.26",
- "env_logger 0.10.0",
+ "env_logger 0.9.3",
  "hex 0.4.0",
  "http 0.2.1",
  "http 0.2.9",
