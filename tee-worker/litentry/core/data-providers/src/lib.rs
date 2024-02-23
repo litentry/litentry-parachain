@@ -251,7 +251,7 @@ impl DataProviderConfig {
 				config.set_discord_official_url(v)?;
 			}
 			if let Ok(v) = env::var("LITENTRY_DISCORD_MICROSERVICE_URL") {
-				config.set_litentry_discord_microservice_url(v);
+				config.set_litentry_discord_microservice_url(v)?;
 			}
 			if let Ok(v) = env::var("ACHAINABLE_URL") {
 				config.set_achainable_url(v)?;
@@ -357,10 +357,11 @@ impl DataProviderConfig {
 		self.discord_official_url = v;
 		Ok(())
 	}
-	pub fn set_litentry_discord_microservice_url(&mut self, v: String) {
+	pub fn set_litentry_discord_microservice_url(&mut self, v: String) -> Result<(), Error> {
 		check_url(&v)?;
 		debug!("set_litentry_discord_microservice_url: {:?}", v);
 		self.litentry_discord_microservice_url = v;
+		Ok(())
 	}
 	pub fn set_discord_auth_token(&mut self, v: String) {
 		debug!("set_discord_auth_token: {:?}", v);
