@@ -38,7 +38,8 @@ pub fn build(
 		})?;
 
 	let mut has_role_value = false;
-	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp =
@@ -110,7 +111,7 @@ mod tests {
 		let url = run(0).unwrap();
 		let mut data_provider_conifg = DataProviderConfig::new().unwrap();
 
-		data_provider_conifg.set_discord_litentry_url(url);
+		data_provider_conifg.set_litentry_discord_microservice_url(url);
 		data_provider_conifg.set_contest_legend_discord_role_id("1034083718425493544".to_string());
 		data_provider_conifg.set_sora_quiz_attendee_id("1034083718425493544".to_string());
 		data_provider_conifg

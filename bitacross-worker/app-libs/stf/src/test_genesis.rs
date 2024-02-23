@@ -56,7 +56,7 @@ pub fn test_genesis_setup(state: &mut impl SgxExternalitiesTrait) {
 	set_sudo_account(state, &ALICE_ENCODED);
 	trace!("Set new sudo account: {:?}", &ALICE_ENCODED);
 
-	let mut endowees: Vec<(AccountId32, Balance)> = vec![
+	let endowees: Vec<(AccountId32, Balance)> = vec![
 		(endowed_account().public().into(), ENDOWED_ACC_FUNDS),
 		(second_endowed_account().public().into(), SECOND_ENDOWED_ACC_FUNDS),
 		(ALICE_ENCODED.into(), ALICE_FUNDS),

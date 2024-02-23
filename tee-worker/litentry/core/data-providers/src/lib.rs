@@ -168,10 +168,9 @@ impl TokenFromString for ETokenAddress {
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,
-	pub twitter_litentry_url: String,
 	pub twitter_auth_token_v2: String,
 	pub discord_official_url: String,
-	pub discord_litentry_url: String,
+	pub litentry_discord_microservice_url: String,
 	pub discord_auth_token: String,
 	pub achainable_url: String,
 	pub achainable_auth_key: String,
@@ -208,10 +207,10 @@ impl DataProviderConfig {
 		// default prod config
 		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
-			twitter_litentry_url: "http://127.0.0.1:9527".to_string(),
 			twitter_auth_token_v2: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
-			discord_litentry_url: "http://127.0.0.1:9527".to_string(),
+			litentry_discord_microservice_url: "https://tee-microservice.litentry.io:9528"
+				.to_string(),
 			discord_auth_token: "".to_string(),
 			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
@@ -248,14 +247,11 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;
 			}
-			if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
-				config.set_twitter_litentry_url(v)?;
-			}
 			if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
 				config.set_discord_official_url(v)?;
 			}
-			if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
-				config.set_discord_litentry_url(v)?;
+			if let Ok(v) = env::var("LITENTRY_DISCORD_MICROSERVICE_URL") {
+				config.set_litentry_discord_microservice_url(v);
 			}
 			if let Ok(v) = env::var("ACHAINABLE_URL") {
 				config.set_achainable_url(v)?;
@@ -351,12 +347,6 @@ impl DataProviderConfig {
 		self.twitter_official_url = v;
 		Ok(())
 	}
-	pub fn set_twitter_litentry_url(&mut self, v: String) -> Result<(), Error> {
-		check_url(&v)?;
-		debug!("set_twitter_litentry_url: {:?}", v);
-		self.twitter_litentry_url = v;
-		Ok(())
-	}
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
@@ -367,11 +357,10 @@ impl DataProviderConfig {
 		self.discord_official_url = v;
 		Ok(())
 	}
-	pub fn set_discord_litentry_url(&mut self, v: String) -> Result<(), Error> {
+	pub fn set_litentry_discord_microservice_url(&mut self, v: String) {
 		check_url(&v)?;
-		debug!("set_discord_litentry_url: {:?}", v);
-		self.discord_litentry_url = v;
-		Ok(())
+		debug!("set_litentry_discord_microservice_url: {:?}", v);
+		self.litentry_discord_microservice_url = v;
 	}
 	pub fn set_discord_auth_token(&mut self, v: String) {
 		debug!("set_discord_auth_token: {:?}", v);

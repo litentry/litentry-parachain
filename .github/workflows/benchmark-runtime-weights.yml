@@ -30,7 +30,7 @@ on:
         required: true
 
 env:
-  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }}  # remote AWS host to run benchmarking
+  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }} # remote AWS host to run benchmarking
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
   BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
   DOCKER_BUILDKIT: 1
@@ -66,7 +66,7 @@ jobs:
           ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
       - name: Dockerhub login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
