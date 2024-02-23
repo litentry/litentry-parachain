@@ -91,11 +91,11 @@ lazy_static! {
 	static ref VC_BUILD_TIME: HistogramVec =
 		register_histogram_vec!("litentry_worker_vc_build_time", "Time taken to build a vc", &["variant"])
 			.unwrap();
-	static ref VC_SUCCESSFULL_RPC_CALLS: Counter =
-		register_counter!("litentry_worker_vc_successfull_issuances", "Succesfull VC Issuance RPC calls")
+	static ref SUCCESSFULL_VC_ISSUANCE_TASKS: Counter =
+		register_counter!("litentry_worker_vc_successfull_issuances_tasks", "Succesfull VC Issuance tasks")
 			.unwrap();
-	static ref VC_FAILED_RPC_CALLS: Counter =
-		register_counter!("litentry_worker_vc_failed_issuances", "Failed VC Issuance RPC calls")
+	static ref FAILED_VC_ISSUANCE_TASKS: Counter =
+		register_counter!("litentry_worker_vc_failed_issuances_tasks", "Failed VC Issuance tasks")
 			.unwrap();
 
 }
@@ -235,13 +235,13 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::VcBuildTime(assertion, time) =>
+			EnclaveMetric::VCBuildTime(assertion, time) =>
 				VC_BUILD_TIME.with_label_values(&[&assertion]).observe(time.as_secs_f64()),
 			EnclaveMetric::SuccessfullVCIssuance => {
-				VC_SUCCESSFULL_RPC_CALLS.inc();
+				SUCCESSFULL_VC_ISSUANCE_TASKS.inc();
 			},
 			EnclaveMetric::FailedVCIssuance => {
-				VC_FAILED_RPC_CALLS.inc();
+				FAILED_VC_ISSUANCE_TASKS.inc();
 			},
 		}
 		Ok(())
