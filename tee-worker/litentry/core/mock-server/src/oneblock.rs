@@ -23,14 +23,11 @@ const RESPONSE_ONEBLOCK: &str = r#"
 "#;
 pub(crate) fn query_one_block_course(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path::full())
-        .map(|p: FullPath| {
-            println!("oneblock mock service1111111111");
-            if p.as_str() == "/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children" {
-                Response::builder().body(RESPONSE_ONEBLOCK.to_string())
-            } else {
-                Response::builder().status(400).body(String::from("Error query"))
-            }
-        })
+	warp::get().and(warp::path::full()).map(|p: FullPath| {
+		if p.as_str() == "/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children" {
+			Response::builder().body(RESPONSE_ONEBLOCK.to_string())
+		} else {
+			Response::builder().status(400).body(String::from("Error query"))
+		}
+	})
 }

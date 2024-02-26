@@ -26,12 +26,12 @@ export const defaultAssertions = [
     //         A1: 'A1',
     //     },
     // },
-    {
-        description: 'The user is a member of Litentry Discord.',
-        assertion: {
-            A2: '807161594245152800',
-        },
-    },
+    // {
+    //     description: 'The user is a member of Litentry Discord.',
+    //     assertion: {
+    //         A2: '807161594245152800',
+    //     },
+    // },
 
     // {
     //     description:
@@ -47,12 +47,12 @@ export const defaultAssertions = [
     //         A4: '10',
     //     },
     // },
-    {
-        description: 'The length of time a user continues to hold DOT token',
-        assertion: {
-            A7: '5',
-        },
-    },
+    // {
+    //     description: 'The length of time a user continues to hold DOT token',
+    //     assertion: {
+    //         A7: '5',
+    //     },
+    // },
     // {
     //     description:
     //         'The range of number of transactions a user has made for a specific token on all supported networks(Litentry)',
@@ -84,18 +84,18 @@ export const defaultAssertions = [
     //         },
     //     },
     // },
-    {
-        description: 'The number of ETH tokens hold > 0',
-        assertion: {
-            Achainable: {
-                Amount: {
-                    name: 'Balance over {amount}',
-                    chain: ['Ethereum'],
-                    amount: '0',
-                },
-            },
-        },
-    },
+    // {
+    //     description: 'The number of ETH tokens hold > 0',
+    //     assertion: {
+    //         Achainable: {
+    //             Amount: {
+    //                 name: 'Balance over {amount}',
+    //                 chain: ['Ethereum'],
+    //                 amount: '0',
+    //             },
+    //         },
+    //     },
+    // },
     // {
     //     description: 'The class of year that Ethereum account was created (must have on-chain records)',
     //     assertion: {
@@ -137,6 +137,19 @@ export const defaultAssertions = [
     //         VIP3MembershipCard: 'Silver',
     //     },
     // },
+    // BNB domain
+    {
+        description: 'Holding a certain amount of bnb domain names',
+        assertion: {
+            BnbDomainHolding: 'BnbDomainHolding',
+        },
+    },
+    {
+        description: 'Holding a certain amount of 000-999.bnb domain names',
+        assertion: {
+            BnbDigitDomainClub: 'Bnb999ClubMember',
+        },
+    },
 ];
 
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
@@ -145,24 +158,10 @@ export const defaultAssertions = [
 // We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
 export const unconfiguredAssertions = [
     // OneBlock
-    {
-        description: 'A participant to the course co-created by OneBlock+ and Parity',
-        assertion: {
-            OneBlock: 'CourseParticipation',
-        },
-    },
-
-    // BNB domain
     // {
-    //     description: 'Holding a certain amount of bnb domain names',
+    //     description: 'A participant to the course co-created by OneBlock+ and Parity',
     //     assertion: {
-    //         BnbDomainHolding: 'BnbDomainHolding',
-    //     },
-    // },
-    // {
-    //     description: 'Holding a certain amount of 000-999.bnb domain names',
-    //     assertion: {
-    //         BnbDigitDomainClub: 'Bnb999ClubMember',
+    //         OneBlock: 'CourseParticipation',
     //     },
     // },
 ];

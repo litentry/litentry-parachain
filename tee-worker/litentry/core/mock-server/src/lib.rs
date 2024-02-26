@@ -27,9 +27,9 @@ pub mod discord_official;
 pub mod karat_dao;
 pub mod litentry_archive;
 pub mod moralis;
+pub mod nodereal;
 pub mod nodereal_jsonrpc;
 pub mod oneblock;
-pub mod twitter_litentry;
 pub mod twitter_official;
 pub mod vip3;
 
@@ -72,6 +72,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())
 					.or(oneblock::query_one_block_course())
+					.or(nodereal::query_user_bnb_domain())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
