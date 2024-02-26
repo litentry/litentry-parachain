@@ -14,9 +14,6 @@
 	limitations under the License.
 */
 
-#[cfg(feature = "evm")]
-use crate::test::evm_pallet_tests;
-
 use crate::{
 	rpc,
 	sync::tests::{enclave_rw_lock_works, sidechain_rw_lock_works},
@@ -150,9 +147,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		tls_ra::tests::test_tls_ra_server_client_networking,
 		// RPC tests
 		direct_rpc_tests::get_state_request_works,
-
-		// EVM tests
-		run_evm_tests,
+		direct_rpc_tests::state_get_mrenclave_works,
 
 		// light-client-test
 		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
@@ -165,16 +160,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		// test_ocall_read_write_ipfs,
 	)
 }
-
-#[cfg(feature = "evm")]
-fn run_evm_tests() {
-	evm_pallet_tests::test_evm_call();
-	evm_pallet_tests::test_evm_counter();
-	evm_pallet_tests::test_evm_create();
-	evm_pallet_tests::test_evm_create2();
-}
-#[cfg(not(feature = "evm"))]
-fn run_evm_tests() {}
 
 fn test_submit_trusted_call_to_top_pool() {
 	// given

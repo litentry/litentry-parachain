@@ -43,7 +43,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::Oneblock(course_type), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::OneBlock(course_type), e.into_error_detail()))
 		},
 	}
 }

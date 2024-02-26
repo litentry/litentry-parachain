@@ -18,7 +18,7 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_trusted_operation,
+	trusted_operation::{perform_direct_operation, perform_trusted_operation},
 	Cli, CliResult, CliResultOk,
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
@@ -41,9 +41,9 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
-// oneblock VC:
+// OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 one-block completion
 //
 // achainable VC:
 // ./bin/litentry-cli trusted -d request-vc \
@@ -75,6 +75,9 @@ pub struct RequestVcCommand {
 	/// subcommand to define the vc type requested
 	#[clap(subcommand)]
 	command: Command,
+	/// mode for the request-vc
+	#[clap(short = 's', long, default_value_t = false)]
+	stf: bool,
 }
 
 // see `assertion.rs`
@@ -94,7 +97,7 @@ pub enum Command {
 	A20,
 	BnbDomainHolding,
 	#[clap(subcommand)]
-	Oneblock(OneblockCommand),
+	OneBlock(OneblockCommand),
 	#[clap(subcommand)]
 	Achainable(AchainableCommand),
 	#[clap(subcommand)]
@@ -340,13 +343,13 @@ impl RequestVcCommand {
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
 			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
-			Command::Oneblock(c) => match c {
+			Command::OneBlock(c) => match c {
 				OneblockCommand::Completion =>
-					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
+					Assertion::OneBlock(OneBlockCourseType::CourseCompletion),
 				OneblockCommand::Outstanding =>
-					Assertion::Oneblock(OneBlockCourseType::CourseOutstanding),
+					Assertion::OneBlock(OneBlockCourseType::CourseOutstanding),
 				OneblockCommand::Participation =>
-					Assertion::Oneblock(OneBlockCourseType::CourseParticipation),
+					Assertion::OneBlock(OneBlockCourseType::CourseParticipation),
 			},
 			Command::Achainable(c) => match c {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(
@@ -518,7 +521,13 @@ impl RequestVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+		let maybe_vc = if self.stf {
+			perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top)
+		} else {
+			perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key)
+		};
+
+		match maybe_vc {
 			Ok(mut vc) => {
 				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
 				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
@@ -529,6 +538,7 @@ impl RequestVcCommand {
 				println!("{:?}", e);
 			},
 		}
+
 		Ok(CliResultOk::None)
 	}
 
