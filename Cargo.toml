@@ -12,7 +12,6 @@ members = [
     'pallets/vc-management',
     'pallets/teebag',
     'pallets/parentchain',
-    'pallets/test-utils',
     'pallets/group',
     'pallets/bitacross',
     'precompiles/*',

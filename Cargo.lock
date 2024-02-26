@@ -5582,8 +5582,6 @@ dependencies = [
  "pallet-proxy",
  "pallet-scheduler",
  "pallet-session",
- "pallet-sidechain",
- "pallet-teerex",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -7457,7 +7455,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "test-utils",
 ]
 
 [[package]]
@@ -7831,32 +7828,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-sidechain"
-version = "0.9.0"
-dependencies = [
- "env_logger 0.9.3",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-balances",
- "pallet-teerex",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sidechain-primitives",
- "sp-core",
- "sp-externalities",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-std",
- "teerex-primitives",
- "test-utils",
-]
-
-[[package]]
 name = "pallet-society"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -7981,34 +7952,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "sp-std",
- "test-utils",
  "x509-cert",
-]
-
-[[package]]
-name = "pallet-teerex"
-version = "0.9.0"
-dependencies = [
- "env_logger 0.9.3",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal 0.4.1",
- "log",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "rustls-webpki",
- "scale-info",
- "sgx-verify",
- "sp-core",
- "sp-externalities",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
- "sp-std",
- "teerex-primitives",
- "test-utils",
 ]
 
 [[package]]
@@ -8143,7 +8087,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "test-utils",
 ]
 
 [[package]]
@@ -10564,10 +10507,8 @@ dependencies = [
  "pallet-proxy",
  "pallet-scheduler",
  "pallet-session",
- "pallet-sidechain",
  "pallet-sudo",
  "pallet-teebag",
- "pallet-teerex",
  "pallet-timestamp",
  "pallet-tips",
  "pallet-transaction-payment",
@@ -10788,7 +10729,6 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-teebag",
- "pallet-teerex",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
@@ -10804,8 +10744,6 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
- "teerex-primitives",
- "test-utils",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -12382,28 +12320,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sgx-verify"
-version = "0.1.4"
-dependencies = [
- "base64 0.13.1",
- "chrono",
- "der 0.6.1",
- "frame-support",
- "hex",
- "hex-literal 0.4.1",
- "parity-scale-codec",
- "ring 0.16.20",
- "rustls-webpki",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-std",
- "teerex-primitives",
- "x509-cert",
-]
-
-[[package]]
 name = "sha-1"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12487,16 +12403,6 @@ name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
-
-[[package]]
-name = "sidechain-primitives"
-version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
-]
 
 [[package]]
 name = "signal-hook-registry"
@@ -13767,17 +13673,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d2faeef5759ab89935255b1a4cd98e0baf99d1085e37d36599c625dac49ae8e"
 
 [[package]]
-name = "teerex-primitives"
-version = "0.1.0"
-dependencies = [
- "hex-literal 0.4.1",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-std",
-]
-
-[[package]]
 name = "tempfile"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13804,14 +13699,6 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
-
-[[package]]
-name = "test-utils"
-version = "0.1.0"
-dependencies = [
- "hex-literal 0.4.1",
- "teerex-primitives",
-]
 
 [[package]]
 name = "thiserror"

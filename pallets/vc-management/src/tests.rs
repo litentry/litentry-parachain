@@ -18,8 +18,9 @@ use crate::{mock::*, Error, ShardIdentifier, Status};
 use core_primitives::{Assertion, Identity};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
+use sp_std::{vec, vec::Vec};
 
-use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
 
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
@@ -30,7 +31,7 @@ const EDDIE_PUBKEY: &[u8; 32] = &[5u8; 32];
 fn request_vc_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -48,8 +49,8 @@ fn request_vc_without_delegatee_works() {
 fn request_vc_13_with_authorized_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let eddie: SystemAccountId = test_utils::get_signer(EDDIE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let eddie: SystemAccountId = get_signer(EDDIE_PUBKEY);
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(eddie.clone()),
 			shard,
@@ -67,7 +68,7 @@ fn request_vc_13_with_authorized_delegatee_works() {
 fn request_vc_13_with_unauthorized_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		// even alice can't apply A13 by herself
 		assert_noop!(
 			VCManagement::request_vc(
@@ -83,8 +84,8 @@ fn request_vc_13_with_unauthorized_delegatee_fails() {
 #[test]
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let alice: Identity = test_utils::get_signer(ALICE_PUBKEY);
+		let teerex_signer: SystemAccountId = get_signer(TEST8_SIGNER_PUB);
+		let alice: Identity = get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			alice,
@@ -98,8 +99,8 @@ fn vc_issued_works() {
 #[test]
 fn vc_issued_with_unpriviledged_origin_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(bob),
@@ -116,8 +117,8 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 #[test]
 fn set_admin_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		assert_eq!(VCManagement::admin().unwrap(), alice);
 		assert_ok!(VCManagement::set_admin(RuntimeOrigin::root(), bob.clone()));
 		assert_eq!(VCManagement::admin().unwrap(), bob);
@@ -131,8 +132,8 @@ fn set_admin_works() {
 #[test]
 fn set_admin_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		assert_eq!(VCManagement::admin().unwrap(), alice);
 		assert_noop!(
 			VCManagement::set_admin(RuntimeOrigin::signed(bob.clone()), bob),
@@ -145,7 +146,7 @@ fn set_admin_fails_with_unprivileged_origin() {
 #[test]
 fn add_schema_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
@@ -168,7 +169,7 @@ fn add_schema_works() {
 #[test]
 fn add_schema_with_unpriviledged_origin_fails() {
 	new_test_ext().execute_with(|| {
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -182,7 +183,7 @@ fn add_schema_with_unpriviledged_origin_fails() {
 #[test]
 fn add_two_schemas_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
@@ -211,7 +212,7 @@ fn add_two_schemas_works() {
 #[test]
 fn disable_schema_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -232,7 +233,7 @@ fn disable_schema_works() {
 #[test]
 fn disable_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			VCManagement::disable_schema(RuntimeOrigin::signed(alice), shard, 2),
@@ -244,8 +245,8 @@ fn disable_schema_with_non_existent_fails() {
 #[test]
 fn disable_schema_with_unpriviledged_origin_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -260,7 +261,7 @@ fn disable_schema_with_unpriviledged_origin_fails() {
 #[test]
 fn activate_schema_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -283,7 +284,7 @@ fn activate_schema_works() {
 #[test]
 fn activate_already_activated_schema_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -304,7 +305,7 @@ fn activate_already_activated_schema_fails() {
 #[test]
 fn revoke_schema_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
@@ -324,7 +325,7 @@ fn revoke_schema_works() {
 #[test]
 fn revoke_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			VCManagement::revoke_schema(RuntimeOrigin::signed(alice), shard, 2),
@@ -336,8 +337,8 @@ fn revoke_schema_with_non_existent_fails() {
 #[test]
 fn revoke_schema_with_unprivileged_origin_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
