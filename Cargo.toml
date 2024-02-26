@@ -49,5 +49,75 @@ lto = "thin"
 strip = "symbols"
 incremental = false
 
+[workspace.dependencies]
+async-trait = { version = "0.1.76" }
+clap = { version = "4.3", features = ["derive"] }
+log = { version = "0.4", default-features = false }
+scale-info = { version = "2.10", default-features = false, features = ["derive"] }
+parity-scale-codec = { version = "3.6", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false }
+hex = { version = "0.4", default-features = false }
+hex-literal = { version = "0.4.1" }
+futures = { version = "0.3.30", features = ["compat"] }
+jsonrpsee = { version = "0.16.2", features = ["server"] }
+tokio = { version = "1.36.0", features = ["macros", "sync"] }
+
+# cumulus client
+cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+
+# evm-tracing
+# Moonbeam Team did not export its corresponding code
+# Astar team maintained one as pallets under Astar-frame repo
+# Due to the confliction of usbtrate/polkadot source
+# Litentry maintained Astar team repo for further usage
+moonbeam-primitives-ext = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
+moonbeam-rpc-debug = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42", default-features = false }
+moonbeam-rpc-primitives-txpool = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42", default-features = false }
+moonbeam-rpc-trace = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
+moonbeam-rpc-txpool = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
+
+# polkadot client
+polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }
+polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42", default-features = false }
+
+# frontier
+fc-consensus = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fc-db = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fc-mapping-sync = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fc-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fc-rpc-core = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fc-storage = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fp-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+
+# substrate
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+
+# benchmarking
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+
+# local
+core-primitives = { path = "primitives/core", default-features = true }
+litentry-parachain-runtime = { path = "runtime/litentry", default-features = true }
+litmus-parachain-runtime = { path = "runtime/litmus", default-features = true }
+rococo-parachain-runtime = { path = "runtime/rococo", default-features = true }
+
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
