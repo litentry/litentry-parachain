@@ -29,6 +29,7 @@ use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
 use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct OneBlockResponse {
