@@ -25,38 +25,37 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 
-sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-network-sync = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-substrate-prometheus-endpoint = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-
 pallet-transaction-payment-rpc = { workspace = true }
+sc-basic-authorship = { workspace = true }
+sc-chain-spec = { workspace = true }
+sc-cli = { workspace = true }
+sc-client-api = { workspace = true }
+sc-consensus = { workspace = true }
+sc-consensus-aura = { workspace = true }
+sc-executor = { workspace = true }
+sc-network = { workspace = true }
+sc-network-sync = { workspace = true }
+sc-rpc = { workspace = true }
+sc-service = { workspace = true }
+sc-sysinfo = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-tracing = { workspace = true }
+sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
+sp-api = { workspace = true, features = ["std"] }
+sp-block-builder = { workspace = true, features = ["std"] }
+sp-blockchain = { workspace = true }
+sp-consensus-aura = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+sp-keystore = { workspace = true, features = ["std"] }
+sp-offchain = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-session = { workspace = true, features = ["std"] }
+sp-timestamp = { workspace = true, features = ["std"] }
+sp-transaction-pool = { workspace = true, features = ["std"] }
 substrate-frame-rpc-system = { workspace = true }
+substrate-prometheus-endpoint = { workspace = true }
 
 fc-consensus = { workspace = true }
 fc-db = { workspace = true }
