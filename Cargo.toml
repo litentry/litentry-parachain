@@ -52,6 +52,7 @@ incremental = false
 [workspace.dependencies]
 async-trait = { version = "0.1.76" }
 clap = { version = "4.3", features = ["derive"] }
+derive_more = { version = "0.99" }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.10", default-features = false, features = ["derive"] }
 parity-scale-codec = { version = "3.6", default-features = false }
@@ -59,9 +60,12 @@ serde = { version = "1.0", default-features = false, features = ["derive", "allo
 serde_json = { version = "1.0", default-features = false }
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4.1" }
+sha3 = { version = "0.10", default-features = false }
 futures = { version = "0.3.30", features = ["compat"] }
 jsonrpsee = { version = "0.16.2", features = ["server"] }
 tokio = { version = "1.36.0", features = ["macros", "sync"] }
+num_enum = { version = "0.7.2", default-features = false }
+rustc-hex = { version = "2.0.1", default-features = false }
 
 # cumulus client
 cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
@@ -101,6 +105,7 @@ fc-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0
 fc-rpc-core = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
 fc-storage = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
 fp-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+fp-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
 
 # substrate client
 sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
@@ -136,9 +141,14 @@ sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false, features = ["forbid-evm-reentrancy"] }
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -150,6 +160,9 @@ core-primitives = { path = "primitives/core", default-features = true }
 litentry-parachain-runtime = { path = "runtime/litentry", default-features = true }
 litmus-parachain-runtime = { path = "runtime/litmus", default-features = true }
 rococo-parachain-runtime = { path = "runtime/rococo", default-features = true }
+pallet-bridge = { path = "pallets/bridge", default-features = false }
+pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
+precompile-utils = { path = "precompiles/utils", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
