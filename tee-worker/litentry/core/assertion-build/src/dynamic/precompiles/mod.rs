@@ -40,9 +40,9 @@ impl PrecompileSet for Precompiles {
 		);
 
 		match handle.code_address() {
-			a if a == hash(1000) => Some(http_get_bool(handle.input().to_vec(), client)),
-			a if a == hash(1001) => Some(http_get_i64(handle.input().to_vec(), client)),
-			a if a == hash(1002) => Some(http_get_string(handle.input().to_vec(), client)),
+			a if a == hash(2) => Some(http_get_i64(handle.input().to_vec(), client)),
+			a if a == hash(3) => Some(http_get_bool(handle.input().to_vec(), client)),
+			a if a == hash(4) => Some(http_get_string(handle.input().to_vec(), client)),
 			_ => None,
 		}
 	}
