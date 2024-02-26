@@ -3,7 +3,8 @@
 	"version": "1.0.0",
 	"main": "cli.js",
 	"scripts": {
-		"start": "node cli.js run"
+		"start": "node cli.js run",
+		"cleanup": "node cli.js cleanup"
 	},
 	"type": "module",
 	"dependencies": {

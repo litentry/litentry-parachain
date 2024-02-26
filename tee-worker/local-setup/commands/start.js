@@ -2,9 +2,8 @@ import inquirer from "inquirer";
 import { isPortAvailable } from "../utils/port.js";
 import fs from "fs";
 import { $, cd, echo, sleep } from "zx";
-
-const homePath = process.env.PWD.substring(0, process.env.PWD.indexOf("/tee-worker"));
-const sidechainPath = `${homePath}/tee-worker`;
+import { spawn } from "child_process";
+import { homePath, sidechainPath } from "../utils/index.js";
 
 const envDefaultServicesWithPorts = [
 	"AliceWSPort",
@@ -27,8 +26,12 @@ async function setAwailablePorts() {
 	let portIsAvailable = true;
 	do {
 		portIsAvailable = await isPortAvailable(Number(process.env.CollatorWSPort) + offset);
-
-		offset += 50;
+		console.log(
+			"Port is avaliable",
+			portIsAvailable,
+			Number(process.env.CollatorWSPort) + offset
+		);
+		if (!portIsAvailable) offset += 50;
 	} while (!portIsAvailable);
 
 	envDefaultServicesWithPorts.forEach(
@@ -75,30 +78,18 @@ async function generateConfigFiles() {
 
 export async function runParachainAndWorker() {
 	await setAwailablePorts();
-
 	const answers = await questionary();
 
 	await generateConfigFiles();
 	if (answers.type !== "remote") {
 		await genereateLocalConfig();
 	}
-
 	await runParachain(answers);
 
 	const workers = await runWorkers(answers);
 
-	process.on("SIGINT", () => {
-		workers.map((worker) => {
-			echo("killing worker");
-			echo(worker);
-
-			worker.kill();
-		});
-		echo("======================TERMINATING======================");
-		process.exit();
-	});
-
-	await sleep(100000);
+	console.log("process.env", JSON.stringify(process.env, null, 2));
+	// display status message
 }
 
 function buildWorkerOpts(workerNumber) {
@@ -117,7 +108,7 @@ function buildWorkerOpts(workerNumber) {
 		"-h",
 		Number(process.env.UntrustedHttpPort) + offset,
 		"-p",
-		Number(process.env.CollatorWSPort) + offset,
+		Number(process.env.CollatorWSPort),
 		"--enable-mock-server",
 		"--parentchain-start-block",
 		"0",
@@ -149,12 +140,17 @@ async function runWorker(index, { flags, subcommandFlags }) {
 
 	cd(cwd);
 
-	const workerProcess = $`./litentry-worker ${flags} run ${subcommandFlags}`;
-
-	workerProcess.stdout.on("data", (data) => {
-		logStream.write(data);
+	const workerProcess = spawn("./litentry-worker", [...flags, "run", ...subcommandFlags], {
+		detached: true,
+		stdio: ["ignore", logStream, logStream],
 	});
-	// await sleep(50000);
+
+	// TODO: !!! need to figure out when worker run successfully. Probably look at log for specific keywords
+	await sleep(index === 0 ? 50000 : 20000);
+
+	// move a process to background
+	workerProcess.unref();
+
 	return workerProcess;
 }
 
@@ -165,8 +161,6 @@ async function runWorkers(answers) {
 		const result = await runWorker(index, options);
 		workers.push(result);
 	}
-	echo("PROCESS ENV", workers);
-
 	return workers;
 }
 
