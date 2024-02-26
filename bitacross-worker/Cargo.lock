@@ -727,7 +727,6 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
- "pallet-teerex",
  "parity-scale-codec",
  "rand 0.8.5",
  "rayon",
