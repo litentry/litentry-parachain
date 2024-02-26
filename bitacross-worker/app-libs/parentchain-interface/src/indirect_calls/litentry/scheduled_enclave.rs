@@ -28,7 +28,7 @@ use log::*;
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct SetScheduledEnclaveArgs {
 	worker_type: WorkerType,
-	sbn: codec::Compact<SidechainBlockNumber>,
+	sbn: SidechainBlockNumber,
 	mrenclave: MrEnclave,
 }
 
@@ -50,7 +50,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveScheduledEnclaveArgs {
 	worker_type: WorkerType,
-	sbn: codec::Compact<SidechainBlockNumber>,
+	sbn: SidechainBlockNumber,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
