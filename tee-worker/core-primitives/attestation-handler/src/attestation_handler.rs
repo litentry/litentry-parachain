@@ -30,7 +30,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{cert, Error as EnclaveError, Error, Result as EnclaveResult};
+use crate::{cert, Error as EnclaveError, Result as EnclaveResult};
 use codec::Encode;
 use core::{convert::TryInto, default::Default};
 use itertools::Itertools;
@@ -195,7 +195,7 @@ where
 				"    [Enclave] failed to write RA file ({}), status: {:?}",
 				RA_DUMP_CERT_DER_FILE, err
 			);
-			return Err(Error::IoError(err))
+			return Err(EnclaveError::IoError(err))
 		}
 		info!("    [Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
 		Ok(())
@@ -220,7 +220,7 @@ where
 				"    [Enclave] failed to write RA file ({}), status: {:?}",
 				RA_DUMP_CERT_DER_FILE, err
 			);
-			return Err(Error::IoError(err))
+			return Err(EnclaveError::IoError(err))
 		}
 		info!("    [Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
 		Ok(())
