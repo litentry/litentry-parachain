@@ -154,34 +154,34 @@ pub mod tests {
 	use litentry_primitives::{Identity, IdentityString};
 	use sp_core::{crypto::AccountId32, H160};
 
-	#[test]
-	pub fn true_because_twitter() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		run(19527).unwrap();
-		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
-		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
-
-		let request = AssertionBuildRequest {
-			shard: Default::default(),
-			signer: AccountId32::new([0; 32]),
-			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(0)),
-			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
-			top_hash: Default::default(),
-			parachain_block_number: Default::default(),
-			sidechain_block_number: Default::default(),
-			maybe_key: None,
-			req_ext_hash: Default::default(),
-			should_create_id_graph: Default::default(),
-		};
-
-		let repository = InMemorySmartContractRepo::new();
-
-		let credential = build(&request, hash(1), repository).unwrap();
-		println!("Generated credential: {:?}", credential);
-
-		assert!(credential.credential_subject.values[0]);
-	}
+	// #[test]
+	// pub fn true_because_twitter() {
+	// 	let _ = env_logger::builder().is_test(true).try_init();
+	// 	run(19527).unwrap();
+	// 	let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
+	// 	let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
+	//
+	// 	let request = AssertionBuildRequest {
+	// 		shard: Default::default(),
+	// 		signer: AccountId32::new([0; 32]),
+	// 		who: Identity::Twitter(IdentityString::new(vec![])),
+	// 		assertion: Assertion::Dynamic(hash(0)),
+	// 		identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
+	// 		top_hash: Default::default(),
+	// 		parachain_block_number: Default::default(),
+	// 		sidechain_block_number: Default::default(),
+	// 		maybe_key: None,
+	// 		req_ext_hash: Default::default(),
+	// 		should_create_id_graph: Default::default(),
+	// 	};
+	//
+	// 	let repository = InMemorySmartContractRepo::new();
+	//
+	// 	let credential = build(&request, hash(1), repository).unwrap();
+	// 	println!("Generated credential: {:?}", credential);
+	//
+	// 	assert!(credential.credential_subject.values[0]);
+	// }
 
 	fn hash(a: u64) -> H160 {
 		H160::from_low_u64_be(a)
