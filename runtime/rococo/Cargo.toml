@@ -269,8 +269,6 @@ std = [
     "moonbeam-rpc-primitives-txpool/std",
     "pallet-bitacross/std",
 ]
-tee-dev = [
-]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
     "cumulus-pallet-dmp-queue/try-runtime",

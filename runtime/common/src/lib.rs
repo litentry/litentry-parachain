@@ -354,7 +354,7 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use pallet_teebag::test_const::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+		use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
 		let signer: <T as frame_system::Config>::AccountId = get_signer(TEST8_SIGNER_PUB);
 		let enclave = pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE);
 		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {

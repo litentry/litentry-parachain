@@ -26,7 +26,7 @@ extern crate frame_benchmarking;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
-	construct_runtime, ord_parameter_types, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
 		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
@@ -973,6 +973,10 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 }
 
 impl pallet_teebag::Config for Runtime {

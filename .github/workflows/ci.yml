@@ -379,7 +379,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           echo "::group::build docker image"
-          make build-docker-release
+          ./scripts/build-docker.sh release latest --features=fast-runtime
           echo "::endgroup::"
           echo "::group::docker images"
           docker images --all
