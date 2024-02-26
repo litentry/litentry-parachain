@@ -20,14 +20,14 @@ use frame_support::{StorageHasher, Twox64Concat};
 use http::header::CONNECTION;
 use itc_rest_client::{
 	error::Error as RestClientError,
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::{Headers, RestClient},
 	RestPath, RestPost,
 };
 use itp_stf_primitives::types::AccountId;
 use itp_utils::hex_display::AsBytesRef;
 use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
-use lc_data_providers::build_client;
+use lc_data_providers::build_client_with_cert;
 use litentry_primitives::ParentchainBalance;
 use pallet_parachain_staking::types::Delegator;
 use serde::{Deserialize, Serialize};
@@ -70,7 +70,7 @@ pub struct JsonRPCResponse {
 }
 
 pub struct LitentryStakingClient {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl Default for LitentryStakingClient {
@@ -83,7 +83,7 @@ impl LitentryStakingClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client("https://litentry-rpc.dwellir.com:443", headers);
+		let client = build_client_with_cert("https://litentry-rpc.dwellir.com:443", headers);
 		LitentryStakingClient { client }
 	}
 

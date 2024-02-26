@@ -1,5 +1,5 @@
 use evm::{executor::stack::PrecompileFailure, ExitError};
-use std::borrow::Cow;
+use std::{borrow::Cow, string::String};
 
 pub fn prepare_custom_failure(reason: String) -> PrecompileFailure {
 	PrecompileFailure::Error { exit_status: ExitError::Other(Cow::Owned(reason)) }

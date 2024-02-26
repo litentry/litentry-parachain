@@ -18,145 +18,14 @@
 // when requesting VCs.
 
 use crate::{
-	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
-	GenericDiscordRoleType, OneBlockCourseType, PlatformUserType, VIP3MembershipCardLevel,
-	Web3Network, Web3NftType, Web3TokenType,
+	all_web3networks, AccountId, AchainableParams, BnbDigitDomainType, BoundedWeb3Network,
+	EVMTokenType, GenericDiscordRoleType, OneBlockCourseType, ParameterString, PlatformUserType,
+	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H160;
-use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::{vec, vec::Vec};
-
-pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
-
-macro_rules! AchainableRequestParams {
-	($type_name:ident, {$( $field_name:ident : $field_type:ty , )* }) => {
-		#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-		pub struct $type_name {
-			pub name: ParameterString,
-			pub chain: BoundedWeb3Network,
-			$( pub $field_name: $field_type ),*
-		}
-	};
-}
-
-AchainableRequestParams!(AchainableAmountHolding, {
-	amount: ParameterString,
-	date: ParameterString,
-	token: Option<ParameterString>,
-});
-
-AchainableRequestParams!(AchainableAmountToken, {
-	amount: ParameterString,
-	token: Option<ParameterString>,
-});
-
-AchainableRequestParams!(AchainableAmount, {
-	amount: ParameterString,
-});
-
-AchainableRequestParams!(AchainableAmounts, {
-	amount1: ParameterString,
-	amount2: ParameterString,
-});
-
-AchainableRequestParams!(AchainableBasic, {});
-
-AchainableRequestParams!(AchainableBetweenPercents, {
-	greater_than_or_equal_to: ParameterString,
-	less_than_or_equal_to: ParameterString,
-});
-
-AchainableRequestParams!(AchainableClassOfYear, {});
-
-AchainableRequestParams!(AchainableDateInterval, {
-	start_date: ParameterString,
-	end_date: ParameterString,
-});
-
-AchainableRequestParams!(AchainableDatePercent, {
-	token: ParameterString,
-	date: ParameterString,
-	percent: ParameterString,
-});
-
-AchainableRequestParams!(AchainableDate, {
-	date: ParameterString,
-});
-
-AchainableRequestParams!(AchainableToken, {
-	token: ParameterString,
-});
-
-AchainableRequestParams!(AchainableMirror, {
-	post_quantity: Option<ParameterString>,
-});
-
-#[rustfmt::skip]
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum AchainableParams {
-	#[codec(index = 0)]
-	AmountHolding(AchainableAmountHolding),
-	#[codec(index = 1)]
-	AmountToken(AchainableAmountToken),
-	#[codec(index = 2)]
-	Amount(AchainableAmount),
-	#[codec(index = 3)]
-	Amounts(AchainableAmounts),
-	#[codec(index = 4)]
-	Basic(AchainableBasic),
-	#[codec(index = 5)]
-	BetweenPercents(AchainableBetweenPercents),
-	#[codec(index = 6)]
-	ClassOfYear(AchainableClassOfYear),
-	#[codec(index = 7)]
-	DateInterval(AchainableDateInterval),
-	#[codec(index = 8)]
-	DatePercent(AchainableDatePercent),
-	#[codec(index = 9)]
-	Date(AchainableDate),
-	#[codec(index = 10)]
-	Token(AchainableToken),
-	#[codec(index = 11)]
-	Mirror(AchainableMirror),
-}
-
-impl AchainableParams {
-	pub fn name(&self) -> ParameterString {
-		match self {
-			AchainableParams::AmountHolding(p) => p.name.clone(),
-			AchainableParams::AmountToken(p) => p.name.clone(),
-			AchainableParams::Amount(p) => p.name.clone(),
-			AchainableParams::Amounts(p) => p.name.clone(),
-			AchainableParams::Basic(p) => p.name.clone(),
-			AchainableParams::BetweenPercents(p) => p.name.clone(),
-			AchainableParams::ClassOfYear(p) => p.name.clone(),
-			AchainableParams::DateInterval(p) => p.name.clone(),
-			AchainableParams::DatePercent(p) => p.name.clone(),
-			AchainableParams::Date(p) => p.name.clone(),
-			AchainableParams::Token(p) => p.name.clone(),
-			AchainableParams::Mirror(p) => p.name.clone(),
-		}
-	}
-
-	pub fn chains(&self) -> Vec<Web3Network> {
-		match self {
-			AchainableParams::AmountHolding(arg) => arg.chain.to_vec(),
-			AchainableParams::AmountToken(arg) => arg.chain.to_vec(),
-			AchainableParams::Amount(arg) => arg.chain.to_vec(),
-			AchainableParams::Amounts(arg) => arg.chain.to_vec(),
-			AchainableParams::Basic(arg) => arg.chain.to_vec(),
-			AchainableParams::BetweenPercents(arg) => arg.chain.to_vec(),
-			AchainableParams::ClassOfYear(arg) => arg.chain.to_vec(),
-			AchainableParams::DateInterval(arg) => arg.chain.to_vec(),
-			AchainableParams::DatePercent(arg) => arg.chain.to_vec(),
-			AchainableParams::Date(arg) => arg.chain.to_vec(),
-			AchainableParams::Token(arg) => arg.chain.to_vec(),
-			AchainableParams::Mirror(arg) => arg.chain.to_vec(),
-		}
-	}
-}
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -194,9 +63,9 @@ pub enum Assertion {
 	#[codec(index = 12)]
 	A20,
 
-	// For Oneblock
+	// For OneBlock
 	#[codec(index = 13)]
-	Oneblock(OneBlockCourseType),
+	OneBlock(OneBlockCourseType),
 
 	// GenericDiscordRole
 	#[codec(index = 14)]
@@ -268,8 +137,8 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(arg) => arg.chains(),
-			// Oneblock Assertion
-			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			// OneBlock Assertion
+			Self::OneBlock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// LITStaking
@@ -292,16 +161,4 @@ impl Assertion {
 			Self::Dynamic(_) => all_web3networks(),
 		}
 	}
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum AmountHoldingTimeType {
-	#[codec(index = 0)]
-	LIT,
-	#[codec(index = 1)]
-	DOT,
-	#[codec(index = 2)]
-	WBTC,
-	#[codec(index = 3)]
-	ETH,
 }

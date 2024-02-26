@@ -28,21 +28,11 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
-# Integritee dependencies
-pallet-evm = { default-features = false, optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "bar/polkadot-v0.9.42" }
 
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
 [features]
 default = ["std"]
-# Compile the sgx-runtime with evm-pallet support in `no_std`.
-evm = ["pallet-evm"]
-# Compile the sgx-runtime with evm-pallet support in `std`.
-evm_std = [
-    "evm",            # Activate the `feature = evm` for the compiler flags.
-    "std",
-    "pallet-evm/std",
-]
 runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",

@@ -1,3 +1,9 @@
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
 use crate::dynamic::precompiles::http_get::{http_get_bool, http_get_i64, http_get_string};
 use evm::executor::stack::{
 	IsPrecompileResult, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileSet,
@@ -5,6 +11,7 @@ use evm::executor::stack::{
 use itc_rest_client::http_client::HttpClient;
 use primitive_types::{H160, U256};
 use std::{
+	format,
 	result::Result as StdResult,
 	string::{String, ToString},
 	vec::Vec,
@@ -68,8 +75,7 @@ impl InputReader {
 			self.position += ((str_len / word_size) + 1) * word_size;
 			Ok(value)
 		} else {
-			Err(format!("Could not read string, start: {:?} end {:?}", self.position, end)
-				.to_string())
+			Err(format!("Could not read string, start: {:?} end {:?}", self.position, end))
 		}
 	}
 
@@ -84,8 +90,7 @@ impl InputReader {
 			self.position += word_size;
 			Ok(size)
 		} else {
-			Err(format!("Could not read string len, start: {:?} end {:?}", self.position, end)
-				.to_string())
+			Err(format!("Could not read string len, start: {:?} end {:?}", self.position, end))
 		}
 	}
 }

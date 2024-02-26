@@ -140,15 +140,15 @@ export const defaultAssertions = [
 ];
 
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
-// For the 'oneblock' assertion, need to configure the Polkadot/Kusma address,
+// For the 'OneBlock' assertion, need to configure the Polkadot/Kusma address,
 // and for 'bnb,' need to configure the NODEREAL_API_KEY
 // We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
 export const unconfiguredAssertions = [
-    // Oneblock
+    // OneBlock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
         assertion: {
-            oneblock: 'CourseParticipation',
+            OneBlock: 'CourseParticipation',
         },
     },
 
@@ -166,85 +166,3 @@ export const unconfiguredAssertions = [
         },
     },
 ];
-export const jsonSchema = {
-    type: 'object',
-    properties: {
-        id: {
-            type: 'string',
-        },
-        type: {
-            type: 'array',
-        },
-        issuer: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                name: {
-                    type: 'string',
-                },
-                shard: {
-                    type: 'string',
-                },
-            },
-        },
-        issuanceDate: {
-            type: 'string',
-        },
-        credentialSubject: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                description: {
-                    type: 'string',
-                },
-                type: {
-                    type: 'string',
-                },
-                tag: {
-                    type: 'array',
-                },
-                assertions: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                    },
-                },
-                values: {
-                    type: 'array',
-                    items: {
-                        type: 'boolean',
-                    },
-                },
-                endpoint: {
-                    type: 'string',
-                },
-            },
-            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
-        },
-        proof: {
-            type: 'object',
-            properties: {
-                created: {
-                    type: 'string',
-                },
-                type: {
-                    enum: ['Ed25519Signature2020'],
-                },
-                proofPurpose: {
-                    enum: ['assertionMethod'],
-                },
-                proofValue: {
-                    type: 'string',
-                },
-                verificationMethod: {
-                    type: 'string',
-                },
-            },
-        },
-    },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
-};

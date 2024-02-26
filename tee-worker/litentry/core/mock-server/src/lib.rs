@@ -28,7 +28,6 @@ pub mod karat_dao;
 pub mod litentry_archive;
 pub mod moralis;
 pub mod nodereal_jsonrpc;
-pub mod twitter_litentry;
 pub mod twitter_official;
 pub mod vip3;
 
@@ -60,7 +59,6 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
-					.or(twitter_litentry::check_follow())
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())

@@ -33,6 +33,7 @@ use futures_sgx::channel::oneshot;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
+use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
@@ -68,10 +69,11 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey>(
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
+	ocall_api: Arc<OcallApi>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -79,6 +81,7 @@ where
 	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
+	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
 {
 	let mut io = IoHandler::new();
 
@@ -261,17 +264,16 @@ where
 	});
 
 	// state_getMrenclave
-	io.add_sync_method("state_getMrenclave", |_: Params| {
-		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
-			Ok(mrenclave) => RpcReturnValue {
+	io.add_sync_method("state_getMrenclave", move |_: Params| {
+		let json_value = match ocall_api.get_mrenclave_of_self() {
+			Ok(m) => RpcReturnValue {
 				do_watch: false,
-				value: mrenclave.encode(),
+				value: m.m.encode(),
 				status: DirectRequestStatus::Ok,
 			}
 			.to_hex(),
-			Err(error) => {
-				let error_msg: String =
-					format!("Could not get current mrenclave due to: {}", error);
+			Err(e) => {
+				let error_msg: String = format!("Could not get current mrenclave due to: {}", e);
 				compute_hex_encoded_return_error(error_msg.as_str())
 			},
 		};
@@ -465,13 +467,6 @@ fn get_request_payload(params: Params) -> Result<String, String> {
 	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
 	Ok(s.to_owned())
-}
-
-pub fn sidechain_io_handler<Error>() -> IoHandler
-where
-	Error: std::fmt::Debug,
-{
-	IoHandler::new()
 }
 
 #[cfg(feature = "test")]
