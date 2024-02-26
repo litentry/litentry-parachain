@@ -84,10 +84,10 @@ fn request_vc_13_with_unauthorized_delegatee_fails() {
 #[test]
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = get_signer(TEST8_SIGNER_PUB);
+		let signer: SystemAccountId = get_signer(TEST8_SIGNER_PUB);
 		let alice: Identity = get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer),
+			RuntimeOrigin::signed(signer),
 			alice,
 			Assertion::A1,
 			H256::default(),

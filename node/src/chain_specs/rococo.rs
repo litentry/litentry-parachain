@@ -20,7 +20,7 @@ use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
 	SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
-	TeebagOperationalMode, TeerexConfig, VCManagementConfig, UNIT, WASM_BINARY,
+	TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -239,12 +239,6 @@ fn generate_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		// use sudo key as genesis admin for teerex and VCMP
-		teerex: TeerexConfig {
-			allow_sgx_debug_mode: true,
-			admin: Some(root_key.clone()),
-			skip_scheduled_enclave_check,
-		},
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
