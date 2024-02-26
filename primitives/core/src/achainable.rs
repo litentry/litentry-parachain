@@ -72,7 +72,26 @@ AchainableRequestParams!(AchainableBetweenPercents, {
 	less_than_or_equal_to: ParameterString,
 });
 
-AchainableRequestParams!(AchainableClassOfYear, {});
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum AchainableNameClassOfYear {
+	ClassOfYear,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableClassOfYear {
+	pub name: AchainableNameClassOfYear,
+	pub chain: BoundedWeb3Network,
+}
+
+impl AchainableNameClassOfYear {
+	pub fn name_str(&self) -> ParameterString {
+		match self {
+			AchainableNameClassOfYear::ClassOfYear => ParameterString::truncate_from(
+				"Account created between {dates}".as_bytes().to_vec(),
+			),
+		}
+	}
+}
 
 AchainableRequestParams!(AchainableDateInterval, {
 	start_date: ParameterString,
@@ -135,7 +154,7 @@ impl AchainableParams {
 			AchainableParams::Amounts(p) => p.name.clone(),
 			AchainableParams::Basic(p) => p.name.clone(),
 			AchainableParams::BetweenPercents(p) => p.name.clone(),
-			AchainableParams::ClassOfYear(p) => p.name.clone(),
+			AchainableParams::ClassOfYear(p) => p.name.name_str(),
 			AchainableParams::DateInterval(p) => p.name.clone(),
 			AchainableParams::DatePercent(p) => p.name.clone(),
 			AchainableParams::Date(p) => p.name.clone(),

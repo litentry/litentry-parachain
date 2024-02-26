@@ -292,7 +292,7 @@ impl TryFrom<AchainableParams> for Params {
 				Ok(Params::ParamsBasicTypeWithBetweenPercents(p))
 			},
 			AchainableParams::ClassOfYear(p) => {
-				let name = ap.to_string(&p.name)?;
+				let name = ap.to_string(&p.name.name_str())?;
 				let network = &p.chain;
 
 				// NOTE:

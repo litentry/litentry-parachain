@@ -27,8 +27,8 @@ use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
-	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
+	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableNameClassOfYear,
+	AchainableParams, AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
 	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
 	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	REQUEST_AES_KEY_LEN,
@@ -396,7 +396,7 @@ impl RequestVcCommand {
 				),
 				AchainableCommand::ClassOfYear(arg) =>
 					Assertion::Achainable(AchainableParams::ClassOfYear(AchainableClassOfYear {
-						name: to_para_str(&arg.name),
+						name: AchainableNameClassOfYear::ClassOfYear,
 						chain: to_chains(&arg.chain),
 					})),
 				AchainableCommand::DateInterval(arg) =>
