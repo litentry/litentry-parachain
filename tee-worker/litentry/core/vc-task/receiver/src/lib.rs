@@ -246,11 +246,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		pool.join();
 		debug!("batch_request_vc execution finished. In total {:?} assertions", len);
 	} else {
-		send_vc_response(
-			sender,
-			context,
-			Err("Expect request_vc trusted call".to_string()),
-		);
+		send_vc_response(sender, context, Err("Expect request_vc trusted call".to_string()));
 	}
 }
 fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
