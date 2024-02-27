@@ -26,8 +26,7 @@ const RESPONSE_BNB_DOMAIN: &str = r#"{
 					"expires": "2028-09-18T13:35:38Z"
 				}
                 "#;
-pub(crate) fn query_user_bnb_domain(
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::post().and(warp::path::full()).map(|p: FullPath| {
 		if p.as_str() == "/spaceid/domain/names/byOwners" {
 			Response::builder().body(RESPONSE_BNB_DOMAIN.to_string())
