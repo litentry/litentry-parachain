@@ -115,8 +115,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					|| body.address == "0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA"
 				{
 					Response::builder().body(RES_BODY_TRUE.to_string())
-				} else if body.address == "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5" {
-					Response::builder().body(RES_BODY_TRUE.to_string())
 				} else {
 					Response::builder().body(RES_BODY_FALSE.to_string())
 				}
