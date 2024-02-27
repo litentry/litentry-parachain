@@ -123,11 +123,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			}
 			// HoldingAmount
 			else if body.name == "Balance over {amount}" {
-				if body.address == "0xff93b45308fd417df303d6515ab04d9e89a750ca" {
-					Response::builder().body(RES_BODY_OK_HOLDING_AMOUNT.to_string())
-				} else {
-					Response::builder().body(RES_BODY_FALSE.to_string())
-				}
+				Response::builder().body(RES_BODY_OK_HOLDING_AMOUNT.to_string())
 			} else {
 				Response::builder().body(RES_BODY_TRUE.to_string())
 			}
