@@ -28,7 +28,7 @@ use log::*;
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct SetScheduledEnclaveArgs {
 	worker_type: WorkerType,
-	sbn: codec::Compact<SidechainBlockNumber>,
+	sbn: SidechainBlockNumber,
 	mrenclave: MrEnclave,
 }
 
@@ -39,7 +39,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!("execute indirect call: SetScheduledEnclave, worker_type: {:?}, sidechain_block_number: {:?}, mrenclave: {:?}", self.worker_type, self.sbn, self.mrenclave);
 		if self.worker_type == WorkerType::BitAcross {
-			GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn.into(), self.mrenclave)?;
+			GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn, self.mrenclave)?;
 		} else {
 			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
 		}
@@ -50,7 +50,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveScheduledEnclaveArgs {
 	worker_type: WorkerType,
-	sbn: codec::Compact<SidechainBlockNumber>,
+	sbn: SidechainBlockNumber,
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
@@ -64,7 +64,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 			self.sbn
 		);
 		if self.worker_type == WorkerType::BitAcross {
-			GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn.into())?;
+			GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn)?;
 		} else {
 			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
 		}
