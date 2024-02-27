@@ -89,14 +89,10 @@ pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
 runtime-common = { path = '../common', default-features = false }
-
-# TEE pallets
-pallet-group = { path = "../../pallets/group", default-features = false }
-pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
-pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.42" }
@@ -146,8 +142,6 @@ runtime-benchmarks = [
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
     "pallet-group/runtime-benchmarks",
     "pallet-identity-management/runtime-benchmarks",
-    "pallet-teerex/runtime-benchmarks",
-    "pallet-sidechain/runtime-benchmarks",
     "pallet-vc-management/runtime-benchmarks",
 ]
 std = [
@@ -219,8 +213,6 @@ std = [
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
-    "pallet-teerex/std",
-    "pallet-sidechain/std",
     "pallet-vc-management/std",
 ]
 try-runtime = [
@@ -255,8 +247,6 @@ try-runtime = [
     "pallet-proxy/try-runtime",
     "pallet-scheduler/try-runtime",
     "pallet-session/try-runtime",
-    "pallet-sidechain/try-runtime",
-    "pallet-teerex/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",

@@ -51,7 +51,6 @@ itp-utils = { path = "../core-primitives/utils" }
 lc-direct-call = { path = "../litentry/core/direct-call" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
-pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 [features]
 default = []

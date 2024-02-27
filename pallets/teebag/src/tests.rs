@@ -18,14 +18,13 @@
 
 #![allow(dead_code, unused_imports)]
 use crate::{
-	mock::*, AttestationType, DcapProvider, Enclave, EnclaveRegistry, Error, Event as TeebagEvent,
-	ScheduledEnclave, SgxBuildMode, WorkerType, H256,
+	mock::*, test_util::*, AttestationType, DcapProvider, Enclave, EnclaveRegistry, Error,
+	Event as TeebagEvent, ScheduledEnclave, SgxBuildMode, WorkerType, H256,
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
 use sp_keyring::AccountKeyring;
 use sp_runtime::AccountId32;
-use test_utils::{get_signer, ias::consts::*};
 
 const VALID_TIMESTAMP: Moment = 1671606747000;
 
