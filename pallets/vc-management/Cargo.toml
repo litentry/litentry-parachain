@@ -26,15 +26,15 @@ pallet-teebag = { path = "../teebag", default-features = false }
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, optional = true }
-test-utils = { path = "../test-utils", default-features = false, optional = true }
 
 [dev-dependencies]
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-pallet-group = { path = "../../pallets/group" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-test-utils = { path = "../test-utils" }
+pallet-group = { path = "../../pallets/group" }
+pallet-teebag = { path = "../teebag", features = ["test-util"] }
+
 
 [features]
 default = ["std"]
@@ -44,7 +44,7 @@ runtime-benchmarks = [
     "frame-system/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
     "pallet-group/runtime-benchmarks",
-    "test-utils",
+    "pallet-teebag/runtime-benchmarks",
 ]
 std = [
     "codec/std",
