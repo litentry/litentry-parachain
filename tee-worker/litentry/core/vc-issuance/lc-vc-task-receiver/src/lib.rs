@@ -44,9 +44,7 @@ use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskCon
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, VCRequest, VCResponse};
 use litentry_macros::if_production_or;
-use litentry_primitives::{
-	Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
-};
+use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use sp_core::blake2_256;
