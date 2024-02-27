@@ -711,6 +711,10 @@ where
 		}
 	}
 
+	pub fn send_rpc_response(&self, hash: TxHash, encoded_value: Vec<u8>, do_watch: bool) {
+		self.listener.write().unwrap().send_rpc_response(&hash, encoded_value, do_watch);
+	}
+
 	pub fn swap_rpc_connection_hash(&self, old_hash: TxHash, new_hash: TxHash) {
 		self.listener.write().unwrap().swap_rpc_connection_hash(old_hash, new_hash);
 	}

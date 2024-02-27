@@ -169,6 +169,10 @@ where
 		self.fire(tx, |s| s.update_connection_state(encoded_value, force_wait));
 	}
 
+	pub fn send_rpc_response(&mut self, hash: &TxHash, encoded_value: Vec<u8>, do_watch: bool) {
+		self.fire(hash, |s| s.send_rpc_response(encoded_value, do_watch));
+	}
+
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&mut self, old_hash: TxHash, new_hash: TxHash) {
 		log::debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);

@@ -119,6 +119,8 @@ pub enum TrustedCall {
 	#[cfg(not(feature = "production"))]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
+	#[codec(index = 6)]
+	batch_request_vc(Identity, Identity, Vec<Assertion>, Option<RequestAesKey>, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
@@ -232,6 +234,7 @@ impl TrustedCall {
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
 			#[cfg(not(feature = "production"))]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
+			Self::batch_request_vc(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -852,6 +855,12 @@ where
 					e
 				})?;
 				Ok(TrustedCallResult::Streamed)
+			},
+			TrustedCall::batch_request_vc(..) => {
+				error!(
+					"TrustedCall::batch_request_vc is not supported here. Will be removed later."
+				);
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::request_vc_callback(
 				signer,

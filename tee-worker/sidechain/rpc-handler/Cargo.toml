@@ -8,6 +8,9 @@ edition = "2021"
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
+# substrate deps
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
 # local dependencies
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }

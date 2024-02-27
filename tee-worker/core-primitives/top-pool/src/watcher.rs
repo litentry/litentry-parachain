@@ -139,6 +139,15 @@ where
 		}
 	}
 
+	pub fn send_rpc_response(&mut self, encoded_value: Vec<u8>, do_watch: bool) {
+		if let Err(e) =
+			self.rpc_response_sender
+				.send_rpc_response(*self.hash(), encoded_value, do_watch)
+		{
+			warn!("failed to update connection state: {:?}", e);
+		}
+	}
+
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&self, new_hash: TxHash) {
 		if let Err(e) = self.rpc_response_sender.swap_hash(*self.hash(), new_hash) {

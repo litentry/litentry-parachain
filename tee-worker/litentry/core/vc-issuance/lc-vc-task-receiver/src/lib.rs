@@ -42,10 +42,10 @@ use itp_types::{
 };
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{init_vc_task_sender_storage, VCResponse};
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCRequest, VCResponse};
 use litentry_macros::if_production_or;
 use litentry_primitives::{
-	AesRequest, Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
+	Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
 };
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
@@ -85,13 +85,13 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	let (sender, receiver) = channel::<(ShardIdentifier, TrustedCall)>();
+	let (tc_sender, tc_receiver) = channel::<(ShardIdentifier, TrustedCall)>();
 
 	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
 	// are submitting trusted calls simultaneously
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
-		if let Ok((shard, call)) = receiver.recv() {
+		if let Ok((shard, call)) = tc_receiver.recv() {
 			info!("Submitting trusted call to the pool");
 			if let Err(e) = context_cloned.submit_trusted_call(&shard, None, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
@@ -103,46 +103,169 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		let context_pool = context.clone();
 		let extrinsic_factory_pool = extrinsic_factory.clone();
 		let node_metadata_repo_pool = node_metadata_repo.clone();
-		let sender_pool = sender.clone();
+		let tc_sender_pool = tc_sender.clone();
 
 		pool.execute(move || {
-			let response = handle_request(
-				&mut req.request,
-				context_pool.clone(),
+			handle_vc_request(
+				&mut req,
+				context_pool,
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
-				sender_pool,
+				tc_sender_pool,
 			);
-			if let Err(e) = req.sender.send(response.clone()) {
-				warn!("Unable to submit response back to the handler: {:?}", e);
-			}
-			if response.is_err() {
-				if let Err(e) =
-					context_pool.ocall_api.update_metric(EnclaveMetric::FailedVCIssuance)
-				{
-					warn!("Failed to update metric for VC Issuance: {:?}", e);
-				}
-			} else if let Err(e) =
-				context_pool.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance)
-			{
-				warn!("Failed to update metric for VC Issuance: {:?}", e);
-			}
-		});
+		})
 	}
 
 	pool.join();
 	warn!("vc_task_receiver loop terminated");
 }
 
-pub fn handle_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
-	request: &mut AesRequest,
+fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
+	sender: &Sender<Result<Vec<u8>, String>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	response: Result<Vec<u8>, String>,
+) where
+	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+{
+	if let Err(e) = sender.send(response.clone()) {
+		warn!("Unable to submit response back to the handler: {:?}", e);
+	}
+	if response.is_err() {
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::FailedVCIssuance) {
+			warn!("Failed to update metric for VC Issuance: {:?}", e);
+		}
+	} else if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::SuccessfullVCIssuance) {
+		warn!("Failed to update metric for VC Issuance: {:?}", e);
+	}
+}
+fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
+	vc_req: &mut VCRequest,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
-	sender: Sender<(ShardIdentifier, TrustedCall)>,
+	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
+) where
+	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	Z: CreateExtrinsics + Send + Sync + 'static,
+	N: AccessNodeMetadata + Send + Sync + 'static,
+	N::MetadataType: NodeMetadataTrait,
+{
+	let request = &mut vc_req.request;
+	let sender = &vc_req.sender;
+	let enclave_shielding_key = match context.shielding_key.retrieve_key() {
+		Ok(value) => value,
+		Err(e) => {
+			send_vc_response(
+				sender,
+				context,
+				Err(format!("Failed to retrieve shielding key: {:?}", e)),
+			);
+			return
+		},
+	};
+	let tcs = match request
+		.decrypt(Box::new(enclave_shielding_key))
+		.ok()
+		.and_then(|v| TrustedOperation::<TrustedCallSigned, Getter>::decode(&mut v.as_slice()).ok())
+		.and_then(|top| top.to_call().cloned())
+	{
+		Some(tcs) => tcs,
+		None => {
+			send_vc_response(sender, context, Err("Failed to decode payload".to_string()));
+			return
+		},
+	};
+	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
+		Ok(m) => m.m,
+		Err(_) => {
+			send_vc_response(sender, context, Err("Failed to get mrenclave".to_string()));
+			return
+		},
+	};
+	if !tcs.verify_signature(&mrenclave, &request.shard) {
+		send_vc_response(sender, context, Err("Failed to verify sig".to_string()));
+		return
+	}
+	if let TrustedCall::request_vc(..) = tcs.call {
+		let response = process_single_request(
+			request.shard.clone(),
+			context.clone(),
+			extrinsic_factory.clone(),
+			node_metadata_repo.clone(),
+			tc_sender.clone(),
+			tcs.call.clone(),
+			1,
+		);
+		send_vc_response(sender, context.clone(), response);
+	} else if let TrustedCall::batch_request_vc(signer, who, assertions, maybe_key, req_ext_hash) =
+		tcs.call
+	{
+		let pool = ThreadPool::new(4);
+		let len = assertions.len() as u8;
+		for assertion in &assertions {
+			let new_call = TrustedCall::request_vc(
+				signer.clone(),
+				who.clone(),
+				assertion.clone(),
+				maybe_key.clone(),
+				req_ext_hash.clone(),
+			);
+			let context_pool = context.clone();
+			let extrinsic_factory_pool = extrinsic_factory.clone();
+			let node_metadata_repo_pool = node_metadata_repo.clone();
+			let tc_sender_pool = tc_sender.clone();
+			let shard = request.shard.clone();
+			let sender_clone = sender.clone();
+
+			pool.execute(move || {
+				let response = process_single_request(
+					shard,
+					context_pool.clone(),
+					extrinsic_factory_pool,
+					node_metadata_repo_pool,
+					tc_sender_pool,
+					new_call,
+					len,
+				);
+				send_vc_response(&sender_clone, context_pool, response);
+			})
+		}
+
+		pool.join();
+		debug!("batch_request_vc execution finished. In total {:?} assertions", len);
+	} else {
+		send_vc_response(
+			sender,
+			context.clone(),
+			Err("Expect request_vc trusted call".to_string()),
+		);
+	}
+}
+fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
+	shard: H256,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	extrinsic_factory: Arc<Z>,
+	node_metadata_repo: Arc<N>,
+	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
+	call: TrustedCall,
+	assertion_num: u8,
 ) -> Result<Vec<u8>, String>
 where
-	ShieldingKeyRepository: AccessKey,
+	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
 		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -155,29 +278,12 @@ where
 	N::MetadataType: NodeMetadataTrait,
 {
 	let start_time = Instant::now();
-	let enclave_shielding_key = context
-		.shielding_key
-		.retrieve_key()
-		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
-	let tcs = request
-		.decrypt(Box::new(enclave_shielding_key))
-		.ok()
-		.and_then(|v| TrustedOperation::<TrustedCallSigned, Getter>::decode(&mut v.as_slice()).ok())
-		.and_then(|top| top.to_call().cloned())
-		.ok_or_else(|| "Failed to decode payload".to_string())?;
-
-	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
-		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".to_string()),
-	};
-
-	ensure!(tcs.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
-
-	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = tcs.call {
+	// The `call` should always be `TrustedCall:request_vc`
+	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
 			context
 				.state_handler
-				.execute_on_current(&request.shard, |state, _| {
+				.execute_on_current(&shard, |state, _| {
 					let storage_key = storage_map_key(
 						"IdentityManagement",
 						"IDGraphs",
@@ -277,7 +383,7 @@ where
 		}
 
 		let req = AssertionBuildRequest {
-			shard: request.shard,
+			shard,
 			signer: signer_account,
 			who: who.clone(),
 			assertion: assertion.clone(),
@@ -292,7 +398,6 @@ where
 
 		let credential_str = create_credential_str(&req, &context)
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
-		let res = VCResponse { vc_payload: credential_str };
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
@@ -311,7 +416,7 @@ where
 		let mutated_id_graph = if should_create_id_graph { id_graph } else { Default::default() };
 
 		let res = RequestVCResult {
-			vc_payload: aes_encrypt_default(&key, &res.vc_payload),
+			vc_payload: aes_encrypt_default(&key, &credential_str),
 			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 			pre_id_graph_hash: id_graph_hash,
 		};
@@ -322,8 +427,8 @@ where
 			.get_enclave_account()
 			.map_err(|_| "Failed to get enclave signer".to_string())?;
 		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
-		sender
-			.send((request.shard, c))
+		tc_sender
+			.send((shard, c))
 			.map_err(|e| format!("Failed to send trusted call: {}", e))?;
 
 		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
@@ -343,7 +448,8 @@ where
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
-		Ok(res.encode())
+		let vc_response = VCResponse { vc_res_payload: res.encode(), vc_req_num: assertion_num };
+		Ok(vc_response.encode())
 	} else {
 		Err("Expect request_vc trusted call".to_string())
 	}
