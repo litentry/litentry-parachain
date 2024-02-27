@@ -23,7 +23,7 @@ use frame_support::{assert_err, assert_ok};
 use hex_literal::hex;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
-use teerex_primitives::SgxBuildMode;
+use teerex_primitives::{SgxAttestationMethod, SgxBuildMode};
 use test_utils::ias::consts::*;
 
 fn list_enclaves() -> Vec<(u64, Enclave<AccountId, Vec<u8>>)> {
@@ -140,6 +140,7 @@ fn add_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 	})
@@ -156,6 +157,7 @@ fn add_and_remove_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		assert_ok!(Teerex::unregister_enclave(RuntimeOrigin::signed(signer)));
@@ -174,6 +176,7 @@ fn add_enclave_without_timestamp_fails() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		)
 		.is_err());
 		assert_eq!(Teerex::enclave_count(), 0);
@@ -201,6 +204,7 @@ fn list_enclaves_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		let enclaves = list_enclaves();
@@ -259,6 +263,7 @@ fn remove_middle_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		assert_eq!(list_enclaves(), vec![(1, e_1.clone())]);
@@ -270,6 +275,7 @@ fn remove_middle_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 2);
 		let enclaves = list_enclaves();
@@ -283,6 +289,7 @@ fn remove_middle_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 3);
 		let enclaves = list_enclaves();
@@ -310,6 +317,7 @@ fn register_enclave_with_different_signer_fails() {
 				URL.to_vec(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			),
 			Error::<Test>::SenderIsNotAttestedEnclave
 		);
@@ -328,6 +336,7 @@ fn register_enclave_with_to_old_attestation_report_fails() {
 				URL.to_vec(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			),
 			Error::<Test>::RemoteAttestationTooOld
 		);
@@ -345,6 +354,7 @@ fn register_enclave_with_almost_too_old_report_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 	})
 }
@@ -373,6 +383,7 @@ fn update_enclave_url_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave(1).unwrap().url, URL.to_vec());
 
@@ -382,6 +393,7 @@ fn update_enclave_url_works() {
 			url2.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave(1).unwrap().url, url2.to_vec());
 		let enclaves = list_enclaves();
@@ -404,6 +416,7 @@ fn update_ipfs_hash_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		assert_ok!(Teerex::confirm_processed_parentchain_block(
@@ -466,6 +479,7 @@ fn unshield_is_only_executed_once_for_the_same_call_hash() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		assert_ok!(Balances::transfer(
@@ -534,6 +548,7 @@ fn timestamp_callback_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer6.clone()),
@@ -541,6 +556,7 @@ fn timestamp_callback_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer7.clone()),
@@ -548,6 +564,7 @@ fn timestamp_callback_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 3);
 
@@ -606,6 +623,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		let enclaves = list_enclaves();
@@ -637,6 +655,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				URL.to_vec(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			));
 			assert_eq!(Teerex::enclave_count(), 1);
 			let enclaves = list_enclaves();
@@ -658,6 +677,7 @@ fn debug_mode_enclave_attest_fails_when_sgx_debug_mode_not_allowed() {
 				URL.to_vec(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			),
 			Error::<Test>::SgxModeNotAllowed
 		);
@@ -687,6 +707,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 		let enclaves = list_enclaves();
@@ -710,6 +731,7 @@ fn verify_unshield_funds_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 
@@ -782,6 +804,7 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		//Ensure that bonding account has funds
@@ -839,6 +862,7 @@ fn confirm_processed_parentchain_block_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 
@@ -884,6 +908,7 @@ fn ensure_registered_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_ok!(Teerex::ensure_registered_enclave(&signer4));
 		assert_err!(
@@ -908,6 +933,7 @@ fn publish_hash_works() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		// There are no events emitted at the genesis block.
@@ -982,6 +1008,7 @@ fn publish_hash_with_too_many_topics_fails() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		let hash = H256::from([1u8; 32]);
@@ -1014,6 +1041,7 @@ fn publish_hash_with_too_much_data_fails() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 
 		let hash = H256::from([1u8; 32]);
@@ -1041,6 +1069,7 @@ fn cannot_register_enclave_when_limit_reached() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		Timestamp::set_timestamp(TEST6_TIMESTAMP);
 		assert_err!(
@@ -1050,6 +1079,7 @@ fn cannot_register_enclave_when_limit_reached() {
 				URL.to_vec(),
 				None,
 				None,
+				SgxAttestationMethod::Ias,
 			),
 			Error::<Test>::RegisteredEnclaveLimitReached
 		);
@@ -1069,6 +1099,7 @@ fn can_register_enclave_while_limit_not_reached() {
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 	})
 }
@@ -1085,6 +1116,7 @@ fn can_set_registered_enclave_limit_to_higher_than_actual_registered_enclaves_co
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_ok!(Teerex::set_registered_enclave_limit(
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
@@ -1133,6 +1165,7 @@ fn cannot_set_registered_enclave_limit_to_lower_than_actual_registered_enclaves_
 			URL.to_vec(),
 			None,
 			None,
+			SgxAttestationMethod::Ias,
 		));
 		assert_err!(
 			Teerex::set_registered_enclave_limit(

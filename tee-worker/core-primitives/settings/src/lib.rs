@@ -63,6 +63,9 @@ pub mod files {
 	#[cfg(not(feature = "production"))]
 	pub static RA_API_KEY_FILE: &str = "key.txt";
 
+	pub static AZURE_ATTEST_URL_FILE: &str = "azure_attest_url.txt";
+	pub static AZURE_ATTEST_KEY_FILE: &str = "azure_attest_key.txt";
+
 	pub const SPID_MIN_LENGTH: usize = 32;
 	pub const STATE_SNAPSHOTS_CACHE_SIZE: usize = 4;
 }

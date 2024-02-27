@@ -132,6 +132,7 @@ itp-utils = { path = "../core-primitives/utils", default-features = false }
 its-block-verification = { path = "../sidechain/block-verification", default-features = false }
 its-primitives = { path = "../sidechain/primitives", default-features = false }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }

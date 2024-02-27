@@ -18,7 +18,7 @@ limitations under the License.
 use crate::{mock::*, Error, Event as SidechainEvent, Teerex};
 use frame_support::{assert_err, assert_ok, dispatch::DispatchResultWithPostInfo};
 use sp_core::H256;
-use teerex_primitives::MrSigner;
+use teerex_primitives::{MrSigner, SgxAttestationMethod};
 use test_utils::ias::consts::*;
 
 // give get_signer a concrete type
@@ -209,6 +209,7 @@ fn register_enclave(signer_pub_key: &MrSigner, cert: &[u8], expected_enclave_cou
 		URL.to_vec(),
 		None,
 		None,
+		SgxAttestationMethod::Ias,
 	));
 	assert_eq!(Teerex::<Test>::enclave_count(), expected_enclave_count);
 }
