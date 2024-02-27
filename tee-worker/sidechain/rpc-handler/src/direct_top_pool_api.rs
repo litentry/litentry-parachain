@@ -350,7 +350,7 @@ where
 	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
 
 	// Use this hash to trigger the storage of connection_registry
-	let hash = request.clone().using_encoded(|x| BlakeTwo256::hash(x));
+	let hash = request.using_encoded(|x| BlakeTwo256::hash(x));
 
 	thread::spawn(move || request_vc_inner1(author, request, hash));
 

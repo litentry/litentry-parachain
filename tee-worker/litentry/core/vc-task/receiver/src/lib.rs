@@ -200,15 +200,15 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	}
 	if let TrustedCall::request_vc(..) = tcs.call {
 		let response = process_single_request(
-			request.shard.clone(),
+			request.shard,
 			context.clone(),
-			extrinsic_factory.clone(),
-			node_metadata_repo.clone(),
-			tc_sender.clone(),
+			extrinsic_factory,
+			node_metadata_repo,
+			tc_sender,
 			tcs.call.clone(),
 			1,
 		);
-		send_vc_response(sender, context.clone(), response);
+		send_vc_response(sender, context, response);
 	} else if let TrustedCall::batch_request_vc(signer, who, assertions, maybe_key, req_ext_hash) =
 		tcs.call
 	{
@@ -219,14 +219,14 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				signer.clone(),
 				who.clone(),
 				assertion.clone(),
-				maybe_key.clone(),
-				req_ext_hash.clone(),
+				maybe_key,
+				req_ext_hash,
 			);
 			let context_pool = context.clone();
 			let extrinsic_factory_pool = extrinsic_factory.clone();
 			let node_metadata_repo_pool = node_metadata_repo.clone();
 			let tc_sender_pool = tc_sender.clone();
-			let shard = request.shard.clone();
+			let shard = request.shard;
 			let sender_clone = sender.clone();
 
 			pool.execute(move || {
@@ -248,7 +248,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	} else {
 		send_vc_response(
 			sender,
-			context.clone(),
+			context,
 			Err("Expect request_vc trusted call".to_string()),
 		);
 	}
