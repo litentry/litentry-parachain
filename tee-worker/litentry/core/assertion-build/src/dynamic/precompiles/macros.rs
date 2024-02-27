@@ -12,19 +12,21 @@ macro_rules! http_get_precompile_fn {
 			input: Vec<u8>,
 			client: T,
 		) -> $crate::dynamic::precompiles::PrecompileResult {
-			let mut reader = $crate::dynamic::precompiles::InputReader::new(input);
-			let url = reader
-				.read_string()
-				.map_err(|e| $crate::dynamic::precompiles::macros::prepare_custom_failure(e))?;
+			let decoded = ethabi::decode(&[ethabi::ParamType::String, ethabi::ParamType::String], &input).map_err(|e| {
+				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
+					"Could not decode bytes {:?}, reason: {:?}", input, e
+				))
+			})?;
+			// safe to unwrap
+			let url = decoded.get(0).unwrap().clone().into_string().unwrap();
 			let url = itc_rest_client::rest_client::Url::parse(&url).map_err(|e| {
 				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
 					"Could not parse url {:?}, reason: {:?}",
 					url, e
 				))
 			})?;
-			let pointer = reader
-				.read_string()
-				.map_err(|e| $crate::dynamic::precompiles::macros::prepare_custom_failure(e))?;
+			// safe to unwrap
+			let pointer = decoded.get(1).unwrap().clone().into_string().unwrap();
 			let resp = client
 				.send_request_raw(url, itc_rest_client::rest_client::Method::GET, None)
 				.map_err(|e| {

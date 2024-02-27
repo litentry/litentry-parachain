@@ -47,6 +47,19 @@ pub mod test {
 	}
 
 	#[test]
+	//temp
+	pub fn test_deserialize() {
+		let data: Vec<u8> = hex::decode("000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000086687474703a2f2f6c6f63616c686f73743a31393532372f6576656e74732f646f65732d757365722d6a6f696e65642d65766d2d63616d706169676e3f6163636f756e743d3078643433353933633731356664643331633631313431616264303461393966643638323263383535383835346363646533396135363834653761353664613237640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a2f6861734a6f696e656400000000000000000000000000000000000000000000").unwrap();
+
+		let encoded = ethabi::encode(&[ethabi::Token::String("http://localhost:19527/events/does-user-joined-evm-campaign?account=0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string()), ethabi::Token::String("/hasJoined".to_string())]);
+		println!("Encoded: {:?}", hex::encode(&encoded));
+
+		let result =
+			ethabi::decode(&[ethabi::ParamType::String, ethabi::ParamType::String], &data).unwrap();
+		// result.g(0).unwrap()
+	}
+
+	#[test]
 	pub fn test_get_string() {
 		// given
 		let client = MockedHttpClient::default();
@@ -128,7 +141,7 @@ pub mod test {
 		let result = http_get_bool(data.to_vec(), client);
 
 		// then
-		assert_exit_status_reason(&result, "Could not read string len, start: 0 end 32");
+		assert_exit_status_reason(&result, "Could not decode bytes [0, 11], reason: InvalidData");
 	}
 
 	#[test]
@@ -163,18 +176,9 @@ pub mod test {
 	}
 
 	fn prepare_input_data(url: &str, pointer: &str) -> Vec<u8> {
-		let url_bytes = url.as_bytes();
-		let pointer_bytes = pointer.as_bytes();
-
-		let mut bytes = [0; 128];
-		U256::try_from(url_bytes.len()).unwrap().to_big_endian(&mut bytes[0..32]);
-		bytes[32..64][0..url_bytes.len()].copy_from_slice(url_bytes);
-		U256::try_from(pointer_bytes.len()).unwrap().to_big_endian(&mut bytes[64..96]);
-		bytes[96..128][0..pointer_bytes.len()].copy_from_slice(pointer_bytes);
-
-		bytes.to_vec()
+		ethabi::encode(&[
+			ethabi::Token::String(url.to_string()),
+			ethabi::Token::String(pointer.to_string()),
+		])
 	}
-
-	//test cases for:
-	//reader cannot panic
 }
