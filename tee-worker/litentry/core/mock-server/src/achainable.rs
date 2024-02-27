@@ -88,7 +88,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			if p.as_str() != "/v1/run/system-labels" {
 				return Response::builder().status(400).body(RES_ERRBODY.to_string())
 			}
-
 			if body.name == "Account total transactions under {amount}" {
 				// Total transaction
 				Response::builder().body(RES_TOTALTRANSACTIONS.to_string())
