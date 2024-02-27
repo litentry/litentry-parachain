@@ -206,8 +206,8 @@ fmt-taplo:
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
-	@cd ts-tests && pnpm run format
-	@cd tee-worker/ts-tests && pnpm run format
+	@cd ts-tests && pnpm install && pnpm run format
+	@cd tee-worker/ts-tests && pnpm install && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:
