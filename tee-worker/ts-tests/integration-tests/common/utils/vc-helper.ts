@@ -150,18 +150,11 @@ export const defaultAssertions = [
             BnbDigitDomainClub: 'Bnb999ClubMember',
         },
     },
-    // NFT holder
-    {
-        description: 'You are WeirdoGhostGang NFT holder',
-        assertion: {
-            WeirdoGhostGangHolder: [],
-        },
-    },
     // OneBlock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
         assertion: {
-            OneBlock: 'CourseParticipation',
+            Oneblock: 'CourseCompletion',
         },
     },
 ];
