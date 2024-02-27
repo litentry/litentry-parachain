@@ -16,7 +16,6 @@
 
 #![allow(opaque_hidden_inferred_bound)]
 
-use serde_json::json;
 use warp::{http::Response, path::FullPath, Filter};
 
 const RESPONSE_ONEBLOCK: &str = r#"

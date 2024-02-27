@@ -16,7 +16,6 @@
 
 #![allow(opaque_hidden_inferred_bound)]
 
-use std::collections::HashMap;
 use warp::{http::Response, path::FullPath, Filter};
 
 const RESPONSE_BNB_DOMAIN: &str = r#"{
