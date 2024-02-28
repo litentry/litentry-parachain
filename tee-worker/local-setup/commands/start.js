@@ -41,8 +41,15 @@ async function setAwailablePorts() {
 
 async function genereateLocalConfig() {
   const today = new Date();
-  const parachainDir = `/tmp/parachain_dev_${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+  const year = today.getFullYear();
+  const hours = String(today.getHours()).padStart(2, "0");
+  const minutes = String(today.getMinutes()).padStart(2, "0");
 
+  const parachainDir = `${day}_${month}_${year}_${hours}${minutes}`;
+	
+  process.env.LITENTRY_PARACHAIN_DIR = parachainDir;
   console.log("Directory has been assigned to:", parachainDir);
 
   const data = {
@@ -80,12 +87,6 @@ export async function runParachainAndWorker() {
   await setAwailablePorts();
 
   const answers = await questionary();
-
-  printLabel("Prepare config files");
-  await generateConfigFiles();
-  if (answers.type !== "remote") {
-    await genereateLocalConfig();
-  }
 
   printLabel("Running Parachain");
   await runParachain(answers);
@@ -203,6 +204,10 @@ async function runWorkers(answers) {
 
 async function runParachain(answers) {
   console.log(`Running parachain in "${answers.mode}" mode`);
+  await generateConfigFiles();
+  if (answers.type !== "remote") {
+    await genereateLocalConfig();
+  }
 
   try {
     if (answers.mode === "local-docker") {
