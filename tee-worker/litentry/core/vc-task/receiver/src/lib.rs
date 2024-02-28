@@ -50,6 +50,7 @@ use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityCo
 use sp_core::blake2_256;
 use std::{
 	boxed::Box,
+	collections::HashSet,
 	format,
 	string::{String, ToString},
 	sync::{
@@ -206,15 +207,26 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			node_metadata_repo,
 			tc_sender,
 			tcs.call.clone(),
+			0,
 			1,
 		);
 		send_vc_response(sender, context, response);
 	} else if let TrustedCall::batch_request_vc(signer, who, assertions, maybe_key, req_ext_hash) =
 		tcs.call
 	{
+		// Filter out duplicate assertions
+		let mut seen: HashSet<H256> = HashSet::new();
+		let mut unique_assertions = Vec::new();
+		for assertion in assertions.into_iter() {
+			let hash = H256::from(blake2_256(&assertion.encode()));
+			if seen.insert(hash) {
+				unique_assertions.push(assertion);
+			}
+		}
+
 		let pool = ThreadPool::new(4);
-		let len = assertions.len() as u8;
-		for assertion in &assertions {
+		let len = unique_assertions.len() as u8;
+		for (idx, assertion) in unique_assertions.iter().enumerate() {
 			let new_call = TrustedCall::request_vc(
 				signer.clone(),
 				who.clone(),
@@ -237,6 +249,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 					node_metadata_repo_pool,
 					tc_sender_pool,
 					new_call,
+					idx as u8,
 					len,
 				);
 				send_vc_response(&sender_clone, context_pool, response);
@@ -256,7 +269,8 @@ fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
 	call: TrustedCall,
-	assertion_num: u8,
+	idx: u8,
+	len: u8,
 ) -> Result<Vec<u8>, String>
 where
 	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync,
@@ -413,6 +427,7 @@ where
 			vc_payload: aes_encrypt_default(&key, &credential_str),
 			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 			pre_id_graph_hash: id_graph_hash,
+			batch_vc_idx: idx,
 		};
 
 		// submit TrustedCall::maybe_create_id_graph to the reciever thread
@@ -442,7 +457,7 @@ where
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
-		let vc_response = VCResponse { vc_res_payload: res.encode(), vc_req_num: assertion_num };
+		let vc_response = VCResponse { payload: res.encode(), len };
 		Ok(vc_response.encode())
 	} else {
 		Err("Expect request_vc trusted call".to_string())

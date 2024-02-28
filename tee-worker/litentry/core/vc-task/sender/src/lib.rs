@@ -42,8 +42,8 @@ pub struct VCRequest {
 
 #[derive(Encode, Decode, Clone)]
 pub struct VCResponse {
-	pub vc_res_payload: Vec<u8>,
-	pub vc_req_num: u8,
+	pub payload: Vec<u8>,
+	pub len: u8,
 }
 
 pub type VcSender = MpscSender<VCRequest>;

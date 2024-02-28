@@ -373,30 +373,30 @@ where
 
 	let mut req_cnt = 0u8;
 	let mut req_num = 0u8;
-	loop {
-		req_cnt += 1;
-		match receiver.recv() {
-			Ok(Ok(response)) =>
+	while let Ok(res) = receiver.recv() {
+		match res {
+			Ok(response) => {
+				req_cnt += 1;
 				if let Ok(vc_res) = VCResponse::decode(&mut response.as_slice()) {
-					req_num = vc_res.vc_req_num;
-					author.send_rpc_response(hash, vc_res.vc_res_payload, req_cnt < req_num);
-					if !req_cnt < req_num {
-						break
-					}
+					req_num = vc_res.len;
+					author.send_rpc_response(hash, vc_res.payload, req_cnt < req_num);
 				} else {
-					let res = compute_hex_encoded_return_error("Request vc response decode error")
-						.to_hex();
+					let res = compute_hex_encoded_return_error("Request vc response decode error");
 					author.send_rpc_response(hash, res.into(), req_cnt < req_num);
-				},
-			Ok(Err(e)) => {
+				}
+				if req_cnt >= req_num {
+					break
+				}
+			},
+			Err(e) => {
+				req_cnt += 1;
 				error!("Received error in jsonresponse: {:?} ", e);
 				let res = compute_hex_encoded_return_error(&e);
 				author.send_rpc_response(hash, res.into(), req_cnt < req_num);
-			},
-			Err(_) => {
-				// This case will only happen if the sender has been dropped
-				let res = compute_hex_encoded_return_error("The sender has been dropped");
-				author.send_rpc_response(hash, res.into(), req_cnt < req_num);
+				// What if there are multiple results, but error comes first???
+				if req_cnt >= req_num {
+					break
+				}
 			},
 		};
 	}

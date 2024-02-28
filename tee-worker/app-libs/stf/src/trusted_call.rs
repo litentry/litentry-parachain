@@ -918,6 +918,7 @@ where
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
 						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 						pre_id_graph_hash: id_graph_hash,
+						batch_vc_idx: 0u8,
 					}))
 				} else {
 					Ok(TrustedCallResult::Empty)

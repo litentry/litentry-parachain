@@ -41,6 +41,9 @@ export default {
         },
         RequestVCResult: {
             vc_payload: "AesOutput",
+            pre_mutated_id_graph: "AesOutput",
+            pre_id_graph_hash: "H256",
+            batch_vc_idx: "u8",
         },
         // Achainable
         AchainableParams: {
