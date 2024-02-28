@@ -26,7 +26,7 @@ extern crate frame_benchmarking;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
-	construct_runtime, ord_parameter_types, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
 		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
@@ -40,9 +40,7 @@ use hex_literal::hex;
 use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_sidechain;
 pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
-pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -441,7 +439,7 @@ impl pallet_proxy::Config for Runtime {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
-	type OnTimestampSet = Teerex;
+	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
@@ -981,28 +979,6 @@ parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 }
 
-ord_parameter_types! {
-	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
-}
-
-impl pallet_teerex::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	// TODO: the generated runtime weights file is incomplete
-	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
-	//       it should be re-benchmarked once the upstream fixes it
-	type WeightInfo = ();
-	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-}
-
-impl pallet_sidechain::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
-}
-
 impl pallet_teebag::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
@@ -1244,8 +1220,6 @@ construct_runtime! {
 		Bitacross: pallet_bitacross = 70,
 
 		// TEE
-		Teerex: pallet_teerex = 90,
-		Sidechain: pallet_sidechain = 91,
 		Teebag: pallet_teebag = 93,
 
 		// Frontier
@@ -1321,8 +1295,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
 			// TEE pallets
-			RuntimeCall::Teerex(_) |
-			RuntimeCall::Sidechain(_) |
 			RuntimeCall::Teebag(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
@@ -1372,8 +1344,6 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_vc_management, VCManagement]
-		[pallet_teerex, Teerex]
-		[pallet_sidechain, Sidechain]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 	);

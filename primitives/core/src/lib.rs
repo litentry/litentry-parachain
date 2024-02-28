@@ -17,6 +17,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 
+use sp_runtime::{traits::ConstU32, BoundedVec};
+
 pub use litentry_proc_macros::*;
 
 pub use constants::*;
@@ -28,6 +30,9 @@ pub use network::*;
 
 mod assertion;
 pub use assertion::*;
+
+mod achainable;
+pub use achainable::*;
 
 mod vip3;
 pub use vip3::*;
@@ -67,6 +72,8 @@ pub use platform_user::*;
 
 mod web3_nft;
 pub use web3_nft::*;
+
+pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 /// Common types of parachains.
 mod types {

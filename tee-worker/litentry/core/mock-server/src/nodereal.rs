@@ -14,28 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![allow(clippy::unnecessary_cast)]
+#![allow(opaque_hidden_inferred_bound)]
 
-pub mod cumulus_pallet_xcmp_queue;
-pub mod frame_system;
-pub mod pallet_asset_manager;
-pub mod pallet_balances;
-pub mod pallet_bridge;
-pub mod pallet_bridge_transfer;
-pub mod pallet_collective;
-pub mod pallet_democracy;
-pub mod pallet_evm;
-pub mod pallet_extrinsic_filter;
-pub mod pallet_identity;
-pub mod pallet_identity_management;
-pub mod pallet_membership;
-pub mod pallet_multisig;
-pub mod pallet_parachain_staking;
-pub mod pallet_preimage;
-pub mod pallet_proxy;
-pub mod pallet_scheduler;
-pub mod pallet_session;
-pub mod pallet_timestamp;
-pub mod pallet_treasury;
-pub mod pallet_utility;
-pub mod pallet_vc_management;
+use warp::{http::Response, path::FullPath, Filter};
+
+const RESPONSE_BNB_DOMAIN: &str = r#"{
+					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+					"name": "8",
+					"expires": "2028-09-18T13:35:38Z"
+				}
+                "#;
+pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post().and(warp::path::full()).map(|p: FullPath| {
+		if p.as_str() == "/spaceid/domain/names/byOwners" {
+			Response::builder().body(RESPONSE_BNB_DOMAIN.to_string())
+		} else {
+			Response::builder().status(400).body(String::from("Error query"))
+		}
+	})
+}

@@ -59,9 +59,8 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
-		let signer: <T as frame_system::Config>::AccountId =
-			test_utils::get_signer(TEST8_SIGNER_PUB);
+		use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+		let signer: <T as frame_system::Config>::AccountId = get_signer(TEST8_SIGNER_PUB);
 		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
 			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(
 				&signer,
@@ -168,9 +167,13 @@ impl pallet_group::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
+	use pallet_teebag::test_util::{
+		get_signer, TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL,
+	};
+
 	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let alice: SystemAccountId = test_utils::get_signer(&[1u8; 32]);
-	let eddie: SystemAccountId = test_utils::get_signer(&[5u8; 32]);
+	let alice: SystemAccountId = get_signer(&[1u8; 32]);
+	let eddie: SystemAccountId = get_signer(&[5u8; 32]);
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
@@ -181,10 +184,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			RuntimeOrigin::signed(alice.clone()),
 			pallet_teebag::OperationalMode::Development
 		));
-
-		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);
-		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
+		let signer: SystemAccountId = get_signer(TEST8_SIGNER_PUB);
 		if !pallet_teebag::EnclaveRegistry::<Test>::contains_key(signer.clone()) {
 			assert_ok!(Teebag::register_enclave(
 				RuntimeOrigin::signed(signer),

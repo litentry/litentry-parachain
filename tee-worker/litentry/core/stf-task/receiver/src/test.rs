@@ -21,7 +21,7 @@ fn test_threadpool_behaviour() {
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
-	let data_provider_conifg = DataProviderConfig::new();
+	let data_provider_conifg = DataProviderConfig::new().unwrap();
 	let context = StfTaskContext::new(
 		Arc::new(shielding_key_repository_mock),
 		author_mock.into(),

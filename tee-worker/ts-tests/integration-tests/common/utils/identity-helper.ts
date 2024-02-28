@@ -4,7 +4,7 @@ import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
-import type { TypeRegistry } from '@polkadot/types';
+import type { Bytes, TypeRegistry, Vec } from '@polkadot/types';
 import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -35,7 +35,7 @@ export async function buildIdentityHelper(
     const identity = {
         [type]: address,
     };
-    return context.api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
+    return context.api.createType('CorePrimitivesIdentity', identity);
 }
 
 export async function buildIdentityFromKeypair(
@@ -64,7 +64,7 @@ export async function buildIdentityFromKeypair(
         [type]: address,
     };
 
-    return context.api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
+    return context.api.createType('CorePrimitivesIdentity', identity);
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.
@@ -77,7 +77,7 @@ export async function buildIdentityTxs(
     identities: CorePrimitivesIdentity[],
     method: 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
     validations?: LitentryValidationData[],
-    web3networks?: Web3Network[][]
+    web3networks?: (Bytes | Vec<Web3Network>)[]
 ): Promise<any[]> {
     const txs: {
         tx: SubmittableExtrinsic<ApiTypes>;
@@ -138,7 +138,7 @@ export function parseIdGraph(
         sidechainRegistry.createType(
             'Vec<(CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decryptedIdGraph
-        ) as unknown as [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+        );
 
     return idGraph;
 }
@@ -182,10 +182,7 @@ export async function buildValidations(
 
             evmValidationData!.Web3Validation.Evm.signature.Ethereum = evmSignature;
             console.log('evmValidationData', evmValidationData);
-            const encodedVerifyIdentityValidation = context.api.createType(
-                'LitentryValidationData',
-                evmValidationData
-            ) as unknown as LitentryValidationData;
+            const encodedVerifyIdentityValidation = context.api.createType('LitentryValidationData', evmValidationData);
 
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'substrate') {
@@ -207,7 +204,7 @@ export async function buildValidations(
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 substrateValidationData
-            ) as unknown as LitentryValidationData;
+            );
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'bitcoin') {
             const bitcoinValidationData = {
@@ -233,7 +230,7 @@ export async function buildValidations(
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData
-            ) as unknown as LitentryValidationData;
+            );
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'bitcoinPrettified') {
             const bitcoinValidationData = {
@@ -258,7 +255,7 @@ export async function buildValidations(
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData
-            ) as unknown as LitentryValidationData;
+            );
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter: ', msg);
@@ -273,7 +270,7 @@ export async function buildValidations(
             const encodedVerifyIdentityValidation = context.api.createType(
                 'LitentryValidationData',
                 twitterValidationData
-            ) as unknown as LitentryValidationData;
+            );
             validations.push(encodedVerifyIdentityValidation);
         }
     }

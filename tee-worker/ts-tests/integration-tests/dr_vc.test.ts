@@ -16,9 +16,9 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { CorePrimitivesIdentity } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-helper';
+import { defaultAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec } from '@polkadot/types';
+import { Vec, Bytes } from '@polkadot/types';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -35,7 +35,7 @@ describe('Test Vc (direct request)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Vec<Web3Network>;
+        networks: Bytes | Vec<Web3Network>;
     }[] = [];
     this.timeout(6000000);
 
@@ -64,7 +64,7 @@ describe('Test Vc (direct request)', function () {
             twitterNonce,
             'twitter'
         );
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Vec<Web3Network>; // @fixme #1878
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
@@ -83,10 +83,7 @@ describe('Test Vc (direct request)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', [
-            'Ethereum',
-            'Bsc',
-        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
@@ -111,9 +108,7 @@ describe('Test Vc (direct request)', function () {
             undefined,
             context.bitcoinWallet.alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', [
-            'BitcoinP2tr',
-        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,
@@ -176,31 +171,6 @@ describe('Test Vc (direct request)', function () {
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
             await assertVc(context, aliceSubstrateIdentity, res.value);
-        });
-    });
-    unconfiguredAssertions.forEach(({ description, assertion }) => {
-        it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
-            const getNextNonce = () => currentNonce++;
-            const nonce = getNextNonce();
-            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            console.log(`request vc ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`);
-            subscribeToEventsWithExtHash(requestIdentifier, context);
-
-            const requestVcCall = await createSignedTrustedCallRequestVc(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
-
-            await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-            // pending test
-            this.skip();
         });
     });
 });

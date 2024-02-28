@@ -29,7 +29,7 @@ export const defaultAssertions = [
     {
         description: 'The user is a member of Litentry Discord.',
         assertion: {
-            A2: 'A2',
+            A2: '807161594245152800',
         },
     },
 
@@ -50,7 +50,7 @@ export const defaultAssertions = [
     {
         description: 'The length of time a user continues to hold DOT token',
         assertion: {
-            A7: '10.01',
+            A7: '5',
         },
     },
     {
@@ -70,6 +70,7 @@ export const defaultAssertions = [
 
     // Achainable
     // https://www.notion.so/web3builders/Assertion-interface-9126ba85a925417a922f2c6ae5d62e87
+
     {
         description: `A trader or liquidity provider of Uniswap V2 or V3
                       Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f
@@ -90,7 +91,6 @@ export const defaultAssertions = [
                 Amount: {
                     name: 'Balance over {amount}',
                     chain: ['Ethereum'],
-
                     amount: '0',
                 },
             },
@@ -137,21 +137,6 @@ export const defaultAssertions = [
             VIP3MembershipCard: 'Silver',
         },
     },
-];
-
-// In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
-// For the 'OneBlock' assertion, need to configure the Polkadot/Kusma address,
-// and for 'bnb,' need to configure the NODEREAL_API_KEY
-// We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
-export const unconfiguredAssertions = [
-    // OneBlock
-    {
-        description: 'A participant to the course co-created by OneBlock+ and Parity',
-        assertion: {
-            OneBlock: 'CourseParticipation',
-        },
-    },
-
     // BNB domain
     {
         description: 'Holding a certain amount of bnb domain names',
@@ -165,86 +150,11 @@ export const unconfiguredAssertions = [
             BnbDigitDomainClub: 'Bnb999ClubMember',
         },
     },
-];
-export const jsonSchema = {
-    type: 'object',
-    properties: {
-        id: {
-            type: 'string',
-        },
-        type: {
-            type: 'array',
-        },
-        issuer: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                name: {
-                    type: 'string',
-                },
-                shard: {
-                    type: 'string',
-                },
-            },
-        },
-        issuanceDate: {
-            type: 'string',
-        },
-        credentialSubject: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                description: {
-                    type: 'string',
-                },
-                type: {
-                    type: 'string',
-                },
-                tag: {
-                    type: 'array',
-                },
-                assertions: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                    },
-                },
-                values: {
-                    type: 'array',
-                    items: {
-                        type: 'boolean',
-                    },
-                },
-                endpoint: {
-                    type: 'string',
-                },
-            },
-            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
-        },
-        proof: {
-            type: 'object',
-            properties: {
-                created: {
-                    type: 'string',
-                },
-                type: {
-                    enum: ['Ed25519Signature2020'],
-                },
-                proofPurpose: {
-                    enum: ['assertionMethod'],
-                },
-                proofValue: {
-                    type: 'string',
-                },
-                verificationMethod: {
-                    type: 'string',
-                },
-            },
+    // OneBlock
+    {
+        description: 'A participant to the course co-created by OneBlock+ and Parity',
+        assertion: {
+            Oneblock: 'CourseCompletion',
         },
     },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
-};
+];
