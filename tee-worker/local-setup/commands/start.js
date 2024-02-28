@@ -22,15 +22,18 @@ const envDefaultServicesWithPorts = [
 ];
 
 // checking that parachain port or sidechain port are available, or add offset
-async function setAwailablePorts() {
+async function setAwailablePorts(answers) {
   let offset = 0;
-  let portIsAvailable = true;
+  let parachainPortIsAvailable = true;
+  let workerPortIsAvailable = true;
   do {
-    portIsAvailable =
-      (await isPortAvailable(Number(process.env.CollatorWSPort) + offset)) &&
-      (await isPortAvailable(Number(process.env.TrustedWorkerPort) + offset));
-    if (!portIsAvailable) offset += 50;
-  } while (!portIsAvailable);
+    parachainPortIsAvailable =
+      answers.mode === "remote" ||
+      (await isPortAvailable(Number(process.env.CollatorWSPort) + offset));
+    workerPortIsAvailable = await isPortAvailable(Number(process.env.TrustedWorkerPort) + offset);
+
+    if (!parachainPortIsAvailable || !workerPortIsAvailable) offset += 50;
+  } while (!parachainPortIsAvailable || !workerPortIsAvailable);
 
   if (offset > 0) console.log("Due to unavailable port shifting ports for", offset);
 
@@ -39,7 +42,7 @@ async function setAwailablePorts() {
   );
 }
 
-async function genereateLocalConfig() {
+function genereateLocalConfig() {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are zero-based
@@ -47,8 +50,8 @@ async function genereateLocalConfig() {
   const hours = String(today.getHours()).padStart(2, "0");
   const minutes = String(today.getMinutes()).padStart(2, "0");
 
-  const parachainDir = `${day}_${month}_${year}_${hours}${minutes}`;
-	
+  const parachainDir = `/tmp/parachain_dev_${day}_${month}_${year}_${hours}${minutes}`;
+
   process.env.LITENTRY_PARACHAIN_DIR = parachainDir;
   console.log("Directory has been assigned to:", parachainDir);
 
@@ -70,7 +73,7 @@ async function genereateLocalConfig() {
   console.log("Config local file generated:", config_file);
 }
 
-async function generateConfigFiles() {
+function generateConfigFiles() {
   const envLocalExampleFile = `${workerPath}/ts-tests/integration-tests/.env.local.example`;
   const envLocalFile = envLocalExampleFile.slice(0, -".example".length);
 
@@ -84,9 +87,8 @@ async function generateConfigFiles() {
 }
 
 export async function runParachainAndWorker() {
-  await setAwailablePorts();
-
   const answers = await questionary();
+  await setAwailablePorts(answers);
 
   printLabel("Running Parachain");
   await runParachain(answers);
@@ -126,7 +128,12 @@ function buildWorkerOpts(workerNumber, answers) {
   }
 
   if (answers.mode === "remote") {
-    flags.push("-u", answers.remoteURL);
+    flags.push(
+      "-u",
+      `${answers.remoteURL.protocol}//${answers.remoteURL.hostname}`,
+      "-p",
+      answers.remoteURL.port
+    );
   } else {
     flags.push("-p", Number(process.env.CollatorWSPort));
   }
@@ -204,10 +211,8 @@ async function runWorkers(answers) {
 
 async function runParachain(answers) {
   console.log(`Running parachain in "${answers.mode}" mode`);
-  await generateConfigFiles();
-  if (answers.type !== "remote") {
-    await genereateLocalConfig();
-  }
+  generateConfigFiles();
+  if (answers.type !== "remote") genereateLocalConfig();
 
   try {
     if (answers.mode === "local-docker") {
@@ -242,6 +247,16 @@ function questionary() {
       name: "remoteURL",
       message: "Which parachain parachain URL to use?",
       when: (answers) => answers.mode === "remote",
+      default: "ws://localhost:9944",
+      filter: (input) => new URL(input),
+      validate: (input) => {
+        try {
+          new URL(input);
+          return true;
+        } catch {
+          return `Please, set valid URL! Inserted: ${input}`;
+        }
+      },
     },
     {
       type: "number",
