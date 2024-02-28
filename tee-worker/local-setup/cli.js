@@ -6,23 +6,23 @@ import { printLabel } from "./utils/index.js";
 dotenv.config({ path: ".env.dev" });
 
 async function main() {
-	switch (process.argv[2]) {
-		case "run":
-			printLabel("Cleanup before start");
-			await cleanup();
+  switch (process.argv[2]) {
+    case "run":
+      printLabel("Cleanup before start");
+      await cleanup();
 
-			await runParachainAndWorker();
+      await runParachainAndWorker();
 
-			break;
-		case "cleanup":
-			await cleanup();
-			break;
+      break;
+    case "cleanup":
+      await cleanup();
+      break;
 
-		default:
-			console.warn("Unknown command, check package.json#scripts");
+    default:
+      console.warn("Unknown command, check package.json#scripts");
 
-			break;
-	}
+      break;
+  }
 }
 
 main();

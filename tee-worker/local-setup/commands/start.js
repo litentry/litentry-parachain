@@ -6,244 +6,244 @@ import { spawn } from "child_process";
 import { homePath, printLabel, workerPath } from "../utils/index.js";
 
 const envDefaultServicesWithPorts = [
-	"AliceWSPort",
-	"AliceRPCPort",
-	"AlicePort",
-	"BobWSPort",
-	"BobRPCPort",
-	"BobPort",
-	"CollatorWSPort",
-	"CollatorRPCPort",
-	"CollatorPort",
-	"TrustedWorkerPort",
-	"UntrustedWorkerPort",
-	"MuRaPort",
-	"UntrustedHttpPort",
+  "AliceWSPort",
+  "AliceRPCPort",
+  "AlicePort",
+  "BobWSPort",
+  "BobRPCPort",
+  "BobPort",
+  "CollatorWSPort",
+  "CollatorRPCPort",
+  "CollatorPort",
+  "TrustedWorkerPort",
+  "UntrustedWorkerPort",
+  "MuRaPort",
+  "UntrustedHttpPort",
 ];
 
 // checking that parachain port or sidechain port are available, or add offset
 async function setAwailablePorts() {
-	let offset = 0;
-	let portIsAvailable = true;
-	do {
-		portIsAvailable =
-			(await isPortAvailable(Number(process.env.CollatorWSPort) + offset)) &&
-			(await isPortAvailable(Number(process.env.TrustedWorkerPort) + offset));
-		if (!portIsAvailable) offset += 50;
-	} while (!portIsAvailable);
+  let offset = 0;
+  let portIsAvailable = true;
+  do {
+    portIsAvailable =
+      (await isPortAvailable(Number(process.env.CollatorWSPort) + offset)) &&
+      (await isPortAvailable(Number(process.env.TrustedWorkerPort) + offset));
+    if (!portIsAvailable) offset += 50;
+  } while (!portIsAvailable);
 
-	if (offset > 0) console.log("Due to unavailable port shifting ports for", offset);
+  if (offset > 0) console.log("Due to unavailable port shifting ports for", offset);
 
-	envDefaultServicesWithPorts.forEach(
-		(service) => (process.env[service] = Number(process.env[service]) + offset)
-	);
+  envDefaultServicesWithPorts.forEach(
+    (service) => (process.env[service] = Number(process.env[service]) + offset)
+  );
 }
 
 async function genereateLocalConfig() {
-	const today = new Date();
-	const parachainDir = `/tmp/parachain_dev_${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
+  const today = new Date();
+  const parachainDir = `/tmp/parachain_dev_${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
 
-	console.log("Directory has been assigned to:", parachainDir);
+  console.log("Directory has been assigned to:", parachainDir);
 
-	const data = {
-		eth_endpoint: "http://127.0.0.1:8545",
-		eth_address: "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
-		private_key: "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
-		ocw_account: "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
-		genesis_state_path: `${parachainDir}/genesis-state`,
-		genesis_wasm_path: `${parachainDir}/genesis-wasm`,
-		parachain_ws: `ws://localhost:${process.env.CollatorWSPort}`,
-		relaychain_ws: `ws://localhost:${process.env.AliceWSPort}`,
-		bridge_path: "/tmp/parachain_dev/chainbridge",
-	};
+  const data = {
+    eth_endpoint: "http://127.0.0.1:8545",
+    eth_address: "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
+    private_key: "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
+    ocw_account: "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
+    genesis_state_path: `${parachainDir}/genesis-state`,
+    genesis_wasm_path: `${parachainDir}/genesis-wasm`,
+    parachain_ws: `ws://localhost:${process.env.CollatorWSPort}`,
+    relaychain_ws: `ws://localhost:${process.env.AliceWSPort}`,
+    bridge_path: "/tmp/parachain_dev/chainbridge",
+  };
 
-	const config_file = `${homePath}/ts-tests/config.local.json`;
+  const config_file = `${homePath}/ts-tests/config.local.json`;
 
-	fs.writeFileSync(config_file, JSON.stringify(data, null, 4));
-	console.log("Config local file generated:", config_file);
+  fs.writeFileSync(config_file, JSON.stringify(data, null, 4));
+  console.log("Config local file generated:", config_file);
 }
 
 async function generateConfigFiles() {
-	const envLocalExampleFile = `${workerPath}/ts-tests/integration-tests/.env.local.example`;
-	const envLocalFile = envLocalExampleFile.slice(0, -".example".length);
+  const envLocalExampleFile = `${workerPath}/ts-tests/integration-tests/.env.local.example`;
+  const envLocalFile = envLocalExampleFile.slice(0, -".example".length);
 
-	const data = fs.readFileSync(envLocalExampleFile, "utf8");
-	const updatedData = data
-		.replace(":2000", `:${process.env.TrustedWorkerPort}`)
-		.replace(":9944", `:${process.env.CollatorWSPort}`);
+  const data = fs.readFileSync(envLocalExampleFile, "utf8");
+  const updatedData = data
+    .replace(":2000", `:${process.env.TrustedWorkerPort}`)
+    .replace(":9944", `:${process.env.CollatorWSPort}`);
 
-	fs.writeFileSync(envLocalFile, updatedData);
-	console.log("Env config file generated:", envLocalFile);
+  fs.writeFileSync(envLocalFile, updatedData);
+  console.log("Env config file generated:", envLocalFile);
 }
 
 export async function runParachainAndWorker() {
-	await setAwailablePorts();
+  await setAwailablePorts();
 
-	const answers = await questionary();
+  const answers = await questionary();
 
-	printLabel("Prepare config files");
-	await generateConfigFiles();
-	if (answers.type !== "remote") {
-		await genereateLocalConfig();
-	}
+  printLabel("Prepare config files");
+  await generateConfigFiles();
+  if (answers.type !== "remote") {
+    await genereateLocalConfig();
+  }
 
-	printLabel("Running Parachain");
-	await runParachain(answers);
+  printLabel("Running Parachain");
+  await runParachain(answers);
 
-	printLabel("Running worker(s)");
-	await runWorkers(answers);
+  printLabel("Running worker(s)");
+  await runWorkers(answers);
 }
 
 function buildWorkerOpts(workerNumber, answers) {
-	const offset = workerNumber * 10;
-	// run worker
-	const flags = [
-		"--clean-reset",
-		"-T",
-		"wss://localhost",
-		"-P",
-		Number(process.env.TrustedWorkerPort) + offset,
-		"-w",
-		Number(process.env.UntrustedWorkerPort) + offset,
-		"-r",
-		Number(process.env.MuRaPort) + offset,
-		"-h",
-		Number(process.env.UntrustedHttpPort) + offset,
-		"--enable-mock-server",
-		"--parentchain-start-block",
-		"0",
-	];
+  const offset = workerNumber * 10;
+  // run worker
+  const flags = [
+    "--clean-reset",
+    "-T",
+    "wss://localhost",
+    "-P",
+    Number(process.env.TrustedWorkerPort) + offset,
+    "-w",
+    Number(process.env.UntrustedWorkerPort) + offset,
+    "-r",
+    Number(process.env.MuRaPort) + offset,
+    "-h",
+    Number(process.env.UntrustedHttpPort) + offset,
+    "--enable-mock-server",
+    "--parentchain-start-block",
+    "0",
+  ];
 
-	const subcommandFlags = ["--skip-ra", "--dev"];
+  const subcommandFlags = ["--skip-ra", "--dev"];
 
-	if (workerNumber === 0) {
-		// Only first/main worker enables metrics
-		flags.push("--enable-metrics");
-	} else {
-		// Other than first worker require state requesting
-		subcommandFlags.push("--request-state");
-	}
+  if (workerNumber === 0) {
+    // Only first/main worker enables metrics
+    flags.push("--enable-metrics");
+  } else {
+    // Other than first worker require state requesting
+    subcommandFlags.push("--request-state");
+  }
 
-	if (answers.mode === "remote") {
-		flags.push("-u", answers.remoteURL);
-	} else {
-		flags.push("-p", Number(process.env.CollatorWSPort));
-	}
+  if (answers.mode === "remote") {
+    flags.push("-u", answers.remoteURL);
+  } else {
+    flags.push("-p", Number(process.env.CollatorWSPort));
+  }
 
-	return { flags, subcommandFlags };
+  return { flags, subcommandFlags };
 }
 
 async function waitForInitialization(logFile, initializationPhrase, timeoutInSeconds = 60) {
-	const timeoutMillis = timeoutInSeconds * 1000;
-	const startTime = Date.now();
-	let found = false;
+  const timeoutMillis = timeoutInSeconds * 1000;
+  const startTime = Date.now();
+  let found = false;
 
-	while (!found) {
-		const elapsedTime = Date.now() - startTime;
+  while (!found) {
+    const elapsedTime = Date.now() - startTime;
 
-		if (elapsedTime >= timeoutMillis) {
-			throw new Error(
-				`Initialization timeout: Process did not initialize within ${timeoutInSeconds} seconds. Please check ${logFile}`
-			);
-		}
+    if (elapsedTime >= timeoutMillis) {
+      throw new Error(
+        `Initialization timeout: Process did not initialize within ${timeoutInSeconds} seconds. Please check ${logFile}`
+      );
+    }
 
-		const logContent = fs.readFileSync(logFile, "utf8");
-		if (logContent.includes(initializationPhrase)) {
-			found = true;
-		} else {
-			await sleep(1000); // Adjust the sleep duration as needed
-		}
-	}
+    const logContent = fs.readFileSync(logFile, "utf8");
+    if (logContent.includes(initializationPhrase)) {
+      found = true;
+    } else {
+      await sleep(1000); // Adjust the sleep duration as needed
+    }
+  }
 }
 
 async function runWorker(index, { flags, subcommandFlags }) {
-	const cwd = `${workerPath}/tmp/worker-${index}`;
-	const logFile = `${workerPath}/log/worker-${index}.txt`;
+  const cwd = `${workerPath}/tmp/worker-${index}`;
+  const logFile = `${workerPath}/log/worker-${index}.txt`;
 
-	if (!fs.existsSync(cwd)) {
-		console.log("Creating worker's directory", cwd);
+  if (!fs.existsSync(cwd)) {
+    console.log("Creating worker's directory", cwd);
 
-		fs.mkdirSync(cwd);
-	}
+    fs.mkdirSync(cwd);
+  }
 
-	const logStream = fs.createWriteStream(logFile, { flags: "a" });
+  const logStream = fs.createWriteStream(logFile, { flags: "a" });
 
-	console.log(`Running worker ${index + 1} and waiting for initialisation`);
-	await $`cp ${workerPath}/bin/litentry-worker ${workerPath}/bin/enclave.signed.so ${cwd}`;
+  console.log(`Running worker ${index + 1} and waiting for initialisation`);
+  await $`cp ${workerPath}/bin/litentry-worker ${workerPath}/bin/enclave.signed.so ${cwd}`;
 
-	cd(cwd);
+  cd(cwd);
 
-	const workerProcess = spawn("./litentry-worker", [...flags, "run", ...subcommandFlags], {
-		detached: true,
-		stdio: ["ignore", logStream, logStream],
-	});
+  const workerProcess = spawn("./litentry-worker", [...flags, "run", ...subcommandFlags], {
+    detached: true,
+    stdio: ["ignore", logStream, logStream],
+  });
 
-	// Wait for worker initialization phrase by checking the log. If the worker hans more than minute, then probably
-	await waitForInitialization(logFile, "Enclave registered at block number", 60);
+  // Wait for worker initialization phrase by checking the log. If the worker hans more than minute, then probably
+  await waitForInitialization(logFile, "Enclave registered at block number", 60);
 
-	console.log("Worker successfully run");
-	console.log("./litentry-worker", [...flags, "run", ...subcommandFlags].join(" "));
-	console.log("----------------");
+  console.log("Worker successfully run");
+  console.log("./litentry-worker", [...flags, "run", ...subcommandFlags].join(" "));
+  console.log("----------------");
 
-	// move a process to background
-	workerProcess.unref();
+  // move a process to background
+  workerProcess.unref();
 
-	return workerProcess;
+  return workerProcess;
 }
 
 async function runWorkers(answers) {
-	const workers = [];
-	for (let index = 0; index < answers.workersCount; index++) {
-		const options = buildWorkerOpts(index, answers);
-		const result = await runWorker(index, options);
-		workers.push(result);
-	}
-	return workers;
+  const workers = [];
+  for (let index = 0; index < answers.workersCount; index++) {
+    const options = buildWorkerOpts(index, answers);
+    const result = await runWorker(index, options);
+    workers.push(result);
+  }
+  return workers;
 }
 
 async function runParachain(answers) {
-	console.log(`Running parachain in "${answers.mode}" mode`);
+  console.log(`Running parachain in "${answers.mode}" mode`);
 
-	try {
-		if (answers.mode === "local-docker") {
-			await $`${homePath}/tee-worker/scripts/litentry/start_parachain.sh`;
-		} else if (answers.mode === "local-binary-standalone") {
-			await $`${homePath}/scripts/launch-standalone.sh`;
-		} else if (answers.mode === "local-binary") {
-			await $`${homePath}/scripts/launch-local-binary.sh rococo`;
-		} else if (answers.mode === "remote") {
-		}
-	} catch (error) {
-		console.error("Running parachain fails");
-		console.error(error);
-		process.exit(1);
-	}
+  try {
+    if (answers.mode === "local-docker") {
+      await $`${homePath}/tee-worker/scripts/litentry/start_parachain.sh`;
+    } else if (answers.mode === "local-binary-standalone") {
+      await $`${homePath}/scripts/launch-standalone.sh`;
+    } else if (answers.mode === "local-binary") {
+      await $`${homePath}/scripts/launch-local-binary.sh rococo`;
+    } else if (answers.mode === "remote") {
+    }
+  } catch (error) {
+    console.error("Running parachain fails");
+    console.error(error);
+    process.exit(1);
+  }
 
-	console.log(
-		`Exposed ports: \n --port ${process.env.CollatorPort} --ws-port ${process.env.CollatorWSPort}  --rpc-port ${process.env.CollatorRPCPort}`
-	);
+  console.log(
+    `Exposed ports: \n --port ${process.env.CollatorPort} --ws-port ${process.env.CollatorWSPort}  --rpc-port ${process.env.CollatorRPCPort}`
+  );
 }
 
 function questionary() {
-	return inquirer.prompt([
-		{
-			type: "list",
-			name: "mode",
-			message: "Which mode you want to run?",
-			choices: ["local-binary-standalone", "local-binary", "local-docker", "remote"],
-		},
-		{
-			type: "input",
-			name: "remoteURL",
-			message: "Which parachain parachain URL to use?",
-			when: (answers) => answers.mode === "remote",
-		},
-		{
-			type: "number",
-			name: "workersCount",
-			message: "How much workers do you want to run?",
-			default: 1,
-			validate: (input) => (input >= 1 ? true : "Please set positive number"),
-		},
-	]);
+  return inquirer.prompt([
+    {
+      type: "list",
+      name: "mode",
+      message: "Which mode you want to run?",
+      choices: ["local-binary-standalone", "local-binary", "local-docker", "remote"],
+    },
+    {
+      type: "input",
+      name: "remoteURL",
+      message: "Which parachain parachain URL to use?",
+      when: (answers) => answers.mode === "remote",
+    },
+    {
+      type: "number",
+      name: "workersCount",
+      message: "How much workers do you want to run?",
+      default: 1,
+      validate: (input) => (input >= 1 ? true : "Please set positive number"),
+    },
+  ]);
 }
