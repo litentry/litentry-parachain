@@ -19,7 +19,7 @@ use crate::{
 	traits::{Block as BlockTrait, SignedBlock as SignedBlockTrait},
 	types::{block_data::BlockData, header::SidechainHeader as Header},
 };
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use sp_core::{ed25519, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 

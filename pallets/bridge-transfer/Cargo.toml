@@ -7,7 +7,7 @@ repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.1.0'
 
 [dependencies]
-parity-scale-codec = { workspace = true, features = ["derive", "max-encoded-len"] }
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 sp-arithmetic = { workspace = true }
@@ -25,8 +25,8 @@ pallet-parachain-staking = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
-pallet-balances = { workspace = true }
-pallet-timestamp = { workspace = true }
+pallet-balances = { workspace = true, features = ["std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]

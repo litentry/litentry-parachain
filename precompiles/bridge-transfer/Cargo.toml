@@ -7,7 +7,7 @@ version = '0.9.17'
 [dependencies]
 log = { workspace = true }
 num_enum = { workspace = true }
-parity-scale-codec = { workspace = true, features = ["derive", "max-encoded-len"] }
+parity-scale-codec = { workspace = true }
 rustc-hex = { workspace = true }
 
 pallet-bridge = { workspace = true }
@@ -30,8 +30,8 @@ scale-info = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
 precompile-utils = { workspace = true, features = ["testing"] }
-pallet-balances = { workspace = true, features = ["insecure_zero_ed"] }
-pallet-timestamp = { workspace = true }
+pallet-balances = { workspace = true, features = ["std", "insecure_zero_ed"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]

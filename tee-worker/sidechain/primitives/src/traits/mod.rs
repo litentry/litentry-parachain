@@ -20,7 +20,7 @@
 //! Todo: This crate should be more generic and supply blanket implementations for
 //! some generic structs.
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use sp_core::{crypto::Public, H256};
 use sp_runtime::traits::{BlakeTwo256, Hash, Member};
 use sp_std::{fmt::Debug, prelude::*};

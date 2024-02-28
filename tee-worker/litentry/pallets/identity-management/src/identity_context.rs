@@ -15,9 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{BlockNumberOf, Config, IDGraph, Web3Network};
-use codec::{Decode, Encode};
 use core::cmp::Ordering;
 use litentry_primitives::{Identity, IdentityNetworkTuple};
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 

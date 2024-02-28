@@ -129,7 +129,7 @@ impl RelayStateSproofBuilder {
 
 		let mut relevant_keys = Vec::new();
 		{
-			use codec::Encode as _;
+			use parity_scale_codec::Encode as _;
 
 			let mut insert = |key: Vec<u8>, value: Vec<u8>| {
 				relevant_keys.push(key.clone());

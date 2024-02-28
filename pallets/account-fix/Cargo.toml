@@ -9,7 +9,7 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
-parity-scale-codec = { workspace = true, features = ["derive", "max-encoded-len"] }
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 frame-support = { workspace = true }
