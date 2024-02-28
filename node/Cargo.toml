@@ -92,7 +92,6 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 try-runtime-cli = { workspace = true }
 
-# Local dependencies
 core-primitives = { workspace = true, features = ["std"] }
 litentry-parachain-runtime = { workspace = true, features = ["std"] }
 litmus-parachain-runtime = { workspace = true, features = ["std"] }

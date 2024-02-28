@@ -72,7 +72,8 @@ tokio = { version = "1.36.0", features = ["macros", "sync"] }
 num_enum = { version = "0.7.2", default-features = false }
 rustc-hex = { version = "2.0.1", default-features = false }
 x509-cert = { version = "0.1.0", default-features = false, features = ["alloc"] }
-ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
+# ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
+ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
 webpki = { version = "=0.102.0-alpha.3", git = "https://github.com/rustls/webpki", rev = "da923ed", package = "rustls-webpki", default-features = false, features = ["alloc", "ring"] }
 
 # cumulus client
@@ -97,7 +98,6 @@ moonbeam-rpc-primitives-txpool = { git = "https://github.com/litentry/astar-fram
 moonbeam-rpc-trace = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
 moonbeam-rpc-txpool = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42" }
 moonbeam-evm-tracer = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.42", default-features = false }
-
 
 # polkadot client
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42" }
