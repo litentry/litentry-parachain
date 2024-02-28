@@ -262,6 +262,8 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		send_vc_response(sender, context, Err("Expect request_vc trusted call".to_string()));
 	}
 }
+
+#[allow(clippy::too_many_arguments)]
 fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	shard: H256,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
