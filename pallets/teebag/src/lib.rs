@@ -525,10 +525,13 @@ pub mod pallet {
 
 		#[pallet::call_index(20)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
-		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
+		pub fn post_opaque_task(
+			origin: OriginFor<T>,
+			request: RsaRequest,
+		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::OpaqueTaskPosted { shard: request.shard });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(21)]
@@ -549,7 +552,7 @@ pub mod pallet {
 				block_hash,
 				task_merkle_root,
 			});
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(22)]
@@ -590,7 +593,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(().into())
+				return Ok(Pays::No.into())
 			}
 
 			let block_number = confirmation.block_number;
@@ -612,7 +615,7 @@ pub mod pallet {
 			);
 
 			Self::finalize_block(sender, shard, confirmation);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 	}
 }
