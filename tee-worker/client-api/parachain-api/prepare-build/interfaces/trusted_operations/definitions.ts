@@ -37,10 +37,10 @@ export default {
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)",
-                batch_request_vc: "(LitentryIdentity, LitentryIdentity, Vec<Assertion>, Option<RequestAesKey>, H256)",
                 set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
+                "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
                 __Unused_remove_identity: "Null",
+                batch_request_vc: "(LitentryIdentity, LitentryIdentity, Vec<Assertion>, Option<RequestAesKey>, H256)",
             },
         },
         TrustedOperationStatus: {
