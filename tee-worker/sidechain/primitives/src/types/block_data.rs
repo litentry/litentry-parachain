@@ -16,7 +16,7 @@
 */
 
 use crate::traits::BlockData as BlockDataTrait;
-use parity_scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 use sp_core::{ed25519, H256};
 use sp_std::vec::Vec;
 

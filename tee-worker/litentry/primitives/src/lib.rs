@@ -39,6 +39,7 @@ use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;
 
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
+use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_hex_utils::hex_encode;
 use log::error;
@@ -60,7 +61,6 @@ pub use parentchain_primitives::{
 	SoraQuizType, VCMPError, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	MINUTES,
 };
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{

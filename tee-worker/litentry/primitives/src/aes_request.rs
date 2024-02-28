@@ -35,7 +35,7 @@ use crate::{
 	aes_decrypt, AesOutput, Box, Debug, DecryptableRequest, RequestAesKey, ShardIdentifier,
 	ShieldingCryptoDecrypt, Vec,
 };
-use parity_scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]
 pub struct AesRequest {
