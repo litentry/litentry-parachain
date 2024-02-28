@@ -785,5 +785,9 @@ impl<T: Config> Pallet<T> {
 
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
+
+#[cfg(any(test, feature = "runtime-benchmarks", feature = "test-util"))]
+pub mod test_util;

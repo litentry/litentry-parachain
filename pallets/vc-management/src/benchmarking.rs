@@ -26,7 +26,7 @@ use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
 
-use test_utils::ias::consts::TEST8_MRENCLAVE;
+use pallet_teebag::test_util::TEST8_MRENCLAVE;
 const USER_SEED: u32 = 9966;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
