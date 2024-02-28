@@ -6,12 +6,13 @@ import { printLabel } from "./utils/index.js";
 dotenv.config({ path: ".env.dev" });
 
 async function main() {
-  switch (process.argv[2]) {
+  const [_node, _file, command, ...options] = process.argv;
+  switch (command) {
     case "run":
       printLabel("Cleanup before start");
       await cleanup();
 
-      await runParachainAndWorker();
+      await runParachainAndWorker(options);
 
       break;
     case "cleanup":

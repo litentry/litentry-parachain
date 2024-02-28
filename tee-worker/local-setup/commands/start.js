@@ -21,6 +21,8 @@ const envDefaultServicesWithPorts = [
   "UntrustedHttpPort",
 ];
 
+const defaultAnswers = { mode: "local-binary-standalone", workersCount: 1 };
+
 // checking that parachain port or sidechain port are available, or add offset
 async function setAwailablePorts(answers) {
   let offset = 0;
@@ -86,8 +88,9 @@ function generateConfigFiles() {
   console.log("Env config file generated:", envLocalFile);
 }
 
-export async function runParachainAndWorker() {
-  const answers = await questionary();
+export async function runParachainAndWorker(options) {
+  const answers = options.includes("-i") ? await questionary() : defaultAnswers;
+
   await setAwailablePorts(answers);
 
   printLabel("Running Parachain");
