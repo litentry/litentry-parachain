@@ -75,20 +75,20 @@ cumulus-pallet-session-benchmarking = { workspace = true, optional = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-system-benchmarking = { workspace = true, optional = true }
 
-core-primitives = { path = "../../primitives/core", default-features = false }
-pallet-account-fix = { path = "../../pallets/account-fix", default-features = false }
-pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
-pallet-bitacross = { path = "../../pallets/bitacross", default-features = false }
-pallet-bridge = { path = "../../pallets/bridge", default-features = false }
-pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
-pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
-pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
-pallet-group = { path = "../../pallets/group", default-features = false }
-pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
-pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
-pallet-teebag = { path = "../../pallets/teebag", default-features = false }
-pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
-runtime-common = { path = '../common', default-features = false }
+core-primitives = { workspace = true }
+pallet-account-fix = { workspace = true }
+pallet-asset-manager = { workspace = true }
+pallet-bitacross = { workspace = true }
+pallet-bridge = { workspace = true }
+pallet-bridge-transfer = { workspace = true }
+pallet-drop3 = { workspace = true }
+pallet-extrinsic-filter = { workspace = true }
+pallet-group = { workspace = true }
+pallet-identity-management = { workspace = true }
+pallet-parachain-staking = { workspace = true }
+pallet-teebag = { workspace = true }
+pallet-vc-management = { workspace = true }
+runtime-common = { workspace = true }
 
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }

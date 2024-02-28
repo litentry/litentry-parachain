@@ -232,14 +232,14 @@ cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cum
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 # local
-core-primitives = { path = "primitives/core", default-features = true }
+core-primitives = { path = "primitives/core", default-features = false }
 litentry-macros = { path = "primitives/core/macros" }
 litentry-proc-macros = { path = "primitives/core/proc-macros" }
-litentry-hex-utils = { path = "primitives/hex", default-features = true }
-runtime-common = { path = "runtime/common", default-features = true }
-litentry-parachain-runtime = { path = "runtime/litentry", default-features = true }
-litmus-parachain-runtime = { path = "runtime/litmus", default-features = true }
-rococo-parachain-runtime = { path = "runtime/rococo", default-features = true }
+litentry-hex-utils = { path = "primitives/hex", default-features = false }
+runtime-common = { path = "runtime/common", default-features = false }
+litentry-parachain-runtime = { path = "runtime/litentry", default-features = false }
+litmus-parachain-runtime = { path = "runtime/litmus", default-features = false }
+rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }

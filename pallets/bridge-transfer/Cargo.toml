@@ -20,8 +20,8 @@ frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 
-pallet-bridge = { path = "../bridge", default-features = false }
-pallet-parachain-staking = { path = "../parachain-staking", default-features = false }
+pallet-bridge = { workspace = true }
+pallet-parachain-staking = { workspace = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }

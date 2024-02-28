@@ -14,7 +14,7 @@ parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true, optional = true }
 
-core-primitives = { path = "../../primitives/core", default-features = false }
+core-primitives = { workspace = true }
 
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }

@@ -45,11 +45,11 @@ polkadot-parachain = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-runtime-parachains = { workspace = true }
 
-core-primitives = { path = "../../primitives/core", default-features = false }
-pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
-pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
-pallet-group = { path = "../../pallets/group", default-features = false }
-pallet-teebag = { path = "../../pallets/teebag", default-features = false }
+core-primitives = { workspace = true }
+pallet-asset-manager = { workspace = true }
+pallet-extrinsic-filter = { workspace = true }
+pallet-group = { workspace = true }
+pallet-teebag = { workspace = true }
 
 [features]
 default = ["std"]
