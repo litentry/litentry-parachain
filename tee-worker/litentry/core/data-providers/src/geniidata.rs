@@ -37,7 +37,6 @@ use std::{
 	vec,
 	vec::Vec,
 };
-use log::debug;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseItem {
 	pub tick: String,
@@ -103,9 +102,7 @@ impl GeniidataClient {
 				.map_err(|e| {
 					DataProviderError::GeniiDataError(format!("GeniiData response error: {}", e))
 				})?;
-			debug!("GeniiData response: {:?}", response);
 			all_items.extend(response.data.list);
-			debug!("GeniiData all items: {:?}", all_items);
 		}
 
 		Ok(all_items)
