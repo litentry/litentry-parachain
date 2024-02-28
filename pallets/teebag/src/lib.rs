@@ -525,13 +525,10 @@ pub mod pallet {
 
 		#[pallet::call_index(20)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
-		pub fn post_opaque_task(
-			origin: OriginFor<T>,
-			request: RsaRequest,
-		) -> DispatchResultWithPostInfo {
+		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::OpaqueTaskPosted { shard: request.shard });
-			Ok(Pays::No.into())
+			Ok(().into())
 		}
 
 		#[pallet::call_index(21)]
