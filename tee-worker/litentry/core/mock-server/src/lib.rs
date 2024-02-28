@@ -71,7 +71,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())
-					.or(oneblock::query())
+					// .or(oneblock::query())
 					.or(nodereal::query())
 					.or(geniidata::query())
 					.boxed(),
