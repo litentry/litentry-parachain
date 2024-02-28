@@ -1,9 +1,9 @@
 import inquirer from "inquirer";
 import { isPortAvailable } from "../utils/port.js";
 import fs from "fs";
-import { $, cd, echo, sleep } from "zx";
+import { $, cd, sleep } from "zx";
 import { spawn } from "child_process";
-import { homePath, sidechainPath } from "../utils/index.js";
+import { homePath, printLabel, workerPath } from "../utils/index.js";
 
 const envDefaultServicesWithPorts = [
 	"AliceWSPort",
@@ -21,18 +21,18 @@ const envDefaultServicesWithPorts = [
 	"UntrustedHttpPort",
 ];
 
+// checking that parachain port or sidechain port are available, or add offset
 async function setAwailablePorts() {
 	let offset = 0;
 	let portIsAvailable = true;
 	do {
-		portIsAvailable = await isPortAvailable(Number(process.env.CollatorWSPort) + offset);
-		console.log(
-			"Port is avaliable",
-			portIsAvailable,
-			Number(process.env.CollatorWSPort) + offset
-		);
+		portIsAvailable =
+			(await isPortAvailable(Number(process.env.CollatorWSPort) + offset)) &&
+			(await isPortAvailable(Number(process.env.TrustedWorkerPort) + offset));
 		if (!portIsAvailable) offset += 50;
 	} while (!portIsAvailable);
+
+	if (offset > 0) console.log("Due to unavailable port shifting ports for", offset);
 
 	envDefaultServicesWithPorts.forEach(
 		(service) => (process.env[service] = Number(process.env[service]) + offset)
@@ -43,7 +43,7 @@ async function genereateLocalConfig() {
 	const today = new Date();
 	const parachainDir = `/tmp/parachain_dev_${today.getDate()}_${today.getMonth()}_${today.getFullYear()}`;
 
-	echo("Directory has been assigned to:", parachainDir);
+	console.log("Directory has been assigned to:", parachainDir);
 
 	const data = {
 		eth_endpoint: "http://127.0.0.1:8545",
@@ -60,11 +60,11 @@ async function genereateLocalConfig() {
 	const config_file = `${homePath}/ts-tests/config.local.json`;
 
 	fs.writeFileSync(config_file, JSON.stringify(data, null, 4));
-	echo("Successfully written ", config_file);
+	console.log("Config local file generated:", config_file);
 }
 
 async function generateConfigFiles() {
-	const envLocalExampleFile = `${sidechainPath}/ts-tests/integration-tests/.env.local.example`;
+	const envLocalExampleFile = `${workerPath}/ts-tests/integration-tests/.env.local.example`;
 	const envLocalFile = envLocalExampleFile.slice(0, -".example".length);
 
 	const data = fs.readFileSync(envLocalExampleFile, "utf8");
@@ -73,26 +73,28 @@ async function generateConfigFiles() {
 		.replace(":9944", `:${process.env.CollatorWSPort}`);
 
 	fs.writeFileSync(envLocalFile, updatedData);
-	echo("Successfully written ", envLocalFile);
+	console.log("Env config file generated:", envLocalFile);
 }
 
 export async function runParachainAndWorker() {
 	await setAwailablePorts();
+
 	const answers = await questionary();
 
+	printLabel("Prepare config files");
 	await generateConfigFiles();
 	if (answers.type !== "remote") {
 		await genereateLocalConfig();
 	}
+
+	printLabel("Running Parachain");
 	await runParachain(answers);
 
-	const workers = await runWorkers(answers);
-
-	console.log("process.env", JSON.stringify(process.env, null, 2));
-	// display status message
+	printLabel("Running worker(s)");
+	await runWorkers(answers);
 }
 
-function buildWorkerOpts(workerNumber) {
+function buildWorkerOpts(workerNumber, answers) {
 	const offset = workerNumber * 10;
 	// run worker
 	const flags = [
@@ -107,36 +109,67 @@ function buildWorkerOpts(workerNumber) {
 		Number(process.env.MuRaPort) + offset,
 		"-h",
 		Number(process.env.UntrustedHttpPort) + offset,
-		"-p",
-		Number(process.env.CollatorWSPort),
 		"--enable-mock-server",
 		"--parentchain-start-block",
 		"0",
-		workerNumber === 0 && "--enable-metrics",
-	].filter(Boolean);
-	echo("index", workerNumber, flags);
+	];
 
-	const subcommandFlags = ["--skip-ra", "--dev", workerNumber !== 0 && "--request-state"].filter(
-		Boolean
-	);
+	const subcommandFlags = ["--skip-ra", "--dev"];
+
+	if (workerNumber === 0) {
+		// Only first/main worker enables metrics
+		flags.push("--enable-metrics");
+	} else {
+		// Other than first worker require state requesting
+		subcommandFlags.push("--request-state");
+	}
+
+	if (answers.mode === "remote") {
+		flags.push("-u", answers.remoteURL);
+	} else {
+		flags.push("-p", Number(process.env.CollatorWSPort));
+	}
 
 	return { flags, subcommandFlags };
 }
 
+async function waitForInitialization(logFile, initializationPhrase, timeoutInSeconds = 60) {
+	const timeoutMillis = timeoutInSeconds * 1000;
+	const startTime = Date.now();
+	let found = false;
+
+	while (!found) {
+		const elapsedTime = Date.now() - startTime;
+
+		if (elapsedTime >= timeoutMillis) {
+			throw new Error(
+				`Initialization timeout: Process did not initialize within ${timeoutInSeconds} seconds. Please check ${logFile}`
+			);
+		}
+
+		const logContent = fs.readFileSync(logFile, "utf8");
+		if (logContent.includes(initializationPhrase)) {
+			found = true;
+		} else {
+			await sleep(1000); // Adjust the sleep duration as needed
+		}
+	}
+}
+
 async function runWorker(index, { flags, subcommandFlags }) {
-	const cwd = `${sidechainPath}/tmp/worker-${index}`;
-	const logDir = `${sidechainPath}/log`;
-	const logFile = `${logDir}/log-${index}.txt`;
+	const cwd = `${workerPath}/tmp/worker-${index}`;
+	const logFile = `${workerPath}/log/worker-${index}.txt`;
 
 	if (!fs.existsSync(cwd)) {
-		echo("creating dir");
+		console.log("Creating worker's directory", cwd);
 
 		fs.mkdirSync(cwd);
 	}
 
 	const logStream = fs.createWriteStream(logFile, { flags: "a" });
 
-	await $`cp ${sidechainPath}/bin/litentry-worker ${sidechainPath}/bin/enclave.signed.so ${cwd}`;
+	console.log(`Running worker ${index + 1} and waiting for initialisation`);
+	await $`cp ${workerPath}/bin/litentry-worker ${workerPath}/bin/enclave.signed.so ${cwd}`;
 
 	cd(cwd);
 
@@ -145,8 +178,12 @@ async function runWorker(index, { flags, subcommandFlags }) {
 		stdio: ["ignore", logStream, logStream],
 	});
 
-	// TODO: !!! need to figure out when worker run successfully. Probably look at log for specific keywords
-	await sleep(index === 0 ? 50000 : 20000);
+	// Wait for worker initialization phrase by checking the log. If the worker hans more than minute, then probably
+	await waitForInitialization(logFile, "Enclave registered at block number", 60);
+
+	console.log("Worker successfully run");
+	console.log("./litentry-worker", [...flags, "run", ...subcommandFlags].join(" "));
+	console.log("----------------");
 
 	// move a process to background
 	workerProcess.unref();
@@ -157,7 +194,7 @@ async function runWorker(index, { flags, subcommandFlags }) {
 async function runWorkers(answers) {
 	const workers = [];
 	for (let index = 0; index < answers.workersCount; index++) {
-		const options = buildWorkerOpts(index);
+		const options = buildWorkerOpts(index, answers);
 		const result = await runWorker(index, options);
 		workers.push(result);
 	}
@@ -165,6 +202,8 @@ async function runWorkers(answers) {
 }
 
 async function runParachain(answers) {
+	console.log(`Running parachain in "${answers.mode}" mode`);
+
 	try {
 		if (answers.mode === "local-docker") {
 			await $`${homePath}/tee-worker/scripts/litentry/start_parachain.sh`;
@@ -177,7 +216,12 @@ async function runParachain(answers) {
 	} catch (error) {
 		console.error("Running parachain fails");
 		console.error(error);
+		process.exit(1);
 	}
+
+	console.log(
+		`Exposed ports: \n --port ${process.env.CollatorPort} --ws-port ${process.env.CollatorWSPort}  --rpc-port ${process.env.CollatorRPCPort}`
+	);
 }
 
 function questionary() {

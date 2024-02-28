@@ -1,9 +1,11 @@
 import { $ } from "zx";
-import { sidechainPath } from "../utils/index.js";
+import { workerPath } from "../utils/index.js";
 
 export async function cleanup() {
-	console.log("Killing proceses");
-
-	await $`pkill -u $USER -9 "litentry"`;
-	await $`rm -rf ${sidechainPath}/tmp/w* ${sidechainPath}/log/log-*`;
+	try {
+		await $`rm -rf ${workerPath}/log/worker-*`;
+		await $`pkill -u $USER -9 "litentry"`;
+		// TODO: not sure do we need to remove binaries
+		// await $`rm -rf ${workerPath}/tmp/worker-*`;
+	} catch {}
 }
