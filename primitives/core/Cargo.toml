@@ -6,9 +6,9 @@ version = '0.9.12'
 
 [dependencies]
 parity-scale-codec = { workspace = true }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-strum = { version = "0.26", default-features = false }
-strum_macros = { version = "0.26", default-features = false }
+serde = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
 
 frame-support = { workspace = true }
 pallet-evm = { workspace = true }
@@ -37,6 +37,7 @@ std = [
     "sp-io/std",
     "ring/std",
     "pallet-evm/std",
+    "litentry-hex-utils/std",
 ]
 production = [
     "litentry-macros/production",

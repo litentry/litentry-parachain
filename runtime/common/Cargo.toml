@@ -37,12 +37,6 @@ xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 xcm-simulator = { workspace = true, optional = true }
 
-core-primitives = { workspace = true }
-pallet-asset-manager = { workspace = true }
-pallet-extrinsic-filter = { workspace = true }
-pallet-group = { workspace = true }
-pallet-teebag = { workspace = true }
-
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
@@ -50,6 +44,12 @@ orml-xtokens = { workspace = true }
 polkadot-parachain = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-runtime-parachains = { workspace = true }
+
+core-primitives = { path = "../../primitives/core", default-features = false }
+pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
+pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-group = { path = "../../pallets/group", default-features = false }
+pallet-teebag = { path = "../../pallets/teebag", default-features = false }
 
 [features]
 default = ["std"]
