@@ -29,7 +29,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 		.map(|_, body: Bytes| {
 			let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 			let method = json.get("method").unwrap().as_str().unwrap();
-			
+
 			let params: Vec<String> = json
 				.get("params")
 				.unwrap()

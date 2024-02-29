@@ -82,7 +82,7 @@ impl GeniidataClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");
 		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
-		
+
 		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers);
 
 		Ok(GeniidataClient { client })
