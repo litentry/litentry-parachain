@@ -27,11 +27,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.TEE_STAGING_SSH_PRIVATE_KEY }}
 
     # - name: Install dependencies
     #   run: |
@@ -45,4 +40,7 @@ jobs:
     # use remote build docker 
 
     - name: SSH into server and restart
-      run: ssh -i ${{ secrets.TEE_STAGING_SSH_PRIVATE_KEY }} $SSH_USER@$SSH_SERVER "bash -s  ~/dev_deploy.sh restart -b -v litentry/litentry-parachain:latest litentry/litentry-worker:latest --config /opt/worker_configs/config.json --discard "
+      run: |
+        echo "${{ secrets.TEE_STAGING_SSH_PRIVATE_KEY }}" > ssh_key.pem
+        chmod 600 ssh_key.pem
+        ssh -i ssh_key.pem $SSH_USER@$SSH_SERVER "bash -s  ~/dev_deploy.sh restart -b -v litentry/litentry-parachain:latest litentry/litentry-worker:latest --config /opt/worker_configs/config.json --discard "
