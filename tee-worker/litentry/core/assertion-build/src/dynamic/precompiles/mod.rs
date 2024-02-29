@@ -1,0 +1,56 @@
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
+use crate::dynamic::precompiles::http_get::{http_get_bool, http_get_i64, http_get_string};
+use evm::executor::stack::{
+	IsPrecompileResult, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileSet,
+};
+use itc_rest_client::http_client::HttpClient;
+use primitive_types::H160;
+use std::result::Result as StdResult;
+
+mod http_get;
+mod macros;
+
+#[cfg(test)]
+mod mocks;
+
+pub type PrecompileResult = StdResult<PrecompileOutput, PrecompileFailure>;
+
+pub struct Precompiles();
+
+impl PrecompileSet for Precompiles {
+	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+		let mut headers = itc_rest_client::rest_client::Headers::new();
+		headers.insert(http::header::CONNECTION.as_str(), "close");
+		let client = HttpClient::new(
+			itc_rest_client::http_client::DefaultSend {},
+			true,
+			Some(core::time::Duration::from_secs(5)),
+			Some(headers),
+			None,
+		);
+
+		match handle.code_address() {
+			a if a == hash(2) => Some(http_get_i64(handle.input().to_vec(), client)),
+			a if a == hash(3) => Some(http_get_bool(handle.input().to_vec(), client)),
+			a if a == hash(4) => Some(http_get_string(handle.input().to_vec(), client)),
+			_ => None,
+		}
+	}
+
+	fn is_precompile(&self, address: H160, _remaining_gas: u64) -> IsPrecompileResult {
+		match address {
+			a if a == hash(2) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
+			a if a == hash(3) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
+			_ => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+		}
+	}
+}
+
+fn hash(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}

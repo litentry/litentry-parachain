@@ -25,6 +25,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use lc_assertion_build::dynamic::repository::InMemorySmartContractRepo;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -269,6 +270,11 @@ where
 
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
+
+		Assertion::Dynamic(smart_contract_id) => {
+			let repository = InMemorySmartContractRepo::new();
+			lc_assertion_build::dynamic::build(req, smart_contract_id, repository)
+		},
 	}?;
 
 	// post-process the credential

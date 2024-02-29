@@ -47,6 +47,7 @@ pub mod a6;
 pub mod a8;
 pub mod achainable;
 pub mod brc20;
+pub mod dynamic;
 pub mod generic_discord_role;
 pub mod holding_time;
 pub mod lit_staking;

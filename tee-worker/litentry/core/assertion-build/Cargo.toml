@@ -30,6 +30,10 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+ethabi = { version = "18.0.0", default-features = false }
+evm = { version = "0.41.1", default-features = false, features = ["with-codec"] }
+primitive-types = { version = "0.12.1", default-features = false }
+
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
