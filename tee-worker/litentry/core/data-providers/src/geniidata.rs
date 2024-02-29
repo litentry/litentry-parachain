@@ -62,8 +62,8 @@ pub struct GeniidataResponse {
 }
 
 impl RestPath<String> for GeniidataResponse {
-	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
-		Ok(path)
+	fn get_path(_path: String) -> core::result::Result<String, RestClientError> {
+		Ok("api/1/brc20/balance?".to_string())
 	}
 }
 
@@ -82,7 +82,7 @@ impl GeniidataClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");
 		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
-
+		
 		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers);
 
 		Ok(GeniidataClient { client })

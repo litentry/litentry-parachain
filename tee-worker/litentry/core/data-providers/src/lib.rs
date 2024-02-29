@@ -217,7 +217,7 @@ impl DataProviderConfig {
 			credential_endpoint: "wss://rpc.rococo-parachain.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
 			oneblock_notion_url:
-				"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children"
+				"https://api.notion.com/"
 					.to_string(),
 			sora_quiz_master_id: "1164463721989554218".to_string(),
 			sora_quiz_attendee_id: "1166941149219532800".to_string(),
@@ -230,7 +230,7 @@ impl DataProviderConfig {
 			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
 			contest_participant_discord_role_id: "1172576734135210104".to_string(),
 			vip3_url: "https://dappapi.vip3.io/".to_string(),
-			geniidata_url: "https://api.geniidata.com/api/1/brc20/balance?".to_string(),
+			geniidata_url: "https://api.geniidata.com/".to_string(),
 			geniidata_api_key: "".to_string(),
 			litentry_archive_url: "https://archive-test.litentry.io".to_string(),
 			karat_dao_api_retry_delay: 5000,
