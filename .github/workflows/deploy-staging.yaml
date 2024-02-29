@@ -1,0 +1,48 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
+  pull_request:
+    branches:
+      - dev
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  deploy-tee-dev:
+    runs-on: ubuntu-latest
+
+    env:
+      SSH_USER: ubuntu
+      SSH_SERVER: 162.19.84.27
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.TEE_STAGING_SSH_PRIVATE_KEY }}
+
+    # - name: Install dependencies
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+    # local build cost 38min
+    # - name: Build litentry-collator
+    #   run: make build-node
+
+    # use remote build docker 
+
+    - name: SSH into server and restart
+      run: ssh -i ${{ secrets.TEE_STAGING_SSH_PRIVATE_KEY }} $SSH_USER@$SSH_SERVER "bash -s  ~/dev_deploy.sh restart -b -v litentry/litentry-parachain:latest litentry/litentry-worker:latest --config /opt/worker_configs/config.json --discard "
