@@ -18,7 +18,7 @@
 
 use lc_data_providers::geniidata::{GeniidataResponse, ResponseData, ResponseItem};
 use std::vec::Vec;
-use warp::{http::Response, path::FullPath, Filter};
+use warp::{http::Response, Filter};
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get().and(warp::path!("api" / "1" / "brc20" / "balance")).map(|| {
 		let items = vec![

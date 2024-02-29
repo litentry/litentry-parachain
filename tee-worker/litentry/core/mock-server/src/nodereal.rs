@@ -16,7 +16,7 @@
 
 #![allow(opaque_hidden_inferred_bound)]
 
-use warp::{http::Response, path::FullPath, Filter};
+use warp::{http::Response, Filter};
 
 const RESPONSE_BNB_DOMAIN: &str = r#"{
 					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
