@@ -71,9 +71,9 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())
-					// .or(oneblock::query())
 					.or(nodereal::query())
 					.or(geniidata::query())
+					.or(oneblock::query())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());

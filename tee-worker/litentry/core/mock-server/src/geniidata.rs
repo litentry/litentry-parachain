@@ -20,10 +20,7 @@ use lc_data_providers::geniidata::{GeniidataResponse, ResponseData, ResponseItem
 use std::vec::Vec;
 use warp::{http::Response, path::FullPath, Filter};
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::get().and(warp::path::full()).map(move |p: FullPath| {
-		println!("geniidata query");
-		println!("p.as_str(): {}", p.as_str());
-		if p.as_str() == "/" {
+	warp::get().and(warp::path!("api" / "1" / "brc20" / "balance")).map( || {
 			let items = vec![
 				("ordi", "100.000000000000000000"),
 				("rats", "18000000.000000000000000000"),
@@ -51,8 +48,5 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				},
 			};
 			Response::builder().body(serde_json::to_string(&res).unwrap())
-		} else {
-			Response::builder().status(400).body(String::from("Error query"))
-		}
 	})
 }
