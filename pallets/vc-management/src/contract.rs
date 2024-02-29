@@ -14,20 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "std")]
-extern crate std;
+// VC Schema
+// According to https://w3c-ccg.github.io/vc-json-schemas/, it defines JSON Schema for W3C Verifiable Credential.
 
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use crate::{Config, ContractBytecode};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
-// vc schema
-pub const SCHEMA_ID_LEN: u32 = 512;
-pub const SCHEMA_CONTENT_LEN: u32 = 2048;
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(T))]
+pub struct Contract<T: Config> {
+	pub creator: T::AccountId,
+	pub code: ContractBytecode,
+}
 
-pub type SchemaIndex = u64;
-pub type SchemaIdString = BoundedVec<u8, ConstU32<SCHEMA_ID_LEN>>;
-pub type SchemaContentString = BoundedVec<u8, ConstU32<SCHEMA_CONTENT_LEN>>;
-
-// vc build logic (smart contract)
-const MAX_CONTRACT_LEN: u32 = 16 * 1024; // 16K
-pub type ContractIndex = u64;
-pub type ContractBytecode = BoundedVec<u8, ConstU32<MAX_CONTRACT_LEN>>;
+impl<T: Config> Contract<T> {
+	pub fn new(creator: T::AccountId, code: ContractBytecode) -> Self {
+		Self { creator, code }
+	}
+}

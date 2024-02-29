@@ -37,19 +37,21 @@ pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
 use pallet_teebag::ShardIdentifier;
-use sp_core::H256;
+use sp_core::{blake2_256, H256};
 use sp_std::vec::Vec;
 
 mod schema;
 pub use schema::*;
 
-pub type VCIndex = H256;
+mod contract;
+pub use contract::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use core_primitives::{
-		Assertion, ErrorDetail, Identity, SchemaIndex, VCMPError, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+	pub use core_primitives::{
+		Assertion, ContractBytecode, ContractIndex, ErrorDetail, Identity, SchemaIndex, VCMPError,
+		SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
 	};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
@@ -93,6 +95,11 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn schema_registry)]
 	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_128Concat, SchemaIndex, VCSchema<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn contract_registry)]
+	pub type ContractRegistry<T: Config> =
+		StorageMap<_, Blake2_128Concat, ContractIndex, Contract<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -147,6 +154,14 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			index: SchemaIndex,
 		},
+		ContractUpdated {
+			index: ContractIndex,
+			creator: T::AccountId,
+			code_hash: H256,
+		},
+		ContractRemoved {
+			index: ContractIndex,
+		},
 		// event errors caused by processing in TEE
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
@@ -187,6 +202,8 @@ pub mod pallet {
 		SchemaAlreadyActivated,
 		SchemaIndexOverFlow,
 		LengthMismatch,
+		ContractCodeTooLong,
+		ContractNotExist,
 	}
 
 	#[pallet::genesis_config]
@@ -338,6 +355,37 @@ pub mod pallet {
 			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
 			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight({195_000_000})]
+		pub fn force_update_contract(
+			origin: OriginFor<T>,
+			index: ContractIndex,
+			code: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			let code_hash: H256 = blake2_256(&code).into();
+			let bounded_code: ContractBytecode =
+				code.try_into().map_err(|_| Error::<T>::ContractCodeTooLong)?;
+			ContractRegistry::<T>::insert(index, Contract::<T>::new(sender.clone(), bounded_code));
+			Self::deposit_event(Event::ContractUpdated { index, creator: sender, code_hash });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight({195_000_000})]
+		pub fn force_remove_contract(
+			origin: OriginFor<T>,
+			index: ContractIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			ensure!(ContractRegistry::<T>::contains_key(index), Error::<T>::ContractNotExist);
+			ContractRegistry::<T>::remove(index);
+			Self::deposit_event(Event::ContractRemoved { index });
 			Ok(().into())
 		}
 
