@@ -55,6 +55,9 @@ use sp_core::Pair;
 //
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x52a6c52dc82940a36fefd1474cc0778517bb1a56b7bda0e308b6c19152dd7510 achainable amount-token test-name -c=bsc,ethereum 1 token-value
+//
+// ./bin/litentry-cli trusted -d request-vc \
+// 	 did:litentry:substrate:0x52a6c52dc82940a36fefd1474cc0778517bb1a56b7bda0e308b6c19152dd7510 dynamic 1
 
 pub fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
