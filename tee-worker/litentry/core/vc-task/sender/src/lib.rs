@@ -40,7 +40,7 @@ pub struct VCRequest {
 	pub request: AesRequest,
 }
 
-#[derive(Encode, Decode, Clone)]
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct VCResponse {
 	pub payload: Vec<u8>,
 	pub len: u8,

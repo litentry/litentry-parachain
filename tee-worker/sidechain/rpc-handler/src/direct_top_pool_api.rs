@@ -36,7 +36,6 @@ use lc_vc_task_sender::{VCRequest, VCResponse, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
 use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, Hash};
 use std::{
 	borrow::ToOwned,
 	format,
@@ -348,13 +347,13 @@ where
 {
 	let payload = get_request_payload(params)?;
 	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
+	let request_clone = request.clone();
+	let response = executor::block_on(async { author.watch_top(request_clone).await });
+	if let Ok(hash) = response {
+		thread::spawn(move || request_vc_inner1(author, request, hash));
+	}
 
-	// Use this hash to trigger the storage of connection_registry
-	let hash = request.using_encoded(|x| BlakeTwo256::hash(x));
-
-	thread::spawn(move || request_vc_inner1(author, request, hash));
-
-	Ok(hash)
+	response.map_err(|e| format!("{:?}", e))
 }
 
 fn request_vc_inner1<R, TCS, G>(author: Arc<R>, request: AesRequest, hash: H256)
@@ -372,31 +371,26 @@ where
 	}
 
 	let mut req_cnt = 0u8;
-	let mut req_num = 0u8;
 	while let Ok(res) = receiver.recv() {
 		match res {
 			Ok(response) => {
 				req_cnt += 1;
 				if let Ok(vc_res) = VCResponse::decode(&mut response.as_slice()) {
-					req_num = vc_res.len;
-					author.send_rpc_response(hash, vc_res.payload, req_cnt < req_num);
+					author.send_rpc_response(hash, vc_res.payload, req_cnt < vc_res.len);
+					if req_cnt >= vc_res.len {
+						break
+					}
 				} else {
 					let res = compute_hex_encoded_return_error("Request vc response decode error");
-					author.send_rpc_response(hash, res.into(), req_cnt < req_num);
-				}
-				if req_cnt >= req_num {
+					author.send_rpc_response(hash, res.into(), false);
 					break
 				}
 			},
 			Err(e) => {
-				req_cnt += 1;
 				error!("Received error in jsonresponse: {:?} ", e);
 				let res = compute_hex_encoded_return_error(&e);
-				author.send_rpc_response(hash, res.into(), req_cnt < req_num);
-				// What if there are multiple results, but error comes first???
-				if req_cnt >= req_num {
-					break
-				}
+				author.send_rpc_response(hash, res.into(), false);
+				break
 			},
 		};
 	}
