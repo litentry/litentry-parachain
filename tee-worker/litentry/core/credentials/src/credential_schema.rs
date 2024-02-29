@@ -104,6 +104,6 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 
 		Assertion::PlatformUser(_) => format!("{BASE_URL}/24-platform-user/1-0-0.json"),
 
-		Assertion::NftHolder(_) => format!("{BASE_URL}/26-nft-holder/1-0-0.json"),
+		Assertion::NftHolder(_) => format!("{BASE_URL}/25-nft-holder/1-0-0.json"),
 	}
 }
