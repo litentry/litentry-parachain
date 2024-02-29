@@ -7,29 +7,26 @@ repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.1.0'
 
 [dependencies]
-# third-party dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 
-# primitives
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-arithmetic = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
-# frame dependencies
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, optional = true }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
 
-pallet-bridge = { path = "../bridge", default-features = false }
-pallet-parachain-staking = { path = "../parachain-staking", default-features = false }
+pallet-bridge = { workspace = true }
+pallet-parachain-staking = { workspace = true }
 
 [dev-dependencies]
-hex-literal = "0.4"
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+hex-literal = { workspace = true }
+pallet-balances = { workspace = true, features = ["std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]
@@ -39,7 +36,8 @@ runtime-benchmarks = [
     "frame-system/runtime-benchmarks",
 ]
 std = [
-    "codec/std",
+    "parity-scale-codec/std",
+    "scale-info/std",
     "sp-std/std",
     "sp-runtime/std",
     "sp-io/std",

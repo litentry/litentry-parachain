@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use codec::{Decode, Encode};
 use frame_support::traits::{tokens::fungibles::Mutate, ContainsPair, Get, PalletInfoAccess};
 use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::traits::{Convert as spConvert, Zero};
 use sp_std::{borrow::Borrow, boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
