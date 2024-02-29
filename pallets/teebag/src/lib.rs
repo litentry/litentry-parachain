@@ -17,7 +17,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
-use codec::Decode;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo},
 	ensure,
@@ -25,6 +24,7 @@ use frame_support::{
 	traits::Get,
 };
 use frame_system::pallet_prelude::*;
+use parity_scale_codec::Decode;
 use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
@@ -785,5 +785,9 @@ impl<T: Config> Pallet<T> {
 
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
+
+#[cfg(any(test, feature = "runtime-benchmarks", feature = "test-util"))]
+pub mod test_util;
