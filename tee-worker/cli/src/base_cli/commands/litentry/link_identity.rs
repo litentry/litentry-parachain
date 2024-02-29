@@ -21,9 +21,10 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
+use ita_stf::{helpers::get_expected_raw_message, Web3Network};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use litentry_primitives::Identity;
+use litentry_primitives::{Identity, LitentryMultiSignature, Web3CommonValidationData};
 use log::*;
 use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
@@ -68,19 +69,23 @@ impl LinkIdentityCommand {
 		let identity = Identity::from_did(self.did.as_str()).unwrap();
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
-		let vdata = vec![0_u8, 0];
-		let web3network = vec![0_u8, 0];
+		let who_identity = Identity::from(who.public());
+		let vdata = get_expected_raw_message(&who_identity, &identity, 1);
+		let validation_payload = vdata.clone();
+		let web3network = vec![Web3Network::Litentry];
+		let encrypted_web3network = tee_shielding_key.encrypt(&web3network.encode()).unwrap();
 
-		// TODO: the params are incorrect - and need to be reworked too
-		// pub fn link_identity(
-		// 	origin: OriginFor<T>,
-		// 	shard: ShardIdentifier,
-		// 	user: T::AccountId,
-		// 	encrypted_identity: Vec<u8>,
-		// 	encrypted_validation_data: Vec<u8>,
-		// 	encrypted_web3networks: Vec<u8>,
-		// )
-		// let vdata: Option<Vec<u8>> = None;
+		let signature: LitentryMultiSignature = who.sign(&validation_payload).into();
+		let web3common = Web3CommonValidationData {
+			message: validation_payload.clone().try_into().unwrap(),
+			signature: signature.into(),
+		};
+		let validation_data = litentry_primitives::ValidationData::Web3(
+			litentry_primitives::Web3ValidationData::Substrate(web3common),
+		);
+		let encrypted_validation_data =
+			tee_shielding_key.encrypt(&validation_data.encode()).unwrap();
+
 		let xt = compose_extrinsic!(
 			chain_api,
 			IMP,
@@ -88,8 +93,8 @@ impl LinkIdentityCommand {
 			shard,
 			who.public().0,
 			encrypted_identity.to_vec(),
-			vdata,
-			web3network
+			encrypted_validation_data,
+			encrypted_web3network
 		);
 		println!("Sending request");
 		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
@@ -97,12 +102,4 @@ impl LinkIdentityCommand {
 
 		Ok(CliResultOk::None)
 	}
-}
-
-fn generate_v_data() {
-	// Do nothing for now
-}
-
-fn generate_encrypted_web3networks() {
-	// Do nothing for now
 }
