@@ -115,7 +115,7 @@ pub mod pallet {
 			+ Copy
 			+ PartialEq
 			+ core::fmt::Debug
-			+ codec::FullCodec
+			+ parity_scale_codec::FullCodec
 			+ AtLeast32BitUnsigned
 			+ From<u64>
 			+ TypeInfo;

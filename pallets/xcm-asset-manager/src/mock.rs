@@ -16,7 +16,7 @@
 
 use super::*;
 use crate as pallet_asset_manager;
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 
 use frame_support::{
 	construct_runtime, parameter_types,

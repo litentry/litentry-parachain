@@ -22,7 +22,7 @@ use crate::{
 	EVMTokenType, GenericDiscordRoleType, OneBlockCourseType, ParameterString, PlatformUserType,
 	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 };
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_std::{vec, vec::Vec};

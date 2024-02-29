@@ -15,6 +15,7 @@
 
 */
 
+use codec::Encode;
 use itp_enclave_api::{direct_request::DirectRequest, EnclaveResult};
 use itp_rpc::{Id, RpcResponse};
 use itp_utils::ToHexPrefixed;
@@ -23,7 +24,6 @@ use its_primitives::{
 	types::{BlockHash, BlockNumber, SignedBlock, SignedBlock as SignedSidechainBlock},
 };
 use its_storage::{interface::FetchBlocks, LastSidechainBlock};
-use parity_scale_codec::Encode;
 
 pub struct TestEnclave;
 

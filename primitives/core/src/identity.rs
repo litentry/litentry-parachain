@@ -21,11 +21,11 @@ use crate::{
 	Web3Network,
 };
 use alloc::{format, str, string::String};
-use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use core::fmt::{Debug, Formatter};
 use litentry_hex_utils::{decode_hex, hex_encode};
 use litentry_macros::if_production_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
+use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{
 	crypto::{AccountId32, ByteArray},
@@ -472,7 +472,7 @@ impl From<[u8; 33]> for Identity {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use codec::DecodeAll;
+	use parity_scale_codec::DecodeAll;
 	use sp_std::vec;
 	use strum::IntoEnumIterator;
 
