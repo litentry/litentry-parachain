@@ -23,6 +23,7 @@ use crate::{
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
+use lc_assertion_build::dynamic::hash;
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
@@ -33,7 +34,7 @@ use litentry_primitives::{
 	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	REQUEST_AES_KEY_LEN,
 };
-use sp_core::{Pair, H160};
+use sp_core::Pair;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -127,7 +128,7 @@ pub struct A2Arg {
 #[derive(Args, Debug)]
 pub struct DynamicArg {
 	//hex encoded smart contract id
-	pub smart_contract_id: String,
+	pub smart_contract_id: u64,
 }
 
 #[derive(Args, Debug)]
@@ -514,11 +515,7 @@ impl RequestVcCommand {
 					Assertion::NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => Assertion::NftHolder(Web3NftType::Club3Sbt),
 			},
-			Command::Dynamic(arg) => {
-				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();
-				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
-				Assertion::Dynamic(H160::from(id_bytes))
-			},
+			Command::Dynamic(arg) => Assertion::Dynamic(hash(arg.smart_contract_id)),
 		};
 
 		let key = Self::random_aes_key();

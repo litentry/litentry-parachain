@@ -7157,6 +7157,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "itp-utils",
+ "lc-assertion-build",
  "lc-credentials",
  "litentry-hex-utils",
  "litentry-primitives",
@@ -9527,6 +9528,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]

@@ -47,7 +47,8 @@ pub fn execute_smart_contract(
 	smart_contract_byte_code: Vec<u8>,
 	input: Vec<u8>,
 ) -> (String, String, String, bool) {
-	println!("Executing smart contract with input: {:?}", hex::encode(&input));
+	info!("Smart contract bytecode: {:?}", hex::encode(&smart_contract_byte_code));
+	info!("Executing smart contract with input: {:?}", hex::encode(&input));
 
 	// prepare EVM runtime
 	let config = prepare_config();
@@ -64,6 +65,8 @@ pub fn execute_smart_contract(
 
 	// deploy smart contract
 	let address = executor.create_address(evm::CreateScheme::Legacy { caller: hash(5) });
+	info!("created address: {:?}", address);
+
 	let _create_result = executor.transact_create(
 		caller,
 		U256::zero(),
@@ -118,7 +121,7 @@ fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Vec<u
 	call_input
 }
 
-fn hash(a: u64) -> H160 {
+pub fn hash(a: u64) -> H160 {
 	H160::from_low_u64_be(a)
 }
 

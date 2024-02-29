@@ -37,7 +37,8 @@ pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
 use pallet_teebag::ShardIdentifier;
-use sp_core::{blake2_256, H256};
+use sp_core::H256;
+use sp_io::hashing::blake2_256;
 use sp_std::vec::Vec;
 
 mod schema;
