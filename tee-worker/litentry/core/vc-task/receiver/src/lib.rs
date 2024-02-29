@@ -211,7 +211,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			1,
 		);
 		send_vc_response(sender, context, response);
-	} else if let TrustedCall::batch_request_vc(signer, who, assertions, maybe_key, req_ext_hash) =
+	} else if let TrustedCall::request_batch_vc(signer, who, assertions, maybe_key, req_ext_hash) =
 		tcs.call
 	{
 		// Filter out duplicate assertions
@@ -257,7 +257,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		}
 
 		pool.join();
-		debug!("batch_request_vc execution finished. In total {:?} assertions", len);
+		debug!("request_batch_vc execution finished. In total {:?} assertions", len);
 	} else {
 		send_vc_response(sender, context, Err("Expect request_vc trusted call".to_string()));
 	}
