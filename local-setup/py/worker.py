@@ -1,11 +1,8 @@
 import os
-import pathlib
-import shutil
-import subprocess
 from subprocess import Popen, STDOUT
 from typing import Union, TextIO, IO
 
-from .helpers import run_subprocess, setup_working_dir, mkdir_p
+from .helpers import setup_working_dir, mkdir_p
 
 
 class Worker:

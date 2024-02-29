@@ -2,16 +2,18 @@
 """
 Launch handily a local dev setup consisting of the parachain network and some workers.
 
-Example usage: `./local-setup/launch.py --config local-setup/development-worker.json --parachain local-binary`
+Example usage: `./local-setup/launch.py --parachain local-binary`
+Standalon + 3 workers: `./local-setup/launch.py -w 3`
 
-The worker log is piped to `./log/worker0.log` etc. folder in the current-working dir.
+The worker log is piped to `./log/worker*.log` etc. folder in the current-working dir.
 
 """
 import argparse
 import json
 import signal
-from subprocess import Popen, PIPE, STDOUT, run
+from subprocess import run
 import os
+import shutil
 import sys
 from time import sleep
 from typing import Union, IO
@@ -59,15 +61,14 @@ def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], 
     return worker
 
 
-def run_worker(config, i: int, log_config_path):
-    id = config.get('id', i)
+def run_worker(id, flags, subcommand_flags, log_config_path):
     log = open(f"{log_dir}/worker-{id}.log", "w+")
-    # TODO: either hard-code 'local-setup' directory, or take from input config.json
-    w = setup_worker(f"tmp/w-{id}", config["source"], log, log_config_path)
+    
+    w = setup_worker(f"tmp/w-{id}", "tee-worker/bin", log, log_config_path)
 
     print(f"Starting worker {id} in background")
     return w.run_in_background(
-        log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"]
+        log_file=log, flags=flags, subcommand_flags=subcommand_flags
     )
 
 
@@ -102,7 +103,8 @@ def check_all_ports_and_reallocate():
             reallocate_ports(x, os.environ.get(x))
 
     print("All preliminary port checks completed")
-    
+
+
 # Generate `config.local.json` used by parachain ts utils
 def generate_config_local_json(parachain_dir):
     data = {
@@ -116,7 +118,7 @@ def generate_config_local_json(parachain_dir):
         "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
         "bridge_path": "/tmp/parachain_dev/chainbridge",
     }
-    config_file = "../ts-tests/config.local.json"
+    config_file = "./ts-tests/config.local.json"
 
     with open(config_file, "w") as f:
         json.dump(data, f, indent=4)
@@ -124,11 +126,20 @@ def generate_config_local_json(parachain_dir):
     print("Successfully written ", config_file)
 
 
-def run_node(config, i: int):
-    node_log = open(f'{log_dir}/node{i}.log', 'w+')
-    node_cmd = [config["bin"]] + config["flags"]
-    print(f'Run node {i} with command: {node_cmd}')
-    return Popen(node_cmd, stdout=node_log, stderr=STDOUT, bufsize=1)
+# Generate `.env.local` used by local enclave ts-tests
+def generate_env_local():
+    env_local_example_file = "./tee-worker/ts-tests/integration-tests/.env.local.example"
+    env_local_file = env_local_example_file[: -len(".example")]
+
+    with open(env_local_example_file, "r") as f:
+        data = f.read()
+        data = data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
+        data = data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
+
+    with open(env_local_file, "w") as f:
+        f.write(data)
+
+    print("Successfully written ", env_local_file)
 
 
 def offset_port(offset):
@@ -138,25 +149,18 @@ def offset_port(offset):
         os.environ[x] = str(new_port)
 
 
-def setup_environment(offset, config, parachain_dir):
-    load_dotenv(".env.dev")
+def setup_environment(offset, parachain_dir):
+    if not os.path.isfile("./local-setup/.env"):
+        shutil.copy("./local-setup/.env.dev", "./local-setup/.env")
+
+    load_dotenv("./local-setup/.env")
     offset_port(offset)
     check_all_ports_and_reallocate()
-    generate_config_local_json(parachain_dir)
 
-    # TODO: only works for single worker for now
-    for p in [
-        "CollatorWSPort",
-        "TrustedWorkerPort",
-        "UntrustedWorkerPort",
-        "MuRaPort",
-        "UntrustedHttpPort",
-    ]:
-        if len(config["workers"]) > 0:
-            config["workers"][0]["flags"] = [
-                flag.replace("$" + p, os.environ.get(p, ""))
-                for flag in config["workers"][0]["flags"]
-            ]
+    if parachain_dir != "":
+        generate_config_local_json(parachain_dir)
+
+    generate_env_local()
 
 def setup_worker_log_level(log_config_path):
     log_level_dic = {}
@@ -165,7 +169,7 @@ def setup_worker_log_level(log_config_path):
 
         # Section
         for (section, item) in log_data.items():
-            log_level_string = "";
+            log_level_string = ""
             indx = 0
 
             for (k, v) in item.items():
@@ -181,26 +185,54 @@ def setup_worker_log_level(log_config_path):
     return log_level_dic
 
 
-def main(processes, config_path, parachain_type, log_config_path, offset, parachain_dir):
-    with open(config_path) as config_file:
-        config = json.load(config_file)
+def get_flags(index):
+    woker_offset = index * 10
+    port_with_offset = lambda env_name: str(int(os.environ.get(env_name)) + woker_offset)
+    ports = {
+        'trusted_worker_port': port_with_offset("TrustedWorkerPort"),
+        'untrusted_worker_port': port_with_offset("UntrustedWorkerPort"),
+        'mura_port': port_with_offset("MuRaPort"),
+        'untrusted_http_port': port_with_offset("UntrustedHttpPort"),
+        'collator_ws_port': os.environ.get("CollatorWSPort"),
+    }
 
+    return list(filter(None, [
+        "--clean-reset",
+        "-P", ports['trusted_worker_port'],
+        "-w", ports['untrusted_worker_port'],
+        "-r", ports['mura_port'],
+        "-h", ports['untrusted_http_port'],
+        "-p", ports['collator_ws_port'],
+        "--enable-mock-server",
+        "--parentchain-start-block", "0",
+        "--enable-metrics" if index == 0 else None
+    ]))
+
+def get_subcommand_flags(index):
+    return list(filter(None, [
+        "--skip-ra",
+        "--dev",
+        "--request-state" if index > 0 else None
+    ]))
+
+def main(processes, workers_number, parachain_type, log_config_path, offset, parachain_dir):
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, config, parachain_dir)
+        setup_environment(offset, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
-        run(["./scripts/litentry/start_parachain.sh"], check=True)
+        run(["./tee-worker/scripts/litentry/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary-standalone":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, config, parachain_dir)
-        run(["../scripts/launch-standalone.sh"], check=True)
+        setup_environment(offset, parachain_dir)
+        run(["./scripts/launch-standalone.sh"], check=True)
     elif parachain_type == "local-binary":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, config, parachain_dir)
-        run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
+        setup_environment(offset, parachain_dir)
+        run(["./scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
+        setup_environment(offset, "")
         print("Litentry parachain should be started remotely")
     else:
         sys.exit("Unsupported parachain_type")
@@ -209,46 +241,47 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
     print("------------------------------------------------------------")
 
     c = pycurl.Curl()
-    worker_i = 0
-    worker_num = len(config["workers"])
-    for w_conf in config["workers"]:
-        processes.append(run_worker(w_conf, worker_i, log_config_path))
+    for i in range(workers_number):
+        flags = get_flags(i)
+        subcommand_flags = get_subcommand_flags(i)
+        id = "dev" if workers_number == 1 else i
+
+        processes.append(run_worker(id, flags, subcommand_flags, log_config_path))
+
         print()
         # Wait a bit for worker to start up.
         sleep(5)
-
+     
         idx = 0
-        if "-h" in w_conf["flags"]:
-            idx = w_conf["flags"].index("-h") + 1
-        elif "--untrusted-http-port" in w_conf["flags"]:
-            idx = w_conf["flags"].index("--untrusted-http-port") + 1
+        if "-h" in flags:
+            idx = flags.index("-h") + 1
+        elif "--untrusted-http-port" in flags:
+            idx = flags.index("--untrusted-http-port") + 1
         else:
             print('No "--untrusted-http-port" provided in config file')
             return 0
-        untrusted_http_port = w_conf["flags"][idx]
+        untrusted_http_port = flags[idx]
         url = "http://localhost:" + str(untrusted_http_port) + "/is_initialized"
         c.setopt(pycurl.URL, url)
 
-        if worker_i < worker_num:
-            counter = 0
-            while True:
-                sleep(5)
-                buffer = BytesIO()
-                c.setopt(c.WRITEDATA, buffer)
-                try:
-                    c.perform()
-                except Exception as e:
-                    print("Try to connect to worker error: " + str(e))
-                    return 0
+        counter = 0
+        while True:
+            sleep(5)
+            buffer = BytesIO()
+            c.setopt(c.WRITEDATA, buffer)
+            try:
+                c.perform()
+            except Exception as e:
+                print("Try to connect to worker error: " + str(e))
+                return 0
 
-                if "I am initialized." == buffer.getvalue().decode("iso-8859-1"):
-                    break
-                if counter >= 600:
-                    print("Worker initialization timeout (3000s). Exit")
-                    return 0
-                counter += 1
+            if "I am initialized." == buffer.getvalue().decode("iso-8859-1"):
+                break
+            if counter >= 600:
+                print("Worker initialization timeout (3000s). Exit")
+                return 0
+            counter += 1
 
-        worker_i += 1
 
     c.close()
     print("Worker(s) started!")
@@ -261,14 +294,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run a setup consisting of a node and some workers"
     )
-    parser.add_argument("-c", "--config", type=str, help="Config for the node and workers")
+    parser.add_argument("-w", "--workers-number", type=int, default=1, help="Number of workers to run")
     parser.add_argument(
         "-p",
         "--parachain",
         nargs="?",
-        default="local-docker",
+        default="local-binary-standalone",
         type=str,
-        help="Config for parachain selection: local-docker / local-binary / remote",
+        help="Config for parachain selection: local-binary-standalone / local-docker / local-binary / remote",
     )
     parser.add_argument(
         "-l",
@@ -286,11 +319,10 @@ if __name__ == "__main__":
     today = datetime.datetime.now()
     formatted_date = today.strftime('%d_%m_%Y_%H%M')
     directory_name = f"parachain_dev_{formatted_date}"
-    temp_directory_path = os.path.join('/tmp', directory_name)
-    parachain_dir = temp_directory_path
-    print("Directory has been assigned to:", temp_directory_path)
+    parachain_dir = os.path.join('/tmp', directory_name)
+    print("Directory has been assigned to:", parachain_dir)
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
+    if main(process_list, args.workers_number, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()

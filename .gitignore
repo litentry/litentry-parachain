@@ -19,3 +19,5 @@ rococo-fork.json
 gethdata
 
 *.patch
+/log
+/log-backup
