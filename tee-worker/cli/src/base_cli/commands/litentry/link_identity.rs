@@ -37,8 +37,6 @@ pub struct LinkIdentityCommand {
 	account: String,
 	/// Identity to be created, in did form
 	did: String,
-	/// Shard identifier
-	shard: String,
 	/// Delegate signer for the account
 	delegate: Option<String>,
 	/// Web3 networks for the linking
