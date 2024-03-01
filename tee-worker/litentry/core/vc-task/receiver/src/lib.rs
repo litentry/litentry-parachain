@@ -123,6 +123,8 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	sender: &Sender<Result<Vec<u8>, String>>,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	response: Result<Vec<u8>, String>,
+	idx: u8,
+	len: u8,
 ) where
 	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
@@ -133,7 +135,12 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
 {
-	if let Err(e) = sender.send(response.clone()) {
+	let vc_res: VCResponse = match response.clone() {
+		Ok(payload) => VCResponse { payload, idx, len },
+		Err(e) => VCResponse { payload: e.as_bytes().to_vec(), idx, len: 0 },
+	};
+
+	if let Err(e) = sender.send(Ok(vc_res.encode())) {
 		warn!("Unable to submit response back to the handler: {:?}", e);
 	}
 	if response.is_err() {
@@ -172,6 +179,8 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				sender,
 				context,
 				Err(format!("Failed to retrieve shielding key: {:?}", e)),
+				0u8,
+				0u8,
 			);
 			return
 		},
@@ -184,19 +193,25 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	{
 		Some(tcs) => tcs,
 		None => {
-			send_vc_response(sender, context, Err("Failed to decode payload".to_string()));
+			send_vc_response(
+				sender,
+				context,
+				Err("Failed to decode payload".to_string()),
+				0u8,
+				0u8,
+			);
 			return
 		},
 	};
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
 		Err(_) => {
-			send_vc_response(sender, context, Err("Failed to get mrenclave".to_string()));
+			send_vc_response(sender, context, Err("Failed to get mrenclave".to_string()), 0u8, 0u8);
 			return
 		},
 	};
 	if !tcs.verify_signature(&mrenclave, &request.shard) {
-		send_vc_response(sender, context, Err("Failed to verify sig".to_string()));
+		send_vc_response(sender, context, Err("Failed to verify sig".to_string()), 0u8, 0u8);
 		return
 	}
 	if let TrustedCall::request_vc(..) = tcs.call {
@@ -207,10 +222,8 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			node_metadata_repo,
 			tc_sender,
 			tcs.call.clone(),
-			0,
-			1,
 		);
-		send_vc_response(sender, context, response);
+		send_vc_response(sender, context, response, 0u8, 1u8);
 	} else if let TrustedCall::request_batch_vc(signer, who, assertions, maybe_key, req_ext_hash) =
 		tcs.call
 	{
@@ -249,21 +262,25 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 					node_metadata_repo_pool,
 					tc_sender_pool,
 					new_call,
-					idx as u8,
-					len,
 				);
-				send_vc_response(&sender_clone, context_pool, response);
+
+				send_vc_response(&sender_clone, context_pool, response, idx as u8, len);
 			})
 		}
 
 		pool.join();
 		debug!("request_batch_vc execution finished. In total {:?} assertions", len);
 	} else {
-		send_vc_response(sender, context, Err("Expect request_vc trusted call".to_string()));
+		send_vc_response(
+			sender,
+			context,
+			Err("Expect request_vc trusted call".to_string()),
+			0u8,
+			0u8,
+		);
 	}
 }
 
-#[allow(clippy::too_many_arguments)]
 fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	shard: H256,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
@@ -271,8 +288,6 @@ fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
 	call: TrustedCall,
-	idx: u8,
-	len: u8,
 ) -> Result<Vec<u8>, String>
 where
 	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync,
@@ -429,7 +444,6 @@ where
 			vc_payload: aes_encrypt_default(&key, &credential_str),
 			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 			pre_id_graph_hash: id_graph_hash,
-			batch_vc_idx: idx,
 		};
 
 		// submit TrustedCall::maybe_create_id_graph to the reciever thread
@@ -459,8 +473,7 @@ where
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
-		let vc_response = VCResponse { payload: res.encode(), len };
-		Ok(vc_response.encode())
+		Ok(res.encode())
 	} else {
 		Err("Expect request_vc trusted call".to_string())
 	}

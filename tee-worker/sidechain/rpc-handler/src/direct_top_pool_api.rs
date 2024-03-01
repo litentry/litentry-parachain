@@ -376,7 +376,7 @@ where
 			Ok(response) => {
 				req_cnt += 1;
 				if let Ok(vc_res) = VCResponse::decode(&mut response.as_slice()) {
-					author.send_rpc_response(hash, vc_res.payload, req_cnt < vc_res.len);
+					author.send_rpc_response(hash, response, req_cnt < vc_res.len);
 					if req_cnt >= vc_res.len {
 						break
 					}

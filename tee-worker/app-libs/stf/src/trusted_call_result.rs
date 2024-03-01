@@ -100,6 +100,4 @@ pub struct RequestVCResult {
 	// they should be referenced/used only when the client's local IDGraph is empty
 	pub pre_mutated_id_graph: AesOutput,
 	pub pre_id_graph_hash: H256,
-	// can be ignored when it's for one vc request
-	pub batch_vc_idx: u8,
 }
