@@ -178,9 +178,8 @@ describe('Test Vc (direct request)', function () {
             const onMessageReceived = async (res: WorkerRpcReturnValue) => {
                 // if response is a A1 or A2, etc....
                 const vcresponse = context.api.createType('VCResponse', res.value);
-                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`)
-                if (vcresponse.len > 0)
-                    await assertVc(context, aliceSubstrateIdentity, vcresponse.payload);
+                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`);
+                if (vcresponse.len > 0) await assertVc(context, aliceSubstrateIdentity, vcresponse.payload);
             };
 
             // the +res+ below is the last message with "do_watch: false" property and we may not need it at all

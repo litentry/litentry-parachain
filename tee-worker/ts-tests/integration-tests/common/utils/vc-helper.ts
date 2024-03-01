@@ -22,11 +22,7 @@ export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed
 export const defaultAssertions = [
     {
         description: 'request_batch_vc trial test',
-        assertion: [
-            {A7: '5'},
-            {A8: ['Litentry']},
-            {A20: 'A20'},
-        ],
+        assertion: [{ A7: '5' }, { A8: ['Litentry'] }, { A20: 'A20' }],
     },
     {
         description: 'Have identified at least one account/address in both Web2 and Web3.',
