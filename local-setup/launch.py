@@ -3,7 +3,7 @@
 Launch handily a local dev setup consisting of the parachain network and some workers.
 
 Example usage: `./local-setup/launch.py --parachain local-binary`
-Standalon + 3 workers: `./local-setup/launch.py -w 3`
+Standalone + 3 workers: `./local-setup/launch.py -w 3`
 
 The worker log is piped to `./log/worker*.log` etc. folder in the current-working dir.
 

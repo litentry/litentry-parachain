@@ -8,17 +8,34 @@ In case you have
 - a sgx hardware and compile the worker with `SGX_MODE=HW` (default mode)
 - a valid intel IAS key (development key is fine)
 
-you can omit the `--features skip-ias-check` when building the node, but you must not use the subcommand flag `--skip-ra` in the json file (see [`two-workers.json`](./config/two-workers.json)) you're using to start the worker.
+you can omit the `--features skip-ias-check` when building the node
 
 ## Steps
-Adapt or create your own config file, as in the example of [`two-workers.json`](./config/two-workers.json). Be mindful of the ports in case you're running the script on a server multiple people are working on.
+Check possible options to launch both node and worker(s)
+```bash
+./local-setup/launch.py -h
+
+options:
+  -h, --help            show this help message and exit
+  -w WORKERS_NUMBER, --workers-number WORKERS_NUMBER
+                        Number of workers to run
+  -p [PARACHAIN], --parachain [PARACHAIN]
+                        Config for parachain selection: local-binary-standalone / local-docker / local-binary / remote
+  -l [LOG_CONFIG_PATH], --log-config-path [LOG_CONFIG_PATH]
+                        log level config file path
+  -o [OFFSET], --offset [OFFSET]
+                        offset for port
+```
+
 
 ### Launch worker and node in terminal one
-You can launch the workers and the node with:
+By default with the script you can launch node in local-binary-standalone mode + 1 worker:
 ```bash
-./local-setup/launch.py --config ./local-setup/config/two-workers.json
+./local-setup/launch.py
 ```
 wait a little until all workers have been launched. You can stop the worker and node simply by pressing `Ctrl + c`.
+
+In case you want to launch multiple workers, just use `-w` flag with number, the workers ports will be adjusted accordingly
 
 ### Open a second terminal to show logs
 ```bash

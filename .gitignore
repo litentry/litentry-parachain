@@ -21,3 +21,4 @@ gethdata
 *.patch
 /log
 /log-backup
+**/__pycache__/
