@@ -19,7 +19,6 @@ use crate::{
 	command_utils::{get_chain_api, *},
 	Cli, CliResult, CliResultOk,
 };
-use base58::FromBase58;
 use codec::{Decode, Encode};
 use ita_stf::{helpers::get_expected_raw_message, Web3Network};
 use itc_rpc_client::direct_client::DirectApi;
@@ -105,8 +104,7 @@ impl LinkIdentityCommand {
 	) -> (Vec<u8>, Vec<u8>) {
 		if identity.is_web3() {
 			let who_identity = Identity::from(self.get_signer().public());
-			let vdata = get_expected_raw_message(&who_identity, identity, 1);
-			let validation_payload = vdata.clone();
+			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce);
 			let web3network: Vec<Web3Network> = self
 				.networks
 				.iter()
@@ -122,7 +120,7 @@ impl LinkIdentityCommand {
 			let signature: LitentryMultiSignature = identity_pair.sign(&validation_payload).into();
 			let web3common = Web3CommonValidationData {
 				message: validation_payload.try_into().unwrap(),
-				signature: signature.into(),
+				signature,
 			};
 			let validation_data = litentry_primitives::ValidationData::Web3(
 				litentry_primitives::Web3ValidationData::Substrate(web3common),
