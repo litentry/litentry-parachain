@@ -156,7 +156,7 @@ export const mockAssertions = [
             Oneblock: 'CourseCompletion',
         },
     },
-    // Brc20AmountHolder-Geniidata
+    // Geniidata
     {
         description: 'NFT holder',
         assertion: {
@@ -165,26 +165,19 @@ export const mockAssertions = [
     },
 
     // nodereal_jsonrpc
-    // {
-    //     description: 'You are a holder of a certain kind of NFT',
-    //     assertion: {
-    //         NftHolder: 'WeirdoGhostGang',
-    //     },
-    // },
-    // nodereal_jsonrpc
+    {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'WeirdoGhostGang',
+        },
+    },
     {
         description: 'The amount of TRX you are holding',
         assertion: {
             TokenHoldingAmount: 'TRX',
         },
     },
-    //karat_dao
-    {
-        description: 'You are a user of a certain platform',
-        assertion: {
-            PlatformUser: 'KaratDaoUser',
-        },
-    },
+
     {
         description: 'The amount of LIT you are staking',
         assertion: {
@@ -195,6 +188,13 @@ export const mockAssertions = [
         description: 'The amount of a Ton you are holding',
         assertion: {
             EVMAmountHolding: 'Ton',
+        },
+    },
+    //karat_dao
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'KaratDaoUser',
         },
     },
 ];
