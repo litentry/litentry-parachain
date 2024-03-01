@@ -300,7 +300,7 @@ impl Identity {
 	}
 
 	pub fn is_web3(&self) -> bool {
-		matches!(self, Self::Substrate(..) | Self::Evm(..) | Self::Bitcoin(..))
+		matches!(self, Self::Substrate(..) | Self::Evm(..) | Self::Bitcoin(..) | Self::Solana(..))
 	}
 
 	pub fn is_substrate(&self) -> bool {
@@ -589,7 +589,7 @@ mod tests {
 	fn is_solana_works() {
 		Identity::iter().for_each(|identity| {
 			assert_eq!(
-				identity.is_bitcoin(),
+				identity.is_solana(),
 				match identity {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
