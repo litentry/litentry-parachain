@@ -24,7 +24,7 @@ use crate::{primitives::TxHash, watcher::Watcher};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_types::BlockHash as SidechainBlockHash;
 use linked_hash_map::LinkedHashMap;
-use log::{debug, trace};
+use log::*;
 
 use std::{collections::HashMap, string::String, sync::Arc, vec, vec::Vec};
 
@@ -153,7 +153,7 @@ where
 	pub fn finalized(&mut self, block_hash: SidechainBlockHash) {
 		if let Some(hashes) = self.finality_watchers.remove(&block_hash) {
 			for hash in hashes {
-				log::debug!(target: "txpool", "[{:?}] Sent finalization event (block {:?})", hash, block_hash);
+				debug!(target: "txpool", "[{:?}] Sent finalization event (block {:?})", hash, block_hash);
 				self.fire(&hash, |s| s.finalized())
 			}
 		}
@@ -169,13 +169,17 @@ where
 		self.fire(tx, |s| s.update_connection_state(encoded_value, force_wait));
 	}
 
-	pub fn send_rpc_response(&mut self, hash: &TxHash, encoded_value: Vec<u8>, do_watch: bool) {
-		self.fire(hash, |s| s.send_rpc_response(encoded_value, do_watch));
+	// Direct vc request is not going through top pool. The hash is only added within "handle_message()" to
+	// connection_registry. So Here use rpc_response_sender directly.
+	pub fn send_rpc_response(&mut self, hash: TxHash, encoded_value: Vec<u8>, do_watch: bool) {
+		if let Err(e) = self.rpc_response_sender.send_rpc_response(hash, encoded_value, do_watch) {
+			warn!("failed to update connection state: {:?}", e);
+		}
 	}
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&mut self, old_hash: TxHash, new_hash: TxHash) {
-		log::debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
+		debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
 		// It's possible that the old top (hash) is already removed from the pool when we
 		// request to swap hashes, in this case we just create one to facilitate the swap
 		if let Some(w) = self.watchers.get(&old_hash) {

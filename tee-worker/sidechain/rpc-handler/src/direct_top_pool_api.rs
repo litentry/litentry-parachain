@@ -36,6 +36,7 @@ use lc_vc_task_sender::{VCRequest, VCResponse, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
 use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Hash};
 use std::{
 	borrow::ToOwned,
 	format,
@@ -347,13 +348,13 @@ where
 {
 	let payload = get_request_payload(params)?;
 	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
-	let request_clone = request.clone();
-	let response = executor::block_on(async { author.watch_top(request_clone).await });
-	if let Ok(hash) = response {
-		thread::spawn(move || request_vc_inner1(author, request, hash));
-	}
 
-	response.map_err(|e| format!("{:?}", e))
+	// Use this hash to trigger the storage of connection_registry
+	let hash = request.using_encoded(|x| BlakeTwo256::hash(x));
+
+	thread::spawn(move || request_vc_inner1(author, request, hash));
+
+	Ok(hash)
 }
 
 fn request_vc_inner1<R, TCS, G>(author: Arc<R>, request: AesRequest, hash: H256)
