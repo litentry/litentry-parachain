@@ -14,7 +14,7 @@ import {
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity } from 'parachain-api';
+import { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { defaultAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
@@ -159,7 +159,22 @@ describe('Test Vc (direct request)', function () {
             );
 
             const isVcDirect = true;
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
+            // const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
+
+            // Instead of waiting for final response we will listen all responses from the call
+            const onMessageReceived = async (res: WorkerRpcReturnValue) => {
+                // if response is a A1 or A2, etc....
+                await assertVc(context, aliceSubstrateIdentity, res.value);
+            };
+
+            // the +res+ below is the last message with "do_watch: false" property and we may not need it at all
+            const res = await sendRequestFromTrustedCall(
+                context,
+                teeShieldingKey,
+                requestVcCall,
+                isVcDirect,
+                onMessageReceived
+            );
             const events = await eventsPromise;
             const vcIssuedEvents = events
                 .map(({ event }) => event)
@@ -170,7 +185,7 @@ describe('Test Vc (direct request)', function () {
                 1,
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
-            await assertVc(context, aliceSubstrateIdentity, res.value);
+            // await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });
 });
