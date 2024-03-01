@@ -256,10 +256,11 @@ mod tests {
 		})
 	}
 
+	#[test]
 	fn is_solana_works() {
 		Web3Network::iter().for_each(|network| {
 			assert_eq!(
-				network.is_bitcoin(),
+				network.is_solana(),
 				match network {
 					Web3Network::Polkadot => false,
 					Web3Network::Kusama => false,
@@ -270,11 +271,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
-					Web3Network::BitcoinP2tr => true,
-					Web3Network::BitcoinP2pkh => true,
-					Web3Network::BitcoinP2sh => true,
-					Web3Network::BitcoinP2wpkh => true,
-					Web3Network::BitcoinP2wsh => true,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
 					Web3Network::Solana => true,
