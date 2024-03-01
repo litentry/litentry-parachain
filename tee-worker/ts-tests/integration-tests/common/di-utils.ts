@@ -217,6 +217,26 @@ export async function createSignedTrustedCallRequestVc(
     );
 }
 
+export async function createSignedTrustedCallRequestBatchVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    assertion: string,
+    aesKey: string,
+    hash: string
+) {
+    return await createSignedTrustedCall(
+        parachainApi,
+        ['request_batch_vc', '(LitentryIdentity, LitentryIdentity, Vec<Assertion>, Option<RequestAesKey>, H256)'],
+        signer,
+        mrenclave,
+        nonce,
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+    );
+}
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,

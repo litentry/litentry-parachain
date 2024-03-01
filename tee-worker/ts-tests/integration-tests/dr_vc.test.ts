@@ -10,6 +10,7 @@ import {
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedCallRequestBatchVc,
 } from './common/di-utils'; // @fixme move to a better place
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
@@ -147,24 +148,39 @@ describe('Test Vc (direct request)', function () {
             );
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-            const requestVcCall = await createSignedTrustedCallRequestVc(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
+            let requestVcCall;
+            if (Array.isArray(assertion)) {
+                requestVcCall = await createSignedTrustedCallRequestBatchVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    new PolkadotSigner(context.substrateWallet.alice),
+                    aliceSubstrateIdentity,
+                    context.api.createType('Vec<Assertion>', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            } else {
+                requestVcCall = await createSignedTrustedCallRequestVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    new PolkadotSigner(context.substrateWallet.alice),
+                    aliceSubstrateIdentity,
+                    context.api.createType('Assertion', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            }
 
             const isVcDirect = true;
-            // const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
-
             // Instead of waiting for final response we will listen all responses from the call
             const onMessageReceived = async (res: WorkerRpcReturnValue) => {
                 // if response is a A1 or A2, etc....
-                await assertVc(context, aliceSubstrateIdentity, res.value);
+                const vcresponse = context.api.createType('VCResponse', res.value);
+                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`)
+                if (vcresponse.len > 0)
+                    await assertVc(context, aliceSubstrateIdentity, vcresponse.payload);
             };
 
             // the +res+ below is the last message with "do_watch: false" property and we may not need it at all
@@ -182,10 +198,9 @@ describe('Test Vc (direct request)', function () {
 
             assert.equal(
                 vcIssuedEvents.length,
-                1,
+                Array.isArray(assertion) ? assertion.length : 1,
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
-            // await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });
 });

@@ -45,6 +45,11 @@ export default {
             pre_id_graph_hash: "H256",
             batch_vc_idx: "u8",
         },
+        VCResponse: {
+            payload: "Vec<u8>",
+            idx: "u8",
+            len: "u8",
+        },
         // Achainable
         AchainableParams: {
             _enum: {

@@ -21,6 +21,14 @@ export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed
 // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
 export const defaultAssertions = [
     {
+        description: 'request_batch_vc trial test',
+        assertion: [
+            {A7: '5'},
+            {A8: ['Litentry']},
+            {A20: 'A20'},
+        ],
+    },
+    {
         description: 'Have identified at least one account/address in both Web2 and Web3.',
         assertion: {
             A1: 'A1',
@@ -40,7 +48,6 @@ export const defaultAssertions = [
             A3: ['A3', 'A3', 'A3'],
         },
     },
-
     {
         description: 'The length of time a user continues to hold LIT token',
         assertion: {
