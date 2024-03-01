@@ -7,33 +7,26 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
-# third-party dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 
-# primitives
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
-# frame dependencies
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-
-# local
-core-primitives = { path = "../../primitives/core", default-features = false }
-pallet-teebag = { path = "../teebag", default-features = false }
-
-# benchmarking
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, optional = true }
+core-primitives = { workspace = true }
+pallet-teebag = { workspace = true }
 
 [dev-dependencies]
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-pallet-group = { path = "../../pallets/group" }
-pallet-teebag = { path = "../teebag", features = ["test-util"] }
+frame-benchmarking = { workspace = true, features = ["std"] }
+pallet-balances = { workspace = true, features = ["std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+pallet-group = { workspace = true, features = ["std"] }
+pallet-teebag = { workspace = true, features = ["std", "test-util"] }
 
 
 [features]
@@ -47,7 +40,7 @@ runtime-benchmarks = [
     "pallet-teebag/runtime-benchmarks",
 ]
 std = [
-    "codec/std",
+    "parity-scale-codec/std",
     "sp-std/std",
     "sp-runtime/std",
     "sp-io/std",

@@ -23,7 +23,6 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
-use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -36,6 +35,7 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use hex_literal::hex;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
