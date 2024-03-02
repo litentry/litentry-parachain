@@ -22,3 +22,4 @@ gethdata
 /log
 /log-backup
 **/__pycache__/
+**/.env
