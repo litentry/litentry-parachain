@@ -164,7 +164,7 @@ pub mod pallet {
 			BoundedVec<u8, T::MaximumNameLength>,
 			T::AccountId,
 			BalanceOf<T>,
-			T::BlockNumber,
+			BlockNumberFor<T>,
 		>,
 		OptionQuery,
 	>;
@@ -366,8 +366,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			name: Vec<u8>,
 			total: BalanceOf<T>,
-			start_at: T::BlockNumber,
-			end_at: T::BlockNumber,
+			start_at: BlockNumberFor<T>,
+			end_at: BlockNumberFor<T>,
 		) -> DispatchResultWithPostInfo {
 			// a few sanity checks
 			let sender = ensure_signed(origin)?;

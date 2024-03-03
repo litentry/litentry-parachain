@@ -71,8 +71,9 @@ pub enum Web3TokenType {
 impl Web3TokenType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx =>
-				vec![Web3Network::Bsc, Web3Network::Ethereum],
+			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx => {
+				vec![Web3Network::Bsc, Web3Network::Ethereum]
+			},
 			Self::Lit => vec![
 				Web3Network::Bsc,
 				Web3Network::Ethereum,

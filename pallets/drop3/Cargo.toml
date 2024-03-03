@@ -35,6 +35,8 @@ std = [
     "parity-scale-codec/std",
     "scale-info/std",
     "sp-std/std",
+    "sp-io/std",
+    "sp-core/std",
     "sp-runtime/std",
     "frame-support/std",
     "frame-system/std",

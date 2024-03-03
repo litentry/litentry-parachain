@@ -21,11 +21,10 @@ use parity_scale_codec::{Decode, Encode};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU64, Everything},
-	RuntimeDebug,
 };
 use frame_system::EnsureRoot;
 use scale_info::TypeInfo;
-use sp_core::H256;
+use sp_core::{RuntimeDebug, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, Hash as THash, IdentityLookup},

@@ -23,7 +23,6 @@ sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
-xcm = { workspace = true }
 
 # There's a problem with --all-features when this is moved under dev-deps
 evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false, optional = true }
@@ -44,6 +43,5 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "sp-std/std",
-    "xcm/std",
 ]
 testing = ["similar-asserts", "std"]

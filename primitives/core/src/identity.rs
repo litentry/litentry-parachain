@@ -39,14 +39,13 @@ use sp_runtime::{
 use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
-pub type MaxStringLength = ConstU32<64>;
-pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
+pub type IdentityInnerString = BoundedVec<u8, ConstU32<64>>;
 
 pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
 
 impl Decode for IdentityString {
 	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-		let inner: BoundedVec<u8, MaxStringLength> = Decode::decode(input)?;
+		let inner: IdentityInnerString = Decode::decode(input)?;
 		Ok(IdentityString { inner })
 	}
 }
@@ -65,7 +64,7 @@ pub struct IdentityString {
 }
 
 impl TypeInfo for IdentityString {
-	type Identity = BoundedVec<u8, MaxStringLength>;
+	type Identity = IdentityInnerString;
 
 	fn type_info() -> Type {
 		TypeDefSequence::new(meta_type::<u8>()).into()

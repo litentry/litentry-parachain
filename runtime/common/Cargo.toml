@@ -41,7 +41,7 @@ orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
-polkadot-parachain = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-runtime-parachains = { workspace = true }
 
@@ -106,7 +106,7 @@ tests = [
     "polkadot-primitives/default",
     "polkadot-runtime-parachains/default",
     "xcm-simulator",
-    "polkadot-parachain/std",
+    "polkadot-parachain-primitives/std",
     "orml-tokens/std",
     "orml-traits/std",
     "orml-xtokens/std",

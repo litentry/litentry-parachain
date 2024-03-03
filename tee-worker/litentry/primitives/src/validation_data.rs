@@ -22,8 +22,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub type MaxStringLength = ConstU32<64>;
-pub type ValidationString = BoundedVec<u8, MaxStringLength>;
+pub type ValidationString = BoundedVec<u8, ConstU32<64>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

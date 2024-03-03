@@ -27,9 +27,10 @@ use crate::{
 };
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
 use parity_scale_codec::{Decode, Encode};
+use sp_core::RuntimeDebug;
 use sp_runtime::{
 	traits::{Saturating, Zero},
-	Perbill, Percent, RuntimeDebug,
+	Perbill, Percent,
 };
 use sp_std::{cmp::Ordering, prelude::*, vec};
 

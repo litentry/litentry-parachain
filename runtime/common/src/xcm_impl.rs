@@ -19,17 +19,17 @@ use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_runtime::traits::{Convert as spConvert, Zero};
-use sp_std::{borrow::Borrow, boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
+use sp_runtime::traits::{Convert, MaybeEquivalence, Zero};
+use sp_std::{boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
 use xcm::{
 	latest::{
 		prelude::{Fungibility, Junction, Junctions, MultiAsset, MultiLocation, XcmError},
-		AssetId as xcmAssetId, Weight,
+		AssetId as xcmAssetId, Weight, XcmContext,
 	},
 	prelude::{Parachain, X1},
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{Convert as xcmConvert, MatchesFungibles, WeightTrader};
+use xcm_executor::traits::{ConvertLocation, MatchesFungibles, WeightTrader};
 
 use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
 use core_primitives::{AccountId, AssetId};
@@ -58,6 +58,7 @@ impl<
 		&mut self,
 		weight: Weight,
 		payment: xcm_executor::Assets,
+		_context: &XcmContext,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let first_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
 
@@ -124,7 +125,7 @@ impl<
 		}
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: Weight, _context: &XcmContext) -> Option<MultiAsset> {
 		if let Some((id, prev_amount, units_per_second)) = self.1 {
 			let ref_time = weight.ref_time().min(self.0);
 			self.0 -= ref_time;
@@ -268,7 +269,7 @@ impl<R: BaseRuntimeRequirements> Default for CurrencyId<R> {
 
 /// Instructs how to convert a 32 byte accountId into a MultiLocation
 pub struct AccountIdToMultiLocation;
-impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		MultiLocation {
 			parents: 0,
@@ -357,7 +358,7 @@ impl<R: BaseRuntimeRequirements> From<CurrencyId<R>> for Option<MultiLocation> {
 // How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert
 // trait
 pub struct CurrencyIdMultiLocationConvert<R: BaseRuntimeRequirements>(PhantomData<R>);
-impl<R: BaseRuntimeRequirements> spConvert<CurrencyId<R>, Option<MultiLocation>>
+impl<R: BaseRuntimeRequirements> Convert<CurrencyId<R>, Option<MultiLocation>>
 	for CurrencyIdMultiLocationConvert<R>
 {
 	fn convert(currency: CurrencyId<R>) -> Option<MultiLocation> {
@@ -365,7 +366,7 @@ impl<R: BaseRuntimeRequirements> spConvert<CurrencyId<R>, Option<MultiLocation>>
 	}
 }
 
-impl<R: BaseRuntimeRequirements> spConvert<MultiLocation, Option<CurrencyId<R>>>
+impl<R: BaseRuntimeRequirements> Convert<MultiLocation, Option<CurrencyId<R>>>
 	for CurrencyIdMultiLocationConvert<R>
 {
 	fn convert(multi: MultiLocation) -> Option<CurrencyId<R>> {
@@ -382,47 +383,56 @@ impl<R: BaseRuntimeRequirements> spConvert<MultiLocation, Option<CurrencyId<R>>>
 /// (must be `TryFrom/TryInto<u128>`) into a MultiLocation Value and Viceversa through
 /// an intermediate generic type AssetType.
 /// The trait bounds enforce is that the AssetTypeGetter trait is also implemented
-pub struct AssetIdMuliLocationConvert<R>(PhantomData<R>);
-impl<R: ParaRuntimeRequirements> xcmConvert<MultiLocation, AssetId>
-	for AssetIdMuliLocationConvert<R>
+pub struct AssetIdMultiLocationConvert<R>(PhantomData<R>);
+
+impl<R: ParaRuntimeRequirements> MaybeEquivalence<MultiLocation, AssetId>
+	for AssetIdMultiLocationConvert<R>
 where
 	R: pallet_asset_manager::Config<ForeignAssetType = CurrencyId<R>>,
 {
-	fn convert_ref(multi: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as spConvert<
+	fn convert(multi: &MultiLocation) -> Option<AssetId> {
+		<Self as ConvertLocation<AssetId>>::convert_location(multi)
+	}
+
+	fn convert_back(id: &AssetId) -> Option<MultiLocation> {
+		if let Some(currency_id) =
+			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_type(*id)
+		{
+			if let Some(multi) = <CurrencyIdMultiLocationConvert<R> as Convert<
+				CurrencyId<R>,
+				Option<MultiLocation>,
+			>>::convert(currency_id)
+			{
+				Some(multi)
+			} else {
+				None
+			}
+		} else {
+			None
+		}
+	}
+}
+
+impl<R: ParaRuntimeRequirements> ConvertLocation<AssetId> for AssetIdMultiLocationConvert<R>
+where
+	R: pallet_asset_manager::Config<ForeignAssetType = CurrencyId<R>>,
+{
+	fn convert_location(multi: &MultiLocation) -> Option<AssetId> {
+		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as Convert<
 			MultiLocation,
 			Option<CurrencyId<R>>,
-		>>::convert(*multi.borrow())
+		>>::convert(*multi)
 		{
 			if let Some(asset_id) =
 				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(
 					currency_id,
 				) {
-				Ok(asset_id)
+				Some(asset_id)
 			} else {
-				Err(())
+				None
 			}
 		} else {
-			Err(())
-		}
-	}
-
-	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-		if let Some(currency_id) =
-			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_type(
-				*asset_id.borrow(),
-			) {
-			if let Some(multi) = <CurrencyIdMultiLocationConvert<R> as spConvert<
-				CurrencyId<R>,
-				Option<MultiLocation>,
-			>>::convert(currency_id)
-			{
-				Ok(multi)
-			} else {
-				Err(())
-			}
-		} else {
-			Err(())
+			None
 		}
 	}
 }

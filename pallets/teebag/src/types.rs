@@ -17,7 +17,6 @@
 use crate::Ed25519Public;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{RuntimeDebug, H256};
 use sp_std::prelude::*;
@@ -39,8 +38,9 @@ pub type SidechainBlockNumber = u64;
 /// please note:
 /// `Attestation::Ignore` is only possible under `OperationalMode::Development`, but not vice versa.
 /// So if you define `Attestation::Ias`, the attestation will be verified even in `Development` mode
-#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(
+	PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo, Serialize, Deserialize,
+)]
 pub enum OperationalMode {
 	#[default]
 	#[codec(index = 0)]

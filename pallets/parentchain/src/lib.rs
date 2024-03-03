@@ -5,7 +5,10 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use frame_support::{pallet_prelude::*, sp_runtime::traits::Header};
+	use frame_support::{
+		pallet_prelude::*,
+		sp_runtime::traits::{Block, Header},
+	};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
@@ -20,7 +23,7 @@ pub mod pallet {
 	/// The current block number being processed. Set by `set_block`.
 	#[pallet::storage]
 	#[pallet::getter(fn block_number)]
-	pub(super) type Number<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	pub(super) type Number<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	/// Hash of the previous block. Set by `set_block`.
 	#[pallet::storage]
@@ -39,11 +42,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_block())]
-		pub fn set_block(origin: OriginFor<T>, header: T::Header) -> DispatchResult {
+		pub fn set_block(origin: OriginFor<T>, block: T::Block) -> DispatchResult {
 			ensure_root(origin)?;
-			<Number<T>>::put(header.number());
-			<ParentHash<T>>::put(header.parent_hash());
-			<BlockHash<T>>::put(header.hash());
+			<Number<T>>::put(block.header().number());
+			<ParentHash<T>>::put(block.header().parent_hash());
+			<BlockHash<T>>::put(block.header().hash());
 			Ok(())
 		}
 	}

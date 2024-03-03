@@ -97,8 +97,8 @@ sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
-  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --rpc-methods=Unsafe \
-  --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm \
+  --rpc-external --rpc-cors=all \
+  --port ${CollatorPort:-30333} --rpc-port ${CollatorWSPort:-9944} --execution wasm \
   --state-pruning archive --blocks-pruning archive \
   --enable-evm-rpc \
   -- \

@@ -25,7 +25,7 @@ use frame_support::{
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
 use parity_scale_codec::Encode;
-use polkadot_parachain::primitives::RelayChainBlockNumber;
+use polkadot_parachain_primitives::RelayChainBlockNumber;
 use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,

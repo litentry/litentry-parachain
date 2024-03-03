@@ -1,4 +1,7 @@
-ignore = ["tee-worker/"]
+ignore = [
+  "tee-worker/",
+  "bitacross-worker/",
+]
 
 # Basic
 hard_tabs = true

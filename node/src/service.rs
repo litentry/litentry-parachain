@@ -27,14 +27,15 @@ use crate::{
 	standalone_block_import::StandaloneBlockImport,
 	tracing::{self, RpcRequesters},
 };
-pub use core_primitives::{reuse, AccountId, Balance, Block, Hash, Header, Index as Nonce};
+pub use core_primitives::{reuse, AccountId, Balance, Block, Hash, Header, Nonce};
 
 use cumulus_client_cli::CollatorOptions;
+#[allow(deprecated)]
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
 use cumulus_client_consensus_common::{
 	ParachainBlockImport as TParachainBlockImport, ParachainConsensus,
 };
-use cumulus_client_network::BlockAnnounceValidator;
+#[allow(deprecated)]
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
@@ -44,7 +45,7 @@ use cumulus_primitives_parachain_inherent::{
 };
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
@@ -78,21 +79,21 @@ pub mod __ {
 
 	#[no_evm]
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type HostFunctions = sp_io::SubstrateHostFunctions;
+	pub type HostFunctions = sp_io::SubstrateHostFunctions;
 
 	#[no_evm]
 	#[cfg(feature = "runtime-benchmarks")]
-	type HostFunctions =
+	pub type HostFunctions =
 		(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions);
 
 	#[evm]
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type HostFunctions =
+	pub type HostFunctions =
 		(sp_io::SubstrateHostFunctions, moonbeam_primitives_ext::moonbeam_ext::HostFunctions);
 
 	#[evm]
 	#[cfg(feature = "runtime-benchmarks")]
-	type HostFunctions = (
+	pub type HostFunctions = (
 		sp_io::SubstrateHostFunctions,
 		frame_benchmarking::benchmarking::HostFunctions,
 		moonbeam_primitives_ext::moonbeam_ext::HostFunctions,
@@ -178,7 +179,7 @@ pub mod __ {
 			ParachainClient<RuntimeApi>,
 			ParachainBackend,
 			MaybeSelectChain,
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
+			sc_consensus::DefaultImportQueue<Block>,
 			sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>,
 			(ParachainBlockImport<RuntimeApi>, Option<Telemetry>, Option<TelemetryWorkerHandle>),
 		>,
@@ -189,10 +190,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 		BIQ: FnOnce(
@@ -202,10 +201,7 @@ pub mod __ {
 			Option<TelemetryHandle>,
 			&TaskManager,
 			bool,
-		) -> Result<
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-			sc_service::Error,
-		>,
+		) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	{
 		__
 	}
@@ -224,7 +220,7 @@ pub mod __ {
 			ParachainClient<RuntimeApi, Executor>,
 			ParachainBackend,
 			MaybeSelectChain,
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>,
+			sc_consensus::DefaultImportQueue<Block>,
 			sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi, Executor>>,
 			(
 				ParachainBlockImport<RuntimeApi, Executor>,
@@ -243,10 +239,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
@@ -258,10 +252,7 @@ pub mod __ {
 			Option<TelemetryHandle>,
 			&TaskManager,
 			bool,
-		) -> Result<
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>,
-			sc_service::Error,
-		>,
+		) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	{
 		let telemetry = config
 			.telemetry_endpoints
@@ -387,10 +378,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
@@ -408,10 +397,8 @@ pub mod __ {
 				Option<TelemetryHandle>,
 				&TaskManager,
 				bool,
-			) -> Result<
-				sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-				sc_service::Error,
-			> + 'static,
+			) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
+			+ 'static,
 		BIC: FnOnce(
 			Arc<ParachainClient<RuntimeApi>>,
 			ParachainBlockImport<RuntimeApi>,
@@ -452,11 +439,10 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
+			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
@@ -478,10 +464,8 @@ pub mod __ {
 				Option<TelemetryHandle>,
 				&TaskManager,
 				bool,
-			) -> Result<
-				sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>,
-				sc_service::Error,
-			> + 'static,
+			) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
+			+ 'static,
 		BIC: FnOnce(
 			Arc<ParachainClient<RuntimeApi, Executor>>,
 			ParachainBlockImport<RuntimeApi, Executor>,
@@ -526,26 +510,27 @@ pub mod __ {
 			s => s.to_string().into(),
 		})?;
 
-		let block_announce_validator =
-			BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
-
 		let force_authoring = parachain_config.force_authoring;
 		let validator = parachain_config.role.is_authority();
 		let prometheus_registry = parachain_config.prometheus_registry().cloned();
 		let transaction_pool = params.transaction_pool.clone();
 		let import_queue_service = params.import_queue.service();
+		let net_config =
+			sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
+
 		let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
-			sc_service::build_network(sc_service::BuildNetworkParams {
-				config: &parachain_config,
+			cumulus_client_service::build_network(cumulus_client_service::BuildNetworkParams {
+				parachain_config: &parachain_config,
+				net_config,
+				para_id: id,
 				client: client.clone(),
 				transaction_pool: transaction_pool.clone(),
 				spawn_handle: task_manager.spawn_handle(),
+				relay_chain_interface: relay_chain_interface.clone(),
 				import_queue: params.import_queue,
-				block_announce_validator_builder: Some(Box::new(|_| {
-					Box::new(block_announce_validator)
-				})),
-				warp_sync_params: None,
-			})?;
+				sybil_resistance_level: cumulus_client_service::CollatorSybilResistance::Resistant,
+			})
+			.await?;
 
 		// Sinks for pubsub notifications.
 		// Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
@@ -626,10 +611,14 @@ pub mod __ {
 					enable_evm_rpc: additional_config.enable_evm_rpc,
 				};
 
+				let pending_consensus_data_provider =
+					Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
+
 				crate::rpc::evm::create_full(
 					deps,
 					subscription,
 					pubsub_notification_sinks.clone(),
+					pending_consensus_data_provider,
 					rpc_config.clone(),
 				)
 				.map_err(Into::into)
@@ -707,7 +696,7 @@ pub mod __ {
 				recovery_handle: Box::new(overseer_handle),
 				sync_service,
 			};
-
+			#[allow(deprecated)]
 			start_collator(params).await?;
 		} else {
 			let params = StartFullNodeParams {
@@ -721,7 +710,7 @@ pub mod __ {
 				recovery_handle: Box::new(overseer_handle),
 				sync_service,
 			};
-
+			#[allow(deprecated)]
 			start_full_node(params)?;
 		}
 
@@ -744,10 +733,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
@@ -781,6 +768,7 @@ pub mod __ {
 					prometheus_registry,
 					telemetry.clone(),
 				);
+				#[allow(deprecated)]
 				Ok(AuraConsensus::build::<
 					sp_consensus_aura::sr25519::AuthorityPair,
 					_,
@@ -856,10 +844,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
@@ -899,6 +885,7 @@ pub mod __ {
 					prometheus_registry,
 					telemetry.clone(),
 				);
+				#[allow(deprecated)]
 				Ok(AuraConsensus::build::<
 					sp_consensus_aura::sr25519::AuthorityPair,
 					_,
@@ -965,19 +952,14 @@ pub mod __ {
 		telemetry: Option<TelemetryHandle>,
 		task_manager: &TaskManager,
 		is_standalone: bool,
-	) -> Result<
-		sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-		sc_service::Error,
-	>
+	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 	where
 		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
@@ -997,10 +979,7 @@ pub mod __ {
 		telemetry: Option<TelemetryHandle>,
 		task_manager: &TaskManager,
 		is_standalone: bool,
-	) -> Result<
-		sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>,
-		sc_service::Error,
-	>
+	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 	where
 		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>>
 			+ Send
@@ -1009,10 +988,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
@@ -1114,7 +1091,7 @@ pub mod __ {
 	// start a standalone node which doesn't need to connect to relaychain
 	#[evm]
 	pub async fn start_standalone_node<RuntimeApi, Executor>(
-		config: Configuration,
+		parachain_config: Configuration,
 		evm_tracing_config: crate::evm_tracing_types::EvmTracingConfig,
 	) -> Result<TaskManager, sc_service::Error>
 	where
@@ -1125,10 +1102,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
@@ -1151,7 +1126,7 @@ pub mod __ {
 			transaction_pool,
 			other: (_, _, _, frontier_backend),
 		} = new_partial::<RuntimeApi, Executor, _>(
-			&config,
+			&parachain_config,
 			true,
 			build_import_queue::<RuntimeApi, Executor>,
 		)?;
@@ -1167,19 +1142,23 @@ pub mod __ {
 		> = Default::default();
 		let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
+		let net_config =
+			sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
+
 		let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 			sc_service::build_network(sc_service::BuildNetworkParams {
-				config: &config,
+				config: &parachain_config,
 				client: client.clone(),
 				transaction_pool: transaction_pool.clone(),
 				spawn_handle: task_manager.spawn_handle(),
 				import_queue,
 				block_announce_validator_builder: None,
 				warp_sync_params: None,
+				net_config,
 			})?;
 
-		let role = config.role.clone();
-		let force_authoring = config.force_authoring;
+		let role = parachain_config.role.clone();
+		let force_authoring = parachain_config.force_authoring;
 		let backoff_authoring_blocks: Option<()> = None;
 
 		let (
@@ -1195,7 +1174,7 @@ pub mod __ {
 			backend.clone(),
 			frontier_backend.clone(),
 			&mut task_manager,
-			&config,
+			&parachain_config,
 			evm_tracing_config.clone(),
 			sync_service.clone(),
 			pubsub_notification_sinks.clone(),
@@ -1321,10 +1300,14 @@ pub mod __ {
 					enable_evm_rpc: true,
 				};
 
+				let pending_consensus_data_provider =
+					Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
+
 				crate::rpc::evm::create_full(
 					deps,
 					subscription,
 					pubsub_notification_sinks.clone(),
+					pending_consensus_data_provider,
 					rpc_config.clone(),
 				)
 				.map_err(Into::into)
@@ -1336,7 +1319,7 @@ pub mod __ {
 			client,
 			transaction_pool,
 			task_manager: &mut task_manager,
-			config,
+			config: parachain_config,
 			keystore: keystore_container.keystore(),
 			backend,
 			network,
@@ -1381,10 +1364,8 @@ pub mod __ {
 		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 			+ sp_api::Metadata<Block>
 			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
+			+ sp_api::ApiExt<Block>
+			+ sp_offchain::OffchainWorkerApi<Block>
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
@@ -1492,13 +1473,11 @@ pub async fn build_relay_chain_interface(
 	collator_options: CollatorOptions,
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
-	if !collator_options.relay_chain_rpc_urls.is_empty() {
-		build_minimal_relay_chain_node(
-			polkadot_config,
-			task_manager,
-			collator_options.relay_chain_rpc_urls,
-		)
-		.await
+	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
+		collator_options.relay_chain_mode
+	{
+		build_minimal_relay_chain_node_with_rpc(polkadot_config, task_manager, rpc_target_urls)
+			.await
 	} else {
 		build_inprocess_relay_chain(
 			polkadot_config,

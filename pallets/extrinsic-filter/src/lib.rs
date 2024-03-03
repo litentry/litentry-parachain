@@ -71,9 +71,8 @@ mod benchmarking;
 pub mod weights;
 
 use frame_support::{
-	dispatch::{CallMetadata, GetCallMetadata},
 	pallet_prelude::*,
-	traits::{Contains, StorageVersion},
+	traits::{CallMetadata, Contains, GetCallMetadata, StorageVersion},
 	transactional,
 };
 use frame_system::pallet_prelude::*;

@@ -42,11 +42,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		{self as system},
 	};
-	use parity_scale_codec::{Decode, Encode, EncodeLike};
-	use scale_info::TypeInfo;
+	use parity_scale_codec::EncodeLike;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},
-		RuntimeDebug, SaturatedConversion,
+		SaturatedConversion,
 	};
 	use sp_std::prelude::*;
 
@@ -175,7 +174,7 @@ pub mod pallet {
 			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
 
 		#[pallet::constant]
-		type ProposalLifetime: Get<Self::BlockNumber>;
+		type ProposalLifetime: Get<BlockNumberFor<Self>>;
 
 		/// Treasury account to receive assets fee
 		type TreasuryAccount: Get<Self::AccountId>;
@@ -292,7 +291,7 @@ pub mod pallet {
 		BridgeChainId,
 		Blake2_256,
 		(DepositNonce, T::Proposal),
-		ProposalVotes<T::AccountId, T::BlockNumber>,
+		ProposalVotes<T::AccountId, BlockNumberFor<T>>,
 	>;
 
 	#[pallet::storage]
@@ -311,8 +310,8 @@ pub mod pallet {
 	pub type BridgeFee<T: Config> = StorageMap<_, Twox64Concat, BridgeChainId, BalanceOf<T>>;
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_initialize(_n: T::BlockNumber) -> Weight {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			// Clear all bridge transfer data
 			BridgeEvents::<T>::kill();
 			Weight::zero()

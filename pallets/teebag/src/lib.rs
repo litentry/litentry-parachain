@@ -94,7 +94,7 @@ pub mod pallet {
 		},
 		ParentchainBlockProcessed {
 			who: T::AccountId,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			block_hash: H256,
 			task_merkle_root: H256,
 		},
@@ -241,7 +241,6 @@ pub mod pallet {
 		pub mode: OperationalMode,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { allow_sgx_debug_mode: false, admin: None, mode: OperationalMode::Production }
@@ -249,7 +248,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
 			Mode::<T>::put(self.mode);
@@ -536,7 +535,7 @@ pub mod pallet {
 		pub fn parentchain_block_processed(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			task_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;

@@ -32,10 +32,10 @@ use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	traits::{Get, ReservableCurrency},
-	RuntimeDebug,
 };
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use sp_core::RuntimeDebug;
 use sp_runtime::traits::Saturating;
 use sp_std::{vec, vec::Vec};
 

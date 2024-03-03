@@ -100,12 +100,12 @@ sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
-  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --rpc-methods=Unsafe \
-  --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm \
+  --unsafe-rpc-external --rpc-cors=all \
+  --port ${CollatorPort:-30333} --rpc-port ${CollatorWSPort:-9944} --execution wasm \
   --state-pruning archive --blocks-pruning archive \
   --enable-evm-rpc \
   -- \
-  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
+  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --rpc-port 9943 \
   --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
