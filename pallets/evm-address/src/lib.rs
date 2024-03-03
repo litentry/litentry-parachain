@@ -40,7 +40,12 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// EVM address type, usually H160
-		type EVMId: Default + Copy + PartialEq + core::fmt::Debug + codec::FullCodec + TypeInfo;
+		type EVMId: Default
+			+ Copy
+			+ PartialEq
+			+ core::fmt::Debug
+			+ parity_scale_codec::FullCodec
+			+ TypeInfo;
 	}
 
 	/// Map for existing evm address and substrate address relation

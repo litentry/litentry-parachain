@@ -147,7 +147,7 @@ pub mod __ {
 			+ Send
 			+ Sync
 			+ 'static,
-		C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+		C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 		C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 		C::Api: BlockBuilder<Block>,
 		P: TransactionPool + Sync + Send + 'static,
@@ -179,7 +179,7 @@ pub mod __ {
 			+ Sync
 			+ 'static,
 		C: sc_client_api::BlockBackend<Block>,
-		C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 			+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>
@@ -192,8 +192,8 @@ pub mod __ {
 		BE::Blockchain: BlockchainBackend<Block>,
 		A: ChainApi<Block = Block> + 'static,
 	{
-		use frame_rpc_system::{System, SystemApiServer};
 		use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+		use substrate_frame_rpc_system::{System, SystemApiServer};
 
 		let mut module = RpcExtension::new(());
 		#[no_evm]

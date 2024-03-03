@@ -14,15 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
+#![allow(opaque_hidden_inferred_bound)]
 
-use crate::{ContestType, SoraQuizType};
+use warp::{http::Response, path::FullPath, Filter};
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum GenericDiscordRoleType {
-	#[codec(index = 0)]
-	Contest(ContestType),
-	#[codec(index = 1)]
-	SoraQuiz(SoraQuizType),
+const RESPONSE_BNB_DOMAIN: &str = r#"{
+					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+					"name": "8",
+					"expires": "2028-09-18T13:35:38Z"
+				}
+                "#;
+pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post().and(warp::path::full()).map(|p: FullPath| {
+		if p.as_str() == "/spaceid/domain/names/byOwners" {
+			Response::builder().body(RESPONSE_BNB_DOMAIN.to_string())
+		} else {
+			Response::builder().status(400).body(String::from("Error query"))
+		}
+	})
 }

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use codec::Decode;
 use frame_support::{dispatch::*, traits::GenesisBuild, weights::Weight};
 pub use pallet_balances::Call as BalancesCall;
+use parity_scale_codec::Decode;
 use sp_runtime::SaturatedConversion;
 pub use sp_std::cell::RefCell;
 

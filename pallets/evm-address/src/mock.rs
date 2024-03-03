@@ -16,7 +16,6 @@
 
 #![cfg(test)]
 use crate as pallet_evm_address;
-use codec::Encode;
 use fp_evm::GenesisAccount;
 use frame_support::{
 	parameter_types,
@@ -26,6 +25,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use hex_literal::hex;
+use parity_scale_codec::Encode;
 use sp_core::{H160, U256};
 use sp_runtime::{
 	generic,
