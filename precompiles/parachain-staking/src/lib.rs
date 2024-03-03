@@ -635,7 +635,7 @@ where
 		let auto_compound: u8 = input.read::<u8>()?;
 
 		if auto_compound > 100 {
-			return Err(error("Must be an integer between 0 and 100 included"))
+			return Err(error("Must be an integer between 0 and 100 included"));
 		}
 		let auto_compound = Percent::from_percent(auto_compound);
 
@@ -763,7 +763,7 @@ where
 		let value: u8 = input.read::<u8>()?;
 
 		if value > 100 {
-			return Err(error("Must be an integer between 0 and 100 included"))
+			return Err(error("Must be an integer between 0 and 100 included"));
 		}
 
 		let value = Percent::from_percent(value);
@@ -852,14 +852,14 @@ where
 		let selector = handle.read_selector()?;
 
 		handle.check_function_modifier(match selector {
-			Action::Delegate |
-			Action::DelegateWithAutoCompound |
-			Action::ScheduleRevokeDelegation |
-			Action::DelegatorBondMore |
-			Action::ScheduleDelegatorBondLess |
-			Action::ExecuteDelegationRequest |
-			Action::CancelDelegationRequest |
-			Action::SetAutoCompound => FunctionModifier::NonPayable,
+			Action::Delegate
+			| Action::DelegateWithAutoCompound
+			| Action::ScheduleRevokeDelegation
+			| Action::DelegatorBondMore
+			| Action::ScheduleDelegatorBondLess
+			| Action::ExecuteDelegationRequest
+			| Action::CancelDelegationRequest
+			| Action::SetAutoCompound => FunctionModifier::NonPayable,
 			_ => FunctionModifier::View,
 		})?;
 

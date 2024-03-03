@@ -457,10 +457,10 @@ pub mod pallet {
 
 			match Self::mode() {
 				OperationalMode::Production | OperationalMode::Maintenance => {
-					if !Self::allow_sgx_debug_mode() &&
-						enclave.sgx_build_mode == SgxBuildMode::Debug
+					if !Self::allow_sgx_debug_mode()
+						&& enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
-						return Err(Error::<T>::InvalidSgxMode.into())
+						return Err(Error::<T>::InvalidSgxMode.into());
 					}
 					ensure!(
 						ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
@@ -589,7 +589,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(().into())
+				return Ok(().into());
 			}
 
 			let block_number = confirmation.block_number;

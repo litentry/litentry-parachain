@@ -1357,7 +1357,7 @@ pub mod pallet {
 
 		pub fn is_white_list(acc: &T::AccountId) -> bool {
 			if <Candidates<T>>::get().binary_search(acc).is_err() {
-				return false
+				return false;
 			}
 			true
 		}
@@ -1426,12 +1426,12 @@ pub mod pallet {
 			// payout is now - delay rounds ago => now - delay > 0 else return early
 			let delay = T::RewardPaymentDelay::get();
 			if now <= delay {
-				return
+				return;
 			}
 			let round_to_payout = now.saturating_sub(delay);
 			let total_points = <Points<T>>::get(round_to_payout);
 			if total_points.is_zero() {
-				return
+				return;
 			}
 			let total_staked = <Staked<T>>::take(round_to_payout);
 			let total_issuance = Self::compute_issuance(total_staked);
@@ -1468,7 +1468,7 @@ pub mod pallet {
 
 			// don't underflow uint
 			if now < delay {
-				return Weight::zero()
+				return Weight::zero();
 			}
 
 			let paid_for_round = now.saturating_sub(delay);
@@ -1510,7 +1510,7 @@ pub mod pallet {
 				// 2. we called pay_one_collator_reward when we were actually done with deferred
 				//    payouts
 				log::warn!("pay_one_collator_reward called with no <Points<T>> for the round!");
-				return (None, early_weight)
+				return (None, early_weight);
 			}
 
 			let collator_fee = payout_info.collator_commission;
@@ -1625,7 +1625,7 @@ pub mod pallet {
 						total_exposed_amount: *snapshot_total,
 					})
 				}
-				return (collator_count, delegation_count, total)
+				return (collator_count, delegation_count, total);
 			}
 
 			// snapshot exposure for round for weighting reward distribution
@@ -1758,7 +1758,7 @@ pub mod pallet {
 
 				let compound_amount = compound_percent.mul_ceil(amount_transferred.peek());
 				if compound_amount.is_zero() {
-					return
+					return;
 				}
 
 				if let Err(err) = Self::delegation_bond_more_without_event(
@@ -1772,7 +1772,7 @@ pub mod pallet {
 								delegator,
 								err
 							);
-					return
+					return;
 				};
 
 				Pallet::<T>::deposit_event(Event::Compounded {

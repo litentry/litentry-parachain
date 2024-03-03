@@ -171,10 +171,10 @@ impl EnclaveIdentity {
 	}
 
 	pub fn is_valid(&self, timestamp_millis: i64) -> bool {
-		self.id == "QE" &&
-			self.version == 2 &&
-			self.issue_date.timestamp_millis() < timestamp_millis &&
-			timestamp_millis < self.next_update.timestamp_millis()
+		self.id == "QE"
+			&& self.version == 2
+			&& self.issue_date.timestamp_millis() < timestamp_millis
+			&& timestamp_millis < self.next_update.timestamp_millis()
 	}
 }
 
@@ -228,10 +228,10 @@ impl TcbInfo {
 	}
 
 	pub fn is_valid(&self, timestamp_millis: i64) -> bool {
-		self.id == "SGX" &&
-			self.version == 3 &&
-			self.issue_date.timestamp_millis() < timestamp_millis &&
-			timestamp_millis < self.next_update.timestamp_millis()
+		self.id == "SGX"
+			&& self.version == 3
+			&& self.issue_date.timestamp_millis() < timestamp_millis
+			&& timestamp_millis < self.next_update.timestamp_millis()
 	}
 }
 

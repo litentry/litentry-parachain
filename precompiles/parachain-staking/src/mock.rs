@@ -167,8 +167,9 @@ where
 {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		match handle.code_address() {
-			a if a == precompile_address() =>
-				Some(ParachainStakingPrecompile::<R>::execute(handle)),
+			a if a == precompile_address() => {
+				Some(ParachainStakingPrecompile::<R>::execute(handle))
+			},
 			_ => None,
 		}
 	}

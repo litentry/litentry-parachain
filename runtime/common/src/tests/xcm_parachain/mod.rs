@@ -395,9 +395,9 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 4) -
-				CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 4)
+				- CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -417,9 +417,9 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 8) -
-				11 * CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 8)
+				- 11 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -450,9 +450,9 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 12) -
-				111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 12)
+				- 111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -474,9 +474,9 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 16) -
-				1111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 16)
+				- 1111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -503,9 +503,9 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 20) -
-				11111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 20)
+				- 11111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -622,9 +622,9 @@ where
 
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 4) -
-				CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 4)
+				- CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -652,9 +652,9 @@ where
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE -
-				u128::from(R::UnitWeightCost::get().ref_time() * 8) -
-				11 * CENTS
+			PARA_A_USER_INITIAL_BALANCE
+				- u128::from(R::UnitWeightCost::get().ref_time() * 8)
+				- 11 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),

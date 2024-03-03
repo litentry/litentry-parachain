@@ -169,7 +169,7 @@ impl Decode for QeCertificationData {
 		if size > 65_000 {
 			return Result::Err(parity_scale_codec::Error::from(
 				"Certification data too long. Max 65000 bytes are allowed",
-			))
+			));
 		}
 
 		// Safety: The try_into() can only fail due to overflow on a 16-bit system, but we anyway
@@ -278,10 +278,10 @@ impl SgxReportBody {
 
 	fn verify_misc_select_field(&self, o: &QuotingEnclave) -> bool {
 		for i in 0..self.misc_select.len() {
-			if (self.misc_select[i] & o.miscselect_mask[i]) !=
-				(o.miscselect[i] & o.miscselect_mask[i])
+			if (self.misc_select[i] & o.miscselect_mask[i])
+				!= (o.miscselect[i] & o.miscselect_mask[i])
 			{
-				return false
+				return false;
 			}
 		}
 		true
@@ -298,18 +298,18 @@ impl SgxReportBody {
 
 	pub fn verify(&self, o: &QuotingEnclave) -> bool {
 		if self.isv_prod_id != o.isvprodid || self.mr_signer != o.mrsigner {
-			return false
+			return false;
 		}
 		if !self.verify_misc_select_field(o) {
-			return false
+			return false;
 		}
 		if !self.verify_attributes_field(o) {
-			return false
+			return false;
 		}
 		for tcb in &o.tcb {
 			// If the enclave isvsvn is bigger than one of the
 			if self.isv_svn >= tcb.isvsvn {
-				return true
+				return true;
 			}
 		}
 		false
@@ -436,7 +436,7 @@ pub struct CertDer<'a>(&'a [u8]);
 /// This is meant for 256 bit ECC signatures or public keys
 pub fn encode_as_der(data: &[u8]) -> Result<Vec<u8>, &'static str> {
 	if data.len() != 64 {
-		return Result::Err("Key must be 64 bytes long")
+		return Result::Err("Key must be 64 bytes long");
 	}
 	let mut sequence = der::asn1::SequenceOf::<der::asn1::UIntRef, 2>::new();
 	sequence
@@ -579,16 +579,16 @@ pub fn verify_dcap_quote(
 	const REPORT_SIZE: usize = core::mem::size_of::<SgxReportBody>();
 	const QUOTE_SIGNATURE_DATA_LEN_SIZE: usize = core::mem::size_of::<u32>();
 
-	let attestation_key_offset = DCAP_QUOTE_HEADER_SIZE +
-		REPORT_SIZE +
-		QUOTE_SIGNATURE_DATA_LEN_SIZE +
-		REPORT_SIGNATURE_SIZE;
-	let authentication_data_offset = attestation_key_offset +
-		ATTESTATION_KEY_SIZE +
-		REPORT_SIZE +
-		REPORT_SIGNATURE_SIZE +
-		core::mem::size_of::<u16>(); //Size of the QE authentication data. We ignore this for now and assume 32. See
-							 // AUTHENTICATION_DATA_SIZE
+	let attestation_key_offset = DCAP_QUOTE_HEADER_SIZE
+		+ REPORT_SIZE
+		+ QUOTE_SIGNATURE_DATA_LEN_SIZE
+		+ REPORT_SIGNATURE_SIZE;
+	let authentication_data_offset = attestation_key_offset
+		+ ATTESTATION_KEY_SIZE
+		+ REPORT_SIZE
+		+ REPORT_SIGNATURE_SIZE
+		+ core::mem::size_of::<u16>(); //Size of the QE authentication data. We ignore this for now and assume 32. See
+							   // AUTHENTICATION_DATA_SIZE
 	let mut hash_data = [0u8; ATTESTATION_KEY_SIZE + AUTHENTICATION_DATA_SIZE];
 	hash_data[0..ATTESTATION_KEY_SIZE].copy_from_slice(
 		&dcap_quote_raw[attestation_key_offset..(attestation_key_offset + ATTESTATION_KEY_SIZE)],

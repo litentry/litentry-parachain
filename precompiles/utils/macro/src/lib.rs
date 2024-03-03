@@ -89,7 +89,7 @@ pub fn generate_function_selector(_: TokenStream, input: TokenStream) -> TokenSt
 	let mut variant_expressions: Vec<Expr> = vec![];
 	for variant in variants {
 		match variant.discriminant {
-			Some((_, Expr::Lit(ExprLit { lit, .. }))) =>
+			Some((_, Expr::Lit(ExprLit { lit, .. }))) => {
 				if let Lit::Str(lit_str) = lit {
 					let digest = Keccak256::digest(lit_str.value().as_bytes());
 					let selector = u32::from_be_bytes([digest[0], digest[1], digest[2], digest[3]]);
@@ -103,18 +103,21 @@ pub fn generate_function_selector(_: TokenStream, input: TokenStream) -> TokenSt
 					return quote_spanned! {
 						lit.span() => compile_error("Expected literal string");
 					}
-					.into()
-				},
-			Some((_eg, expr)) =>
+					.into();
+				}
+			},
+			Some((_eg, expr)) => {
 				return quote_spanned! {
 					expr.span() => compile_error("Expected literal");
 				}
-				.into(),
-			None =>
+				.into()
+			},
+			None => {
 				return quote_spanned! {
 					variant.span() => compile_error("Each variant must have a discriminant");
 				}
-				.into(),
+				.into()
+			},
 		}
 	}
 

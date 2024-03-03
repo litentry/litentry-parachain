@@ -33,7 +33,7 @@ pub struct DigitDomainTypeError;
 impl BnbDigitDomainType {
 	pub fn is_bnb_999_club_member(domain_name: &str) -> bool {
 		if domain_name.len() == BNB_999_CLUB_MEMBER_LENGTH && domain_name.parse::<usize>().is_ok() {
-			return true
+			return true;
 		}
 
 		false
@@ -42,7 +42,7 @@ impl BnbDigitDomainType {
 	pub fn is_bnb_9999_club_member(domain_name: &str) -> bool {
 		if domain_name.len() == BNB_9999_CLUB_MEMBER_LENGTH && domain_name.parse::<usize>().is_ok()
 		{
-			return true
+			return true;
 		}
 
 		false
@@ -50,7 +50,7 @@ impl BnbDigitDomainType {
 
 	pub fn is_member(&self, domain_name: &str) -> bool {
 		if let Ok(member) = BnbDigitDomainType::from_str(domain_name) {
-			return *self == member
+			return *self == member;
 		}
 
 		false
@@ -62,11 +62,11 @@ impl FromStr for BnbDigitDomainType {
 
 	fn from_str(domain_name: &str) -> Result<Self, Self::Err> {
 		if BnbDigitDomainType::is_bnb_999_club_member(domain_name) {
-			return Ok(BnbDigitDomainType::Bnb999ClubMember)
+			return Ok(BnbDigitDomainType::Bnb999ClubMember);
 		}
 
 		if BnbDigitDomainType::is_bnb_9999_club_member(domain_name) {
-			return Ok(BnbDigitDomainType::Bnb10kClubMember)
+			return Ok(BnbDigitDomainType::Bnb10kClubMember);
 		}
 
 		Err(DigitDomainTypeError)

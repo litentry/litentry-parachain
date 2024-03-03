@@ -129,9 +129,9 @@ pub fn call_cost(value: U256, config: &evm::Config) -> u64 {
 	let is_call_or_staticcall = true;
 	let new_account = true;
 
-	address_access_cost(is_cold, config.gas_call, config) +
-		xfer_cost(is_call_or_callcode, transfers_value) +
-		new_cost(is_call_or_staticcall, new_account, transfers_value, config)
+	address_access_cost(is_cold, config.gas_call, config)
+		+ xfer_cost(is_call_or_callcode, transfers_value)
+		+ new_cost(is_call_or_staticcall, new_account, transfers_value, config)
 }
 
 impl PrecompileHandle for MockHandle {
@@ -150,7 +150,7 @@ impl PrecompileHandle for MockHandle {
 			.record_cost(call_cost(context.apparent_value, &evm::Config::london()))
 			.is_err()
 		{
-			return (ExitReason::Error(ExitError::OutOfGas), vec![])
+			return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 		}
 
 		match &mut self.subcall_handle {
@@ -165,7 +165,7 @@ impl PrecompileHandle for MockHandle {
 				});
 
 				if self.record_cost(cost).is_err() {
-					return (ExitReason::Error(ExitError::OutOfGas), vec![])
+					return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 				}
 
 				for log in logs {

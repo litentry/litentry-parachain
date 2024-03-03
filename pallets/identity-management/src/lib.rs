@@ -321,32 +321,37 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::LinkIdentityFailed(detail) =>
+				IMPError::LinkIdentityFailed(detail) => {
 					Self::deposit_event(Event::LinkIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::DeactivateIdentityFailed(detail) =>
+					})
+				},
+				IMPError::DeactivateIdentityFailed(detail) => {
 					Self::deposit_event(Event::DeactivateIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::ActivateIdentityFailed(detail) =>
+					})
+				},
+				IMPError::ActivateIdentityFailed(detail) => {
 					Self::deposit_event(Event::ActivateIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::ImportScheduledEnclaveFailed =>
-					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
-				IMPError::UnclassifiedError(detail) =>
+					})
+				},
+				IMPError::ImportScheduledEnclaveFailed => {
+					Self::deposit_event(Event::ImportScheduledEnclaveFailed)
+				},
+				IMPError::UnclassifiedError(detail) => {
 					Self::deposit_event(Event::UnclassifiedError {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
+					})
+				},
 			}
 			Ok(Pays::No.into())
 		}

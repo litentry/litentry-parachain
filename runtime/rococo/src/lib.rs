@@ -209,8 +209,9 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) =>
-				call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) => {
+				call.pre_dispatch_self_contained(info, dispatch_info, len)
+			},
 			_ => None,
 		}
 	}
@@ -220,10 +221,11 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => {
 				Some(call.dispatch(RuntimeOrigin::from(
 					pallet_ethereum::RawOrigin::EthereumTransaction(info),
-				))),
+				)))
+			},
 			_ => None,
 		}
 	}
@@ -354,27 +356,27 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
 				c,
-				RuntimeCall::Balances(..) |
-					RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				RuntimeCall::Balances(..)
+					| RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
 			ProxyType::CancelProxy => matches!(
 				c,
-				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-					RuntimeCall::Utility(..) |
-					RuntimeCall::Multisig(..)
+				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. })
+					| RuntimeCall::Utility(..)
+					| RuntimeCall::Multisig(..)
 			),
 			ProxyType::Collator => matches!(
 				c,
-				RuntimeCall::ParachainStaking(..) |
-					RuntimeCall::Utility(..) |
-					RuntimeCall::Multisig(..)
+				RuntimeCall::ParachainStaking(..)
+					| RuntimeCall::Utility(..)
+					| RuntimeCall::Multisig(..)
 			),
 			ProxyType::Governance => matches!(
 				c,
-				RuntimeCall::Democracy(..) |
-					RuntimeCall::Council(..) |
-					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..)
+				RuntimeCall::Democracy(..)
+					| RuntimeCall::Council(..)
+					| RuntimeCall::TechnicalCommittee(..)
+					| RuntimeCall::Treasury(..)
 			),
 		}
 	}
@@ -1076,7 +1078,7 @@ where
 		if let Some(author_index) = pallet_aura::Pallet::<T>::find_author(digests) {
 			let authority_id =
 				<pallet_aura::Pallet<T>>::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]))
+			return Some(H160::from_slice(&authority_id.encode()[4..24]));
 		}
 
 		None
@@ -1213,17 +1215,17 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::Sudo(_) |
-				RuntimeCall::System(_) |
-				RuntimeCall::Timestamp(_) |
-				RuntimeCall::ParachainSystem(_) |
-				RuntimeCall::ExtrinsicFilter(_) |
-				RuntimeCall::Multisig(_) |
-				RuntimeCall::Council(_) |
-				RuntimeCall::TechnicalCommittee(_)
+			RuntimeCall::Sudo(_)
+				| RuntimeCall::System(_)
+				| RuntimeCall::Timestamp(_)
+				| RuntimeCall::ParachainSystem(_)
+				| RuntimeCall::ExtrinsicFilter(_)
+				| RuntimeCall::Multisig(_)
+				| RuntimeCall::Council(_)
+				| RuntimeCall::TechnicalCommittee(_)
 		) {
 			// always allow core calls
-			return true
+			return true;
 		}
 
 		pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)

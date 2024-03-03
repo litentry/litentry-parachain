@@ -487,7 +487,7 @@ pub mod pallet {
 				return CurrentMaxPoolId::<T>::mutate(|id| {
 					*id += 1u64.into();
 					Ok(*id)
-				})
+				});
 			}
 
 			// otherwise find the vacant id from the beginning
@@ -495,7 +495,7 @@ pub mod pallet {
 			for (idx, id) in sorted_ids.iter().enumerate() {
 				let expected_id: T::PoolId = (idx as u64).checked_add(1u64).unwrap().into();
 				if id != &expected_id {
-					return Ok(expected_id)
+					return Ok(expected_id);
 				}
 			}
 

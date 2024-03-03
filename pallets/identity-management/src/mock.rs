@@ -54,7 +54,9 @@ where
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
 				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
-				Ok(who),
+			{
+				Ok(who)
+			},
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}

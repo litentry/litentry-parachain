@@ -164,7 +164,7 @@ where
 		let remaining_gas = handle.remaining_gas();
 		let required_gas = Runtime::GasWeightMapping::weight_to_gas(weight);
 		if required_gas > remaining_gas {
-			return Err(ExitError::OutOfGas)
+			return Err(ExitError::OutOfGas);
 		}
 
 		// Make sure there is enough remaining weight
@@ -388,11 +388,11 @@ fn check_function_modifier(
 	modifier: FunctionModifier,
 ) -> EvmResult {
 	if is_static && modifier != FunctionModifier::View {
-		return Err(revert("can't call non-static function in static context"))
+		return Err(revert("can't call non-static function in static context"));
 	}
 
 	if modifier != FunctionModifier::Payable && context.apparent_value > U256::zero() {
-		return Err(revert("function is not payable"))
+		return Err(revert("function is not payable"));
 	}
 
 	Ok(())

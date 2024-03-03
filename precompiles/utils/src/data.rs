@@ -99,7 +99,7 @@ impl<'a> EvmDataReader<'a> {
 		T: num_enum::TryFromPrimitive<Primitive = u32>,
 	{
 		if input.len() < 4 {
-			return Err(revert("tried to parse selector out of bounds"))
+			return Err(revert("tried to parse selector out of bounds"));
 		}
 
 		let mut buffer = [0u8; 4];
@@ -119,7 +119,7 @@ impl<'a> EvmDataReader<'a> {
 	/// Create a new input parser from a selector-initial input.
 	pub fn new_skip_selector(input: &'a [u8]) -> EvmResult<Self> {
 		if input.len() < 4 {
-			return Err(revert("input is too short"))
+			return Err(revert("input is too short"));
 		}
 
 		Ok(Self::new(&input[4..]))
@@ -163,7 +163,7 @@ impl<'a> EvmDataReader<'a> {
 			.map_err(|_| revert("array offset is too large"))?;
 
 		if offset >= self.input.len() {
-			return Err(revert("pointer points out of bounds"))
+			return Err(revert("pointer points out of bounds"));
 		}
 
 		Ok(Self { input: &self.input[offset..], cursor: 0 })
