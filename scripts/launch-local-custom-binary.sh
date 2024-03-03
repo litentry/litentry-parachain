@@ -46,11 +46,13 @@ if [ -z "$POLKADOT_BIN" ]; then
   # TODO: find a way to get stable download link
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
-  #
-  url="https://github.com/paritytech/polkadot-sdk/releases/download/polkadot-v1.1.0/polkadot"
-  POLKADOT_BIN="$LITENTRY_PARACHAIN_DIR/polkadot"
-  wget -O "$POLKADOT_BIN" -q "$url"
-  chmod a+x "$POLKADOT_BIN"
+  
+  for f in polkadot-execute-worker polkadot-prepare-worker polkadot; do
+    url="https://github.com/paritytech/polkadot-sdk/releases/download/polkadot-v1.1.0/$f"
+    POLKADOT_BIN="$LITENTRY_PARACHAIN_DIR/$f"
+    wget -O "$POLKADOT_BIN" -q "$url"
+    chmod a+x "$POLKADOT_BIN"
+  done
 fi
 
 if [ ! -s "$POLKADOT_BIN" ]; then
