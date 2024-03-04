@@ -44,24 +44,24 @@ FIRST_NEW_ACCOUNT=$(${CLIENT} new-account)
 echo "New Account created: ${FIRST_NEW_ACCOUNT}" 
 
 echo "Linking identity to Bob"
-OUTPUT=$(${CLIENT} link-identity //Bob did:litentry:substrate:${FIRST_NEW_ACCOUNT} litentry)
+OUTPUT=$(${CLIENT} link-identity //Bob did:litentry:substrate:${FIRST_NEW_ACCOUNT} litentry) || { echo "Link identity command failed"; exit 1; }
 echo "Finished Linking identity to Bob"
 sleep 30
 
 echo "Capturing IDGraph Hash of Bob" 
-INITIAL_ID_GRAPH_HASH=$(${CLIENT} id-graph-hash did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48)
+INITIAL_ID_GRAPH_HASH=$(${CLIENT} id-graph-hash did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48) || { echo "Failed to get ID Graph hash"; exit 1; }
 echo "Initial ID Graph Hash of Bob: ${INITIAL_ID_GRAPH_HASH}"
 
 SECOND_NEW_ACCOUNT=$(${CLIENT} new-account)
 echo "New Account created: ${SECOND_NEW_ACCOUNT}" 
 # Step 5: Link new account to Bob with Alice as delegate signer 
-echo "Linking new identity to Bob with Alice as delegate signer"
-OUTPUT=$(${CLIENT} link-identity //Bob "did:litentry:substrate:${SECOND_NEW_ACCOUNT}" litentry -d //Eve)
+echo "Linking new identity to Bob with Eve as delegate signer"
+OUTPUT=$(${CLIENT} link-identity //Bob "did:litentry:substrate:${SECOND_NEW_ACCOUNT}" litentry -d //Eve) || { echo "Link identity command failed"; exit 1; }
 echo "Finished Linking identity to Bob"
 sleep 30
 
 echo "Capturing IDGraph Hash of Bob" 
-FINAL_ID_GRAPH_HASH=$(${CLIENT} id-graph-hash did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48)
+FINAL_ID_GRAPH_HASH=$(${CLIENT} id-graph-hash did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48) || { echo "Failed to get ID Graph hash"; exit 1; }
 echo "Final ID Graph Hash of Bob: ${FINAL_ID_GRAPH_HASH}"
 
 if [ "$INITIAL_ID_GRAPH_HASH" != "$FINAL_ID_GRAPH_HASH" ]; then
