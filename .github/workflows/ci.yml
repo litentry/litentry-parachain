@@ -696,6 +696,7 @@ jobs:
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
+          - test_name: lit-test-failed-parentchain-extrinsic
     steps:
       - uses: actions/checkout@v4
 
