@@ -16,7 +16,7 @@ itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 its-primitives = { path = "../primitives", default-features = false }
 
-lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
+lc-vc-task-sender = { path = "../../litentry/core/vc-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 # sgx enabled external libraries

@@ -40,16 +40,17 @@ use crate::{
 };
 use alloc::string::String;
 use chrono::DateTime;
-use codec::{Decode, Encode, Input};
 use core::time::Duration;
 use der::asn1::ObjectIdentifier;
 use frame_support::{ensure, traits::Len};
+use parity_scale_codec::{Decode, Encode, Input};
 use ring::signature::{self};
 use scale_info::TypeInfo;
 use serde_json::Value;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	prelude::*,
+	vec,
 };
 use x509_cert::Certificate;
 
@@ -134,7 +135,7 @@ pub struct QeAuthenticationData {
 }
 
 impl Decode for QeAuthenticationData {
-	fn decode<I: Input>(input: &mut I) -> Result<Self, codec::Error> {
+	fn decode<I: Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
 		let mut size_buf: [u8; 2] = [0; 2];
 		input.read(&mut size_buf)?;
 		let size = u16::from_le_bytes(size_buf);
@@ -155,7 +156,7 @@ pub struct QeCertificationData {
 }
 
 impl Decode for QeCertificationData {
-	fn decode<I: Input>(input: &mut I) -> Result<Self, codec::Error> {
+	fn decode<I: Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
 		let mut certification_data_type_buf: [u8; 2] = [0; 2];
 		input.read(&mut certification_data_type_buf)?;
 		let certification_data_type = u16::from_le_bytes(certification_data_type_buf);
@@ -166,7 +167,7 @@ impl Decode for QeCertificationData {
 		// This is an arbitrary limit to prevent out of memory issues. Intel does not specify a max
 		// value
 		if size > 65_000 {
-			return Result::Err(codec::Error::from(
+			return Result::Err(parity_scale_codec::Error::from(
 				"Certification data too long. Max 65000 bytes are allowed",
 			))
 		}
