@@ -5,6 +5,7 @@ name = 'core-primitives'
 version = '0.9.12'
 
 [dependencies]
+base58 = { workspace = true }
 parity-scale-codec = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
