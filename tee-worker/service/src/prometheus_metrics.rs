@@ -274,6 +274,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Substrate(_) => "Substrate",
 			Identity::Evm(_) => "Evm",
 			Identity::Bitcoin(_) => "Bitcoin",
+			Identity::Solana(_) => "Solana",
 		},
 		RequestType::AssertionVerification(request) => match request.assertion {
 			Assertion::A1 => "A1",
