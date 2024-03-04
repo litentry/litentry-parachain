@@ -45,8 +45,9 @@ export default {
             pre_id_graph_hash: "H256",
             batch_vc_idx: "u8",
         },
-        VCResponse: {
+        RequestVcResultOrError: {
             payload: "Vec<u8>",
+            is_error: "bool",
             idx: "u8",
             len: "u8",
         },

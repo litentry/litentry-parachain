@@ -42,7 +42,7 @@ use itp_types::{
 };
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{init_vc_task_sender_storage, VCRequest, VCResponse};
+use lc_vc_task_sender::{init_vc_task_sender_storage, RequestVcResultOrError, VCRequest};
 use litentry_macros::if_production_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
@@ -135,9 +135,10 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
 {
-	let vc_res: VCResponse = match response.clone() {
-		Ok(payload) => VCResponse { payload, idx, len },
-		Err(e) => VCResponse { payload: e.as_bytes().to_vec(), idx, len: 0 },
+	let vc_res: RequestVcResultOrError = match response.clone() {
+		Ok(payload) => RequestVcResultOrError { payload, is_error: false, idx, len },
+		Err(e) =>
+			RequestVcResultOrError { payload: e.as_bytes().to_vec(), is_error: true, idx, len },
 	};
 
 	if let Err(e) = sender.send(Ok(vc_res.encode())) {
@@ -180,7 +181,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				context,
 				Err(format!("Failed to retrieve shielding key: {:?}", e)),
 				0u8,
-				0u8,
+				1u8,
 			);
 			return
 		},
@@ -196,9 +197,9 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			send_vc_response(
 				sender,
 				context,
-				Err("Failed to decode payload".to_string()),
+				Err("Failed to decode request payload".to_string()),
 				0u8,
-				0u8,
+				1u8,
 			);
 			return
 		},
@@ -206,12 +207,12 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
 		Err(_) => {
-			send_vc_response(sender, context, Err("Failed to get mrenclave".to_string()), 0u8, 0u8);
+			send_vc_response(sender, context, Err("Failed to get mrenclave".to_string()), 0u8, 1u8);
 			return
 		},
 	};
 	if !tcs.verify_signature(&mrenclave, &request.shard) {
-		send_vc_response(sender, context, Err("Failed to verify sig".to_string()), 0u8, 0u8);
+		send_vc_response(sender, context, Err("Failed to verify sig".to_string()), 0u8, 1u8);
 		return
 	}
 	if let TrustedCall::request_vc(..) = tcs.call {
@@ -276,7 +277,7 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			context,
 			Err("Expect request_vc trusted call".to_string()),
 			0u8,
-			0u8,
+			1u8,
 		);
 	}
 }

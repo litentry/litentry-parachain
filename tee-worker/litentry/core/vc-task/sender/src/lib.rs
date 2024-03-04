@@ -41,9 +41,9 @@ pub struct VCRequest {
 }
 
 #[derive(Debug, Encode, Decode, Clone)]
-pub struct VCResponse {
+pub struct RequestVcResultOrError {
 	pub payload: Vec<u8>,
-	// can be ignored when it's for one vc request
+	pub is_error: bool,
 	pub idx: u8,
 	pub len: u8,
 }

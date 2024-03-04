@@ -32,7 +32,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
-use lc_vc_task_sender::{VCRequest, VCResponse, VcRequestSender};
+use lc_vc_task_sender::{RequestVcResultOrError, VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
 use sp_core::H256;
@@ -376,7 +376,7 @@ where
 		match res {
 			Ok(response) => {
 				req_cnt += 1;
-				if let Ok(vc_res) = VCResponse::decode(&mut response.as_slice()) {
+				if let Ok(vc_res) = RequestVcResultOrError::decode(&mut response.as_slice()) {
 					author.send_rpc_response(hash, response, req_cnt < vc_res.len);
 					if req_cnt >= vc_res.len {
 						break
