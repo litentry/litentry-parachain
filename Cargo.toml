@@ -50,6 +50,7 @@ incremental = false
 async-trait = { version = "0.1.76" }
 assert_matches = { version = "1.3.0" }
 blake2-rfc = { version = "0.2.18", default-features = false }
+base58 = { version = "0.2", default-features = false }
 base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 clap = { version = "4.3", features = ["derive"] }
