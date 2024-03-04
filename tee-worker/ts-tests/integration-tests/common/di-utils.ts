@@ -229,7 +229,10 @@ export async function createSignedTrustedCallRequestBatchVc(
 ) {
     return await createSignedTrustedCall(
         parachainApi,
-        ['request_batch_vc', '(LitentryIdentity, LitentryIdentity, Vec<Assertion>, Option<RequestAesKey>, H256)'],
+        [
+            'request_batch_vc',
+            '(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)',
+        ],
         signer,
         mrenclave,
         nonce,

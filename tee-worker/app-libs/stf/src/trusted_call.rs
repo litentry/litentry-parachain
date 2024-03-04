@@ -68,11 +68,13 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::MultiAddress;
+use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
+pub type MaxAssertionLength = ConstU32<32>;
+pub type VecAssertion = BoundedVec<Assertion, MaxAssertionLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -120,7 +122,7 @@ pub enum TrustedCall {
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
 	#[codec(index = 6)]
-	request_batch_vc(Identity, Identity, Vec<Assertion>, Option<RequestAesKey>, H256),
+	request_batch_vc(Identity, Identity, VecAssertion, Option<RequestAesKey>, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
