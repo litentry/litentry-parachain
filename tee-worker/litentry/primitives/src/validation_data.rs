@@ -66,6 +66,8 @@ pub enum Web3ValidationData {
 	Evm(Web3CommonValidationData),
 	#[codec(index = 2)]
 	Bitcoin(Web3CommonValidationData),
+	#[codec(index = 3)]
+	Solana(Web3CommonValidationData),
 }
 
 impl Web3ValidationData {
@@ -74,6 +76,7 @@ impl Web3ValidationData {
 			Self::Substrate(data) => &data.message,
 			Self::Evm(data) => &data.message,
 			Self::Bitcoin(data) => &data.message,
+			Self::Solana(data) => &data.message,
 		}
 	}
 
@@ -82,6 +85,7 @@ impl Web3ValidationData {
 			Self::Substrate(data) => &data.signature,
 			Self::Evm(data) => &data.signature,
 			Self::Bitcoin(data) => &data.signature,
+			Self::Solana(data) => &data.signature,
 		}
 	}
 }
