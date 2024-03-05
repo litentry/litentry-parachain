@@ -79,335 +79,334 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     for (let index = 0; index < 100; index++) {
-         step('check idGraph from sidechain storage before linking', async function () {
-             const idGraphGetter = await createSignedTrustedGetterIdGraph(
-                 context.api,
-                 new BitcoinSigner(context.bitcoinWallet.alice),
-                 aliceBitcoinIdentity
-             );
-             console.log('idGraphGetter------', JSON.stringify(idGraphGetter.toHuman(), null, 2));
+        step('check idGraph from sidechain storage before linking', async function () {
+            const idGraphGetter = await createSignedTrustedGetterIdGraph(
+                context.api,
+                new BitcoinSigner(context.bitcoinWallet.alice),
+                aliceBitcoinIdentity
+            );
+            console.log('idGraphGetter------', JSON.stringify(idGraphGetter.toHuman(), null, 2));
 
-             const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-             const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-             assert.lengthOf(idGraph, 0);
-         });
+            const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+            const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+            assert.lengthOf(idGraph, 0);
+        });
     }
-   
 
-//     step('linking identities (alice bitcoin account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+    //     step('linking identities (alice bitcoin account)', async function () {
+    //         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+    //         const getNextNonce = () => currentNonce++;
 
-//         const aliceEvmNonce = getNextNonce();
-//         const [aliceEvmValidation] = await buildValidations(
-//             context,
-//             [aliceBitcoinIdentity],
-//             [aliceEvmIdentity],
-//             aliceEvmNonce,
-//             'ethereum',
-//             undefined,
-//             [context.ethersWallet.alice]
-//         );
-//         const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-//         linkIdentityRequestParams.push({
-//             nonce: aliceEvmNonce,
-//             identity: aliceEvmIdentity,
-//             validation: aliceEvmValidation,
-//             networks: aliceEvmNetworks,
-//         });
+    //         const aliceEvmNonce = getNextNonce();
+    //         const [aliceEvmValidation] = await buildValidations(
+    //             context,
+    //             [aliceBitcoinIdentity],
+    //             [aliceEvmIdentity],
+    //             aliceEvmNonce,
+    //             'ethereum',
+    //             undefined,
+    //             [context.ethersWallet.alice]
+    //         );
+    //         const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+    //         linkIdentityRequestParams.push({
+    //             nonce: aliceEvmNonce,
+    //             identity: aliceEvmIdentity,
+    //             validation: aliceEvmValidation,
+    //             networks: aliceEvmNetworks,
+    //         });
 
-//         // link another bitcoin account with prettified signature
-//         const bobBitcoinNonce = getNextNonce();
-//         const [bobBitcoinValidation] = await buildValidations(
-//             context,
-//             [aliceBitcoinIdentity],
-//             [bobBitcoinIdentity],
-//             bobBitcoinNonce,
-//             'bitcoinPrettified',
-//             undefined,
-//             undefined,
-//             context.bitcoinWallet.bob
-//         );
-//         const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
-//         linkIdentityRequestParams.push({
-//             nonce: bobBitcoinNonce,
-//             identity: bobBitcoinIdentity,
-//             validation: bobBitcoinValidation,
-//             networks: bobBitcoinNetowrks,
-//         });
+    //         // link another bitcoin account with prettified signature
+    //         const bobBitcoinNonce = getNextNonce();
+    //         const [bobBitcoinValidation] = await buildValidations(
+    //             context,
+    //             [aliceBitcoinIdentity],
+    //             [bobBitcoinIdentity],
+    //             bobBitcoinNonce,
+    //             'bitcoinPrettified',
+    //             undefined,
+    //             undefined,
+    //             context.bitcoinWallet.bob
+    //         );
+    //         const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
+    //         linkIdentityRequestParams.push({
+    //             nonce: bobBitcoinNonce,
+    //             identity: bobBitcoinIdentity,
+    //             validation: bobBitcoinValidation,
+    //             networks: bobBitcoinNetowrks,
+    //         });
 
-//         const identityLinkedEvents: any[] = [];
-//         const idGraphHashResults: any[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
-//             [
-//                 [aliceBitcoinIdentity, true],
-//                 [aliceEvmIdentity, true],
-//             ],
-//             [[bobBitcoinIdentity, true]],
-//         ];
+    //         const identityLinkedEvents: any[] = [];
+    //         const idGraphHashResults: any[] = [];
+    //         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
+    //             [
+    //                 [aliceBitcoinIdentity, true],
+    //                 [aliceEvmIdentity, true],
+    //             ],
+    //             [[bobBitcoinIdentity, true]],
+    //         ];
 
-//         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-//             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new BitcoinSigner(context.bitcoinWallet.alice),
-//                 aliceBitcoinIdentity,
-//                 identity.toHex(),
-//                 validation.toHex(),
-//                 networks.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+    //         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+    //             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+    //             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
+    //                 context.api,
+    //                 context.mrEnclave,
+    //                 context.api.createType('Index', nonce),
+    //                 new BitcoinSigner(context.bitcoinWallet.alice),
+    //                 aliceBitcoinIdentity,
+    //                 identity.toHex(),
+    //                 validation.toHex(),
+    //                 networks.toHex(),
+    //                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+    //                 requestIdentifier
+    //             );
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceBitcoinIdentity,
-//                     res,
-//                     'LinkIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('linkIdentityCall', res);
+    //             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+    //             idGraphHashResults.push(
+    //                 await assertIdGraphMutationResult(
+    //                     context,
+    //                     teeShieldingKey,
+    //                     aliceBitcoinIdentity,
+    //                     res,
+    //                     'LinkIdentityResult',
+    //                     expectedIdGraphs[0]
+    //                 )
+    //             );
+    //             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+    //             await assertIsInSidechainBlock('linkIdentityCall', res);
 
-//             const events = (await eventsPromise).map(({ event }) => event);
-//             events.forEach((event) => {
-//                 if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
-//                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
-//                 }
-//                 if (context.api.events.identityManagement.IdentityLinked.is(event)) {
-//                     identityLinkedEvents.push(event);
-//                 }
-//             });
-//         }
+    //             const events = (await eventsPromise).map(({ event }) => event);
+    //             events.forEach((event) => {
+    //                 if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
+    //                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
+    //                 }
+    //                 if (context.api.events.identityManagement.IdentityLinked.is(event)) {
+    //                     identityLinkedEvents.push(event);
+    //                 }
+    //             });
+    //         }
 
-//         await assertIdGraphMutationEvent(
-//             context,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             identityLinkedEvents,
-//             idGraphHashResults,
-//             2
-//         );
-//     });
+    //         await assertIdGraphMutationEvent(
+    //             context,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             identityLinkedEvents,
+    //             idGraphHashResults,
+    //             2
+    //         );
+    //     });
 
-//     step('check user sidechain storage after linking', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             aliceBitcoinIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+    //     step('check user sidechain storage after linking', async function () {
+    //         const idGraphGetter = await createSignedTrustedGetterIdGraph(
+    //             context.api,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             aliceBitcoinIdentity
+    //         );
+    //         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+    //         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         // according to the order of linkIdentityRequestParams
-//         const expectedWeb3Networks = [['Ethereum', 'Bsc'], ['BitcoinP2tr']];
-//         let currentIndex = 0;
+    //         // according to the order of linkIdentityRequestParams
+    //         const expectedWeb3Networks = [['Ethereum', 'Bsc'], ['BitcoinP2tr']];
+    //         let currentIndex = 0;
 
-//         for (const { identity } of linkIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+    //         for (const { identity } of linkIdentityRequestParams) {
+    //             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+    //             console.debug(`checking identity: ${identityDump}`);
+    //             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+    //             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+    //             const [, idGraphNodeContext] = idGraphNode!;
 
-//             const web3networks = idGraphNode![1].web3networks.toHuman();
-//             assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
+    //             const web3networks = idGraphNode![1].web3networks.toHuman();
+    //             assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Active',
-//                 `status should be active for identity: ${identityDump}`
-//             );
-//             console.debug('active ✅');
+    //             assert.equal(
+    //                 idGraphNodeContext.status.toString(),
+    //                 'Active',
+    //                 `status should be active for identity: ${identityDump}`
+    //             );
+    //             console.debug('active ✅');
 
-//             currentIndex++;
-//         }
+    //             currentIndex++;
+    //         }
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
-//     });
-//     step('deactivating identity(alice bitcoin account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+    //         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
+    //     });
+    //     step('deactivating identity(alice bitcoin account)', async function () {
+    //         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+    //         const getNextNonce = () => currentNonce++;
 
-//         const aliceEvmNonce = getNextNonce();
+    //         const aliceEvmNonce = getNextNonce();
 
-//         deactivateIdentityRequestParams.push({
-//             nonce: aliceEvmNonce,
-//             identity: aliceEvmIdentity,
-//         });
+    //         deactivateIdentityRequestParams.push({
+    //             nonce: aliceEvmNonce,
+    //             identity: aliceEvmIdentity,
+    //         });
 
-//         const identityDeactivatedEvents: any[] = [];
-//         const idGraphHashResults: any[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, false]]];
+    //         const identityDeactivatedEvents: any[] = [];
+    //         const idGraphHashResults: any[] = [];
+    //         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, false]]];
 
-//         for (const { nonce, identity } of deactivateIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-//             const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new BitcoinSigner(context.bitcoinWallet.alice),
-//                 aliceBitcoinIdentity,
-//                 identity.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+    //         for (const { nonce, identity } of deactivateIdentityRequestParams) {
+    //             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+    //             const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
+    //                 context.api,
+    //                 context.mrEnclave,
+    //                 context.api.createType('Index', nonce),
+    //                 new BitcoinSigner(context.bitcoinWallet.alice),
+    //                 aliceBitcoinIdentity,
+    //                 identity.toHex(),
+    //                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+    //                 requestIdentifier
+    //             );
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceBitcoinIdentity,
-//                     res,
-//                     'DeactivateIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('deactivateIdentityCall', res);
+    //             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
+    //             idGraphHashResults.push(
+    //                 await assertIdGraphMutationResult(
+    //                     context,
+    //                     teeShieldingKey,
+    //                     aliceBitcoinIdentity,
+    //                     res,
+    //                     'DeactivateIdentityResult',
+    //                     expectedIdGraphs[0]
+    //                 )
+    //             );
+    //             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+    //             await assertIsInSidechainBlock('deactivateIdentityCall', res);
 
-//             const events = (await eventsPromise).map(({ event }) => event);
-//             events.forEach((event) => {
-//                 if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
-//                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
-//                 }
-//                 if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
-//                     identityDeactivatedEvents.push(event);
-//                 }
-//             });
-//         }
+    //             const events = (await eventsPromise).map(({ event }) => event);
+    //             events.forEach((event) => {
+    //                 if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
+    //                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
+    //                 }
+    //                 if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
+    //                     identityDeactivatedEvents.push(event);
+    //                 }
+    //             });
+    //         }
 
-//         await assertIdGraphMutationEvent(
-//             context,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             identityDeactivatedEvents,
-//             idGraphHashResults,
-//             1
-//         );
-//     });
+    //         await assertIdGraphMutationEvent(
+    //             context,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             identityDeactivatedEvents,
+    //             idGraphHashResults,
+    //             1
+    //         );
+    //     });
 
-//     step('check idGraph from sidechain storage after deactivating', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             aliceBitcoinIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+    //     step('check idGraph from sidechain storage after deactivating', async function () {
+    //         const idGraphGetter = await createSignedTrustedGetterIdGraph(
+    //             context.api,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             aliceBitcoinIdentity
+    //         );
+    //         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+    //         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         for (const { identity } of deactivateIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+    //         for (const { identity } of deactivateIdentityRequestParams) {
+    //             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+    //             console.debug(`checking identity: ${identityDump}`);
+    //             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+    //             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+    //             const [, idGraphNodeContext] = idGraphNode!;
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Inactive',
-//                 `status should be Inactive for identity: ${identityDump}`
-//             );
-//             console.debug('inactive ✅');
-//         }
+    //             assert.equal(
+    //                 idGraphNodeContext.status.toString(),
+    //                 'Inactive',
+    //                 `status should be Inactive for identity: ${identityDump}`
+    //             );
+    //             console.debug('inactive ✅');
+    //         }
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
-//     });
+    //         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
+    //     });
 
-//     step('activating identity(alice bitcoin account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+    //     step('activating identity(alice bitcoin account)', async function () {
+    //         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+    //         const getNextNonce = () => currentNonce++;
 
-//         const aliceEvmNonce = getNextNonce();
+    //         const aliceEvmNonce = getNextNonce();
 
-//         activateIdentityRequestParams.push({
-//             nonce: aliceEvmNonce,
-//             identity: aliceEvmIdentity,
-//         });
+    //         activateIdentityRequestParams.push({
+    //             nonce: aliceEvmNonce,
+    //             identity: aliceEvmIdentity,
+    //         });
 
-//         const identityActivatedEvents: any[] = [];
-//         const idGraphHashResults: any[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, true]]];
+    //         const identityActivatedEvents: any[] = [];
+    //         const idGraphHashResults: any[] = [];
+    //         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, true]]];
 
-//         for (const { nonce, identity } of activateIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-//             const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new BitcoinSigner(context.bitcoinWallet.alice),
-//                 aliceBitcoinIdentity,
-//                 identity.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+    //         for (const { nonce, identity } of activateIdentityRequestParams) {
+    //             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+    //             const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
+    //                 context.api,
+    //                 context.mrEnclave,
+    //                 context.api.createType('Index', nonce),
+    //                 new BitcoinSigner(context.bitcoinWallet.alice),
+    //                 aliceBitcoinIdentity,
+    //                 identity.toHex(),
+    //                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+    //                 requestIdentifier
+    //             );
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceBitcoinIdentity,
-//                     res,
-//                     'ActivateIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('activateIdentityCall', res);
+    //             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
+    //             idGraphHashResults.push(
+    //                 await assertIdGraphMutationResult(
+    //                     context,
+    //                     teeShieldingKey,
+    //                     aliceBitcoinIdentity,
+    //                     res,
+    //                     'ActivateIdentityResult',
+    //                     expectedIdGraphs[0]
+    //                 )
+    //             );
+    //             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+    //             await assertIsInSidechainBlock('activateIdentityCall', res);
 
-//             const events = (await eventsPromise).map(({ event }) => event);
-//             events.forEach((event) => {
-//                 if (context.api.events.identityManagement.ActivateIdentityFailed.is(event)) {
-//                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
-//                 }
-//                 if (context.api.events.identityManagement.IdentityActivated.is(event)) {
-//                     identityActivatedEvents.push(event);
-//                 }
-//             });
-//         }
+    //             const events = (await eventsPromise).map(({ event }) => event);
+    //             events.forEach((event) => {
+    //                 if (context.api.events.identityManagement.ActivateIdentityFailed.is(event)) {
+    //                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
+    //                 }
+    //                 if (context.api.events.identityManagement.IdentityActivated.is(event)) {
+    //                     identityActivatedEvents.push(event);
+    //                 }
+    //             });
+    //         }
 
-//         await assertIdGraphMutationEvent(
-//             context,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             identityActivatedEvents,
-//             idGraphHashResults,
-//             1
-//         );
-//     });
+    //         await assertIdGraphMutationEvent(
+    //             context,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             identityActivatedEvents,
+    //             idGraphHashResults,
+    //             1
+    //         );
+    //     });
 
-//     step('check idGraph from sidechain storage after activating', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new BitcoinSigner(context.bitcoinWallet.alice),
-//             aliceBitcoinIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+    //     step('check idGraph from sidechain storage after activating', async function () {
+    //         const idGraphGetter = await createSignedTrustedGetterIdGraph(
+    //             context.api,
+    //             new BitcoinSigner(context.bitcoinWallet.alice),
+    //             aliceBitcoinIdentity
+    //         );
+    //         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+    //         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         for (const { identity } of linkIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+    //         for (const { identity } of linkIdentityRequestParams) {
+    //             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+    //             console.debug(`checking identity: ${identityDump}`);
+    //             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+    //             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+    //             const [, idGraphNodeContext] = idGraphNode!;
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Active',
-//                 `status should be active for identity: ${identityDump}`
-//             );
-//             console.debug('active ✅');
-//         }
+    //             assert.equal(
+    //                 idGraphNodeContext.status.toString(),
+    //                 'Active',
+    //                 `status should be active for identity: ${identityDump}`
+    //             );
+    //             console.debug('active ✅');
+    //         }
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
-//     });
+    //         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
+    //     });
 });

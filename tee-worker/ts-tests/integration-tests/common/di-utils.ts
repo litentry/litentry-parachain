@@ -124,9 +124,8 @@ export const createSignedTrustedGetter = async (
         const payloadStr = u8aToHex(payload).substring(2);
         console.log('payloadStr--------', payloadStr);
         console.log('await signer.sign(payloadStr)------', await signer.sign(payloadStr));
-        console.log('u8aToHex(await signer.sign(payloadStr)-------',u8aToHex(await signer.sign(payloadStr)))
-        
-        
+        console.log('u8aToHex(await signer.sign(payloadStr)-------', u8aToHex(await signer.sign(payloadStr)));
+
         signature = parachainApi.createType('LitentryMultiSignature', {
             [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
         });
