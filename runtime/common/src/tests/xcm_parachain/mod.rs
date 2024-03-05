@@ -16,7 +16,6 @@
 
 use std::marker::PhantomData;
 
-use codec::Encode;
 use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
@@ -25,6 +24,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
+use parity_scale_codec::Encode;
 use polkadot_parachain::primitives::RelayChainBlockNumber;
 use sp_runtime::{
 	traits::{Convert, Dispatchable},

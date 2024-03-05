@@ -379,7 +379,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           echo "::group::build docker image"
-          make build-docker-release
+          ./scripts/build-docker.sh release latest --features=fast-runtime
           echo "::endgroup::"
           echo "::group::docker images"
           docker images --all
@@ -619,23 +619,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run pallet-teerex unittests
-        run: |
-          rustup show
-          cargo +stable install cargo-hack --locked
-          cargo hack test --feature-powerset --features=default --locked --release -p pallet-teerex --lib
-
       - name: Run all unittests
         run: |
+          echo "::group::core-primitives unittest"
           cargo test --locked --release -p core-primitives --lib
-          # no `skip-ias-check` feature
+          echo "::endgroup::"
+          echo "::group::all pallets unittest"
           cargo test --locked --release -p pallet-* --lib
-          # with `skip-ias-check` feature only
-          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
-          # with `runtime-benchmarks` feature only
+          echo "::endgroup::"
+          echo "::group::all pallets unittest with runtime-benchmarks feature"
           cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
-          # with both `skip-ias-check` and `runtime-benchmarks` features
-          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -659,18 +653,19 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      # We could use matrix but don't have to. Since this ci has many jobs already,
-      # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
+      # We could have used matrix but the runtime tests are executed sequentially for a cleaner GHA visualisation graph.
       # It won't take much longer as we run them back to back.
-      # We intentionally write 3 steps for better readability in GHA tab if one of them fails.
-      - name: Run rococo runtime test
-        run: cargo test --locked --release -p rococo-parachain-runtime --lib
-
-      - name: Run litmus runtime test
-        run: cargo test --locked --release -p litmus-parachain-runtime --lib
-
-      - name: Run litentry runtime test
-        run: cargo test --locked --release -p litentry-parachain-runtime --lib
+      - name: Run runtime tests
+        run: |
+          echo "::group::rococo runtime test"
+          cargo test --locked --release -p rococo-parachain-runtime --lib
+          echo "::endgroup::"
+          echo "::group::litmus runtime test"
+          cargo test --locked --release -p litmus-parachain-runtime --lib
+          echo "::endgroup::"
+          echo "::group::litentry runtime test"
+          cargo test --locked --release -p litentry-parachain-runtime --lib
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()

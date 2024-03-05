@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::{hash::Hash, vec::Vec};
@@ -96,6 +96,9 @@ pub enum Web3Network {
 	Polygon,
 	#[codec(index = 15)]
 	Arbitrum,
+	// solana
+	#[codec(index = 16)]
+	Solana,
 }
 
 // mainly used in CLI
@@ -133,6 +136,10 @@ impl Web3Network {
 				Self::BitcoinP2wsh
 		)
 	}
+
+	pub fn is_solana(&self) -> bool {
+		matches!(self, Self::Solana)
+	}
 }
 
 pub fn all_web3networks() -> Vec<Web3Network> {
@@ -149,6 +156,10 @@ pub fn all_evm_web3networks() -> Vec<Web3Network> {
 
 pub fn all_bitcoin_web3networks() -> Vec<Web3Network> {
 	Web3Network::iter().filter(|n| n.is_bitcoin()).collect()
+}
+
+pub fn all_solana_web3networks() -> Vec<Web3Network> {
+	Web3Network::iter().filter(|n| n.is_solana()).collect()
 }
 
 #[cfg(test)]
@@ -183,6 +194,7 @@ mod tests {
 					Web3Network::BitcoinP2wsh => false,
 					Web3Network::Polygon => true,
 					Web3Network::Arbitrum => true,
+					Web3Network::Solana => false,
 				}
 			)
 		})
@@ -210,6 +222,7 @@ mod tests {
 					Web3Network::BitcoinP2wsh => false,
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
+					Web3Network::Solana => false,
 				}
 			)
 		})
@@ -237,6 +250,35 @@ mod tests {
 					Web3Network::BitcoinP2wsh => true,
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
+					Web3Network::Solana => false,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn is_solana_works() {
+		Web3Network::iter().for_each(|network| {
+			assert_eq!(
+				network.is_solana(),
+				match network {
+					Web3Network::Polkadot => false,
+					Web3Network::Kusama => false,
+					Web3Network::Litentry => false,
+					Web3Network::Litmus => false,
+					Web3Network::LitentryRococo => false,
+					Web3Network::Khala => false,
+					Web3Network::SubstrateTestnet => false,
+					Web3Network::Ethereum => false,
+					Web3Network::Bsc => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
+					Web3Network::Polygon => false,
+					Web3Network::Arbitrum => false,
+					Web3Network::Solana => true,
 				}
 			)
 		})

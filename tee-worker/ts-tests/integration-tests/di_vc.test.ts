@@ -16,7 +16,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { CorePrimitivesIdentity } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-helper';
+import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 
@@ -136,8 +136,8 @@ describe('Test Vc (direct invocation)', function () {
         }
     });
 
-    defaultAssertions.forEach(({ description, assertion }) => {
-        step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+    mockAssertions.forEach(({ description, assertion }) => {
+        step(`request vc payload : ${JSON.stringify(assertion)} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
@@ -169,32 +169,6 @@ describe('Test Vc (direct invocation)', function () {
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
             await assertVc(context, aliceSubstrateIdentity, res.value);
-        });
-    });
-
-    unconfiguredAssertions.forEach(({ description, assertion }) => {
-        it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
-            const getNextNonce = () => currentNonce++;
-            const nonce = getNextNonce();
-            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            console.log(`request vc ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`);
-            subscribeToEventsWithExtHash(requestIdentifier, context);
-
-            const requestVcCall = await createSignedTrustedCallRequestVc(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
-
-            await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-            // pending test
-            this.skip();
         });
     });
 });
