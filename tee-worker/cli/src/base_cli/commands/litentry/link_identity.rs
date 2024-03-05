@@ -56,7 +56,7 @@ impl LinkIdentityCommand {
 
 		let signer = self.get_signer();
 		let who: sr25519_core::Pair = get_pair_from_str(&self.account).into();
-		chain_api.set_signer(signer.clone().into());
+		chain_api.set_signer(signer.into());
 
 		let (identity, encrypted_identity) = self.encrypt_identity(cli);
 		let (encrypted_web3network, encrypted_validation_data) =
