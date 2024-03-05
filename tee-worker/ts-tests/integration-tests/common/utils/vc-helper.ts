@@ -18,7 +18,7 @@ export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed
     return [...results];
 }
 
-export const defaultBatchAssertion = [
+export const mockBatchAssertion = [
     {
         description: 'request_batch_vc trial test',
         assertion: [{ A7: '5' }, { A8: ['Litentry'] }, { A20: 'A20' }],
