@@ -16,7 +16,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { CorePrimitivesIdentity } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { defaultAssertions } from './common/utils/vc-helper';
+import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 
@@ -136,8 +136,8 @@ describe('Test Vc (direct invocation)', function () {
         }
     });
 
-    defaultAssertions.forEach(({ description, assertion }) => {
-        step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+    mockAssertions.forEach(({ description, assertion }) => {
+        step(`request vc payload : ${JSON.stringify(assertion)} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
