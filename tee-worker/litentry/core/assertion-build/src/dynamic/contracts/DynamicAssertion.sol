@@ -163,6 +163,10 @@ abstract contract DynamicAssertion {
         return is_of_type(identity, 5);
     }
 
+    function is_solana(Identity memory identity) internal pure returns (bool) {
+        return is_of_type(identity, 6);
+    }
+
     function is_of_type(Identity memory identity, uint32 identity_type)
         internal
         pure
