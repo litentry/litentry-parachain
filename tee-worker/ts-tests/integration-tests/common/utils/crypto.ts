@@ -145,7 +145,11 @@ export class BitcoinSigner implements Signer {
         return new Promise((resolve, reject) => {
             if (isString(message)) {
                 const sig = new bitcore.Message(message).sign(this.keypair);
-                resolve(bufferToU8a(Buffer.from(sig, 'base64')));
+                let buf = Buffer.from(sig, 'base64');
+                if (buf.length === 64) {
+                    buf = Buffer.concat([Buffer.from([0]), buf]);
+                }
+                resolve(bufferToU8a(buf));
             } else {
                 reject('wrong message type');
             }
