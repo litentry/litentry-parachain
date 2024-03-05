@@ -46,5 +46,6 @@ pub fn web3_network_to_chain(network: &Web3Network) -> &'static str {
 		Web3Network::BitcoinP2wsh => "bitcoin_p2wsh",
 		Web3Network::Polygon => "polygon",
 		Web3Network::Arbitrum => "arbitrum",
+		Web3Network::Solana => "solana",
 	}
 }

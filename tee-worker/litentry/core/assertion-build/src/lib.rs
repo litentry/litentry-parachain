@@ -181,7 +181,8 @@ fn pubkey_to_address(network: &Web3Network, pubkey: &str) -> String {
 		| Web3Network::Ethereum
 		| Web3Network::Bsc
 		| Web3Network::Polygon
-		| Web3Network::Arbitrum => "".to_string(),
+		| Web3Network::Arbitrum
+		| Web3Network::Solana => "".to_string(),
 	}
 }
 
