@@ -43,7 +43,7 @@ pub fn decode_hex<T: AsRef<[u8]>>(message: T) -> Result<Vec<u8>, FromHexError> {
 mod tests {
 	use super::*;
 	use alloc::string::ToString;
-	use codec::{Decode, Encode};
+	use parity_scale_codec::{Decode, Encode};
 
 	#[test]
 	fn hex_encode_decode_works() {

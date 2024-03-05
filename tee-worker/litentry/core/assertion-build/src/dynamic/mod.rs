@@ -108,6 +108,7 @@ pub fn identity_to_token(identity: &Identity) -> Token {
 		Identity::Substrate(addr) => (3, addr.as_ref().to_vec()),
 		Identity::Evm(addr) => (4, addr.as_ref().to_vec()),
 		Identity::Bitcoin(addr) => (5, addr.as_ref().to_vec()),
+		Identity::Solana(addr) => (6, addr.as_ref().to_vec()),
 	};
 	Token::Tuple(vec![Token::Uint(type_index.into()), Token::Bytes(value)])
 }

@@ -23,7 +23,6 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
-use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -36,11 +35,10 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use hex_literal::hex;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_sidechain;
-pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -345,7 +343,7 @@ impl pallet_proxy::Config for Runtime {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
-	type OnTimestampSet = Teerex;
+	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
@@ -786,25 +784,6 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
-}
-
-impl pallet_teerex::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
-	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-}
-
-impl pallet_sidechain::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
-}
-
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -874,10 +853,6 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		AssetManager: pallet_asset_manager = 65,
-
-		// TEE
-		Teerex: pallet_teerex = 90,
-		Sidechain: pallet_sidechain = 91,
 	}
 }
 
@@ -967,8 +942,6 @@ mod benches {
 		// This module returned an error when ran the benchmark, temporarily chose to comment it out
 		// [pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		[pallet_teerex, Teerex]
-		[pallet_sidechain, Sidechain]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 	);
