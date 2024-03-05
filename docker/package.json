@@ -8,6 +8,6 @@
     "start": "node_modules/.bin/parachain-launch"
   },
   "dependencies": {
-    "@open-web3/parachain-launch": "github:Kailai-Wang/parachain-launch#use-raw-binary"
+    "@open-web3/parachain-launch": "github:Kailai-Wang/parachain-launch#87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0"
   }
 }
