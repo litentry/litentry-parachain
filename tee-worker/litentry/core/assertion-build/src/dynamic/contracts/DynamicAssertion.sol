@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 struct Identity {
     uint32 identity_type;
     bytes value;
+    uint32[] networks;
 }
 
 abstract contract DynamicAssertion {
@@ -106,12 +107,12 @@ abstract contract DynamicAssertion {
         return (value);
     }
 
-    function from(uint32 identity_type, bytes memory value)
-        internal
-        pure
-        returns (Identity memory)
-    {
-        return (Identity(identity_type, value));
+    function from(
+        uint32 identity_type,
+        bytes memory value,
+        uint32[] memory networks
+    ) internal pure returns (Identity memory) {
+        return (Identity(identity_type, value, networks));
     }
 
     function is_web3(Identity memory identity_type)
@@ -134,71 +135,192 @@ abstract contract DynamicAssertion {
             is_github(identity_type));
     }
 
-    function is_twitter(Identity memory identity_type)
+    function is_twitter(Identity memory identity) internal pure returns (bool) {
+        return is_of_type(identity, 0);
+    }
+
+    function is_discord(Identity memory identity) internal pure returns (bool) {
+        return is_of_type(identity, 1);
+    }
+
+    function is_github(Identity memory identity) internal pure returns (bool) {
+        return is_of_type(identity, 2);
+    }
+
+    function is_substrate(Identity memory identity)
         internal
         pure
         returns (bool)
     {
-        if (identity_type.identity_type == 0) {
+        return is_of_type(identity, 3);
+    }
+
+    function is_evm(Identity memory identity) public pure returns (bool) {
+        return is_of_type(identity, 4);
+    }
+
+    function is_bitcoin(Identity memory identity) internal pure returns (bool) {
+        return is_of_type(identity, 5);
+    }
+
+    function is_of_type(Identity memory identity, uint32 identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        if (identity.identity_type == identity_type) {
             return (true);
         } else {
             return (false);
         }
     }
 
-    function is_discord(Identity memory identity_type)
+    function has_polkadot_network(Identity memory identity_type)
         internal
         pure
         returns (bool)
     {
-        if (identity_type.identity_type == 1) {
-            return (true);
-        } else {
-            return (false);
-        }
+        return has_network(identity_type, 0);
     }
 
-    function is_github(Identity memory identity_type)
+    function has_kusama_network(Identity memory identity_type)
         internal
         pure
         returns (bool)
     {
-        if (identity_type.identity_type == 2) {
-            return (true);
-        } else {
-            return (false);
-        }
+        return has_network(identity_type, 1);
     }
 
-    function is_substrate(Identity memory identity_type)
+    function has_litentry_network(Identity memory identity_type)
         internal
         pure
         returns (bool)
     {
-        if (identity_type.identity_type == 3) {
-            return (true);
-        } else {
-            return (false);
-        }
+        return has_network(identity_type, 2);
     }
 
-    function is_evm(Identity memory identity_type) public pure returns (bool) {
-        if (identity_type.identity_type == 4) {
-            return (true);
-        } else {
-            return (false);
-        }
-    }
-
-    function is_bitcoin(Identity memory identity_type)
+    function has_litmus_network(Identity memory identity_type)
         internal
         pure
         returns (bool)
     {
-        if (identity_type.identity_type == 5) {
-            return (true);
-        } else {
-            return (false);
+        return has_network(identity_type, 3);
+    }
+
+    function has_litentry_rococo_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 4);
+    }
+
+    function has_khala_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 5);
+    }
+
+    function has_substrate_testnet_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 6);
+    }
+
+    function has_ethereum_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 7);
+    }
+
+    function has_bsc_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 8);
+    }
+
+    function has_bitcoin_p2tr_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 9);
+    }
+
+    function has_bitcoin_p2pkh_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 10);
+    }
+
+    function has_bitcoin_p2sh_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 11);
+    }
+
+    function has_bitcoin_p2wpkh_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 12);
+    }
+
+    function has_bitcoin_p2wsh_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 13);
+    }
+
+    function has_polygon_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 14);
+    }
+
+    function has_arbitrum_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 15);
+    }
+
+    function has_solana_network(Identity memory identity_type)
+        internal
+        pure
+        returns (bool)
+    {
+        return has_network(identity_type, 16);
+    }
+
+    function has_network(Identity memory identity_type, uint32 network)
+        internal
+        pure
+        returns (bool)
+    {
+        for (uint256 i = 0; i < identity_type.networks.length; i++) {
+            if (identity_type.networks[i] == network) {
+                return (true);
+            }
         }
+        return (false);
     }
 }

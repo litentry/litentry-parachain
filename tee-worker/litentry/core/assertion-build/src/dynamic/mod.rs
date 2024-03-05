@@ -38,7 +38,6 @@ pub fn build<SC: SmartContractRepository>(
 	smart_contract_id: H160,
 	repository: SC,
 ) -> Result<Credential> {
-	// let smart_contract_byte_code = hex::decode("608060405234801561001057600080fd5b5061077f806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c806309c5eabe1461003b578063c66e70f014610067575b600080fd5b61004e6100493660046103cd565b61008a565b60405161005e9493929190610466565b60405180910390f35b61007a6100753660046104c8565b6100c1565b604051901515815260200161005e565b6060806060600080858060200190518101906100a69190610548565b90506100b1816100e6565b9450945094509450509193509193565b6000816000015163ffffffff16600414156100de57506001919050565b506000919050565b60608060606000806040518060800160405280604581526020016106ce60459139905060006040518060400160405280601b81526020017f4261736963204964656e7469747920566572696669636174696f6e00000000008152509050600060405180606001604052806037815260200161071360379139905060008080805b8b518110156101dd576101918c82815181106101845761018461068e565b60200260200101516101fc565b1561019f57600191506101cb565b6101c18c82815181106101b4576101b461068e565b602002602001015161022b565b156101cb57600192505b806101d5816106a4565b915050610166565b508080156101e85750815b959b949a5092985093965091945050505050565b600061020782610254565b8061021657506102168261026b565b80610225575061022582610288565b92915050565b6000610236826102a5565b806102455750610245826100c1565b806102255750610225826102c2565b805160009063ffffffff166100de57506001919050565b6000816000015163ffffffff16600114156100de57506001919050565b6000816000015163ffffffff16600214156100de57506001919050565b6000816000015163ffffffff16600314156100de57506001919050565b6000816000015163ffffffff16600514156100de57506001919050565b634e487b7160e01b600052604160045260246000fd5b6040805190810167ffffffffffffffff81118282101715610318576103186102df565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715610347576103476102df565b604052919050565b600067ffffffffffffffff821115610369576103696102df565b50601f01601f191660200190565b600082601f83011261038857600080fd5b813561039b6103968261034f565b61031e565b8181528460208386010111156103b057600080fd5b816020850160208301376000918101602001919091529392505050565b6000602082840312156103df57600080fd5b813567ffffffffffffffff8111156103f657600080fd5b61040284828501610377565b949350505050565b60005b8381101561042557818101518382015260200161040d565b83811115610434576000848401525b50505050565b6000815180845261045281602086016020860161040a565b601f01601f19169290920160200192915050565b608081526000610479608083018761043a565b828103602084015261048b818761043a565b9050828103604084015261049f818661043a565b915050821515606083015295945050505050565b63ffffffff811681146104c557600080fd5b50565b6000602082840312156104da57600080fd5b813567ffffffffffffffff808211156104f257600080fd5b908301906040828603121561050657600080fd5b61050e6102f5565b8235610519816104b3565b815260208301358281111561052d57600080fd5b61053987828601610377565b60208301525095945050505050565b6000602080838503121561055b57600080fd5b825167ffffffffffffffff8082111561057357600080fd5b818501915085601f83011261058757600080fd5b815181811115610599576105996102df565b8060051b6105a885820161031e565b91825283810185019185810190898411156105c257600080fd5b86860192505b83831015610681578251858111156105e05760008081fd5b86016040818c03601f19018113156105f85760008081fd5b6106006102f5565b8983015161060d816104b3565b815282820151888111156106215760008081fd5b8084019350508c603f8401126106375760008081fd5b898301516106476103968261034f565b8181528e8483870101111561065c5760008081fd5b61066b828d830186880161040a565b828c0152508452505091860191908601906105c8565b9998505050505050505050565b634e487b7160e01b600052603260045260246000fd5b60006000198214156106c657634e487b7160e01b600052601160045260246000fd5b506001019056fe596f75277665206964656e746966696564206174206c65617374206f6e65206163636f756e742f6164647265737320696e20626f7468205765623220616e6420576562332e246861735f776562325f6163636f756e74203d3d207472756520616e6420246861735f776562335f6163636f756e74203d3d2074727565a26469706673582212208271aba6061226250b47b78fd11d6561b035772536a30a99688373d21cf3a9c464736f6c63430008080033").unwrap();
 	let input = prepare_execute_call_input(&req.identities);
 
 	let smart_contract_byte_code = repository.get(&smart_contract_id).unwrap();
@@ -107,8 +106,10 @@ fn decode_result(data: &[u8]) -> (String, String, String, bool) {
 }
 
 fn prepare_execute_call_input(identities: &[IdentityNetworkTuple]) -> Vec<u8> {
-	let identities: Vec<Token> =
-		identities.iter().map(|identity| identity_to_token(&identity.0)).collect();
+	let identities: Vec<Token> = identities
+		.iter()
+		.map(|identity| identity_with_networks_to_token(identity))
+		.collect();
 
 	let encoded_identities = encode(&[Token::Array(identities)]);
 	let encoded_identities_as_bytes = encode(&[Token::Bytes(encoded_identities)]);
@@ -116,8 +117,8 @@ fn prepare_execute_call_input(identities: &[IdentityNetworkTuple]) -> Vec<u8> {
 	prepare_function_call_input(function_hash, encoded_identities_as_bytes)
 }
 
-pub fn identity_to_token(identity: &Identity) -> Token {
-	let (type_index, value) = match identity {
+pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token {
+	let (type_index, value) = match &identity.0 {
 		Identity::Twitter(str) => (0, str.inner_ref().to_vec()),
 		Identity::Discord(str) => (1, str.inner_ref().to_vec()),
 		Identity::Github(str) => (2, str.inner_ref().to_vec()),
@@ -126,7 +127,33 @@ pub fn identity_to_token(identity: &Identity) -> Token {
 		Identity::Bitcoin(addr) => (5, addr.as_ref().to_vec()),
 		Identity::Solana(addr) => (6, addr.as_ref().to_vec()),
 	};
-	Token::Tuple(vec![Token::Uint(type_index.into()), Token::Bytes(value)])
+	let networks: Vec<Token> = identity.1.iter().map(|network| network_to_token(network)).collect();
+	Token::Tuple(vec![Token::Uint(type_index.into()), Token::Bytes(value), Token::Array(networks)])
+}
+
+pub fn network_to_token(network: &Web3Network) -> Token {
+	Token::Uint(
+		match network {
+			Web3Network::Polkadot => 0,
+			Web3Network::Kusama => 1,
+			Web3Network::Litentry => 2,
+			Web3Network::Litmus => 3,
+			Web3Network::LitentryRococo => 4,
+			Web3Network::Khala => 5,
+			Web3Network::SubstrateTestnet => 6,
+			Web3Network::Ethereum => 7,
+			Web3Network::Bsc => 8,
+			Web3Network::BitcoinP2tr => 9,
+			Web3Network::BitcoinP2pkh => 10,
+			Web3Network::BitcoinP2sh => 11,
+			Web3Network::BitcoinP2wpkh => 12,
+			Web3Network::BitcoinP2wsh => 13,
+			Web3Network::Polygon => 14,
+			Web3Network::Arbitrum => 15,
+			Web3Network::Solana => 16,
+		}
+		.into(),
+	)
 }
 
 fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Vec<u8> {
@@ -164,12 +191,65 @@ fn prepare_memory() -> MemoryVicinity {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::dynamic::{build, repository::InMemorySmartContractRepo};
+	use crate::dynamic::{
+		build, identity_with_networks_to_token, repository::InMemorySmartContractRepo, U256,
+	};
+	use ethabi::{Token, Token::Uint};
 	use itp_types::Assertion;
 	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
-	use litentry_primitives::{Identity, IdentityString};
+	use litentry_primitives::{
+		Address32, Identity, IdentityNetworkTuple, IdentityString, Web3Network,
+	};
 	use sp_core::{crypto::AccountId32, H160};
+
+	#[test]
+	pub fn should_tokenize_identity_with_networks() {
+		// given
+		let identity = Identity::Substrate(Address32::from([0u8; 32]));
+		let networks = vec![Web3Network::Polkadot, Web3Network::Litentry];
+
+		// when
+		let token = identity_with_networks_to_token(&(identity, networks));
+
+		// then
+		match token {
+			Token::Tuple(tokens) => {
+				assert_eq!(tokens.len(), 3);
+				match tokens.get(0).unwrap() {
+					Token::Uint(value) => {
+						assert_eq!(value, &Into::<U256>::into(3))
+					},
+					_ => panic!("Expected Token::Uint"),
+				};
+				match tokens.get(1).unwrap() {
+					Token::Bytes(value) => {
+						assert_eq!(value, &[0u8; 32].to_vec())
+					},
+					_ => panic!("Expected Token::Bytes"),
+				}
+				match tokens.get(2).unwrap() {
+					Token::Array(network_tokens) => {
+						assert_eq!(network_tokens.len(), 2);
+						match network_tokens.get(0).unwrap() {
+							Token::Uint(value) => {
+								assert_eq!(value, &Into::<U256>::into(0))
+							},
+							_ => panic!("Expected Token::Uint"),
+						}
+						match network_tokens.get(1).unwrap() {
+							Token::Uint(value) => {
+								assert_eq!(value, &Into::<U256>::into(2))
+							},
+							_ => panic!("Expected Token::Uint"),
+						}
+					},
+					_ => panic!("Expected Token::Array"),
+				}
+			},
+			_ => panic!("Expected Token::Tuple"),
+		}
+	}
 
 	#[test]
 	pub fn true_because_twitter() {
