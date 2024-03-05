@@ -24,7 +24,7 @@ use sgx_tse::rsgx_create_report;
 use sgx_types::*;
 use std::{ptr, sync::Arc, vec::Vec};
 
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 const RET_QUOTE_BUF_LEN: usize = 2048;
 

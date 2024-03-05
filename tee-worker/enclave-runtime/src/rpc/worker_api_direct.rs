@@ -53,7 +53,7 @@ use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_not_production;
 use litentry_primitives::DecryptableRequest;
 use log::debug;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
@@ -81,7 +81,8 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
-	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
+	AccessShieldingKey:
+		AccessPubkey<KeyType = Rsa3072PublicKey> + AccessKey + Send + Sync + 'static,
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
 	State: HandleState + Send + Sync + 'static,

@@ -30,7 +30,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
 use log::*;
-use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
+use sgx_crypto::rsa::Rsa3072KeyPair;
 use std::{sync::Arc, vec::Vec};
 
 /// Handles the sealing and unsealing of the shielding key, state key and the state.

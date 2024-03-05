@@ -18,7 +18,7 @@
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
-use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::ed25519::Pair as Ed25519Pair;
 use std::vec::Vec;
 

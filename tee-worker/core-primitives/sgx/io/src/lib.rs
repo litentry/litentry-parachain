@@ -74,11 +74,11 @@ pub fn read_to_string<P: AsRef<Path>>(filepath: P) -> IOResult<String> {
 
 #[cfg(feature = "sgx")]
 mod sgx {
+	use sgx_tprotected_fs::SgxFile;
 	use std::{
 		convert::AsRef,
 		io::{Read, Result, Write},
 		path::Path,
-		sgxfs::SgxFile,
 		vec::Vec,
 	};
 

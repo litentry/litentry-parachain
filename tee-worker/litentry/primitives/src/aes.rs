@@ -18,7 +18,7 @@
 extern crate sgx_tstd as std;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate rand_sgx as rand;
+extern crate sgx_rand as rand;
 
 use crate::{Decode, Encode, Vec};
 

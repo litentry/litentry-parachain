@@ -31,7 +31,7 @@ use sp_runtime::traits::Block as ParentchainBlockTrait;
 use std::time::Duration;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 #[cfg(all(feature = "std", not(feature = "sgx")))]
 use std::sync::RwLock;

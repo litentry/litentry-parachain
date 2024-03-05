@@ -15,7 +15,7 @@ itp-types = { path = "../types", default-features = false }
 its-primitives = { path = "../../sidechain/primitives", default-features = false }
 
 # sgx enabled external libraries
-jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
+jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/Kailai-Wang/jsonrpc-sgx", branch = "sgx-sdk-2.0.0", default-features = false, optional = true }
 linked-hash-map_sgx = { package = "linked-hash-map", git = "https://github.com/mesalock-linux/linked-hash-map-sgx", optional = true }
 
 # std compatible external libraries (make sure these versions match with the sgx-enabled ones above)

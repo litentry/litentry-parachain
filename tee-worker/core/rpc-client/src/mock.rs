@@ -25,12 +25,12 @@ use itp_api_client_types::Metadata;
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::MrEnclave;
 use litentry_primitives::Identity;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
 
 #[derive(Clone, Default)]
 pub struct DirectClientMock {
-	rsa_pubkey: Rsa3072PubKey,
+	rsa_pubkey: Rsa3072PublicKey,
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	metadata: String,
@@ -39,7 +39,7 @@ pub struct DirectClientMock {
 
 impl DirectClientMock {
 	pub fn new(
-		rsa_pubkey: Rsa3072PubKey,
+		rsa_pubkey: Rsa3072PublicKey,
 		mu_ra_url: String,
 		untrusted_worker_url: String,
 		metadata: String,
@@ -48,7 +48,7 @@ impl DirectClientMock {
 		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata, nonce }
 	}
 
-	pub fn with_rsa_pubkey(mut self, key: Rsa3072PubKey) -> Self {
+	pub fn with_rsa_pubkey(mut self, key: Rsa3072PublicKey) -> Self {
 		self.rsa_pubkey = key;
 		self
 	}
@@ -83,7 +83,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_rsa_pubkey(&self) -> Result<Rsa3072PubKey> {
+	fn get_rsa_pubkey(&self) -> Result<Rsa3072PublicKey> {
 		Ok(self.rsa_pubkey)
 	}
 

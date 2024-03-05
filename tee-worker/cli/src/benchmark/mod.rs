@@ -40,7 +40,7 @@ use itp_types::{
 use log::*;
 use rand::Rng;
 use rayon::prelude::*;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use sp_application_crypto::sr25519;
 use sp_core::{sr25519 as sr25519_core, Pair};
 use sp_keystore::Keystore;
@@ -129,7 +129,7 @@ impl BenchmarkCommand {
 
 		// Get shielding pubkey.
 		let worker_api_direct = get_worker_api_direct(cli);
-		let shielding_pubkey: Rsa3072PubKey = match worker_api_direct.get_rsa_pubkey() {
+		let shielding_pubkey: Rsa3072PublicKey = match worker_api_direct.get_rsa_pubkey() {
 			Ok(key) => key,
 			Err(err_msg) => panic!("{}", err_msg.to_string()),
 		};

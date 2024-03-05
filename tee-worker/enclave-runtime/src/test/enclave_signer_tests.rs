@@ -37,7 +37,7 @@ use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
 use itp_types::RsaRequest;
 use litentry_primitives::Identity;
-use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
 use std::{sync::Arc, vec::Vec};
 

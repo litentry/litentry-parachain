@@ -18,7 +18,7 @@
 //! Mechanisms to (temporarily) suspend the production of sidechain blocks.
 
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;

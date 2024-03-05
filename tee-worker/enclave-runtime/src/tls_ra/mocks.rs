@@ -19,7 +19,7 @@ use super::seal_handler::{SealStateAndKeys, UnsealStateAndKeys};
 use crate::error::Result as EnclaveResult;
 use itp_types::ShardIdentifier;
 use std::{
-	sync::{Arc, SgxRwLock as RwLock},
+	sync::{Arc, RwLock},
 	vec::Vec,
 };
 

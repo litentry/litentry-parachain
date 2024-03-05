@@ -27,7 +27,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;

@@ -20,7 +20,7 @@ use crate::sgx_reexport_prelude::*;
 use core::fmt::Debug;
 
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;

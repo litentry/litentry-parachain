@@ -21,7 +21,7 @@ use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::api_client::{ParentchainApi, TungsteniteRpcClient};
 use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainSignature as Signature};
 use log::*;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, Pair};
 use sp_runtime::traits::{IdentifyAccount, Verify};
@@ -32,7 +32,7 @@ type AccountPublic = <Signature as Verify>::Signer;
 pub(crate) const KEYSTORE_PATH: &str = "my_keystore";
 
 /// Retrieves the public shielding key via the enclave websocket server.
-pub(crate) fn get_shielding_key(cli: &Cli) -> Result<Rsa3072PubKey, String> {
+pub(crate) fn get_shielding_key(cli: &Cli) -> Result<Rsa3072PublicKey, String> {
 	let worker_api_direct = get_worker_api_direct(cli);
 	worker_api_direct.get_rsa_pubkey().map_err(|e| e.to_string())
 }

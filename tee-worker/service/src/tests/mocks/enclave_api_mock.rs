@@ -25,7 +25,7 @@ use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveRe
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_storage::StorageProof;
 use itp_types::{EnclaveFingerprint, ShardIdentifier};
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use sp_core::ed25519;
 
 /// mock for EnclaveBase - use in tests
@@ -80,7 +80,7 @@ impl EnclaveBase for EnclaveMock {
 		todo!()
 	}
 
-	fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PubKey> {
+	fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PublicKey> {
 		unreachable!()
 	}
 

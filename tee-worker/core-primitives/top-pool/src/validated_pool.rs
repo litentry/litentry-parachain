@@ -20,9 +20,9 @@
 use crate::sgx_reexport_prelude::*;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxMutex as Mutex;
+use std::sync::RwLock;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::SgxMutex as Mutex;
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;

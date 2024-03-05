@@ -22,7 +22,7 @@ use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_types::ShardIdentifier;
 use pallet_teebag::EnclaveFingerprint;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sgx_crypto::rsa::Rsa3072PublicKey;
 use sp_core::ed25519;
 
 /// Trait for base/common Enclave API functions
@@ -69,7 +69,7 @@ pub trait EnclaveBase: Send + Sync + 'static {
 		parentchain_id: ParentchainId,
 	) -> EnclaveResult<()>;
 
-	fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PubKey>;
+	fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PublicKey>;
 
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public>;
 
@@ -98,7 +98,7 @@ mod impl_ffi {
 	use itp_types::ShardIdentifier;
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
-	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+	use sgx_crypto::rsa::Rsa3072PublicKey;
 	use sgx_types::*;
 	use sp_core::ed25519;
 
@@ -277,7 +277,7 @@ mod impl_ffi {
 			Ok(())
 		}
 
-		fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PubKey> {
+		fn get_rsa_shielding_pubkey(&self) -> EnclaveResult<Rsa3072PublicKey> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let pubkey_size = SHIELDING_KEY_SIZE;
@@ -295,7 +295,7 @@ mod impl_ffi {
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-			let rsa_pubkey: Rsa3072PubKey =
+			let rsa_pubkey: Rsa3072PublicKey =
 				serde_json::from_slice(pubkey.as_slice()).expect("Invalid public key");
 			debug!("got RSA pubkey {:?}", rsa_pubkey);
 			Ok(rsa_pubkey)

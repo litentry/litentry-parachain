@@ -19,7 +19,7 @@
 //! to the light-client (validator) by employing RwLocks under the hood.
 
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;

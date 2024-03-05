@@ -41,7 +41,7 @@ use itp_stf_primitives::{
 	types::TrustedOperation,
 };
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 /// Mock for the StfExecutor.
 #[derive(Default)]

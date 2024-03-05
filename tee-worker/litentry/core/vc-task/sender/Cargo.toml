@@ -7,14 +7,14 @@ edition = "2021"
 
 [dependencies]
 # std dependencies
-futures = { version = "0.3.8", optional = true }
 
 # sgx dependencies
-futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
+# futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["net", "thread"], optional = true }
 
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+futures = { version = "0.3", default-features = false }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 
@@ -32,17 +32,15 @@ litentry-primitives = { path = "../../../primitives", default-features = false }
 [features]
 default = ["std"]
 sgx = [
-    "futures_sgx",
+    # "futures_sgx",
     "sgx_tstd",
     "lc-stf-task-sender/sgx",
-    "futures_sgx",
 ]
 std = [
-    "futures",
+    "futures/std",
     "log/std",
     "sp-runtime/std",
     "sp-std/std",
     "itp-types/std",
     "lc-stf-task-sender/std",
-    "futures",
 ]

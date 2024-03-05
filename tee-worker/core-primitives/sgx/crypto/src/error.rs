@@ -19,7 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use derive_more::{Display, From};
-use sgx_types::sgx_status_t;
+use sgx_types::error::SgxStatus;
 use std::prelude::v1::Box;
 
 #[derive(Debug, Display, From)]
@@ -27,17 +27,17 @@ pub enum Error {
 	IO(std::io::Error),
 	InvalidNonceKeyLength,
 	Codec(codec::Error),
-	Serialization(serde_json::Error),
+	Serde,
 	LockPoisoning,
 	Other(Box<dyn std::error::Error + Sync + Send + 'static>),
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-impl From<Error> for sgx_status_t {
+impl From<Error> for SgxStatus {
 	/// return sgx_status for top level enclave functions
-	fn from(error: Error) -> sgx_status_t {
-		log::warn!("Transform non-sgx-error into `SGX_ERROR_UNEXPECTED`: {:?}", error);
-		sgx_status_t::SGX_ERROR_UNEXPECTED
+	fn from(error: Error) -> SgxStatus {
+		log::warn!("Transform non-sgx-error into `SgxStatus::Unexpected`: {:?}", error);
+		SgxStatus::Unexpected
 	}
 }

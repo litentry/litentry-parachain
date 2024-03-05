@@ -14,18 +14,13 @@
 	limitations under the License.
 
 */
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	error::{Error, Result},
 	traits::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt},
 	ToPubkey,
 };
-use sgx_crypto_helper::{
-	rsa3072::{Rsa3072KeyPair, Rsa3072PubKey},
-	RsaKeyPair,
-};
+use sgx_crypto::rsa::{Rsa3072KeyPair, Rsa3072PublicKey};
 use std::vec::Vec;
 
 // Reexport sgx module
@@ -39,10 +34,7 @@ impl ShieldingCryptoEncrypt for Rsa3072KeyPair {
 	type Error = Error;
 
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
-		let mut cipher_buffer = Vec::new();
-		self.encrypt_buffer(data, &mut cipher_buffer)
-			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-		Ok(cipher_buffer)
+		self.encrypt(data).map_err(|e| Error::Other(format!("{:?}", e).into()))
 	}
 }
 
@@ -50,35 +42,29 @@ impl ShieldingCryptoDecrypt for Rsa3072KeyPair {
 	type Error = Error;
 
 	fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
-		let mut decrypted_buffer = Vec::new();
-		self.decrypt_buffer(data, &mut decrypted_buffer)
-			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-		Ok(decrypted_buffer)
+		self.decrypt(data).map_err(|e| Error::Other(format!("{:?}", e).into()))
 	}
 }
 
-impl ShieldingCryptoEncrypt for Rsa3072PubKey {
+impl ShieldingCryptoEncrypt for Rsa3072PublicKey {
 	type Error = Error;
 
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
-		let mut cipher_buffer = Vec::new();
-		self.encrypt_buffer(data, &mut cipher_buffer)
-			.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-		Ok(cipher_buffer)
+		self.encrypt(data).map_err(|e| Error::Other(format!("{:?}", e).into()))
 	}
 }
 
 impl ToPubkey for Rsa3072KeyPair {
 	type Error = Error;
-	type Pubkey = Rsa3072PubKey;
+	type Pubkey = Rsa3072PublicKey;
 
 	fn pubkey(&self) -> Result<Self::Pubkey> {
-		self.export_pubkey().map_err(|e| Error::Other(format!("{:?}", e).into()))
+		Ok(self.public_key())
 	}
 }
 
 pub trait RsaSealing {
-	fn unseal_pubkey(&self) -> Result<Rsa3072PubKey>;
+	fn unseal_pubkey(&self) -> Result<Rsa3072PublicKey>;
 
 	fn unseal_pair(&self) -> Result<Rsa3072KeyPair>;
 
@@ -95,6 +81,7 @@ pub mod sgx {
 	use crate::key_repository::KeyRepository;
 	use itp_sgx_io::{seal, unseal, SealedIO};
 	use log::*;
+	use sgx_serialize::opaque;
 	use std::path::PathBuf;
 
 	/// Gets a repository for an Rsa3072 keypair and initializes
@@ -124,7 +111,7 @@ pub mod sgx {
 	}
 
 	impl RsaSealing for Rsa3072Seal {
-		fn unseal_pubkey(&self) -> Result<Rsa3072PubKey> {
+		fn unseal_pubkey(&self) -> Result<Rsa3072PublicKey> {
 			self.unseal()?.pubkey()
 		}
 
@@ -146,7 +133,7 @@ pub mod sgx {
 
 		fn create_sealed(&self) -> Result<()> {
 			let rsa_keypair =
-				Rsa3072KeyPair::new().map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+				Rsa3072KeyPair::create().map_err(|e| Error::Other(format!("{:?}", e).into()))?;
 			info!("Generated RSA3072 key pair. PubKey: {:?}", rsa_keypair.pubkey()?);
 			self.seal(&rsa_keypair)
 		}
@@ -158,14 +145,12 @@ pub mod sgx {
 
 		fn unseal(&self) -> Result<Self::Unsealed> {
 			let raw = unseal(self.path())?;
-			let key: Rsa3072KeyPair = serde_json::from_slice(&raw)
-				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+			let key: Rsa3072KeyPair = opaque::decode(&raw).ok_or(Error::Serde)?;
 			Ok(key.into())
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
-			let key_json = serde_json::to_vec(&unsealed)
-				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+			let key_json = opaque::encode(unsealed).ok_or(Error::Serde)?;
 			Ok(seal(&key_json, self.path())?)
 		}
 	}
@@ -173,14 +158,14 @@ pub mod sgx {
 
 #[cfg(feature = "test")]
 pub mod sgx_tests {
-	use super::{serde_json, sgx::*};
+	use super::sgx::*;
 	use crate::{key_repository::AccessKey, RsaSealing, ToPubkey};
 	use itp_sgx_temp_dir::TempDir;
-	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+	use sgx_crypto::rsa::Rsa3072PublicKey;
 
 	/// Helper method because Rsa3072 does not implement `Eq`.
-	pub fn equal(pubkey1: &Rsa3072PubKey, pubkey2: &Rsa3072PubKey) -> bool {
-		serde_json::to_vec(pubkey1).unwrap() == serde_json::to_vec(pubkey2).unwrap()
+	pub fn equal(pubkey1: &Rsa3072PublicKey, pubkey2: &Rsa3072PublicKey) -> bool {
+		pubkey1 == pubkey2
 	}
 
 	pub fn using_get_rsa3072_repository_twice_initializes_key_only_once() {

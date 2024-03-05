@@ -107,7 +107,7 @@ pub mod sgx {
 	use itp_sgx_io::{seal, unseal, SealedIO};
 	use log::info;
 	use sgx_rand::{Rng, StdRng};
-	use std::sgxfs::SgxFile;
+	use sgx_tprotected_fs::SgxFile;
 
 	/// Gets a repository for an AES key and initializes
 	/// a fresh key if it doesn't exist at `path`.

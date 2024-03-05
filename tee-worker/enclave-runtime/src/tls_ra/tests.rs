@@ -34,13 +34,13 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_types::ShardIdentifier;
-use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
 use sgx_types::{sgx_quote_sign_type_t, sgx_target_info_t};
 use std::{
 	net::{TcpListener, TcpStream},
 	os::unix::io::AsRawFd,
 	string::String,
-	sync::{Arc, SgxRwLock as RwLock},
+	sync::{Arc, RwLock},
 	thread,
 	time::Duration,
 	vec::Vec,

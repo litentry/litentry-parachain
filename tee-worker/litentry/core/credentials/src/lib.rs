@@ -28,7 +28,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use chrono_sgx as chrono;
-	pub use serde_json_sgx as serde_json;
+	// pub use serde_json_sgx as serde_json;
 	pub use thiserror_sgx as thiserror;
 }
 
@@ -59,7 +59,7 @@ extern crate hex_sgx as hex;
 
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate rand_sgx as rand;
+extern crate sgx_rand as rand;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};

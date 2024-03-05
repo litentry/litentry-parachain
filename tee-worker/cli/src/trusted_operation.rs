@@ -419,7 +419,7 @@ fn send_direct_vc_request<T: Decode + Debug>(
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+	shielding_pubkey: sgx_crypto::rsa::Rsa3072PublicKey,
 	key: RequestAesKey,
 ) -> String {
 	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
@@ -446,7 +446,7 @@ fn decode_response_value<T: Decode, I: Input>(
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+	shielding_pubkey: sgx_crypto::rsa::Rsa3072PublicKey,
 ) -> String {
 	let encrypted_top = shielding_pubkey.encrypt(&top.encode()).unwrap();
 

@@ -34,7 +34,7 @@ pub mod io;
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::sync::RwLock;
 
 use lazy_static::lazy_static;
 use std::sync::Arc;
