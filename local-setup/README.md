@@ -2,13 +2,11 @@
 
 ## Prerequisite
 - worker built with ` SGX_MODE=SW make`
-- integritee-node built with `cargo build --release --features skip-ias-check`
+- integritee-node built with `cargo build --release`
 
 In case you have
 - a sgx hardware and compile the worker with `SGX_MODE=HW` (default mode)
 - a valid intel IAS key (development key is fine)
-
-you can omit the `--features skip-ias-check` when building the node
 
 ## Steps
 Check possible options to launch both node and worker(s)
