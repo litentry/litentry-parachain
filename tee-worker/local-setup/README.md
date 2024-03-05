@@ -2,13 +2,13 @@
 
 ## Prerequisite
 - worker built with ` SGX_MODE=SW make`
-- integritee-node built with `cargo build --release --features skip-ias-check`
+- integritee-node built with `cargo build --release`
 
 In case you have
 - a sgx hardware and compile the worker with `SGX_MODE=HW` (default mode)
 - a valid intel IAS key (development key is fine)
 
-you can omit the `--features skip-ias-check` when building the node, but you must not use the subcommand flag `--skip-ra` in the json file (see [`two-workers.json`](./config/two-workers.json)) you're using to start the worker.
+You must not use the subcommand flag `--skip-ra` in the json file (see [`two-workers.json`](./config/two-workers.json)) you're using to start the worker.
 
 ## Steps
 Adapt or create your own config file, as in the example of [`two-workers.json`](./config/two-workers.json). Be mindful of the ports in case you're running the script on a server multiple people are working on.
