@@ -68,6 +68,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
+	trusted_call_sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
@@ -103,7 +104,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		let context_pool = context.clone();
 		let extrinsic_factory_pool = extrinsic_factory.clone();
 		let node_metadata_repo_pool = node_metadata_repo.clone();
-		let sender_pool = sender.clone();
+		let sender_pool = trusted_call_sender.clone();
 
 		pool.execute(move || {
 			let response = handle_request(
@@ -139,7 +140,7 @@ pub fn handle_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
-	sender: Sender<(ShardIdentifier, TrustedCall)>,
+	sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 ) -> Result<Vec<u8>, String>
 where
 	ShieldingKeyRepository: AccessKey,
@@ -323,7 +324,7 @@ where
 			.map_err(|_| "Failed to get enclave signer".to_string())?;
 		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
 		sender
-			.send((request.shard, c))
+			.send((request.shard, None, c))
 			.map_err(|e| format!("Failed to send trusted call: {}", e))?;
 
 		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering

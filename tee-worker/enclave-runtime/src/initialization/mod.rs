@@ -52,7 +52,7 @@ use crate::{
 use base58::ToBase58;
 use codec::Encode;
 use core::str::FromStr;
-use ita_stf::{Getter, TrustedCallSigned};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned, H256};
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
@@ -240,7 +240,9 @@ fn initialize_state_observer(
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
 }
 
-fn run_stf_task_handler() -> Result<(), Error> {
+fn run_stf_task_handler(
+	sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
+) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
@@ -265,10 +267,12 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		data_provider_config,
 	);
 
-	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
+	run_stf_task_receiver(Arc::new(stf_task_context), sender).map_err(Error::StfTaskReceiver)
 }
 
-fn run_vc_issuance() -> Result<(), Error> {
+fn run_vc_issuance(
+	sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
+) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
@@ -294,7 +298,50 @@ fn run_vc_issuance() -> Result<(), Error> {
 	);
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	run_vc_handler_runner(
+		Arc::new(stf_task_context),
+		extrinsic_factory,
+		node_metadata_repo,
+		sender,
+	);
+	Ok(())
+}
+
+fn run_trusted_call_sequencer(
+	receiver: std::sync::mpsc::Receiver<(ShardIdentifier, Option<H256>, TrustedCall)>,
+) -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api.clone(),
+	));
+
+	let stf_task_context = StfTaskContext::new(
+		shielding_key_repository,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+		data_provider_config,
+	);
+
+	loop {
+		if let Ok((shard, hash, call)) = receiver.recv() {
+			info!("Submitting trusted call to the pool");
+			if let Err(e) = stf_task_context.submit_trusted_call(&shard, hash, &call) {
+				error!("Submit Trusted Call failed: {:?}", e);
+			}
+		}
+	}
 	Ok(())
 }
 
@@ -365,16 +412,29 @@ pub(crate) fn init_enclave_sidechain_components(
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
 
+	// Create a channel
+	let (sender, receiver) =
+		std::sync::mpsc::channel::<(ShardIdentifier, Option<H256>, TrustedCall)>();
 	std::thread::spawn(move || {
-		println!("running stf task handler");
+		println!("running trusted call sequencer");
 		#[allow(clippy::unwrap_used)]
-		run_stf_task_handler().unwrap();
+		run_trusted_call_sequencer(receiver).unwrap();
+	});
+
+	std::thread::spawn({
+		let sender = sender.clone();
+		move || {
+			println!("running stf task handler");
+			// Use the cloned sender directly here
+			#[allow(clippy::unwrap_used)]
+			run_stf_task_handler(sender).unwrap();
+		}
 	});
 
 	std::thread::spawn(move || {
 		println!("running vc issuance");
 		#[allow(clippy::unwrap_used)]
-		run_vc_issuance().unwrap();
+		run_vc_issuance(sender).unwrap();
 	});
 
 	Ok(())

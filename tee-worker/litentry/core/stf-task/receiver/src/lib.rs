@@ -204,6 +204,7 @@ where
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<ShieldingKeyRepository, A, S, H, O>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	trusted_call_sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 ) -> Result<(), Error>
 where
 	ShieldingKeyRepository: AccessKey + Sync + Send + 'static,
@@ -219,23 +220,11 @@ where
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
-
-	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
-	// are submitting trusted calls simultaneously
 	let context_cloned = context.clone();
-	thread::spawn(move || loop {
-		if let Ok((shard, hash, call)) = receiver.recv() {
-			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
-				error!("Submit Trusted Call failed: {:?}", e);
-			}
-		}
-	});
 
 	while let Ok(req) = stf_task_receiver.recv() {
 		let context_pool = context.clone();
-		let sender_pool = sender.clone();
+		let sender_pool = trusted_call_sender.clone();
 
 		pool.execute(move || {
 			let start_time = Instant::now();

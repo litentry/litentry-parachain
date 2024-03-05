@@ -65,7 +65,7 @@ where
 	fn on_success(
 		&self,
 		_result: Self::Result,
-		sender: Sender<(ShardIdentifier, H256, TrustedCall)>,
+		sender: Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 	) {
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
@@ -77,7 +77,7 @@ where
 				self.req.maybe_key,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+			if let Err(e) = sender.send((self.req.shard, Some(self.req.top_hash), c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
@@ -85,7 +85,11 @@ where
 		}
 	}
 
-	fn on_failure(&self, error: Self::Error, sender: Sender<(ShardIdentifier, H256, TrustedCall)>) {
+	fn on_failure(
+		&self,
+		error: Self::Error,
+		sender: Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
+	) {
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
@@ -94,7 +98,7 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+			if let Err(e) = sender.send((self.req.shard, Some(self.req.top_hash), c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {

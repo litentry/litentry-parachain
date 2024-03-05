@@ -72,7 +72,7 @@ where
 	fn on_success(
 		&self,
 		result: Self::Result,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 	) {
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
@@ -88,7 +88,7 @@ where
 				self.req.should_create_id_graph,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+			if let Err(e) = sender.send((self.req.shard, Some(self.req.top_hash), c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
@@ -99,7 +99,7 @@ where
 	fn on_failure(
 		&self,
 		error: Self::Error,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, Option<H256>, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
@@ -109,7 +109,7 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+			if let Err(e) = sender.send((self.req.shard, Some(self.req.top_hash), c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
