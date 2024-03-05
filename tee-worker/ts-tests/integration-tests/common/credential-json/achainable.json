@@ -244,7 +244,7 @@
         },
         "dataProvider": "achainable",
         "network": "litentry",
-        "mockDid": "litentry:bitcoin:0x030b0998ea7d5052e3016bd8c83f920f452f6102c06e91a2880556b91db68bce90",
+        "mockDid": "litentry:bitcoin:0x02dbb0aff6e115284ac2ac5795e299588dae74474ad4bd0e580e92163e80837da8",
         "mockWeb3Network": "BitcoinP2tr",
         "expectedCredentialValue": null
     }
