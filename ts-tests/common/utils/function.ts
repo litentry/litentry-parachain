@@ -32,7 +32,7 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
 // TODO: support to send the `vote extrinsic`, if the number of council members is greater than 2.
 export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
     const chain = (await api.rpc.system.chain()).toString().toLowerCase();
-    if (chain == 'litmus-dev') {
+    if (chain != 'rococo-dev') {
         const threshold = api.createType('Compact<u32>', 1);
         const call = api.createType('Call', tx);
         return api.tx.council.propose(threshold, call, api.createType('Compact<u32>', tx.length));
