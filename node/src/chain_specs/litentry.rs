@@ -18,7 +18,7 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CouncilMembershipConfig, GenesisConfig,
-	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig, SudoConfig,
+	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
 	SystemConfig, TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -197,7 +197,6 @@ fn generate_genesis(
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
 			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
