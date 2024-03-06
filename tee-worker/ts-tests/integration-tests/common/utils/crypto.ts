@@ -9,6 +9,7 @@ import { blake2AsU8a } from '@polkadot/util-crypto';
 import bitcore from 'bitcore-lib';
 import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
+import { base64Decode } from '@polkadot/util-crypto';
 
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
@@ -144,12 +145,17 @@ export class BitcoinSigner implements Signer {
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
         return new Promise((resolve, reject) => {
             if (isString(message)) {
-                const sig = new bitcore.Message(message).sign(this.keypair);
-                let buf = Buffer.from(sig, 'base64');
-                if (buf.length === 64) {
-                    buf = Buffer.concat([Buffer.from([0]), buf]);
-                }
-                resolve(bufferToU8a(buf));
+                let buffer: Uint8Array;
+
+                // Here we must use the format [u8,65],
+                // so we can only accept a signature that has been decoded from base64 and has a length of 65.
+                // Therefore, using a do -while loop to resign unnecessary signatures.We should not encounter an infinite loop situation, so no condition is set to break out of the loop.
+                do {
+                    const sig = new bitcore.Message(message).sign(this.keypair);
+                    buffer = base64Decode(sig);
+                } while (buffer.length !== 65);
+
+                resolve(buffer);
             } else {
                 reject('wrong message type');
             }
