@@ -23,7 +23,9 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
-use ita_stf::{Getter, StfError, TrustedCall, TrustedCallSigned};
+use ita_stf::{
+	trusted_call_result::RequestVcResultOrError, Getter, StfError, TrustedCall, TrustedCallSigned,
+};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
@@ -80,6 +82,8 @@ pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	match top {
 		TrustedOperation::direct_call(call) => match call.call {
 			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
+			TrustedCall::request_batch_vc(..) =>
+				send_direct_vc_request(cli, trusted_args, top, key),
 			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
 		},
 		_ =>
@@ -395,6 +399,9 @@ fn send_direct_vc_request<T: Decode + Debug>(
 						},
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+							if let Ok(response) =
+								RequestVcResultOrError::decode(&mut return_value.value.as_slice())
+							{}
 						},
 						DirectRequestStatus::Ok => {
 							debug!("request status is ignored");

@@ -22,8 +22,11 @@ use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Ru
 #[cfg(not(feature = "production"))]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
-	aes_encrypt_default, helpers::ensure_self, trusted_call_result::RequestVCResult, Getter,
-	OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation, H256,
+	aes_encrypt_default,
+	helpers::ensure_self,
+	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
+	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation,
+	H256,
 };
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
@@ -42,7 +45,7 @@ use itp_types::{
 };
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{init_vc_task_sender_storage, RequestVcResultOrError, VCRequest};
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCRequest};
 use litentry_macros::if_production_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;

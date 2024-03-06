@@ -40,14 +40,6 @@ pub struct VCRequest {
 	pub request: AesRequest,
 }
 
-#[derive(Debug, Encode, Decode, Clone)]
-pub struct RequestVcResultOrError {
-	pub payload: Vec<u8>,
-	pub is_error: bool,
-	pub idx: u8,
-	pub len: u8,
-}
-
 pub type VcSender = MpscSender<VCRequest>;
 
 // Global storage of the sender. Should not be accessed directly.

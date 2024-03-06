@@ -26,13 +26,14 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
+use ita_stf::trusted_call_result::RequestVcResultOrError;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
-use lc_vc_task_sender::{RequestVcResultOrError, VCRequest, VcRequestSender};
+use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
 use sp_core::H256;
@@ -352,12 +353,12 @@ where
 	// Use this hash to trigger the storage of connection_registry
 	let hash = request.using_encoded(|x| BlakeTwo256::hash(x));
 
-	thread::spawn(move || request_vc_inner1(author, request, hash));
+	thread::spawn(move || request_vc_inner(author, request, hash));
 
 	Ok(hash)
 }
 
-fn request_vc_inner1<R, TCS, G>(author: Arc<R>, request: AesRequest, hash: H256)
+fn request_vc_inner<R, TCS, G>(author: Arc<R>, request: AesRequest, hash: H256)
 where
 	R: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,

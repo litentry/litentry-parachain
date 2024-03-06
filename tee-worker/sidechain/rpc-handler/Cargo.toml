@@ -12,6 +12,7 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local dependencies
+ita-stf = { path = "../../app-libs/stf", default-features = false }
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
 itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-features = false }
