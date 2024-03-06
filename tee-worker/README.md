@@ -30,7 +30,7 @@ If you think parachain-node launch too slowly, can use this branch: [litentry-ru
 
 ```bash
 # build integritee-node(not parachain-node)
-cargo build --release --features "skip-extrinsic-filtering skip-ias-check"
+cargo build --release --features "skip-extrinsic-filtering"
 ```
 
 ## Build and Run
