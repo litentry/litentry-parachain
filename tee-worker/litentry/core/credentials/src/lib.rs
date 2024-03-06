@@ -135,6 +135,35 @@ impl Issuer {
 	}
 }
 
+#[derive(Serialize, Deserialize, Encode, Decode, PartialEq, Eq, TypeInfo, Debug, Clone)]
+#[serde(untagged)]
+pub enum Assertions {
+	Raw(String),
+	Typed(Vec<AssertionLogic>),
+}
+
+impl Assertions {
+	pub fn get_typed(self) -> Vec<AssertionLogic> {
+		match self {
+			Self::Raw(_) => vec![],
+			Self::Typed(assertions) => assertions,
+		}
+	}
+
+	pub fn push_typed(&mut self, logic: AssertionLogic) {
+		match self {
+			Self::Raw(_) => (),
+			Self::Typed(assertions) => assertions.push(logic),
+		};
+	}
+}
+
+impl Default for Assertions {
+	fn default() -> Self {
+		Self::Typed(vec![])
+	}
+}
+
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct CredentialSubject {
@@ -150,7 +179,7 @@ pub struct CredentialSubject {
 	/// Several sets of assertions.
 	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
 	#[serde(skip_deserializing)]
-	pub assertions: Vec<AssertionLogic>,
+	pub assertions: Assertions,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
 	/// The extrinsic on Parentchain for credential verification purpose
@@ -349,7 +378,7 @@ impl Credential {
 			.add_item(from_date_logic)
 			.add_item(to_date_logic);
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(is_hold);
 	}
 
@@ -365,7 +394,7 @@ impl Credential {
 		let assertion =
 			AssertionLogic::new_and().add_item(has_web2_account).add_item(has_web3_account);
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -378,7 +407,7 @@ impl Credential {
 			.add_item(verified)
 			.add_item(has_joined)
 			.add_item(guild);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -402,7 +431,7 @@ impl Credential {
 			.add_item(guild)
 			.add_item(channel)
 			.add_item(role);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -416,7 +445,7 @@ impl Credential {
 			.add_item(is_following)
 			.add_item(has_retweeted)
 			.add_item(original_tweet_id);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -428,7 +457,7 @@ impl Credential {
 		let follower_max = AssertionLogic::new_item("$total_followers", Op::LessEq, &max);
 
 		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(true);
 	}
 
@@ -450,7 +479,7 @@ impl Credential {
 		};
 		assertion = assertion.add_item(or_logic);
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(min != 0);
 	}
 
@@ -464,25 +493,25 @@ impl Credential {
 
 		let assertion =
 			AssertionLogic::new_and().add_item(is_following).add_item(twitter_screen_name);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a13(&mut self) {
 		let badge = AssertionLogic::new_item("$has_claimed_badge", Op::Equal, "true");
-		self.credential_subject.assertions.push(badge);
+		self.credential_subject.assertions.push_typed(badge);
 		self.credential_subject.values.push(true);
 	}
 
 	pub fn add_assertion_a14(&mut self, value: bool) {
 		let governance = AssertionLogic::new_item("$total_governance_action", Op::GreaterThan, "0");
-		self.credential_subject.assertions.push(governance);
+		self.credential_subject.assertions.push_typed(governance);
 		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a20(&mut self, value: bool) {
 		let governance = AssertionLogic::new_item("$has_joined", Op::Equal, &value.to_string());
-		self.credential_subject.assertions.push(governance);
+		self.credential_subject.assertions.push_typed(governance);
 		self.credential_subject.values.push(value);
 	}
 
@@ -496,7 +525,7 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(and_logic);
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -504,7 +533,7 @@ impl Credential {
 		let content = AssertionLogic::new_item(content, Op::Equal, "true");
 		let assertion = AssertionLogic::new_and().add_item(content);
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 	}
 
@@ -514,7 +543,7 @@ impl Credential {
 		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
 		and_logic = and_logic.add_item(from);
 
-		self.credential_subject.assertions.push(and_logic);
+		self.credential_subject.assertions.push_typed(and_logic);
 		self.credential_subject.values.push(ret);
 	}
 
@@ -527,11 +556,7 @@ impl Credential {
 	) {
 		self.credential_subject.description = description;
 		self.credential_subject.types = assertion_type;
-		self.credential_subject.assertions = vec![AssertionLogic::Item {
-			src: assertion,
-			op: Op::Equal,
-			dst: "sommething".to_string(),
-		}];
+		self.credential_subject.assertions = Assertions::Raw(assertion);
 		self.credential_subject.values = vec![result]
 	}
 }
@@ -601,7 +626,7 @@ mod tests {
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], false);
-			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+			assert_eq!(credential_unsigned.credential_subject.assertions.get_typed()[0], assertion)
 		}
 
 		{
@@ -619,7 +644,7 @@ mod tests {
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
-			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+			assert_eq!(credential_unsigned.credential_subject.assertions.get_typed()[0], assertion)
 		}
 
 		{
@@ -637,7 +662,7 @@ mod tests {
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
-			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+			assert_eq!(credential_unsigned.credential_subject.assertions.get_typed()[0], assertion)
 		}
 	}
 
@@ -667,7 +692,7 @@ mod tests {
 			assertion = assertion.add_item(or_logic);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], false);
-			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+			assert_eq!(credential_unsigned.credential_subject.assertions.get_typed()[0], assertion)
 		}
 
 		{
@@ -687,7 +712,7 @@ mod tests {
 			assertion = assertion.add_item(or_logic);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
-			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+			assert_eq!(credential_unsigned.credential_subject.assertions.get_typed()[0], assertion)
 		}
 	}
 }

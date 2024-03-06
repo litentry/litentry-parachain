@@ -215,7 +215,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build WeirdoGhostGang holder done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3NftType::WeirdoGhostGang),
@@ -248,7 +248,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build Club3Sbt holder done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3NftType::Club3Sbt),
@@ -278,7 +278,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build Club3Sbt holder done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3NftType::Club3Sbt),

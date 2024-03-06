@@ -68,7 +68,7 @@ fn update_assertion(balance: f64, credential: &mut Credential) {
 		},
 	}
 
-	credential.credential_subject.assertions.push(assertion);
+	credential.credential_subject.assertions.push_typed(assertion);
 }
 
 fn get_assertion_content() -> &'static str {

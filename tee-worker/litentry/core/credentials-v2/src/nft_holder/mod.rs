@@ -67,7 +67,7 @@ impl NFTHolderAssertionUpdate for Credential {
 		}
 
 		assertion = assertion.add_item(network_assertion);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(has_nft);
 	}
 }

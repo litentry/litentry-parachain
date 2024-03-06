@@ -106,10 +106,7 @@ fn decode_result(data: &[u8]) -> (String, String, String, bool) {
 }
 
 fn prepare_execute_call_input(identities: &[IdentityNetworkTuple]) -> Vec<u8> {
-	let identities: Vec<Token> = identities
-		.iter()
-		.map(|identity| identity_with_networks_to_token(identity))
-		.collect();
+	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 
 	let encoded_identities = encode(&[Token::Array(identities)]);
 	let encoded_identities_as_bytes = encode(&[Token::Bytes(encoded_identities)]);
@@ -127,7 +124,7 @@ pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token
 		Identity::Bitcoin(addr) => (5, addr.as_ref().to_vec()),
 		Identity::Solana(addr) => (6, addr.as_ref().to_vec()),
 	};
-	let networks: Vec<Token> = identity.1.iter().map(|network| network_to_token(network)).collect();
+	let networks: Vec<Token> = identity.1.iter().map(network_to_token).collect();
 	Token::Tuple(vec![Token::Uint(type_index.into()), Token::Bytes(value), Token::Array(networks)])
 }
 
@@ -274,8 +271,8 @@ pub mod tests {
 
 		let repository = InMemorySmartContractRepo::new();
 
-		let credential = build(&request, hash(1), repository).unwrap();
-		println!("Generated credential: {:?}", credential);
+		let credential = build(&request, hash(0), repository).unwrap();
+		println!("Generated credential: {:?}", serde_json::to_string(&credential).unwrap());
 
 		assert!(credential.credential_subject.values[0]);
 	}

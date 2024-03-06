@@ -44,7 +44,7 @@ impl OneBlockAssertionUpdate for Credential {
 		};
 
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 
 		self.add_subject_info(info.1, info.0);

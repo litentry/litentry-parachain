@@ -55,7 +55,7 @@ impl PlatformUserAssertionUpdate for Credential {
 			platform_user_type.get_platform_name(),
 		));
 
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(is_user);
 	}
 }

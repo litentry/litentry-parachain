@@ -45,7 +45,7 @@ fn update_mirror_assertion(mtype: &AchainableNameMirror, value: bool, credential
 	let content = get_mirror_content(mtype);
 	let logic = AssertionLogic::new_item(content, Op::Equal, "true");
 	let assertion = AssertionLogic::new_and().add_item(logic);
-	credential.credential_subject.assertions.push(assertion);
+	credential.credential_subject.assertions.push_typed(assertion);
 	credential.credential_subject.values.push(value);
 }
 

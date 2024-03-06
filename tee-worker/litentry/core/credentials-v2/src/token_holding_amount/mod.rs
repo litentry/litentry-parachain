@@ -109,7 +109,7 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 		},
 	}
 
-	credential.credential_subject.assertions.push(assertion);
+	credential.credential_subject.assertions.push_typed(assertion);
 }
 
 fn create_network_assertion_logic(

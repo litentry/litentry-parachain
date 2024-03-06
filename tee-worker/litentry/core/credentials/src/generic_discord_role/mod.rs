@@ -56,7 +56,7 @@ impl GenericDiscordRoleAssertionUpdate for Credential {
 	) {
 		let assertion_content = get_generic_discord_role_assertion_content(&ctype);
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(value);
 
 		let info = get_generic_discord_role_assertion_info(&ctype);

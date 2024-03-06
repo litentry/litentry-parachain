@@ -151,7 +151,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build WeirdoGhostGang holder done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::Item {
 						src: String::from("$is_weirdo_ghost_gang_holder"),
 						op: Op::Equal,

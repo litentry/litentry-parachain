@@ -123,7 +123,7 @@ fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential
 		},
 	}
 
-	credential.credential_subject.assertions.push(assertion);
+	credential.credential_subject.assertions.push_typed(assertion);
 }
 
 fn tick_to_brctoken(tick: &str) -> BRC20Token {

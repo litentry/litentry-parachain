@@ -32,7 +32,7 @@ impl UpdateBABHolder for Credential {
 		let bab_holder = AssertionLogic::new_item(BAB_HOLDER_BREAKDOWN, Op::Equal, "true");
 
 		let assertion = AssertionLogic::new_and().add_item(bab_holder);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 		self.credential_subject.values.push(is_bab_holder);
 
 		self.add_subject_info(BAB_HOLDER_DESCRIPTIONS, BAB_HOLDER_TYPE);

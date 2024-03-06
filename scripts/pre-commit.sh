@@ -39,7 +39,7 @@ root_dir=$(git rev-parse --show-toplevel)
 
 start=$(date +%s)
 
-#clean_up
+clean_up
 
 cd "$root_dir"
 make fmt
@@ -58,28 +58,28 @@ cd "$root_dir/tee-worker"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 5], tee-worker service test"
-#clean_up
+clean_up
 cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
 ./litentry-worker test --all
 
 echo "[Step 6], bitacross-worker clippy"
-#cd "$root_dir/bitacross-worker" && bitacross_clippy
+cd "$root_dir/bitacross-worker" && bitacross_clippy
 
 echo "[Step 7], bitacross-worker enclave clippy"
-#cd "$root_dir/bitacross-worker/enclave-runtime" && bitacross_clippy
+cd "$root_dir/bitacross-worker/enclave-runtime" && bitacross_clippy
 
 echo "[Step 8], bitacross-worker cargo test"
 cd "$root_dir/bitacross-worker"
-#RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
+RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 9], bitacross-worker service test"
-#clean_up
+clean_up
 cd "$root_dir/bitacross-worker"
-#SGX_MODE=SW SKIP_WASM_BUILD=1 make
+SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/bitacross-worker/bin"
-#./bitacross-worker test --all
+./bitacross-worker test --all
 
 end=$(date +%s)
 echo "Elapsed Time: $((end-start)) seconds"

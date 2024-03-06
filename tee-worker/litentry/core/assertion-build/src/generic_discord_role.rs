@@ -150,7 +150,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build GenericDiscordRole Contest done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::Item {
 						src: String::from("$is_contest_legend"),
 						op: Op::Equal,

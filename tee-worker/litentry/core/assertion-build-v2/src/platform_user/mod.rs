@@ -124,7 +124,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build karat dao user done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
+					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
 					AssertionLogic::And {
 						items: vec![Box::new(AssertionLogic::Item {
 							src: "$platform".into(),

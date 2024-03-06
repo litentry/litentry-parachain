@@ -38,7 +38,7 @@ impl UpdateUniswapUser for Credential {
 			AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, &is_v3_holder.to_string());
 
 		let assertion = AssertionLogic::new_and().add_item(uniswap_v2).add_item(uniswap_v3);
-		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.assertions.push_typed(assertion);
 
 		// Always true
 		self.credential_subject.values.push(true);
