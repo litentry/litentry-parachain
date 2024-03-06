@@ -49,7 +49,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 		use sp_io::KillStorageResult;
 
 		log::info!("Post check Sudo");
