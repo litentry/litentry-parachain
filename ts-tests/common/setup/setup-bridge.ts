@@ -4,6 +4,7 @@ import '@polkadot/api-augment';
 import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { ISubmittableResult } from '@polkadot/types/types';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from '../utils';
@@ -134,11 +135,12 @@ async function setupCrossChainTransfer(
     await eConfig.erc20.grantRole(MINTER_ROLE, eConfig.erc20Handler.address);
 
     // parachain setup
-    let extrinsic: SubmittableExtrinsic<ApiTypes>[] = [];
+    let extrinsic: SubmittableExtrinsic<"promise", ISubmittableResult>[] = [];
     for (let i = 0; i < parachainRelayers.length; i++) {
         const isRelayer = await pConfig.api.query.chainBridge.relayers(parachainRelayers[i]);
         if (!isRelayer.toHuman()) {
-            extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i])));
+            const temp = await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i]));
+            extrinsic.push(temp);
         }
     }
 
