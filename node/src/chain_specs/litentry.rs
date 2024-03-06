@@ -45,7 +45,6 @@ const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 struct GenesisInfo {
-	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<(AccountId, String)>,
 	council: Vec<AccountId>,
@@ -61,7 +60,6 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		ChainType::Development,
 		move || {
 			generate_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
@@ -152,7 +150,6 @@ fn get_chain_spec_from_genesis_info(
 			use std::str::FromStr;
 			let genesis_info_cloned = genesis_info.clone();
 			generate_genesis(
-				genesis_info_cloned.root_key,
 				genesis_info_cloned.invulnerables,
 				genesis_info_cloned
 					.endowed_accounts
@@ -185,7 +182,6 @@ fn get_chain_spec_from_genesis_info(
 }
 
 fn generate_genesis(
-	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<(AccountId, Balance)>,
 	council_members: Vec<AccountId>,
