@@ -16,7 +16,7 @@
 
 #![allow(opaque_hidden_inferred_bound)]
 
-use warp::{http::Response, path::FullPath, Filter};
+use warp::{http::Response, Filter};
 
 const RESPONSE_BNB_DOMAIN: &str = r#"{
 					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
@@ -26,11 +26,7 @@ const RESPONSE_BNB_DOMAIN: &str = r#"{
 				}
                 "#;
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::post().and(warp::path::full()).map(|p: FullPath| {
-		if p.as_str() == "/spaceid/domain/names/byOwners" {
-			Response::builder().body(RESPONSE_BNB_DOMAIN.to_string())
-		} else {
-			Response::builder().status(400).body(String::from("Error query"))
-		}
-	})
+	warp::post()
+		.and(warp::path!(String / "spaceid" / "domain" / "names" / String))
+		.map(|_: String, _: String| Response::builder().body(RESPONSE_BNB_DOMAIN.to_string()))
 }
