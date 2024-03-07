@@ -43,10 +43,12 @@ use std::{
 	convert::TryInto,
 	io::{Read, Write},
 	net::TcpStream,
+	os::fd::FromRawFd,
 	slice,
 	sync::Arc,
 	vec::Vec,
 };
+
 /// Client part of the TCP-level connection and the underlying TLS-level session.
 ///
 /// Includes a seal handler, which handles the storage part of the received data.
@@ -322,6 +324,6 @@ fn tls_client_session_stream(
 	let dns_name = webpki::DNSNameRef::try_from_ascii_str(DEV_HOSTNAME)
 		.map_err(|e| EnclaveError::Other(e.into()))?;
 	let sess = rustls::ClientSession::new(&Arc::new(client_config), dns_name);
-	let conn = TcpStream::new(socket_fd)?;
+	let conn = unsafe { TcpStream::from_raw_fd(socket_fd) };
 	Ok((sess, conn))
 }

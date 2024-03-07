@@ -43,6 +43,7 @@ use std::{
 	backtrace::{self, PrintFormat},
 	io::{Read, Write},
 	net::TcpStream,
+	os::fd::FromRawFd,
 	sync::Arc,
 };
 
@@ -287,7 +288,7 @@ fn tls_server_session_stream(
 	server_config: ServerConfig,
 ) -> EnclaveResult<(ServerSession, TcpStream)> {
 	let sess = ServerSession::new(&Arc::new(server_config));
-	let conn = TcpStream::new(socket_fd).map_err(|e| EnclaveError::Other(e.into()))?;
+	let conn = unsafe { TcpStream::from_raw_fd(socket_fd) };
 	Ok((sess, conn))
 }
 

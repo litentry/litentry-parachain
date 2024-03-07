@@ -77,7 +77,7 @@ use sp_runtime::traits::Header as HeaderT;
 use std::{string::String, sync::Arc, time::Duration, vec::Vec};
 #[no_mangle]
 pub extern "C" fn test_main_entrance() -> size_t {
-	run_test_cases!(
+	run_unit_tests!(
 		itp_attestation_handler::attestation_handler::tests::decode_spid_works,
 		stf_sgx_tests::enclave_account_initialization_works,
 		stf_sgx_tests::shield_funds_increments_signer_account_nonce,

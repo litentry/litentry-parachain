@@ -179,7 +179,8 @@ pub mod test {
 
 	pub fn seal_shielding_key_works() {
 		let seal_handler = SealHandlerMock::default();
-		let key_pair_in_bytes = opaque::encode(&Rsa3072KeyPair::default()).unwrap().as_slice();
+		let encoded_key = opaque::encode(&Rsa3072KeyPair::default()).unwrap();
+		let key_pair_in_bytes = encoded_key.as_slice();
 
 		let result = seal_handler.seal_shielding_key(&key_pair_in_bytes);
 
@@ -196,8 +197,8 @@ pub mod test {
 
 	pub fn unseal_seal_shielding_key_works() {
 		let seal_handler = SealHandlerMock::default();
-
-		let key_pair_in_bytes = seal_handler.unseal_shielding_key().unwrap().as_slice();
+		let unsealed_key = seal_handler.unseal_shielding_key().unwrap();
+		let key_pair_in_bytes = unsealed_key.as_slice();
 
 		let result = seal_handler.seal_shielding_key(&key_pair_in_bytes);
 
