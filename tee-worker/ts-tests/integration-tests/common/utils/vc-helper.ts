@@ -191,12 +191,10 @@ export const mockAssertions = [
         },
     },
 
-    //karat_dao
-    // @fixme: Not sure why it fails in CI but wokrs locally, temporarily comment out and let the PR(2553) pass, solve it in another issue.
-    // {
-    //     description: 'You are a user of a certain platform',
-    //     assertion: {
-    //         PlatformUser: 'KaratDaoUser',
-    //     },
-    // },
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'KaratDaoUser',
+        },
+    },
 ];
