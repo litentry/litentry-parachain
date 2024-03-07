@@ -6,20 +6,20 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
+futures = { version = "0.3", optional = true }
 thiserror = { version = "1.0.26", optional = true }
 threadpool = { version = "1.8.0", optional = true }
 
 # sgx dependencies
-# futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
+futures_sgx = { package = "futures", git = "https://github.com/Kailai-Wang/futures-rs-sgx", branch = "sgx-sdk-2.0.0", optional = true }
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"], optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", features = ["net", "thread"], optional = true }
 thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
-threadpool_sgx = { git = "https://github.com/mesalock-linux/rust-threadpool-sgx", package = "threadpool", tag = "sgx_1.1.3", optional = true }
+threadpool_sgx = { package = "threadpool", git = "https://github.com/Kailai-Wang/rust-threadpool-sgx", branch = "sgx-sdk-2.0.0", optional = true }
 url_sgx = { package = "url", git = "https://github.com/mesalock-linux/rust-url-sgx", tag = "sgx_1.1.3", optional = true }
 
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-futures = { version = "0.3", default-features = false }
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -63,7 +63,7 @@ hex = "0.4.2"
 default = ["std"]
 sgx = [
     "threadpool_sgx",
-    # "futures_sgx",
+    "futures_sgx",
     "hex-sgx",
     "sgx_tstd",
     "thiserror_sgx",
@@ -85,7 +85,7 @@ sgx = [
 ]
 std = [
     "threadpool",
-    "futures/std",
+    "futures",
     "log/std",
     "thiserror",
     "itc-peer-top-broadcaster/std",

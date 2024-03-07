@@ -16,7 +16,7 @@
 */
 
 use derive_more::From;
-use sgx_types::{sgx_quote3_error_t, sgx_status_t};
+use sgx_types::error::*;
 use std::{boxed::Box, result::Result as StdResult, string::String};
 
 pub type Result<T> = StdResult<T, Error>;
@@ -33,8 +33,8 @@ pub enum Error {
 	IO(std::io::Error),
 	LightClient(itc_parentchain::light_client::error::Error),
 	NodeMetadataProvider(itp_node_api::metadata::provider::Error),
-	Sgx(sgx_status_t),
-	SgxQuote(sgx_quote3_error_t),
+	Sgx(SgxStatus),
+	SgxQuote(Quote3Error),
 	Consensus(its_sidechain::consensus_common::Error),
 	Stf(String),
 	StfStateHandler(itp_stf_state_handler::error::Error),
@@ -55,27 +55,27 @@ pub enum Error {
 	Other(Box<dyn std::error::Error>),
 }
 
-impl From<Error> for sgx_status_t {
+impl From<Error> for SgxStatus {
 	/// return sgx_status for top level enclave functions
-	fn from(error: Error) -> sgx_status_t {
+	fn from(error: Error) -> SgxStatus {
 		match error {
 			Error::Sgx(status) => status,
 			_ => {
 				log::error!("Returning error {:?} as sgx unexpected.", error);
-				sgx_status_t::SGX_ERROR_UNEXPECTED
+				SgxStatus::Unexpected
 			},
 		}
 	}
 }
 
-impl From<Error> for sgx_quote3_error_t {
+impl From<Error> for Quote3Error {
 	/// return sgx_quote error
-	fn from(error: Error) -> sgx_quote3_error_t {
+	fn from(error: Error) -> Quote3Error {
 		match error {
 			Error::SgxQuote(status) => status,
 			_ => {
 				log::error!("Returning error {:?} as sgx unexpected.", error);
-				sgx_quote3_error_t::SGX_QL_ERROR_UNEXPECTED
+				Quote3Error::Unexpected
 			},
 		}
 	}

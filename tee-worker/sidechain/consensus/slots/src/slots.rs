@@ -28,13 +28,7 @@ use its_primitives::traits::{
 use lazy_static::lazy_static;
 use log::warn;
 use sp_runtime::traits::Block as ParentchainBlockTrait;
-use std::time::Duration;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-
-#[cfg(all(feature = "std", not(feature = "sgx")))]
-use std::sync::RwLock;
+use std::{sync::RwLock, time::Duration};
 
 pub use sp_consensus_slots::Slot;
 

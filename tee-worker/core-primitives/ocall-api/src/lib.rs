@@ -28,7 +28,7 @@ use itp_types::{
 	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash, ShardIdentifier,
 	TrustedOperationStatus, WorkerRequest, WorkerResponse,
 };
-use sgx_types::*;
+use sgx_types::{error::*, types::*};
 use sp_core::H256;
 use sp_runtime::{traits::Header, OpaqueExtrinsic};
 use sp_std::prelude::*;
@@ -37,43 +37,43 @@ use sp_std::prelude::*;
 pub enum Error {
 	Storage(StorageError),
 	Codec(codec::Error),
-	Sgx(sgx_types::sgx_status_t),
+	Sgx(SgxStatus),
 }
 
 pub type Result<T> = StdResult<T, Error>;
 /// Trait for the enclave to make o-calls related to remote attestation
 pub trait EnclaveAttestationOCallApi: Clone + Send + Sync {
-	fn sgx_init_quote(&self) -> SgxResult<(sgx_target_info_t, sgx_epid_group_id_t)>;
+	fn sgx_init_quote(&self) -> SgxResult<(TargetInfo, EpidGroupId)>;
 
 	fn get_ias_socket(&self) -> SgxResult<i32>;
 
 	fn get_quote(
 		&self,
 		sig_rl: Vec<u8>,
-		report: sgx_report_t,
-		sign_type: sgx_quote_sign_type_t,
-		spid: sgx_spid_t,
-		quote_nonce: sgx_quote_nonce_t,
-	) -> SgxResult<(sgx_report_t, Vec<u8>)>;
+		report: Report,
+		sign_type: QuoteSignType,
+		spid: Spid,
+		quote_nonce: QuoteNonce,
+	) -> SgxResult<(Report, Vec<u8>)>;
 
-	fn get_dcap_quote(&self, report: sgx_report_t, quote_size: u32) -> SgxResult<Vec<u8>>;
+	fn get_dcap_quote(&self, report: Report, quote_size: u32) -> SgxResult<Vec<u8>>;
 
 	fn get_qve_report_on_quote(
 		&self,
 		quote: Vec<u8>,
 		current_time: i64,
-		quote_collateral: sgx_ql_qve_collateral_t,
-		qve_report_info: sgx_ql_qe_report_info_t,
+		quote_collateral: CQlQveCollateral,
+		qve_report_info: QlQeReportInfo,
 		supplemental_data_size: u32,
-	) -> SgxResult<(u32, sgx_ql_qv_result_t, sgx_ql_qe_report_info_t, Vec<u8>)>;
+	) -> SgxResult<(u32, QlQvResult, QlQeReportInfo, Vec<u8>)>;
 
 	fn get_update_info(
 		&self,
-		platform_info: sgx_platform_info_t,
+		platform_info: PlatformInfo,
 		enclave_trusted: i32,
-	) -> SgxResult<sgx_update_info_bit_t>;
+	) -> SgxResult<UpdateInfoBit>;
 
-	fn get_mrenclave_of_self(&self) -> SgxResult<sgx_measurement_t>;
+	fn get_mrenclave_of_self(&self) -> SgxResult<Measurement>;
 }
 
 /// trait for o-calls related to RPC

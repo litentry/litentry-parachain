@@ -15,16 +15,10 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use codec::Encode;
 use itp_ocall_api::EnclaveMetricsOCallApi;
-use sgx_types::SgxResult;
-use std::vec::Vec;
+use sgx_types::error::SgxResult;
+use std::{sync::RwLock, vec::Vec};
 
 /// Metrics o-call mock.
 #[derive(Default)]

@@ -18,12 +18,6 @@
 //! Concurrent access mechanisms that ensure mutually exclusive read/write access
 //! to the light-client (validator) by employing RwLocks under the hood.
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	ExtrinsicSender as ExtrinsicSenderTrait, LightClientSealing, LightClientState,
@@ -32,7 +26,10 @@ use crate::{
 use finality_grandpa::BlockNumberOps;
 use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
 use sp_runtime::traits::{Block as ParentchainBlockTrait, NumberFor};
-use std::{marker::PhantomData, sync::Arc};
+use std::{
+	marker::PhantomData,
+	sync::{Arc, RwLock},
+};
 
 /// Retrieve an exclusive lock on a validator for either read or write access.
 ///

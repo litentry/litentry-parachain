@@ -63,16 +63,15 @@ use itp_types::{parentchain::Address, Block, RsaRequest, ShardIdentifier, H256};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
-use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
-use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 use std::{sync::Arc, vec::Vec};
+
 pub fn process_indirect_call_in_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 	info!("Setting up test.");
 
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
-	let shielding_key = TestShieldingKey::new().unwrap();
+	let shielding_key = TestShieldingKey::create().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key));
 	let header = ParentchainHeaderBuilder::default().build();
 
@@ -113,7 +112,7 @@ pub fn submit_shielding_call_to_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
-	let shielding_key = TestShieldingKey::new().unwrap();
+	let shielding_key = TestShieldingKey::create().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key));
 	let header = ParentchainHeaderBuilder::default().build();
 

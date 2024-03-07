@@ -37,7 +37,7 @@ use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
 use log::*;
 use rustls::{ClientConfig, ClientSession, Stream};
-use sgx_types::*;
+use sgx_types::{error::*, types::*};
 use std::{
 	backtrace::{self, PrintFormat},
 	convert::TryInto,
@@ -166,21 +166,21 @@ where
 #[no_mangle]
 pub unsafe extern "C" fn request_state_provisioning(
 	socket_fd: c_int,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	shard: *const u8,
 	shard_size: u32,
 	skip_ra: c_int,
-) -> sgx_status_t {
-	let _ = backtrace::enable_backtrace("enclave.signed.so", PrintFormat::Short);
+) -> SgxStatus {
+	let _ = backtrace::enable_backtrace(PrintFormat::Short);
 	let shard = ShardIdentifier::from_slice(slice::from_raw_parts(shard, shard_size as usize));
 
 	let state_handler = match GLOBAL_STATE_HANDLER_COMPONENT.get() {
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -188,7 +188,7 @@ pub unsafe extern "C" fn request_state_provisioning(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -196,7 +196,7 @@ pub unsafe extern "C" fn request_state_provisioning(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn request_state_provisioning(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -219,7 +219,7 @@ pub unsafe extern "C" fn request_state_provisioning(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -242,7 +242,7 @@ pub unsafe extern "C" fn request_state_provisioning(
 		return e.into()
 	};
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 /// Internal [`request_state_provisioning`] function to be able to use the handy `?` operator.
@@ -250,8 +250,8 @@ pub unsafe extern "C" fn request_state_provisioning(
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn request_state_provisioning_internal<StateAndKeySealer: SealStateAndKeys>(
 	socket_fd: c_int,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	shard: ShardIdentifier,
 	skip_ra: c_int,
@@ -281,8 +281,8 @@ pub(crate) fn request_state_provisioning_internal<StateAndKeySealer: SealStateAn
 }
 
 fn tls_client_config<A: EnclaveAttestationOCallApi + 'static>(
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	ocall_api: A,
 	skip_ra: bool,

@@ -17,10 +17,6 @@
 
 //! Generic component containers.
 
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
-
-#[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use crate::{

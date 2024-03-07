@@ -13,14 +13,15 @@ log = { version = "0.4", default-features = false }
 ofb = { version = "0.4.0" }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false, optional = true }
+sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false, optional = true }
+
 # sgx deps
 # serde_json-sgx = { package = "serde_json", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["tserialize"] }
 sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 # substrate 
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -39,10 +40,15 @@ std = [
     "itp-sgx-io/std",
     "sp-core/std",
     "serde_json/std",
+    "sgx_crypto/userialize",
+    "sgx_serialize/userialize",
 ]
 sgx = [
     "sgx_tstd",
+    "sgx_tprotected_fs",
     "sgx_rand",
+    "sgx_serialize/tserialize",
+    "sgx_crypto/tserialize",
     "itp-sgx-io/sgx",
     # "serde_json-sgx",
 ]

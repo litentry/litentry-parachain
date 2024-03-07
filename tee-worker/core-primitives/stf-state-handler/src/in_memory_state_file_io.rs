@@ -15,12 +15,6 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	file_io::StateFileIo,
@@ -30,7 +24,12 @@ use codec::Encode;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesType};
 use itp_types::{ShardIdentifier, H256};
 use sp_core::blake2_256;
-use std::{boxed::Box, collections::HashMap, sync::Arc, vec::Vec};
+use std::{
+	boxed::Box,
+	collections::HashMap,
+	sync::{Arc, RwLock},
+	vec::Vec,
+};
 
 type StateHash = H256;
 type ShardDirectory<State> = HashMap<StateId, (StateHash, State)>;

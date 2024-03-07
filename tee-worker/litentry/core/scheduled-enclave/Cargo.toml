@@ -13,6 +13,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 thiserror = { version = "1.0.26", optional = true }
 
 # sgx-deps
+sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"], optional = true }
 thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
 
@@ -25,6 +26,7 @@ itp-types = { path = "../../../core-primitives/types", default-features = false 
 default = ["std"]
 sgx = [
     "sgx_tstd",
+    "sgx_tprotected_fs",
     "thiserror-sgx",
     "itp-sgx-io/sgx",
 ]

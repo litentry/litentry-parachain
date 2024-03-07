@@ -19,12 +19,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	base_pool::TrustedOperation,
 	error::Error,
@@ -42,7 +36,14 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, Hash, NumberFor},
 };
-use std::{boxed::Box, collections::HashMap, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	boxed::Box,
+	collections::HashMap,
+	string::String,
+	sync::{Arc, RwLock},
+	vec,
+	vec::Vec,
+};
 
 /// Mock for the trusted operation pool
 ///

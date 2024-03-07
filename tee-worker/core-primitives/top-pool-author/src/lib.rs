@@ -16,7 +16,7 @@
 */
 
 #![feature(trait_alias)]
-#![cfg_attr(feature = "mocks", feature(drain_filter))]
+#![cfg_attr(feature = "mocks", feature(extract_if))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(all(feature = "std", feature = "sgx"))]

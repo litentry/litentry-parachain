@@ -26,7 +26,7 @@ use base58::FromBase58Error;
 
 use crate::state_snapshot_primitives::StateId;
 use itp_types::ShardIdentifier;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{boxed::Box, format, string::String};
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -54,7 +54,7 @@ pub enum Error {
 	#[error("IO error: {0}")]
 	IO(std::io::Error),
 	#[error("SGX error, status: {0}")]
-	SgxError(sgx_status_t),
+	SgxError(SgxStatus),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }
@@ -71,8 +71,8 @@ impl From<codec::Error> for Error {
 	}
 }
 
-impl From<sgx_status_t> for Error {
-	fn from(sgx_status: sgx_status_t) -> Self {
+impl From<SgxStatus> for Error {
+	fn from(sgx_status: SgxStatus) -> Self {
 		Self::SgxError(sgx_status)
 	}
 }

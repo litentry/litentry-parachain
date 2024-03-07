@@ -19,16 +19,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxMutex as Mutex;
-
-#[cfg(feature = "std")]
-use std::sync::Mutex;
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	base_pool as base,
 	base_pool::PruneStatus,
@@ -52,7 +42,7 @@ use std::{
 	collections::{HashMap, HashSet},
 	format,
 	string::String,
-	sync::Arc,
+	sync::{Arc, Mutex, RwLock},
 	time::Instant,
 	vec,
 	vec::Vec,

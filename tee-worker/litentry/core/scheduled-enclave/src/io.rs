@@ -33,7 +33,8 @@ mod sgx {
 	pub use itp_settings::files::SCHEDULED_ENCLAVE_FILE;
 	pub use itp_sgx_io::{seal, unseal, SealedIO};
 	pub use log::*;
-	pub use std::{boxed::Box, fs, path::PathBuf, sgxfs::SgxFile, sync::Arc};
+	pub use sgx_tprotected_fs::SgxFile;
+	pub use std::path::PathBuf;
 
 	#[derive(Clone, Debug)]
 	pub struct ScheduledEnclaveSeal {

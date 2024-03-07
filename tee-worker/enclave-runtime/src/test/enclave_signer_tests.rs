@@ -37,7 +37,7 @@ use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
 use itp_types::RsaRequest;
 use litentry_primitives::Identity;
-use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::Pair;
 use std::{sync::Arc, vec::Vec};
 
@@ -45,7 +45,7 @@ type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
 type TestStf = Stf<TrustedCallSigned, GetterExecutorMock, SgxExternalities, Runtime>;
 
 pub fn derive_key_is_deterministic() {
-	let rsa_key = Rsa3072KeyPair::new().unwrap();
+	let rsa_key = Rsa3072KeyPair::create().unwrap();
 
 	let first_ed_key = rsa_key.derive_ed25519().unwrap();
 	let second_ed_key = rsa_key.derive_ed25519().unwrap();

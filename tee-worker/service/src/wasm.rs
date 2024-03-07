@@ -14,10 +14,10 @@
 	limitations under the License.
 */
 
-use sgx_types::*;
+use sgx_types::types::*;
 
 extern "C" {
-	fn sgxwasm_init(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+	fn sgxwasm_init(eid: sgx_enclave_id_t, retval: *mut SgxStatus) -> SgxStatus;
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,11 +39,11 @@ pub enum BoundaryValue {
 }
 
 pub fn sgx_enclave_wasm_init(eid: sgx_enclave_id_t) -> Result<(), String> {
-	let mut retval: sgx_status_t = sgx_status_t::SGX_SUCCESS;
+	let mut retval: SgxStatus = SgxStatus::Success;
 	let result = unsafe { sgxwasm_init(eid, &mut retval) };
 
 	match result {
-		sgx_status_t::SGX_SUCCESS => {},
+		SgxStatus::Success => {},
 		_ => {
 			println!("[-] ECALL Enclave Failed {}!", result.as_str());
 			panic!("sgx_enclave_wasm_init's ECALL returned unknown error!");
@@ -51,7 +51,7 @@ pub fn sgx_enclave_wasm_init(eid: sgx_enclave_id_t) -> Result<(), String> {
 	}
 
 	match retval {
-		sgx_status_t::SGX_SUCCESS => {},
+		SgxStatus::Success => {},
 		_ => {
 			println!("[-] ECALL Enclave Function return fail: {}!", retval.as_str());
 			return Err(format!("ECALL func return error: {}", retval.as_str()))

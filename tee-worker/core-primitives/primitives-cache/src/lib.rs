@@ -35,15 +35,7 @@ pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
 }
 
-#[cfg(feature = "std")]
-use std::sync::RwLockReadGuard;
-#[cfg(feature = "std")]
-use std::sync::RwLockWriteGuard;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockReadGuard as RwLockReadGuard;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
+use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 use crate::error::Result;
 use lazy_static::lazy_static;

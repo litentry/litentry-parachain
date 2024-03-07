@@ -15,11 +15,8 @@
 
 */
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-
 use derive_more::{Display, From};
-use sgx_types::error::SgxStatus;
+use sgx_types::error::*;
 use std::prelude::v1::Box;
 
 #[derive(Debug, Display, From)]

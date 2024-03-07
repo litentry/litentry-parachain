@@ -16,7 +16,7 @@
 */
 
 #[cfg(feature = "sgx")]
-use std::sync::{RwLock, SgxRwLockWriteGuard as RwLockWriteGuard};
+use std::sync::{RwLock, RwLockWriteGuard};
 
 #[cfg(feature = "std")]
 use std::sync::{RwLock, RwLockWriteGuard};

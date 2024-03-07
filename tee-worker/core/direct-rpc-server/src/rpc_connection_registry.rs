@@ -15,15 +15,9 @@
 
 */
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{ForceWait, RpcConnectionRegistry, RpcHash};
 use itp_rpc::RpcResponse;
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, sync::RwLock};
 
 type HashMapLock<K, V> = RwLock<HashMap<K, V>>;
 

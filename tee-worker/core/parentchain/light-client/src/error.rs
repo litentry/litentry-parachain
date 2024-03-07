@@ -17,7 +17,7 @@
 
 use std::{boxed::Box, string::String};
 
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use thiserror_sgx as thiserror;
 
@@ -75,10 +75,10 @@ impl From<codec::Error> for Error {
 	}
 }
 
-impl From<Error> for sgx_status_t {
+impl From<Error> for SgxStatus {
 	/// return sgx_status for top level enclave functions
-	fn from(error: Error) -> sgx_status_t {
-		log::warn!("LightClientError into sgx_status_t: {:?}", error);
-		sgx_status_t::SGX_ERROR_UNEXPECTED
+	fn from(error: Error) -> SgxStatus {
+		log::warn!("LightClientError into SgxStatus: {:?}", error);
+		SgxStatus::Unexpected
 	}
 }

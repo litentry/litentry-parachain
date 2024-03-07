@@ -34,8 +34,8 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_types::ShardIdentifier;
-use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
-use sgx_types::{sgx_quote_sign_type_t, sgx_target_info_t};
+use sgx_crypto::rsa::Rsa3072KeyPair;
+use sgx_types::types::{QuoteSignType, TargetInfo};
 use std::{
 	net::{TcpListener, TcpStream},
 	os::unix::io::AsRawFd,
@@ -46,7 +46,7 @@ use std::{
 	vec::Vec,
 };
 
-static SIGN_TYPE: sgx_quote_sign_type_t = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+static SIGN_TYPE: QuoteSignType = QuoteSignType::Unlinkable;
 static SKIP_RA: i32 = 1;
 static QUOTE_SIZE: u32 = 0;
 
@@ -54,7 +54,7 @@ fn run_state_provisioning_server(seal_handler: impl UnsealStateAndKeys, port: u1
 	let listener = TcpListener::bind(server_addr(port)).unwrap();
 
 	let (socket, _addr) = listener.accept().unwrap();
-	let sgx_target_info: sgx_target_info_t = sgx_target_info_t::default();
+	let sgx_target_info: TargetInfo = TargetInfo::default();
 	run_state_provisioning_server_internal::<_, WorkerModeProvider>(
 		socket.as_raw_fd(),
 		SIGN_TYPE,
@@ -109,7 +109,7 @@ pub fn test_tls_ra_server_client_networking() {
 
 	// Start client.
 	let socket = TcpStream::connect(server_addr(port)).unwrap();
-	let sgx_target_info: sgx_target_info_t = sgx_target_info_t::default();
+	let sgx_target_info: TargetInfo = TargetInfo::default();
 	let result = request_state_provisioning_internal(
 		socket.as_raw_fd(),
 		SIGN_TYPE,
@@ -142,7 +142,7 @@ pub fn test_tls_ra_server_client_networking() {
 pub fn test_state_and_key_provisioning() {
 	let client_account = AccountId::from([42; 32]);
 	let state_key = Aes::new([3u8; 16], [0u8; 16]);
-	let shielding_key = Rsa3072KeyPair::new().unwrap();
+	let shielding_key = Rsa3072KeyPair::create().unwrap();
 	let initialized_state = EnclaveStf::init_state(AccountId::new([1u8; 32]));
 	let shard = ShardIdentifier::from([1u8; 32]);
 
@@ -161,7 +161,7 @@ pub fn test_state_and_key_provisioning() {
 
 	// Start client.
 	let socket = TcpStream::connect(server_addr(port)).unwrap();
-	let sgx_target_info: sgx_target_info_t = sgx_target_info_t::default();
+	let sgx_target_info: TargetInfo = TargetInfo::default();
 	let result = request_state_provisioning_internal(
 		socket.as_raw_fd(),
 		SIGN_TYPE,

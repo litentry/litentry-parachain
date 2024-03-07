@@ -17,7 +17,7 @@
 //! Primitives to handle multithreaded state access in the enclave.
 //!
 //! Note: In general the design should try to minimize usage of these, as potential deadlocks can
-//! occur. Documentation of the `SgxRwLock` says that panics __might__ occur when trying to acquire
+//! occur. Documentation of the `RwLock` says that panics __might__ occur when trying to acquire
 //! a lock multiple times in the same thread. However, tests have shown that it also might result in
 //! a deadlock.
 //!
@@ -31,32 +31,32 @@
 
 use crate::error::{Error, Result as EnclaveResult};
 use lazy_static::lazy_static;
-use std::sync::{SgxRwLock, SgxRwLockReadGuard, SgxRwLockWriteGuard};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 lazy_static! {
-	pub static ref SIDECHAIN_DB_LOCK: SgxRwLock<()> = Default::default();
+	pub static ref SIDECHAIN_DB_LOCK: RwLock<()> = Default::default();
 }
 
 pub struct EnclaveLock;
 
 impl SidechainRwLock for EnclaveLock {
-	fn read_sidechain_db() -> EnclaveResult<SgxRwLockReadGuard<'static, ()>> {
+	fn read_sidechain_db() -> EnclaveResult<RwLockReadGuard<'static, ()>> {
 		SIDECHAIN_DB_LOCK.read().map_err(|e| Error::Other(e.into()))
 	}
 
-	fn write_sidechain_db() -> EnclaveResult<SgxRwLockWriteGuard<'static, ()>> {
+	fn write_sidechain_db() -> EnclaveResult<RwLockWriteGuard<'static, ()>> {
 		SIDECHAIN_DB_LOCK.write().map_err(|e| Error::Other(e.into()))
 	}
 }
 
 pub trait SidechainRwLock {
-	fn read_sidechain_db() -> EnclaveResult<SgxRwLockReadGuard<'static, ()>>;
-	fn write_sidechain_db() -> EnclaveResult<SgxRwLockWriteGuard<'static, ()>>;
+	fn read_sidechain_db() -> EnclaveResult<RwLockReadGuard<'static, ()>>;
+	fn write_sidechain_db() -> EnclaveResult<RwLockWriteGuard<'static, ()>>;
 }
 
 // simple type defs to prevent too long names
-type AggregatedReadGuards<'a> = SgxRwLockReadGuard<'a, ()>;
-type AggregatedWriteGuards<'a> = SgxRwLockWriteGuard<'a, ()>;
+type AggregatedReadGuards<'a> = RwLockReadGuard<'a, ()>;
+type AggregatedWriteGuards<'a> = RwLockWriteGuard<'a, ()>;
 
 /// Useful, if all state must be accessed. Reduces the number of lines.
 pub trait EnclaveStateRWLock: SidechainRwLock {

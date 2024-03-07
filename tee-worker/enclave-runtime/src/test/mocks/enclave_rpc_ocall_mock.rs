@@ -19,7 +19,7 @@
 use codec::Encode;
 use itp_ocall_api::EnclaveRpcOCallApi;
 use itp_types::TrustedOperationStatus;
-use sgx_types::SgxResult;
+use sgx_types::error::SgxResult;
 use std::vec::Vec;
 
 #[derive(Clone, Debug, Default)]

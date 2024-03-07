@@ -19,16 +19,16 @@
 use crate::ocall::{ffi, OcallApi};
 use frame_support::ensure;
 use itp_ocall_api::{EnclaveIpfsOCallApi, IpfsCid};
-use sgx_types::{sgx_status_t, SgxResult};
+use sgx_types::error::*;
 
 impl EnclaveIpfsOCallApi for OcallApi {
 	fn write_ipfs(&self, encoded_state: &[u8]) -> SgxResult<IpfsCid> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let mut cid_buf = IpfsCid([0u8; 46]);
 
 		let res = unsafe {
 			ffi::ocall_write_ipfs(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				encoded_state.as_ptr(),
 				encoded_state.len() as u32,
 				cid_buf.0.as_mut_ptr(),
@@ -36,21 +36,21 @@ impl EnclaveIpfsOCallApi for OcallApi {
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(cid_buf)
 	}
 
 	fn read_ipfs(&self, cid: &IpfsCid) -> SgxResult<()> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 
 		let res = unsafe {
-			ffi::ocall_read_ipfs(&mut rt as *mut sgx_status_t, cid.0.as_ptr(), cid.0.len() as u32)
+			ffi::ocall_read_ipfs(&mut rt as *mut SgxStatus, cid.0.as_ptr(), cid.0.len() as u32)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(())
 	}

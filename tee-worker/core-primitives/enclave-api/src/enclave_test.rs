@@ -29,16 +29,16 @@ mod impl_ffi {
 	use frame_support::ensure;
 	use itp_enclave_api_ffi as ffi;
 	use log::*;
-	use sgx_types::sgx_status_t;
+	use sgx_types::error::*;
 
 	impl EnclaveTest for Enclave {
 		fn test_main_entrance(&self) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 
 			let result = unsafe { ffi::test_main_entrance(self.eid, &mut retval) };
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			debug!("[+] successfully executed enclave test main");
 

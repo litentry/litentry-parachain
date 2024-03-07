@@ -15,18 +15,12 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::{BlockHash, ShardIdentifier};
-use sgx_types::{sgx_status_t, SgxResult};
-use std::{string::String, vec::Vec};
+use sgx_types::error::*;
+use std::{string::String, sync::RwLock, vec::Vec};
 
 pub struct SidechainOCallApiMock<SignedSidechainBlockType> {
 	fetch_from_peer_blocks: Option<Vec<SignedSidechainBlockType>>,
@@ -114,7 +108,7 @@ where
 				.iter()
 				.map(|b| SignedSidechainBlock::decode(&mut b.encode().as_slice()).unwrap())
 				.collect()),
-			None => Err(sgx_status_t::SGX_ERROR_UNEXPECTED),
+			None => Err(SgxStatus::Unexpected),
 		}
 	}
 

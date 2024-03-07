@@ -15,14 +15,8 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{response_channel::ResponseChannel, DirectRpcError};
-use std::vec::Vec;
+use std::{sync::RwLock, vec::Vec};
 
 #[derive(Default)]
 pub struct ResponseChannelMock<Token>

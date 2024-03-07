@@ -21,7 +21,7 @@ use crate::ocall_bridge::bridge_api::{
 };
 use itp_enclave_api::remote_attestation::{QveReport, RemoteAttestationCallBacks};
 use log::debug;
-use sgx_types::*;
+use sgx_types::types::*;
 use std::{
 	net::{SocketAddr, TcpStream},
 	os::unix::io::IntoRawFd,
@@ -42,11 +42,11 @@ impl<E> RemoteAttestationBridge for RemoteAttestationOCall<E>
 where
 	E: RemoteAttestationCallBacks,
 {
-	fn init_quote(&self) -> OCallBridgeResult<(sgx_target_info_t, sgx_epid_group_id_t)> {
+	fn init_quote(&self) -> OCallBridgeResult<(TargetInfo, EpidGroupId)> {
 		debug!("RemoteAttestationBridge: init quote");
 		self.enclave_api.init_quote().map_err(|e| match e {
 			itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::InitQuote(s),
-			_ => OCallBridgeError::InitQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
+			_ => OCallBridgeError::InitQuote(SgxStatus::Unexpected),
 		})
 	}
 
@@ -66,16 +66,16 @@ where
 	fn get_quote(
 		&self,
 		revocation_list: Vec<u8>,
-		report: sgx_report_t,
-		quote_type: sgx_quote_sign_type_t,
-		spid: sgx_spid_t,
-		quote_nonce: sgx_quote_nonce_t,
-	) -> OCallBridgeResult<(sgx_report_t, Vec<u8>)> {
+		report: Report,
+		quote_type: QuoteSignType,
+		spid: Spid,
+		quote_nonce: QuoteNonce,
+	) -> OCallBridgeResult<(Report, Vec<u8>)> {
 		debug!("RemoteAttestationBridge: get quote type: {:?}", quote_type);
 		let real_quote_len =
 			self.enclave_api.calc_quote_size(revocation_list.clone()).map_err(|e| match e {
 				itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
-				_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
+				_ => OCallBridgeError::GetQuote(SgxStatus::Unexpected),
 			})?;
 
 		debug!("RemoteAttestationBridge: real quote length: {}", real_quote_len);
@@ -83,16 +83,16 @@ where
 			.get_quote(revocation_list, report, quote_type, spid, quote_nonce, real_quote_len)
 			.map_err(|e| match e {
 				itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
-				_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
+				_ => OCallBridgeError::GetQuote(SgxStatus::Unexpected),
 			})
 	}
 
-	fn get_dcap_quote(&self, report: sgx_report_t, quote_size: u32) -> OCallBridgeResult<Vec<u8>> {
+	fn get_dcap_quote(&self, report: Report, quote_size: u32) -> OCallBridgeResult<Vec<u8>> {
 		debug!("RemoteAttestationBridge: get dcap quote, size: {}", quote_size);
 
 		self.enclave_api.get_dcap_quote(report, quote_size).map_err(|e| match e {
 			itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
-			_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
+			_ => OCallBridgeError::GetQuote(SgxStatus::Unexpected),
 		})
 	}
 
@@ -100,8 +100,8 @@ where
 		&self,
 		quote: Vec<u8>,
 		current_time: i64,
-		quote_collateral: &sgx_ql_qve_collateral_t,
-		qve_report_info: sgx_ql_qe_report_info_t,
+		quote_collateral: &CQlQveCollateral,
+		qve_report_info: QlQeReportInfo,
 		supplemental_data_size: u32,
 	) -> OCallBridgeResult<QveReport> {
 		debug!("RemoteAttestationBridge: get qve report on quote, length: {}", quote.len());
@@ -116,22 +116,22 @@ where
 			)
 			.map_err(|e| match e {
 				itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
-				_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
+				_ => OCallBridgeError::GetQuote(SgxStatus::Unexpected),
 			})
 	}
 
 	fn get_update_info(
 		&self,
-		platform_blob: sgx_platform_info_t,
+		platform_blob: PlatformInfo,
 		enclave_trusted: i32,
-	) -> OCallBridgeResult<sgx_update_info_bit_t> {
+	) -> OCallBridgeResult<UpdateInfoBit> {
 		debug!("RemoteAttestationBridge: get update into");
 
 		self.enclave_api
 			.get_update_info(platform_blob, enclave_trusted)
 			.map_err(|e| match e {
 				itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetUpdateInfo(s),
-				_ => OCallBridgeError::GetUpdateInfo(sgx_status_t::SGX_ERROR_UNEXPECTED),
+				_ => OCallBridgeError::GetUpdateInfo(SgxStatus::Unexpected),
 			})
 	}
 }

@@ -16,7 +16,7 @@
 */
 
 use serde_derive::{Deserialize, Serialize};
-use sgx_types::*;
+use sgx_types::types::*;
 use std::str;
 
 #[cfg(test)]

@@ -28,7 +28,7 @@ use itp_types::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlockType;
 use its_sidechain::consensus_common::BlockImport;
-use sgx_types::SgxResult;
+use sgx_types::error::SgxResult;
 use sp_runtime::{traits::Header as ParentchainHeaderTrait, OpaqueExtrinsic};
 use std::{string::String, sync::Arc, vec::Vec};
 

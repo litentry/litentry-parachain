@@ -9,6 +9,7 @@ import { blake2AsU8a } from '@polkadot/util-crypto';
 import bitcore from 'bitcore-lib';
 import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
+import { base64Decode } from '@polkadot/util-crypto';
 
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 

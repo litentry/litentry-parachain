@@ -19,7 +19,7 @@
 use crate::ocall_bridge::bridge_api::{Bridge, SidechainBridge};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{slice, sync::Arc};
 
 /// # Safety
@@ -35,7 +35,7 @@ pub unsafe extern "C" fn ocall_fetch_sidechain_blocks_from_peer(
 	shard_identifier_size: u32,
 	sidechain_blocks_ptr: *mut u8,
 	sidechain_blocks_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	fetch_sidechain_blocks_from_peer(
 		last_imported_block_hash_ptr,
 		last_imported_block_hash_size,
@@ -60,7 +60,7 @@ fn fetch_sidechain_blocks_from_peer(
 	sidechain_blocks_ptr: *mut u8,
 	sidechain_blocks_size: u32,
 	sidechain_api: Arc<dyn SidechainBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let last_imported_block_hash_encoded = unsafe {
 		Vec::from(slice::from_raw_parts(
 			last_imported_block_hash_ptr,
@@ -85,7 +85,7 @@ fn fetch_sidechain_blocks_from_peer(
 		Ok(r) => r,
 		Err(e) => {
 			error!("fetch sidechain blocks from peer failed: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -95,10 +95,10 @@ fn fetch_sidechain_blocks_from_peer(
 		write_slice_and_whitespace_pad(sidechain_blocks_encoded_slice, sidechain_blocks_encoded)
 	{
 		error!("Failed to transfer encoded sidechain blocks to o-call buffer: {:?}", e);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
+		return SgxStatus::Unexpected
 	}
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 #[cfg(test)]
@@ -136,7 +136,7 @@ mod tests {
 		let decoded_blocks: Vec<SignedBlock> =
 			Decode::decode(&mut block_buffer.as_slice()).unwrap();
 
-		assert_eq!(result, sgx_status_t::SGX_SUCCESS);
+		assert_eq!(result, SgxStatus::Success);
 		assert_eq!(sidechain_blocks, decoded_blocks);
 	}
 
@@ -164,7 +164,7 @@ mod tests {
 			sidechain_bridge_mock,
 		);
 
-		assert_eq!(result, sgx_status_t::SGX_ERROR_UNEXPECTED);
+		assert_eq!(result, SgxStatus::Unexpected);
 	}
 
 	fn call_fetch_sidechain_blocks_from_peer(
@@ -173,7 +173,7 @@ mod tests {
 		shard_identifier: H256,
 		buffer: &mut Vec<u8>,
 		sidechain_bridge: Arc<dyn SidechainBridge>,
-	) -> sgx_status_t {
+	) -> SgxStatus {
 		let last_imported_block_hash_encoded = last_imported_block_hash.encode();
 		let maybe_until_block_hash_encoded = maybe_until_block_hash.encode();
 		let shard_identifier_encoded = shard_identifier.encode();

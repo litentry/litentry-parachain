@@ -29,19 +29,15 @@ use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_io::{seal, unseal};
 use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
 use log::*;
+use sgx_tprotected_fs::SgxFile;
 use sp_runtime::traits::{Block, Header};
 use std::{
 	boxed::Box,
 	fs,
 	path::{Path, PathBuf},
-	sgxfs::SgxFile,
 	sync::Arc,
 };
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
 use std::sync::RwLock;
 
 pub const DB_FILE: &str = "db.bin";

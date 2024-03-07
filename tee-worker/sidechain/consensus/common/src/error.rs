@@ -20,7 +20,7 @@
 use itp_types::BlockHash as ParentchainBlockHash;
 use its_block_verification::error::Error as VerificationError;
 use its_primitives::types::{block::BlockHash as SidechainBlockHash, BlockNumber};
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{
 	boxed::Box,
 	error,
@@ -37,7 +37,7 @@ pub use thiserror_sgx as thiserror;
 #[non_exhaustive]
 pub enum Error {
 	#[error("SGX error, status: {0}")]
-	Sgx(sgx_status_t),
+	Sgx(SgxStatus),
 	#[error("Unable to create block proposal.")]
 	CannotPropose,
 	#[error("Encountered poisoned lock")]
@@ -80,8 +80,8 @@ impl core::convert::From<codec::Error> for Error {
 	}
 }
 
-impl From<sgx_status_t> for Error {
-	fn from(sgx_status: sgx_status_t) -> Self {
+impl From<SgxStatus> for Error {
+	fn from(sgx_status: SgxStatus) -> Self {
 		Self::Sgx(sgx_status)
 	}
 }

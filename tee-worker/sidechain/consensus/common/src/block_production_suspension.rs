@@ -17,10 +17,6 @@
 
 //! Mechanisms to (temporarily) suspend the production of sidechain blocks.
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
 use std::sync::RwLock;
 
 use crate::error::{Error, Result};

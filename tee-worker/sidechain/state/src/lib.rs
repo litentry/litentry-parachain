@@ -27,7 +27,6 @@ mod error;
 mod impls;
 
 pub use error::*;
-pub use impls::*;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 mod sgx_reexports {

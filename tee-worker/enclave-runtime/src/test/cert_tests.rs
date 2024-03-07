@@ -18,7 +18,7 @@
 use crate::test::mocks::attestation_ocall_mock::AttestationOCallMock;
 use hex::FromHexError;
 use itp_attestation_handler::cert::{verify_attn_report, verify_mra_cert};
-use sgx_types::{sgx_measurement_t, sgx_status_t, SGX_HASH_SIZE};
+use sgx_types::{error::*, types::*};
 use std::vec::Vec;
 
 // Test data and tests are mostly copied from:
@@ -34,7 +34,7 @@ const CERT_WRONG_PLATFORM_BLOB: &[u8] = b"0\x82\x0c\x8c0\x82\x0c2\xa0\x03\x02\x0
 pub fn test_verify_mra_cert_should_work() {
 	let mr_enclave = get_mr_enclave_from_hex_string(TEST4_MRENCLAVE).unwrap();
 	let attestation_ocall =
-		AttestationOCallMock::create_with_mr_enclave(sgx_measurement_t { m: mr_enclave });
+		AttestationOCallMock::create_with_mr_enclave(Measurement { m: mr_enclave });
 	let result = verify_mra_cert(TEST4_CERT, false, false, &attestation_ocall);
 
 	assert!(result.is_ok());
@@ -43,11 +43,11 @@ pub fn test_verify_mra_cert_should_work() {
 pub fn test_verify_wrong_cert_is_err() {
 	let mr_enclave = get_mr_enclave_from_hex_string(TEST4_MRENCLAVE).unwrap();
 	let attestation_ocall =
-		AttestationOCallMock::create_with_mr_enclave(sgx_measurement_t { m: mr_enclave });
+		AttestationOCallMock::create_with_mr_enclave(Measurement { m: mr_enclave });
 	let result = verify_mra_cert(CERT_WRONG_PLATFORM_BLOB, false, false, &attestation_ocall);
 
 	assert!(result.is_err());
-	assert_eq!(result.unwrap_err(), sgx_status_t::SGX_ERROR_UNEXPECTED);
+	assert_eq!(result.unwrap_err(), SgxStatus::Unexpected);
 }
 
 pub fn test_given_wrong_platform_info_when_verifying_attestation_report_then_return_error() {
@@ -55,17 +55,17 @@ pub fn test_given_wrong_platform_info_when_verifying_attestation_report_then_ret
 	let result = verify_attn_report(CERT_WRONG_PLATFORM_BLOB, Vec::new(), &attestation_ocall);
 
 	assert!(result.is_err());
-	assert_eq!(result.unwrap_err(), sgx_status_t::SGX_ERROR_UNEXPECTED);
+	assert_eq!(result.unwrap_err(), SgxStatus::Unexpected);
 }
 
-fn get_mr_enclave_from_hex_string(input_str: &str) -> Result<[u8; SGX_HASH_SIZE], FromHexError> {
+fn get_mr_enclave_from_hex_string(input_str: &str) -> Result<[u8; 32], FromHexError> {
 	let decoded_str = hex::decode(input_str)?;
 
-	if decoded_str.len() != SGX_HASH_SIZE {
+	if decoded_str.len() != 32 {
 		return Err(FromHexError::InvalidStringLength)
 	}
 
-	let mut mr_enclave = [0u8; SGX_HASH_SIZE];
+	let mut mr_enclave = [0u8; 32];
 	mr_enclave.clone_from_slice(decoded_str.as_slice());
 
 	Ok(mr_enclave)

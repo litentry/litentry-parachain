@@ -15,19 +15,7 @@
 
 */
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockReadGuard as RwLockReadGuard;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "std")]
-use std::sync::RwLockReadGuard;
-#[cfg(feature = "std")]
-use std::sync::RwLockWriteGuard;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::string::{String, ToString};
 

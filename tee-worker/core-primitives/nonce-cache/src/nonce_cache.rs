@@ -15,15 +15,7 @@
 
 */
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "std")]
-use std::sync::RwLockWriteGuard;
+use std::sync::{RwLock, RwLockWriteGuard};
 
 use crate::{
 	error::{Error, Result},

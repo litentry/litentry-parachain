@@ -22,7 +22,7 @@ use frame_support::ensure;
 use itp_ocall_api::EnclaveSidechainOCallApi;
 use itp_types::{BlockHash, ShardIdentifier};
 use log::*;
-use sgx_types::{sgx_status_t, SgxResult};
+use sgx_types::error::*;
 use std::{string::String, vec::Vec};
 
 impl EnclaveSidechainOCallApi for OcallApi {
@@ -30,19 +30,19 @@ impl EnclaveSidechainOCallApi for OcallApi {
 		&self,
 		signed_blocks: Vec<SignedSidechainBlock>,
 	) -> SgxResult<()> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let signed_blocks_encoded = signed_blocks.encode();
 
 		let res = unsafe {
 			ffi::ocall_propose_sidechain_blocks(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				signed_blocks_encoded.as_ptr(),
 				signed_blocks_encoded.len() as u32,
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(())
 	}
@@ -51,19 +51,19 @@ impl EnclaveSidechainOCallApi for OcallApi {
 		&self,
 		signed_blocks: Vec<SignedSidechainBlock>,
 	) -> SgxResult<()> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let signed_blocks_encoded = signed_blocks.encode();
 
 		let res = unsafe {
 			ffi::ocall_store_sidechain_blocks(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				signed_blocks_encoded.as_ptr(),
 				signed_blocks_encoded.len() as u32,
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(())
 	}
@@ -76,7 +76,7 @@ impl EnclaveSidechainOCallApi for OcallApi {
 	) -> SgxResult<Vec<SignedSidechainBlock>> {
 		const BLOCK_BUFFER_SIZE: usize = 262144; // Buffer size for sidechain blocks in bytes (256KB).
 
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let last_imported_block_hash_encoded = last_imported_block_hash.encode();
 		let maybe_until_block_hash_encoded = maybe_until_block_hash.encode();
 		let shard_identifier_encoded = shard_identifier.encode();
@@ -86,7 +86,7 @@ impl EnclaveSidechainOCallApi for OcallApi {
 
 		let res = unsafe {
 			ffi::ocall_fetch_sidechain_blocks_from_peer(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				last_imported_block_hash_encoded.as_ptr(),
 				last_imported_block_hash_encoded.len() as u32,
 				maybe_until_block_hash_encoded.as_ptr(),
@@ -98,20 +98,20 @@ impl EnclaveSidechainOCallApi for OcallApi {
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		let decoded_signed_blocks: Vec<SignedSidechainBlock> =
 			Decode::decode(&mut signed_blocks_encoded.as_slice()).map_err(|e| {
 				error!("Failed to decode WorkerResponse: {}", e);
-				sgx_status_t::SGX_ERROR_UNEXPECTED
+				SgxStatus::Unexpected
 			})?;
 
 		Ok(decoded_signed_blocks)
 	}
 
 	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		const BLOCK_BUFFER_SIZE: usize = 262144; // Buffer size for sidechain blocks in bytes (256KB).
 
 		// We have to pre-allocate the vector and hope it's large enough (see GitHub issue #621).
@@ -119,19 +119,19 @@ impl EnclaveSidechainOCallApi for OcallApi {
 
 		let res = unsafe {
 			ffi::ocall_get_trusted_peers_urls(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				peers_encoded.as_mut_ptr(),
 				peers_encoded.len() as u32,
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		let decoded_peers: Vec<String> =
 			Decode::decode(&mut peers_encoded.as_slice()).map_err(|e| {
 				error!("Failed to decode peers list: {}", e);
-				sgx_status_t::SGX_ERROR_UNEXPECTED
+				SgxStatus::Unexpected
 			})?;
 
 		Ok(decoded_peers)

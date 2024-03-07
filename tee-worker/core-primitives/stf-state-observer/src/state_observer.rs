@@ -15,18 +15,12 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	traits::{ObserveState, UpdateState},
 };
 use itp_types::ShardIdentifier;
-use std::{collections::HashMap, vec::Vec};
+use std::{collections::HashMap, sync::RwLock, vec::Vec};
 
 /// State observer implementation. Receives updates in a dedicated queue.
 /// These updates are applied every time an observation function is executed.

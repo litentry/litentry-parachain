@@ -18,7 +18,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, Cid, IpfsBridge};
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{slice, sync::Arc};
 
 /// C-API exposed for o-call from enclave
@@ -28,13 +28,13 @@ pub unsafe extern "C" fn ocall_write_ipfs(
 	enc_state_size: u32,
 	cid: *mut u8,
 	cid_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	write_ipfs(enc_state, enc_state_size, cid, cid_size, Bridge::get_ipfs_api())
 }
 
 /// C-API exposed for o-call from enclave
 #[no_mangle]
-pub unsafe extern "C" fn ocall_read_ipfs(cid: *const u8, cid_size: u32) -> sgx_status_t {
+pub unsafe extern "C" fn ocall_read_ipfs(cid: *const u8, cid_size: u32) -> SgxStatus {
 	read_ipfs(cid, cid_size, Bridge::get_ipfs_api())
 }
 
@@ -44,33 +44,33 @@ fn write_ipfs(
 	cid: *mut u8,
 	cid_size: u32,
 	ipfs_api: Arc<dyn IpfsBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let state = unsafe { slice::from_raw_parts(enc_state, enc_state_size as usize) };
 	let cid = unsafe { slice::from_raw_parts_mut(cid, cid_size as usize) };
 
 	return match ipfs_api.write_to_ipfs(state) {
 		Ok(r) => {
 			cid.clone_from_slice(&r);
-			sgx_status_t::SGX_SUCCESS
+			SgxStatus::Success
 		},
 		Err(e) => {
 			error!("OCall to write_ipfs failed: {:?}", e);
-			sgx_status_t::SGX_ERROR_UNEXPECTED
+			SgxStatus::Unexpected
 		},
 	}
 }
 
-fn read_ipfs(cid: *const u8, cid_size: u32, ipfs_api: Arc<dyn IpfsBridge>) -> sgx_status_t {
+fn read_ipfs(cid: *const u8, cid_size: u32, ipfs_api: Arc<dyn IpfsBridge>) -> SgxStatus {
 	let _cid = unsafe { slice::from_raw_parts(cid, cid_size as usize) };
 
 	let mut cid: Cid = [0; 46];
 	cid.clone_from_slice(_cid);
 
 	match ipfs_api.read_from_ipfs(cid) {
-		Ok(_) => sgx_status_t::SGX_SUCCESS,
+		Ok(_) => SgxStatus::Success,
 		Err(e) => {
 			error!("OCall to read_ipfs failed: {:?}", e);
-			sgx_status_t::SGX_ERROR_UNEXPECTED
+			SgxStatus::Unexpected
 		},
 	}
 }

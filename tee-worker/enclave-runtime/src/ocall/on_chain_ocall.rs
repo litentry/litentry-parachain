@@ -24,7 +24,7 @@ use itp_ocall_api::{EnclaveOnChainOCallApi, Result};
 use itp_storage::{verify_storage_entries, Error as StorageError};
 use itp_types::{storage::StorageEntryVerified, WorkerRequest, WorkerResponse, H256};
 use log::*;
-use sgx_types::*;
+use sgx_types::error::*;
 use sp_runtime::{traits::Header, OpaqueExtrinsic};
 use std::vec::Vec;
 
@@ -35,13 +35,13 @@ impl EnclaveOnChainOCallApi for OcallApi {
 		parentchain_id: &ParentchainId,
 		await_each_inclusion: bool,
 	) -> SgxResult<()> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let extrinsics_encoded = extrinsics.encode();
 		let parentchain_id_encoded = parentchain_id.encode();
 
 		let res = unsafe {
 			ffi::ocall_send_to_parentchain(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				extrinsics_encoded.as_ptr(),
 				extrinsics_encoded.len() as u32,
 				parentchain_id_encoded.as_ptr(),
@@ -50,8 +50,8 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(())
 	}
@@ -61,7 +61,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 		req: Vec<WorkerRequest>,
 		parentchain_id: &ParentchainId,
 	) -> SgxResult<Vec<WorkerResponse<V>>> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		// Litentry: since #1221 we need 28139 bytes
 		let mut resp: Vec<u8> = vec![0; 4196 * 16];
 		let request_encoded = req.encode();
@@ -69,7 +69,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 
 		let res = unsafe {
 			ffi::ocall_worker_request(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				request_encoded.as_ptr(),
 				request_encoded.len() as u32,
 				parentchain_id_encoded.as_ptr(),
@@ -79,13 +79,13 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		let decoded_response: Vec<WorkerResponse<V>> = Decode::decode(&mut resp.as_slice())
 			.map_err(|e| {
 				error!("Failed to decode WorkerResponse: {}", e);
-				sgx_status_t::SGX_ERROR_UNEXPECTED
+				SgxStatus::Unexpected
 			})?;
 
 		Ok(decoded_response)

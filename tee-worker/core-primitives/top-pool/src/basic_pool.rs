@@ -20,10 +20,6 @@ pub extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxMutex as Mutex;
-
-#[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use crate::{

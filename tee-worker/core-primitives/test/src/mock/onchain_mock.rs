@@ -28,7 +28,7 @@ use itp_types::{
 	ShardIdentifier, WorkerRequest, WorkerResponse, WorkerType,
 };
 use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
-use sgx_types::*;
+use sgx_types::{error::SgxResult, types::*};
 use sp_core::H256;
 use sp_runtime::{traits::Header as HeaderTrait, OpaqueExtrinsic};
 use sp_std::prelude::*;
@@ -37,7 +37,7 @@ use std::{collections::HashMap, string::String};
 #[derive(Default, Clone, Debug)]
 pub struct OnchainMock {
 	inner: HashMap<Vec<u8>, Vec<u8>>,
-	mr_enclave: [u8; SGX_HASH_SIZE],
+	mr_enclave: [u8; 32],
 }
 
 impl OnchainMock {
@@ -66,7 +66,7 @@ impl OnchainMock {
 		self
 	}
 
-	pub fn with_mr_enclave(mut self, mr_enclave: [u8; SGX_HASH_SIZE]) -> Self {
+	pub fn with_mr_enclave(mut self, mr_enclave: [u8; 32]) -> Self {
 		self.mr_enclave = mr_enclave;
 		self
 	}
@@ -92,7 +92,7 @@ impl OnchainMock {
 }
 
 impl EnclaveAttestationOCallApi for OnchainMock {
-	fn sgx_init_quote(&self) -> SgxResult<(sgx_target_info_t, sgx_epid_group_id_t)> {
+	fn sgx_init_quote(&self) -> SgxResult<(TargetInfo, EpidGroupId)> {
 		todo!()
 	}
 
@@ -103,15 +103,15 @@ impl EnclaveAttestationOCallApi for OnchainMock {
 	fn get_quote(
 		&self,
 		_sig_rl: Vec<u8>,
-		_report: sgx_report_t,
-		_sign_type: sgx_quote_sign_type_t,
-		_spid: sgx_spid_t,
-		_quote_nonce: sgx_quote_nonce_t,
-	) -> SgxResult<(sgx_report_t, Vec<u8>)> {
+		_report: Report,
+		_sign_type: QuoteSignType,
+		_spid: Spid,
+		_quote_nonce: QuoteNonce,
+	) -> SgxResult<(Report, Vec<u8>)> {
 		todo!()
 	}
 
-	fn get_dcap_quote(&self, _report: sgx_report_t, _quote_size: u32) -> SgxResult<Vec<u8>> {
+	fn get_dcap_quote(&self, _report: Report, _quote_size: u32) -> SgxResult<Vec<u8>> {
 		todo!()
 	}
 
@@ -119,23 +119,23 @@ impl EnclaveAttestationOCallApi for OnchainMock {
 		&self,
 		_quote: Vec<u8>,
 		_current_time: i64,
-		_quote_collateral: sgx_ql_qve_collateral_t,
-		_qve_report_info: sgx_ql_qe_report_info_t,
+		_quote_collateral: CQlQveCollateral,
+		_qve_report_info: QlQeReportInfo,
 		_supplemental_data_size: u32,
-	) -> SgxResult<(u32, sgx_ql_qv_result_t, sgx_ql_qe_report_info_t, Vec<u8>)> {
+	) -> SgxResult<(u32, QlQvResult, QlQeReportInfo, Vec<u8>)> {
 		todo!()
 	}
 
 	fn get_update_info(
 		&self,
-		_platform_info: sgx_platform_info_t,
+		_platform_info: PlatformInfo,
 		_enclave_trusted: i32,
-	) -> SgxResult<sgx_update_info_bit_t> {
+	) -> SgxResult<UpdateInfoBit> {
 		todo!()
 	}
 
-	fn get_mrenclave_of_self(&self) -> SgxResult<sgx_measurement_t> {
-		Ok(sgx_measurement_t { m: self.mr_enclave })
+	fn get_mrenclave_of_self(&self) -> SgxResult<Measurement> {
+		Ok(Measurement { m: self.mr_enclave })
 	}
 }
 

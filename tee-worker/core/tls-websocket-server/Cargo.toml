@@ -7,15 +7,15 @@ edition = "2021"
 [dependencies]
 bit-vec = { version = "0.6", default-features = false }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
-rcgen = { package = "rcgen", default-features = false, git = "https://github.com/integritee-network/rcgen" }
+rcgen = { git = "https://github.com/Kailai-Wang/rcgen-sgx", branch = "sgx-sdk-2.0.0", default-features = false, features = ["pem"] }
 
 # sgx dependencies
 sgx_tstd = { optional = true, features = ["net", "thread"], git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
 
 # sgx enabled external libraries
-mio-extras = { optional = true, default-features = false, git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b" }
-mio_sgx = { package = "mio", optional = true, git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
-rustls_sgx = { package = "rustls", optional = true, git = "https://github.com/mesalock-linux/rustls", branch = "mesalock_sgx" }
+mio-extras = { optional = true, default-features = false, git = "https://github.com/Kailai-Wang/mio-extras-sgx", branch = "sgx-sdk-2.0.0" }
+mio_sgx = { package = "mio", optional = true, git = "https://github.com/Kailai-Wang/mio-sgx", branch = "sgx-sdk-2.0.0" }
+rustls_sgx = { package = "rustls", optional = true, git = "https://github.com/Kailai-Wang/rustls-sgx", branch = "sgx-sdk-2.0.0" }
 thiserror_sgx = { package = "thiserror", optional = true, git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }
 tungstenite_sgx = { package = "tungstenite", optional = true, git = "https://github.com/Kailai-Wang/tungstenite-rs-sgx", branch = "sgx-sdk-2.0.0", features = ["rustls-tls-webpki-roots"] }
 webpki_sgx = { package = "webpki", optional = true, git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_sgx" }
@@ -47,7 +47,6 @@ sgx = [
     "mio-extras/sgx",
     "mio_sgx",
     "rcgen/sgx",
-    "rcgen/pem_sgx",
     "rustls_sgx",
     "sgx_tstd",
     "thiserror_sgx",
@@ -59,7 +58,7 @@ std = [
     "mio",
     "mio-extras/std",
     "rcgen/std",
-    "rcgen/pem",
+    "rcgen/std",
     "rustls",
     "thiserror",
     "tungstenite",

@@ -15,12 +15,6 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	traits::{ObserveState, UpdateState},
@@ -28,7 +22,7 @@ use crate::{
 use core::fmt::Debug;
 use itp_types::ShardIdentifier;
 use log::*;
-use std::vec::Vec;
+use std::{sync::RwLock, vec::Vec};
 
 /// Observe state mock.
 #[derive(Default)]

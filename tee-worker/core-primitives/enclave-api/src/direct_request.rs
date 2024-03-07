@@ -30,11 +30,11 @@ mod impl_ffi {
 	use crate::{error::Error, Enclave, EnclaveResult};
 	use frame_support::ensure;
 	use itp_enclave_api_ffi as ffi;
-	use sgx_types::sgx_status_t;
+	use sgx_types::error::*;
 
 	impl DirectRequest for Enclave {
 		fn rpc(&self, request: Vec<u8>) -> EnclaveResult<Vec<u8>> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 			let response_len = 8192;
 			let mut response: Vec<u8> = vec![0u8; response_len as usize];
 
@@ -49,8 +49,8 @@ mod impl_ffi {
 				)
 			};
 
-			ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(res == SgxStatus::Success, Error::Sgx(res));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			Ok(response)
 		}

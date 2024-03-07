@@ -35,8 +35,8 @@ ipfs-api = "0.11.0"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec"] }
 
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["tserialize"] }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false, features = ["userialize"] }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 # local
 itc-parentchain = { path = "../core/parentchain/parentchain-crate" }

@@ -15,15 +15,9 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{ConnectionToken, WebSocketMessageHandler, WebSocketResult};
 use log::debug;
-use std::{collections::HashMap, string::String, vec::Vec};
+use std::{collections::HashMap, string::String, sync::RwLock, vec::Vec};
 
 pub struct WebSocketHandlerMock {
 	pub responses: Vec<String>,

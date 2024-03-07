@@ -25,10 +25,9 @@ use itertools::Itertools;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use log::*;
 use serde_json::Value;
-use sgx_types::{
-	sgx_platform_info_t, sgx_quote_t, sgx_status_t, SgxResult, SGX_PLATFORM_INFO_SIZE,
-};
+use sgx_types::{error::*, types::*};
 use std::{
+	format,
 	io::BufReader,
 	ptr, str,
 	string::String,
@@ -63,8 +62,7 @@ pub mod sgx {
 	use bit_vec::BitVec;
 	use chrono::{Duration, TimeZone, Utc as TzUtc};
 	use num_bigint::BigUint;
-	use sgx_tcrypto::SgxEccHandle;
-	use sgx_types::{sgx_ec256_private_t, sgx_ec256_public_t};
+	use sgx_crypto::ecc::*;
 	use yasna::models::ObjectIdentifier;
 
 	const ISSUER: &str = "Integritee";
@@ -73,15 +71,15 @@ pub mod sgx {
 	/// `payload` must be a valid a string, not just arbitrary data.
 	pub fn gen_ecc_cert(
 		payload: &str,
-		prv_k: &sgx_ec256_private_t,
-		pub_k: &sgx_ec256_public_t,
-		ecc_handle: &SgxEccHandle,
-	) -> Result<(Vec<u8>, Vec<u8>), sgx_status_t> {
+		prv_k: &EcPrivateKey,
+		pub_k: &EcPublicKey,
+		ecc_handle: &EcKeyPair,
+	) -> Result<(Vec<u8>, Vec<u8>), SgxStatus> {
 		// Generate public key bytes since both DER will use it
 		let mut pub_key_bytes: Vec<u8> = vec![4];
-		let mut pk_gx = pub_k.gx;
+		let mut pk_gx = pub_k.public_key().gx.clone();
 		pk_gx.reverse();
-		let mut pk_gy = pub_k.gy;
+		let mut pk_gy = pub_k.public_key().gy.clone();
 		pk_gy.reverse();
 		pub_key_bytes.extend_from_slice(&pk_gx);
 		pub_key_bytes.extend_from_slice(&pk_gy);
@@ -173,13 +171,13 @@ pub mod sgx {
 				// Signature
 				let sig = {
 					let tbs = &writer.buf[4..];
-					ecc_handle.ecdsa_sign_slice(tbs, prv_k).unwrap()
+					ecc_handle.private_key().sign(tbs).unwrap()
 				};
 				let sig_der = yasna::construct_der(|writer| {
 					writer.write_sequence(|writer| {
-						let mut sig_x = sig.x;
+						let mut sig_x = sig.signature().x.clone();
 						sig_x.reverse();
-						let mut sig_y = sig.y;
+						let mut sig_y = sig.signature().y.clone();
 						sig_y.reverse();
 						writer.next().write_biguint(&BigUint::from_slice(&sig_x));
 						writer.next().write_biguint(&BigUint::from_slice(&sig_y));
@@ -204,7 +202,7 @@ pub mod sgx {
 				let inner_key_der = yasna::construct_der(|writer| {
 					writer.write_sequence(|writer| {
 						writer.next().write_u8(1);
-						let mut prv_k_r = prv_k.r;
+						let mut prv_k_r = prv_k.private_key().r.clone();
 						prv_k_r.reverse();
 						writer.next().write_bytes(&prv_k_r);
 						writer.next().write_tagged(yasna::Tag::context(1), |writer| {
@@ -242,7 +240,7 @@ pub fn parse_cert_issuer(cert_der: &[u8]) -> SgxResult<Vec<u8>> {
 	let mut offset = cert_der
 		.windows(prime256v1_oid.len())
 		.position(|window| window == prime256v1_oid)
-		.ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+		.ok_or(SgxStatus::Unexpected)?;
 	offset += 11; // 10 + TAG (0x03)
 
 	// Obtain Public Key length
@@ -276,7 +274,7 @@ where
 	let mut offset = cert_der
 		.windows(prime256v1_oid.len())
 		.position(|window| window == prime256v1_oid)
-		.ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+		.ok_or(SgxStatus::Unexpected)?;
 	offset += 11; // 10 + TAG (0x03)
 
 	// Obtain Public Key length
@@ -295,7 +293,7 @@ where
 	let mut offset = cert_der
 		.windows(ns_cmt_oid.len())
 		.position(|window| window == ns_cmt_oid)
-		.ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+		.ok_or(SgxStatus::Unexpected)?;
 	offset += 12; // 11 + TAG (0x04)
 
 	// Obtain Netscape Comment length
@@ -310,17 +308,17 @@ where
 	let mut payload = cert_der[offset..offset + len].to_vec();
 	trace!("payload in mra cert verifier is: {:?}", &payload);
 	if is_payload_base64_encoded {
-		payload = base64::decode(&payload[..]).or(Err(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
+		payload = base64::decode(&payload[..]).or(Err(SgxStatus::Unexpected))?;
 	}
 	trace!("payload in mra cert verifier is: {:?}", &payload);
 	if !is_dcap {
 		// Extract each field
 		let mut iter = payload.split(|x| *x == b'|');
-		let attn_report_raw = iter.next().ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
-		let sig_raw = iter.next().ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+		let attn_report_raw = iter.next().ok_or(SgxStatus::Unexpected)?;
+		let sig_raw = iter.next().ok_or(SgxStatus::Unexpected)?;
 		let sig = base64::decode(sig_raw).map_err(|e| EnclaveError::Other(e.into()))?;
 
-		let sig_cert_raw = iter.next().ok_or(sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+		let sig_cert_raw = iter.next().ok_or(SgxStatus::Unexpected)?;
 		let sig_cert_dec = base64::decode_config(sig_cert_raw, base64::STANDARD)
 			.map_err(|e| EnclaveError::Other(e.into()))?;
 		let sig_cert = webpki::EndEntityCert::from(&sig_cert_dec).expect("Bad DER");
@@ -354,7 +352,7 @@ where
 			Ok(_) => info!("Cert is good"),
 			Err(e) => {
 				error!("Cert verification error {:?}", e);
-				return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+				return Err(SgxStatus::Unexpected)
 			},
 		}
 
@@ -364,7 +362,7 @@ where
 			Ok(_) => info!("Signature good"),
 			Err(e) => {
 				error!("Signature verification error {:?}", e);
-				return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+				return Err(SgxStatus::Unexpected)
 			},
 		}
 
@@ -386,21 +384,21 @@ where
 {
 	// Verify attestation report
 	// 1. Check timestamp is within 24H (90day is recommended by Intel)
-	let attn_report: Value =
-		serde_json::from_slice(report_raw).map_err(|e| EnclaveError::Other(e.into()))?;
+	let attn_report: Value = serde_json::from_slice(report_raw)
+		.map_err(|e| EnclaveError::Other(format!("{e}").into()))?;
 	if let Value::String(time) = &attn_report["timestamp"] {
 		let time_fixed = time.clone() + "+0000";
 		let ts = DateTime::parse_from_str(&time_fixed, "%Y-%m-%dT%H:%M:%S%.f%z")
-			.map_err(|e| EnclaveError::Other(e.into()))?
+			.map_err(|e| EnclaveError::Other(format!("{e}").into()))?
 			.timestamp();
 		let now = SystemTime::now()
 			.duration_since(UNIX_EPOCH)
-			.map_err(|e| EnclaveError::Other(e.into()))?
+			.map_err(|e| EnclaveError::Other(format!("{e}").into()))?
 			.as_secs() as i64;
 		info!("Time diff = {}", now - ts);
 	} else {
 		error!("Failed to fetch timestamp from attestation report");
-		return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+		return Err(SgxStatus::Unexpected)
 	}
 
 	// 2. Verify quote status (mandatory field)
@@ -423,7 +421,7 @@ where
 						)
 						.map_err(|e| {
 							error!("failed to push element to platform info blob buffer, exceeding buffer size ({})", e);
-							sgx_status_t::SGX_ERROR_UNEXPECTED
+							SgxStatus::Unexpected
 						})?;
 					}
 
@@ -431,23 +429,23 @@ where
 					// if that's not the case, the following error will occur
 					let platform_info = buf.into_inner().map_err(|e| {
 						error!("Failed to extract platform info from InfoBlob, result does not contain enough elements (require: {}, found: {})", e.capacity(), e.len());
-						sgx_status_t::SGX_ERROR_UNEXPECTED
+						SgxStatus::Unexpected
 					})?;
 
-					attestation_ocall.get_update_info(sgx_platform_info_t { platform_info }, 1)?;
+					attestation_ocall.get_update_info(PlatformInfo { platform_info }, 1)?;
 				} else {
 					error!("Failed to fetch platformInfoBlob from attestation report");
-					return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+					return Err(SgxStatus::Unexpected)
 				}
 			},
 			status => {
 				error!("Unexpected status in attestation report: {}", status);
-				return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+				return Err(SgxStatus::Unexpected)
 			},
 		}
 	} else {
 		error!("Failed to fetch isvEnclaveQuoteStatus from attestation report");
-		return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+		return Err(SgxStatus::Unexpected)
 	}
 
 	// 3. Verify quote body
@@ -455,7 +453,7 @@ where
 		let quote = base64::decode(quote_raw).map_err(|e| EnclaveError::Other(e.into()))?;
 		debug!("Quote = {:?}", quote);
 		// TODO: lack security check here
-		let sgx_quote: sgx_quote_t = unsafe { ptr::read(quote.as_ptr() as *const _) };
+		let sgx_quote: Quote = unsafe { ptr::read(quote.as_ptr() as *const _) };
 
 		let ti = attestation_ocall.get_mrenclave_of_self()?;
 		if sgx_quote.report_body.mr_enclave.m != ti.m {
@@ -463,7 +461,7 @@ where
 				"mr_enclave is not equal to self {:?} != {:?}",
 				sgx_quote.report_body.mr_enclave.m, ti.m
 			);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+			return Err(SgxStatus::Unexpected)
 		}
 
 		// ATTENTION
@@ -490,7 +488,7 @@ where
 		}
 	} else {
 		error!("Failed to fetch isvEnclaveQuoteBody from attestation report");
-		return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+		return Err(SgxStatus::Unexpected)
 	}
 
 	Ok(())

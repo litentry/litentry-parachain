@@ -18,15 +18,15 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, RemoteAttestationBridge};
 use log::*;
-use sgx_types::{c_int, sgx_status_t};
+use sgx_types::{c_int, SgxStatus};
 use std::sync::Arc;
 
 #[no_mangle]
-pub extern "C" fn ocall_get_ias_socket(ret_fd: *mut c_int) -> sgx_status_t {
+pub extern "C" fn ocall_get_ias_socket(ret_fd: *mut c_int) -> SgxStatus {
 	get_ias_socket(ret_fd, Bridge::get_ra_api()) // inject the RA API (global state)
 }
 
-fn get_ias_socket(ret_fd: *mut c_int, ra_api: Arc<dyn RemoteAttestationBridge>) -> sgx_status_t {
+fn get_ias_socket(ret_fd: *mut c_int, ra_api: Arc<dyn RemoteAttestationBridge>) -> SgxStatus {
 	debug!("    Entering ocall_get_ias_socket");
 	let socket_result = ra_api.get_ias_socket();
 
@@ -35,7 +35,7 @@ fn get_ias_socket(ret_fd: *mut c_int, ra_api: Arc<dyn RemoteAttestationBridge>) 
 			unsafe {
 				*ret_fd = s;
 			}
-			sgx_status_t::SGX_SUCCESS
+			SgxStatus::Success
 		},
 		Err(e) => {
 			error!("[-]  Failed to get IAS socket: {:?}", e);
@@ -65,7 +65,7 @@ mod tests {
 
 		let ret_status = get_ias_socket(&mut ias_sock as *mut i32, Arc::new(ra_ocall_api_mock));
 
-		assert_eq!(ret_status, sgx_status_t::SGX_SUCCESS);
+		assert_eq!(ret_status, SgxStatus::Success);
 		assert_eq!(ias_sock, expected_socket);
 	}
 
@@ -80,7 +80,7 @@ mod tests {
 		let mut ias_sock: i32 = 0;
 		let ret_status = get_ias_socket(&mut ias_sock as *mut i32, Arc::new(ra_ocall_api_mock));
 
-		assert_ne!(ret_status, sgx_status_t::SGX_SUCCESS);
+		assert_ne!(ret_status, SgxStatus::Success);
 		assert_eq!(ias_sock, 0);
 	}
 }

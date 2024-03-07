@@ -21,7 +21,7 @@ use itp_enclave_api::{
 };
 use itp_types::ShardIdentifier;
 use log::*;
-use sgx_types::*;
+use sgx_types::types::*;
 use std::{
 	net::{TcpListener, TcpStream},
 	os::unix::io::AsRawFd,
@@ -29,8 +29,8 @@ use std::{
 
 pub fn enclave_run_state_provisioning_server<E: TlsRemoteAttestation>(
 	enclave_api: &E,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	addr: &str,
 	skip_ra: bool,
@@ -72,7 +72,7 @@ pub fn enclave_run_state_provisioning_server<E: TlsRemoteAttestation>(
 
 pub fn enclave_request_state_provisioning<E: TlsRemoteAttestation + RemoteAttestation>(
 	enclave_api: &E,
-	sign_type: sgx_quote_sign_type_t,
+	sign_type: QuoteSignType,
 	addr: &str,
 	shard: &ShardIdentifier,
 	skip_ra: bool,

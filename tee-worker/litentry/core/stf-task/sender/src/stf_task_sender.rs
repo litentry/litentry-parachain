@@ -13,19 +13,17 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use crate::error::{Error, Result};
+
+use crate::{
+	error::{Error, Result},
+	RequestType,
+};
 use lazy_static::lazy_static;
 use log::*;
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
 use std::sync::{
 	mpsc::{channel, Receiver, Sender},
-	Arc,
+	Arc, Mutex,
 };
-
-use crate::RequestType;
-#[cfg(feature = "std")]
-use std::sync::Mutex;
 
 pub type StfSender = Sender<RequestType>;
 

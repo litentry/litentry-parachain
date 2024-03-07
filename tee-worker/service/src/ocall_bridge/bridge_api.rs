@@ -20,7 +20,7 @@ use itp_enclave_api::remote_attestation::QveReport;
 use lazy_static::lazy_static;
 use log::*;
 use parking_lot::RwLock;
-use sgx_types::*;
+use sgx_types::types::*;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(test)]
@@ -118,11 +118,11 @@ pub trait GetOCallBridgeComponents {
 #[derive(Debug, thiserror::Error)]
 pub enum OCallBridgeError {
 	#[error("GetQuote Error: {0}")]
-	GetQuote(sgx_status_t),
+	GetQuote(SgxStatus),
 	#[error("InitQuote Error: {0}")]
-	InitQuote(sgx_status_t),
+	InitQuote(SgxStatus),
 	#[error("GetUpdateInfo Error: {0}")]
-	GetUpdateInfo(sgx_status_t),
+	GetUpdateInfo(SgxStatus),
 	#[error("GetIasSocket Error: {0}")]
 	GetIasSocket(String),
 	#[error("UpdateMetric Error: {0}")]
@@ -147,13 +147,13 @@ pub enum OCallBridgeError {
 	TargetBParentchainNotInitialized,
 }
 
-impl From<OCallBridgeError> for sgx_status_t {
-	fn from(o: OCallBridgeError) -> sgx_status_t {
+impl From<OCallBridgeError> for SgxStatus {
+	fn from(o: OCallBridgeError) -> SgxStatus {
 		match o {
 			OCallBridgeError::GetQuote(s) => s,
 			OCallBridgeError::InitQuote(s) => s,
 			OCallBridgeError::GetUpdateInfo(s) => s,
-			_ => sgx_status_t::SGX_ERROR_UNEXPECTED,
+			_ => SgxStatus::Unexpected,
 		}
 	}
 }
@@ -164,7 +164,7 @@ pub type OCallBridgeResult<T> = Result<T, OCallBridgeError>;
 #[cfg_attr(test, automock)]
 pub trait RemoteAttestationBridge {
 	/// initialize the quote
-	fn init_quote(&self) -> OCallBridgeResult<(sgx_target_info_t, sgx_epid_group_id_t)>;
+	fn init_quote(&self) -> OCallBridgeResult<(TargetInfo, EpidGroupId)>;
 
 	/// get the intel attestation service socket
 	fn get_ias_socket(&self) -> OCallBridgeResult<i32>;
@@ -173,31 +173,31 @@ pub trait RemoteAttestationBridge {
 	fn get_quote(
 		&self,
 		revocation_list: Vec<u8>,
-		report: sgx_report_t,
-		quote_type: sgx_quote_sign_type_t,
-		spid: sgx_spid_t,
-		quote_nonce: sgx_quote_nonce_t,
-	) -> OCallBridgeResult<(sgx_report_t, Vec<u8>)>;
+		report: Report,
+		quote_type: QuoteSignType,
+		spid: Spid,
+		quote_nonce: QuoteNonce,
+	) -> OCallBridgeResult<(Report, Vec<u8>)>;
 
 	/// retrieve the quote from dcap server
-	fn get_dcap_quote(&self, report: sgx_report_t, quote_size: u32) -> OCallBridgeResult<Vec<u8>>;
+	fn get_dcap_quote(&self, report: Report, quote_size: u32) -> OCallBridgeResult<Vec<u8>>;
 
 	// Retrieve verification of quote
 	fn get_qve_report_on_quote(
 		&self,
 		quote: Vec<u8>,
 		current_time: i64,
-		quote_collateral: &sgx_ql_qve_collateral_t,
-		qve_report_info: sgx_ql_qe_report_info_t,
+		quote_collateral: &CQlQveCollateral,
+		qve_report_info: QlQeReportInfo,
 		supplemental_data_size: u32,
 	) -> OCallBridgeResult<QveReport>;
 
 	/// --
 	fn get_update_info(
 		&self,
-		platform_blob: sgx_platform_info_t,
+		platform_blob: PlatformInfo,
 		enclave_trusted: i32,
-	) -> OCallBridgeResult<sgx_update_info_bit_t>;
+	) -> OCallBridgeResult<UpdateInfoBit>;
 }
 
 /// Trait for all the OCalls related to parentchain operations

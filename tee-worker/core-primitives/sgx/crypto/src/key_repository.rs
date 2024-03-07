@@ -15,18 +15,12 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	ToPubkey,
 };
 use itp_sgx_io::SealedIO;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 /// Access a cryptographic key.
 pub trait AccessKey {

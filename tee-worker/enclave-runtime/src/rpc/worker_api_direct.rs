@@ -54,6 +54,7 @@ use litentry_macros::if_not_production;
 use litentry_primitives::DecryptableRequest;
 use log::debug;
 use sgx_crypto::rsa::Rsa3072PublicKey;
+use sgx_serialize::json;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
@@ -104,7 +105,7 @@ where
 			},
 		};
 
-		let rsa_pubkey_json = match serde_json::to_string(&rsa_pubkey) {
+		let rsa_pubkey_json = match json::encode(&rsa_pubkey) {
 			Ok(k) => k,
 			Err(x) => {
 				let error_msg: String =

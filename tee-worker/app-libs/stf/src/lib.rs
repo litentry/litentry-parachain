@@ -17,7 +17,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 #![feature(structural_match)]
-#![feature(rustc_attrs)]
 #![feature(core_intrinsics)]
 #![feature(derive_eq)]
 #![cfg_attr(all(not(target_env = "sgx"), not(feature = "std")), no_std)]

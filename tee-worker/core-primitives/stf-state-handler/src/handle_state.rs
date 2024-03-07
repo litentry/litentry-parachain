@@ -15,10 +15,6 @@
 
 */
 
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
-
-#[cfg(feature = "std")]
 use std::sync::RwLockWriteGuard;
 
 use crate::error::Result;

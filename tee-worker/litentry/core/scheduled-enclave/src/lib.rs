@@ -31,13 +31,8 @@ pub mod error;
 use error::Result;
 pub mod io;
 
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 lazy_static! {
 	/// Global instance of a ScheduledEnclave

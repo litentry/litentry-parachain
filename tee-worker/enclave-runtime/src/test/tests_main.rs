@@ -70,14 +70,14 @@ use its_sidechain::{
 	state::SidechainSystemExt,
 };
 use litentry_primitives::Identity;
-use sgx_tunittest::*;
-use sgx_types::size_t;
+use sgx_types::types::size_t;
+use sgx_unit_test::*;
 use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
 use sp_runtime::traits::Header as HeaderT;
 use std::{string::String, sync::Arc, time::Duration, vec::Vec};
 #[no_mangle]
 pub extern "C" fn test_main_entrance() -> size_t {
-	rsgx_unit_tests!(
+	run_test_cases!(
 		itp_attestation_handler::attestation_handler::tests::decode_spid_works,
 		stf_sgx_tests::enclave_account_initialization_works,
 		stf_sgx_tests::shield_funds_increments_signer_account_nonce,

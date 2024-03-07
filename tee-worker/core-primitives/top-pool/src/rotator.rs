@@ -21,16 +21,11 @@
 //! Keeps only recent extrinsic and discard the ones kept for a significant amount of time.
 //! Discarded extrinsics are banned so that they don't get re-imported again.
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{base_pool::TrustedOperation, primitives::TxHash};
 use std::{
 	collections::HashMap,
 	iter,
+	sync::RwLock,
 	time::{Duration, Instant},
 };
 

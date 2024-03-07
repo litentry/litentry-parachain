@@ -30,12 +30,8 @@ pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
 }
 
-#[cfg(feature = "std")]
-use std::sync::RwLockWriteGuard;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
-
 use crate::error::Result;
+use std::sync::RwLockWriteGuard;
 
 pub use nonce_cache::NonceCache;
 

@@ -19,7 +19,7 @@ use crate::config::Config;
 use itp_enclave_api::{enclave_base::EnclaveBase, error::Error as EnclaveApiError, EnclaveResult};
 use itp_settings::files::{ENCLAVE_FILE, ENCLAVE_TOKEN};
 use log::*;
-use sgx_types::*;
+use sgx_types::types::*;
 use std::{
 	fs::File,
 	io::{Read, Write},

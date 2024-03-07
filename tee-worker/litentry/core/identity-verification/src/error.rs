@@ -17,5 +17,5 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-pub use litentry_primitives::{ErrorDetail, IMPError as Error, IntoErrorDetail};
+pub use litentry_primitives::IMPError as Error;
 pub type Result<T> = core::result::Result<T, Error>;

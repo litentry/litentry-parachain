@@ -26,16 +26,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(feature = "sgx")]
 extern crate sgx_tstd as std;
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 pub use crate::error::Error;
-
 use crate::error::Result;
-use std::ops::Deref;
+use std::{ops::Deref, sync::RwLock};
 
 pub mod error;
 

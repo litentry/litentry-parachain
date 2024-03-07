@@ -51,7 +51,6 @@ use its_sidechain::{aura::proposer_factory::ProposerFactory, slots::SlotInfo};
 use lc_scheduled_enclave::ScheduledEnclaveMock;
 use log::*;
 use primitive_types::H256;
-use sgx_crypto_helper::RsaKeyPair;
 use sp_core::Pair;
 use std::{sync::Arc, vec};
 
@@ -69,7 +68,7 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 	info!("Setting up test.");
 
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
-	let shielding_key = TestShieldingKey::new().unwrap();
+	let shielding_key = TestShieldingKey::create().unwrap();
 	let state_key = TestStateKey::new([3u8; 16], [1u8; 16]);
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key));
 	let state_key_repo = Arc::new(TestStateKeyRepo::new(state_key));

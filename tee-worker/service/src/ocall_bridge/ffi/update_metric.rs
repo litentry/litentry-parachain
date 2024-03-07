@@ -18,17 +18,14 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, MetricsBridge};
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{slice, sync::Arc};
 
 /// # Safety
 ///
 /// FFI are always unsafe
 #[no_mangle]
-pub unsafe extern "C" fn ocall_update_metric(
-	metric_ptr: *const u8,
-	metric_size: u32,
-) -> sgx_status_t {
+pub unsafe extern "C" fn ocall_update_metric(metric_ptr: *const u8, metric_size: u32) -> SgxStatus {
 	update_metric(metric_ptr, metric_size, Bridge::get_metrics_api())
 }
 
@@ -36,15 +33,15 @@ fn update_metric(
 	metric_ptr: *const u8,
 	metric_size: u32,
 	oc_api: Arc<dyn MetricsBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let metric_encoded: Vec<u8> =
 		unsafe { Vec::from(slice::from_raw_parts(metric_ptr, metric_size as usize)) };
 
 	match oc_api.update_metric(metric_encoded) {
-		Ok(_) => sgx_status_t::SGX_SUCCESS,
+		Ok(_) => SgxStatus::Success,
 		Err(e) => {
 			error!("update_metric o-call failed: {:?}", e);
-			sgx_status_t::SGX_ERROR_UNEXPECTED
+			SgxStatus::Unexpected
 		},
 	}
 }

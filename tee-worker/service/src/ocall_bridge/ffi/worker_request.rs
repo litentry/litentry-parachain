@@ -19,7 +19,7 @@
 use crate::ocall_bridge::bridge_api::{Bridge, WorkerOnChainBridge};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{slice, sync::Arc, vec::Vec};
 
 /// # Safety
@@ -33,7 +33,7 @@ pub unsafe extern "C" fn ocall_worker_request(
 	parentchain_id_size: u32,
 	response: *mut u8,
 	resp_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	worker_request(
 		request,
 		req_size,
@@ -53,7 +53,7 @@ fn worker_request(
 	response: *mut u8,
 	resp_size: u32,
 	oc_api: Arc<dyn WorkerOnChainBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let request_vec: Vec<u8> =
 		unsafe { Vec::from(slice::from_raw_parts(request, req_size as usize)) };
 
@@ -65,13 +65,13 @@ fn worker_request(
 			let resp_slice = unsafe { slice::from_raw_parts_mut(response, resp_size as usize) };
 			if let Err(e) = write_slice_and_whitespace_pad(resp_slice, r) {
 				error!("Failed to transfer worker request response to o-call buffer: {:?}", e);
-				return sgx_status_t::SGX_ERROR_UNEXPECTED
+				return SgxStatus::Unexpected
 			}
-			sgx_status_t::SGX_SUCCESS
+			SgxStatus::Success
 		},
 		Err(e) => {
 			error!("Worker request failed: {:?}", e);
-			sgx_status_t::SGX_ERROR_UNEXPECTED
+			SgxStatus::Unexpected
 		},
 	}
 }

@@ -31,17 +31,13 @@ use itp_stf_primitives::{
 use itp_types::H256;
 use sp_core::Pair;
 use sp_runtime::traits::Header as HeaderTrait;
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-use std::{boxed::Box, marker::PhantomData, ops::Deref, time::Duration, vec::Vec};
+use std::{boxed::Box, marker::PhantomData, ops::Deref, sync::RwLock, time::Duration, vec::Vec};
 
 use crate::traits::StfShardVaultQuery;
 use itp_stf_primitives::{
 	traits::{GetterAuthorization, TrustedCallVerification},
 	types::TrustedOperation,
 };
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
 
 /// Mock for the StfExecutor.
 #[derive(Default)]

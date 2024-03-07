@@ -21,7 +21,6 @@
 //! and get all your needed pallets in
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![feature(prelude_import)]
 #![feature(structural_match)]
 #![feature(core_intrinsics)]
 #![feature(derive_eq)]

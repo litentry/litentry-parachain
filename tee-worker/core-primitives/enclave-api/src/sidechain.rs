@@ -52,7 +52,7 @@ mod impl_ffi {
 	use itp_enclave_api_ffi as ffi;
 	use itp_storage::StorageProof;
 	use itp_types::parentchain::ParentchainId;
-	use sgx_types::sgx_status_t;
+	use sgx_types::error::*;
 	use sp_runtime::generic::SignedBlock;
 
 	impl Sidechain for Enclave {
@@ -64,7 +64,7 @@ mod impl_ffi {
 			parentchain_id: &ParentchainId,
 			is_syncing: bool,
 		) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 			let blocks_enc = blocks.encode();
 			let events_enc = events.encode();
 			let events_proofs_enc = events_proofs.encode();
@@ -86,19 +86,19 @@ mod impl_ffi {
 				)
 			};
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			Ok(())
 		}
 
 		fn execute_trusted_calls(&self) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 
 			let result = unsafe { ffi::execute_trusted_calls(self.eid, &mut retval) };
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			Ok(())
 		}
@@ -107,14 +107,14 @@ mod impl_ffi {
 			&self,
 			until: u32,
 		) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 
 			let result = unsafe {
 				ffi::ignore_parentchain_block_import_validation_until(self.eid, &mut retval, &until)
 			};
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			Ok(())
 		}

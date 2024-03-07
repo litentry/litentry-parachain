@@ -18,22 +18,22 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, RemoteAttestationBridge};
 use log::*;
-use sgx_types::{sgx_epid_group_id_t, sgx_status_t, sgx_target_info_t};
+use sgx_types::{EpidGroupId, SgxStatus, TargetInfo};
 use std::sync::Arc;
 
 #[no_mangle]
 pub unsafe extern "C" fn ocall_sgx_init_quote(
-	ret_ti: *mut sgx_target_info_t,
-	ret_gid: *mut sgx_epid_group_id_t,
-) -> sgx_status_t {
+	ret_ti: *mut TargetInfo,
+	ret_gid: *mut EpidGroupId,
+) -> SgxStatus {
 	sgx_init_quote(ret_ti, ret_gid, Bridge::get_ra_api()) // inject the RA API (global state)
 }
 
 fn sgx_init_quote(
-	ret_ti: *mut sgx_target_info_t,
-	ret_gid: *mut sgx_epid_group_id_t,
+	ret_ti: *mut TargetInfo,
+	ret_gid: *mut EpidGroupId,
 	ra_api: Arc<dyn RemoteAttestationBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	debug!("    Entering ocall_sgx_init_quote");
 	let init_result = match ra_api.init_quote() {
 		Ok(r) => r,
@@ -48,7 +48,7 @@ fn sgx_init_quote(
 		*ret_gid = init_result.1;
 	}
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 #[cfg(test)]
@@ -66,20 +66,20 @@ mod tests {
 			.times(1)
 			.returning(|| Ok((dummy_target_info(), [8u8; 4])));
 
-		let mut ti: sgx_target_info_t = sgx_target_info_t::default();
-		let mut eg: sgx_epid_group_id_t = sgx_epid_group_id_t::default();
+		let mut ti: TargetInfo = TargetInfo::default();
+		let mut eg: EpidGroupId = EpidGroupId::default();
 
 		let ret_status = sgx_init_quote(
-			&mut ti as *mut sgx_target_info_t,
-			&mut eg as *mut sgx_epid_group_id_t,
+			&mut ti as *mut TargetInfo,
+			&mut eg as *mut EpidGroupId,
 			Arc::new(ra_ocall_api_mock),
 		);
 
-		assert_eq!(ret_status, sgx_status_t::SGX_SUCCESS);
+		assert_eq!(ret_status, SgxStatus::Success);
 		assert_eq!(eg, [8u8; 4]);
 	}
 
-	fn dummy_target_info() -> sgx_target_info_t {
-		sgx_target_info_t::default()
+	fn dummy_target_info() -> TargetInfo {
+		TargetInfo::default()
 	}
 }

@@ -18,7 +18,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, SidechainBridge};
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::{slice, sync::Arc};
 
 /// # Safety
@@ -28,7 +28,7 @@ use std::{slice, sync::Arc};
 pub unsafe extern "C" fn ocall_store_sidechain_blocks(
 	signed_blocks_ptr: *const u8,
 	signed_blocks_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	store_sidechain_blocks(signed_blocks_ptr, signed_blocks_size, Bridge::get_sidechain_api())
 }
 
@@ -36,15 +36,15 @@ fn store_sidechain_blocks(
 	signed_blocks_ptr: *const u8,
 	signed_blocks_size: u32,
 	sidechain_api: Arc<dyn SidechainBridge>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let signed_blocks_vec: Vec<u8> =
 		unsafe { Vec::from(slice::from_raw_parts(signed_blocks_ptr, signed_blocks_size as usize)) };
 
 	match sidechain_api.store_sidechain_blocks(signed_blocks_vec) {
-		Ok(_) => sgx_status_t::SGX_SUCCESS,
+		Ok(_) => SgxStatus::Success,
 		Err(e) => {
 			error!("store sidechain blocks failed: {:?}", e);
-			sgx_status_t::SGX_ERROR_UNEXPECTED
+			SgxStatus::Unexpected
 		},
 	}
 }

@@ -17,17 +17,11 @@
 
 //! Import queue implementation
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
 use crate::{
 	error::{Error, Result},
 	PeekQueue, PopFromQueue, PushToQueue,
 };
-use std::{collections::VecDeque, vec::Vec};
+use std::{collections::VecDeque, sync::RwLock, vec::Vec};
 
 /// Any import queue.
 ///

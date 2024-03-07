@@ -90,7 +90,7 @@ use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
 use litentry_primitives::BroadcastedRequest;
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
 pub(crate) fn init_enclave(
@@ -357,8 +357,8 @@ pub(crate) fn init_enclave_sidechain_components(
 	let block_composer = Arc::new(BlockComposer::new(signer, state_key_repository));
 	GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.initialize(block_composer);
 	if let Some(fail_mode) = fail_mode {
-		let fail_mode = FailSlotMode::from_str(&fail_mode)
-			.map_err(|_| Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
+		let fail_mode =
+			FailSlotMode::from_str(&fail_mode).map_err(|_| Error::Sgx(SgxStatus::Unexpected))?;
 		let fail_on_demand = Arc::new(Some(FailSlotOnDemand::new(fail_at, fail_mode)));
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(fail_on_demand);
 	} else {

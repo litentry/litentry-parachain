@@ -54,10 +54,6 @@ use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
 mod slot_stream;
 mod slots;
 
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
 use std::sync::RwLock;
 
 #[cfg(test)]

@@ -19,23 +19,23 @@ use crate::ocall::{ffi, OcallApi};
 use codec::Encode;
 use frame_support::ensure;
 use itp_ocall_api::EnclaveMetricsOCallApi;
-use sgx_types::{sgx_status_t, SgxResult};
+use sgx_types::error::*;
 
 impl EnclaveMetricsOCallApi for OcallApi {
 	fn update_metric<Metric: Encode>(&self, metric: Metric) -> SgxResult<()> {
-		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		let mut rt: SgxStatus = SgxStatus::Unexpected;
 		let metric_encoded = metric.encode();
 
 		let res = unsafe {
 			ffi::ocall_update_metric(
-				&mut rt as *mut sgx_status_t,
+				&mut rt as *mut SgxStatus,
 				metric_encoded.as_ptr(),
 				metric_encoded.len() as u32,
 			)
 		};
 
-		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
-		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+		ensure!(rt == SgxStatus::Success, rt);
+		ensure!(res == SgxStatus::Success, res);
 
 		Ok(())
 	}

@@ -38,7 +38,7 @@ use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvide
 use itp_types::ShardIdentifier;
 use log::*;
 use rustls::{ServerConfig, ServerSession, StreamOwned};
-use sgx_types::*;
+use sgx_types::{error::*, types::*};
 use std::{
 	backtrace::{self, PrintFormat},
 	io::{Read, Write},
@@ -185,18 +185,18 @@ where
 #[no_mangle]
 pub unsafe extern "C" fn run_state_provisioning_server(
 	socket_fd: c_int,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	skip_ra: c_int,
-) -> sgx_status_t {
-	let _ = backtrace::enable_backtrace("enclave.signed.so", PrintFormat::Short);
+) -> SgxStatus {
+	let _ = backtrace::enable_backtrace(PrintFormat::Short);
 
 	let state_handler = match GLOBAL_STATE_HANDLER_COMPONENT.get() {
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -220,7 +220,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		Ok(s) => s,
 		Err(e) => {
 			error!("{:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 
@@ -243,7 +243,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		return e.into()
 	};
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 /// Internal [`run_state_provisioning_server`] function to be able to use the handy `?` operator.
@@ -252,8 +252,8 @@ pub(crate) fn run_state_provisioning_server_internal<
 	WorkerModeProvider: ProvideWorkerMode,
 >(
 	socket_fd: c_int,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	skip_ra: c_int,
 	seal_handler: StateAndKeyUnsealer,
@@ -292,8 +292,8 @@ fn tls_server_session_stream(
 }
 
 fn tls_server_config<A: EnclaveAttestationOCallApi + 'static>(
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 	ocall_api: A,
 	skip_ra: bool,

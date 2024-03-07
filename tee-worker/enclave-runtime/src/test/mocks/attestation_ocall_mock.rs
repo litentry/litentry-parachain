@@ -17,7 +17,7 @@
 */
 
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use sgx_types::*;
+use sgx_types::{error::*, types::*};
 use std::{
 	fmt::{Debug, Formatter, Result as FormatResult},
 	vec::Vec,
@@ -25,7 +25,7 @@ use std::{
 
 #[derive(Clone)]
 pub struct AttestationOCallMock {
-	mr_enclave: sgx_measurement_t,
+	mr_enclave: Measurement,
 }
 
 impl AttestationOCallMock {
@@ -33,13 +33,13 @@ impl AttestationOCallMock {
 		Default::default()
 	}
 
-	pub fn create_with_mr_enclave(mr_enclave: sgx_measurement_t) -> Self {
+	pub fn create_with_mr_enclave(mr_enclave: Measurement) -> Self {
 		AttestationOCallMock { mr_enclave }
 	}
 }
 
 impl EnclaveAttestationOCallApi for AttestationOCallMock {
-	fn sgx_init_quote(&self) -> SgxResult<(sgx_target_info_t, sgx_epid_group_id_t)> {
+	fn sgx_init_quote(&self) -> SgxResult<(TargetInfo, EpidGroupId)> {
 		unreachable!()
 	}
 
@@ -50,15 +50,15 @@ impl EnclaveAttestationOCallApi for AttestationOCallMock {
 	fn get_quote(
 		&self,
 		_sig_rl: Vec<u8>,
-		_report: sgx_report_t,
-		_sign_type: sgx_quote_sign_type_t,
-		_spid: sgx_spid_t,
-		_quote_nonce: sgx_quote_nonce_t,
-	) -> SgxResult<(sgx_report_t, Vec<u8>)> {
+		_report: Report,
+		_sign_type: QuoteSignType,
+		_spid: Spid,
+		_quote_nonce: QuoteNonce,
+	) -> SgxResult<(Report, Vec<u8>)> {
 		unreachable!()
 	}
 
-	fn get_dcap_quote(&self, _report: sgx_report_t, _quote_size: u32) -> SgxResult<Vec<u8>> {
+	fn get_dcap_quote(&self, _report: Report, _quote_size: u32) -> SgxResult<Vec<u8>> {
 		unreachable!()
 	}
 
@@ -66,29 +66,29 @@ impl EnclaveAttestationOCallApi for AttestationOCallMock {
 		&self,
 		_quote: Vec<u8>,
 		_current_time: i64,
-		_quote_collateral: sgx_ql_qve_collateral_t,
-		_qve_report_info: sgx_ql_qe_report_info_t,
+		_quote_collateral: CQlQveCollateral,
+		_qve_report_info: QlQeReportInfo,
 		_supplemental_data_size: u32,
-	) -> SgxResult<(u32, sgx_ql_qv_result_t, sgx_ql_qe_report_info_t, Vec<u8>)> {
+	) -> SgxResult<(u32, QlQvResult, QlQeReportInfo, Vec<u8>)> {
 		unreachable!()
 	}
 
 	fn get_update_info(
 		&self,
-		_platform_info: sgx_platform_info_t,
+		_platform_info: PlatformInfo,
 		_enclave_trusted: i32,
-	) -> SgxResult<sgx_update_info_bit_t> {
-		Ok(sgx_update_info_bit_t { csmeFwUpdate: 0, pswUpdate: 0, ucodeUpdate: 0 })
+	) -> SgxResult<UpdateInfoBit> {
+		Ok(UpdateInfoBit { csmeFwUpdate: 0, pswUpdate: 0, ucodeUpdate: 0 })
 	}
 
-	fn get_mrenclave_of_self(&self) -> SgxResult<sgx_measurement_t> {
+	fn get_mrenclave_of_self(&self) -> SgxResult<Measurement> {
 		Ok(self.mr_enclave)
 	}
 }
 
 impl Default for AttestationOCallMock {
 	fn default() -> Self {
-		AttestationOCallMock { mr_enclave: sgx_measurement_t { m: [1; SGX_HASH_SIZE] } }
+		AttestationOCallMock { mr_enclave: Measurement { m: [1; 32] } }
 	}
 }
 

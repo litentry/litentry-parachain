@@ -21,7 +21,7 @@ pub use litentry_primitives::{ErrorDetail, IMPError, VCMPError};
 
 use itp_types::parentchain::ParentchainError;
 use lc_scheduled_enclave::error::Error as ScheduledEnclaveError;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
 
@@ -31,7 +31,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
 	#[error("SGX error, status: {0}")]
-	Sgx(sgx_status_t),
+	Sgx(SgxStatus),
 	#[error("STF execution error: {0}")]
 	StfExecution(#[from] itp_stf_executor::error::Error),
 	#[error("Node Metadata error: {0:?}")]
@@ -62,8 +62,8 @@ impl From<ParentchainError> for Error {
 	}
 }
 
-impl From<sgx_status_t> for Error {
-	fn from(sgx_status: sgx_status_t) -> Self {
+impl From<SgxStatus> for Error {
+	fn from(sgx_status: SgxStatus) -> Self {
 		Self::Sgx(sgx_status)
 	}
 }

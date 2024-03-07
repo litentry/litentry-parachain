@@ -18,10 +18,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-#[cfg(feature = "sgx")]
-use std::sync::{RwLock, SgxMutex as Mutex};
-
-#[cfg(feature = "std")]
 use std::sync::{Mutex, RwLock};
 
 use crate::{

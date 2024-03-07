@@ -38,7 +38,7 @@ use itp_test::mock::{
 use itp_top_pool::mocks::trusted_operation_pool_mock::TrustedOperationPoolMock;
 use itp_utils::ToHexPrefixed;
 use litentry_primitives::BroadcastedRequest;
-use sgx_crypto::{rsa::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::H256;
 use std::sync::Arc;
 
@@ -62,7 +62,7 @@ fn top_encryption_works() {
 }
 
 fn encrypt_and_decrypt_top(top: &TrustedOperationMock) -> TrustedOperationMock {
-	let encryption_key = Rsa3072KeyPair::new().unwrap();
+	let encryption_key = Rsa3072KeyPair::create().unwrap();
 	let encrypted_top = encryption_key.encrypt(top.encode().as_slice()).unwrap();
 	let decrypted_top = encryption_key.decrypt(encrypted_top.as_slice()).unwrap();
 

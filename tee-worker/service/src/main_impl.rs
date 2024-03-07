@@ -52,7 +52,7 @@ use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
 use serde_json::Value;
-use sgx_types::*;
+use sgx_types::types::*;
 use sp_runtime::traits::Header as HeaderT;
 use substrate_api_client::{
 	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
@@ -264,7 +264,7 @@ pub(crate) fn main() {
 			println!("*** Running Enclave MU-RA TLS server\n");
 			enclave_run_state_provisioning_server(
 				enclave.as_ref(),
-				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+				QuoteSignType::Unlinkable,
 				quoting_enclave_target_info.as_ref(),
 				quote_size.as_ref(),
 				&config.mu_ra_url(),
@@ -276,7 +276,7 @@ pub(crate) fn main() {
 			let shard = extract_shard(sub_matches.value_of("shard"), enclave.as_ref());
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
-				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+				QuoteSignType::Unlinkable,
 				&config.mu_ra_url_external(),
 				&shard,
 				sub_matches.is_present("skip-ra"),
@@ -328,7 +328,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	litentry_rpc_api: ParentchainApi,
 	tokio_handle_getter: Arc<T>,
 	initialization_handler: Arc<InitializationHandler>,
-	quoting_enclave_target_info: Option<sgx_target_info_t>,
+	quoting_enclave_target_info: Option<TargetInfo>,
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
@@ -384,7 +384,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	thread::spawn(move || {
 		enclave_run_state_provisioning_server(
 			enclave_api_key_prov.as_ref(),
-			sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+			QuoteSignType::Unlinkable,
 			quoting_enclave_target_info.as_ref(),
 			quote_size.as_ref(),
 			&ra_url,

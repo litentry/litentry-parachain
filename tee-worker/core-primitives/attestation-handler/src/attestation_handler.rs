@@ -43,19 +43,17 @@ use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_io as io;
 use itp_time_utils::now_as_secs;
 use log::*;
-use sgx_rand::{os, Rng};
-use sgx_tcrypto::{rsgx_sha256_slice, SgxEccHandle};
-use sgx_tse::{rsgx_create_report, rsgx_verify_report};
-use sgx_types::{
-	c_int, sgx_epid_group_id_t, sgx_quote_nonce_t, sgx_quote_sign_type_t, sgx_report_data_t,
-	sgx_spid_t, sgx_status_t, sgx_target_info_t, SgxResult, *,
-};
+use sgx_crypto::{ecc::*, sha::Sha256};
+use sgx_dcap_tvl::capi::sgx_tvl_verify_qve_report_and_identity;
+use sgx_trts::capi::sgx_read_rand;
+use sgx_tse::{capi::sgx_self_target, EnclaveReport};
+use sgx_types::{error::*, types::*};
 use sp_core::{ed25519, Pair};
 use std::{
 	borrow::ToOwned,
 	env, format,
 	io::{Read, Write},
-	net::TcpStream,
+	net::{SocketAddr, TcpStream},
 	prelude::v1::*,
 	println, str,
 	string::{String, ToString},
@@ -88,7 +86,7 @@ pub trait AttestationHandler {
 	/// but instead generate a mock certificate.
 	fn generate_dcap_ra_cert(
 		&self,
-		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quoting_enclave_target_info: Option<&TargetInfo>,
 		quote_size: Option<&u32>,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>, Vec<u8>)>;
@@ -102,7 +100,7 @@ pub trait AttestationHandler {
 	/// Write the remote attestation report to the disk
 	fn dump_dcap_ra_cert_to_disk(
 		&self,
-		quoting_enclave_target_info: &sgx_target_info_t,
+		quoting_enclave_target_info: &TargetInfo,
 		quote_size: u32,
 	) -> EnclaveResult<()>;
 
@@ -110,7 +108,7 @@ pub trait AttestationHandler {
 	/// Returns a pair consisting of (private key DER, certificate DER)
 	fn create_epid_ra_report_and_signature(
 		&self,
-		sign_type: sgx_quote_sign_type_t,
+		sign_type: QuoteSignType,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>)>;
 }
@@ -128,7 +126,7 @@ where
 	fn create_payload_epid(
 		&self,
 		pub_k: &[u8; 32],
-		sign_type: sgx_quote_sign_type_t,
+		sign_type: QuoteSignType,
 	) -> EnclaveResult<String> {
 		info!("    [Enclave] Create attestation report");
 		let (attn_report, sig, cert) = match self.create_epid_attestation_report(&pub_k, sign_type)
@@ -157,7 +155,7 @@ where
 {
 	fn generate_ias_ra_cert(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
 		// Our certificate is unlinkable.
-		let sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		let sign_type = QuoteSignType::Unlinkable;
 
 		// FIXME: should call `create_ra_report_and_signature` in skip_ra mode as well:
 		// https://github.com/integritee-network/worker/issues/321.
@@ -182,7 +180,7 @@ where
 
 	fn dump_ias_ra_cert_to_disk(&self) -> EnclaveResult<()> {
 		// our certificate is unlinkable
-		let sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
+		let sign_type = QuoteSignType::Unlinkable;
 
 		let (_key_der, cert_der) = match self.create_epid_ra_report_and_signature(sign_type, false)
 		{
@@ -203,7 +201,7 @@ where
 
 	fn dump_dcap_ra_cert_to_disk(
 		&self,
-		quoting_enclave_target_info: &sgx_target_info_t,
+		quoting_enclave_target_info: &TargetInfo,
 		quote_size: u32,
 	) -> EnclaveResult<()> {
 		let (_priv_key_der, _cert_der, dcap_quote) = match self.generate_dcap_ra_cert(
@@ -228,19 +226,17 @@ where
 
 	fn create_epid_ra_report_and_signature(
 		&self,
-		sign_type: sgx_quote_sign_type_t,
+		sign_type: QuoteSignType,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>)> {
 		let chain_signer = self.signing_key_repo.retrieve_key()?;
 		info!("[Enclave Attestation] Ed25519 pub raw : {:?}", chain_signer.public().0);
 
 		info!("    [Enclave] Generate keypair");
-		let ecc_handle = SgxEccHandle::new();
-		let _result = ecc_handle.open();
-		let (prv_k, pub_k) = ecc_handle.create_key_pair()?;
+		let ecc_handle = EcKeyPair::create().unwrap();
+		let prv_k = ecc_handle.private_key();
+		let pub_k = ecc_handle.public_key();
 		info!("    [Enclave] Generate ephemeral ECDSA keypair successful");
-		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
-		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let payload = if !skip_ra {
 			self.create_payload_epid(&chain_signer.public().0, sign_type)?
@@ -258,30 +254,27 @@ where
 			},
 		};
 
-		let _ = ecc_handle.close();
 		info!("    [Enclave] Generate ECC Certificate successful");
 		Ok((key_der, cert_der))
 	}
 
 	fn generate_dcap_ra_cert(
 		&self,
-		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quoting_enclave_target_info: Option<&TargetInfo>,
 		quote_size: Option<&u32>,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>, Vec<u8>)> {
 		if !skip_ra && quoting_enclave_target_info.is_none() && quote_size.is_none() {
 			error!("Enclave Attestation] remote attestation not skipped, but Quoting Enclave (QE) data is not available");
-			return Err(EnclaveError::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))
+			return Err(EnclaveError::Sgx(SgxStatus::Unexpected))
 		}
 		let chain_signer = self.signing_key_repo.retrieve_key()?;
 		info!("[Enclave Attestation] Ed25519 signer pub key: {:?}", chain_signer.public().0);
 
-		let ecc_handle = SgxEccHandle::new();
-		let _result = ecc_handle.open();
-		let (prv_k, pub_k) = ecc_handle.create_key_pair()?;
+		let ecc_handle = EcKeyPair::create().unwrap();
+		let prv_k = ecc_handle.private_key();
+		let pub_k = ecc_handle.public_key();
 		info!("Enclave Attestation] Generated ephemeral ECDSA keypair:");
-		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
-		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let qe_quote = if !skip_ra {
 			let qe_quote = match self.retrieve_qe_dcap_quote(
@@ -311,8 +304,6 @@ where
 					return Err(e.into())
 				},
 			};
-
-		let _ = ecc_handle.close();
 
 		debug!("[Enclave] Generated ECC cert info:");
 		trace!("[Enclave] Generated ECC cert info: key_der={:?}", &key_der);
@@ -469,7 +460,12 @@ where
 		let dns_name = webpki::DNSNameRef::try_from_ascii_str(DEV_HOSTNAME)
 			.map_err(|e| EnclaveError::Other(e.into()))?;
 		let mut sess = rustls::ClientSession::new(&Arc::new(config), dns_name);
-		let mut sock = TcpStream::new(fd)?;
+
+		// TODO(Litentry): copied from sgx-sdk 2.0.0 branch - is this the right way to do it?
+		let port = 443;
+		let addr = lookup_ipv4(DEV_HOSTNAME, port);
+		let mut sock = TcpStream::connect(&addr).expect("[-] Connect tls server failed!");
+
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
@@ -513,7 +509,12 @@ where
 			EnclaveError::Other(e.into())
 		})?;
 		let mut sess = rustls::ClientSession::new(&Arc::new(config), dns_name);
-		let mut sock = TcpStream::new(fd)?;
+
+		// TODO(Litentry): copied from sgx-sdk 2.0.0 branch - is this the right way to do it?
+		let port = 443;
+		let addr = lookup_ipv4(DEV_HOSTNAME, port);
+		let mut sock = TcpStream::connect(&addr).expect("[-] Connect tls server failed!");
+
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
@@ -543,19 +544,19 @@ where
 	fn create_epid_attestation_report(
 		&self,
 		pub_k: &[u8; 32],
-		sign_type: sgx_quote_sign_type_t,
+		sign_type: QuoteSignType,
 	) -> SgxResult<(String, String, String)> {
 		// Workflow:
 		// (1) ocall to get the target_info structure (ti) and epid group id (eg)
 		// (1.5) get sigrl
-		// (2) call sgx_create_report with ti+data, produce an sgx_report_t
+		// (2) call Report::for_target with ti+data, produce an Report
 		// (3) ocall to sgx_get_quote to generate (*mut sgx-quote_t, uint32_t)
 
 		// (1) get ti + eg
 		let init_quote = self.ocall_api.sgx_init_quote()?;
 
-		let epid_group_id: sgx_epid_group_id_t = init_quote.1;
-		let target_info: sgx_target_info_t = init_quote.0;
+		let epid_group_id: EpidGroupId = init_quote.1;
+		let target_info: TargetInfo = init_quote.0;
 
 		debug!("    [Enclave] EPID group id = {:?}", epid_group_id);
 
@@ -570,25 +571,13 @@ where
 		let sigrl_vec: Vec<u8> = self.get_sigrl_from_intel(ias_socket, eg_num)?;
 
 		// (2) Generate the report
-		let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
+		let mut report_data: ReportData = ReportData::default();
 		report_data.d[..32].clone_from_slice(&pub_k[..]);
 
-		let report = match rsgx_create_report(&target_info, &report_data) {
-			Ok(r) => {
-				debug!(
-					"    [Enclave] Report creation successful. mr_signer.m = {:x?}",
-					r.body.mr_signer.m
-				);
-				r
-			},
-			Err(e) => {
-				error!("    [Enclave] Report creation failed. {:?}", e);
-				return Err(e)
-			},
-		};
+		let report = Report::for_target(&target_info, &report_data)?;
 
-		let mut quote_nonce = sgx_quote_nonce_t { rand: [0; 16] };
-		let mut os_rng = os::SgxRng::new().map_err(|e| EnclaveError::Other(e.into()))?;
+		let mut quote_nonce = QuoteNonce { rand: [0; 16] };
+		let mut os_rng = sgx_trts::rand::Rng::new();
 		os_rng.fill_bytes(&mut quote_nonce.rand);
 
 		// (3) Generate the quote
@@ -596,14 +585,14 @@ where
 		//       1. sigrl: ptr + len
 		//       2. report: ptr 432bytes
 		//       3. linkable: u32, unlinkable=0, linkable=1
-		//       4. spid: sgx_spid_t ptr 16bytes
-		//       5. sgx_quote_nonce_t ptr 16bytes
+		//       4. spid: Spid ptr 16bytes
+		//       5. QuoteNonce ptr 16bytes
 		//       6. p_sig_rl + sigrl size ( same to sigrl)
 		//       7. [out]p_qe_report need further check
 		//       8. [out]p_quote
 		//       9. quote_size
 
-		let spid: sgx_spid_t = Self::load_spid(RA_SPID_FILE)?;
+		let spid: Spid = Self::load_spid(RA_SPID_FILE)?;
 
 		let quote_result =
 			self.ocall_api.get_quote(sigrl_vec, report, sign_type, spid, quote_nonce)?;
@@ -613,7 +602,7 @@ where
 
 		// Added 09-28-2018
 		// Perform a check on qe_report to verify if the qe_report is valid
-		match rsgx_verify_report(&qe_report) {
+		match qe_report.verify() {
 			Ok(()) => debug!("    [Enclave] rsgx_verify_report success!"),
 			Err(x) => {
 				error!("    [Enclave] rsgx_verify_report failed. {:?}", x);
@@ -627,7 +616,7 @@ where
 			|| target_info.attributes.xfrm != qe_report.body.attributes.xfrm
 		{
 			error!("    [Enclave] qe_report does not match current target_info!");
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+			return Err(SgxStatus::Unexpected)
 		}
 
 		debug!("    [Enclave] qe_report check success");
@@ -647,28 +636,30 @@ where
 
 		let mut rhs_vec: Vec<u8> = quote_nonce.rand.to_vec();
 		rhs_vec.extend(&quote_content);
-		let rhs_hash = rsgx_sha256_slice(&rhs_vec[..])?;
+		let mut shactx = Sha256::new().unwrap();
+		shactx.update(&rhs_vec[..]).unwrap();
+		let rhs_hash = shactx.finalize().unwrap();
 		let lhs_hash = &qe_report.body.report_data.d[..32];
 
 		debug!("    [Enclave] rhs hash = {:02X}", rhs_hash.iter().format(""));
 		debug!("    [Enclave] lhs hash = {:02X}", lhs_hash.iter().format(""));
 
-		if rhs_hash != lhs_hash {
+		if rhs_hash.hash != lhs_hash {
 			error!("    [Enclave] Quote is tampered!");
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+			return Err(SgxStatus::Unexpected)
 		}
 
 		let (attn_report, sig, cert) = self.get_report_from_intel(ias_socket, quote_content)?;
 		Ok((attn_report, sig, cert))
 	}
 
-	fn load_spid(filename: &str) -> SgxResult<sgx_spid_t> {
+	fn load_spid(filename: &str) -> SgxResult<Spid> {
 		// Check if set as an environment variable
 		match env::var("IAS_EPID_SPID").or_else(|_| io::read_to_string(filename)) {
 			Ok(spid) => decode_spid(&spid),
 			Err(e) => {
 				error!("Failed to load SPID: {:?}", e);
-				Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+				Err(SgxStatus::Unexpected)
 			},
 		}
 	}
@@ -681,120 +672,109 @@ where
 			.map_err(|e| EnclaveError::Other(e.into()))
 	}
 
+	// TODO(Litentry): do we need this?
 	/// Returns Ok if the verification of the quote by the quote verification enclave (QVE) was successful
-	pub fn ecdsa_quote_verification(&self, quote: Vec<u8>) -> SgxResult<()> {
-		let mut app_enclave_target_info: sgx_target_info_t = unsafe { std::mem::zeroed() };
-		let quote_collateral: sgx_ql_qve_collateral_t = unsafe { std::mem::zeroed() };
-		let mut qve_report_info: sgx_ql_qe_report_info_t = unsafe { std::mem::zeroed() };
-		let supplemental_data_size = std::mem::size_of::<sgx_ql_qv_supplemental_t>() as u32;
+	// pub fn ecdsa_quote_verification(&self, quote: Vec<u8>) -> SgxResult<()> {
+	// 	let mut app_enclave_target_info: TargetInfo = unsafe { std::mem::zeroed() };
+	// 	let quote_collateral: CQlQveCollateral = unsafe { std::mem::zeroed() };
+	// 	let mut qve_report_info: QlQeReportInfo = unsafe { std::mem::zeroed() };
+	// 	let supplemental_data_size = std::mem::size_of::<QlQvSupplemental>() as u32;
 
-		// Get target info of the app enclave. QvE will target the generated report to this enclave.
-		let ret_val =
-			unsafe { sgx_self_target(&mut app_enclave_target_info as *mut sgx_target_info_t) };
-		if ret_val != sgx_status_t::SGX_SUCCESS {
-			error!("sgx_self_target returned: {:?}", ret_val);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
-		}
+	// 	// Get target info of the app enclave. QvE will target the generated report to this enclave.
+	// 	let ret_val =
+	// 		unsafe { sgx_self_target(&mut app_enclave_target_info as *mut TargetInfo) };
+	// 	if ret_val != SgxStatus::Success {
+	// 		error!("sgx_self_target returned: {:?}", ret_val);
+	// 		return Err(SgxStatus::Unexpected)
+	// 	}
 
-		// Set current time, which is needed to check against the expiration date of the certificate.
-		let current_time: i64 = now_as_secs().try_into().unwrap_or_else(|e| {
-			panic!("Could not convert SystemTime from u64 into i64: {:?}", e);
-		});
+	// 	// Set current time, which is needed to check against the expiration date of the certificate.
+	// 	let current_time: i64 = now_as_secs().try_into().unwrap_or_else(|e| {
+	// 		panic!("Could not convert SystemTime from u64 into i64: {:?}", e);
+	// 	});
 
-		// Set random nonce.
-		let mut rand_nonce = vec![0u8; 16];
-		let ret_val = unsafe { sgx_read_rand(rand_nonce.as_mut_ptr(), rand_nonce.len()) };
-		if ret_val != sgx_status_t::SGX_SUCCESS {
-			error!("sgx_read_rand returned: {:?}", ret_val);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
-		}
-		debug!("Retrieved random nonce {:?}", rand_nonce);
-		qve_report_info.nonce.rand.copy_from_slice(rand_nonce.as_slice());
-		qve_report_info.app_enclave_target_info = app_enclave_target_info;
+	// 	// Set random nonce.
+	// 	let mut rand_nonce = vec![0u8; 16];
+	// 	let ret_val = unsafe { sgx_read_rand(rand_nonce.as_mut_ptr(), rand_nonce.len()) };
+	// 	if ret_val != SgxStatus::Success.into() {
+	// 		error!("sgx_read_rand returned: {:?}", ret_val);
+	// 		return Err(SgxStatus::Unexpected)
+	// 	}
+	// 	debug!("Retrieved random nonce {:?}", rand_nonce);
+	// 	qve_report_info.nonce.rand.copy_from_slice(rand_nonce.as_slice());
+	// 	qve_report_info.app_enclave_target_info = app_enclave_target_info;
 
-		// Ocall to call Quote verification Enclave (QvE), which verifies the generated quote.
-		let (
-			collateral_expiration_status,
-			quote_verification_result,
-			qve_report_info_return_value,
-			supplemental_data,
-		) = self.ocall_api.get_qve_report_on_quote(
-			quote.clone(),
-			current_time,
-			quote_collateral,
-			qve_report_info,
-			supplemental_data_size,
-		)?;
+	// 	// Ocall to call Quote verification Enclave (QvE), which verifies the generated quote.
+	// 	let (
+	// 		collateral_expiration_status,
+	// 		quote_verification_result,
+	// 		qve_report_info_return_value,
+	// 		supplemental_data,
+	// 	) = self.ocall_api.get_qve_report_on_quote(
+	// 		quote.clone(),
+	// 		current_time,
+	// 		quote_collateral,
+	// 		qve_report_info,
+	// 		supplemental_data_size,
+	// 	)?;
 
-		// Check nonce of qve report to protect against replay attacks, as the qve report
-		// is coming from the untrusted side.
-		if qve_report_info_return_value.nonce.rand != qve_report_info.nonce.rand {
-			error!(
-				"Nonce of input value and return value are not matching. Input: {:?}, Output: {:?}",
-				qve_report_info.nonce.rand, qve_report_info_return_value.nonce.rand
-			);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
-		}
+	// 	// Check nonce of qve report to protect against replay attacks, as the qve report
+	// 	// is coming from the untrusted side.
+	// 	if qve_report_info_return_value.nonce.rand != qve_report_info.nonce.rand {
+	// 		error!(
+	// 			"Nonce of input value and return value are not matching. Input: {:?}, Output: {:?}",
+	// 			qve_report_info.nonce.rand, qve_report_info_return_value.nonce.rand
+	// 		);
+	// 		return Err(SgxStatus::Unexpected)
+	// 	}
 
-		// Set the threshold of QvE ISV SVN. The ISV SVN of QvE used to verify quote must be greater or equal to this threshold
-		// e.g. You can check latest QvE ISVSVN from QvE configuration file on Github
-		// https://github.com/intel/SGXDataCenterAttestationPrimitives/blob/master/QuoteVerification/QvE/Enclave/linux/config.xml#L4
-		// or you can get latest QvE ISVSVN in QvE Identity JSON file from
-		// https://api.trustedservices.intel.com/sgx/certification/v3/qve/identity
-		// Make sure you are using trusted & latest QvE ISV SVN as threshold
-		// Warning: The function may return erroneous result if QvE ISV SVN has been modified maliciously.
-		let qve_isvsvn_threshold: sgx_isv_svn_t = 6;
+	// 	// Set the threshold of QvE ISV SVN. The ISV SVN of QvE used to verify quote must be greater or equal to this threshold
+	// 	// e.g. You can check latest QvE ISVSVN from QvE configuration file on Github
+	// 	// https://github.com/intel/SGXDataCenterAttestationPrimitives/blob/master/QuoteVerification/QvE/Enclave/linux/config.xml#L4
+	// 	// or you can get latest QvE ISVSVN in QvE Identity JSON file from
+	// 	// https://api.trustedservices.intel.com/sgx/certification/v3/qve/identity
+	// 	// Make sure you are using trusted & latest QvE ISV SVN as threshold
+	// 	// Warning: The function may return erroneous result if QvE ISV SVN has been modified maliciously.
+	// 	let qve_isvsvn_threshold: u16 = 6;
 
-		// Verify the qve report to validate that it is coming from a legit quoting verification enclave
-		// and has not been tampered with.
-		let ret_val = unsafe {
-			sgx_tvl_verify_qve_report_and_identity(
-				quote.as_ptr(),
-				quote.len() as u32,
-				&qve_report_info_return_value as *const sgx_ql_qe_report_info_t,
-				current_time,
-				collateral_expiration_status,
-				quote_verification_result,
-				supplemental_data.as_ptr(),
-				supplemental_data_size,
-				qve_isvsvn_threshold,
-			)
-		};
+	// 	// Verify the qve report to validate that it is coming from a legit quoting verification enclave
+	// 	// and has not been tampered with.
+	// 	let ret_val = unsafe {
+	// 		sgx_tvl_verify_qve_report_and_identity(
+	// 			quote.as_ptr(),
+	// 			quote.len() as u32,
+	// 			&qve_report_info_return_value as *const QlQeReportInfo,
+	// 			current_time,
+	// 			collateral_expiration_status,
+	// 			quote_verification_result,
+	// 			supplemental_data.as_ptr(),
+	// 			supplemental_data_size,
+	// 			qve_isvsvn_threshold,
+	// 		)
+	// 	};
 
-		if ret_val != sgx_quote3_error_t::SGX_QL_SUCCESS {
-			error!("sgx_tvl_verify_qve_report_and_identity returned: {:?}", ret_val);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
-		}
+	// 	if ret_val != Quote3Error::Success {
+	// 		error!("sgx_tvl_verify_qve_report_and_identity returned: {:?}", ret_val);
+	// 		return Err(SgxStatus::Unexpected)
+	// 	}
 
-		Ok(())
-	}
+	// 	Ok(())
+	// }
 
 	pub fn retrieve_qe_dcap_quote(
 		&self,
 		pub_k: &[u8; 32],
-		quoting_enclave_target_info: &sgx_target_info_t,
+		quoting_enclave_target_info: &TargetInfo,
 		quote_size: u32,
 	) -> SgxResult<Vec<u8>> {
 		// Generate app enclave report and include the enclave public key.
 		// The quote will be generated on top of this report and validate that the
 		// report as well as the public key inside it are coming from a legit
 		// intel sgx enclave.
-		let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
+		let mut report_data: ReportData = ReportData::default();
 		report_data.d[..32].clone_from_slice(&pub_k[..]);
 
-		let app_report = match rsgx_create_report(quoting_enclave_target_info, &report_data) {
-			Ok(report) => {
-				debug!(
-					"rsgx_create_report creation successful. mr_signer: {:?}",
-					report.body.mr_signer.m
-				);
-				report
-			},
-			Err(e) => {
-				error!("rsgx_create_report creation failed. {:?}", e);
-				return Err(e)
-			},
-		};
+		let app_report = Report::for_target(quoting_enclave_target_info, &report_data)?;
 
 		// Retrieve quote from pccs for our app enclave.
 		debug!("Entering ocall_api.get_dcap_quote with quote size: {:?} ", quote_size);
@@ -804,21 +784,34 @@ where
 		// while being on the untrusted side.
 		// This step is probably obsolete, as the QvE will check the quote as well on behalf
 		// of the target enclave.
-		let p_quote3: *const sgx_quote3_t = quote_vec.as_ptr() as *const sgx_quote3_t;
-		let quote3: sgx_quote3_t = unsafe { *p_quote3 };
+		let p_quote3: *const Quote3 = quote_vec.as_ptr() as *const Quote3;
+		let quote3: Quote3 = unsafe { *p_quote3 };
 		if quote3.report_body.mr_enclave.m != app_report.body.mr_enclave.m {
 			error!("mr_enclave of quote and app_report are not matching");
 			error!("mr_enclave of quote: {:?}", quote3.report_body.mr_enclave.m);
 			error!("mr_enclave of quote: {:?}", app_report.body.mr_enclave.m);
-			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+			return Err(SgxStatus::Unexpected)
 		}
 
 		Ok(quote_vec)
 	}
 }
 
-fn decode_spid(hex_encoded_string: &str) -> SgxResult<sgx_spid_t> {
-	let mut spid = sgx_spid_t::default();
+pub fn lookup_ipv4(host: &str, port: u16) -> SocketAddr {
+	use std::net::ToSocketAddrs;
+
+	let addrs = (host, port).to_socket_addrs().unwrap();
+	for addr in addrs {
+		if let SocketAddr::V4(_) = addr {
+			return addr;
+		}
+	}
+
+	unreachable!("Cannot lookup address");
+}
+
+fn decode_spid(hex_encoded_string: &str) -> SgxResult<Spid> {
+	let mut spid = Spid::default();
 	let hex = hex_encoded_string.trim();
 
 	if hex.len() < itp_settings::files::SPID_MIN_LENGTH {
@@ -827,10 +820,10 @@ fn decode_spid(hex_encoded_string: &str) -> SgxResult<sgx_spid_t> {
 			hex.len(),
 			itp_settings::files::SPID_MIN_LENGTH
 		);
-		return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
+		return Err(SgxStatus::Unexpected)
 	}
 
-	let decoded_vec = hex::decode(hex).map_err(|_| sgx_status_t::SGX_ERROR_UNEXPECTED)?;
+	let decoded_vec = hex::decode(hex).map_err(|_| SgxStatus::Unexpected)?;
 
 	spid.id.copy_from_slice(&decoded_vec[..16]);
 	Ok(spid)
@@ -843,9 +836,8 @@ pub mod tests {
 
 	pub fn decode_spid_works() {
 		let spid_encoded = "F39ABCF95015A5BF6C7D360EF5035E12";
-		let expected_spid = sgx_spid_t {
-			id: [243, 154, 188, 249, 80, 21, 165, 191, 108, 125, 54, 14, 245, 3, 94, 18],
-		};
+		let expected_spid =
+			Spid { id: [243, 154, 188, 249, 80, 21, 165, 191, 108, 125, 54, 14, 245, 3, 94, 18] };
 
 		let decoded_spid = decode_spid(spid_encoded).unwrap();
 		assert_eq!(decoded_spid.id, expected_spid.id);

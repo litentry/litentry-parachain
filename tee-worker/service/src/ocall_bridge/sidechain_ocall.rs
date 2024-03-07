@@ -106,7 +106,7 @@ where
 		if let Err(e) = self.peer_registry.update_peers() {
 			error!("Error updating peers: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
-		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		// status = SgxStatus::Unexpected;
 		} else {
 			info!("Successfully updated peers");
 		}
@@ -115,7 +115,7 @@ where
 		if let Err(e) = self.block_broadcaster.broadcast_blocks(signed_blocks) {
 			error!("Error broadcasting blocks: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
-		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		// status = SgxStatus::Unexpected;
 		} else {
 			info!("Successfully broadcast blocks");
 		}

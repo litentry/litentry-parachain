@@ -51,27 +51,26 @@ use itp_settings::{
 	worker::MR_ENCLAVE_SIZE,
 	worker_mode::{ProvideWorkerMode, WorkerModeProvider},
 };
-use itp_sgx_crypto::{
-	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
-};
+use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
 use itp_types::{AttestationType, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
-use sgx_types::*;
+use sgx_serialize::json;
+use sgx_types::{error::*, types::*};
 use sp_core::{ed25519::Public as Ed25519Public, Pair};
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
 
 #[no_mangle]
-pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> sgx_status_t {
+pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> SgxStatus {
 	if mrenclave.is_null() || mrenclave_size < MR_ENCLAVE_SIZE {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let attestation_handler = match GLOBAL_ATTESTATION_HANDLER_COMPONENT.get() {
 		Ok(r) => r,
 		Err(e) => {
 			error!("Component get failure: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	match attestation_handler.get_mrenclave() {
@@ -81,9 +80,9 @@ pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize
 				write_slice_and_whitespace_pad(mrenclave_slice, mrenclave_value.to_vec())
 			{
 				error!("Failed to transfer mrenclave to o-call buffer: {:?}", e);
-				return sgx_status_t::SGX_ERROR_UNEXPECTED
+				return SgxStatus::Unexpected
 			}
-			sgx_status_t::SGX_SUCCESS
+			SgxStatus::Success
 		},
 		Err(e) => e.into(),
 	}
@@ -93,8 +92,8 @@ pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize
 pub fn create_ra_report_and_signature(
 	skip_ra: bool,
 	remote_attestation_type: RemoteAttestationType,
-	sign_type: sgx_quote_sign_type_t,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	sign_type: QuoteSignType,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 ) -> EnclaveResult<(Vec<u8>, Vec<u8>)> {
 	let attestation_handler = match GLOBAL_ATTESTATION_HANDLER_COMPONENT.get() {
@@ -139,9 +138,9 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 	unchecked_extrinsic_max_size: u32,
 	unchecked_extrinsic_size: *mut u32,
 	skip_ra: c_int,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if w_url.is_null() || unchecked_extrinsic.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
@@ -163,7 +162,7 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 			Ok(l) => l as u32,
 			Err(e) => return EnclaveError::BufferError(e).into(),
 		};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 #[no_mangle]
@@ -174,11 +173,11 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 	unchecked_extrinsic_max_size: u32,
 	unchecked_extrinsic_size: *mut u32,
 	skip_ra: c_int,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if w_url.is_null() || unchecked_extrinsic.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
@@ -205,13 +204,13 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 			Ok(l) => l as u32,
 			Err(e) => return EnclaveError::BufferError(e).into(),
 		};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 pub fn generate_dcap_ra_extrinsic_internal(
 	url: Vec<u8>,
 	skip_ra: bool,
-	quoting_enclave_target_info: Option<&sgx_target_info_t>,
+	quoting_enclave_target_info: Option<&TargetInfo>,
 	quote_size: Option<&u32>,
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
@@ -235,13 +234,13 @@ pub fn generate_dcap_ra_extrinsic_internal(
 #[no_mangle]
 pub unsafe extern "C" fn generate_dcap_ra_quote(
 	skip_ra: c_int,
-	quoting_enclave_target_info: &sgx_target_info_t,
+	quoting_enclave_target_info: &TargetInfo,
 	quote_size: u32,
 	dcap_quote_p: *mut u8,
 	dcap_quote_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if dcap_quote_p.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let dcap_quote = match generate_dcap_ra_quote_internal(
 		skip_ra == 1,
@@ -258,12 +257,12 @@ pub unsafe extern "C" fn generate_dcap_ra_quote(
 		return EnclaveError::BufferError(e).into()
 	};
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 pub fn generate_dcap_ra_quote_internal(
 	skip_ra: bool,
-	quoting_enclave_target_info: &sgx_target_info_t,
+	quoting_enclave_target_info: &TargetInfo,
 	quote_size: u32,
 ) -> EnclaveResult<Vec<u8>> {
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
@@ -286,9 +285,9 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 	unchecked_extrinsic: *mut u8,
 	unchecked_extrinsic_max_size: u32,
 	unchecked_extrinsic_size: *mut u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if w_url.is_null() || unchecked_extrinsic.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
 	let url = match String::decode(&mut url_slice) {
@@ -313,7 +312,7 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 			Ok(l) => l as u32,
 			Err(e) => return EnclaveError::BufferError(e).into(),
 		};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 pub fn generate_dcap_ra_extrinsic_from_quote_internal(
@@ -429,20 +428,20 @@ fn create_extrinsics(call: OpaqueCall) -> EnclaveResult<OpaqueExtrinsic> {
 
 #[no_mangle]
 pub unsafe extern "C" fn generate_register_quoting_enclave_extrinsic(
-	collateral: *const sgx_ql_qve_collateral_t,
+	collateral: *const CQlQveCollateral,
 	unchecked_extrinsic: *mut u8,
 	unchecked_extrinsic_max_size: u32,
 	unchecked_extrinsic_size: *mut u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if unchecked_extrinsic.is_null() || collateral.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_max_size as usize);
 	let collateral = SgxQlQveCollateral::from_c_type(&*collateral);
 	let collateral_data = match collateral.get_quoting_enclave_split() {
 		Some(d) => d,
-		None => return sgx_status_t::SGX_ERROR_INVALID_PARAMETER,
+		None => return SgxStatus::InvalidParameter,
 	};
 
 	let call_index_getter = |m: &NodeMetadata| m.register_quoting_enclave_call_indexes();
@@ -456,25 +455,25 @@ pub unsafe extern "C" fn generate_register_quoting_enclave_extrinsic(
 		Ok(l) => l as u32,
 		Err(e) => return e.into(),
 	};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn generate_register_tcb_info_extrinsic(
-	collateral: *const sgx_ql_qve_collateral_t,
+	collateral: *const CQlQveCollateral,
 	unchecked_extrinsic: *mut u8,
 	unchecked_extrinsic_max_size: u32,
 	unchecked_extrinsic_size: *mut u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	if unchecked_extrinsic.is_null() || collateral.is_null() {
-		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
+		return SgxStatus::InvalidParameter
 	}
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_max_size as usize);
 	let collateral = SgxQlQveCollateral::from_c_type(&*collateral);
 	let collateral_data = match collateral.get_tcb_info_split() {
 		Some(d) => d,
-		None => return sgx_status_t::SGX_ERROR_INVALID_PARAMETER,
+		None => return SgxStatus::InvalidParameter,
 	};
 
 	let call_index_getter = |m: &NodeMetadata| m.register_tcb_info_call_indexes();
@@ -488,7 +487,7 @@ pub unsafe extern "C" fn generate_register_tcb_info_extrinsic(
 		Ok(l) => l as u32,
 		Err(e) => return e.into(),
 	};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 pub fn generate_generic_register_collateral_extrinsic<F>(
@@ -514,45 +513,45 @@ where
 }
 
 #[no_mangle]
-pub extern "C" fn dump_ias_ra_cert_to_disk() -> sgx_status_t {
+pub extern "C" fn dump_ias_ra_cert_to_disk() -> SgxStatus {
 	let attestation_handler = match GLOBAL_ATTESTATION_HANDLER_COMPONENT.get() {
 		Ok(r) => r,
 		Err(e) => {
 			error!("Component get failure: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	match attestation_handler.dump_ias_ra_cert_to_disk() {
-		Ok(_) => sgx_status_t::SGX_SUCCESS,
+		Ok(_) => SgxStatus::Success,
 		Err(e) => e.into(),
 	}
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn dump_dcap_ra_cert_to_disk(
-	quoting_enclave_target_info: &sgx_target_info_t,
+	quoting_enclave_target_info: &TargetInfo,
 	quote_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let attestation_handler = match GLOBAL_ATTESTATION_HANDLER_COMPONENT.get() {
 		Ok(r) => r,
 		Err(e) => {
 			error!("Component get failure: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	match attestation_handler.dump_dcap_ra_cert_to_disk(quoting_enclave_target_info, quote_size) {
-		Ok(_) => sgx_status_t::SGX_SUCCESS,
+		Ok(_) => SgxStatus::Success,
 		Err(e) => e.into(),
 	}
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn dump_dcap_collateral_to_disk(
-	collateral: *const sgx_ql_qve_collateral_t,
-) -> sgx_status_t {
+	collateral: *const CQlQveCollateral,
+) -> SgxStatus {
 	let collateral = SgxQlQveCollateral::from_c_type(&*collateral);
 	collateral.dump_to_disk();
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
@@ -560,13 +559,12 @@ fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
-			keypair
-				.export_pubkey()
-				.and_then(|pubkey| {
-					serde_json::to_vec(&pubkey).map_err(|e| SgxCryptoError::Serialization(e).into())
-				})
-				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
+			let pubkey = keypair.public_key();
+			json::encode(&pubkey)
+				.map(|s| s.as_bytes().to_vec())
+				.map_err(|_| itp_sgx_crypto::Error::Serde)
 		})
+		.map_err(|_| EnclaveError::Other("json encode error".into()))
 		.ok();
 
 	Ok(shielding_pubkey)

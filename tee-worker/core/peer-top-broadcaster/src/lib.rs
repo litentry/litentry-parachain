@@ -26,10 +26,6 @@ extern crate sgx_tstd as std;
 
 use alloc::vec;
 use log::error;
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
-
-#[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClient, RpcClientFactory};

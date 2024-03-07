@@ -17,19 +17,13 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-use core::fmt::Debug;
-
-#[cfg(feature = "sgx")]
-use std::sync::RwLock;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
 
 use crate::{
 	error::Result,
 	traits::{AuthorApi, OnBlockImported},
 };
 use codec::{Decode, Encode};
+use core::fmt::Debug;
 use itp_stf_primitives::{
 	traits::TrustedCallVerification,
 	types::{AccountId, TrustedOperation as StfTrustedOperation, TrustedOperationOrHash},
@@ -39,23 +33,18 @@ use itp_types::{DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
 use sp_core::{blake2_256, H256};
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
 use std::{
 	boxed::Box,
 	collections::HashMap,
 	marker::PhantomData,
 	string::String,
-	sync::{mpsc::Sender, Arc},
+	sync::{mpsc::Sender, Arc, Mutex, RwLock},
 	vec,
 	vec::Vec,
 };
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-#[cfg(feature = "std")]
-use std::sync::Mutex;
 
 lazy_static! {
 	pub static ref GLOBAL_MOCK_AUTHOR_API: Arc<Mutex<Option<Sender<Vec<u8>>>>> =
@@ -102,7 +91,7 @@ where
 		match tops_lock.get_mut(&shard) {
 			Some(tops_encoded) => {
 				let removed_tops = tops_encoded
-					.drain_filter(|t| hashes.contains(&blake2_256(t).into()))
+					.extract_if(|t| hashes.contains(&blake2_256(t).into()))
 					.map(|t| blake2_256(&t).into())
 					.collect::<Vec<_>>();
 				Ok(removed_tops)

@@ -50,7 +50,7 @@ use itp_types::{
 	OpaqueCall, ShardIdentifier,
 };
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use sp_core::crypto::{DeriveJunction, Pair};
 use std::{slice, sync::Arc, vec::Vec};
 
@@ -60,7 +60,7 @@ pub unsafe extern "C" fn init_proxied_shard_vault(
 	shard_size: u32,
 	parentchain_id: *const u8,
 	parentchain_id_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let shard_identifier =
 		ShardIdentifier::from_slice(slice::from_raw_parts(shard, shard_size as usize));
 	let parentchain_id =
@@ -68,16 +68,16 @@ pub unsafe extern "C" fn init_proxied_shard_vault(
 			Ok(id) => id,
 			Err(e) => {
 				error!("Could not decode parentchain id: {:?}", e);
-				return sgx_status_t::SGX_ERROR_UNEXPECTED
+				return SgxStatus::Unexpected
 			},
 		};
 
 	if let Err(e) = init_proxied_shard_vault_internal(shard_identifier, parentchain_id) {
 		error!("Failed to initialize proxied shard vault ({:?}): {:?}", shard_identifier, e);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
+		return SgxStatus::Unexpected
 	}
 
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 /// reads the shard vault account id form state if it has been initialized previously
@@ -87,19 +87,19 @@ pub unsafe extern "C" fn get_ecc_vault_pubkey(
 	shard_size: u32,
 	pubkey: *mut u8,
 	pubkey_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let shard = ShardIdentifier::from_slice(slice::from_raw_parts(shard, shard_size as usize));
 
 	let shard_vault = match get_shard_vault_account(shard) {
 		Ok(account) => account,
 		Err(e) => {
 			warn!("Failed to fetch shard vault account: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	let pubkey_slice = slice::from_raw_parts_mut(pubkey, pubkey_size as usize);
 	pubkey_slice.clone_from_slice(shard_vault.encode().as_slice());
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 /// reads the shard vault account id form state if it has been initialized previously
