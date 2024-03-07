@@ -373,27 +373,62 @@ where
 	}
 
 	let mut req_cnt = 0u8;
-	while let Ok(res) = receiver.recv() {
-		match res {
-			Ok(response) => {
-				req_cnt += 1;
-				if let Ok(vc_res) = RequestVcResultOrError::decode(&mut response.as_slice()) {
-					author.send_rpc_response(hash, response, req_cnt < vc_res.len);
-					if req_cnt >= vc_res.len {
+	loop {
+		if let Ok(res) = receiver.recv() {
+			match res {
+				Ok(response) => {
+					req_cnt += 1;
+					if let Ok(vc_res) = RequestVcResultOrError::decode(&mut response.as_slice()) {
+						author.send_rpc_response(hash, response, req_cnt < vc_res.len);
+						if req_cnt >= vc_res.len {
+							break
+						}
+					} else {
+						// This should never happen. Because the return value is always RequestVcResultOrError.
+						error!("Should never happen. Channel collapsed.");
+						let res = RequestVcResultOrError {
+							payload: "The whole batch request crashed. Please try again."
+								.to_string()
+								.as_bytes()
+								.to_vec(),
+							is_error: true,
+							idx: 0u8,
+							len: 0u8,
+						};
+						author.send_rpc_response(hash, res.encode(), false);
 						break
 					}
-				} else {
-					let res = compute_hex_encoded_return_error("Request vc response decode error");
-					author.send_rpc_response(hash, res.into(), false);
+				},
+				Err(e) => {
+					// This should never happen. Because the return value is always Ok(RequestVcResultOrError).
+					error!("Should never happen. Channel collapsed: {:?} ", e);
+					let res = RequestVcResultOrError {
+						payload: "The whole batch request crashed. Please try again."
+							.to_string()
+							.as_bytes()
+							.to_vec(),
+						is_error: true,
+						idx: 0u8,
+						len: 0u8,
+					};
+					author.send_rpc_response(hash, res.encode(), false);
 					break
-				}
-			},
-			Err(e) => {
-				error!("Received error in jsonresponse: {:?} ", e);
-				let res = compute_hex_encoded_return_error(&e);
-				author.send_rpc_response(hash, res.into(), false);
-				break
-			},
-		};
+				},
+			};
+		} else {
+			// Normally should not happen.
+			error!("Should never happen. Channel receiver error.");
+			let res = RequestVcResultOrError {
+				payload: "The whole batch request crashed. Please try again."
+					.to_string()
+					.as_bytes()
+					.to_vec(),
+				is_error: true,
+				idx: 0u8,
+				len: 0u8,
+			};
+			author.send_rpc_response(hash, res.encode(), false);
+			break
+		}
 	}
 }
