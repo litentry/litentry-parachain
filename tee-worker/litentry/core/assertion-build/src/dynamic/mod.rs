@@ -41,11 +41,11 @@ pub fn build<SC: SmartContractRepository>(
 	let input = prepare_execute_call_input(&req.identities);
 
 	let smart_contract_byte_code = repository.get(&smart_contract_id).unwrap();
-	let (description, assertion_type, assertion, result) =
+	let (description, assertion_type, assertions, result) =
 		execute_smart_contract(smart_contract_byte_code, input);
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_dynamic(description, assertion_type, assertion, result);
+			credential_unsigned.update_dynamic(description, assertion_type, assertions, result);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
@@ -61,7 +61,7 @@ pub fn build<SC: SmartContractRepository>(
 pub fn execute_smart_contract(
 	smart_contract_byte_code: Vec<u8>,
 	input: Vec<u8>,
-) -> (String, String, String, bool) {
+) -> (String, String, Vec<String>, bool) {
 	println!("Executing smart contract with input: {:?}", hex::encode(&input));
 
 	// prepare EVM runtime
@@ -94,13 +94,24 @@ pub fn execute_smart_contract(
 	decode_result(&call_reason.1)
 }
 
-fn decode_result(data: &[u8]) -> (String, String, String, bool) {
-	let types = vec![ParamType::String, ParamType::String, ParamType::String, ParamType::Bool];
+fn decode_result(data: &[u8]) -> (String, String, Vec<String>, bool) {
+	let types = vec![
+		ParamType::String,
+		ParamType::String,
+		ParamType::Array(ParamType::String.into()),
+		ParamType::Bool,
+	];
 	let decoded = decode(&types, data).unwrap();
 	(
 		decoded[0].clone().into_string().unwrap(),
 		decoded[1].clone().into_string().unwrap(),
-		decoded[2].clone().into_string().unwrap(),
+		decoded[2]
+			.clone()
+			.into_array()
+			.unwrap()
+			.into_iter()
+			.map(|p| p.into_string().unwrap())
+			.collect(),
 		decoded[3].clone().into_bool().unwrap(),
 	)
 }

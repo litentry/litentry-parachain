@@ -138,7 +138,7 @@ impl Issuer {
 #[derive(Serialize, Deserialize, Encode, Decode, PartialEq, Eq, TypeInfo, Debug, Clone)]
 #[serde(untagged)]
 pub enum Assertions {
-	Raw(String),
+	Raw(Vec<String>),
 	Typed(Vec<AssertionLogic>),
 }
 
@@ -551,12 +551,12 @@ impl Credential {
 		&mut self,
 		description: String,
 		assertion_type: String,
-		assertion: String,
+		assertions: Vec<String>,
 		result: bool,
 	) {
 		self.credential_subject.description = description;
 		self.credential_subject.types = assertion_type;
-		self.credential_subject.assertions = Assertions::Raw(assertion);
+		self.credential_subject.assertions = Assertions::Raw(assertions);
 		self.credential_subject.values = vec![result]
 	}
 }

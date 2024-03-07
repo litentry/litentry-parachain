@@ -2,47 +2,49 @@
 
 pragma solidity ^0.8.8;
 
-struct Identity {
-    uint32 identity_type;
-    bytes value;
-    uint32[] networks;
-}
+    struct Identity {
+        uint32 identity_type;
+        bytes value;
+        uint32[] networks;
+    }
 
 abstract contract DynamicAssertion {
+    string[] assertions;
+
     function execute(bytes memory input)
-        public
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            bool
-        )
+    public
+    returns (
+        string memory,
+        string memory,
+        string[] memory,
+        bool
+    )
     {
         Identity[] memory identities = abi.decode(input, (Identity[]));
         return doExecute(identities);
     }
 
     function doExecute(Identity[] memory identities)
-        internal
-        virtual
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            bool
-        );
+    internal
+    virtual
+    returns (
+        string memory,
+        string memory,
+        string[] memory,
+        bool
+    );
 
     function encode_params(string memory url, string memory jsonPointer)
-        public
-        pure
-        returns (bytes memory)
+    public
+    pure
+    returns (bytes memory)
     {
         return abi.encode(url, jsonPointer);
     }
 
     function GetI64(string memory url, string memory jsonPointer)
-        internal
-        returns (int64)
+    internal
+    returns (int64)
     {
         int64 value;
 
@@ -50,8 +52,8 @@ abstract contract DynamicAssertion {
         uint256 encoded_params_len = encoded_params.length;
         assembly {
             let memPtr := mload(0x40)
-            // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
-            // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
+        // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
+        // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
             if iszero(
                 call(
                     not(0),
@@ -65,7 +67,7 @@ abstract contract DynamicAssertion {
             ) {
                 revert(0, 0)
             }
-            // advance free memory pointer
+        // advance free memory pointer
             mstore(0x40, add(memPtr, 0x20))
             value := mload(memPtr)
         }
@@ -74,8 +76,8 @@ abstract contract DynamicAssertion {
     }
 
     function GetBool(string memory url, string memory jsonPointer)
-        internal
-        returns (bool)
+    internal
+    returns (bool)
     {
         bool value;
 
@@ -84,8 +86,8 @@ abstract contract DynamicAssertion {
 
         assembly {
             let memPtr := mload(0x40)
-            // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
-            // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
+        // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
+        // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
             if iszero(
                 call(
                     not(0),
@@ -99,7 +101,7 @@ abstract contract DynamicAssertion {
             ) {
                 revert(0, 0)
             }
-            // advance free memory pointer
+        // advance free memory pointer
             mstore(0x40, add(memPtr, 0x20))
             value := mload(memPtr)
         }
@@ -116,22 +118,22 @@ abstract contract DynamicAssertion {
     }
 
     function is_web3(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return (is_substrate(identity_type) ||
-            is_evm(identity_type) ||
+        is_evm(identity_type) ||
             is_bitcoin(identity_type));
     }
 
     function is_web2(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return (is_twitter(identity_type) ||
-            is_discord(identity_type) ||
+        is_discord(identity_type) ||
             is_github(identity_type));
     }
 
@@ -148,9 +150,9 @@ abstract contract DynamicAssertion {
     }
 
     function is_substrate(Identity memory identity)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return is_of_type(identity, 3);
     }
@@ -168,9 +170,9 @@ abstract contract DynamicAssertion {
     }
 
     function is_of_type(Identity memory identity, uint32 identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         if (identity.identity_type == identity_type) {
             return (true);
@@ -180,145 +182,145 @@ abstract contract DynamicAssertion {
     }
 
     function has_polkadot_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 0);
     }
 
     function has_kusama_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 1);
     }
 
     function has_litentry_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 2);
     }
 
     function has_litmus_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 3);
     }
 
     function has_litentry_rococo_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 4);
     }
 
     function has_khala_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 5);
     }
 
     function has_substrate_testnet_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 6);
     }
 
     function has_ethereum_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 7);
     }
 
     function has_bsc_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 8);
     }
 
     function has_bitcoin_p2tr_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 9);
     }
 
     function has_bitcoin_p2pkh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 10);
     }
 
     function has_bitcoin_p2sh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 11);
     }
 
     function has_bitcoin_p2wpkh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 12);
     }
 
     function has_bitcoin_p2wsh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 13);
     }
 
     function has_polygon_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 14);
     }
 
     function has_arbitrum_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 15);
     }
 
     function has_solana_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         return has_network(identity_type, 16);
     }
 
     function has_network(Identity memory identity_type, uint32 network)
-        internal
-        pure
-        returns (bool)
+    internal
+    pure
+    returns (bool)
     {
         for (uint256 i = 0; i < identity_type.networks.length; i++) {
             if (identity_type.networks[i] == network) {

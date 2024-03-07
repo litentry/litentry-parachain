@@ -6,20 +6,20 @@ import {DynamicAssertion, Identity} from "DynamicAssertion.sol";
 
 contract A1 is DynamicAssertion {
     function doExecute(Identity[] memory identities)
-        internal
-        override
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            bool
-        )
+    internal
+    override
+    returns (
+        string memory,
+        string memory,
+        string[] memory,
+        bool
+    )
     {
         string
-            memory description = "You've identified at least one account/address in both Web2 and Web3.";
+        memory description = "You've identified at least one account/address in both Web2 and Web3.";
         string memory assertion_type = "Basic Identity Verification";
-        string
-            memory assertion = "$has_web2_account == true and $has_web3_account == true";
+        assertions.push("$has_web2_account == true and $has_web3_account == true");
+
         bool result;
 
         bool has_web3_identity = false;
@@ -34,6 +34,6 @@ contract A1 is DynamicAssertion {
         }
         result = has_web2_identity && has_web3_identity;
 
-        return (description, assertion_type, assertion, result);
+        return (description, assertion_type, assertions, result);
     }
 }
