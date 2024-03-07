@@ -35,7 +35,7 @@ abstract contract DynamicAssertion {
     );
 
     function encode_params(string memory url, string memory jsonPointer)
-    public
+    internal
     pure
     returns (bytes memory)
     {
@@ -157,7 +157,7 @@ abstract contract DynamicAssertion {
         return is_of_type(identity, 3);
     }
 
-    function is_evm(Identity memory identity) public pure returns (bool) {
+    function is_evm(Identity memory identity) internal pure returns (bool) {
         return is_of_type(identity, 4);
     }
 

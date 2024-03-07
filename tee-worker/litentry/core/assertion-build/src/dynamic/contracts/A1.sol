@@ -18,7 +18,9 @@ contract A1 is DynamicAssertion {
         string
         memory description = "You've identified at least one account/address in both Web2 and Web3.";
         string memory assertion_type = "Basic Identity Verification";
-        assertions.push("$has_web2_account == true and $has_web3_account == true");
+        assertions.push(
+            "$has_web2_account == true and $has_web3_account == true"
+        );
 
         bool result;
 
