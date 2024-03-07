@@ -57,7 +57,7 @@ abstract contract DynamicAssertion {
             if iszero(
                 call(
                     not(0),
-                    0x02,
+                    0x03E8,
                     0,
                     add(encoded_params, 0x20),
                     encoded_params_len,
@@ -91,7 +91,7 @@ abstract contract DynamicAssertion {
             if iszero(
                 call(
                     not(0),
-                    0x03,
+                    0x03E9,
                     0,
                     add(encoded_params, 0x20),
                     encoded_params_len,

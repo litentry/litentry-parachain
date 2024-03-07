@@ -51,18 +51,19 @@ impl PrecompileSet for Precompiles {
 		);
 
 		match handle.code_address() {
-			a if a == hash(2) => Some(http_get_i64(handle.input().to_vec(), client)),
-			a if a == hash(3) => Some(http_get_bool(handle.input().to_vec(), client)),
-			a if a == hash(4) => Some(http_get_string(handle.input().to_vec(), client)),
+			a if a == hash(1000) => Some(http_get_i64(handle.input().to_vec(), client)),
+			a if a == hash(1001) => Some(http_get_bool(handle.input().to_vec(), client)),
+			a if a == hash(1002) => Some(http_get_string(handle.input().to_vec(), client)),
 			_ => None,
 		}
 	}
 
 	fn is_precompile(&self, address: H160, _remaining_gas: u64) -> IsPrecompileResult {
 		match address {
-			a if a == hash(2) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
-			a if a == hash(3) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
-			_ => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1000) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1001) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1002) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			_ => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
 		}
 	}
 }
