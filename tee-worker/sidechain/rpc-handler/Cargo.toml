@@ -52,6 +52,7 @@ std = [
     "log/std",
     "rust-base58",
     "lc-vc-task-sender/std",
+    "sp-runtime/std",
 ]
 sgx = [
     "futures_sgx",
