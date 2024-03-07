@@ -237,39 +237,52 @@ fn handle_vc_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		for assertion in assertions.into_iter() {
 			let hash = H256::from(blake2_256(&assertion.encode()));
 			if seen.insert(hash) {
-				unique_assertions.push(assertion);
+				unique_assertions.push(Some(assertion));
+			} else {
+				unique_assertions.push(None);
 			}
 		}
 
 		let pool = ThreadPool::new(4);
 		let len = unique_assertions.len() as u8;
 		for (idx, assertion) in unique_assertions.iter().enumerate() {
-			let new_call = TrustedCall::request_vc(
-				signer.clone(),
-				who.clone(),
-				assertion.clone(),
-				maybe_key,
-				req_ext_hash,
-			);
 			let context_pool = context.clone();
-			let extrinsic_factory_pool = extrinsic_factory.clone();
-			let node_metadata_repo_pool = node_metadata_repo.clone();
-			let tc_sender_pool = tc_sender.clone();
-			let shard = request.shard;
 			let sender_clone = sender.clone();
 
-			pool.execute(move || {
-				let response = process_single_request(
-					shard,
-					context_pool.clone(),
-					extrinsic_factory_pool,
-					node_metadata_repo_pool,
-					tc_sender_pool,
-					new_call,
+			if let Some(assertion) = assertion {
+				let new_call = TrustedCall::request_vc(
+					signer.clone(),
+					who.clone(),
+					assertion.clone(),
+					maybe_key,
+					req_ext_hash,
 				);
+				let extrinsic_factory_pool = extrinsic_factory.clone();
+				let node_metadata_repo_pool = node_metadata_repo.clone();
+				let tc_sender_pool = tc_sender.clone();
+				let shard = request.shard;
 
-				send_vc_response(&sender_clone, context_pool, response, idx as u8, len);
-			})
+				pool.execute(move || {
+					let response = process_single_request(
+						shard,
+						context_pool.clone(),
+						extrinsic_factory_pool,
+						node_metadata_repo_pool,
+						tc_sender_pool,
+						new_call,
+					);
+
+					send_vc_response(&sender_clone, context_pool, response, idx as u8, len);
+				})
+			} else {
+				send_vc_response(
+					&sender_clone,
+					context_pool,
+					Err("Duplicate assertion request".to_string()),
+					idx as u8,
+					len,
+				);
+			}
 		}
 
 		pool.join();
