@@ -77,14 +77,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
-            const idGraphGetter = await createSignedTrustedGetterIdGraph(
-                context.api,
-                new BitcoinSigner(context.bitcoinWallet.alice),
-                aliceBitcoinIdentity
-            );
-            const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-            const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-            assert.lengthOf(idGraph, 0);
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new BitcoinSigner(context.bitcoinWallet.alice),
+            aliceBitcoinIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        assert.lengthOf(idGraph, 0);
     });
 
     step('linking identities (alice bitcoin account)', async function () {
@@ -156,7 +156,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            
+
             idGraphHashResults.push(
                 await assertIdGraphMutationResult(
                     context,

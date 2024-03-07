@@ -10,7 +10,7 @@ import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
 import { ECPairInterface } from 'ecpair';
 import * as bitcoinMessage from 'bitcoinjs-message';
-import {randomBytes} from 'crypto';
+import { randomBytes } from 'crypto';
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {

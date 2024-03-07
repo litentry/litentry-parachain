@@ -250,14 +250,14 @@ export async function buildValidations(
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
             bitcoinSignature = bitcoinMessage.sign(
-               'Litentry authorization token: ' + msg,
+                'Litentry authorization token: ' + msg,
                 bitcoinSigner.privateKey!,
                 bitcoinSigner.compressed
             );
-            
+
             bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
             console.log('bitcoin pubkey: ', `0x${bitcoinSigner.publicKey.toString('hex')}`);
-            
+
             console.log('bitcoin sig (base64): ', bitcoinSignature.toString('base64'));
             console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
