@@ -19,7 +19,6 @@ function bitacross_clippy() {
 function parachain_check() {
     make clippy
     cargo test --locked --release -p pallet-* --lib
-    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
     cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
     cargo test --locked --release -p rococo-parachain-runtime --lib
     cargo test --locked --release -p litmus-parachain-runtime --lib
