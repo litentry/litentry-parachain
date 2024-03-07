@@ -16,7 +16,6 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-use codec::{Decode, Encode};
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
 use log::*;

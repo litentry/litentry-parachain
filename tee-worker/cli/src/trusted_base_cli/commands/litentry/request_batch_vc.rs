@@ -14,16 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::arch::x86_64::_CMP_ORD_Q;
-
 use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::{perform_direct_operation, perform_trusted_operation},
+	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
-use clap::Error;
 use ita_stf::{
 	trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning, VecAssertion,
 };
@@ -155,12 +152,10 @@ impl RequestBatchVcCommand {
 					commands.push((command, current_params.clone()));
 					current_params.clear();
 				}
+			} else if current_command.is_none() {
+				current_command = Some(item.to_string());
 			} else {
-				if current_command.is_none() {
-					current_command = Some(item.to_string());
-				} else {
-					current_params.push(item.to_string());
-				}
+				current_params.push(item.to_string());
 			}
 		}
 
@@ -237,7 +232,7 @@ impl RequestBatchVcCommand {
 									.ok_or("Achainable AmountHolding: Missing parameter")?
 									.clone(),
 							),
-							token: params.get(5).map_or(None, |v| Some(to_para_str(v))),
+							token: params.get(5).map(|v| to_para_str(v)),
 						},
 					))),
 					"amounttoken" => Ok(Assertion::Achainable(AchainableParams::AmountToken(
@@ -260,7 +255,7 @@ impl RequestBatchVcCommand {
 									.ok_or("Achainable AmountToken: Missing parameter")?
 									.clone(),
 							),
-							token: params.get(4).map_or(None, |v| Some(to_para_str(v))),
+							token: params.get(4).map(|v| to_para_str(v)),
 						},
 					))),
 					"amount" =>
@@ -445,19 +440,25 @@ impl RequestBatchVcCommand {
 							name: to_para_str(
 								&params
 									.get(1)
-									.ok_or("Achainable Token: Missing parameter".to_string())?
+									.ok_or_else(|| {
+										"Achainable Token: Missing parameter".to_string()
+									})?
 									.clone(),
 							),
 							chain: to_chains(
 								params
 									.get(2)
-									.ok_or("Achainable Token: Missing parameter".to_string())?
+									.ok_or_else(|| {
+										"Achainable Token: Missing parameter".to_string()
+									})?
 									.clone(),
 							),
 							token: to_para_str(
 								&params
 									.get(3)
-									.ok_or("Achainable Token: Missing parameter".to_string())?
+									.ok_or_else(|| {
+										"Achainable Token: Missing parameter".to_string()
+									})?
 									.clone(),
 							),
 						}))),
@@ -466,16 +467,20 @@ impl RequestBatchVcCommand {
 							name: to_para_str(
 								&params
 									.get(1)
-									.ok_or("Achainable Token: Missing parameter".to_string())?
+									.ok_or_else(|| {
+										"Achainable Token: Missing parameter".to_string()
+									})?
 									.clone(),
 							),
 							chain: to_chains(
 								params
 									.get(2)
-									.ok_or("Achainable Token: Missing parameter".to_string())?
+									.ok_or_else(|| {
+										"Achainable Token: Missing parameter".to_string()
+									})?
 									.clone(),
 							),
-							post_quantity: params.get(3).map_or(None, |v| Some(to_para_str(v))),
+							post_quantity: params.get(3).map(|v| to_para_str(v)),
 						}))),
 					_ => Err("Achainable: Wrong parameter".to_string()),
 				}
