@@ -10,6 +10,7 @@ import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
 import { ECPairInterface } from 'ecpair';
 import * as bitcoinMessage from 'bitcoinjs-message';
+import {randomBytes} from 'crypto';
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
@@ -144,7 +145,10 @@ export class BitcoinSigner implements Signer {
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
         return new Promise((resolve, reject) => {
             if (isString(message)) {
-                const sig = bitcoinMessage.sign(message, this.keypair.privateKey!, this.keypair.compressed);
+                // produce non-deterministic signatures
+                const sig = bitcoinMessage.sign(message, this.keypair.privateKey!, this.keypair.compressed, {
+                    extraEntropy: randomBytes(32),
+                });
                 resolve(sig);
             } else {
                 reject('wrong message type');

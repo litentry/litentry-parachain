@@ -11,7 +11,7 @@ import {
     createSignedTrustedCallRequestVc,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
-import { CorePrimitivesIdentity, RequestVCResult } from 'parachain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';

@@ -155,7 +155,7 @@ export async function buildValidations(
 ): Promise<LitentryValidationData[]> {
     let evmSignature: HexString;
     let substrateSignature: Uint8Array;
-    let bitcoinSignature: Uint8Array;
+    let bitcoinSignature: Buffer;
     const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
@@ -221,11 +221,15 @@ export async function buildValidations(
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
             // we need to sign the hex string without `0x` prefix, the signature is base64-encoded string
-            const sig = bitcoinMessage.sign(msg.substring(2), bitcoinSigner.privateKey!, bitcoinSigner.compressed);
-            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(sig);
+            bitcoinSignature = bitcoinMessage.sign(
+                msg.substring(2),
+                bitcoinSigner.privateKey!,
+                bitcoinSigner.compressed
+            );
+            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
             console.log('bitcoin pubkey: ', `0x${bitcoinSigner.publicKey.toString('hex')}`);
-            console.log('bitcoin sig (base64): ', sig.toString('base64'));
-            console.log('bitcoin sig (hex): ', u8aToHex(sig));
+            console.log('bitcoin sig (base64): ', bitcoinSignature.toString('base64'));
+            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData
@@ -245,13 +249,17 @@ export async function buildValidations(
             console.log('post verification msg to bitcoin: ', msg);
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
-            const sig = bitcoinMessage.sign(msg.substring(2), bitcoinSigner.privateKey!, bitcoinSigner.compressed);
+            bitcoinSignature = bitcoinMessage.sign(
+                msg.substring(2),
+                bitcoinSigner.privateKey!,
+                bitcoinSigner.compressed
+            );
 
-            bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(sig);
+            bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
             console.log('bitcoin pubkey: ', `0x${bitcoinSigner.publicKey.toString('hex')}`);
 
-            console.log('bitcoin sig (base64): ', sig.toString('base64'));
-            console.log('bitcoin sig (hex): ', u8aToHex(sig));
+            console.log('bitcoin sig (base64): ', bitcoinSignature.toString('base64'));
+            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData
