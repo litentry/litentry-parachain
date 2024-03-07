@@ -52,7 +52,7 @@ test = [
 dcap = []
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["tserialize"] }
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["tcrypto"] }
 sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_serialize_derive = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
@@ -154,10 +154,7 @@ itp-sgx-temp-dir = { version = "0.1", default-features = false, optional = true,
 [patch.crates-io]
 env_logger = { git = "https://github.com/Kailai-Wang/env_logger-sgx", branch = "sgx-sdk-2.0.0" }
 # getrandom = { git = "https://github.com/integritee-network/getrandom-sgx", branch = "update-v2.3" }
-log = { git = "https://github.com/integritee-network/log-sgx" }
-
-[patch."https://github.com/mesalock-linux/log-sgx"]
-log = { git = "https://github.com/integritee-network/log-sgx" }
+log = { git = "https://github.com/Kailai-Wang/log-sgx", branch = "sgx-sdk-2.0.0" }
 
 [patch."https://github.com/paritytech/substrate"]
 sp-io = { path = "../core-primitives/substrate-sgx/sp-io" }

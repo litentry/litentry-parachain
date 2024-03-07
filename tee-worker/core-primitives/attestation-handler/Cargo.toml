@@ -32,8 +32,7 @@ webpki_sgx = { package = "webpki", git = "https://github.com/mesalock-linux/webp
 yasna_sgx = { package = "yasna", optional = true, default-features = false, features = ["bit-vec", "num-bigint", "chrono", "mesalock_sgx"], git = "https://github.com/mesalock-linux/yasna.rs-sgx", rev = "sgx_1.1.3" }
 
 # sgx
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["tserialize"], optional = true }
-sgx_dcap_tvl = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["capi"], optional = true }
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_trts = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tse = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["capi"], optional = true }
@@ -87,12 +86,11 @@ sgx = [
     "thiserror_sgx",
     "webpki_sgx",
     "yasna_sgx",
-    "sgx_tse",
-    "sgx_tstd",
     "sgx_rand",
     "sgx_crypto",
-    "sgx_dcap_tvl",
     "sgx_trts",
+    "sgx_tse",
+    "sgx_tstd",
     "num-bigint",
     # local
     "itp-sgx-io/sgx",

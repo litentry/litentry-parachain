@@ -49,7 +49,7 @@ impl ToPubkey for ed25519::Pair {
 }
 
 #[cfg(feature = "sgx")]
-pub mod sgx {
+mod sgx {
 	use super::SEALED_SIGNER_SEED_FILE;
 	use crate::{
 		error::{Error, Result},
@@ -137,7 +137,10 @@ pub mod sgx {
 }
 
 #[cfg(feature = "test")]
-pub mod sgx_tests {
+pub use sgx_tests::*;
+
+#[cfg(feature = "test")]
+mod sgx_tests {
 	use super::sgx::*;
 	use crate::{key_repository::AccessKey, Ed25519Sealing, ToPubkey};
 	use itp_sgx_temp_dir::TempDir;

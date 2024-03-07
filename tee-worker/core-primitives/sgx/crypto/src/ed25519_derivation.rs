@@ -27,10 +27,7 @@ pub trait DeriveEd25519 {
 
 impl DeriveEd25519 for Rsa3072KeyPair {
 	fn derive_ed25519(&self) -> Result<Ed25519Pair> {
-		#[cfg(all(not(feature = "std"), feature = "sgx"))]
 		let encoded_key = opaque::encode(self).ok_or(Error::Serde)?;
-		#[cfg(all(feature = "std", not(feature = "sgx")))]
-		let encoded_key = serde_json::to_vec(self).ok_or(Error::Serde)?;
 		let seed = blake2_256(&encoded_key);
 		Ok(Ed25519Pair::from_seed(&seed))
 	}

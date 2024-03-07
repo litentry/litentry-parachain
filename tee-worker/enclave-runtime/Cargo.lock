@@ -983,7 +983,7 @@ dependencies = [
 [[package]]
 name = "env_logger"
 version = "0.9.0"
-source = "git+https://github.com/Kailai-Wang/env_logger-sgx?branch=sgx-sdk-2.0.0#6ed005a8082e6534bbd5e53e8abd5c590658d471"
+source = "git+https://github.com/Kailai-Wang/env_logger-sgx?branch=sgx-sdk-2.0.0#157db0daa65a04242d5450d67440c255c3cfcfed"
 dependencies = [
  "log",
  "sgx_tstd",
@@ -2196,7 +2196,6 @@ dependencies = [
  "rustls",
  "serde_json",
  "sgx_crypto",
- "sgx_dcap_tvl",
  "sgx_rand",
  "sgx_trts",
  "sgx_tse",
@@ -2350,7 +2349,6 @@ dependencies = [
  "log",
  "ofb",
  "parity-scale-codec",
- "serde_json",
  "sgx_crypto",
  "sgx_rand",
  "sgx_serialize",
@@ -3277,7 +3275,7 @@ dependencies = [
 [[package]]
 name = "log"
 version = "0.4.17"
-source = "git+https://github.com/integritee-network/log-sgx#483383a9be3e2e900042eef9b6b2d0837411783f"
+source = "git+https://github.com/Kailai-Wang/log-sgx?branch=sgx-sdk-2.0.0#791241e84613319afae17d80691c0c6d1e0ff6a4"
 dependencies = [
  "cfg-if 1.0.0",
  "sgx_tstd",
@@ -3339,7 +3337,7 @@ dependencies = [
 [[package]]
 name = "mio"
 version = "0.6.21"
-source = "git+https://github.com/Kailai-Wang/mio-sgx?branch=sgx-sdk-2.0.0#f0dcfb02f798a0008bdeb1fbec2325d82bf858a7"
+source = "git+https://github.com/Kailai-Wang/mio-sgx?branch=sgx-sdk-2.0.0#607d00838bf0732d64746ed0796b9ebc412c2a63"
 dependencies = [
  "iovec",
  "log",
@@ -4094,7 +4092,7 @@ dependencies = [
 [[package]]
 name = "rustls"
 version = "0.19.0"
-source = "git+https://github.com/Kailai-Wang/rustls-sgx?branch=sgx-sdk-2.0.0#b1a65472c654be8b034417f19c37b0205a8426f5"
+source = "git+https://github.com/Kailai-Wang/rustls-sgx?branch=sgx-sdk-2.0.0#b487a0c9f26d0726120edf0cff2f3ec536c9b3d0"
 dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx)",
  "log",
@@ -4392,17 +4390,6 @@ source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0
 dependencies = [
  "sgx_build_helper",
  "sgx_download_prebuilt",
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_dcap_tvl"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
-dependencies = [
- "sgx_crypto",
- "sgx_trts",
- "sgx_tse",
  "sgx_types",
 ]
 
@@ -5405,7 +5392,7 @@ checksum = "f4f195fd851901624eee5a58c4bb2b4f06399148fcd0ed336e6f1cb60a9881df"
 [[package]]
 name = "tungstenite"
 version = "0.14.0"
-source = "git+https://github.com/Kailai-Wang/tungstenite-rs-sgx?branch=sgx-sdk-2.0.0#043b0e283e38e643621dabc62538694061d2d740"
+source = "git+https://github.com/Kailai-Wang/tungstenite-rs-sgx?branch=sgx-sdk-2.0.0#cdc6d38acecddead5bb9c710259a62e206ce8ad0"
 dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?tag=sgx_1.1.3)",
  "byteorder 1.3.4",

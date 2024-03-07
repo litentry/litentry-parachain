@@ -28,7 +28,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use chrono_sgx as chrono;
-	// pub use serde_json_sgx as serde_json;
 	pub use thiserror_sgx as thiserror;
 }
 

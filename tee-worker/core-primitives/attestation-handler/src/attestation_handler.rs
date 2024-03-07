@@ -32,7 +32,6 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{cert, Error as EnclaveError, Error, Result as EnclaveResult};
 use codec::Encode;
-use core::{convert::TryInto, default::Default};
 use itertools::Itertools;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_settings::{
@@ -41,12 +40,9 @@ use itp_settings::{
 };
 use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_io as io;
-use itp_time_utils::now_as_secs;
 use log::*;
 use sgx_crypto::{ecc::*, sha::Sha256};
-use sgx_dcap_tvl::capi::sgx_tvl_verify_qve_report_and_identity;
-use sgx_trts::capi::sgx_read_rand;
-use sgx_tse::{capi::sgx_self_target, EnclaveReport};
+use sgx_tse::EnclaveReport;
 use sgx_types::{error::*, types::*};
 use sp_core::{ed25519, Pair};
 use std::{
@@ -672,94 +668,8 @@ where
 			.map_err(|e| EnclaveError::Other(e.into()))
 	}
 
-	// TODO(Litentry): do we need this?
-	/// Returns Ok if the verification of the quote by the quote verification enclave (QVE) was successful
-	// pub fn ecdsa_quote_verification(&self, quote: Vec<u8>) -> SgxResult<()> {
-	// 	let mut app_enclave_target_info: TargetInfo = unsafe { std::mem::zeroed() };
-	// 	let quote_collateral: CQlQveCollateral = unsafe { std::mem::zeroed() };
-	// 	let mut qve_report_info: QlQeReportInfo = unsafe { std::mem::zeroed() };
-	// 	let supplemental_data_size = std::mem::size_of::<QlQvSupplemental>() as u32;
-
-	// 	// Get target info of the app enclave. QvE will target the generated report to this enclave.
-	// 	let ret_val =
-	// 		unsafe { sgx_self_target(&mut app_enclave_target_info as *mut TargetInfo) };
-	// 	if ret_val != SgxStatus::Success {
-	// 		error!("sgx_self_target returned: {:?}", ret_val);
-	// 		return Err(SgxStatus::Unexpected)
-	// 	}
-
-	// 	// Set current time, which is needed to check against the expiration date of the certificate.
-	// 	let current_time: i64 = now_as_secs().try_into().unwrap_or_else(|e| {
-	// 		panic!("Could not convert SystemTime from u64 into i64: {:?}", e);
-	// 	});
-
-	// 	// Set random nonce.
-	// 	let mut rand_nonce = vec![0u8; 16];
-	// 	let ret_val = unsafe { sgx_read_rand(rand_nonce.as_mut_ptr(), rand_nonce.len()) };
-	// 	if ret_val != SgxStatus::Success.into() {
-	// 		error!("sgx_read_rand returned: {:?}", ret_val);
-	// 		return Err(SgxStatus::Unexpected)
-	// 	}
-	// 	debug!("Retrieved random nonce {:?}", rand_nonce);
-	// 	qve_report_info.nonce.rand.copy_from_slice(rand_nonce.as_slice());
-	// 	qve_report_info.app_enclave_target_info = app_enclave_target_info;
-
-	// 	// Ocall to call Quote verification Enclave (QvE), which verifies the generated quote.
-	// 	let (
-	// 		collateral_expiration_status,
-	// 		quote_verification_result,
-	// 		qve_report_info_return_value,
-	// 		supplemental_data,
-	// 	) = self.ocall_api.get_qve_report_on_quote(
-	// 		quote.clone(),
-	// 		current_time,
-	// 		quote_collateral,
-	// 		qve_report_info,
-	// 		supplemental_data_size,
-	// 	)?;
-
-	// 	// Check nonce of qve report to protect against replay attacks, as the qve report
-	// 	// is coming from the untrusted side.
-	// 	if qve_report_info_return_value.nonce.rand != qve_report_info.nonce.rand {
-	// 		error!(
-	// 			"Nonce of input value and return value are not matching. Input: {:?}, Output: {:?}",
-	// 			qve_report_info.nonce.rand, qve_report_info_return_value.nonce.rand
-	// 		);
-	// 		return Err(SgxStatus::Unexpected)
-	// 	}
-
-	// 	// Set the threshold of QvE ISV SVN. The ISV SVN of QvE used to verify quote must be greater or equal to this threshold
-	// 	// e.g. You can check latest QvE ISVSVN from QvE configuration file on Github
-	// 	// https://github.com/intel/SGXDataCenterAttestationPrimitives/blob/master/QuoteVerification/QvE/Enclave/linux/config.xml#L4
-	// 	// or you can get latest QvE ISVSVN in QvE Identity JSON file from
-	// 	// https://api.trustedservices.intel.com/sgx/certification/v3/qve/identity
-	// 	// Make sure you are using trusted & latest QvE ISV SVN as threshold
-	// 	// Warning: The function may return erroneous result if QvE ISV SVN has been modified maliciously.
-	// 	let qve_isvsvn_threshold: u16 = 6;
-
-	// 	// Verify the qve report to validate that it is coming from a legit quoting verification enclave
-	// 	// and has not been tampered with.
-	// 	let ret_val = unsafe {
-	// 		sgx_tvl_verify_qve_report_and_identity(
-	// 			quote.as_ptr(),
-	// 			quote.len() as u32,
-	// 			&qve_report_info_return_value as *const QlQeReportInfo,
-	// 			current_time,
-	// 			collateral_expiration_status,
-	// 			quote_verification_result,
-	// 			supplemental_data.as_ptr(),
-	// 			supplemental_data_size,
-	// 			qve_isvsvn_threshold,
-	// 		)
-	// 	};
-
-	// 	if ret_val != Quote3Error::Success {
-	// 		error!("sgx_tvl_verify_qve_report_and_identity returned: {:?}", ret_val);
-	// 		return Err(SgxStatus::Unexpected)
-	// 	}
-
-	// 	Ok(())
-	// }
+	// TODO(Litentry): do we need this? I don't see where it's used
+	// pub fn ecdsa_quote_verification(&self, quote: Vec<u8>) -> SgxResult<()
 
 	pub fn retrieve_qe_dcap_quote(
 		&self,

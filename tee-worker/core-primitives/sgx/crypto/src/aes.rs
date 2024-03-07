@@ -101,7 +101,7 @@ pub trait AesSealing {
 pub use sgx::*;
 
 #[cfg(feature = "sgx")]
-pub mod sgx {
+mod sgx {
 	use super::*;
 	use crate::key_repository::KeyRepository;
 	use itp_sgx_io::{seal, unseal, SealedIO};
@@ -162,7 +162,10 @@ pub mod sgx {
 }
 
 #[cfg(feature = "test")]
-pub mod sgx_tests {
+pub use sgx_tests::*;
+
+#[cfg(feature = "test")]
+mod sgx_tests {
 	use super::sgx::*;
 	use crate::{key_repository::AccessKey, AesSeal, AesSealing};
 	use itp_sgx_temp_dir::TempDir;

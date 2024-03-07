@@ -8,12 +8,13 @@ edition = "2021"
 [dependencies]
 
 # sgx deps
-sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_tstd = { optional = true, features = ["untrusted_fs"], branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
+sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["untrusted_fs"], optional = true }
 
 [features]
 default = ["std"]
 std = []
 sgx = [
+    "sgx_tprotected_fs",
     "sgx_tstd",
 ]

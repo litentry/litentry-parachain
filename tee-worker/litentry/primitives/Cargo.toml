@@ -23,7 +23,7 @@ strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
 
 # sgx dependencies
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
+sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 # internal dependencies
@@ -43,13 +43,14 @@ production = [
 ]
 sgx = [
     "sgx_tstd",
-    "sgx_rand",
+    "sgx_rand/trand",
     "itp-sgx-crypto/sgx",
 ]
 std = [
     "strum/std",
     "hex/std",
     "serde/std",
+    "sgx_rand/urand",
     "itp-sgx-crypto/std",
     "itp-utils/std",
     "sp-core/std",

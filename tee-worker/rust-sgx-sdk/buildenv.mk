@@ -1,52 +1,73 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
 #
-# Copyright (C) 2017-2018 Baidu, Inc. All Rights Reserved.
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#  * Neither the name of Baidu, Inc., nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License..
 #
 #
 
-CP    := /bin/cp -f
+# -----------------------------------------------------------------------------
+# Function : parent-dir
+# Arguments: 1: path
+# Returns  : Parent dir or path of $1, with final separator removed.
+# -----------------------------------------------------------------------------
+parent-dir = $(patsubst %/,%,$(dir $(1:%/=%)))
+
+# -----------------------------------------------------------------------------
+# Macro    : my-dir
+# Returns  : the directory of the current Makefile
+# Usage    : $(my-dir)
+# -----------------------------------------------------------------------------
+my-dir = $(realpath $(call parent-dir,$(lastword $(MAKEFILE_LIST))))
+
+
+ROOT_DIR              := $(call my-dir)
+ifneq ($(words $(subst :, ,$(ROOT_DIR))), 1)
+  $(error main directory cannot contain spaces nor colons)
+endif
+
+COMMON_DIR            := $(ROOT_DIR)/common
+
+CP    := cp -f
 MKDIR := mkdir -p
 STRIP := strip
 OBJCOPY := objcopy
+CC ?= gcc
 
 # clean the content of 'INCLUDE' - this variable will be set by vcvars32.bat
 # thus it will cause build error when this variable is used by our Makefile,
 # when compiling the code under Cygwin tainted by MSVC environment settings.
 INCLUDE :=
 
-# turn on stack protector for SDK
-COMMON_FLAGS += -fstack-protector
+# this will return the path to the file that included the buildenv.mk file
+CUR_DIR := $(realpath $(call parent-dir,$(lastword $(wordlist 2,$(words $(MAKEFILE_LIST)),x $(MAKEFILE_LIST)))))
 
-ifdef DEBUG
-    COMMON_FLAGS += -O0 -g -DDEBUG -UNDEBUG
+CC_VERSION := $(shell $(CC) -dumpversion)
+CC_VERSION_MAJOR := $(shell echo $(CC_VERSION) | cut -f1 -d.)
+CC_VERSION_MINOR := $(shell echo $(CC_VERSION) | cut -f2 -d.)
+CC_BELOW_4_9 := $(shell [ $(CC_VERSION_MAJOR) -lt 4 -o \( $(CC_VERSION_MAJOR) -eq 4 -a $(CC_VERSION_MINOR) -le 9 \) ] && echo 1)
+CC_BELOW_5_2 := $(shell [ $(CC_VERSION_MAJOR) -lt 5 -o \( $(CC_VERSION_MAJOR) -eq 5 -a $(CC_VERSION_MINOR) -le 2 \) ] && echo 1)
+CC_NO_LESS_THAN_8 := $(shell expr $(CC_VERSION) \>\= "8")
+
+# turn on stack protector for SDK
+ifeq ($(CC_BELOW_4_9), 1)
+    COMMON_FLAGS += -fstack-protector
 else
-    COMMON_FLAGS += -O2 -D_FORTIFY_SOURCE=2 -UDEBUG -DNDEBUG
+    COMMON_FLAGS += -fstack-protector-strong
 endif
+
+COMMON_FLAGS += -ffunction-sections -fdata-sections
 
 # turn on compiler warnings as much as possible
 COMMON_FLAGS += -Wall -Wextra -Winit-self -Wpointer-arith -Wreturn-type \
@@ -61,7 +82,7 @@ CFLAGS += -Wjump-misses-init -Wstrict-prototypes -Wunsuffixed-float-constants
 CXXFLAGS += -Wnon-virtual-dtor
 
 # for static_assert()
-CXXFLAGS += -std=c++0x
+CXXFLAGS += -std=c++14
 
 .DEFAULT_GOAL := all
 # this turns off the RCS / SCCS implicit rules of GNU Make
@@ -83,7 +104,7 @@ ifneq (,$(findstring 86,$(UNAME)))
         HOST_ARCH := x86_64
     endif
 else
-    $(info Unknown host CPU architecture $(UNAME))
+    $(info Unknown host CPU arhitecture $(UNAME))
     $(error Aborting)
 endif
 
@@ -105,6 +126,11 @@ else
 COMMON_FLAGS += -DITT_ARCH_IA64
 endif
 
+CET_FLAGS := 
+ifeq ($(CC_NO_LESS_THAN_8), 1)
+    CET_FLAGS += -fcf-protection
+endif
+
 CFLAGS   += $(COMMON_FLAGS)
 CXXFLAGS += $(COMMON_FLAGS)
 
@@ -117,31 +143,29 @@ MITIGATION_RET ?= 0
 MITIGATION_C ?= 0
 MITIGATION_ASM ?= 0
 MITIGATION_AFTERLOAD ?= 0
-MITIGATION_LIB_PATH :=
 
-ifeq ($(MITIGATION-CVE-2020-0551), LOAD)
+ifeq ($(MITIGATION_CVE_2020_0551), LOAD)
     MITIGATION_C := 1
     MITIGATION_ASM := 1
     MITIGATION_INDIRECT := 1
     MITIGATION_RET := 1
     MITIGATION_AFTERLOAD := 1
-    MITIGATION_LIB_PATH := cve_2020_0551_load
-else ifeq ($(MITIGATION-CVE-2020-0551), CF)
+else ifeq ($(MITIGATION_CVE_2020_0551), CF)
     MITIGATION_C := 1
     MITIGATION_ASM := 1
     MITIGATION_INDIRECT := 1
     MITIGATION_RET := 1
     MITIGATION_AFTERLOAD := 0
-    MITIGATION_LIB_PATH := cve_2020_0551_cf
 endif
 
-MITIGATION_CFLAGS :=
-MITIGATION_ASFLAGS :=
 ifeq ($(MITIGATION_C), 1)
 ifeq ($(MITIGATION_INDIRECT), 1)
     MITIGATION_CFLAGS += -mindirect-branch-register
 endif
 ifeq ($(MITIGATION_RET), 1)
+ifeq ($(CC_NO_LESS_THAN_8), 1)
+    MITIGATION_CFLAGS += -fcf-protection=none
+endif
     MITIGATION_CFLAGS += -mfunction-return=thunk-extern
 endif
 endif
@@ -149,16 +173,28 @@ endif
 ifeq ($(MITIGATION_ASM), 1)
     MITIGATION_ASFLAGS += -fno-plt
 ifeq ($(MITIGATION_AFTERLOAD), 1)
-    MITIGATION_ASFLAGS += -Wa,-mlfence-after-load=yes
+    MITIGATION_ASFLAGS += -Wa,-mlfence-after-load=yes -Wa,-mlfence-before-indirect-branch=memory
 else
-    MITIGATION_ASFLAGS += -Wa,-mlfence-before-indirect-branch=register
+    MITIGATION_ASFLAGS += -Wa,-mlfence-before-indirect-branch=all
 endif
 ifeq ($(MITIGATION_RET), 1)
-    MITIGATION_ASFLAGS += -Wa,-mlfence-before-ret=not
+    MITIGATION_ASFLAGS += -Wa,-mlfence-before-ret=shl
 endif
 endif
 
 MITIGATION_CFLAGS += $(MITIGATION_ASFLAGS)
+
+#fcf-protection is not compatible with MITIGATION
+ifneq ($(MITIGATION_RET), 1)
+    CFLAGS   += $(CET_FLAGS)
+    CXXFLAGS += $(CET_FLAGS)
+endif
+
+ifeq ($(MITIGATION_CVE_2020_0551), LOAD)
+    MITIGATION_RUSTFLAGS = "-C target-feature=+rdrnd,+rdseed,+lvi-cfi,+lvi-load-hardening"
+else ifeq ($(MITIGATION_CVE_2020_0551), CF)
+    MITIGATION_RUSTFLAGS = "-C target-feature=+rdrnd,+rdseed,+lvi-cfi"
+endif
 
 # Compiler and linker options for an Enclave
 #
@@ -171,9 +207,29 @@ MITIGATION_CFLAGS += $(MITIGATION_ASFLAGS)
 ENCLAVE_CFLAGS   = -ffreestanding -nostdinc -fvisibility=hidden -fpie -fno-strict-overflow -fno-delete-null-pointer-checks
 ENCLAVE_CXXFLAGS = $(ENCLAVE_CFLAGS) -nostdinc++
 ENCLAVE_LDFLAGS  = $(COMMON_LDFLAGS) -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
-                   -Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
-                   -Wl,--gc-sections \
-                   -Wl,--defsym,__ImageBase=0
+                   -Wl,-pie -Wl,--export-dynamic  \
+                   -Wl,--gc-sections
+
+# ENCLAVE_LDFLAGS  = $(COMMON_LDFLAGS) -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
+#                    -Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
+#                    -Wl,--gc-sections \
+#                    -Wl,--defsym,ImageBase=0
 
 ENCLAVE_CFLAGS += $(MITIGATION_CFLAGS)
 ENCLAVE_ASFLAGS = $(MITIGATION_ASFLAGS)
+ENCLAVE_RUSTFLAGS = $(MITIGATION_RUSTFLAGS)
+
+
+# We have below choices as to math and string libs:
+# 1. math   - optimized (1), open sourced (0)
+# 2. string - optimized (1), open sourced (0)
+#
+# A macro 'USE_OPT_LIBS' is provided to allow users to build
+# RUST SGX SDK with different library combination by setting different
+# value to 'USE_OPT_LIBS'.
+# By default, choose to build SDK using optimized IPP crypto +
+# open sourced string + open sourced math.
+#
+# IPP + open sourced string + open sourced math
+USE_OPT_LIBS  ?= 1
+OPT_LIBS_PATH ?= $(ROOT_DIR)
