@@ -1,6 +1,6 @@
 import '@polkadot/api-augment';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { loadConfig, signAndSend } from '../utils';
+import { loadConfig, signAndSend, sudoWrapper } from '../utils';
 import { hexToU8a } from '@polkadot/util';
 
 const mrenclave = process.argv[2];
@@ -11,7 +11,7 @@ async function setAliceAsAdmin(api: ApiPromise, config: any) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
 
-    const tx = api.tx.sudo.sudo(api.tx.teebag.setAdmin('esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5'));
+    const tx = await sudoWrapper(api, api.tx.teebag.setAdmin('esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5'));
 
     console.log(`Setting Alice as Admin for Teebag`);
     return signAndSend(tx, alice);

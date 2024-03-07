@@ -1,7 +1,7 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, sudoWrapper } from '../common/utils';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import { evmToAddress } from '@polkadot/util-crypto';
@@ -15,7 +15,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             let temp = await context.api.rpc.chain.getBlock();
             console.log(`setMode await Before: ${temp.block.header.number}`);
             await signAndSend(extrinsic, context.alice);
@@ -82,7 +82,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         );
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 
@@ -91,7 +91,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             let temp = await context.api.rpc.chain.getBlock();
             console.log(`setMode await Before: ${temp.block.header.number}`);
             await signAndSend(extrinsic, context.alice);
@@ -148,7 +148,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         expect(eveCurrentBalance.free.toBigInt()).to.equal(eveInitBalance.free.toBigInt() + BigInt(100000000000));
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 
@@ -157,7 +157,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             await signAndSend(extrinsic, context.alice);
         }
 
@@ -210,7 +210,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapper(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 });
