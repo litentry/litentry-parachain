@@ -1,7 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
@@ -29,7 +28,6 @@ import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Bytes, Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -66,27 +64,29 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceBitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
             'Bitcoin',
             context
         );
         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
         bobBitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.bob.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.bob.publicKey.toString('hex'),
             'Bitcoin',
             context
         );
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
-        const idGraphGetter = await createSignedTrustedGetterIdGraph(
-            context.api,
-            new BitcoinSigner(context.bitcoinWallet.alice),
-            aliceBitcoinIdentity
-        );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-        assert.lengthOf(idGraph, 0);
+        for (let index = 0; index < 200; index++) {
+            const idGraphGetter = await createSignedTrustedGetterIdGraph(
+                context.api,
+                new BitcoinSigner(context.bitcoinWallet.alice),
+                aliceBitcoinIdentity
+            );
+            const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+            const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+            assert.lengthOf(idGraph, 0);
+        }
     });
 
     step('linking identities (alice bitcoin account)', async function () {

@@ -6,11 +6,10 @@ import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
-import bitcore from 'bitcore-lib';
 import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
-import { base64Decode } from '@polkadot/util-crypto';
-
+import { ECPairInterface } from 'ecpair';
+import * as bitcoinMessage from 'bitcoinjs-message';
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
@@ -132,30 +131,23 @@ export class EthersSigner implements Signer {
 }
 
 export class BitcoinSigner implements Signer {
-    keypair: bitcore.PrivateKey;
+    keypair: ECPairInterface;
 
-    constructor(keypair: bitcore.PrivateKey) {
+    constructor(keypair: ECPairInterface) {
         this.keypair = keypair;
     }
 
     getAddressRaw(): Uint8Array {
-        return bufferToU8a(this.keypair.toPublicKey().toBuffer());
+        return bufferToU8a(this.keypair.publicKey);
     }
 
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
         return new Promise((resolve, reject) => {
             if (isString(message)) {
-                let buffer: Uint8Array;
+                const sig = bitcoinMessage.sign(message, this.keypair.privateKey!, this.keypair.compressed);
+                console.log(sig.toString('base64'));
 
-                // Here we must use the format [u8,65],
-                // so we can only accept a signature that has been decoded from base64 and has a length of 65.
-                // Therefore, using a do -while loop to resign unnecessary signatures.We should not encounter an infinite loop situation, so no condition is set to break out of the loop.
-                do {
-                    const sig = new bitcore.Message(message).sign(this.keypair);
-                    buffer = base64Decode(sig);
-                } while (buffer.length !== 65);
-
-                resolve(buffer);
+                resolve(sig);
             } else {
                 reject('wrong message type');
             }

@@ -140,7 +140,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
             'Bitcoin',
             context
         );
@@ -466,7 +466,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
             'Bitcoin',
             context
         );
@@ -595,7 +595,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
             'Bitcoin',
             context
         );

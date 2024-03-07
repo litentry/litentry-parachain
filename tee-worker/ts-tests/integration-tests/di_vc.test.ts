@@ -1,7 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
@@ -93,7 +92,7 @@ describe('Test Vc (direct invocation)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
             'Bitcoin',
             context
         );

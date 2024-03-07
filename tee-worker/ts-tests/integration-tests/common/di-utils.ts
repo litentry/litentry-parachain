@@ -131,6 +131,7 @@ export const createSignedTrustedGetter = async (
             [signer.type()]: u8aToHex(await signer.sign(payload)),
         });
     }
+
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,
