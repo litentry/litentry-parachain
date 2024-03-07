@@ -18,11 +18,13 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_direct_operation,
+	trusted_operation::send_direct_batch_vc_request,
 	Cli, CliResult, CliResultOk,
 };
+use codec::Decode;
 use ita_stf::{
-	trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning, VecAssertion,
+	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
+	Index, TrustedCall, TrustedCallSigning, VecAssertion,
 };
 use itp_stf_primitives::types::KeyPair;
 use litentry_hex_utils::decode_hex;
@@ -37,6 +39,7 @@ use litentry_primitives::{
 };
 use sp_core::Pair;
 use sp_runtime::BoundedVec;
+use std::sync::mpsc::channel;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -119,18 +122,48 @@ impl RequestBatchVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		let maybe_vc = perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key);
+		let (sender, receiver) = channel::<Result<RequestVcResultOrError, String>>();
 
-		match maybe_vc {
-			Ok(mut vc) => {
-				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-				println!("----Generated VC-----");
-				println!("{}", credential_str);
-			},
-			Err(e) => {
-				println!("{:?}", e);
-			},
+		send_direct_batch_vc_request(cli, trusted_cli, &top, key, sender);
+
+		let mut len = 0u8;
+		let mut cnt = 0u8;
+		loop {
+			match receiver.recv() {
+				Ok(res) => match res {
+					Ok(response) => {
+						cnt += 1;
+						if len < response.len {
+							len = response.len;
+						}
+						if response.is_error {
+							println!(
+								"received one error: {:?}",
+								String::from_utf8(response.payload)
+							);
+						} else {
+							let mut vc =
+								RequestVCResult::decode(&mut response.payload.as_slice()).unwrap();
+							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+							let credential_str =
+								String::from_utf8(decrypted).expect("Found invalid UTF-8");
+							println!("----Generated VC-----");
+							println!("{}", credential_str);
+						}
+						if cnt >= len {
+							break
+						}
+					},
+					Err(e) => {
+						println!("Response error: {:?}", e);
+						break
+					},
+				},
+				Err(e) => {
+					println!("channel receiver error: {:?}", e);
+					break
+				},
+			}
 		}
 
 		Ok(CliResultOk::None)

@@ -42,7 +42,7 @@ use sp_core::H256;
 use std::{
 	fmt::Debug,
 	result::Result as StdResult,
-	sync::mpsc::{channel, Receiver},
+	sync::mpsc::{channel, Receiver, Sender as MpscSender},
 	time::Instant,
 };
 use substrate_api_client::{
@@ -82,8 +82,6 @@ pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	match top {
 		TrustedOperation::direct_call(call) => match call.call {
 			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
-			TrustedCall::request_batch_vc(..) =>
-				send_direct_vc_request(cli, trusted_args, top, key),
 			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
 		},
 		_ =>
@@ -399,9 +397,6 @@ fn send_direct_vc_request<T: Decode + Debug>(
 						},
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
-							if let Ok(response) =
-								RequestVcResultOrError::decode(&mut return_value.value.as_slice())
-							{}
 						},
 						DirectRequestStatus::Ok => {
 							debug!("request status is ignored");
@@ -421,6 +416,94 @@ fn send_direct_vc_request<T: Decode + Debug>(
 			},
 		};
 	}
+}
+
+pub(crate) fn send_direct_batch_vc_request(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
+	key: RequestAesKey,
+	resp_sender: MpscSender<Result<RequestVcResultOrError, String>>,
+) {
+	let encryption_key = get_shielding_key(cli).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
+	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
+
+	debug!("get direct api");
+	let direct_api = get_worker_api_direct(cli);
+
+	debug!("setup sender and receiver");
+	let (sender, receiver) = channel();
+	direct_api.watch(jsonrpc_call, sender);
+
+	debug!("waiting for rpc response");
+	let mut req_cnt = 0u8;
+	std::thread::spawn(move || loop {
+		match receiver.recv() {
+			Ok(response) => {
+				req_cnt += 1;
+				debug!("received response");
+				let response: RpcResponse = serde_json::from_str(&response).unwrap();
+				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
+					debug!("successfully decoded rpc response: {:?}", return_value);
+					match return_value.status {
+						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+							if let Ok(value) =
+								RequestVcResultOrError::decode(&mut return_value.value.as_slice())
+							{
+								let len = value.len;
+								resp_sender.send(Ok(value)).expect("failed to send back result");
+								if req_cnt >= len {
+									break
+								}
+							} else {
+								// Should never happen.
+								error!("failed to decode RequestVcResultOrError.");
+								direct_api.close().unwrap();
+								resp_sender
+									.send(Err(
+										"failed to decode RequestVcResultOrError. close channel"
+											.to_string(),
+									))
+									.expect("failed to send back result");
+								break
+							}
+						},
+						_ => {
+							// Should never happen. RpcReturnValue should always have DirectRequestStatus::TrustedOperationStatus.
+							error!("Wrong RpcReturnValue. Should never happen.");
+							direct_api.close().unwrap();
+							resp_sender
+								.send(Err(
+									"Wrong RpcReturnValue. Should never happen. close channel"
+										.to_string(),
+								))
+								.expect("failed to send back result");
+							break
+						},
+					}
+				} else {
+					// Normally should not happen.
+					error!("failed to decode RpcReturnValue.");
+					direct_api.close().unwrap();
+					resp_sender
+						.send(Err("failed to decode RpcReturnValue. close channel".to_string()))
+						.expect("failed to send back result");
+					break
+				}
+			},
+			Err(e) => {
+				// Normally should not happen.
+				error!("failed to receive rpc response: {:?}", e);
+				direct_api.close().unwrap();
+				resp_sender
+					.send(Err("failed to receive rpc response. close channel".to_string()))
+					.expect("failed to send back result");
+				break
+			},
+		};
+	});
 }
 
 pub(crate) fn get_vc_json_request(
