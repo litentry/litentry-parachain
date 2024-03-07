@@ -1,23 +1,3 @@
-export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed'): Promise<any> {
-    const results: any = [];
-    for (let k = 0; k < events.length; k++) {
-        switch (method) {
-            case 'VCIssued':
-                results.push({
-                    identity: events[k].data.identity.toHex(),
-                    index: events[k].data.index.toHex(),
-                });
-                break;
-            case 'Failed':
-                results.push(events[k].data.detail.toHuman());
-                break;
-            default:
-                break;
-        }
-    }
-    return [...results];
-}
-
 // @todo move to a better place, and make it more generic, at least define the type
 export const mockAssertions = [
     {
@@ -190,13 +170,11 @@ export const mockAssertions = [
             EVMAmountHolding: 'Ton',
         },
     },
-
     //karat_dao
-    // @fixme: Not sure why it fails in CI but wokrs locally, temporarily comment out and let the PR(2553) pass, solve it in another issue.
-    // {
-    //     description: 'You are a user of a certain platform',
-    //     assertion: {
-    //         PlatformUser: 'KaratDaoUser',
-    //     },
-    // },
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'KaratDaoUser',
+        },
+    },
 ];
