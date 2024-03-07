@@ -145,8 +145,6 @@ export class BitcoinSigner implements Signer {
         return new Promise((resolve, reject) => {
             if (isString(message)) {
                 const sig = bitcoinMessage.sign(message, this.keypair.privateKey!, this.keypair.compressed);
-                console.log(sig.toString('base64'));
-
                 resolve(sig);
             } else {
                 reject('wrong message type');

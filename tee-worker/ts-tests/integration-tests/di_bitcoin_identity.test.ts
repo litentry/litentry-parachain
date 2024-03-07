@@ -77,7 +77,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
-        for (let index = 0; index < 200; index++) {
+        for (let index = 0; index < 2000; index++) {
             const idGraphGetter = await createSignedTrustedGetterIdGraph(
                 context.api,
                 new BitcoinSigner(context.bitcoinWallet.alice),
