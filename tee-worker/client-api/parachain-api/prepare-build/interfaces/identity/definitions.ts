@@ -27,6 +27,7 @@ export default {
                 Substrate: "Address32",
                 Evm: "Address20",
                 Bitcoin: "Address33",
+                Solana: "Address32",
             },
         },
         Address32: "[u8;32]",
@@ -51,6 +52,7 @@ export default {
                 "BitcoinP2wsh",
                 "Polygon",
                 "Arbitrum",
+                "Solana",
             ],
         },
         LitentryValidationData: {
@@ -78,6 +80,7 @@ export default {
                 Substrate: "Web3CommonValidationData",
                 Evm: "Web3CommonValidationData",
                 Bitcoin: "Web3CommonValidationData",
+                Solana: "Web3CommonValidationData",
             },
         },
         Web3CommonValidationData: {
