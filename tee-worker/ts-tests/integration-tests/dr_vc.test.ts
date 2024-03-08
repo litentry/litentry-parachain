@@ -18,6 +18,7 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
+import { u8aToHex } from '@polkadot/util';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -92,7 +93,7 @@ describe('Test Vc (direct request)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
+            u8aToHex(context.bitcoinWallet.alice.publicKey),
             'Bitcoin',
             context
         );

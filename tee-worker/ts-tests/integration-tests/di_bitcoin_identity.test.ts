@@ -28,6 +28,7 @@ import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Bytes, Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
+import { u8aToHex } from '@polkadot/util';
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -64,13 +65,13 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceBitcoinIdentity = await buildIdentityHelper(
-            '0x' + context.bitcoinWallet.alice.publicKey.toString('hex'),
+            u8aToHex(context.bitcoinWallet.alice.publicKey),
             'Bitcoin',
             context
         );
         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
         bobBitcoinIdentity = await buildIdentityHelper(
-            '0x' + context.bitcoinWallet.bob.publicKey.toString('hex'),
+            u8aToHex(context.bitcoinWallet.bob.publicKey),
             'Bitcoin',
             context
         );

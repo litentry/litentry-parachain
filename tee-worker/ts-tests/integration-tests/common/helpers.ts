@@ -8,7 +8,6 @@ import { IntegrationTestContext, JsonRpcRequest } from './common-types';
 import { randomBytes } from 'crypto';
 import { ECPairFactory, ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import * as bitcoinjs from 'bitcoinjs-lib';
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
 export function getSubstrateSigner(): {
