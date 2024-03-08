@@ -148,7 +148,7 @@ mod tests {
 		let url = run(0).unwrap() + "/karat_dao/";
 
 		let mut config = DataProviderConfig::new().unwrap();
-		config.set_karat_dao_api_url(url);
+		config.set_karat_dao_api_url(url).unwrap();
 		config
 	}
 
