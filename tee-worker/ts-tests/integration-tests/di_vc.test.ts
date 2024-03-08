@@ -1,7 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
@@ -19,6 +18,7 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
+import { u8aToHex } from '@polkadot/util';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -93,7 +93,7 @@ describe('Test Vc (direct invocation)', function () {
 
         const bitcoinNonce = getNextNonce();
         const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            u8aToHex(context.bitcoinWallet.alice.publicKey),
             'Bitcoin',
             context
         );
