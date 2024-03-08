@@ -125,6 +125,7 @@ export const createSignedTrustedGetter = async (
     let signature;
     if (signer.type() === 'bitcoin') {
         const payloadStr = u8aToHex(payload).substring(2);
+
         signature = parachainApi.createType('LitentryMultiSignature', {
             [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
         });
@@ -133,6 +134,7 @@ export const createSignedTrustedGetter = async (
             [signer.type()]: u8aToHex(await signer.sign(payload)),
         });
     }
+
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,
