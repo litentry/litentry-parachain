@@ -76,6 +76,8 @@ func main() {
 	//at this point we got all stuff from worker - shielding key, mrenclave and shard (shard == mrenclave)
 
 	//** WARNING: use this key only for environment without real value
+	//public 0xffefbfc831e25a4dc6ece5c3600db669132a06ff8db152e3d7a1bbc0a3d425e596e708015b72266e0c6b7975662c794db43846c312ab58a678d9440a42cceba9
+	//address 0x144Fa896B5FAbcA9D352483f0741776d1F836094
 	key, _ := crypto.HexToECDSA("453134b1fda19819772d2fe7de3c2a8670f930e3187f2a81a509a52500e3a281")
 	ethAddress := crypto.PubkeyToAddress(key.PublicKey).Bytes()
 
