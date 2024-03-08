@@ -99,7 +99,8 @@ mod impl_ffi {
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto::rsa::Rsa3072PublicKey;
-	use sgx_types::types::*;
+	use sgx_serialize::json;
+	use sgx_types::{error::*, types::*};
 	use sp_core::ed25519;
 
 	impl EnclaveBase for Enclave {
@@ -295,8 +296,9 @@ mod impl_ffi {
 			ensure!(result == SgxStatus::Success, Error::Sgx(result));
 			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
+			let pubkey_str = std::str::from_utf8(&pubkey).unwrap();
 			let rsa_pubkey: Rsa3072PublicKey =
-				serde_json::from_slice(pubkey.as_slice()).expect("Invalid public key");
+				json::decode(pubkey_str).expect("Invalid public key");
 			debug!("got RSA pubkey {:?}", rsa_pubkey);
 			Ok(rsa_pubkey)
 		}
@@ -382,7 +384,7 @@ mod impl_ffi {
 	}
 
 	fn init_parentchain_components_ffi(
-		enclave_id: sgx_enclave_id_t,
+		enclave_id: EnclaveId,
 		params: Vec<u8>,
 	) -> EnclaveResult<Vec<u8>> {
 		let mut retval = SgxStatus::Success;

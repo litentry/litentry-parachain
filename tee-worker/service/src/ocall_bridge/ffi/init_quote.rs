@@ -18,7 +18,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, RemoteAttestationBridge};
 use log::*;
-use sgx_types::{EpidGroupId, SgxStatus, TargetInfo};
+use sgx_types::{error::*, types::*};
 use std::sync::Arc;
 
 #[no_mangle]

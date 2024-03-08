@@ -1,5 +1,5 @@
 use codec::Error as CodecError;
-use sgx_types::{error::Quote3Error, SgxStatus};
+use sgx_types::error::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

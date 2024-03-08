@@ -22,27 +22,27 @@ pub mod sidechain;
 pub mod utils;
 
 #[cfg(feature = "implement-ffi")]
-pub use sgx_urts::SgxEnclave;
+pub use sgx_urts::enclave::SgxEnclave;
 
 #[cfg(feature = "implement-ffi")]
-use sgx_types::sgx_enclave_id_t;
+use sgx_types::types::EnclaveId;
 
 pub type EnclaveResult<T> = Result<T, Error>;
 
 #[cfg(feature = "implement-ffi")]
 #[derive(Clone, Debug, Default)]
 pub struct Enclave {
-	eid: sgx_enclave_id_t,
+	eid: EnclaveId,
 	sgx_enclave: SgxEnclave,
 }
 
 #[cfg(feature = "implement-ffi")]
 impl Enclave {
 	pub fn new(sgx_enclave: SgxEnclave) -> Self {
-		Enclave { eid: sgx_enclave.geteid(), sgx_enclave }
+		Enclave { eid: sgx_enclave.eid(), sgx_enclave }
 	}
 
 	pub fn destroy(self) {
-		self.sgx_enclave.destroy()
+		let _ = drop(self.sgx_enclave);
 	}
 }

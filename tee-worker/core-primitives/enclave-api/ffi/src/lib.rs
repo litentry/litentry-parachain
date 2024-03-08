@@ -223,8 +223,7 @@ extern "C" {
 	pub fn request_state_provisioning(
 		eid: EnclaveId,
 		retval: *mut SgxStatus,
-		w_url: *const u8,
-		w_url_size: u32,
+		socket_fd: c_int,
 		sign_type: QuoteSignType,
 		quoting_enclave_target_info: Option<&TargetInfo>,
 		quote_size: Option<&u32>,

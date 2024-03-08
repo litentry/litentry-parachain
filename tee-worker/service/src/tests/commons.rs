@@ -26,7 +26,7 @@ use crate::config::Config;
 pub struct Message {
 	pub account: String,
 	pub amount: u32,
-	pub sha256: sgx_sha256_hash_t,
+	pub sha256: [u8; SHA256_HASH_SIZE],
 }
 
 #[cfg(test)]

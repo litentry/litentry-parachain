@@ -21,7 +21,7 @@ use crate::ocall_bridge::bridge_api::{
 };
 use itp_enclave_api::remote_attestation::{QveReport, RemoteAttestationCallBacks};
 use log::debug;
-use sgx_types::types::*;
+use sgx_types::{error::*, types::*};
 use std::{
 	net::{SocketAddr, TcpStream},
 	os::unix::io::IntoRawFd,

@@ -84,8 +84,7 @@ mod api {
 
 	// We should probably switch to the opaque block, then we can get rid of the
 	// runtime dependency here.
-	// pub use itp_types::Block;
-	pub use my_node_runtime::{Block, Runtime, UncheckedExtrinsic};
+	pub use litentry_primitives::OpaqueParentchainBlock as Block;
 
 	pub use substrate_api_client::{
 		api::Error as ApiClientError,

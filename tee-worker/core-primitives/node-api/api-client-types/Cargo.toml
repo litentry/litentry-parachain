@@ -15,7 +15,8 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 itp-types = { default-features = false, path = "../../types" }
 
 # litentry
-my-node-runtime = { package = "rococo-parachain-runtime", path = "../../../../runtime/rococo", optional = true }
+litentry-primitives = { path = "../../../litentry/primitives", optional = true }
+# my-node-runtime = { package = "rococo-parachain-runtime", path = "../../../../runtime/rococo", optional = true }
 
 [features]
 default = ["std"]
@@ -24,5 +25,6 @@ std = [
     "substrate-api-client/std",
     "substrate-api-client/tungstenite-client",
     "sp-runtime/std",
-    "my-node-runtime/std",
+    # "my-node-runtime/std",
+    "litentry-primitives/std",
 ]

@@ -19,7 +19,7 @@
 use crate::EnclaveResult;
 use itp_types::ShardIdentifier;
 use pallet_teebag::Fmspc;
-use sgx_types::{error::Quote3Error, types::*};
+use sgx_types::types::*;
 
 /// Struct that unites all relevant data reported by the QVE
 pub struct QveReport {
@@ -129,7 +129,7 @@ mod impl_ffi {
 	use itp_types::ShardIdentifier;
 	use log::*;
 	use pallet_teebag::Fmspc;
-	use sgx_types::types::*;
+	use sgx_types::{error::*, function::*, types::*};
 
 	const OS_SYSTEM_PATH: &str = "/usr/lib/x86_64-linux-gnu/";
 	const C_STRING_ENDING: &str = "\0";
@@ -303,7 +303,7 @@ mod impl_ffi {
 			let free_status = unsafe { sgx_ql_free_quote_verification_collateral(collateral_ptr) };
 			ensure!(result == SgxStatus::Success, Error::Sgx(result));
 			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
-			ensure!(free_status == Quote3Error::SUCCESS, Error::SgxQuote(free_status));
+			ensure!(free_status == Quote3Error::Success, Error::SgxQuote(free_status));
 
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
@@ -330,7 +330,7 @@ mod impl_ffi {
 			let free_status = unsafe { sgx_ql_free_quote_verification_collateral(collateral_ptr) };
 			ensure!(result == SgxStatus::Success, Error::Sgx(result));
 			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
-			ensure!(free_status == Quote3Error::SUCCESS, Error::SgxQuote(free_status));
+			ensure!(free_status == Quote3Error::Success, Error::SgxQuote(free_status));
 
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
@@ -369,22 +369,21 @@ mod impl_ffi {
 		}
 
 		fn set_ql_qe_enclave_paths(&self) -> EnclaveResult<()> {
-			set_ql_path(sgx_ql_path_type_t::SGX_QL_PCE_PATH, PCE_ENCLAVE)?;
-			set_ql_path(sgx_ql_path_type_t::SGX_QL_QE3_PATH, QE3_ENCLAVE)?;
-			set_ql_path(sgx_ql_path_type_t::SGX_QL_IDE_PATH, ID_ENCLAVE)?;
-			if set_ql_path(sgx_ql_path_type_t::SGX_QL_QPL_PATH, LIBDCAP_QUOTEPROV).is_err() {
+			set_ql_path(QlPathType::PcePath, PCE_ENCLAVE)?;
+			set_ql_path(QlPathType::Qe3Path, QE3_ENCLAVE)?;
+			set_ql_path(QlPathType::IdePath, ID_ENCLAVE)?;
+			if set_ql_path(QlPathType::QplPath, LIBDCAP_QUOTEPROV).is_err() {
 				// Ignore the error, because user may want to get cert type=3 quote.
 				warn!("Cannot set QPL directory, you may get ECDSA quote with `Encrypted PPID` cert type.\n");
 			};
-			set_qv_path(sgx_qv_path_type_t::SGX_QV_QVE_PATH, QVE_ENCLAVE)?;
+			set_qv_path(QvPathType::QvePath, QVE_ENCLAVE)?;
 
 			Ok(())
 		}
 
 		fn set_sgx_qpl_logging(&self) -> EnclaveResult<()> {
-			let log_level = sgx_ql_log_level_t::SGX_QL_LOG_INFO;
-			let res = unsafe { sgx_ql_set_logging_callback(forward_qpl_log, log_level) };
-			if res == Quote3Error::SUCCESS {
+			let res = unsafe { sgx_ql_set_logging_callback(forward_qpl_log) };
+			if res == Quote3Error::Success {
 				Ok(())
 			} else {
 				error!("Setting logging function failed with: {:?}", res);
@@ -396,7 +395,7 @@ mod impl_ffi {
 			let mut quoting_enclave_target_info: TargetInfo = TargetInfo::default();
 			let qe3_ret =
 				unsafe { sgx_qe_get_target_info(&mut quoting_enclave_target_info as *mut _) };
-			ensure!(qe3_ret == Quote3Error::SUCCESS, Error::SgxQuote(qe3_ret));
+			ensure!(qe3_ret == Quote3Error::Success, Error::SgxQuote(qe3_ret));
 
 			Ok(quoting_enclave_target_info)
 		}
@@ -404,7 +403,7 @@ mod impl_ffi {
 		fn qe_get_quote_size(&self) -> EnclaveResult<u32> {
 			let mut quote_size: u32 = 0;
 			let qe3_ret = unsafe { sgx_qe_get_quote_size(&mut quote_size as *mut _) };
-			ensure!(qe3_ret == Quote3Error::SUCCESS, Error::SgxQuote(qe3_ret));
+			ensure!(qe3_ret == Quote3Error::Success, Error::SgxQuote(qe3_ret));
 
 			Ok(quote_size)
 		}
@@ -417,7 +416,7 @@ mod impl_ffi {
 			let free_status = unsafe { sgx_ql_free_quote_verification_collateral(collateral_ptr) };
 			ensure!(result == SgxStatus::Success, Error::Sgx(result));
 			ensure!(retval == SgxStatus::Success, Error::Sgx(result));
-			ensure!(free_status == Quote3Error::SUCCESS, Error::SgxQuote(free_status));
+			ensure!(free_status == Quote3Error::Success, Error::SgxQuote(free_status));
 			Ok(())
 		}
 
@@ -486,7 +485,7 @@ mod impl_ffi {
 				);
 			};
 
-			ensure!(sgx_status == Quote3Error::SUCCESS, Error::SgxQuote(sgx_status));
+			ensure!(sgx_status == Quote3Error::Success, Error::SgxQuote(sgx_status));
 			Ok(collateral_ptr)
 		}
 	}
@@ -548,7 +547,7 @@ mod impl_ffi {
 					p_sig_rl,
 					sig_rl_size,
 					p_qe_report,
-					p_quote as *mut sgx_quote_t,
+					p_quote as *mut Quote,
 					quote_length,
 				)
 			};
@@ -563,7 +562,7 @@ mod impl_ffi {
 			let qe3_ret =
 				unsafe { sgx_qe_get_quote(&report, quote_size, quote_vec.as_mut_ptr() as _) };
 
-			ensure!(qe3_ret == Quote3Error::SUCCESS, Error::SgxQuote(qe3_ret));
+			ensure!(qe3_ret == Quote3Error::Success, Error::SgxQuote(qe3_ret));
 
 			Ok(quote_vec)
 		}
@@ -577,16 +576,14 @@ mod impl_ffi {
 			supplemental_data_size: u32,
 		) -> EnclaveResult<QveReport> {
 			let mut collateral_expiration_status = 1u32;
-			let mut quote_verification_result = QlQvResult::SGX_QL_QV_RESULT_OK;
+			let mut quote_verification_result = QlQvResult::Ok;
 			let mut supplemental_data: Vec<u8> = vec![0; supplemental_data_size as usize];
 			let mut qve_report_info_return_value: QlQeReportInfo = qve_report_info;
 
 			// Set QvE (Quote verification Enclave) loading policy.
-			let dcap_ret = unsafe {
-				sgx_qv_set_enclave_load_policy(sgx_ql_request_policy_t::SGX_QL_EPHEMERAL)
-			};
+			let dcap_ret = unsafe { sgx_qv_set_enclave_load_policy(QlRequestPolicy::Ephemeral) };
 
-			if dcap_ret != Quote3Error::SUCCESS {
+			if dcap_ret != Quote3Error::Success {
 				error!("sgx_qv_set_enclave_load_policy failed: {:#04x}", dcap_ret as u32);
 				return Err(Error::SgxQuote(dcap_ret))
 			}
@@ -596,7 +593,7 @@ mod impl_ffi {
 			let dcap_ret =
 				unsafe { sgx_qv_get_quote_supplemental_data_size(&mut qve_supplemental_data_size) };
 
-			if dcap_ret != Quote3Error::SUCCESS {
+			if dcap_ret != Quote3Error::Success {
 				error!("sgx_qv_get_quote_supplemental_data_size failed: {:?}", dcap_ret);
 				return Err(Error::SgxQuote(dcap_ret))
 			}
@@ -633,7 +630,7 @@ mod impl_ffi {
 				)
 			};
 
-			if Quote3Error::SUCCESS != dcap_ret {
+			if Quote3Error::Success != dcap_ret {
 				error!("sgx_qv_verify_quote failed: {:?}", dcap_ret);
 				error!("quote_verification_result: {:?}", quote_verification_result);
 				return Err(Error::SgxQuote(dcap_ret))
@@ -641,7 +638,7 @@ mod impl_ffi {
 
 			// Check and print verification result.
 			match quote_verification_result {
-				QlQvResult::SGX_QL_QV_RESULT_OK => {
+				QlQvResult::Ok => {
 					// Check verification collateral expiration status.
 					// This value should be considered in your own attestation/verification policy.
 					if 0u32 == collateral_expiration_status {
@@ -650,11 +647,11 @@ mod impl_ffi {
 						warn!("QvE verification completed, but collateral is out of date based on 'expiration_check_date' you provided.");
 					}
 				},
-				QlQvResult::SGX_QL_QV_RESULT_CONFIG_NEEDED
-				| QlQvResult::SGX_QL_QV_RESULT_OUT_OF_DATE
-				| QlQvResult::SGX_QL_QV_RESULT_OUT_OF_DATE_CONFIG_NEEDED
-				| QlQvResult::SGX_QL_QV_RESULT_SW_HARDENING_NEEDED
-				| QlQvResult::SGX_QL_QV_RESULT_CONFIG_AND_SW_HARDENING_NEEDED => {
+				QlQvResult::ConfigNeeded
+				| QlQvResult::OutOfDate
+				| QlQvResult::OutOfDateConfigNeeded
+				| QlQvResult::SWHardeningNeeded
+				| QlQvResult::ConfigAndSWHardeningNeeded => {
 					warn!(
 						"QvE verification completed with Non-terminal result: {:?}",
 						quote_verification_result
@@ -671,10 +668,9 @@ mod impl_ffi {
 			// Check supplemental data.
 			if supplemental_data_size > 0 {
 				// For now we simply print it, no checks done.
-				let p_supplemental_data: *const sgx_ql_qv_supplemental_t =
-					supplemental_data.as_ptr() as *const sgx_ql_qv_supplemental_t;
-				let qv_supplemental_data: sgx_ql_qv_supplemental_t =
-					unsafe { *p_supplemental_data };
+				let p_supplemental_data: *const QlQvSupplemental =
+					supplemental_data.as_ptr() as *const QlQvSupplemental;
+				let qv_supplemental_data: QlQvSupplemental = unsafe { *p_supplemental_data };
 				info!(
 					"QvE verification: Supplemental data version: {}",
 					qv_supplemental_data.version
@@ -804,18 +800,18 @@ mod impl_ffi {
 		possible_path
 	}
 
-	fn set_ql_path(path_type: sgx_ql_path_type_t, path: &str) -> EnclaveResult<()> {
+	fn set_ql_path(path_type: QlPathType, path: &str) -> EnclaveResult<()> {
 		let ret_val = unsafe { sgx_ql_set_path(path_type, create_system_path(path).as_ptr() as _) };
-		if ret_val != Quote3Error::SUCCESS {
+		if ret_val != Quote3Error::Success {
 			error!("Could not set {:?}", path_type);
 			return Err(Error::SgxQuote(ret_val))
 		}
 		Ok(())
 	}
 
-	fn set_qv_path(path_type: sgx_qv_path_type_t, path: &str) -> EnclaveResult<()> {
+	fn set_qv_path(path_type: QvPathType, path: &str) -> EnclaveResult<()> {
 		let ret_val = unsafe { sgx_qv_set_path(path_type, create_system_path(path).as_ptr() as _) };
-		if ret_val != Quote3Error::SUCCESS {
+		if ret_val != Quote3Error::Success {
 			error!("Could not set {:?}", path_type);
 			return Err(Error::SgxQuote(ret_val))
 		}
@@ -825,7 +821,7 @@ mod impl_ffi {
 	#[allow(clippy::not_unsafe_ptr_arg_deref)]
 	/// Make sure that the `log_slice_ptr` points to a null terminated string.
 	// This function must not be marked as `unsafe`, because `sgx_ql_set_logging_callback` expects a safe (i.e. not `unsafe`) function.
-	pub extern "C" fn forward_qpl_log(log_level: sgx_ql_log_level_t, log_slice_ptr: *const c_char) {
+	pub extern "C" fn forward_qpl_log(log_level: QlLogLevel, log_slice_ptr: *const c_char) {
 		if log_slice_ptr.is_null() {
 			error!("[QPL - ERROR], slice to print was NULL");
 			return
@@ -833,8 +829,8 @@ mod impl_ffi {
 		// This is safe, as the previous block checks for `NULL` pointer.
 		let slice = unsafe { core::ffi::CStr::from_ptr(log_slice_ptr) };
 		match log_level {
-			sgx_ql_log_level_t::SGX_QL_LOG_INFO => info!("[QPL - INFO], {:?}", slice),
-			sgx_ql_log_level_t::SGX_QL_LOG_ERROR => error!("[QPL - ERROR], {:?}", slice),
+			QlLogLevel::LogInfo => info!("[QPL - INFO], {:?}", slice),
+			QlLogLevel::LogError => error!("[QPL - ERROR], {:?}", slice),
 		}
 	}
 }

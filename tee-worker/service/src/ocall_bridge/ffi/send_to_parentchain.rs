@@ -18,7 +18,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, WorkerOnChainBridge};
 use log::*;
-use sgx_types::{c_int, SgxStatus};
+use sgx_types::{error::*, types::*};
 use std::{slice, sync::Arc, vec::Vec};
 
 /// # Safety

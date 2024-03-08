@@ -47,9 +47,12 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
 use litentry_macros::if_production_or;
-use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
+use litentry_primitives::{
+	Enclave as TeebagEnclave, ParentchainHash as Hash, ParentchainHeader as Header,
+	ShardIdentifier, WorkerType,
+};
 use log::*;
-use my_node_runtime::{Hash, Header, RuntimeEvent};
+// use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
 use serde_json::Value;
 use sgx_types::types::*;
@@ -78,7 +81,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(feature = "link-binary")]
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
-pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
+
+// pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
 
 pub(crate) fn main() {
 	// Setup logging
@@ -630,14 +634,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Subscribe to events and print them.
-	println!("*** [{:?}] Subscribing to events", ParentchainId::Litentry);
-	let mut subscription = litentry_rpc_api.subscribe_events().unwrap();
-	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
-	loop {
-		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-			print_events(events, ParentchainId::Litentry)
-		}
-	}
+	// println!("*** [{:?}] Subscribing to events", ParentchainId::Litentry);
+	// let mut subscription = litentry_rpc_api.subscribe_events().unwrap();
+	// println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
+	// loop {
+	// 	if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
+	// 		print_events(events, ParentchainId::Litentry)
+	// 	}
+	// }
 }
 
 fn init_provided_shard_vault<E: EnclaveBase>(
@@ -703,18 +707,18 @@ fn init_target_parentchain<E>(
 	enclave.init_proxied_shard_vault(shard, &parentchain_id).unwrap();
 
 	// Subscribe to events and print them.
-	println!("*** [{:?}] Subscribing to events...", parentchain_id);
-	let mut subscription = node_api.subscribe_events().unwrap();
-	println!("[+] [{:?}] Subscribed to events. waiting...", parentchain_id);
+	// println!("*** [{:?}] Subscribing to events...", parentchain_id);
+	// let mut subscription = node_api.subscribe_events().unwrap();
+	// println!("[+] [{:?}] Subscribed to events. waiting...", parentchain_id);
 
-	thread::Builder::new()
-		.name(format!("{:?}_parentchain_event_subscription", parentchain_id))
-		.spawn(move || loop {
-			if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-				print_events(events, parentchain_id)
-			}
-		})
-		.unwrap();
+	// thread::Builder::new()
+	// 	.name(format!("{:?}_parentchain_event_subscription", parentchain_id))
+	// 	.spawn(move || loop {
+	// 		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
+	// 			print_events(events, parentchain_id)
+	// 		}
+	// 	})
+	// 	.unwrap();
 }
 
 fn init_parentchain<E>(

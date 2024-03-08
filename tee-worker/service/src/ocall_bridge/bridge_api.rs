@@ -20,7 +20,7 @@ use itp_enclave_api::remote_attestation::QveReport;
 use lazy_static::lazy_static;
 use log::*;
 use parking_lot::RwLock;
-use sgx_types::types::*;
+use sgx_types::{error::*, types::*};
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(test)]

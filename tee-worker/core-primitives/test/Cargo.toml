@@ -10,7 +10,7 @@ sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", bra
 
 # sgx deps
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/Kailai-Wang/jsonrpc-sgx", branch = "sgx-sdk-2.0.0", default-features = false, optional = true }
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 # substrate deps

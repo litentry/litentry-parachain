@@ -17,7 +17,7 @@
 use sgx_types::types::*;
 
 extern "C" {
-	fn sgxwasm_init(eid: sgx_enclave_id_t, retval: *mut SgxStatus) -> SgxStatus;
+	fn sgxwasm_init(eid: EnclaveId, retval: *mut SgxStatus) -> SgxStatus;
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub enum BoundaryValue {
 	F64(u64),
 }
 
-pub fn sgx_enclave_wasm_init(eid: sgx_enclave_id_t) -> Result<(), String> {
+pub fn sgx_enclave_wasm_init(eid: EnclaveId) -> Result<(), String> {
 	let mut retval: SgxStatus = SgxStatus::Success;
 	let result = unsafe { sgxwasm_init(eid, &mut retval) };
 

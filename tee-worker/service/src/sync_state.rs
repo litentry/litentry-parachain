@@ -29,7 +29,7 @@ use itp_enclave_api::{
 use itp_node_api::api_client::PalletTeebagApi;
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use itp_types::{ShardIdentifier, WorkerType};
-use sgx_types::QuoteSignType;
+use sgx_types::types::*;
 use std::string::String;
 
 pub(crate) fn sync_state<

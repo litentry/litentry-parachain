@@ -18,7 +18,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, RemoteAttestationBridge};
 use log::*;
-use sgx_types::{QuoteNonce, QuoteSignType, Report, SgxStatus, Spid};
+use sgx_types::{error::*, types::*};
 use std::{slice, sync::Arc};
 
 /// p_quote must be a pre-allocated memory region of size `maxlen`
@@ -85,7 +85,7 @@ fn get_quote(
 	let quote = get_quote_result.1;
 
 	if quote.len() as u32 > maxlen {
-		return SgxStatus::SGX_ERROR_FAAS_BUFFER_TOO_SHORT
+		return SgxStatus::Unexpected
 	}
 
 	let quote_slice = unsafe { slice::from_raw_parts_mut(p_quote, quote.len()) };
@@ -130,7 +130,7 @@ fn get_dcap_quote(
 	};
 
 	if quote.len() as u32 > quote_size {
-		return SgxStatus::SGX_ERROR_FAAS_BUFFER_TOO_SHORT
+		return SgxStatus::Unexpected
 	}
 
 	let quote_slice = unsafe { slice::from_raw_parts_mut(p_quote, quote.len()) };

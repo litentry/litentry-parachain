@@ -14,7 +14,7 @@
 
 use crate::ocall_bridge::bridge_api::{Bridge, RemoteAttestationBridge};
 use log::*;
-use sgx_types::types::*;
+use sgx_types::{error::*, types::*};
 use std::{slice, sync::Arc};
 
 #[no_mangle]
