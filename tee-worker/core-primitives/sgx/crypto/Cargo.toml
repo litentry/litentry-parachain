@@ -13,10 +13,10 @@ log = { version = "0.4", default-features = false }
 ofb = { version = "0.4.0" }
 
 sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false }
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false }
 sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false }
 
 # sgx deps
+sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
@@ -37,17 +37,16 @@ std = [
     "log/std",
     "itp-sgx-io/std",
     "sp-core/std",
-    "sgx_rand/urand",
     "sgx_crypto/userialize",
     "sgx_serialize/userialize",
 ]
 sgx = [
+    "itp-sgx-io/sgx",
     "sgx_tstd",
     "sgx_tprotected_fs",
-    "sgx_rand/trand",
+    "sgx_rand",
     "sgx_crypto/tserialize",
     "sgx_serialize/tserialize",
-    "itp-sgx-io/sgx",
 ]
 mocks = []
 test = [

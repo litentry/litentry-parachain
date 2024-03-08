@@ -7208,6 +7208,8 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "sgx_crypto",
+ "sgx_serialize",
  "sgx_types",
  "sp-consensus-grandpa",
  "sp-core",
@@ -9940,7 +9942,7 @@ dependencies = [
  "sp-consensus-babe",
  "sp-core",
  "sp-keystore",
- "sp-maybe-compressed-blob",
+ "sp-maybe-compressed-blob 4.1.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "thiserror 1.0.44",
  "zstd 0.11.2+zstd.1.5.2",
@@ -11750,7 +11752,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "sc-allocator",
- "sp-maybe-compressed-blob",
+ "sp-maybe-compressed-blob 4.1.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-wasm-interface",
  "thiserror 1.0.44",
  "wasm-instrument",
@@ -13650,6 +13652,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-maybe-compressed-blob"
+version = "4.1.0-dev"
+source = "git+https://github.com/Kailai-Wang/substrate?branch=polkadot-v0.9.42-wasm-metadata#62d5e04430b35c00348b0634bc7b73308cfe215a"
+dependencies = [
+ "thiserror 1.0.44",
+ "zstd 0.12.4",
+]
+
+[[package]]
 name = "sp-metadata-ir"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -14221,13 +14232,13 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "5.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
+source = "git+https://github.com/Kailai-Wang/substrate?branch=polkadot-v0.9.42-wasm-metadata#62d5e04430b35c00348b0634bc7b73308cfe215a"
 dependencies = [
  "ansi_term",
  "build-helper",
  "cargo_metadata",
  "filetime",
- "sp-maybe-compressed-blob",
+ "sp-maybe-compressed-blob 4.1.0-dev (git+https://github.com/Kailai-Wang/substrate?branch=polkadot-v0.9.42-wasm-metadata)",
  "strum 0.24.1",
  "tempfile",
  "toml 0.7.8",
