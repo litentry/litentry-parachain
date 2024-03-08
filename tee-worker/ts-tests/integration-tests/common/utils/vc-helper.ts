@@ -170,7 +170,7 @@ export const mockAssertions = [
             EVMAmountHolding: 'Ton',
         },
     },
-    //karat_dao
+
     {
         description: 'You are a user of a certain platform',
         assertion: {
