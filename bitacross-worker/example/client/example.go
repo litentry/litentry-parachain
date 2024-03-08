@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -76,10 +75,12 @@ func main() {
 	getStateMrEnclaveResult, _ := decodeRpcReturnValue(res.Result)
 	//at this point we got all stuff from worker - shielding key, mrenclave and shard (shard == mrenclave)
 
-	//** generate private key and ethereum address
-	curve := secp256k1.S256()
-	key, _ := ecdsa.GenerateKey(curve, rand.Reader)
+	//** WARNING: use this key only for environment without real value
+	key, _ := crypto.HexToECDSA("453134b1fda19819772d2fe7de3c2a8670f930e3187f2a81a509a52500e3a281")
 	ethAddress := crypto.PubkeyToAddress(key.PublicKey).Bytes()
+
+	fmt.Println("Eth address")
+	fmt.Println(crypto.PubkeyToAddress(key.PublicKey))
 
 	//** prepare identity (signer)
 	identity := map[string]interface{}{
@@ -319,7 +320,7 @@ func create_conn() *websocket.Conn {
 
 	// this is not secure, use with caution
 	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	c, _, err := dialer.Dial("wss://localhost:2000", nil)
+	c, _, err := dialer.Dial("wss://bitacross-dev.litentry.io:2000", nil)
 	if err != nil {
 		fmt.Println("Could not connect to worker")
 		fmt.Println(err)
