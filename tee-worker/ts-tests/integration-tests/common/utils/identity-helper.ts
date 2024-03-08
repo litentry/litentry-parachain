@@ -10,8 +10,8 @@ import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import { bufferToU8a } from '@polkadot/util';
-import bitcore from 'bitcore-lib';
+import { ECPairInterface } from 'ecpair';
+import * as bitcoinMessage from 'bitcoinjs-message';
 
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
@@ -151,11 +151,11 @@ export async function buildValidations(
     network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'bitcoinPrettified',
     substrateSigners?: KeyringPair[] | KeyringPair,
     evmSigners?: ethers.Wallet[],
-    bitcoinSigners?: bitcore.PrivateKey[] | bitcore.PrivateKey
+    bitcoinSigners?: ECPairInterface[] | ECPairInterface
 ): Promise<LitentryValidationData[]> {
     let evmSignature: HexString;
     let substrateSignature: Uint8Array;
-    let bitcoinSignature: Uint8Array;
+    let bitcoinSignature: Buffer;
     const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
@@ -221,11 +221,14 @@ export async function buildValidations(
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
             // we need to sign the hex string without `0x` prefix, the signature is base64-encoded string
-            const sig = new bitcore.Message(msg.substring(2)).sign(bitcoinSigner);
-            bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
+            bitcoinSignature = bitcoinMessage.sign(
+                msg.substring(2),
+                bitcoinSigner.privateKey!,
+                bitcoinSigner.compressed
+            );
             bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
-            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
-            console.log('bitcoin sig (base64): ', sig);
+            console.log('bitcoin pubkey: ', `0x${bitcoinSigner.publicKey.toString('hex')}`);
+            console.log('bitcoin sig (base64): ', bitcoinSignature.toString('base64'));
             console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
@@ -246,11 +249,16 @@ export async function buildValidations(
             console.log('post verification msg to bitcoin: ', msg);
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
-            const sig = new bitcore.Message('Litentry authorization token: ' + msg).sign(bitcoinSigner);
-            bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
+            bitcoinSignature = bitcoinMessage.sign(
+                'Litentry authorization token: ' + msg,
+                bitcoinSigner.privateKey!,
+                bitcoinSigner.compressed
+            );
+
             bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
-            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
-            console.log('bitcoin sig (base64): ', sig);
+            console.log('bitcoin pubkey: ', `0x${bitcoinSigner.publicKey.toString('hex')}`);
+
+            console.log('bitcoin sig (base64): ', bitcoinSignature.toString('base64'));
             console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
