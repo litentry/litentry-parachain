@@ -20,7 +20,7 @@ use crate::{
 	globals::tokio_handle::GetTokioHandle,
 	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, SidechainBridge},
 	sync_block_broadcaster::BroadcastBlocks,
-	worker_peers_registry::PeersRegistry,
+	worker_peers_updater::PeersRegistry,
 };
 use codec::{Decode, Encode};
 use itp_types::{BlockHash, ShardIdentifier};
@@ -264,7 +264,8 @@ mod tests {
 	) -> TestSidechainOCall {
 		let block_broadcaster_mock = Arc::new(BroadcastBlocksMock {});
 		let block_storage_mock = Arc::new(BlockStorageMock {});
-		let worker_peers_registry_mock = Arc::new(WorkerPeersRegistryMock {});
+		let worker_peers_registry_mock: Arc<WorkerPeersRegistryMock> =
+			Arc::new(WorkerPeersRegistryMock {});
 		let peer_block_fetcher_mock = Arc::new(
 			FetchBlocksFromPeerMock::<SignedSidechainBlock>::default()
 				.with_signed_blocks(peer_blocks_map),
