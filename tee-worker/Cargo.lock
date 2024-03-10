@@ -3483,6 +3483,7 @@ dependencies = [
  "futures-core 0.3.8",
  "futures-task 0.3.8",
  "futures-util 0.3.8",
+ "num_cpus 1.13.0",
  "sgx_tstd",
 ]
 
@@ -3495,7 +3496,7 @@ dependencies = [
  "futures-core 0.3.28",
  "futures-task 0.3.28",
  "futures-util 0.3.28",
- "num_cpus",
+ "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -6069,7 +6070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe7a749456510c45f795e8b04a6a3e0976d0139213ecbf465843830ad55e2217"
 dependencies = [
  "kvdb",
- "num_cpus",
+ "num_cpus 1.16.0",
  "parking_lot 0.12.1",
  "regex 1.9.5",
  "rocksdb",
@@ -6389,6 +6390,8 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
+ "futures 0.3.28",
+ "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
@@ -6419,8 +6422,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "thiserror 1.0.44",
- "threadpool 1.8.0",
- "threadpool 1.8.1",
 ]
 
 [[package]]
@@ -8224,6 +8225,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
 dependencies = [
  "autocfg 1.1.0",
+]
+
+[[package]]
+name = "num_cpus"
+version = "1.13.0"
+source = "git+https://github.com/mesalock-linux/num_cpus-sgx#48fef62b75f6c059c356efb2233b3e884b63dca8"
+dependencies = [
+ "sgx_trts",
 ]
 
 [[package]]
@@ -10758,7 +10767,7 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-deque",
  "crossbeam-utils",
- "num_cpus",
+ "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -12074,7 +12083,7 @@ dependencies = [
  "hyper",
  "hyper-rustls 0.23.2",
  "libp2p",
- "num_cpus",
+ "num_cpus 1.16.0",
  "once_cell 1.18.0",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -14473,7 +14482,7 @@ version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
 dependencies = [
- "num_cpus",
+ "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -14612,7 +14621,7 @@ dependencies = [
  "bytes 1.4.0",
  "libc",
  "mio 0.8.8",
- "num_cpus",
+ "num_cpus 1.16.0",
  "parking_lot 0.12.1",
  "pin-project-lite 0.2.10",
  "signal-hook-registry",
