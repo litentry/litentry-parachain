@@ -225,7 +225,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			}
 
 			let assertion_len = unique_assertions.len() as u8;
-			req_registry.add_new_item(connection_hash, len);
+			req_registry.add_new_item(connection_hash, assertion_len);
 			for (idx, assertion) in unique_assertions.iter().enumerate() {
 				if let Some(assertion) = assertion {
 					let new_call = TrustedCall::request_vc(
