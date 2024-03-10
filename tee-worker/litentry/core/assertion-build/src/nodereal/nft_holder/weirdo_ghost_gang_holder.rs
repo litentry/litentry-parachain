@@ -123,7 +123,7 @@ mod tests {
 		let mut config = DataProviderConfig::new().unwrap();
 
 		config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
-		config.set_nodereal_api_chain_network_url(url);
+		config.set_nodereal_api_chain_network_url(url).unwrap();
 		config
 	}
 
