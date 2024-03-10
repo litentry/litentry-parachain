@@ -106,6 +106,7 @@ pub struct RequestVCResult {
 pub struct RequestVcResultOrError {
 	pub payload: Vec<u8>,
 	pub is_error: bool,
+	// When `is_error` true, the following `idx` and `len` should be ignored.
 	pub idx: u8,
 	pub len: u8,
 }

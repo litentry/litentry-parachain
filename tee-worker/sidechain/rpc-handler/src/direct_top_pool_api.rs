@@ -26,7 +26,6 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
-use ita_stf::trusted_call_result::RequestVcResultOrError;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
@@ -36,14 +35,13 @@ use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHan
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
-use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, Hash};
+use sp_core::{blake2_256, H256};
 use std::{
 	borrow::ToOwned,
 	format,
 	string::{String, ToString},
-	sync::{mpsc::channel, Arc},
-	thread, vec,
+	sync::Arc,
+	vec,
 	vec::Vec,
 };
 
@@ -122,10 +120,9 @@ where
 	});
 
 	// author_requestVc
-	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method("author_requestVc", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_requestVc");
-		let json_value = match author_submit_request_vc_inner(watch_author.clone(), params) {
+		let json_value = match author_submit_request_vc_inner(params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
 				value: vec![],
@@ -341,94 +338,16 @@ where
 	response.map_err(|e| format!("{:?}", e))
 }
 
-fn author_submit_request_vc_inner<R, TCS, G>(author: Arc<R>, params: Params) -> Result<H256, String>
-where
-	R: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
-	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
-	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
-{
+fn author_submit_request_vc_inner(params: Params) -> Result<H256, String> {
 	let payload = get_request_payload(params)?;
 	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
 
-	// Use this hash to trigger the storage of connection_registry
-	let hash = request.using_encoded(|x| BlakeTwo256::hash(x));
-
-	thread::spawn(move || request_vc_inner(author, request, hash));
-
-	Ok(hash)
-}
-
-fn request_vc_inner<R, TCS, G>(author: Arc<R>, request: AesRequest, hash: H256)
-where
-	R: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
-	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
-	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
-{
 	let vc_request_sender = VcRequestSender::new();
-	let (sender, receiver) = channel::<Result<Vec<u8>, String>>();
-
-	if let Err(err) = vc_request_sender.send(VCRequest { sender, request }) {
-		error!("failed to send AesRequest within request_vc: {:?}", err);
-		return
-	}
-
-	let mut req_cnt = 0u8;
-	loop {
-		if let Ok(res) = receiver.recv() {
-			match res {
-				Ok(response) => {
-					req_cnt += 1;
-					if let Ok(vc_res) = RequestVcResultOrError::decode(&mut response.as_slice()) {
-						author.send_rpc_response(hash, response, req_cnt < vc_res.len);
-						if req_cnt >= vc_res.len {
-							break
-						}
-					} else {
-						// This should never happen. Because the return value is always RequestVcResultOrError.
-						error!("Should never happen. Channel collapsed.");
-						let res = RequestVcResultOrError {
-							payload: "The whole batch request crashed. Please try again."
-								.to_string()
-								.as_bytes()
-								.to_vec(),
-							is_error: true,
-							idx: 0u8,
-							len: 0u8,
-						};
-						author.send_rpc_response(hash, res.encode(), false);
-						break
-					}
-				},
-				Err(e) => {
-					// This should never happen. Because the return value is always Ok(RequestVcResultOrError).
-					error!("Should never happen. Channel collapsed: {:?} ", e);
-					let res = RequestVcResultOrError {
-						payload: "The whole batch request crashed. Please try again."
-							.to_string()
-							.as_bytes()
-							.to_vec(),
-						is_error: true,
-						idx: 0u8,
-						len: 0u8,
-					};
-					author.send_rpc_response(hash, res.encode(), false);
-					break
-				},
-			};
-		} else {
-			// Normally should not happen.
-			error!("Should never happen. Channel receiver error.");
-			let res = RequestVcResultOrError {
-				payload: "The whole batch request crashed. Please try again."
-					.to_string()
-					.as_bytes()
-					.to_vec(),
-				is_error: true,
-				idx: 0u8,
-				len: 0u8,
-			};
-			author.send_rpc_response(hash, res.encode(), false);
-			break
-		}
+	if let Err(err) = vc_request_sender.send(VCRequest { request: request.clone() }) {
+		let error_msg = format!("failed to send AesRequest within request_vc: {:?}", err);
+		error!("{}", error_msg);
+		Err(error_msg)
+	} else {
+		Ok(request.using_encoded(|x| H256::from(blake2_256(x))))
 	}
 }

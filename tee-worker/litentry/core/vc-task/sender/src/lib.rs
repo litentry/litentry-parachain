@@ -30,12 +30,10 @@ use std::{
 		mpsc::{channel, Receiver, Sender as MpscSender},
 		Arc,
 	},
-	vec::Vec,
 };
 
 #[derive(Debug)]
 pub struct VCRequest {
-	pub sender: MpscSender<Result<Vec<u8>, String>>,
 	pub request: AesRequest,
 }
 
