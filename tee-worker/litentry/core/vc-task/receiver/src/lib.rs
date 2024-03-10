@@ -6,8 +6,8 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use futures_sgx as futures;
 	pub use hex_sgx as hex;
-	pub use threadpool_sgx as threadpool;
 }
 
 #[cfg(all(feature = "std", feature = "sgx"))]
@@ -18,6 +18,7 @@ pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
+use futures::executor::ThreadPool;
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 #[cfg(not(feature = "production"))]
 use ita_stf::helpers::ensure_alice;
@@ -62,7 +63,6 @@ use std::{
 	time::Instant,
 	vec::Vec,
 };
-use threadpool::ThreadPool;
 
 pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
@@ -82,8 +82,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	N::MetadataType: NodeMetadataTrait,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
-	let n_workers = 4;
-	let pool = ThreadPool::new(n_workers);
+	let pool = ThreadPool::new().unwrap();
 
 	let (sender, receiver) = channel::<(ShardIdentifier, TrustedCall)>();
 
@@ -105,7 +104,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		let node_metadata_repo_pool = node_metadata_repo.clone();
 		let sender_pool = sender.clone();
 
-		pool.execute(move || {
+		pool.spawn_ok(async move {
 			let response = handle_request(
 				&mut req.request,
 				context_pool.clone(),
@@ -129,8 +128,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			}
 		});
 	}
-
-	pool.join();
 	warn!("vc_task_receiver loop terminated");
 }
 
