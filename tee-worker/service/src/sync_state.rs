@@ -29,8 +29,11 @@ use itp_enclave_api::{
 use itp_node_api::api_client::PalletTeebagApi;
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode};
 use itp_types::{ShardIdentifier, WorkerType};
+use log::info;
 use sgx_types::sgx_quote_sign_type_t;
+use sp_runtime::MultiSigner;
 use std::string::String;
+use teerex_primitives::AnySigner;
 
 pub(crate) fn sync_state<
 	E: TlsRemoteAttestation + EnclaveBase + RemoteAttestation,
@@ -42,13 +45,13 @@ pub(crate) fn sync_state<
 	enclave_api: &E,
 	skip_ra: bool,
 ) {
-	// FIXME: we now assume that keys are equal for all shards.
 	let provider_url = match WorkerModeProvider::worker_mode() {
-		WorkerMode::Sidechain =>
+		WorkerMode::Sidechain | WorkerMode::OffChainWorker =>
 			executor::block_on(get_author_url_of_last_finalized_sidechain_block(node_api, shard))
 				.expect("Author of last finalized sidechain block could not be found"),
-		_ => executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
-			.expect("Author of last finalized sidechain block could not be found"),
+		WorkerMode::Teeracle =>
+			executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
+				.expect("Author of last finalized sidechain block could not be found"),
 	};
 
 	println!("Requesting state provisioning from worker at {}", &provider_url);
@@ -98,4 +101,14 @@ async fn get_enclave_url_of_first_registered<NodeApi: PalletTeebagApi, EnclaveAp
 	let worker_api_direct =
 		DirectWorkerApi::new(String::from_utf8_lossy(first_enclave.url.as_slice()).to_string());
 	Ok(worker_api_direct.get_mu_ra_url()?)
+}
+
+/// Returns the url of the last active worker on our shard
+async fn get_enclave_url_of_last_active<NodeApi: PalletTeerexApi, EnclaveApi: EnclaveBase>(
+	node_api: &NodeApi,
+	enclave_api: &EnclaveApi,
+	shard: &ShardIdentifier,
+) -> Result<String> {
+	// Litentry: TODO - implement this?
+	unimplemented!()
 }

@@ -16,22 +16,29 @@
 */
 
 use crate::error::{Error, ServiceResult};
-use itp_node_api::api_client::{AccountApi, ParentchainApi};
-use itp_settings::worker::{
-	EXISTENTIAL_DEPOSIT_FACTOR_FOR_INIT_FUNDS, REGISTERING_FEE_FACTOR_FOR_INIT_FUNDS,
+use codec::Encode;
+use itp_node_api::api_client::{AccountApi, ParentchainApi, TEEREX};
+use itp_settings::worker::REGISTERING_FEE_FACTOR_FOR_INIT_FUNDS;
+use itp_types::{
+	parentchain::{AccountId, Balance, ParentchainId},
+	Moment,
 };
-use itp_types::parentchain::Balance;
 use log::*;
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	Pair,
 };
 use sp_keyring::AccountKeyring;
-use sp_runtime::MultiAddress;
+use sp_runtime::{MultiAddress, Saturating};
+use std::{thread, time::Duration};
 use substrate_api_client::{
-	extrinsic::BalancesExtrinsics, GetBalance, GetTransactionPayment, SubmitAndWatch, XtStatus,
+	ac_compose_macros::compose_extrinsic, ac_primitives::Bytes, extrinsic::BalancesExtrinsics,
+	GetBalance, GetStorage, GetTransactionPayment, SubmitAndWatch, XtStatus,
 };
+use teerex_primitives::SgxAttestationMethod;
 
+const SGX_RA_PROOF_MAX_LEN: usize = 5000;
+const MAX_URL_LEN: usize = 256;
 /// Information about the enclave on-chain account.
 pub trait EnclaveAccountInfo {
 	fn free_balance(&self) -> ServiceResult<Balance>;
@@ -54,66 +61,88 @@ impl EnclaveAccountInfoProvider {
 	}
 }
 
-pub fn setup_account_funding(
+/// evaluate if the enclave should have more funds and how much more
+/// in --dev mode: let Alice pay for missing funds
+/// in production mode: wait for manual transfer before continuing
+pub fn setup_reasonable_account_funding(
 	api: &ParentchainApi,
 	accountid: &AccountId32,
-	encoded_extrinsic: Vec<u8>,
+	parentchain_id: ParentchainId,
 	is_development_mode: bool,
 ) -> ServiceResult<()> {
-	// Account funds
-	if is_development_mode {
-		// Development mode, the faucet will ensure that the enclave has enough funds
-		ensure_account_has_funds(api, accountid)?;
-	} else {
-		// Production mode, there is no faucet.
-		let registration_fees = enclave_registration_fees(api, encoded_extrinsic)?;
-		info!("Registration fees = {:?}", registration_fees);
-		let free_balance = api.get_free_balance(accountid)?;
-		info!("TEE's free balance = {:?}", free_balance);
+	loop {
+		let needed = estimate_funds_needed_to_run_for_a_while(api, accountid, parentchain_id)?;
+		let free = api.get_free_balance(accountid)?;
+		let missing_funds = needed.saturating_sub(free);
 
-		let min_required_funds =
-			registration_fees.saturating_mul(REGISTERING_FEE_FACTOR_FOR_INIT_FUNDS);
-		let missing_funds = min_required_funds.saturating_sub(free_balance);
+		if missing_funds < needed * 2 / 3 {
+			return Ok(())
+		}
 
-		if missing_funds > 0 {
-			// If there are not enough funds, then the user can send the missing TEER to the enclave address and start again.
-			println!(
-				"Enclave account: {:}, missing funds {}",
-				accountid.to_ss58check(),
-				missing_funds
+		if is_development_mode {
+			info!("[{:?}] Alice will grant {:?} to {:?}", parentchain_id, missing_funds, accountid);
+			bootstrap_funds_from_alice(api, accountid, missing_funds)?;
+		} else {
+			error!(
+				"[{:?}] Enclave account needs funding. please send at least {:?} to {:?}",
+				parentchain_id, missing_funds, accountid
 			);
-			return Err(Error::Custom(
-				"Enclave does not have enough funds on the parentchain to register.".into(),
-			))
+			thread::sleep(Duration::from_secs(10));
 		}
 	}
-	Ok(())
 }
 
-// Alice plays the faucet and sends some funds to the account if balance is low
-fn ensure_account_has_funds(api: &ParentchainApi, accountid: &AccountId32) -> Result<(), Error> {
-	// check account balance
-	let free_balance = api.get_free_balance(accountid)?;
-	info!("TEE's free balance = {:?} (Account: {})", free_balance, accountid);
-
-	let existential_deposit = api.get_existential_deposit()?;
-	info!("Existential deposit is = {:?}", existential_deposit);
-
-	let min_required_funds =
-		existential_deposit.saturating_mul(EXISTENTIAL_DEPOSIT_FACTOR_FOR_INIT_FUNDS);
-	let missing_funds = min_required_funds.saturating_sub(free_balance);
-
-	if missing_funds > 0 {
-		info!("Transfer {:?} from Alice to {}", missing_funds, accountid);
-		bootstrap_funds_from_alice(api, accountid, missing_funds)?;
-	}
-	Ok(())
-}
-
-fn enclave_registration_fees(
+fn estimate_funds_needed_to_run_for_a_while(
 	api: &ParentchainApi,
-	encoded_extrinsic: Vec<u8>,
-) -> Result<u128, Error> {
+	accountid: &AccountId32,
+	parentchain_id: ParentchainId,
+) -> ServiceResult<Balance> {
+	let existential_deposit = api.get_existential_deposit()?;
+	info!("[{:?}] Existential deposit is = {:?}", parentchain_id, existential_deposit);
+
+	let mut min_required_funds: Balance = existential_deposit;
+	min_required_funds += shard_vault_initial_funds(api)?;
+
+	let transfer_fee = estimate_transfer_fee(api)?;
+	info!("[{:?}] a single transfer costs {:?}", parentchain_id, transfer_fee);
+	min_required_funds += 1000 * transfer_fee;
+
+	// Check if this is an integritee chain and Compose a register_sgx_enclave extrinsic
+	if let Ok(ra_renewal) = api.get_constant::<Moment>("Teerex", "MaxAttestationRenewalPeriod") {
+		info!("[{:?}] this chain has the teerex pallet. estimating RA fees", parentchain_id);
+		let encoded_xt: Bytes = compose_extrinsic!(
+			api,
+			TEEREX,
+			"register_sgx_enclave",
+			vec![0u8; SGX_RA_PROOF_MAX_LEN],
+			Some(vec![0u8; MAX_URL_LEN]),
+			SgxAttestationMethod::Dcap { proxied: false }
+		)
+		.encode()
+		.into();
+		let tx_fee =
+			api.get_fee_details(&encoded_xt, None).unwrap().unwrap().inclusion_fee.unwrap();
+		let ra_fee = tx_fee.base_fee + tx_fee.len_fee + tx_fee.adjusted_weight_fee;
+		info!(
+			"[{:?}] one enclave registration costs {:?} and needs to be renewed every {:?}h",
+			parentchain_id,
+			ra_fee,
+			ra_renewal / 1_000 / 3_600
+		);
+		min_required_funds += 5 * ra_fee;
+	} else {
+		info!("[{:?}] this chain has no teerex pallet, no need to add RA fees", parentchain_id);
+	}
+
+	info!(
+		"[{:?}] we estimate the funding requirement for the primary validateer (worst case) to be {:?}",
+		parentchain_id,
+		min_required_funds
+	);
+	Ok(min_required_funds)
+}
+
+pub fn estimate_fee(api: &ParentchainApi, encoded_extrinsic: Vec<u8>) -> Result<u128, Error> {
 	let reg_fee_details = api.get_fee_details(&encoded_extrinsic.into(), None)?;
 	match reg_fee_details {
 		Some(details) => match details.inclusion_fee {
@@ -127,7 +156,7 @@ fn enclave_registration_fees(
 	}
 }
 
-// Alice sends some funds to the account
+/// Alice sends some funds to the account. only for dev chains testing
 fn bootstrap_funds_from_alice(
 	api: &ParentchainApi,
 	accountid: &AccountId32,
@@ -165,4 +194,25 @@ fn bootstrap_funds_from_alice(
 	trace!("TEE's NEW free balance = {:?}", free_balance);
 
 	Ok(())
+}
+
+/// precise estimation of necessary funds to register a hardcoded number of proxies
+pub fn shard_vault_initial_funds(api: &ParentchainApi) -> Result<Balance, Error> {
+	let proxy_deposit_base: Balance = api.get_constant("Proxy", "ProxyDepositBase")?;
+	let proxy_deposit_factor: Balance = api.get_constant("Proxy", "ProxyDepositFactor")?;
+	let transfer_fee = estimate_transfer_fee(api)?;
+	let existential_deposit = api.get_existential_deposit()?;
+	info!("Proxy Deposit is {:?} base + {:?} per proxy", proxy_deposit_base, proxy_deposit_factor);
+	Ok(proxy_deposit_base + 10 * proxy_deposit_factor + 500 * transfer_fee + existential_deposit)
+}
+
+/// precise estimation of a single transfer fee
+pub fn estimate_transfer_fee(api: &ParentchainApi) -> Result<Balance, Error> {
+	let encoded_xt: Bytes = api
+		.balance_transfer_allow_death(AccountId::from([0u8; 32]).into(), 1000000000000)
+		.encode()
+		.into();
+	let tx_fee = api.get_fee_details(&encoded_xt, None).unwrap().unwrap().inclusion_fee.unwrap();
+	let transfer_fee = tx_fee.base_fee + tx_fee.len_fee + tx_fee.adjusted_weight_fee;
+	Ok(transfer_fee)
 }

@@ -29,8 +29,8 @@ use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
-	parentchain::{AccountId, ParentchainCall, ParentchainId},
-	ShardIdentifier, H256,
+	parentchain::{AccountId, BlockHash, BlockNumber, ParentchainCall, ParentchainId},
+	Moment, ShardIdentifier, H256,
 };
 
 #[cfg(feature = "mocks")]
@@ -40,7 +40,7 @@ pub mod runtime_upgrade;
 pub mod sudo_pallet;
 pub mod system_pallet;
 
-pub const SHARD_VAULT_KEY: &str = "ShardVaultPubKey";
+pub const SHARD_CREATION_HEADER_KEY: &str = "ShardCreationHeaderKey";
 
 /// Interface to initialize a new state.
 pub trait InitState<State, AccountId> {
@@ -50,7 +50,12 @@ pub trait InitState<State, AccountId> {
 
 /// Interface to query shard vault account for shard
 pub trait ShardVaultQuery<S> {
-	fn get_vault(state: &mut S) -> Option<AccountId>;
+	fn get_vault(state: &mut S) -> Option<(AccountId, ParentchainId)>;
+}
+
+/// Interface to query shard creation block information for shard on a specified parentchain
+pub trait ShardCreationQuery<S> {
+	fn get_shard_creation_info(state: &mut S) -> ShardCreationInfo;
 }
 
 /// Interface for all functions calls necessary to update an already
@@ -137,5 +142,29 @@ impl StfExecutionResult for () {
 	}
 	fn force_connection_wait(&self) -> bool {
 		false
+	}
+}
+
+#[derive(Debug, Clone, Copy, Encode, Decode)]
+pub struct BlockMetadata {
+	pub number: BlockNumber,
+	pub hash: BlockHash,
+	pub timestamp: Option<Moment>,
+}
+
+#[derive(Debug, Clone, Copy, Encode, Decode)]
+pub struct ShardCreationInfo {
+	pub litentry: Option<BlockMetadata>,
+	pub target_a: Option<BlockMetadata>,
+	pub target_b: Option<BlockMetadata>,
+}
+
+impl ShardCreationInfo {
+	pub fn for_parentchain(&self, id: ParentchainId) -> Option<BlockMetadata> {
+		match id {
+			ParentchainId::Litentry => self.litentry,
+			ParentchainId::TargetA => self.target_a,
+			ParentchainId::TargetB => self.target_b,
+		}
 	}
 }

@@ -1,5 +1,5 @@
 [workspace]
-
+resolver = "2"
 members = [
     "app-libs/parentchain-interface",
     "app-libs/sgx-runtime",
@@ -19,6 +19,7 @@ members = [
     "core/rpc-server",
     "core/tls-websocket-server",
     "core-primitives/attestation-handler",
+    "core-primitives/binary-merkle-tree",
     "core-primitives/import-queue",
     "core-primitives/component-container",
     "core-primitives/enclave-api",

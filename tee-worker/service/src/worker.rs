@@ -26,6 +26,7 @@ use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
+use itp_types::ShardIdentifier;
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_rpc_handler::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
 use jsonrpsee::{
@@ -38,9 +39,9 @@ use std::{
 	collections::HashSet,
 	sync::{Arc, RwLock},
 };
+use url::Url as UrlType;
 
 pub type WorkerResult<T> = Result<T, Error>;
-pub type Url = String;
 
 #[derive(Clone, Hash, Eq, PartialEq, Encode, Decode, Debug)]
 pub struct PeerUrls {
@@ -103,6 +104,7 @@ where
 			debug!("No blocks to broadcast, returning");
 			return Ok(())
 		}
+		let nr_blocks = blocks.len();
 
 		let blocks_json = vec![to_json_value(blocks)?];
 		let peers = self
@@ -114,6 +116,8 @@ where
 			.map(|l| l.clone())?;
 
 		self.initialization_handler.sidechain_block_produced();
+
+		let nr_peers = peers.len();
 
 		for url in peers {
 			let blocks = blocks_json.clone();
@@ -141,18 +145,19 @@ where
 				}
 			});
 		}
+		info!("broadcast {} block(s) to {} peers", nr_blocks, nr_peers);
 		Ok(())
 	}
 }
 
 /// Looks for new peers and updates them.
 pub trait UpdatePeers {
-	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>>;
+	fn search_peers(&self, shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>>;
 
 	fn set_peers_urls(&self, peers: HashSet<PeerUrls>) -> WorkerResult<()>;
 
-	fn update_peers(&self) -> WorkerResult<()> {
-		let peers = self.search_peers()?;
+	fn update_peers(&self, shard: ShardIdentifier) -> WorkerResult<()> {
+		let peers = self.search_peers(shard)?;
 		self.set_peers_urls(peers)
 	}
 }
@@ -182,7 +187,7 @@ where
 	NodeApiFactory: CreateNodeApi + Send + Sync,
 	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
-	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>> {
+	fn search_peers(&self, _shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>> {
 		let worker_url_external = self._config.trusted_worker_url_external();
 		let node_api = self
 			.node_api_factory
@@ -192,8 +197,13 @@ where
 		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
-			let enclave_url = String::from_utf8_lossy(enclave.url.as_slice()).to_string();
-			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
+			let enclave_url = UrlType::parse(&format!(
+				"wss://{}",
+				String::from_utf8_lossy(&enclave.instance_url().unwrap()).replace("wss://", "")
+			))
+			.unwrap();
+			trace!("found peer rpc url: {}", enclave_url);
+			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone().into());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
 					let is_me = enclave_url == worker_url_external;
@@ -204,6 +214,7 @@ where
 				},
 			}
 		}
+		debug!("found {} peers in shard state for {:?}", peer_urls.len(), shard);
 		Ok(peer_urls)
 	}
 

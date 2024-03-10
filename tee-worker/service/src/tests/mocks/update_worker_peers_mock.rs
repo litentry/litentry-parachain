@@ -19,11 +19,12 @@ use crate::{
 	worker::{Url, WorkerResult},
 	worker_peers_updater::PeersRegistry,
 };
+use itp_types::ShardIdentifier;
 
 pub struct WorkerPeersRegistryMock;
 
 impl PeersRegistry for WorkerPeersRegistryMock {
-	fn update_peers(&self) -> WorkerResult<()> {
+	fn update_peers(&self, _shard: ShardIdentifier) -> WorkerResult<()> {
 		Ok(())
 	}
 

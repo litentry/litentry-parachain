@@ -3013,11 +3013,11 @@ dependencies = [
 
 [[package]]
 name = "form_urlencoded"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a62bc1cf6f830c2ec14a513a9fb124d0a213a629668a4186f329db21fe045652"
+checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
 ]
 
 [[package]]
@@ -4234,9 +4234,9 @@ dependencies = [
 
 [[package]]
 name = "idna"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d20d6b07bfbc108882d88ed8e37d39636dcc260e15e30c45e6ba089610b917c"
+checksum = "634d9b1461af396cad843f47fdba5597a4f9e6ddd4bfb6ff5d85028c25cb12f6"
 dependencies = [
  "unicode-bidi 0.3.13",
  "unicode-normalization 0.1.22",
@@ -4488,6 +4488,7 @@ dependencies = [
  "env_logger 0.9.3",
  "ita-sgx-runtime",
  "ita-stf",
+ "itc-parentchain",
  "itc-parentchain-indirect-calls-executor",
  "itc-parentchain-test",
  "itp-api-client-types",
@@ -4504,10 +4505,12 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
+ "regex 1.9.5",
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
+ "substrate-api-client",
 ]
 
 [[package]]
@@ -4548,6 +4551,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
  "itp-sgx-externalities",
+ "itp-sgx-runtime-primitives",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-storage",
@@ -4588,7 +4592,7 @@ dependencies = [
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
  "url 2.1.1",
- "url 2.4.0",
+ "url 2.5.0",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
 ]
@@ -4672,6 +4676,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-stf-executor",
+ "itp-stf-interface",
  "itp-types",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4777,7 +4782,7 @@ dependencies = [
  "thiserror 1.0.44",
  "thiserror 1.0.9",
  "url 2.1.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -4805,7 +4810,7 @@ dependencies = [
  "sgx_crypto_helper",
  "sp-core",
  "thiserror 1.0.44",
- "url 2.4.0",
+ "url 2.5.0",
  "ws",
 ]
 
@@ -4850,7 +4855,7 @@ dependencies = [
  "thiserror 1.0.9",
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
- "url 2.4.0",
+ "url 2.5.0",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
  "yasna 0.3.1",
@@ -4907,7 +4912,6 @@ name = "itp-api-client-types"
 version = "0.9.0"
 dependencies = [
  "itp-types",
- "rococo-parachain-runtime",
  "sp-runtime",
  "substrate-api-client",
 ]
@@ -4952,6 +4956,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itp-binary-merkle-tree"
+version = "0.8.0"
+dependencies = [
+ "binary-merkle-tree",
+ "parity-scale-codec",
+ "serde 1.0.193",
+]
+
+[[package]]
 name = "itp-component-container"
 version = "0.8.0"
 dependencies = [
@@ -4969,6 +4982,7 @@ dependencies = [
  "itc-parentchain",
  "itp-enclave-api-ffi",
  "itp-settings",
+ "itp-stf-interface",
  "itp-storage",
  "itp-types",
  "log 0.4.20",
@@ -5413,6 +5427,7 @@ dependencies = [
  "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
+ "serde 1.0.193",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -5522,6 +5537,7 @@ dependencies = [
  "fork-tree 3.0.0",
  "itc-parentchain-light-client",
  "itc-parentchain-test",
+ "itertools 0.10.5",
  "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-import-queue",
@@ -5533,6 +5549,7 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-test",
  "itp-types",
+ "itp-utils",
  "its-block-verification",
  "its-primitives",
  "its-state",
@@ -5840,7 +5857,7 @@ dependencies = [
  "serde 1.0.193",
  "serde_json 1.0.103",
  "thiserror 1.0.44",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -5985,7 +6002,7 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.22.0",
  "tokio-util 0.6.10",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -6236,7 +6253,7 @@ dependencies = [
  "thiserror 1.0.44",
  "thiserror 1.0.9",
  "url 2.1.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -6370,7 +6387,7 @@ dependencies = [
  "thiserror 1.0.44",
  "thiserror 1.0.9",
  "url 2.1.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -6901,7 +6918,7 @@ dependencies = [
  "quicksink",
  "rw-stream-sink",
  "soketto 0.7.1",
- "url 2.4.0",
+ "url 2.5.0",
  "webpki-roots 0.22.6",
 ]
 
@@ -7064,6 +7081,7 @@ dependencies = [
  "frame-metadata",
  "hdrhistogram",
  "hex 0.4.3",
+ "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
  "itc-rpc-client",
@@ -7091,6 +7109,7 @@ dependencies = [
  "serde_json 1.0.103",
  "sgx_crypto_helper",
  "sp-application-crypto",
+ "sp-consensus-aura",
  "sp-core",
  "sp-core-hashing 6.0.0",
  "sp-keyring",
@@ -7168,7 +7187,9 @@ dependencies = [
  "frame-support",
  "futures 0.3.28",
  "hex 0.4.3",
+ "humantime",
  "ipfs-api",
+ "ita-parentchain-interface",
  "ita-stf",
  "itc-parentchain",
  "itc-parentchain-test",
@@ -7180,7 +7201,9 @@ dependencies = [
  "itp-enclave-metrics",
  "itp-node-api",
  "itp-settings",
+ "itp-stf-interface",
  "itp-storage",
+ "itp-time-utils",
  "itp-types",
  "itp-utils",
  "its-consensus-slots",
@@ -7213,6 +7236,7 @@ dependencies = [
  "serde_json 1.0.103",
  "sgx_crypto_helper",
  "sgx_types",
+ "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
  "sp-keyring",
@@ -7220,6 +7244,7 @@ dependencies = [
  "substrate-api-client",
  "thiserror 1.0.44",
  "tokio",
+ "url 2.5.0",
  "warp",
 ]
 
@@ -7694,11 +7719,11 @@ dependencies = [
  "data-encoding",
  "multibase",
  "multihash 0.16.3",
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
  "serde 1.0.193",
  "static_assertions",
  "unsigned-varint 0.7.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -7713,11 +7738,11 @@ dependencies = [
  "log 0.4.20",
  "multibase",
  "multihash 0.17.0",
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
  "serde 1.0.193",
  "static_assertions",
  "unsigned-varint 0.7.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -9527,11 +9552,11 @@ dependencies = [
  "byteorder 1.4.3",
  "data-encoding",
  "multihash 0.13.2",
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
  "serde 1.0.193",
  "static_assertions",
  "unsigned-varint 0.7.1",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -9734,9 +9759,9 @@ source = "git+https://github.com/mesalock-linux/rust-url-sgx?tag=sgx_1.1.3#23832
 
 [[package]]
 name = "percent-encoding"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
+checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "pest"
@@ -10965,7 +10990,7 @@ dependencies = [
  "mime",
  "native-tls",
  "once_cell 1.18.0",
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
  "pin-project-lite 0.2.10",
  "serde 1.0.193",
  "serde_json 1.0.103",
@@ -10973,7 +10998,7 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tower-service",
- "url 2.4.0",
+ "url 2.5.0",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -12648,7 +12673,7 @@ dependencies = [
  "rand 0.8.5",
  "substring",
  "thiserror 1.0.44",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -14162,7 +14187,7 @@ dependencies = [
  "subtle",
  "thiserror 1.0.44",
  "tokio",
- "url 2.4.0",
+ "url 2.5.0",
  "webrtc-util",
 ]
 
@@ -14188,7 +14213,7 @@ dependencies = [
  "sp-runtime",
  "sp-runtime-interface",
  "tungstenite 0.18.0",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -14991,7 +15016,7 @@ dependencies = [
  "tinyvec",
  "tokio",
  "tracing",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -15064,7 +15089,7 @@ dependencies = [
  "rustls 0.19.1",
  "sha-1 0.9.8",
  "thiserror 1.0.44",
- "url 2.4.0",
+ "url 2.5.0",
  "utf-8 0.7.6",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki-roots 0.21.1",
@@ -15086,7 +15111,7 @@ dependencies = [
  "rand 0.8.5",
  "sha1 0.10.5",
  "thiserror 1.0.44",
- "url 2.4.0",
+ "url 2.5.0",
  "utf-8 0.7.6",
 ]
 
@@ -15296,13 +15321,13 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50bff7831e19200a85b17131d085c25d7811bc4e186efdaf54bbd132994a88cb"
+checksum = "31e6302e3bb753d46e83516cae55ae196fc0c309407cf11ab35cc51a4c2a4633"
 dependencies = [
  "form_urlencoded",
- "idna 0.4.0",
- "percent-encoding 2.3.0",
+ "idna 0.5.0",
+ "percent-encoding 2.3.1",
 ]
 
 [[package]]
@@ -15414,7 +15439,7 @@ dependencies = [
  "mime",
  "mime_guess",
  "multer",
- "percent-encoding 2.3.0",
+ "percent-encoding 2.3.1",
  "pin-project",
  "rustls-pemfile",
  "scoped-tls",
@@ -15619,7 +15644,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "64b20236ab624147dfbb62cf12a19aaf66af0e41b8398838b66e997d07d269d4"
 dependencies = [
  "indexmap 1.9.3",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -15906,7 +15931,7 @@ dependencies = [
  "time 0.3.22",
  "tokio",
  "turn",
- "url 2.4.0",
+ "url 2.5.0",
  "waitgroup",
  "webrtc-data",
  "webrtc-dtls",
@@ -15991,7 +16016,7 @@ dependencies = [
  "thiserror 1.0.44",
  "tokio",
  "turn",
- "url 2.4.0",
+ "url 2.5.0",
  "uuid",
  "waitgroup",
  "webrtc-mdns",
@@ -16390,7 +16415,7 @@ dependencies = [
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha-1 0.8.2",
  "slab 0.4.8",
- "url 2.4.0",
+ "url 2.5.0",
 ]
 
 [[package]]

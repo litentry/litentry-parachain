@@ -16,8 +16,9 @@
 */
 
 pub mod invoke;
-mod litentry;
+pub mod litentry;
 pub mod shield_funds;
+pub mod timestamp_set;
 pub mod transfer_to_alice_shields_funds;
 
 pub use invoke::InvokeArgs;

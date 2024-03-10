@@ -17,34 +17,43 @@
 
 mod event_filter;
 mod event_handler;
-mod extrinsic_parser;
 
 use crate::{
 	decode_and_log_error,
+	extrinsic_parser::ParseExtrinsic,
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
 		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
 	},
-	integritee::extrinsic_parser::ParseExtrinsic,
+	Litentry,
 };
 use codec::{Decode, Encode};
-use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
 pub use event_handler::ParentchainEventHandler;
-pub use extrinsic_parser::ParentchainExtrinsicParser;
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
 	error::{Error, Result},
 	filter_metadata::FilterIntoDataFrom,
 	IndirectDispatch,
 };
-use itp_node_api::metadata::NodeMetadataTrait;
+use itp_api_client_types::ParentchainSignedExtra;
+use itp_node_api::metadata::{
+	pallet_enclave_bridge::EnclaveBridgeCallIndexes, pallet_timestamp::TimestampCallIndexes,
+};
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::{CallIndex, H256};
-use log::trace;
-use sp_core::crypto::AccountId32;
-use sp_runtime::MultiAddress;
+use log::*;
+use sp_runtime::traits::BlakeTwo256;
 use sp_std::vec::Vec;
+
+pub type BlockNumber = u32;
+pub type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
+use crate::extrinsic_parser::ExtrinsicParser;
+pub use itp_types::parentchain::{AccountId, Balance, Hash};
+
+pub type Signature = sp_runtime::MultiSignature;
+
+/// Parses the extrinsics corresponding to the parentchain.
+pub type ParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
 
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
@@ -53,20 +62,22 @@ pub enum IndirectCall {
 	ShieldFunds(ShieldFundsArgs),
 	#[codec(index = 1)]
 	Invoke(InvokeArgs),
-	// Litentry
 	#[codec(index = 2)]
-	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	TimestampSet(TimestampSetArgs<Litentry>),
+	// Litentry
 	#[codec(index = 3)]
-	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	#[codec(index = 4)]
-	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	#[codec(index = 5)]
-	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	#[codec(index = 6)]
-	SetScheduledEnclave(SetScheduledEnclaveArgs),
+	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	#[codec(index = 7)]
-	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+	SetScheduledEnclave(SetScheduledEnclaveArgs),
 	#[codec(index = 8)]
+	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+	#[codec(index = 9)]
 	BatchAll(Vec<IndirectCall>),
 }
 
@@ -79,6 +90,8 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 		match self {
 			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
 			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
+			IndirectCall::TimestampSet(timestamp_set_args) =>
+				timestamp_set_args.dispatch(executor, ()),
 			// Litentry
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash)),
@@ -106,17 +119,13 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 }
 
 /// Default filter we use for the Integritee-Parachain.
-pub struct ShieldFundsAndInvokeFilter<ExtrinsicParser> {
-	_phantom: PhantomData<ExtrinsicParser>,
-}
+pub struct ExtrinsicFilter {}
 
-impl<ExtrinsicParser, NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata>
-	for ShieldFundsAndInvokeFilter<ExtrinsicParser>
-where
-	ExtrinsicParser: ParseExtrinsic,
+impl<NodeMetadata: EnclaveBridgeCallIndexes + TimestampCallIndexes> FilterIntoDataFrom<NodeMetadata>
+	for ExtrinsicFilter
 {
 	type Output = IndirectCall;
-	type ParseParentchainMetadata = ExtrinsicParser;
+	type ParseParentchainMetadata = ParentchainExtrinsicParser;
 
 	fn filter_into_from_metadata(
 		encoded_data: &[u8],
@@ -129,24 +138,20 @@ where
 		let xt = match Self::ParseParentchainMetadata::parse(call_mut) {
 			Ok(xt) => xt,
 			Err(e) => {
-				log::error!(
-					"[ShieldFundsAndInvokeFilter] Could not parse parentchain extrinsic: {:?}",
-					e
-				);
+				error!("ExtrinsicFilter: Could not parse parentchain extrinsic: {:?}", e);
 				return None
 			},
 		};
 		let address = if let Some(signature) = xt.signature { Some(signature.0) } else { None };
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
-		log::trace!(
-			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
-			index
-		);
+		trace!("ExtrinsicFilter: attempting to execute indirect call with index {:?}", index);
 		if index == metadata.post_opaque_task_call_indexes().ok()? {
-			log::debug!("executing invoke call");
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
+		} else if index == metadata.timestamp_set_call_indexes().ok()? {
+			let args = decode_and_log_error::<TimestampSetArgs<Integritee>>(call_args)?;
+			Some(IndirectCall::TimestampSet(args))
 		// Litentry
 		} else if index == metadata.link_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
@@ -184,7 +189,7 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	address: Option<MultiAddress<AccountId32, ()>>,
 	hash: H256,
 ) -> Option<IndirectCall> {
-	let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
+	let call_count: Vec<()> = Decode::decode(call_args).ok()?;
 	let mut calls: Vec<IndirectCall> = Vec::new();
 	log::debug!("Received BatchAll including {} calls", call_count.len());
 	for _i in 0..call_count.len() {

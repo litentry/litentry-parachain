@@ -59,7 +59,10 @@ use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
 };
-use itp_types::{parentchain::Address, Block, RsaRequest, ShardIdentifier, H256};
+use itp_types::{
+	parentchain::{Address, ParentchainId},
+	Block, RsaRequest, ShardIdentifier, H256,
+};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
@@ -146,20 +149,23 @@ pub fn submit_shielding_call_to_top_pool() {
 		));
 	let node_meta_data_repository = Arc::new(NodeMetadataRepository::default());
 	node_meta_data_repository.set_metadata(NodeMetadataMock::new());
-	let indirect_calls_executor =
-		IndirectCallsExecutor::<
-			_,
-			_,
-			_,
-			_,
-			integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
-			TestEventCreator,
-			integritee::ParentchainEventHandler,
-			TrustedCallSigned,
-			Getter,
-		>::new(
-			shielding_key_repo, enclave_signer, top_pool_author.clone(), node_meta_data_repository
-		);
+	let indirect_calls_executor = IndirectCallsExecutor::<
+		_,
+		_,
+		_,
+		_,
+		integritee::ExtrinsicFilter,
+		TestEventCreator,
+		integritee::ParentchainEventHandler,
+		TrustedCallSigned,
+		Getter,
+	>::new(
+		shielding_key_repo,
+		enclave_signer,
+		top_pool_author.clone(),
+		node_meta_data_repository,
+		ParentchainId::Integritee,
+	);
 
 	let block_with_shielding_call = create_opaque_call_extrinsic(shard_id, &shielding_key);
 
