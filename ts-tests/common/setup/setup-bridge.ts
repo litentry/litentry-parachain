@@ -7,7 +7,7 @@ import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { ISubmittableResult } from '@polkadot/types/types';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from '../utils';
+import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapperGC } from '../utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');
@@ -139,20 +139,20 @@ async function setupCrossChainTransfer(
     for (let i = 0; i < parachainRelayers.length; i++) {
         const isRelayer = await pConfig.api.query.chainBridge.relayers(parachainRelayers[i]);
         if (!isRelayer.toHuman()) {
-            const temp = await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i]));
+            const temp = await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i]));
             extrinsic.push(temp);
         }
     }
 
     const whitelist = await pConfig.api.query.chainBridge.chainNonces(sourceChainID);
     if (!whitelist.toHuman()) {
-        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
+        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
 
     const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
     if (resource.toHuman() !== 'BridgeTransfer.transfer') {
         extrinsic.push(
-            await sudoWrapper(
+            await sudoWrapperGC(
                 pConfig.api,
                 pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
             )
@@ -161,7 +161,7 @@ async function setupCrossChainTransfer(
 
     const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
     if (!fee || fee.toString() !== parachainFee.toString()) {
-        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
+        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
     }
 
     if (extrinsic.length > 0) {
