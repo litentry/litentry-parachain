@@ -12,6 +12,7 @@ contract A1 is DynamicAssertion {
         string memory,
         string memory,
         string[] memory,
+        string memory,
         bool
     )
     {
@@ -21,6 +22,7 @@ contract A1 is DynamicAssertion {
         assertions.push(
             "$has_web2_account == true and $has_web3_account == true"
         );
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/1-basic-identity-verification/1-0-0.json";
 
         bool result;
 
@@ -36,6 +38,6 @@ contract A1 is DynamicAssertion {
         }
         result = has_web2_identity && has_web3_identity;
 
-        return (description, assertion_type, assertions, result);
+        return (description, assertion_type, assertions, schema_url, result);
     }
 }

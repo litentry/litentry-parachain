@@ -10,6 +10,7 @@ pragma solidity ^0.8.8;
 
 abstract contract DynamicAssertion {
     string[] assertions;
+    string schema_url;
 
     function execute(bytes memory input)
     public
@@ -17,6 +18,7 @@ abstract contract DynamicAssertion {
         string memory,
         string memory,
         string[] memory,
+        string memory,
         bool
     )
     {
@@ -31,6 +33,7 @@ abstract contract DynamicAssertion {
         string memory,
         string memory,
         string[] memory,
+        string memory,
         bool
     );
 

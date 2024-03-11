@@ -552,12 +552,14 @@ impl Credential {
 		description: String,
 		assertion_type: String,
 		assertions: Vec<String>,
+		schema_url: String,
 		result: bool,
 	) {
 		self.credential_subject.description = description;
 		self.credential_subject.types = assertion_type;
 		self.credential_subject.assertions = Assertions::Raw(assertions);
-		self.credential_subject.values = vec![result]
+		self.credential_subject.values = vec![result];
+		self.credential_schema.id = schema_url;
 	}
 }
 

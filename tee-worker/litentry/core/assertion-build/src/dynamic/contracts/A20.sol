@@ -12,6 +12,7 @@ contract A20 is DynamicAssertion {
         string memory,
         string memory,
         string[] memory,
+        string memory,
         bool
     )
     {
@@ -19,6 +20,7 @@ contract A20 is DynamicAssertion {
         memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
         assertions[0] = "$has_joined == true";
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
         bool result;
 
         for (uint256 i = 0; i < identities.length; i++) {
@@ -37,6 +39,6 @@ contract A20 is DynamicAssertion {
                 break;
             }
         }
-        return (description, assertion_type, assertions, result);
+        return (description, assertion_type, assertions, schema_url, result);
     }
 }
