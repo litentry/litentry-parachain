@@ -2,8 +2,8 @@
 """
 Launch handily a local dev setup consisting of the parachain network and some workers.
 
-Example usage: `./local-setup/launch.py --parachain local-binary`
-Standalone + 3 workers: `./local-setup/launch.py -w 3`
+Example usage: `./local-setup/launch.py --parachain local-binary --worker identity`
+Standalone + 3 workers: `./local-setup/launch.py --worker identity -wn 3`
 
 The worker log is piped to `./log/worker*.log` etc. folder in the current-working dir.
 
@@ -50,21 +50,21 @@ PORTS = [
 ]
 
 
-def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], log_config_path):
+def setup_worker(work_dir: str, source_dir: str, worker_bin: str, std_err: Union[None, int, IO], log_config_path):
     print(f"Setting up worker in {work_dir}")
     print(f"Copying files from {source_dir}")
 
     log_level_dic = setup_worker_log_level(log_config_path)
-    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err, log_level_dic=log_level_dic)
+    worker = Worker(cwd=work_dir, source_dir=source_dir, worker_bin=worker_bin, std_err=std_err, log_level_dic=log_level_dic)
     worker.init_clean()
     print("Initialized worker.")
     return worker
 
 
-def run_worker(id, flags, subcommand_flags, log_config_path):
+def run_worker(id, worker_dir, worker_bin, flags, subcommand_flags, log_config_path):
     log = open(f"{log_dir}/worker-{id}.log", "w+")
     
-    w = setup_worker(f"tmp/w-{id}", "tee-worker/bin", log, log_config_path)
+    w = setup_worker(f"tmp/w-{id}", worker_dir + "/bin", worker_bin, log, log_config_path)
 
     print(f"Starting worker {id} in background")
     return w.run_in_background(
@@ -127,19 +127,20 @@ def generate_config_local_json(parachain_dir):
 
 
 # Generate `.env.local` used by local enclave ts-tests
-def generate_env_local():
-    env_local_example_file = "./tee-worker/ts-tests/integration-tests/.env.local.example"
-    env_local_file = env_local_example_file[: -len(".example")]
+def generate_env_local(worker_dir):
+    if worker_dir == "tee-worker":
+        env_local_example_file = "./" + worker_dir + "/ts-tests/integration-tests/.env.local.example"
+        env_local_file = env_local_example_file[: -len(".example")]
 
-    with open(env_local_example_file, "r") as f:
-        data = f.read()
-        data = data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
-        data = data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
+        with open(env_local_example_file, "r") as f:
+            data = f.read()
+            data = data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
+            data = data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
 
-    with open(env_local_file, "w") as f:
-        f.write(data)
+        with open(env_local_file, "w") as f:
+            f.write(data)
 
-    print("Successfully written ", env_local_file)
+        print("Successfully written ", env_local_file)
 
 
 def offset_port(offset):
@@ -149,7 +150,7 @@ def offset_port(offset):
         os.environ[x] = str(new_port)
 
 
-def setup_environment(offset, parachain_dir):
+def setup_environment(offset, parachain_dir, worker_dir):
     if not os.path.isfile("./local-setup/.env"):
         shutil.copy("./local-setup/.env.dev", "./local-setup/.env")
 
@@ -160,7 +161,7 @@ def setup_environment(offset, parachain_dir):
     if parachain_dir != "":
         generate_config_local_json(parachain_dir)
 
-    generate_env_local()
+    generate_env_local(worker_dir)
 
 def setup_worker_log_level(log_config_path):
     log_level_dic = {}
@@ -185,7 +186,7 @@ def setup_worker_log_level(log_config_path):
     return log_level_dic
 
 
-def get_flags(index):
+def get_flags(index, worker):
     woker_offset = index * 10
     port_with_offset = lambda env_name: str(int(os.environ.get(env_name)) + woker_offset)
     ports = {
@@ -203,7 +204,7 @@ def get_flags(index):
         "-r", ports['mura_port'],
         "-h", ports['untrusted_http_port'],
         "-p", ports['collator_ws_port'],
-        "--enable-mock-server",
+        "--enable-mock-server" if worker == "identity" else "",
         "--parentchain-start-block", "0",
         "--enable-metrics" if index == 0 else None
     ]))
@@ -215,24 +216,33 @@ def get_subcommand_flags(index):
         "--request-state" if index > 0 else None
     ]))
 
-def main(processes, workers_number, parachain_type, log_config_path, offset, parachain_dir):
+def main(processes, worker, workers_number, parachain_type, log_config_path, offset, parachain_dir):
     # Litentry
+    if worker == "identity":
+        worker_dir = "tee-worker"
+        worker_bin = "litentry-worker"
+    elif worker == "bitacross":
+        worker_dir = "bitacross-worker"
+        worker_bin = "bitacross-worker"
+    else:
+        sys.exit("Unsupported worker")
+
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, parachain_dir)
+        setup_environment(offset, parachain_dir, worker_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./tee-worker/scripts/litentry/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary-standalone":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, parachain_dir)
+        setup_environment(offset, parachain_dir, worker_dir)
         run(["./scripts/launch-standalone.sh"], check=True)
     elif parachain_type == "local-binary":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, parachain_dir)
+        setup_environment(offset, parachain_dir, worker_dir)
         run(["./scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
-        setup_environment(offset, "")
+        setup_environment(offset, "", worker_dir)
         print("Litentry parachain should be started remotely")
     else:
         sys.exit("Unsupported parachain_type")
@@ -241,12 +251,13 @@ def main(processes, workers_number, parachain_type, log_config_path, offset, par
     print("------------------------------------------------------------")
 
     c = pycurl.Curl()
+
     for i in range(workers_number):
-        flags = get_flags(i)
+        flags = get_flags(i, worker)
         subcommand_flags = get_subcommand_flags(i)
         id = "dev" if workers_number == 1 else i
 
-        processes.append(run_worker(id, flags, subcommand_flags, log_config_path))
+        processes.append(run_worker(id, worker_dir, worker_bin, flags, subcommand_flags, log_config_path))
 
         print()
         # Wait a bit for worker to start up.
@@ -294,7 +305,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run a setup consisting of a node and some workers"
     )
-    parser.add_argument("-w", "--workers-number", type=int, default=1, help="Number of workers to run")
+    parser.add_argument("-w", "--worker", type=str, default="identity", help="Worker to run: identity / bitacross")
+    parser.add_argument("-wn", "--workers-number", type=int, default=1, help="Number of workers to run")
     parser.add_argument(
         "-p",
         "--parachain",
@@ -324,5 +336,5 @@ if __name__ == "__main__":
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.workers_number, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
+    if main(process_list, args.worker, args.workers_number, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()
