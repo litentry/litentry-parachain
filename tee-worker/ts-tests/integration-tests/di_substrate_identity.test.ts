@@ -11,6 +11,7 @@ import {
     buildValidations,
     initIntegrationTestContext,
     PolkadotSigner,
+    sleep,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -304,6 +305,7 @@ describe('Test Identity (direct invocation)', function () {
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
 
         const evmNonce = getNextNonce();
+
         // random wrong msg
         const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
         const evmSignature = (await context.ethersWallet.alice.signMessage(
@@ -353,10 +355,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking already linked identity', async function () {
+        // sleep for a while to make sure the nonce is updated
+        await sleep(3);
+
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
+
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const [twitterValidation] = await buildValidations(
             context,
@@ -479,9 +485,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-
-            assert.lengthOf(idGraphHashResults, 4);
         }
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
