@@ -220,14 +220,9 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
     # Litentry
     if worker == "identity":
         worker_dir = "tee-worker"
-    elif worker == "bitacross":
-        worker_dir = "bitacross-worker"
-    else:
-        sys.exit("Unsupported worker")
-
-    if worker == "identity":
         worker_bin = "litentry-worker"
     elif worker == "bitacross":
+        worker_dir = "bitacross-worker"
         worker_bin = "bitacross-worker"
     else:
         sys.exit("Unsupported worker")
