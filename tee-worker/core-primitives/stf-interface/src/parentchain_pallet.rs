@@ -22,7 +22,7 @@ pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {
 	type Error;
 
 	/// Updates the block number, block hash and parent hash of the parentchain block.
-	fn update_parentchain_integritee_block(
+	fn update_parentchain_litentry_block(
 		state: &mut State,
 		header: ParentchainHeader,
 	) -> Result<(), Self::Error>;

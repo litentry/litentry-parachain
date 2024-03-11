@@ -14,56 +14,11 @@
 	limitations under the License.
 */
 
-use crate::{
-	error::{Error, Result as EnclaveResult},
-	utils::{
-		get_extrinsic_factory_from_integritee_solo_or_parachain,
-		get_stf_enclave_signer_from_solo_or_parachain,
-	},
-};
-use codec::Encode;
-use enclave_bridge_primitives::ShardConfig;
-
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_enclave_bridge::EnclaveBridgeCallIndexes, provider::AccessNodeMetadata,
-};
-
-use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
-
-use itp_types::{
-	parentchain::{AccountId, BlockNumber, ParentchainId},
-	OpaqueCall, ShardIdentifier,
-};
-use itp_utils::hex::hex_encode;
+use crate::error::Result as EnclaveResult;
+use itp_types::ShardIdentifier;
 use log::*;
 
-use teerex_primitives::EnclaveFingerprint;
-
 pub(crate) fn init_shard_config(shard: ShardIdentifier) -> EnclaveResult<()> {
-	trace!("Intializing shard config on integritee network");
-	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	let enclave_signer = get_stf_enclave_signer_from_solo_or_parachain()?;
-	let mrenclave = enclave_signer.ocall_api.get_mrenclave_of_self()?;
-	let shard_config = ShardConfig::<AccountId>::new(EnclaveFingerprint::from(mrenclave.m));
-
-	let call = extrinsics_factory
-		.node_metadata_repository
-		.get_from_metadata(|m| m.update_shard_config_call_indexes())
-		.map_err(|e| Error::Other(e.into()))?
-		.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-
-	let opaque_call = OpaqueCall::from_tuple(&(call, shard, shard_config, BlockNumber::from(0u8)));
-	debug!("encoded call: {}", hex_encode(opaque_call.encode().as_slice()));
-	let xts = extrinsics_factory
-		.create_extrinsics(&[opaque_call], None)
-		.map_err(|e| Error::Other(e.into()))?;
-
-	info!("Initializing or touching shard config on integritee network. awaiting inclusion before continuing");
-	// this needs to be blocking because the parentchain handler may be re-initialized right after this and the extrinsic would be swallowed
-	enclave_signer
-		.ocall_api
-		.send_to_parentchain(xts, &ParentchainId::Integritee, true)
-		.map_err(|e| Error::Other(e.into()))?;
+	warn!("TODO(Litentry): init_shard_config");
 	Ok(())
 }

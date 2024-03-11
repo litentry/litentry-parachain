@@ -75,7 +75,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		stf_enclave_signer,
 		top_pool_author,
 		node_metadata_repository,
-		ParentchainId::Integritee,
+		ParentchainId::Litentry,
 	));
 	Ok(IntegriteeParentchainBlockImporter::new(
 		validator_access,

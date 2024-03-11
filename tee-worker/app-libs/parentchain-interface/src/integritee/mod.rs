@@ -20,10 +20,11 @@ mod event_handler;
 
 use crate::{
 	decode_and_log_error,
-	extrinsic_parser::ParseExtrinsic,
+	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic},
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
 		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
+		TimestampSetArgs,
 	},
 	Litentry,
 };
@@ -37,19 +38,19 @@ use itc_parentchain_indirect_calls_executor::{
 	IndirectDispatch,
 };
 use itp_api_client_types::ParentchainSignedExtra;
-use itp_node_api::metadata::{
-	pallet_enclave_bridge::EnclaveBridgeCallIndexes, pallet_timestamp::TimestampCallIndexes,
-};
+use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
+pub use itp_types::{
+	parentchain::{AccountId, Balance, Hash},
+	CallIndex, H256,
+};
 use log::*;
-use sp_runtime::traits::BlakeTwo256;
+use sp_core::crypto::AccountId32;
+use sp_runtime::{traits::BlakeTwo256, MultiAddress};
 use sp_std::vec::Vec;
 
 pub type BlockNumber = u32;
 pub type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
-use crate::extrinsic_parser::ExtrinsicParser;
-pub use itp_types::parentchain::{AccountId, Balance, Hash};
-
 pub type Signature = sp_runtime::MultiSignature;
 
 /// Parses the extrinsics corresponding to the parentchain.
@@ -121,9 +122,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 /// Default filter we use for the Integritee-Parachain.
 pub struct ExtrinsicFilter {}
 
-impl<NodeMetadata: EnclaveBridgeCallIndexes + TimestampCallIndexes> FilterIntoDataFrom<NodeMetadata>
-	for ExtrinsicFilter
-{
+impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for ExtrinsicFilter {
 	type Output = IndirectCall;
 	type ParseParentchainMetadata = ParentchainExtrinsicParser;
 
@@ -150,7 +149,7 @@ impl<NodeMetadata: EnclaveBridgeCallIndexes + TimestampCallIndexes> FilterIntoDa
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
 		} else if index == metadata.timestamp_set_call_indexes().ok()? {
-			let args = decode_and_log_error::<TimestampSetArgs<Integritee>>(call_args)?;
+			let args = decode_and_log_error::<TimestampSetArgs<Litentry>>(call_args)?;
 			Some(IndirectCall::TimestampSet(args))
 		// Litentry
 		} else if index == metadata.link_identity_call_indexes().ok()? {

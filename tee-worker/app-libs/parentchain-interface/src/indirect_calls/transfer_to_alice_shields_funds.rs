@@ -71,7 +71,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 				executor.get_enclave_account()?.into(),
 				ALICE_ACCOUNT_ID,
 				self.value,
-				ParentchainId::Integritee,
+				ParentchainId::Litentry,
 			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
 			let trusted_operation =

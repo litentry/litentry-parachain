@@ -513,7 +513,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	let send_register_xt = move || {
 		println!("[+] Send register enclave extrinsic");
-		send_integritee_extrinsic(
+		send_litentry_extrinsic(
 			register_xt(),
 			&node_api2,
 			&tee_accountid_clone,
@@ -576,17 +576,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 					println!("We are the primary worker, first_run: {}", first_run);
 					if first_run {
 						enclave.init_shard(shard.encode()).unwrap();
-						if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
-							enclave
-								.init_shard_creation_parentchain_header(
-									shard,
-									&ParentchainId::Litentry,
-									&register_enclave_xt_header,
-								)
-								.unwrap();
-							debug!("shard config should be initialized on litentry network now");
-							return (true, true)
-						}
+						enclave
+							.init_shard_creation_parentchain_header(
+								shard,
+								&ParentchainId::Litentry,
+								&register_enclave_xt_header,
+							)
+							.unwrap();
+						debug!("shard config should be initialized on litentry network now");
+						return (true, true)
 					}
 					return (true, false)
 				} else {
@@ -618,7 +616,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				&enclave,
 				&litentry_rpc_api,
 				&tee_accountid,
-				ParentchainId::Integritee,
+				ParentchainId::Litentry,
 				shard,
 			)
 		} else {
@@ -627,7 +625,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	match WorkerModeProvider::worker_mode() {
 		WorkerMode::OffChainWorker => {
-			println!("[Integritee:OCW] Finished initializing light client, syncing parentchain...");
+			println!("[Litentry:OCW] Finished initializing light client, syncing parentchain...");
 
 			// Syncing all parentchain blocks, this might take a while..
 			let last_synced_header = integritee_parentchain_handler
@@ -647,7 +645,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			info!("skipping shard vault check because not yet supported for offchain worker");
 		},
 		WorkerMode::Sidechain => {
-			println!("[Integritee:SCV] Finished initializing light client, syncing litentry parentchain...");
+			println!("[Litentry:SCV] Finished initializing light client, syncing litentry parentchain...");
 
 			// Litentry: apply skipped parentchain block
 			let parentchain_start_block = config
@@ -720,14 +718,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	);
 
 	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-		println!("[Integritee:SCV] starting block production");
+		println!("[Litentry:SCV] starting block production");
 		let last_synced_header =
 			sidechain_init_block_production(enclave.clone(), sidechain_storage).unwrap();
 	}
 
 	ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(
 		&litentry_rpc_api,
-		ParentchainId::Integritee,
+		ParentchainId::Litentry,
 	);
 }
 
@@ -740,9 +738,9 @@ fn init_provided_shard_vault<E: EnclaveBase>(
 	shielding_target: Option<ParentchainId>,
 	we_are_primary_validateer: bool,
 ) {
-	let shielding_target = shielding_target.unwrap_or(ParentchainId::Integritee);
+	let shielding_target = shielding_target.unwrap_or(ParentchainId::Litentry);
 	let rpc_api = match shielding_target {
-		ParentchainId::Integritee => litentry_rpc_api,
+		ParentchainId::Litentry => litentry_rpc_api,
 		ParentchainId::TargetA => maybe_target_a_rpc_api
 			.expect("target A must be initialized to be used as shielding target"),
 		ParentchainId::TargetB => maybe_target_b_rpc_api
@@ -817,23 +815,18 @@ where
 	let (parentchain_handler, last_synched_header) =
 		init_parentchain(enclave, &node_api, tee_account_id, parentchain_id, shard);
 
-	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
-		println!(
-			"[{:?}] Finished initializing light client, syncing parentchain...",
-			parentchain_id
-		);
+	println!("[{:?}] Finished initializing light client, syncing parentchain...", parentchain_id);
 
-		// Syncing all parentchain blocks, this might take a while..
-		let last_synched_header = parentchain_handler
-			.sync_parentchain_until_latest_finalized(last_synched_header, 0, *shard, true)
-			.unwrap();
+	// Syncing all parentchain blocks, this might take a while..
+	let last_synched_header = parentchain_handler
+		.sync_parentchain_until_latest_finalized(last_synched_header, 0, *shard, true)
+		.unwrap();
 
-		start_parentchain_header_subscription_thread(
-			parentchain_handler.clone(),
-			last_synched_header,
-			*shard,
-		)
-	}
+	start_parentchain_header_subscription_thread(
+		parentchain_handler.clone(),
+		last_synched_header,
+		*shard,
+	);
 
 	let parentchain_init_params = parentchain_handler.parentchain_init_params.clone();
 
@@ -976,7 +969,7 @@ fn register_quotes_from_marblerun(
 	for quote in quotes {
 		match enclave.generate_dcap_ra_extrinsic_from_quote(url.clone(), &quote) {
 			Ok(xt) => {
-				send_integritee_extrinsic(xt, api, accountid, is_development_mode);
+				send_litentry_extrinsic(xt, api, accountid, is_development_mode);
 			},
 			Err(e) => {
 				error!("Extracting information from quote failed: {}", e)
@@ -998,15 +991,15 @@ fn register_collateral(
 		let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
 		println!("[>] DCAP setup: register QE collateral");
 		let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
-		send_integritee_extrinsic(uxt, api, accountid, is_development_mode);
+		send_litentry_extrinsic(uxt, api, accountid, is_development_mode);
 
 		println!("[>] DCAP setup: register TCB info");
 		let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
-		send_integritee_extrinsic(uxt, api, accountid, is_development_mode);
+		send_litentry_extrinsic(uxt, api, accountid, is_development_mode);
 	}
 }
 
-fn send_integritee_extrinsic(
+fn send_litentry_extrinsic(
 	extrinsic: Vec<u8>,
 	api: &ParentchainApi,
 	fee_payer: &AccountId32,
@@ -1016,7 +1009,7 @@ fn send_integritee_extrinsic(
 	let ed = api.get_existential_deposit()?;
 	let free = api.get_free_balance(fee_payer)?;
 	let missing_funds = fee.saturating_add(ed).saturating_sub(free);
-	info!("[Integritee] send extrinsic");
+	info!("[Litentry] send extrinsic");
 	debug!("fee: {:?}, ed: {:?}, free: {:?} => missing: {:?}", fee, ed, free, missing_funds);
 	trace!(
 		"  encoded extrinsic len: {}, payload: 0x{:}",
@@ -1028,7 +1021,7 @@ fn send_integritee_extrinsic(
 		setup_reasonable_account_funding(
 			api,
 			fee_payer,
-			ParentchainId::Integritee,
+			ParentchainId::Litentry,
 			is_development_mode,
 		)?
 	}

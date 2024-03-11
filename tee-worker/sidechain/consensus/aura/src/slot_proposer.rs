@@ -188,6 +188,13 @@ impl<
 			)
 			.map_err(|e| ConsensusError::Other(e.to_string().into()))?;
 
+		if let Err(e) = self
+			.metrics_api
+			.update_metric(EnclaveMetric::SidechainSlotBlockCompositionTime(started.elapsed()))
+		{
+			warn!("Failed to update metric for sidechain slot block composition time: {:?}", e);
+		};
+
 		println!(
 			"[Sidechain] propose block {} summary: executed {}, failed {}, from {} in queue in {}ms",
 			sidechain_block.block().header().block_number(),

@@ -233,12 +233,12 @@ pub(crate) fn add_shard_vault_proxy(
 	let (vault, parentchain_id) = get_shard_vault_internal(shard)?;
 
 	let enclave_extrinsics_factory = match parentchain_id {
-		ParentchainId::Integritee => get_extrinsic_factory_from_integritee_solo_or_parachain()?,
+		ParentchainId::Litentry => get_extrinsic_factory_from_integritee_solo_or_parachain()?,
 		ParentchainId::TargetA => get_extrinsic_factory_from_target_a_solo_or_parachain()?,
 		ParentchainId::TargetB => get_extrinsic_factory_from_target_b_solo_or_parachain()?,
 	};
 	let node_metadata_repo = match parentchain_id {
-		ParentchainId::Integritee =>
+		ParentchainId::Litentry =>
 			get_node_metadata_repository_from_integritee_solo_or_parachain()?,
 		ParentchainId::TargetA => get_node_metadata_repository_from_target_a_solo_or_parachain()?,
 		ParentchainId::TargetB => get_node_metadata_repository_from_target_b_solo_or_parachain()?,

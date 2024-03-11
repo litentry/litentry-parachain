@@ -34,6 +34,8 @@ thiserror-sgx = { package = "thiserror", optional = true, git = "https://github.
 # substrate deps
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
+litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
+
 [dev-dependencies]
 # local
 itc-parentchain-test = { path = "../../../core/parentchain/test" }

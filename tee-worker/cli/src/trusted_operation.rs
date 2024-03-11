@@ -29,7 +29,7 @@ use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
 use itp_types::{
-	parentchain::{BlockHash, BlockNumber, Hash, ProcessedParentchainBlock},
+	parentchain::{BlockHash, BlockNumber, Hash, ParentchainBlockProcessed},
 	DirectRequestStatus, RsaRequest, TrustedOperationStatus,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};

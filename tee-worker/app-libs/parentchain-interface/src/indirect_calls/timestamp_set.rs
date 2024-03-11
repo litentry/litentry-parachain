@@ -50,7 +50,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>, I: ParentchainInstanc
 			return Err(Error::Other("unknown parentchain instance".into()))
 		};
 		let trusted_call =
-			TrustedCall::timestamp_set(enclave_account_id, self.now.0, parentchain_id);
+			TrustedCall::timestamp_set(enclave_account_id.into(), self.now.0, parentchain_id);
 		let shard = executor.get_default_shard();
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
 		let trusted_operation =

@@ -33,7 +33,6 @@ use log::info;
 use sgx_types::sgx_quote_sign_type_t;
 use sp_runtime::MultiSigner;
 use std::string::String;
-use teerex_primitives::AnySigner;
 
 pub(crate) fn sync_state<
 	E: TlsRemoteAttestation + EnclaveBase + RemoteAttestation,

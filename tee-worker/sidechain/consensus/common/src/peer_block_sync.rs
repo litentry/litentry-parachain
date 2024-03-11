@@ -20,7 +20,6 @@ use codec::Encode;
 use core::{fmt::Debug, marker::PhantomData};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::H256;
-use itp_utils::hex::hex_encode;
 use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as HeaderTrait, ShardIdentifierFor,
@@ -28,6 +27,7 @@ use its_primitives::{
 	},
 	types::BlockHash,
 };
+use litentry_hex_utils::hex_encode;
 use log::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
 use std::{sync::Arc, vec::Vec};

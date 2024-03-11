@@ -188,27 +188,15 @@ pub fn get_shard_vaults() -> Vec<(AccountId, ParentchainId)> {
 pub fn shard_creation_info() -> ShardCreationInfo {
 	let maybe_litentry_info: Option<BlockMetadata> = ParentchainLitentry::creation_block_number()
 		.and_then(|number| {
-			ParentchainLitentry::creation_block_hash().map(|hash| BlockMetadata {
-				number,
-				hash,
-				timestamp: ParentchainLitentry::creation_timestamp(),
-			})
+			ParentchainLitentry::creation_block_hash().map(|hash| BlockMetadata { number, hash })
 		});
 	let maybe_target_a_info: Option<BlockMetadata> = ParentchainTargetA::creation_block_number()
 		.and_then(|number| {
-			ParentchainTargetA::creation_block_hash().map(|hash| BlockMetadata {
-				number,
-				hash,
-				timestamp: ParentchainTargetA::creation_timestamp(),
-			})
+			ParentchainTargetA::creation_block_hash().map(|hash| BlockMetadata { number, hash })
 		});
 	let maybe_target_b_info: Option<BlockMetadata> = ParentchainTargetB::creation_block_number()
 		.and_then(|number| {
-			ParentchainTargetB::creation_block_hash().map(|hash| BlockMetadata {
-				number,
-				hash,
-				timestamp: ParentchainTargetB::creation_timestamp(),
-			})
+			ParentchainTargetB::creation_block_hash().map(|hash| BlockMetadata { number, hash })
 		});
 
 	ShardCreationInfo {

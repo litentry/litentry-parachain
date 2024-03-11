@@ -35,7 +35,6 @@ use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, ac_primitives::Bytes, extrinsic::BalancesExtrinsics,
 	GetBalance, GetStorage, GetTransactionPayment, SubmitAndWatch, XtStatus,
 };
-use teerex_primitives::SgxAttestationMethod;
 
 const SGX_RA_PROOF_MAX_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
@@ -107,32 +106,8 @@ fn estimate_funds_needed_to_run_for_a_while(
 	info!("[{:?}] a single transfer costs {:?}", parentchain_id, transfer_fee);
 	min_required_funds += 1000 * transfer_fee;
 
-	// Check if this is an integritee chain and Compose a register_sgx_enclave extrinsic
-	if let Ok(ra_renewal) = api.get_constant::<Moment>("Teerex", "MaxAttestationRenewalPeriod") {
-		info!("[{:?}] this chain has the teerex pallet. estimating RA fees", parentchain_id);
-		let encoded_xt: Bytes = compose_extrinsic!(
-			api,
-			TEEREX,
-			"register_sgx_enclave",
-			vec![0u8; SGX_RA_PROOF_MAX_LEN],
-			Some(vec![0u8; MAX_URL_LEN]),
-			SgxAttestationMethod::Dcap { proxied: false }
-		)
-		.encode()
-		.into();
-		let tx_fee =
-			api.get_fee_details(&encoded_xt, None).unwrap().unwrap().inclusion_fee.unwrap();
-		let ra_fee = tx_fee.base_fee + tx_fee.len_fee + tx_fee.adjusted_weight_fee;
-		info!(
-			"[{:?}] one enclave registration costs {:?} and needs to be renewed every {:?}h",
-			parentchain_id,
-			ra_fee,
-			ra_renewal / 1_000 / 3_600
-		);
-		min_required_funds += 5 * ra_fee;
-	} else {
-		info!("[{:?}] this chain has no teerex pallet, no need to add RA fees", parentchain_id);
-	}
+	// TODO(Litentry): shall we charge RA fee?
+	info!("[{:?}] not adding RA fees for now", parentchain_id);
 
 	info!(
 		"[{:?}] we estimate the funding requirement for the primary validateer (worst case) to be {:?}",

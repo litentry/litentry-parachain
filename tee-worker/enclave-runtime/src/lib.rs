@@ -150,8 +150,8 @@ pub unsafe extern "C" fn init(
 			builder.init();
 		},
 		env_logger::builder()
-		.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
-		.init();
+			.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
+			.init()
 	);
 
 	let mu_ra_url =

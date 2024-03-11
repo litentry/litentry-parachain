@@ -15,7 +15,7 @@
 
 */
 
-use crate::{OpaqueCall, PalletString, ShardIdentifier};
+use crate::{OpaqueCall, ShardIdentifier};
 use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -26,8 +26,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::bounded::alloc;
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 use substrate_api_client::ac_node_api::StaticEvent;
-use teeracle_primitives::ExchangeRate;
-use teerex_primitives::{SgxAttestationMethod, SgxStatus};
+
 pub type StorageProof = Vec<Vec<u8>>;
 
 // Basic Types.
@@ -40,6 +39,7 @@ pub type AccountId = sp_core::crypto::AccountId32;
 pub type AccountData = pallet_balances::AccountData<Balance>;
 pub type AccountInfo = frame_system::AccountInfo<Index, AccountData>;
 pub type Address = MultiAddress<AccountId, ()>;
+
 // todo! make generic
 /// The type used to represent the kinds of proxying allowed.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
@@ -142,95 +142,26 @@ impl StaticEvent for BalanceTransfer {
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct AddedSgxEnclave {
-	pub registered_by: AccountId,
-	pub worker_url: Option<PalletString>,
-	pub tcb_status: Option<SgxStatus>,
-	pub attestation_method: SgxAttestationMethod,
-}
-
-impl core::fmt::Display for crate::parentchain::AddedSgxEnclave {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"AddedSgxEnclave :: from: {}, url: {:?}, status: {:?}, method: {:?}",
-			account_id_to_string::<AccountId>(&self.registered_by),
-			self.worker_url,
-			self.tcb_status,
-			self.attestation_method
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for crate::parentchain::ProcessedParentchainBlock {
-	const PALLET: &'static str = "EnclaveBridge";
-	const EVENT: &'static str = "ProcessedParentchainBlock";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct ProcessedParentchainBlock {
+pub struct ParentchainBlockProcessed {
 	pub shard: ShardIdentifier,
-	pub block_hash: Hash,
-	pub trusted_calls_merkle_root: Hash,
 	pub block_number: BlockNumber,
+	pub block_hash: Hash,
+	pub task_merkle_root: Hash,
 }
 
-impl core::fmt::Display for crate::parentchain::ProcessedParentchainBlock {
+impl core::fmt::Display for crate::parentchain::ParentchainBlockProcessed {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
-			"ProcessedParentchainBlock :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
-			self.block_number, self.shard, self.trusted_calls_merkle_root, self.block_hash
+			"ParentchainBlockProcessed :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
+			self.block_number, self.shard, self.task_merkle_root, self.block_hash
 		);
 		write!(f, "{}", message)
 	}
 }
 
-impl StaticEvent for crate::parentchain::AddedSgxEnclave {
-	const PALLET: &'static str = "EnclaveBridge";
-	const EVENT: &'static str = "ProcessedParentchainBlock";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct OracleUpdated {
-	pub oracle_data_name: PalletString,
-	pub data_source: PalletString,
-}
-
-impl core::fmt::Display for crate::parentchain::OracleUpdated {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"OracleUpdated :: data name {:?} source: {:?}",
-			self.oracle_data_name, self.data_source,
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for crate::parentchain::OracleUpdated {
-	const PALLET: &'static str = "Teeracle";
-	const EVENT: &'static str = "OracleUpdated";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct ExchangeRateUpdated {
-	pub data_source: PalletString,
-	pub trading_pair: PalletString,
-	pub exchange_rate: ExchangeRate,
-}
-
-impl core::fmt::Display for crate::parentchain::ExchangeRateUpdated {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"OracleUpdated :: source {:?} trading pair: {:?}",
-			self.data_source, self.trading_pair,
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for crate::parentchain::ExchangeRateUpdated {
-	const PALLET: &'static str = "Teeracle";
-	const EVENT: &'static str = "ExchangeRateUpdated";
+impl StaticEvent for ParentchainBlockProcessed {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "ParentchainBlockProcessed";
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>

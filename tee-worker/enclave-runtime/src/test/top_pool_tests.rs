@@ -164,7 +164,7 @@ pub fn submit_shielding_call_to_top_pool() {
 		enclave_signer,
 		top_pool_author.clone(),
 		node_meta_data_repository,
-		ParentchainId::Integritee,
+		ParentchainId::Litentry,
 	);
 
 	let block_with_shielding_call = create_opaque_call_extrinsic(shard_id, &shielding_key);

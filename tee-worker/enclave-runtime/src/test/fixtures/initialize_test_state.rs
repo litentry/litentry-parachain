@@ -36,7 +36,7 @@ pub fn init_state<S: HandleState<StateT = SgxExternalities>>(
 	let mut state = TestStf::init_state(enclave_account);
 
 	let vault = AccountId::new([42u8; 32]);
-	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Integritee).unwrap();
+	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
 
 	state.prune_state_diff();
 

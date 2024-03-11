@@ -268,7 +268,18 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-impl pallet_parentchain::Config for Runtime {
+pub type ParentchainInstanceLitentry = pallet_parentchain::Instance1;
+impl pallet_parentchain::Config<ParentchainInstanceLitentry> for Runtime {
+	type WeightInfo = ();
+}
+
+pub type ParentchainInstanceTargetA = pallet_parentchain::Instance2;
+impl pallet_parentchain::Config<crate::ParentchainInstanceTargetA> for Runtime {
+	type WeightInfo = ();
+}
+
+pub type ParentchainInstanceTargetB = pallet_parentchain::Instance3;
+impl pallet_parentchain::Config<crate::ParentchainInstanceTargetB> for Runtime {
 	type WeightInfo = ();
 }
 
@@ -291,7 +302,9 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		Parentchain: pallet_parentchain,
+		ParentchainLitentry: pallet_parentchain::<Instance1>,
+		ParentchainTargetA: pallet_parentchain::<Instance2>,
+		ParentchainTargetB: pallet_parentchain::<Instance3>,
 		IdentityManagement: pallet_imt,
 	}
 );

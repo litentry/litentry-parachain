@@ -30,7 +30,7 @@ use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{AccountId, BlockHash, BlockNumber, ParentchainCall, ParentchainId},
-	Moment, ShardIdentifier, H256,
+	ShardIdentifier, H256,
 };
 
 #[cfg(feature = "mocks")]
@@ -149,7 +149,7 @@ impl StfExecutionResult for () {
 pub struct BlockMetadata {
 	pub number: BlockNumber,
 	pub hash: BlockHash,
-	pub timestamp: Option<Moment>,
+	// Litentry: we don't seem to need the timestamp
 }
 
 #[derive(Debug, Clone, Copy, Encode, Decode)]

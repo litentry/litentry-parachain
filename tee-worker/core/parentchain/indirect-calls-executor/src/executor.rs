@@ -202,7 +202,7 @@ impl<
 			}
 		}
 		debug!("successfully processed {} indirect invocations", executed_calls.len());
-		if self.parentchain_id == ParentchainId::Integritee {
+		if self.parentchain_id == ParentchainId::Litentry {
 			// Include a processed parentchain block confirmation for each block.
 			Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
 				block_hash,
@@ -468,7 +468,7 @@ mod test {
 			stf_enclave_signer,
 			top_pool_author.clone(),
 			node_metadata_repo,
-			ParentchainId::Integritee,
+			ParentchainId::Litentry,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)

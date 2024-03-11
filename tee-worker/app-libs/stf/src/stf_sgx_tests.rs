@@ -22,7 +22,7 @@ use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInstancesInterface, sudo_pallet::SudoPalletInterface,
 	system_pallet::SystemPalletAccountInterface, InitState, StateCallInterface,
 };
-use itp_stf_primitives::types::{AccountId, ShardIdentifier, Signature};
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::parentchain::ParentchainId;
 use litentry_primitives::LitentryMultiSignature;
 use sp_core::{
@@ -49,14 +49,14 @@ pub fn shield_funds_increments_signer_account_nonce() {
 	let enclave_signer_account_id: AccountId = enclave_call_signer.public().into();
 	let mut state = StfState::init_state(enclave_signer_account_id.clone());
 	let vault = AccountId::new([2u8; 32]);
-	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Integritee).unwrap();
+	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(
 			enclave_call_signer.public().into(),
 			AccountId::new([1u8; 32]),
 			500u128,
-			ParentchainId::Integritee,
+			ParentchainId::Litentry,
 		),
 		0,
 		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),

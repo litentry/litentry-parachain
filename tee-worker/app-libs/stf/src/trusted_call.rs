@@ -26,10 +26,7 @@ use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_addre
 #[cfg(not(feature = "production"))]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
-	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_self,
-		get_storage_by_key_hash, shard_vault,
-	},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self, shard_vault},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
 		SetIdentityNetworksResult, TrustedCallResult,
@@ -57,9 +54,8 @@ use itp_stf_primitives::{
 };
 use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId, ProxyType},
-	Address, Moment, OpaqueCall,
+	Address, Moment, OpaqueCall, H256,
 };
-pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
@@ -525,7 +521,7 @@ where
 					ParentchainId::TargetB => ParentchainCall::TargetB(proxy_call),
 				};
 				calls.push(parentchain_call);
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_shield(enclave_account, who, value, parentchain_id) => {
 				let account_id: AccountId32 =
@@ -551,58 +547,9 @@ where
 			},
 			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				debug!("timestamp_set({}, {:?})", now, parentchain_id);
-				match parentchain_id {
-					ParentchainId::Litentry => {
-						if ParentchainLitentry::creation_timestamp().is_none() {
-							debug!(
-								"initializing creation timestamp({}, {:?})",
-								now, parentchain_id
-							);
-							ita_sgx_runtime::ParentchainPalletCall::<
-								Runtime,
-								ParentchainInstanceLitentry,
-							>::set_creation_timestamp {
-								creation: now,
-							}
-							.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-							.map_err(|e| {
-								Self::Error::Dispatch(format!("Timestamp Set error: {:?}", e.error))
-							})?;
-						};
-						ita_sgx_runtime::ParentchainPalletCall::<
-							Runtime,
-							ParentchainInstanceLitentry,
-						>::set_now {
-							now,
-						}
-						.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-						.map_err(|e| {
-							Self::Error::Dispatch(format!("Timestamp Set error: {:?}", e.error))
-						})?
-					},
-					ParentchainId::TargetA => ita_sgx_runtime::ParentchainPalletCall::<
-						Runtime,
-						ParentchainInstanceTargetA,
-					>::set_now {
-						now,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-					.map_err(|e| {
-						Self::Error::Dispatch(format!("Timestamp Set error: {:?}", e.error))
-					})?,
-					ParentchainId::TargetB => ita_sgx_runtime::ParentchainPalletCall::<
-						Runtime,
-						ParentchainInstanceTargetB,
-					>::set_now {
-						now,
-					}
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-					.map_err(|e| {
-						Self::Error::Dispatch(format!("Timestamp Set error: {:?}", e.error))
-					})?,
-				};
-				Ok(())
+				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
+				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
+				Ok(TrustedCallResult::Empty)
 			},
 
 			#[cfg(feature = "evm")]

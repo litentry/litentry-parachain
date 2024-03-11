@@ -17,7 +17,7 @@
 
 use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
 
-use itp_types::parentchain::{AddedSgxEnclave, BalanceTransfer};
+use itp_types::parentchain::BalanceTransfer;
 use log::*;
 use substrate_api_client::{GetChainInfo, SubscribeEvents};
 

@@ -16,7 +16,7 @@
 */
 
 use itp_api_client_types::ParentchainApi;
-use itp_types::parentchain::{AddedSgxEnclave, BalanceTransfer, ParentchainId};
+use itp_types::parentchain::{BalanceTransfer, ParentchainId};
 use substrate_api_client::SubscribeEvents;
 
 pub fn subscribe_to_parentchain_events(api: &ParentchainApi, parentchain_id: ParentchainId) {
@@ -47,18 +47,7 @@ pub fn subscribe_to_parentchain_events(api: &ParentchainApi, parentchain_id: Par
 						event.variant_name()
 					),
 				},
-				"Teerex" => match event.variant_name() {
-					"AddedSgxEnclave" =>
-						if let Ok(Some(ev)) = event.as_event::<AddedSgxEnclave>() {
-							println!("[L1Event:{}] Teerex::{:?}", parentchain_id, ev);
-						},
-					_ => println!(
-						"[L1Event:{}] {}::{}",
-						parentchain_id,
-						event.pallet_name(),
-						event.variant_name()
-					),
-				},
+				// TODO(Litentry): add important teebag events?
 				_ => println!(
 					"[L1Event:{}] {}::{}",
 					parentchain_id,

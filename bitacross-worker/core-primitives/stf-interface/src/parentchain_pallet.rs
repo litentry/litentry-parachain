@@ -16,7 +16,7 @@
 */
 
 /// Interface trait of the parentchain pallet.
-pub trait ParentchainPalletInterface<State, ParentchainHeader> {
+pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {
 	type Error;
 
 	/// Updates the block number, block hash and parent hash of the parentchain block.
