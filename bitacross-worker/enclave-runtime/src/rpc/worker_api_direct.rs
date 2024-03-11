@@ -157,7 +157,7 @@ where
 			get_repository_public_key(
 				&GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 				|repository| repository.retrieve_key(),
-				|key| key.public_bytes(),
+				|key| key.public().0.encode(),
 			)
 			.await
 		}
@@ -170,7 +170,7 @@ where
 			get_repository_public_key(
 				&GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 				|repository| repository.retrieve_key(),
-				|key| key.public_bytes(),
+				|key| key.public_bytes().encode(),
 			)
 			.await
 		}
@@ -183,7 +183,7 @@ where
 			get_repository_public_key(
 				&GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
 				|repository| repository.retrieve_key(),
-				|key| key.public_bytes(),
+				|key| key.public_bytes().encode(),
 			)
 			.await
 		}
@@ -421,8 +421,7 @@ async fn get_repository_public_key<T>(
 	match repository_component.get() {
 		Ok(key_repository) => match key_retrieval_fn(&key_repository) {
 			Ok(key) => {
-				let value = encode_fn(key);
-				let json_value = RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
+				let json_value = ;
 				json!(json_value.to_hex())
 			},
 			Err(_) => json!(compute_hex_encoded_return_error("Some error happened")),
