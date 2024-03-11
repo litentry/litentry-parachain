@@ -1491,6 +1491,7 @@ dependencies = [
  "futures-core 0.3.8",
  "futures-task 0.3.8",
  "futures-util 0.3.8",
+ "num_cpus",
  "sgx_tstd",
 ]
 
@@ -3158,6 +3159,7 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
+ "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
@@ -3188,7 +3190,6 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
- "threadpool",
 ]
 
 [[package]]
@@ -3546,6 +3547,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
 dependencies = [
  "autocfg 1.1.0",
+]
+
+[[package]]
+name = "num_cpus"
+version = "1.13.0"
+source = "git+https://github.com/mesalock-linux/num_cpus-sgx#48fef62b75f6c059c356efb2233b3e884b63dca8"
+dependencies = [
+ "sgx_trts",
 ]
 
 [[package]]
