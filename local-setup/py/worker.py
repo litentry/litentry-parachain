@@ -8,7 +8,7 @@ from .helpers import setup_working_dir, mkdir_p
 class Worker:
     def __init__(
         self,
-        worker_bin: str = "./litentry-worker",
+        worker_bin: str = "litentry-worker",
         cwd: str = "./",
         source_dir: str = "./",
         std_err: Union[None, int, IO] = STDOUT,
@@ -18,7 +18,7 @@ class Worker:
         litentry-worker wrapper.
 
         Args:
-            worker_bin: Path to the worker bin relative to `cwd` or as absolute path.
+            worker_bin: Name of the worker bin
 
             cwd:        working directory of the worker.
 
@@ -32,7 +32,8 @@ class Worker:
 
         """
         self.cwd = cwd
-        self.cli = [worker_bin]
+        self.worker_bin = worker_bin
+        self.cli = ["./" + worker_bin]
         self.source_dir = source_dir
         self.std_err = std_err
         # cache fields
@@ -41,7 +42,7 @@ class Worker:
 
     def setup_cwd(self):
         mkdir_p(self.cwd)
-        setup_working_dir(self.source_dir, self.cwd)
+        setup_working_dir(self.source_dir, self.cwd, self.worker_bin)
 
     def init_clean(self):
         """Purges all db files first and initializes the environment afterwards."""
