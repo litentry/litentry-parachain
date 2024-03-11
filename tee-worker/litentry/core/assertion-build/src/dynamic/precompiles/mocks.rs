@@ -63,9 +63,9 @@ impl SendHttpRequest for MockedHttpClient {
 
 	fn send_request_raw(
 		&self,
-		url: Url,
-		method: Method,
-		maybe_body: Option<String>,
+		_url: Url,
+		_method: Method,
+		_maybe_body: Option<String>,
 	) -> Result<(Response, EncodedBody), Error> {
 		if !self.http_err {
 			const HEAD: &[u8; 102] = b"HTTP/1.1 200 OK\r\n\

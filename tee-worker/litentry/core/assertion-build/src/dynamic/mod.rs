@@ -202,13 +202,10 @@ pub mod tests {
 	use crate::dynamic::{
 		build, identity_with_networks_to_token, repository::InMemorySmartContractRepo, U256,
 	};
-	use ethabi::{Token, Token::Uint};
+	use ethabi::Token;
 	use itp_types::Assertion;
-	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
-	use litentry_primitives::{
-		Address32, Identity, IdentityNetworkTuple, IdentityString, Web3Network,
-	};
+	use litentry_primitives::{Address32, Identity, IdentityString, Web3Network};
 	use sp_core::{crypto::AccountId32, H160};
 
 	#[test]
@@ -260,9 +257,9 @@ pub mod tests {
 	}
 
 	#[test]
-	pub fn true_because_twitter() {
+	pub fn test_a1_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run(19527).unwrap();
+		// given
 		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
@@ -282,10 +279,40 @@ pub mod tests {
 
 		let repository = InMemorySmartContractRepo::new();
 
+		// when
 		let credential = build(&request, hash(0), repository).unwrap();
-		println!("Generated credential: {:?}", serde_json::to_string(&credential).unwrap());
 
+		// then
 		assert!(credential.credential_subject.values[0]);
+	}
+
+	#[test]
+	pub fn test_a1_false() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		// given
+		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
+
+		let request = AssertionBuildRequest {
+			shard: Default::default(),
+			signer: AccountId32::new([0; 32]),
+			who: Identity::Twitter(IdentityString::new(vec![])),
+			assertion: Assertion::Dynamic(hash(0)),
+			identities: vec![(twitter_identity, vec![])],
+			top_hash: Default::default(),
+			parachain_block_number: Default::default(),
+			sidechain_block_number: Default::default(),
+			maybe_key: None,
+			req_ext_hash: Default::default(),
+			should_create_id_graph: Default::default(),
+		};
+
+		let repository = InMemorySmartContractRepo::new();
+
+		// when
+		let credential = build(&request, hash(0), repository).unwrap();
+
+		// then
+		assert!(!credential.credential_subject.values[0]);
 	}
 
 	fn hash(a: u64) -> H160 {

@@ -60,9 +60,12 @@ impl PrecompileSet for Precompiles {
 
 	fn is_precompile(&self, address: H160, _remaining_gas: u64) -> IsPrecompileResult {
 		match address {
-			a if a == hash(1000) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
-			a if a == hash(1001) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
-			a if a == hash(1002) => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1000) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1001) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1002) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			_ => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
 		}
 	}
