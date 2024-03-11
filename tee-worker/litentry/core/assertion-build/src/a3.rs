@@ -119,7 +119,8 @@ mod tests {
 	fn build_a3_works() {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 		data_provider_config
-			.set_litentry_discord_microservice_url("http://localhost:19527".to_string());
+			.set_litentry_discord_microservice_url("http://localhost:19527".to_string())
+			.unwrap();
 		let guild_id_u: u64 = 919848390156767232;
 		let channel_id_u: u64 = 919848392035794945;
 		let role_id_u: u64 = 1034083718425493544;

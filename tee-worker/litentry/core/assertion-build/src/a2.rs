@@ -96,7 +96,8 @@ mod tests {
 	fn build_a2_works() {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 		data_provider_config
-			.set_litentry_discord_microservice_url("http://localhost:19527".to_string());
+			.set_litentry_discord_microservice_url("http://localhost:19527".to_string())
+			.unwrap();
 		let guild_id_u: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
