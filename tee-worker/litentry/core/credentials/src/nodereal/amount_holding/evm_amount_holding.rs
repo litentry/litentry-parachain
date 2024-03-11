@@ -155,7 +155,7 @@ fn update_assertion(token_type: EVMTokenType, balance: f64, credential: &mut Cre
 		},
 	}
 
-	credential.credential_subject.assertions.push_typed(assertion);
+	credential.credential_subject.assertions.push(assertion);
 }
 
 fn create_network_assertion_logic(

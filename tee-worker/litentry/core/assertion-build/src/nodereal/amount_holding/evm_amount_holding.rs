@@ -202,7 +202,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_ton_token_assertion_logic(),
@@ -257,7 +257,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_ton_token_assertion_logic(),
@@ -312,7 +312,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_ton_token_assertion_logic(),

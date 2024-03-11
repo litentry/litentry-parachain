@@ -101,7 +101,7 @@ fn update_assertion(token: ETokenAddress, balance: f64, credential: &mut Credent
 		},
 	}
 
-	credential.credential_subject.assertions.push_typed(assertion);
+	credential.credential_subject.assertions.push(assertion);
 }
 
 fn get_token_info(token: &ETokenAddress) -> (&'static str, &'static str) {

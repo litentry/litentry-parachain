@@ -66,7 +66,7 @@ impl UpdateBnbDomainHoldingAmountCredential for Credential {
 			assertion = assertion.add_item(item);
 		}
 
-		self.credential_subject.assertions.push_typed(assertion);
+		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(bnb_amount.get_index(amount) != Some(0));
 
 		let info = bnb_amount.get_info();

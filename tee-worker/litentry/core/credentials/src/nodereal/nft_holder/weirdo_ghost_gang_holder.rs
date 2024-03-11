@@ -30,7 +30,7 @@ pub trait WeirdoGhostGangHolderAssertionUpdate {
 impl WeirdoGhostGangHolderAssertionUpdate for Credential {
 	fn update_weirdo_ghost_gang_holder_assertion(&mut self, value: bool) {
 		let assertion = AssertionLogic::new_item("$is_weirdo_ghost_gang_holder", Op::Equal, "true");
-		self.credential_subject.assertions.push_typed(assertion);
+		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
 
 		self.add_subject_info(WEIRDO_GHOST_GANG_HOLDER_INFOS.1, WEIRDO_GHOST_GANG_HOLDER_INFOS.0);

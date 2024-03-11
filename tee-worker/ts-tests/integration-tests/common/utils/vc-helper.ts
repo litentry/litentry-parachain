@@ -197,4 +197,10 @@ export const mockAssertions = [
             PlatformUser: 'KaratDaoUser',
         },
     },
+    {
+        description: 'Dynamic',
+        assertion: {
+            Dynamic: new Uint8Array(20),
+        },
+    },
 ];

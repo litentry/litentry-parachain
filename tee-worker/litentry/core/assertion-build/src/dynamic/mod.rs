@@ -22,7 +22,7 @@ use evm::{
 	Config,
 };
 use itp_types::Assertion;
-use lc_credentials::Credential;
+use lc_credentials::{assertion_logic::AssertionLogic, Credential};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Identity;
 use log::{error, info};
@@ -45,10 +45,21 @@ pub fn build<SC: SmartContractRepository>(
 		execute_smart_contract(smart_contract_byte_code, input);
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
+			let mut assertion_values: Vec<AssertionLogic> = vec![];
+			for assertion in assertions {
+				let logic: AssertionLogic = serde_json::from_str(&assertion).map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::Dynamic(smart_contract_id),
+						ErrorDetail::StfError(ErrorString::truncate_from(format!("{}", e).into())),
+					)
+				})?;
+				assertion_values.push(logic);
+			}
+
 			credential_unsigned.update_dynamic(
 				description,
 				assertion_type,
-				assertions,
+				assertion_values,
 				schema_url,
 				result,
 			);

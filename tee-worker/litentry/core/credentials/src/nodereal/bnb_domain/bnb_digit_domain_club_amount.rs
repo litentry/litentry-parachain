@@ -92,7 +92,7 @@ impl UpdateDigitDomainClubAmountCredential for Credential {
 			assertion = assertion.add_item(item);
 		}
 
-		self.credential_subject.assertions.push_typed(assertion);
+		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(digit_domain.get_index(amount) != Some(0));
 
 		let info = digit_domain.get_info();

@@ -79,7 +79,7 @@ impl AchainableAmountHoldingTimeUpdate for Credential {
 			.add_item(from_date_logic)
 			.add_item(to_date_logic);
 
-		self.credential_subject.assertions.push_typed(assertion);
+		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
 
 		self.add_subject_info(&holding_type.get_info().0, &holding_type.get_info().1);

@@ -79,7 +79,7 @@ impl UpdateVIP3MembershipCardCredential for Credential {
 		self.add_subject_info(entity.get_info(), entity.get_type());
 
 		let assertion = AssertionLogic::new_item(entity.get_breakdown(), Op::Equal, "true");
-		self.credential_subject.assertions.push_typed(assertion);
+		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
 	}
 }

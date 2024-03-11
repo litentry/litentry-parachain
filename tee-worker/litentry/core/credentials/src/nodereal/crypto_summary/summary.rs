@@ -81,7 +81,7 @@ impl CryptoSummaryCredentialUpdate for Credential {
 	fn update_crypto_summary_credential(&mut self, txs: u64, summary: SummaryHoldings) {
 		let (value, and_logic) = build_assertions(txs, summary);
 
-		self.credential_subject.assertions.push_typed(and_logic);
+		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(value);
 
 		self.add_subject_info(VC_CRYPTO_SUMMARY_DESCRIPTIONS, VC_CRYPTO_SUMMARY_TYPE);

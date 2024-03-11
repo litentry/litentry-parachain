@@ -313,7 +313,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build bnb TokenHoldingAmount done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Bnb),
@@ -351,7 +351,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build eth TokenHoldingAmount done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Eth),
@@ -394,7 +394,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build evm TokenHoldingAmount done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::SpaceId),
@@ -437,7 +437,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build ethereum TokenHoldingAmount done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Amp),
@@ -480,7 +480,7 @@ mod tests {
 			Ok(credential) => {
 				log::info!("build lit TokenHoldingAmount done");
 				assert_eq!(
-					*(credential.credential_subject.assertions.get_typed().first().unwrap()),
+					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Lit),

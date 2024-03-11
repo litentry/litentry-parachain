@@ -20,7 +20,7 @@ contract A1 is DynamicAssertion {
         memory description = "You've identified at least one account/address in both Web2 and Web3.";
         string memory assertion_type = "Basic Identity Verification";
         assertions.push(
-            "$has_web2_account == true and $has_web3_account == true"
+            '{"and": [{ "src": "$has_web2_account", "op": "==", "dst": "true" }, { "src": "$has_web3_account", "op": "==", "dst": "true" } ] }'
         );
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/1-basic-identity-verification/1-0-0.json";
 
