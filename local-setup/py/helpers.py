@@ -96,9 +96,9 @@ class GracefulKiller:
             print(f"Backup log into " + new_folder_name)
         if self.parachain_type == "local-docker":
             print("Cleaning up litentry-parachain...")
-            subprocess.run(["./scripts/litentry/stop_parachain.sh", "||", "true"])
-        if self.parachain_type == "local-binary":
+            subprocess.run(["./tee-worker/scripts/litentry/stop_parachain.sh", "||", "true"])
+        if self.parachain_type == "local-binary" or self.parachain_type == "local-binary-standalone":
             print("Cleaning up litentry-parachain...")
-            subprocess.run(["../scripts/clean-local-binary.sh", "||", "true"])
+            subprocess.run(["./scripts/clean-local-binary.sh", "||", "true"])
 
         sys.exit(0)

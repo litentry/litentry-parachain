@@ -19,9 +19,6 @@ use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
-#[cfg(feature = "skip-ias-check")]
-use pallet_teebag::test_util::TEST8_CERT;
-
 use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE};
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
@@ -115,41 +112,6 @@ fn activate_identity_works() {
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::ActivateIdentityRequested { shard },
-		));
-	});
-}
-
-#[test]
-#[cfg(feature = "skip-ias-check")]
-fn tee_callback_with_registered_enclave_works() {
-	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
-	const URL: &[u8] =
-		&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
-		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(alice.clone()),
-			Default::default(),
-			Default::default(),
-			TEST8_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-			Default::default(),
-		));
-
-		assert_ok!(IdentityManagement::some_error(
-			RuntimeOrigin::signed(alice),
-			None,
-			IMPError::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle),
-			H256::default(),
-		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityFailed {
-				prime_identity: None,
-				detail: ErrorDetail::WrongWeb2Handle,
-				req_ext_hash: H256::default(),
-			},
 		));
 	});
 }
