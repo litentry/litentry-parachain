@@ -289,8 +289,10 @@ mod tests {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/");
-		data_provider_config.set_achainable_url(url.clone());
+		data_provider_config
+			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
+			.unwrap();
+		data_provider_config.set_achainable_url(url.clone()).unwrap();
 		data_provider_config
 	}
 

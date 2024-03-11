@@ -11,13 +11,14 @@ import {
     createSignedTrustedCallRequestVc,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
-import { CorePrimitivesIdentity, RequestVCResult } from 'parachain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
+
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;

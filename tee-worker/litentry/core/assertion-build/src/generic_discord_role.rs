@@ -111,7 +111,7 @@ mod tests {
 		let url = run(0).unwrap();
 		let mut data_provider_conifg = DataProviderConfig::new().unwrap();
 
-		data_provider_conifg.set_litentry_discord_microservice_url(url);
+		data_provider_conifg.set_litentry_discord_microservice_url(url).unwrap();
 		data_provider_conifg.set_contest_legend_discord_role_id("1034083718425493544".to_string());
 		data_provider_conifg.set_sora_quiz_attendee_id("1034083718425493544".to_string());
 		data_provider_conifg
