@@ -82,7 +82,6 @@ lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-featur
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
-my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 
 [features]
 default = []
