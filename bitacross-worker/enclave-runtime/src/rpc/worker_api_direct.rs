@@ -37,7 +37,7 @@ use futures_sgx::channel::oneshot;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itp_component_container::{ComponentGetter};
+use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
