@@ -201,9 +201,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
-
-            assert.lengthOf(idGraphHashResults, 4);
         }
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -592,9 +591,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
-
-            assert.lengthOf(idGraphHashResults, 4);
         }
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -807,9 +805,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-
-            assert.lengthOf(idGraphHashResults, 1);
         }
+        assert.lengthOf(idGraphHashResults, 1);
     });
 
     step('setting identity networks for prime identity)', async function () {
@@ -854,7 +851,6 @@ describe('Test Identity (direct invocation)', function () {
         );
         expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
         await assertIsInSidechainBlock('setIdentityNetworksCall', res);
-
         assert.lengthOf(idGraphHashResults, 1);
     });
 });

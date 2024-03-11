@@ -152,8 +152,8 @@ describe('Test Identity (evm direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
-            assert.lengthOf(idGraphHashResults, 2);
         }
+        assert.lengthOf(idGraphHashResults, 2);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -254,8 +254,8 @@ describe('Test Identity (evm direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-            assert.lengthOf(idGraphHashResults, 2);
         }
+        assert.lengthOf(idGraphHashResults, 2);
     });
 
     step('check idGraph from sidechain storage after deactivating', async function () {
@@ -343,9 +343,8 @@ describe('Test Identity (evm direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
-
-            assert.lengthOf(idGraphHashResults, 1);
         }
+        assert.lengthOf(idGraphHashResults, 2);
     });
 
     step('check idGraph from sidechain storage after activating', async function () {
