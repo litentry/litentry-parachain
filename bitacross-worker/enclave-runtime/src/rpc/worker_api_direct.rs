@@ -35,15 +35,15 @@ use codec::Encode;
 use core::result::Result;
 use futures_sgx::channel::oneshot;
 use ita_sgx_runtime::Runtime;
-use ita_stf::{Getter, KeyPair, TrustedCallSigned};
+use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itp_component_container::{ComponentContainer};
+use itp_component_container::{ComponentGetter};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519,
-	key_repository::{AccessKey, AccessPubkey, KeyRepository},
+	key_repository::{AccessKey, AccessPubkey},
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
@@ -154,12 +154,17 @@ where
 		debug!("worker_api_direct rpc was called: bitacross_getParachainKey");
 
 		async move {
-			get_repository_public_key(
-				&GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-				|repository| repository.retrieve_key(),
-				|key| key.public().0.encode(),
-			)
-			.await
+			let json_value = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(key_repository) => match key_repository.retrieve_key() {
+					Ok(key) =>
+						RpcReturnValue::new(key.public().0.encode(), false, DirectRequestStatus::Ok)
+							.to_hex(),
+					Err(_) => compute_hex_encoded_return_error("Some error happened"),
+				},
+				Err(_) => compute_hex_encoded_return_error("Repository not found"),
+			};
+
+			Ok(json!(json_value))
 		}
 	});
 
@@ -167,12 +172,20 @@ where
 		debug!("worker_api_direct rpc was called: bitacross_getEthereumKey");
 
 		async move {
-			get_repository_public_key(
-				&GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
-				|repository| repository.retrieve_key(),
-				|key| key.public_bytes().encode(),
-			)
-			.await
+			let json_value = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(key_repository) => match key_repository.retrieve_key() {
+					Ok(key) => RpcReturnValue::new(
+						key.public_bytes().encode(),
+						false,
+						DirectRequestStatus::Ok,
+					)
+					.to_hex(),
+					Err(_) => compute_hex_encoded_return_error("Some error happened"),
+				},
+				Err(_) => compute_hex_encoded_return_error("Repository not found"),
+			};
+
+			Ok(json!(json_value))
 		}
 	});
 
@@ -180,12 +193,20 @@ where
 		debug!("worker_api_direct rpc was called: bitacross_getBitcoinKey");
 
 		async move {
-			get_repository_public_key(
-				&GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
-				|repository| repository.retrieve_key(),
-				|key| key.public_bytes().encode(),
-			)
-			.await
+			let json_value = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(key_repository) => match key_repository.retrieve_key() {
+					Ok(key) => RpcReturnValue::new(
+						key.public_bytes().encode(),
+						false,
+						DirectRequestStatus::Ok,
+					)
+					.to_hex(),
+					Err(_) => compute_hex_encoded_return_error("Some error happened"),
+				},
+				Err(_) => compute_hex_encoded_return_error("Repository not found"),
+			};
+
+			Ok(json!(json_value))
 		}
 	});
 
@@ -411,23 +432,6 @@ fn execute_getter_inner<GE: ExecuteGetter>(
 		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(getter_result)
-}
-
-async fn get_repository_public_key<T>(
-	repository_component: &ComponentContainer<T>,
-	key_retrieval_fn: impl Fn(&T) -> Result<KeyPair, String>,
-	encode_fn: impl Fn(KeyPair) -> Vec<u8>,
-) -> jsonrpc_core::Value {
-	match repository_component.get() {
-		Ok(key_repository) => match key_retrieval_fn(&key_repository) {
-			Ok(key) => {
-				let json_value = ;
-				json!(json_value.to_hex())
-			},
-			Err(_) => json!(compute_hex_encoded_return_error("Some error happened")),
-		},
-		Err(_) => json!(compute_hex_encoded_return_error("Repository not found")),
-	}
 }
 
 fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
