@@ -29,6 +29,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
             mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
+        console.log(`evm mapped substrate address: ${evmAccountRaw.mappedAddress}`);
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
         );
