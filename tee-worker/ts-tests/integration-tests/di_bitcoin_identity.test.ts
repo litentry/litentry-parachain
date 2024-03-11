@@ -1,7 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
@@ -29,7 +28,7 @@ import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Bytes, Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-
+import { u8aToHex } from '@polkadot/util';
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -66,13 +65,13 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceBitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            u8aToHex(context.bitcoinWallet.alice.publicKey),
             'Bitcoin',
             context
         );
         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
         bobBitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.bob.toPublicKey().toBuffer())),
+            u8aToHex(context.bitcoinWallet.bob.publicKey),
             'Bitcoin',
             context
         );
@@ -158,6 +157,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+
             idGraphHashResults.push(
                 await assertIdGraphMutationResult(
                     context,

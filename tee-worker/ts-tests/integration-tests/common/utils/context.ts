@@ -13,8 +13,7 @@ import type { IntegrationTestContext, Web3Wallets } from '../common-types';
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
-import bitcore from 'bitcore-lib';
-
+import { randomBitcoinWallet } from '../helpers';
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
 
@@ -49,8 +48,8 @@ export async function initIntegrationTestContext(
     const substrateWallet = getSubstrateSigner();
 
     const bitcoinWallet = {
-        alice: new bitcore.PrivateKey(),
-        bob: new bitcore.PrivateKey(),
+        alice: randomBitcoinWallet(),
+        bob: randomBitcoinWallet(),
     };
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
@@ -118,7 +117,7 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
         const evmWallet = ethers.Wallet.createRandom();
-        const bitcoinPair = new bitcore.PrivateKey();
+        const bitcoinPair = randomBitcoinWallet();
         addresses.push({
             substrateWallet: substratePair,
             evmWallet: evmWallet,

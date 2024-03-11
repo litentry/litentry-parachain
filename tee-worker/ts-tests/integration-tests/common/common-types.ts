@@ -5,8 +5,7 @@ import { Metadata, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import bitcore from 'bitcore-lib';
-
+import { ECPairInterface } from 'ecpair';
 // If there are types already defined in the client-api, please avoid redefining these types.
 // Instead, make every effort to use the types that have been generated within the client-api.
 interface EthersWalletItem {
@@ -16,7 +15,7 @@ interface SubstrateWalletItem {
     [key: string]: KeyringPair;
 }
 interface BitcoinWalletItem {
-    [key: string]: bitcore.PrivateKey;
+    [key: string]: ECPairInterface;
 }
 export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
@@ -35,7 +34,7 @@ export type IntegrationTestContext = {
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
     evmWallet: Wallet;
-    bitcoinWallet: bitcore.PrivateKey;
+    bitcoinWallet: ECPairInterface;
 };
 
 export type JsonRpcRequest = {
