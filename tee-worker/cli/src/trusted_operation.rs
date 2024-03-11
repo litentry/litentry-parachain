@@ -22,12 +22,15 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
-use ita_stf::{Getter, StfError, TrustedCall, TrustedCallSigned};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_node_api::api_client::{ApiClientError, ParentchainApi, TEEBAG};
+use itp_node_api::api_client::{ApiClientError, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
+use itp_stf_primitives::{
+	error::StfError,
+	types::{ShardIdentifier, TrustedOperation},
+};
 use itp_types::{
 	parentchain::{BlockHash, BlockNumber, Hash, ParentchainBlockProcessed},
 	DirectRequestStatus, RsaRequest, TrustedOperationStatus,
@@ -267,7 +270,10 @@ fn send_indirect_request<T: Decode + Debug>(
 	}
 }
 
-pub fn read_shard(trusted_args: &TrustedCli) -> StdResult<ShardIdentifier, codec::Error> {
+pub fn read_shard(
+	trusted_args: &TrustedCli,
+	cli: &Cli,
+) -> StdResult<ShardIdentifier, codec::Error> {
 	match &trusted_args.shard {
 		Some(s) => match s.from_base58() {
 			Ok(s) => ShardIdentifier::decode(&mut &s[..]),

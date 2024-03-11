@@ -39,9 +39,9 @@ use std::{
 	collections::HashSet,
 	sync::{Arc, RwLock},
 };
-use url::Url as UrlType;
 
 pub type WorkerResult<T> = Result<T, Error>;
+pub type Url = String;
 
 #[derive(Clone, Hash, Eq, PartialEq, Encode, Decode, Debug)]
 pub struct PeerUrls {
@@ -187,7 +187,7 @@ where
 	NodeApiFactory: CreateNodeApi + Send + Sync,
 	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
-	fn search_peers(&self, _shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>> {
+	fn search_peers(&self, shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>> {
 		let worker_url_external = self._config.trusted_worker_url_external();
 		let node_api = self
 			.node_api_factory
@@ -197,13 +197,14 @@ where
 		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
-			let enclave_url = UrlType::parse(&format!(
+			let enclave_url: String = url::Url::parse(&format!(
 				"wss://{}",
-				String::from_utf8_lossy(&enclave.instance_url().unwrap()).replace("wss://", "")
+				String::from_utf8_lossy(enclave.url.as_slice()).replace("wss://", "")
 			))
-			.unwrap();
+			.unwrap()
+			.into();
 			trace!("found peer rpc url: {}", enclave_url);
-			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone().into());
+			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
 					let is_me = enclave_url == worker_url_external;

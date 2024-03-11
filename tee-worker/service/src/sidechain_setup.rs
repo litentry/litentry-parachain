@@ -60,6 +60,8 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage>(
 	enclave: Arc<Enclave>,
 	sidechain_storage: Arc<SidechainStorage>,
+	fail_mode: Option<String>,
+	fail_at: u64,
 ) -> ServiceResult<()>
 where
 	Enclave: EnclaveBase + Sidechain,

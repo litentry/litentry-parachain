@@ -18,7 +18,7 @@ use crate::error::Result as EnclaveResult;
 use itp_types::ShardIdentifier;
 use log::*;
 
-pub(crate) fn init_shard_config(shard: ShardIdentifier) -> EnclaveResult<()> {
+pub(crate) fn init_shard_config(_shard: ShardIdentifier) -> EnclaveResult<()> {
 	warn!("TODO(Litentry): init_shard_config");
 	Ok(())
 }

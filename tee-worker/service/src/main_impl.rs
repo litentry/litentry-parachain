@@ -34,6 +34,7 @@ use itp_enclave_api::{
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
+	Enclave,
 };
 use itp_node_api::{
 	api_client::{AccountApi, PalletTeebagApi, ParentchainApi},
@@ -68,7 +69,10 @@ use itp_types::parentchain::{AccountId, Balance};
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSigner;
-use std::{fmt::Debug, path::PathBuf, str, str::Utf8Error, sync::Arc, thread, time::Duration};
+use std::{
+	collections::HashSet, fmt::Debug, path::PathBuf, str, str::Utf8Error, sync::Arc, thread,
+	time::Duration,
+};
 use substrate_api_client::ac_node_api::{EventRecord, Phase::ApplyExtrinsic};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -513,12 +517,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	let send_register_xt = move || {
 		println!("[+] Send register enclave extrinsic");
-		send_litentry_extrinsic(
-			register_xt(),
-			&node_api2,
-			&tee_accountid_clone,
-			is_development_mode,
-		)
+		send_litentry_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
 	};
 
 	// Litentry: send the registration extrinsic regardless of being registered or not,
@@ -584,9 +583,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 							)
 							.unwrap();
 						debug!("shard config should be initialized on litentry network now");
-						return (true, true)
+						(true, true)
+					} else {
+						(true, false)
 					}
-					return (true, false)
 				} else {
 					println!("We are NOT primary worker, the primary worker is {}", account);
 					if first_run {
@@ -599,7 +599,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 							skip_ra,
 						);
 					}
-					return (false, true)
+					(false, true)
 				}
 			},
 			None => {
@@ -631,7 +631,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			let last_synced_header = integritee_parentchain_handler
 				.sync_parentchain_until_latest_finalized(
 					integritee_last_synced_header_at_last_run,
-					0 * shard,
+					0,
+					*shard,
 					true,
 				)
 				.unwrap();
@@ -652,11 +653,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				.try_parse_parentchain_start_block()
 				.expect("parentchain start block to be a valid number");
 
-			println!(
-				"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
-				last_synced_header.number, parentchain_start_block
-			);
-
 			let last_synced_header = if we_are_primary_validateer {
 				info!("We're the first validateer to be registered, syncing parentchain blocks until the one we have registered ourselves on.");
 				integritee_parentchain_handler
@@ -670,6 +666,11 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			} else {
 				integritee_last_synced_header_at_last_run
 			};
+
+			println!(
+				"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
+				last_synced_header.number, parentchain_start_block
+			);
 
 			start_parentchain_header_subscription_thread(
 				integritee_parentchain_handler,
@@ -719,8 +720,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 		println!("[Litentry:SCV] starting block production");
-		let last_synced_header =
-			sidechain_init_block_production(enclave.clone(), sidechain_storage).unwrap();
+		let last_synced_header = sidechain_init_block_production(
+			enclave.clone(),
+			sidechain_storage,
+			config.clone().fail_slot_mode,
+			config.fail_at,
+		)
+		.unwrap();
 	}
 
 	ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(

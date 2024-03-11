@@ -30,7 +30,6 @@ use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
 use itp_time_utils::duration_now;
 use itp_types::ShardIdentifier;
-use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sp_consensus_grandpa::VersionedAuthorityList;
 use sp_runtime::traits::Header as HeaderTrait;

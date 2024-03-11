@@ -30,7 +30,6 @@ use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, TrustedOperation};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};

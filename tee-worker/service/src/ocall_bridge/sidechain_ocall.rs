@@ -119,7 +119,7 @@ where
 
 		// FIXME: When & where should peers be updated?
 		trace!("Updating peers..");
-		if let Err(e) = self.peer_updater.update_peers(shard) {
+		if let Err(e) = self.peer_registry.update_peers(shard) {
 			error!("Error updating peers: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
 		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
