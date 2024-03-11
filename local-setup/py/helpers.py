@@ -26,7 +26,7 @@ def run_subprocess(
     )
 
 
-def setup_working_dir(source_dir: str, target_dir: str):
+def setup_working_dir(source_dir: str, target_dir: str, worker_bin: str):
     """Setup the working dir such that the necessary files to run a worker are contained.
 
     Args:
@@ -45,7 +45,7 @@ def setup_working_dir(source_dir: str, target_dir: str):
         else:
             print(f'{source} does not exist, this may be fine for DCAP or skip-ra, but you can\'t perform IAS remote attestation without this file.')
 
-    mandatory = ["enclave.signed.so", "litentry-worker"]
+    mandatory = ["enclave.signed.so", worker_bin]
 
     for file in mandatory:
         source = f"{source_dir}/{file}"
