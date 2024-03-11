@@ -46,6 +46,7 @@ use std::{
 	sync::Arc,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum ProvisioningPayload {
 	Everything,

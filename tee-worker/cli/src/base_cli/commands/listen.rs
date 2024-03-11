@@ -17,7 +17,7 @@
 
 use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
 
-use itp_types::parentchain::BalanceTransfer;
+use itp_types::parentchain::{BalanceTransfer, ParentchainBlockProcessed};
 use log::*;
 use substrate_api_client::{GetChainInfo, SubscribeEvents};
 
@@ -73,7 +73,11 @@ impl ListenCommand {
 						_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
 					},
 					"Teebag" => match event.variant_name() {
-						// TODO: placeholder
+						"ParentchainBlockProcessed" => {
+							if let Ok(Some(ev)) = event.as_event::<ParentchainBlockProcessed>() {
+								println!("{:?}", ev);
+							}
+						},
 						_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
 					},
 					_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
