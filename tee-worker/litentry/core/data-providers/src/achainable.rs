@@ -21,6 +21,7 @@ use crate::{
 	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError,
 	LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
+use async_trait::async_trait;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -55,9 +56,22 @@ impl AchainableClient {
 		AchainableClient { client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn query_system_label(&mut self, address: &str, params: Params) -> Result<bool, Error> {
 		let body = ReqBody::new(address.into(), params);
 		self.post(SystemLabelReqPath::default(), &body)
+			.and_then(AchainableClient::parse)
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn query_system_label(
+		&mut self,
+		address: &str,
+		params: Params,
+	) -> Result<bool, Error> {
+		let body = ReqBody::new(address.into(), params);
+		self.post(SystemLabelReqPath::default(), &body)
+			.await
 			.and_then(AchainableClient::parse)
 	}
 
@@ -71,13 +85,27 @@ impl AchainableClient {
 		Ok(v.and_then(|v| v.get(0..4)).unwrap_or("Invalid").into())
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn query_class_of_year(&mut self, address: &str, params: Params) -> Result<String, Error> {
 		let body = ReqBody::new(address.into(), params);
 		self.post(SystemLabelReqPath::default(), &body)
 			.and_then(Self::parse_class_of_year)
 	}
+
+	#[cfg(feature = "async")]
+	pub async fn query_class_of_year(
+		&mut self,
+		address: &str,
+		params: Params,
+	) -> Result<String, Error> {
+		let body = ReqBody::new(address.into(), params);
+		self.post(SystemLabelReqPath::default(), &body)
+			.await
+			.and_then(Self::parse_class_of_year)
+	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait AchainablePost {
 	fn post(
 		&mut self,
@@ -86,6 +114,7 @@ pub trait AchainablePost {
 	) -> Result<serde_json::Value, Error>;
 }
 
+#[cfg(not(feature = "async"))]
 impl AchainablePost for AchainableClient {
 	fn post(
 		&mut self,
@@ -95,6 +124,33 @@ impl AchainablePost for AchainableClient {
 		let response = self
 			.client
 			.post_capture::<SystemLabelReqPath, ReqBody, serde_json::Value>(params, body);
+		debug!("ReqBody response: {:?}", response);
+		response.map_err(|e| Error::AchainableError(format!("Achainable response error: {}", e)))
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainablePost {
+	async fn post(
+		&mut self,
+		params: SystemLabelReqPath,
+		body: &ReqBody,
+	) -> Result<serde_json::Value, Error>;
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainablePost for AchainableClient {
+	async fn post(
+		&mut self,
+		params: SystemLabelReqPath,
+		body: &ReqBody,
+	) -> Result<serde_json::Value, Error> {
+		let response = self
+			.client
+			.post_capture::<SystemLabelReqPath, ReqBody, serde_json::Value>(params, body)
+			.await;
 		debug!("ReqBody response: {:?}", response);
 		response.map_err(|e| Error::AchainableError(format!("Achainable response error: {}", e)))
 	}
@@ -683,6 +739,7 @@ impl ParamsBasicTypeWithMirror {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 fn check_achainable_label(
 	client: &mut AchainableClient,
 	address: &str,
@@ -694,7 +751,21 @@ fn check_achainable_label(
 		.and_then(AchainableClient::parse)
 }
 
+#[cfg(feature = "async")]
+async fn check_achainable_label(
+	client: &mut AchainableClient,
+	address: &str,
+	params: Params,
+) -> Result<bool, Error> {
+	let body = ReqBody::new(address.into(), params);
+	client
+		.post(SystemLabelReqPath::default(), &body)
+		.await
+		.and_then(AchainableClient::parse)
+}
+
 /// A4/A7/A10/A11
+#[cfg(not(feature = "async"))]
 pub trait AchainableHolder {
 	fn is_holder(
 		&mut self,
@@ -703,6 +774,7 @@ pub trait AchainableHolder {
 	) -> Result<bool, Error>;
 }
 
+#[cfg(not(feature = "async"))]
 impl AchainableHolder for AchainableClient {
 	fn is_holder(
 		&mut self,
@@ -714,6 +786,33 @@ impl AchainableHolder for AchainableClient {
 			address,
 			Params::ParamsBasicTypeWithAmountHolding(amount_holding),
 		)
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableHolder {
+	async fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
+	) -> Result<bool, Error>;
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableHolder for AchainableClient {
+	async fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
+	) -> Result<bool, Error> {
+		check_achainable_label(
+			self,
+			address,
+			Params::ParamsBasicTypeWithAmountHolding(amount_holding),
+		)
+		.await
 	}
 }
 
@@ -770,6 +869,7 @@ impl AchainableTotalTransactionsParser for AchainableClient {
 		Err(Error::AchainableError("Invalid response".to_string()))
 	}
 }
+#[cfg(not(feature = "async"))]
 pub trait AchainableAccountTotalTransactions {
 	/// NOTE: Achinable "chain" fieild must be one of [ethereum, polkadot, kusama, litmus, litentry, khala]
 	fn total_transactions(
@@ -778,7 +878,7 @@ pub trait AchainableAccountTotalTransactions {
 		addresses: &[String],
 	) -> Result<u64, Error>;
 }
-
+#[cfg(not(feature = "async"))]
 impl AchainableAccountTotalTransactions for AchainableClient {
 	fn total_transactions(
 		&mut self,
@@ -793,6 +893,41 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
 			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
 			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
+			txs += tx;
+		}
+
+		Ok(txs)
+	}
+}
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableAccountTotalTransactions {
+	/// NOTE: Achinable "chain" fieild must be one of [ethereum, polkadot, kusama, litmus, litentry, khala]
+	async fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error>;
+}
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableAccountTotalTransactions for AchainableClient {
+	async fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error> {
+		let mut txs = 0_u64;
+		for address in addresses.iter() {
+			let name = "Account total transactions under {amount}".to_string();
+			let amount = "1".to_string();
+
+			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
+			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
+			let tx = self
+				.post(SystemLabelReqPath::default(), &body)
+				.await
+				.and_then(Self::parse_txs)?;
 			txs += tx;
 		}
 
@@ -853,9 +988,11 @@ impl AchainableUtils for AchainableClient {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait HoldingAmount {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error>;
 }
+#[cfg(not(feature = "async"))]
 impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
@@ -870,6 +1007,38 @@ impl HoldingAmount for AchainableClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait HoldingAmount {
+	async fn holding_amount(
+		&mut self,
+		addresses: Vec<String>,
+		param: Params,
+	) -> Result<String, Error>;
+}
+#[cfg(feature = "async")]
+#[async_trait]
+impl HoldingAmount for AchainableClient {
+	async fn holding_amount(
+		&mut self,
+		addresses: Vec<String>,
+		param: Params,
+	) -> Result<String, Error> {
+		let mut total_balance = 0_f64;
+		for address in addresses.iter() {
+			let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
+			let balance = self
+				.post(SystemLabelReqPath::default(), &body)
+				.await
+				.and_then(Self::get_balance)?;
+			total_balance += balance;
+		}
+
+		Ok(total_balance.to_string())
+	}
+}
+
+#[cfg(not(feature = "async"))]
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
@@ -884,6 +1053,23 @@ pub trait AchainableTagAccount {
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableTagAccount {
+	async fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
+	async fn og_account(&mut self, address: &str) -> Result<bool, Error>;
+	async fn class_of_year(
+		&mut self,
+		address: &str,
+		param: ParamsBasicTypeWithClassOfYear,
+	) -> Result<bool, Error>;
+	async fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
+	async fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 pub trait AchainableTagBalance {
 	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error>;
 	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error>;
@@ -902,6 +1088,27 @@ pub trait AchainableTagBalance {
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableTagBalance {
+	async fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	async fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	async fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error>;
+	async fn kusama_whale(&mut self, address: &str) -> Result<bool, Error>;
+	async fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error>;
+	async fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;
+	async fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error>;
+	async fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 pub trait AchainableTagDotsama {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
@@ -923,6 +1130,36 @@ pub trait AchainableTagDotsama {
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableTagDotsama {
+	async fn is_polkadot_treasury_proposal_beneficiary(
+		&mut self,
+		address: &str,
+	) -> Result<bool, Error>;
+	async fn is_kusama_treasury_proposal_beneficiary(
+		&mut self,
+		address: &str,
+	) -> Result<bool, Error>;
+	async fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+	async fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 pub trait AchainableTagDeFi {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
@@ -944,6 +1181,30 @@ pub trait AchainableTagDeFi {
 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait AchainableTagDeFi {
+	async fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
+	async fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
+	async fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	async fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	async fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	async fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	async fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
+	async fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	async fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	async fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
+	async fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	async fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
+	async fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	async fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
+	async fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	async fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
+	async fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	async fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Account created after {date}".to_string();
@@ -990,6 +1251,55 @@ impl AchainableTagAccount for AchainableClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableTagAccount for AchainableClient {
+	async fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Account created after {date}".to_string();
+		let chain = Web3Network::Ethereum;
+		let date = "30D".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, &chain, date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param)).await
+	}
+
+	async fn og_account(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Account created before {date}".to_string();
+		let chain = Web3Network::Ethereum;
+		let date = "2020-01-01T00:00:00.000Z".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, &chain, date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param)).await
+	}
+
+	async fn class_of_year(
+		&mut self,
+		address: &str,
+		param: ParamsBasicTypeWithClassOfYear,
+	) -> Result<bool, Error> {
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param)).await
+	}
+
+	async fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Account found on {chain}".to_string(), &Web3Network::Bsc);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicTypeWithDatePercent::default();
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDatePercent(param)).await
+	}
+
+	async fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Validator".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Validator".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+}
+
+#[cfg(not(feature = "async"))]
 impl AchainableTagBalance for AchainableClient {
 	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance between percents".to_string();
@@ -1142,6 +1452,165 @@ impl AchainableTagBalance for AchainableClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableTagBalance for AchainableClient {
+	async fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = Web3Network::Polkadot;
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+			.await
+	}
+
+	async fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = Web3Network::Kusama;
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+			.await
+	}
+
+	async fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = Web3Network::Polkadot;
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+			.await
+	}
+
+	async fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = Web3Network::Kusama;
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+			.await
+	}
+
+	async fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount = "10".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param)).await
+	}
+
+	async fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = Web3Network::Litentry;
+		let amount = "10".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param)).await
+	}
+
+	async fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance over {amount}".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount = "100".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param)).await
+	}
+
+	async fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// 10 - 100 ETH Holder
+		let name = "Balance between {amounts}".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount1 = "10".to_string();
+		let amount2 = "100".to_string();
+		let param = ParamsBasicTypeWithAmounts::new(name, &chain, amount1, amount2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmounts(param)).await
+	}
+
+	async fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
+		// ETH Millionaire
+		let name = "Balance over {amount} dollars".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount = "100".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param)).await
+	}
+
+	async fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
+		// ETH2 Validator Eligible
+		let name = "Balance over {amount}".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount = "32".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param)).await
+	}
+
+	async fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ WETH Holder
+		let name = "ERC20 balance over {amount}".to_string();
+		let chain = Web3Network::Ethereum;
+		let amount = "100".to_string();
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			&chain,
+			amount,
+			Some(WETH_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param)).await
+	}
+
+	async fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ LIT BEP20 Holder
+		let name = "BEP20 balance over {amount}".to_string();
+		let chain = Web3Network::Bsc;
+		let amount = "100".to_string();
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			&chain,
+			amount,
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param)).await
+	}
+
+	async fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// Native LIT Hodler
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::Litentry,
+			"10".to_string(),
+			"2023-01-01T00:00:00.000Z".to_string(),
+			None,
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param)).await
+	}
+
+	async fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::Ethereum,
+			"10".to_string(),
+			"2022-01-01T00:00:00.000Z".to_string(),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param)).await
+	}
+
+	async fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::Bsc,
+			"10".to_string(),
+			"2022-01-01T00:00:00.000Z".to_string(),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param)).await
+	}
+}
+
+#[cfg(not(feature = "async"))]
 impl AchainableTagDotsama for AchainableClient {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
 		let param =
@@ -1236,6 +1705,109 @@ impl AchainableTagDotsama for AchainableClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableTagDotsama for AchainableClient {
+	async fn is_polkadot_treasury_proposal_beneficiary(
+		&mut self,
+		address: &str,
+	) -> Result<bool, Error> {
+		let param =
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_treasury_proposal_beneficiary(
+		&mut self,
+		address: &str,
+	) -> Result<bool, Error> {
+		let param =
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("TipFinder".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("TipFinder".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Councilor".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Councilor".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("BountyCurator".to_string(), &Web3Network::Polkadot);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+
+	async fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("BountyCurator".to_string(), &Web3Network::Kusama);
+		check_achainable_label(self, address, Params::ParamsBasicType(param)).await
+	}
+}
+
+#[cfg(not(feature = "async"))]
 impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 trader
@@ -1409,6 +1981,182 @@ impl AchainableTagDeFi for AchainableClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl AchainableTagDeFi for AchainableClient {
+	async fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 trader
+		let name_trader = "Uniswap V2 trader";
+		// Uniswap V2 liquidity provider
+		let name_provider = "Uniswap V2 liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		if request_basic_type_with_token(self, address, name_trader, &chain, None).await?
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None).await?
+		{
+			return Ok(true)
+		}
+
+		Ok(false)
+	}
+
+	async fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 trader
+		let name_trader = "Uniswap V3 trader";
+		// Uniswap V3 liquidity provider
+		let name_provider = "Uniswap V3 liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		if request_basic_type_with_token(self, address, name_trader, &chain, None).await?
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None).await?
+		{
+			return Ok(true)
+		}
+
+		Ok(false)
+	}
+
+	async fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 liquidity provider
+		let name = "Uniswap V2 liquidity provider".to_string();
+		let chain = Web3Network::Ethereum;
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param)).await
+	}
+
+	async fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 liquidity provider
+		let name = "Uniswap V3 liquidity provider".to_string();
+		let chain = Web3Network::Ethereum;
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param)).await
+	}
+
+	async fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		request_basic_type_with_token(self, address, name, &chain, Some(USDC_TOKEN_ADDRESS)).await
+	}
+
+	async fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		request_basic_type_with_token(self, address, name, &chain, Some(USDC_TOKEN_ADDRESS)).await
+	}
+
+	async fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		// Uniswap V3 {token} liquidity provider
+		if self.usdt_uniswap_v2_lp(address).await? || self.usdt_uniswap_v3_lp(address).await? {
+			return Ok(true)
+		}
+
+		Ok(false)
+	}
+
+	async fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		request_basic_type_with_token(self, address, name, &chain, Some(USDT_TOKEN_ADDRESS)).await
+	}
+
+	async fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
+
+		request_basic_type_with_token(self, address, name, &chain, Some(USDT_TOKEN_ADDRESS)).await
+	}
+
+	async fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V2 Lender
+		let name = "Aave V2 Lender";
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V2 Borrower
+		let name = "Aave V2 Borrower";
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V3 Lender
+		let name = "Aave V3 Lender";
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V3 Borrower
+		let name = "Aave V3 Borrower";
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Trader
+		let name = "Curve Trader";
+		let chain = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Trader
+		let name = "Curve Trader".to_string();
+		let chain = Web3Network::Ethereum;
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param)).await
+	}
+
+	async fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider";
+		let chain = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None).await
+	}
+
+	async fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider".to_string();
+		let chain = Web3Network::Ethereum;
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param)).await
+	}
+
+	async fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// MetaMask trader
+		let name = "MetaMask trader".to_string();
+		let chain = Web3Network::Ethereum;
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param)).await
+	}
+}
+
+#[cfg(not(feature = "async"))]
 fn request_basic_type_with_token(
 	client: &mut AchainableClient,
 	address: &str,
@@ -1422,6 +2170,23 @@ fn request_basic_type_with_token(
 	} else {
 		let param = ParamsBasicType::new(name.to_string(), network);
 		check_achainable_label(client, address, Params::ParamsBasicType(param))
+	}
+}
+
+#[cfg(feature = "async")]
+async fn request_basic_type_with_token(
+	client: &mut AchainableClient,
+	address: &str,
+	name: &str,
+	network: &Web3Network,
+	token: Option<&str>,
+) -> Result<bool, Error> {
+	if let Some(token) = token {
+		let param = ParamsBasicTypeWithToken::new(name.to_string(), network, token.to_string());
+		check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param)).await
+	} else {
+		let param = ParamsBasicType::new(name.to_string(), network);
+		check_achainable_label(client, address, Params::ParamsBasicType(param)).await
 	}
 }
 

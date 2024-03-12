@@ -62,6 +62,7 @@ impl DiscordLitentryClient {
 	}
 
 	// user has joined Discord guild
+	#[cfg(not(feature = "async"))]
 	pub fn check_join(
 		&mut self,
 		guild_id: Vec<u8>,
@@ -78,6 +79,25 @@ impl DiscordLitentryClient {
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn check_join(
+		&mut self,
+		guild_id: Vec<u8>,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let guild_id_s = vec_to_string(guild_id)?;
+		let handler_s = vec_to_string(handler)?;
+		debug!("discord check join, guild_id: {}, handler: {}", guild_id_s, handler_s);
+
+		let path = "/discord/joined".to_string();
+		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
+		self.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+
+	#[cfg(not(feature = "async"))]
 	// user has commented in channel with Role 'ID-Hubber'
 	pub fn check_id_hubber(
 		&mut self,
@@ -111,7 +131,42 @@ impl DiscordLitentryClient {
 		res
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn check_id_hubber(
+		&mut self,
+		guild_id: Vec<u8>,
+		channel_id: Vec<u8>,
+		role_id: Vec<u8>,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let guild_id_s = vec_to_string(guild_id)?;
+		let channel_id_s = vec_to_string(channel_id)?;
+		let role_id_s = vec_to_string(role_id)?;
+		let handler_s = vec_to_string(handler)?;
+		debug!(
+			"discord check id_hubber, guild_id: {}, channel_id: {}, role_id: {}, handler: {}",
+			guild_id_s, channel_id_s, role_id_s, handler_s
+		);
+
+		let path = "/discord/commented/idhubber".to_string();
+		let query = vec![
+			("guildid", guild_id_s.as_str()),
+			("channelid", channel_id_s.as_str()),
+			("roleid", role_id_s.as_str()),
+			("handler", handler_s.as_str()),
+		];
+
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
+	}
+
 	// user has role
+	#[cfg(not(feature = "async"))]
 	pub fn has_role(
 		&mut self,
 		role_id_s: String,
@@ -131,7 +186,29 @@ impl DiscordLitentryClient {
 		res
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn has_role(
+		&mut self,
+		role_id_s: String,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let handler_s = vec_to_string(handler)?;
+		debug!("discord has role, role_id: {}, handler: {}", role_id_s, handler_s);
+
+		let path = "/discord/user/has/role".to_string();
+		let query = vec![("roleid", role_id_s.as_str()), ("handler", handler_s.as_str())];
+
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
+	}
+
 	// assign ID-Hubber Role to User
+	#[cfg(not(feature = "async"))]
 	pub fn assign_id_hubber(
 		&mut self,
 		guild_id: Vec<u8>,
@@ -146,6 +223,27 @@ impl DiscordLitentryClient {
 		let res = self
 			.client
 			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn assign_id_hubber(
+		&mut self,
+		guild_id: Vec<u8>,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let guild_id_s = vec_to_string(guild_id)?;
+		let handler_s = vec_to_string(handler)?;
+		debug!("discord assign id_hubber, guild_id: {}, handler: {}", guild_id_s, handler_s);
+
+		let path = "/discord/assgin/idhubber".to_string();
+		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.await
 			.map_err(|e| Error::RequestError(format!("{:?}", e)));
 
 		res

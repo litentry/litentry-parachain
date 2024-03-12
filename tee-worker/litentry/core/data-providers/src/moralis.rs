@@ -21,6 +21,7 @@ use crate::{
 	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
 	RetryableRestGet,
 };
+use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -66,6 +67,7 @@ impl MoralisClient {
 		MoralisClient { retry_option, client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	fn get<T>(&mut self, params: MoralisRequest, fast_fail: bool) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
@@ -83,6 +85,30 @@ impl MoralisClient {
 		} else {
 			self.client
 				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
+		}
+	}
+
+	#[cfg(feature = "async")]
+	async fn get<T>(&mut self, params: MoralisRequest, fast_fail: bool) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>> + std::marker::Send,
+	{
+		let retry_option: Option<RetryOption> =
+			if fast_fail { None } else { Some(self.retry_option.clone()) };
+		if let Some(query) = params.query {
+			let transformed_query: Vec<(&str, &str)> =
+				query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+			self.client
+				.get_with_retry::<ReqPath, T>(
+					ReqPath::new(params.path.as_str()),
+					&transformed_query,
+					retry_option,
+				)
+				.await
+		} else {
+			self.client
+				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
+				.await
 		}
 	}
 }
@@ -150,6 +176,7 @@ impl<'a> RestPath<ReqPath<'a>> for GetNftsByWalletResponse {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait NftApiList {
 	fn get_nfts_by_wallet(
 		&mut self,
@@ -158,6 +185,17 @@ pub trait NftApiList {
 	) -> Result<GetNftsByWalletResponse, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait NftApiList {
+	async fn get_nfts_by_wallet(
+		&mut self,
+		param: &GetNftsByWalletParam,
+		fast_fail: bool,
+	) -> Result<GetNftsByWalletResponse, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl NftApiList for MoralisClient {
 	// https://docs.moralis.io/web3-data-api/evm/reference/get-wallet-nfts
 	fn get_nfts_by_wallet(
@@ -186,6 +224,48 @@ impl NftApiList for MoralisClient {
 		debug!("get_nfts_by_wallet, params: {:?}", params);
 
 		match self.get::<GetNftsByWalletResponse>(params, fast_fail) {
+			Ok(resp) => {
+				debug!("get_nfts_by_wallet, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_nfts_by_wallet, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl NftApiList for MoralisClient {
+	// https://docs.moralis.io/web3-data-api/evm/reference/get-wallet-nfts
+	async fn get_nfts_by_wallet(
+		&mut self,
+		param: &GetNftsByWalletParam,
+		fast_fail: bool,
+	) -> Result<GetNftsByWalletResponse, Error> {
+		let mut query: Vec<(String, String)> =
+			vec![("chain".to_string(), param.chain.value.clone())];
+		if let Some(token_addresses) = param.token_addresses.clone() {
+			for (index, address) in token_addresses.iter().enumerate() {
+				query.push((format!("token_addresses[{}]", index), address.clone()));
+			}
+		}
+
+		if let Some(limit) = param.limit {
+			query.push(("limit".to_string(), limit.to_string()));
+		}
+
+		if let Some(cursor) = param.cursor.clone() {
+			query.push(("cursor".to_string(), cursor));
+		}
+
+		let params = MoralisRequest { path: format!("{}/nft", param.address), query: Some(query) };
+
+		debug!("get_nfts_by_wallet, params: {:?}", params);
+
+		match self.get::<GetNftsByWalletResponse>(params, fast_fail).await {
 			Ok(resp) => {
 				debug!("get_nfts_by_wallet, response: {:?}", resp);
 				Ok(resp)

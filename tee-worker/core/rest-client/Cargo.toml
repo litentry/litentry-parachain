@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 # std dependencies
+async-trait = { version = "0.1.77", default-features = false }
 http = { version = "0.2", optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
 thiserror = { version = "1.0.26", optional = true }
@@ -26,6 +27,9 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 [features]
 default = ["std"]
+async = []
+async_std = ["async", "std"]
+async_sgx = ["async", "sgx"]
 std = [
     # std only
     "http",

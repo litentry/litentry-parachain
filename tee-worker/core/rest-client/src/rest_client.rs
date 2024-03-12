@@ -26,6 +26,7 @@ use crate::{
 	RestPost, RestPut,
 };
 
+use async_trait::async_trait;
 use log::*;
 use std::string::{String, ToString};
 
@@ -157,6 +158,7 @@ where
 	}
 }
 
+#[cfg(not(feature = "async"))]
 impl<H> RestGet for RestClient<H>
 where
 	H: SendHttpRequest,
@@ -182,6 +184,36 @@ where
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl<H> RestGet for RestClient<H>
+where
+	H: SendHttpRequest + std::marker::Send,
+{
+	/// Make a GET request.
+	async fn get<U, T>(&mut self, params: U) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send,
+		U: std::marker::Send,
+	{
+		let body = self.make_request::<U, T>(Method::GET, params, None, None)?;
+
+		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
+	}
+
+	/// Make a GET request with query parameters.
+	async fn get_with<U, T>(&mut self, params: U, query: &Query<'_>) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send,
+		U: std::marker::Send,
+	{
+		let body = self.make_request::<U, T>(Method::GET, params, Some(query), None)?;
+
+		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
+	}
+}
+
+#[cfg(not(feature = "async"))]
 impl<H> RestPost for RestClient<H>
 where
 	H: SendHttpRequest,
@@ -221,6 +253,56 @@ where
 	where
 		T: serde::Serialize + RestPath<U>,
 		K: serde::de::DeserializeOwned,
+	{
+		self.post_or_put_capture_with(Method::POST, params, data, query)
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl<H> RestPost for RestClient<H>
+where
+	H: SendHttpRequest + std::marker::Send,
+{
+	/// Make a POST request.
+	async fn post<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
+	where
+		T: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		U: std::marker::Send,
+	{
+		self.post_or_put(Method::POST, params, data)
+	}
+
+	/// Make POST request with query parameters.
+	async fn post_with<U, T>(&mut self, params: U, data: &T, query: &Query<'_>) -> Result<(), Error>
+	where
+		T: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		U: std::marker::Send,
+	{
+		self.post_or_put_with(Method::POST, params, data, query)
+	}
+
+	/// Make a POST request and capture returned body.
+	async fn post_capture<U, T, K>(&mut self, params: U, data: &T) -> Result<K, Error>
+	where
+		T: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		K: serde::de::DeserializeOwned + std::marker::Send,
+		U: std::marker::Send,
+	{
+		self.post_or_put_capture(Method::POST, params, data)
+	}
+
+	/// Make a POST request with query parameters and capture returned body.
+	async fn post_capture_with<U, T, K>(
+		&mut self,
+		params: U,
+		data: &T,
+		query: &Query<'_>,
+	) -> Result<K, Error>
+	where
+		T: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		K: serde::de::DeserializeOwned + std::marker::Send,
+		U: std::marker::Send,
 	{
 		self.post_or_put_capture_with(Method::POST, params, data, query)
 	}
