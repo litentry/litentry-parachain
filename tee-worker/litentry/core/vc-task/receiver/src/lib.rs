@@ -66,8 +66,8 @@ use std::{
 		mpsc::{channel, Sender},
 		Arc,
 	},
-	thread::{self, sleep},
-	time::{Duration, Instant},
+	thread,
+	time::Instant,
 	vec::Vec,
 };
 
@@ -307,7 +307,10 @@ impl RequestRegistry {
 	// Return value indicates whether some item is still not yet processed.
 	pub fn update_item(&self, key: H256) -> Result<bool, &'static str> {
 		let mut map = self.status_map.lock().unwrap();
+
+		#[allow(unused_assignments)]
 		let mut all_processed = false;
+
 		if let Some(entry) = map.get_mut(&key) {
 			entry.processed += 1;
 			all_processed = entry.processed == entry.total;
