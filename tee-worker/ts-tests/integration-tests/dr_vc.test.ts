@@ -188,7 +188,6 @@ describe('Test Vc (direct request)', function () {
                 onMessageReceived
             );
             await assertVc(context, aliceSubstrateIdentity, res.value);
-
         });
     });
 });
