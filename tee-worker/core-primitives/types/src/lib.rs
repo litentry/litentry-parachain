@@ -130,6 +130,7 @@ pub enum TrustedOperationStatus {
 	#[codec(index = 10)]
 	Invalid,
 	/// TrustedOperation has been executed.
+	#[codec(index = 11)]
 	TopExecuted(Vec<u8>, bool),
 }
 
