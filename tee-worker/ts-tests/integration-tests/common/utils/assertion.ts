@@ -36,36 +36,6 @@ export function assertIdGraph(
     });
 }
 
-export async function assertIdentityDeactivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
-    for (let index = 0; index < events.length; index++) {
-        const eventData = events[index].data;
-        const who = eventData.primeIdentity;
-        const signerIdentity = await signer.getIdentity(context);
-        assert.deepEqual(
-            who.toHuman(),
-            signerIdentity.toHuman(),
-            'Check IdentityDeactivated error: signer should be equal to who'
-        );
-    }
-
-    console.log(colors.green('assertIdentityDeactivated complete'));
-}
-
-export async function assertIdentityActivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
-    for (let index = 0; index < events.length; index++) {
-        const eventData = events[index].data;
-        const who = eventData.primeIdentity;
-        const signerIdentity = await signer.getIdentity(context);
-        assert.deepEqual(
-            who.toHuman(),
-            signerIdentity.toHuman(),
-            'Check IdentityActivated error: signer should be equal to who'
-        );
-    }
-
-    console.log(colors.green('assertIdentityActivated complete'));
-}
-
 export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcReturnValue) {
     assert.isTrue(
         res.status.isTrustedOperationStatus,
@@ -78,43 +48,6 @@ export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcR
         status[0].isSubmitted || status[0].isInSidechainBlock,
         `${callType} should be submitted or in sidechain block, but is ${status[0].type}`
     );
-}
-
-export async function checkErrorDetail(events: Event[], expectedDetail: string) {
-    // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
-    //       I have to JSON.stringify it to assign it to a string
-    events.map((item: any) => {
-        console.log('error detail: ', item.data.detail.toHuman());
-        const detail = JSON.stringify(item.data.detail.toHuman());
-
-        assert.isTrue(
-            detail.includes(expectedDetail),
-            `check error detail failed, expected detail is ${expectedDetail}, but got ${detail}`
-        );
-    });
-}
-
-// for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
-export async function assertIdGraphMutationEvent(
-    context: IntegrationTestContext,
-    signer: Signer,
-    events: any[],
-    idGraphHashResults: any[] | undefined,
-    expectedLength: number
-) {
-    assert.equal(events.length, expectedLength);
-    if (idGraphHashResults != undefined) {
-        assert.equal(idGraphHashResults!.length, expectedLength);
-    }
-
-    const signerIdentity = await signer.getIdentity(context);
-    events.forEach((e, i) => {
-        assert.deepEqual(signerIdentity.toHuman(), e.data.primeIdentity.toHuman());
-        if (idGraphHashResults != undefined) {
-            assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
-        }
-    });
-    console.log(colors.green('assertIdGraphMutationEvent passed'));
 }
 
 export function assertWorkerError(
