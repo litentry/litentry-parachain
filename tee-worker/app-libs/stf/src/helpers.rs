@@ -77,11 +77,11 @@ pub fn get_storage_by_key_hash<V: Decode>(key: Vec<u8>) -> Option<V> {
 		if let Ok(value) = Decode::decode(&mut value_encoded.as_slice()) {
 			Some(value)
 		} else {
-			error!("could not decode state for key {:x?}", key);
+			error!("could not decode state for key {:?}", hex::encode(&key));
 			None
 		}
 	} else {
-		info!("key not found in state {:x?}", key);
+		info!("key not found in state {:?}", hex::encode(key));
 		None
 	}
 }

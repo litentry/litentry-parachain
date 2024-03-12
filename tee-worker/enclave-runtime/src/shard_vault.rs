@@ -190,7 +190,7 @@ pub(crate) fn init_proxied_shard_vault_internal(
 	info!("[{:?}] vault funding call: 0x{}", parentchain_id, hex::encode(call.0.clone()));
 	let xts = enclave_extrinsics_factory.create_extrinsics(&[call], None)?;
 
-	//this extrinsic must be included in a block before we can move on. otherwise the next will fail
+	// this extrinsic must be included in a block before we can move on. otherwise the next will fail
 	ocall_api.send_to_parentchain(xts, &parentchain_id, true)?;
 
 	// we are assuming nonce=0 here.

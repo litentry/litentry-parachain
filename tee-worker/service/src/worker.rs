@@ -197,12 +197,7 @@ where
 		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
-			let enclave_url: String = url::Url::parse(&format!(
-				"wss://{}",
-				String::from_utf8_lossy(enclave.url.as_slice()).replace("wss://", "")
-			))
-			.unwrap()
-			.into();
+			let enclave_url = String::from_utf8_lossy(enclave.url.as_slice()).to_string();
 			trace!("found peer rpc url: {}", enclave_url);
 			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {

@@ -546,7 +546,9 @@ where
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
-				ensure_enclave_signer_account(&enclave_account)?;
+				let account_id: AccountId32 =
+					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&account_id)?;
 				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
 				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
 				Ok(TrustedCallResult::Empty)
