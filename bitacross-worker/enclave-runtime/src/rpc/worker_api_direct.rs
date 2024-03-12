@@ -42,9 +42,10 @@ use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
+	ecdsa, ed25519,
 	ed25519_derivation::DeriveEd25519,
 	key_repository::{AccessKey, AccessPubkey},
-	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
+	schnorr, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
 use itp_top_pool_author::traits::AuthorApi;
@@ -56,7 +57,7 @@ use litentry_macros::if_not_production;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::Pair;
+use sp_core::ed25519;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -79,6 +80,9 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	ocall_api: Arc<OcallApi>,
+	signer: ed25519::Pair,
+	bitcoin_key: schnorr::Pair,
+	ethereum_key: ecdsa::Pair,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -150,63 +154,15 @@ where
 		}
 	});
 
-	io.add_method("bitacross_getParachainKey", move |_: Params| {
-		debug!("worker_api_direct rpc was called: bitacross_getParachainKey");
+	io.add_method("bitacross_getPublicKeys", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_getPublicKeys");
 
 		async move {
-			let json_value = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {
-				Ok(key_repository) => match key_repository.retrieve_key() {
-					Ok(key) =>
-						RpcReturnValue::new(key.public().0.encode(), false, DirectRequestStatus::Ok)
-							.to_hex(),
-					Err(_) => compute_hex_encoded_return_error("Some error happened"),
-				},
-				Err(_) => compute_hex_encoded_return_error("Repository not found"),
-			};
-
-			Ok(json!(json_value))
-		}
-	});
-
-	io.add_method("bitacross_getEthereumKey", move |_: Params| {
-		debug!("worker_api_direct rpc was called: bitacross_getEthereumKey");
-
-		async move {
-			let json_value = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
-				Ok(key_repository) => match key_repository.retrieve_key() {
-					Ok(key) => RpcReturnValue::new(
-						key.public_bytes().encode(),
-						false,
-						DirectRequestStatus::Ok,
-					)
-					.to_hex(),
-					Err(_) => compute_hex_encoded_return_error("Some error happened"),
-				},
-				Err(_) => compute_hex_encoded_return_error("Repository not found"),
-			};
-
-			Ok(json!(json_value))
-		}
-	});
-
-	io.add_method("bitacross_getBitcoinKey", move |_: Params| {
-		debug!("worker_api_direct rpc was called: bitacross_getBitcoinKey");
-
-		async move {
-			let json_value = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
-				Ok(key_repository) => match key_repository.retrieve_key() {
-					Ok(key) => RpcReturnValue::new(
-						key.public_bytes().encode(),
-						false,
-						DirectRequestStatus::Ok,
-					)
-					.to_hex(),
-					Err(_) => compute_hex_encoded_return_error("Some error happened"),
-				},
-				Err(_) => compute_hex_encoded_return_error("Repository not found"),
-			};
-
-			Ok(json!(json_value))
+			Ok(json!({
+				"signer": format!("{:?}", signer.public().0),
+				"bitcoin_key": format!("{:?}", bitcoin_key.public_bytes()),
+				"ethereum_key": format!("{:?}", ethereum_key.public_bytes())
+			}))
 		}
 	});
 
