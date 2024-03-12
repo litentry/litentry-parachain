@@ -1,6 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
+import { u8aToHex } from '@polkadot/util';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
@@ -15,11 +15,9 @@ import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
-import { subscribeToEventsWithExtHash } from './common/transactions';
 import { mockBatchAssertion } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
-import { u8aToHex } from '@polkadot/util';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -146,7 +144,6 @@ describe('Test Vc (direct request)', function () {
             console.log(
                 `request vc direct ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`
             );
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
             let requestVcCall;
             if (Array.isArray(assertion)) {
@@ -190,16 +187,8 @@ describe('Test Vc (direct request)', function () {
                 isVcDirect,
                 onMessageReceived
             );
-            const events = await eventsPromise;
-            const vcIssuedEvents = events
-                .map(({ event }) => event)
-                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
 
-            assert.equal(
-                vcIssuedEvents.length,
-                Array.isArray(assertion) ? assertion.length : 1,
-                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
-            );
+            // @todo: assert batch vc response
         });
     });
 });

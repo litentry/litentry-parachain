@@ -300,6 +300,8 @@ export const getSidechainNonce = async (
     teeShieldingKey: KeyObject,
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
+    // wait for the nonce to be updated in sidechain
+    await sleep(5);
     const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
     const getter = context.api.createType('Getter', { public: getterPublic });
     const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
