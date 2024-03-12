@@ -27,6 +27,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
 
 use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
+use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -106,7 +107,7 @@ impl NoderealClient {
 		NoderealClient { api_key, api_url, client }
 	}
 }
-
+#[cfg(not(feature = "async"))]
 pub trait NoderealHttpMethods {
 	fn post(
 		&mut self,
@@ -114,7 +115,7 @@ pub trait NoderealHttpMethods {
 		body: &SpaceIDReqBody,
 	) -> Result<serde_json::Value, Error>;
 }
-
+#[cfg(not(feature = "async"))]
 impl NoderealHttpMethods for NoderealClient {
 	fn post(
 		&mut self,
@@ -124,6 +125,30 @@ impl NoderealHttpMethods for NoderealClient {
 		let response = self
 			.client
 			.post_capture::<NoderealServiceReqPath, SpaceIDReqBody, serde_json::Value>(path, body);
+		response.map_err(|e| Error::NoderealError(format!("Nodereal response error: {}", e)))
+	}
+}
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait NoderealHttpMethods {
+	async fn post(
+		&mut self,
+		path: NoderealServiceReqPath,
+		body: &SpaceIDReqBody,
+	) -> Result<serde_json::Value, Error>;
+}
+#[cfg(feature = "async")]
+#[async_trait]
+impl NoderealHttpMethods for NoderealClient {
+	async fn post(
+		&mut self,
+		path: NoderealServiceReqPath,
+		body: &SpaceIDReqBody,
+	) -> Result<serde_json::Value, Error> {
+		let response = self
+			.client
+			.post_capture::<NoderealServiceReqPath, SpaceIDReqBody, serde_json::Value>(path, body)
+			.await;
 		response.map_err(|e| Error::NoderealError(format!("Nodereal response error: {}", e)))
 	}
 }
@@ -157,12 +182,22 @@ impl DomainInfo {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait BnbDomainApiList {
 	fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
 	fn by_binds(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
 	fn by_names(&mut self, names: &[String]) -> Result<serde_json::Value, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait BnbDomainApiList {
+	async fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
+	async fn by_binds(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
+	async fn by_names(&mut self, names: &[String]) -> Result<serde_json::Value, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl BnbDomainApiList for NoderealClient {
 	fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error> {
 		let req_body = SpaceIDReqBody(owners.to_vec());
@@ -180,6 +215,28 @@ impl BnbDomainApiList for NoderealClient {
 		let req_body = SpaceIDReqBody(names.to_vec());
 		let path = NoderealServiceReqPath::new(&self.api_key, "byNames");
 		self.post(path, &req_body)
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl BnbDomainApiList for NoderealClient {
+	async fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error> {
+		let req_body = SpaceIDReqBody(owners.to_vec());
+		let path = NoderealServiceReqPath::new(&self.api_key, "byOwners");
+		self.post(path, &req_body).await
+	}
+
+	async fn by_binds(&mut self, owners: &[String]) -> Result<serde_json::Value, Error> {
+		let req_body = SpaceIDReqBody(owners.to_vec());
+		let path = NoderealServiceReqPath::new(&self.api_key, "byBinds");
+		self.post(path, &req_body).await
+	}
+
+	async fn by_names(&mut self, names: &[String]) -> Result<serde_json::Value, Error> {
+		let req_body = SpaceIDReqBody(names.to_vec());
+		let path = NoderealServiceReqPath::new(&self.api_key, "byNames");
+		self.post(path, &req_body).await
 	}
 }
 

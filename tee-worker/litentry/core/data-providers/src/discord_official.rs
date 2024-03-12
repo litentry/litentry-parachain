@@ -89,6 +89,7 @@ impl DiscordOfficialClient {
 		DiscordOfficialClient { client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn query_message(
 		&mut self,
 		channel_id: Vec<u8>,
@@ -105,6 +106,25 @@ impl DiscordOfficialClient {
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn query_message(
+		&mut self,
+		channel_id: Vec<u8>,
+		message_id: Vec<u8>,
+	) -> Result<DiscordMessage, Error> {
+		let channel_id = vec_to_string(channel_id)?;
+		let message_id = vec_to_string(message_id)?;
+		debug!("discord query msg, channel_id: {}, message_id: {}", channel_id, message_id);
+
+		let path = format!("/api/channels/{}/messages/{}", channel_id, message_id);
+		let query = vec![];
+		self.client
+			.get_with::<String, DiscordMessage>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+
+	#[cfg(not(feature = "async"))]
 	pub fn get_user_info(&mut self, user_id: String) -> Result<DiscordUser, Error> {
 		debug!("discord query user, id: {}", user_id);
 
@@ -112,6 +132,18 @@ impl DiscordOfficialClient {
 		let query = vec![];
 		self.client
 			.get_with::<String, DiscordUser>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn get_user_info(&mut self, user_id: String) -> Result<DiscordUser, Error> {
+		debug!("discord query user, id: {}", user_id);
+
+		let path = format!("/api/users/{}", user_id);
+		let query = vec![];
+		self.client
+			.get_with::<String, DiscordUser>(path, query.as_slice())
+			.await
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 }

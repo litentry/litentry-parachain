@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
+async-trait = { version = "0.1.77", default-features = false }
 chrono = { version = "0.4.19", features = ["alloc"], optional = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 http = { version = "0.2", optional = true }
@@ -44,6 +45,9 @@ itp-stf-primitives = { path = "../../../core-primitives/stf-primitives" }
 
 [features]
 default = ["std"]
+async = []
+async_std = ["async", "std", "itc-rest-client/async_std"]
+async_sgx = ["async", "sgx", "itc-rest-client/async_sgx"]
 sgx = [
     "hex-sgx",
     "http-sgx",

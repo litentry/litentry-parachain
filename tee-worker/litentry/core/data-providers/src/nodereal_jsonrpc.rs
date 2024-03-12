@@ -21,6 +21,7 @@ use crate::{
 	build_client_with_cert, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error,
 	HttpError, ReqPath, RetryOption, RetryableRestPost,
 };
+use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -132,11 +133,21 @@ impl NoderealJsonrpcClient {
 		NoderealJsonrpcClient { path, retry_option, client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	fn post(&mut self, body: &RpcRequest, fast_fail: bool) -> Result<RpcResponse, Error> {
 		let path = ReqPath::new(self.path.as_str());
 		let retry_option = if fast_fail { None } else { Some(self.retry_option.clone()) };
 		self.client
 			.post_capture_retry::<ReqPath, RpcRequest, RpcResponse>(path, body, retry_option)
+	}
+
+	#[cfg(feature = "async")]
+	async fn post(&mut self, body: &RpcRequest, fast_fail: bool) -> Result<RpcResponse, Error> {
+		let path = ReqPath::new(self.path.as_str());
+		let retry_option = if fast_fail { None } else { Some(self.retry_option.clone()) };
+		self.client
+			.post_capture_retry::<ReqPath, RpcRequest, RpcResponse>(path, body, retry_option)
+			.await
 	}
 }
 
@@ -226,6 +237,7 @@ pub struct GetNFTInventoryResultDetail {
 	pub balance: String,
 }
 
+#[cfg(not(feature = "async"))]
 pub trait NftApiList {
 	fn get_nft_holdings(
 		&mut self,
@@ -252,7 +264,36 @@ pub trait NftApiList {
 	) -> Result<GetNFTInventoryResult, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait NftApiList {
+	async fn get_nft_holdings(
+		&mut self,
+		param: &GetNFTHoldingsParam,
+		fast_fail: bool,
+	) -> Result<GetNFTHoldingsResult, Error>;
+
+	async fn get_token_balance_721(
+		&mut self,
+		param: &GetTokenBalance721Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
+
+	async fn get_token_balance_1155(
+		&mut self,
+		param: &GetTokenBalance1155Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
+
+	async fn get_token_nft_inventory(
+		&mut self,
+		param: &GetNFTInventoryParam,
+		fast_fail: bool,
+	) -> Result<GetNFTInventoryResult, Error>;
+}
+
 // NFT API
+#[cfg(not(feature = "async"))]
 impl NftApiList for NoderealJsonrpcClient {
 	// https://docs.nodereal.io/reference/nr_getnftholdings
 	fn get_nft_holdings(
@@ -385,6 +426,141 @@ impl NftApiList for NoderealJsonrpcClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl NftApiList for NoderealJsonrpcClient {
+	// https://docs.nodereal.io/reference/nr_getnftholdings
+	async fn get_nft_holdings(
+		&mut self,
+		param: &GetNFTHoldingsParam,
+		fast_fail: bool,
+	) -> Result<GetNFTHoldingsResult, Error> {
+		let params: Vec<String> = vec![
+			param.account_address.clone(),
+			param.token_type.clone(),
+			format!("0x{:X}", param.page),
+			format!("0x{:X}", param.page_size),
+		];
+		debug!("get_nft_holdings: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getNFTHoldings".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+		self.post(&req_body, fast_fail)
+			.await
+			.map_err(|e| {
+				debug!("get_nft_holdings, error: {:?}", e);
+				e
+			})
+			.map(|resp: RpcResponse| {
+				debug!("get_nft_holdings, response: {:?}", resp);
+				serde_json::from_value(resp.result).unwrap()
+			})
+	}
+
+	// https://docs.nodereal.io/reference/nr_gettokenbalance721
+	async fn get_token_balance_721(
+		&mut self,
+		param: &GetTokenBalance721Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
+		let params: Vec<String> = vec![
+			param.token_address.clone(),
+			param.account_address.clone(),
+			param.block_number.clone(),
+		];
+		debug!("get_token_balance_721: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance721".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("get_token_balance_721, response: {:?}", resp);
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => {
+				debug!("get_token_balance_721, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	// https://docs.nodereal.io/reference/nr_gettokenbalance1155
+	async fn get_token_balance_1155(
+		&mut self,
+		param: &GetTokenBalance1155Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
+		let params: Vec<String> = vec![
+			param.token_address.clone(),
+			param.account_address.clone(),
+			param.block_number.clone(),
+			param.token_id.clone(),
+		];
+		debug!("get_token_balance_1155: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance1155".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("get_token_balance_1155, response: {:?}", resp);
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => {
+				debug!("get_token_balance_1155, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	// https://docs.nodereal.io/reference/nr_getnftinventory
+	async fn get_token_nft_inventory(
+		&mut self,
+		param: &GetNFTInventoryParam,
+		fast_fail: bool,
+	) -> Result<GetNFTInventoryResult, Error> {
+		let params: Vec<String> = vec![
+			param.account_address.clone(),
+			param.contract_address.clone(),
+			param.page_size.clone(),
+			param.page_key.clone(),
+		];
+		debug!("get_token_nft_inventory: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getNFTInventory".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
+			Ok(resp) => {
+				debug!("get_token_nft_inventory, response: {:?}", resp);
+				match serde_json::from_value::<GetNFTInventoryResult>(resp.result) {
+					Ok(result) => Ok(result),
+					Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+				}
+			},
+			Err(e) => {
+				debug!("get_token_nft_inventory, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
 #[derive(Serialize, Debug)]
 pub struct GetTokenBalance20Param {
 	// The address of the contract
@@ -396,6 +572,7 @@ pub struct GetTokenBalance20Param {
 }
 
 // Fungible Tokens API
+#[cfg(not(feature = "async"))]
 pub trait FungibleApiList {
 	fn get_token_balance_20(
 		&mut self,
@@ -405,6 +582,22 @@ pub trait FungibleApiList {
 	fn get_token_holdings(&mut self, address: &str, fast_fail: bool) -> Result<RpcResponse, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait FungibleApiList {
+	async fn get_token_balance_20(
+		&mut self,
+		param: &GetTokenBalance20Param,
+		fast_fail: bool,
+	) -> Result<u128, Error>;
+	async fn get_token_holdings(
+		&mut self,
+		address: &str,
+		fast_fail: bool,
+	) -> Result<RpcResponse, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl FungibleApiList for NoderealJsonrpcClient {
 	// https://docs.nodereal.io/reference/nr_gettokenbalance20
 	fn get_token_balance_20(
@@ -450,10 +643,68 @@ impl FungibleApiList for NoderealJsonrpcClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl FungibleApiList for NoderealJsonrpcClient {
+	// https://docs.nodereal.io/reference/nr_gettokenbalance20
+	async fn get_token_balance_20(
+		&mut self,
+		param: &GetTokenBalance20Param,
+		fast_fail: bool,
+	) -> Result<u128, Error> {
+		let params: Vec<String> =
+			vec![param.contract_address.clone(), param.address.clone(), param.block_number.clone()];
+		debug!("get_token_balance_20: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance20".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("get_token_balance_20, response: {:?}", resp);
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => {
+				debug!("get_token_balance_20, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	async fn get_token_holdings(
+		&mut self,
+		address: &str,
+		fast_fail: bool,
+	) -> Result<RpcResponse, Error> {
+		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(), "0x64".to_string()];
+		debug!("get_token_holdings: {:?}", params);
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenHoldings".to_string(),
+			params: params.to_vec(),
+			id: Id::Number(1),
+		};
+
+		self.post(&req_body, fast_fail).await
+	}
+}
+
+#[cfg(not(feature = "async"))]
 pub trait EthBalance {
 	fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error>;
 }
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait EthBalance {
+	async fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error>;
+}
 
+#[cfg(not(feature = "async"))]
 impl EthBalance for NoderealJsonrpcClient {
 	fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error> {
 		let params = vec![address.to_string(), "latest".to_string()];
@@ -478,11 +729,46 @@ impl EthBalance for NoderealJsonrpcClient {
 		}
 	}
 }
+#[cfg(feature = "async")]
+#[async_trait]
+impl EthBalance for NoderealJsonrpcClient {
+	async fn get_balance(&mut self, address: &str, fast_fail: bool) -> Result<u128, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
 
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getBalance".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getBalance, response: {:?}", resp);
+				convert_balance_hex_json_value_to_u128(resp.result)
+			},
+			Err(e) => {
+				debug!("eth_getBalance, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
+#[cfg(not(feature = "async"))]
 pub trait TransactionCount {
 	fn get_transaction_count(&mut self, address: &str, fast_fail: bool) -> Result<u64, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait TransactionCount {
+	async fn get_transaction_count(&mut self, address: &str, fast_fail: bool)
+		-> Result<u64, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl TransactionCount for NoderealJsonrpcClient {
 	fn get_transaction_count(&mut self, address: &str, fast_fail: bool) -> Result<u64, Error> {
 		let params = vec![address.to_string(), "latest".to_string()];
@@ -495,6 +781,49 @@ impl TransactionCount for NoderealJsonrpcClient {
 		};
 
 		match self.post(&req_body, fast_fail) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getTransactionCount, response: {:?}", resp);
+				match resp.result.as_str() {
+					Some(result) => match u64::from_str_radix(&result[2..], 16) {
+						Ok(balance) => Ok(balance),
+						Err(_) => Err(Error::RequestError(format!(
+							"Cannot parse result {:?} to u64",
+							result
+						))),
+					},
+					None => Err(Error::RequestError(format!(
+						"Cannot transform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => {
+				debug!("get_transaction_count, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl TransactionCount for NoderealJsonrpcClient {
+	async fn get_transaction_count(
+		&mut self,
+		address: &str,
+		fast_fail: bool,
+	) -> Result<u64, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getTransactionCount".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body, fast_fail).await {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("eth_getTransactionCount, response: {:?}", resp);

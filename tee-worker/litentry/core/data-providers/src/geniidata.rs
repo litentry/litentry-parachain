@@ -74,6 +74,7 @@ pub struct GeniidataClient {
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
+#[cfg(not(feature = "async"))]
 impl GeniidataClient {
 	pub fn new(
 		data_provider_config: &DataProviderConfig,
@@ -99,6 +100,43 @@ impl GeniidataClient {
 			let response = self
 				.client
 				.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
+				.map_err(|e| {
+					DataProviderError::GeniiDataError(format!("GeniiData response error: {}", e))
+				})?;
+			all_items.extend(response.data.list);
+		}
+
+		Ok(all_items)
+	}
+}
+
+#[cfg(feature = "async")]
+impl GeniidataClient {
+	pub fn new(
+		data_provider_config: &DataProviderConfig,
+	) -> core::result::Result<Self, ErrorDetail> {
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+		headers.insert(ACCEPT.as_str(), "application/json");
+		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
+
+		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers);
+
+		Ok(GeniidataClient { client })
+	}
+
+	pub async fn create_brc20_amount_holder_sum(
+		&mut self,
+		addresses: Vec<String>,
+	) -> Result<Vec<ResponseItem>, DataProviderError> {
+		let mut all_items: Vec<ResponseItem> = Vec::new();
+		for address in addresses {
+			let query =
+				vec![("limit", GENIIDATA_QUERY_LIMIT), ("offset", "0"), ("address", &address)];
+			let response = self
+				.client
+				.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
+				.await
 				.map_err(|e| {
 					DataProviderError::GeniiDataError(format!("GeniiData response error: {}", e))
 				})?;
