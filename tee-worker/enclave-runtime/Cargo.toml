@@ -183,22 +183,3 @@ sgx_tseal = { version = "1.1.6", git = "https://github.com/apache/incubator-teac
 sgx_tstd = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
 sgx_tunittest = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
 sgx_types = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
-
-#[patch."https://github.com/integritee-network/parachain"]
-#integritee-runtime = { path = "../../parachain/polkadot-parachains/integritee-runtime"}
-#parachains-common = { path = "../../parachain/polkadot-parachains/common"}
-
-#[patch."https://github.com/integritee-network/pallets.git"]
-#pallet-claims = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#pallet-enclave-bridge = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#pallet-teerex = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#pallet-sidechain = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#pallet-parentchain = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#sgx-verify = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#pallet-teeracle = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#test-utils = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#claims-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#enclave-bridge-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#teerex-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#teeracle-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }
-#common-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/parentchian-set-timestamp" }

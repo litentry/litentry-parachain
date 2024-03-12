@@ -24,7 +24,6 @@ use crate::{
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
 		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
-		TimestampSetArgs,
 	},
 	Litentry,
 };
@@ -56,29 +55,28 @@ pub type Signature = sp_runtime::MultiSignature;
 /// Parses the extrinsics corresponding to the parentchain.
 pub type ParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
 
-/// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
+/// The default indirect call (extrinsic-triggered) of Litentry parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
 	#[codec(index = 0)]
 	ShieldFunds(ShieldFundsArgs),
 	#[codec(index = 1)]
 	Invoke(InvokeArgs),
-	#[codec(index = 2)]
-	TimestampSet(TimestampSetArgs<Litentry>),
 	// Litentry
-	#[codec(index = 3)]
+	// we ignore `TimestampSet` for now, see unused `TrustedCall::timestamp_set`
+	#[codec(index = 2)]
 	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 6)]
+	#[codec(index = 5)]
 	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 7)]
+	#[codec(index = 6)]
 	SetScheduledEnclave(SetScheduledEnclaveArgs),
-	#[codec(index = 8)]
+	#[codec(index = 7)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
-	#[codec(index = 9)]
+	#[codec(index = 8)]
 	BatchAll(Vec<IndirectCall>),
 }
 
@@ -91,8 +89,6 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 		match self {
 			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
 			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
-			IndirectCall::TimestampSet(timestamp_set_args) =>
-				timestamp_set_args.dispatch(executor, ()),
 			// Litentry
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash)),
@@ -119,7 +115,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	}
 }
 
-/// Default filter we use for the Integritee-Parachain.
+/// Default filter we use for Litentry parachain.
 pub struct ExtrinsicFilter {}
 
 impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for ExtrinsicFilter {
@@ -148,9 +144,6 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 		if index == metadata.post_opaque_task_call_indexes().ok()? {
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
-		} else if index == metadata.timestamp_set_call_indexes().ok()? {
-			let args = decode_and_log_error::<TimestampSetArgs<Litentry>>(call_args)?;
-			Some(IndirectCall::TimestampSet(args))
 		// Litentry
 		} else if index == metadata.link_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
