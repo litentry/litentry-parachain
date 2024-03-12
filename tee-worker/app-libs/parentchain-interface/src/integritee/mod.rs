@@ -25,7 +25,6 @@ use crate::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
 		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
 	},
-	Litentry,
 };
 use codec::{Decode, Encode};
 pub use event_filter::FilterableEvents;
