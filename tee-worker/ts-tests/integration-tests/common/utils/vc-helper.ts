@@ -18,7 +18,40 @@ export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed
     return [...results];
 }
 
-// @todo move to a better place, and make it more generic, at least define the type
+export const mockBatchAssertion = [
+    {
+        description: 'request_batch_vc trial test',
+        assertion: [{ A7: '5' }, { A8: ['Litentry'] }, { A20: 'A20' }],
+    },
+    {
+        description: 'Have identified at least one account/address in both Web2 and Web3.',
+        assertion: {
+            A1: 'A1',
+        },
+    },
+    {
+        description: 'The user is a member of Litentry Discord.',
+        assertion: {
+            A2: '807161594245152800',
+        },
+    },
+
+    {
+        description:
+            'Have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882',
+        assertion: {
+            A3: ['A3', 'A3', 'A3'],
+        },
+    },
+    {
+        description: 'The length of time a user continues to hold LIT token',
+        assertion: {
+            A4: '10',
+        },
+    },
+];
+
+// https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
 export const mockAssertions = [
     {
         description: 'Have identified at least one account/address in both Web2 and Web3.',
