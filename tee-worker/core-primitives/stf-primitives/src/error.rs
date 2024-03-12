@@ -52,34 +52,35 @@ pub enum StfError {
 	#[codec(index = 9)]
 	EmptyIDGraph,
 
-	#[codec(index = 30)]
+	// upstream errors
+	#[codec(index = 20)]
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
 	MissingPrivileges(AccountId),
-	#[codec(index = 31)]
+	#[codec(index = 21)]
 	#[display(fmt = "Valid enclave signer account is required")]
 	RequireEnclaveSignerAccount,
-	#[codec(index = 32)]
+	#[codec(index = 22)]
 	#[display(fmt = "Error dispatching runtime call. {:?}", _0)]
 	Dispatch(String),
-	#[codec(index = 33)]
+	#[codec(index = 23)]
 	#[display(fmt = "Not enough funds to perform operation")]
 	MissingFunds,
-	#[codec(index = 34)]
+	#[codec(index = 24)]
 	#[display(fmt = "Invalid Nonce {:?} != {:?}", _0, _1)]
 	InvalidNonce(Nonce, Nonce),
-	#[codec(index = 35)]
+	#[codec(index = 25)]
 	StorageHashMismatch,
-	#[codec(index = 36)]
+	#[codec(index = 26)]
 	InvalidStorageDiff,
-	#[codec(index = 37)]
+	#[codec(index = 27)]
 	InvalidMetadata,
-	#[codec(index = 38)]
+	#[codec(index = 28)]
 	ShardVaultOnMultipleParentchainsNotAllowed,
-	#[codec(index = 39)]
+	#[codec(index = 29)]
 	ChangingShardVaultAccountNotAllowed,
-	#[codec(index = 40)]
+	#[codec(index = 30)]
 	WrongParentchainIdForShardVault,
-	#[codec(index = 41)]
+	#[codec(index = 31)]
 	NoShardVaultAssigned,
 }
 
