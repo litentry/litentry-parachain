@@ -325,7 +325,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		Parentchain: pallet_parentchain,
+		ParentchainLitentry: pallet_parentchain::<Instance1>,
 		IdentityManagement: pallet_imt,
 		Evm: pallet_evm,
 	}
