@@ -27,7 +27,8 @@ import { createJsonRpcRequest, nextRequestId } from './helpers';
 async function sendRequest(
     wsClient: WebSocketAsPromised,
     request: JsonRpcRequest,
-    api: ApiPromise
+    api: ApiPromise,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
         wsClient.onMessage.addListener((data) => {
@@ -45,6 +46,8 @@ async function sendRequest(
                 if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
                     console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
                 }
+                // sending every response we receive from websocket
+                if (onMessageReceived) onMessageReceived(res);
 
                 // resolve it once `do_watch` is false, meaning it's the final response
                 if (res.do_watch.isFalse) {
@@ -216,6 +219,29 @@ export async function createSignedTrustedCallRequestVc(
     );
 }
 
+export async function createSignedTrustedCallRequestBatchVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    assertion: string,
+    aesKey: string,
+    hash: string
+) {
+    return await createSignedTrustedCall(
+        parachainApi,
+        [
+            'request_batch_vc',
+            '(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)',
+        ],
+        signer,
+        mrenclave,
+        nonce,
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+    );
+}
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -301,7 +327,8 @@ export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     call: TrustedCallSigned,
-    isVcDirect = false
+    isVcDirect = false,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
@@ -320,7 +347,7 @@ export const sendRequestFromTrustedCall = async (
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
-    return sendRequest(context.tee, request, context.api);
+    return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
 export const sendRequestFromGetter = async (
