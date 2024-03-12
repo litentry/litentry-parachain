@@ -182,6 +182,42 @@ where
 		Ok(())
 	}
 
+	fn send_rpc_response(
+		&self,
+		hash: Self::Hash,
+		encoded_value: Vec<u8>,
+		do_watch: bool,
+	) -> DirectRpcResult<()> {
+		debug!(
+			"Send out new rpc response, hash: {:?}, encoded_value: {:?}, watch: {:?}",
+			hash, encoded_value, do_watch
+		);
+
+		// withdraw removes it from the registry
+		let (connection_token, rpc_response, force_wait) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		let mut new_response = rpc_response.clone();
+		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
+			.map_err(|e| DirectRpcError::Other(format!("{:?}", e).into()))?;
+
+		// update response
+		result.do_watch = do_watch;
+		result.value = encoded_value;
+		new_response.result = result.to_hex();
+
+		self.encode_and_send_response(connection_token, &new_response)?;
+
+		if do_watch {
+			self.connection_registry.store(hash, connection_token, new_response, force_wait);
+		}
+
+		debug!("Send out new rpc response successfully");
+		Ok(())
+	}
+
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()> {
 		debug!("swap hash, old: {:?}, new: {:?}", old_hash, new_hash);
 
