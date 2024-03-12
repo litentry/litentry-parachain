@@ -35,12 +35,14 @@ macro_rules! http_get_precompile_fn {
 			})?;
 			// safe to unwrap
 			let url = decoded.get(0).unwrap().clone().into_string().unwrap();
+			std::println!("Url is : {:?}", url);
 			let url = itc_rest_client::rest_client::Url::parse(&url).map_err(|e| {
 				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
 					"Could not parse url {:?}, reason: {:?}",
 					url, e
 				))
 			})?;
+
 			// safe to unwrap
 			let pointer = decoded.get(1).unwrap().clone().into_string().unwrap();
 			let resp = client

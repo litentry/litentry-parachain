@@ -27,8 +27,10 @@ use evm::executor::stack::{
 use itc_rest_client::http_client::HttpClient;
 use primitive_types::H160;
 use std::result::Result as StdResult;
+use crate::dynamic::precompiles::to_string::bytes_to_string;
 
 mod http_get;
+mod to_string;
 mod macros;
 
 #[cfg(test)]
@@ -54,6 +56,7 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1000) => Some(http_get_i64(handle.input().to_vec(), client)),
 			a if a == hash(1001) => Some(http_get_bool(handle.input().to_vec(), client)),
 			a if a == hash(1002) => Some(http_get_string(handle.input().to_vec(), client)),
+			a if a == hash(1051) => Some(bytes_to_string(handle.input().to_vec())),
 			_ => None,
 		}
 	}
@@ -65,6 +68,8 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1001) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			a if a == hash(1002) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1051) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			_ => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
 		}

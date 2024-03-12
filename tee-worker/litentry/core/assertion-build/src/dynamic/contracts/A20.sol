@@ -19,24 +19,25 @@ contract A20 is DynamicAssertion {
         string
         memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
-        assertions[0] = "$has_joined == true";
+        assertions.push(
+            '{ "src": "$has_web2_account", "op": "==", "dst": "true" }'
+        );
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
-        bool result;
+        bool result = false;
+        string memory hex_encoded;
 
         for (uint256 i = 0; i < identities.length; i++) {
-            if (is_twitter(identities[i])) {
-                string
-                memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+            if (is_web3(identities[i])) {
+                hex_encoded = toString(identities[i].value);
+                string memory url = concatenateStrings(
+                    "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
+                    hex_encoded
+                );
                 string memory jsonPointer = "/hasJoined";
                 result = GetBool(url, jsonPointer);
-            } else {
-                string
-                memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=test";
-                string memory jsonPointer = "/hasJoined";
-                result = GetBool(url, jsonPointer);
-            }
-            if (result) {
-                break;
+                if (result) {
+                    break;
+                }
             }
         }
         return (description, assertion_type, assertions, schema_url, result);

@@ -55,8 +55,6 @@ abstract contract DynamicAssertion {
         uint256 encoded_params_len = encoded_params.length;
         assembly {
             let memPtr := mload(0x40)
-        // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
-        // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
             if iszero(
                 call(
                     not(0),
@@ -89,8 +87,6 @@ abstract contract DynamicAssertion {
 
         assembly {
             let memPtr := mload(0x40)
-        // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
-        // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
             if iszero(
                 call(
                     not(0),
@@ -98,6 +94,46 @@ abstract contract DynamicAssertion {
                     0,
                     add(encoded_params, 0x20),
                     encoded_params_len,
+                    memPtr,
+                    0x20
+                )
+            ) {
+                revert(0, 0)
+            }
+        // advance free memory pointer
+            mstore(0x40, add(memPtr, 0x20))
+            value := mload(memPtr)
+        }
+
+        return (value);
+    }
+
+    function concatenateStrings(string memory a, string memory b)
+    internal
+    pure
+    returns (string memory)
+    {
+        bytes memory concatenatedBytes = abi.encodePacked(a, b);
+        return string(concatenatedBytes);
+    }
+
+    function toString(bytes memory bytes_value)
+    internal
+    returns (string memory)
+    {
+        string memory value;
+        bytes memory encoded = abi.encode(bytes_value);
+        uint256 encoded_len = encoded.length;
+
+        assembly {
+            let memPtr := mload(0x40)
+            if iszero(
+                call(
+                    not(0),
+                    0x041B,
+                    0,
+                    add(encoded, 0x20),
+                    encoded_len,
                     memPtr,
                     0x20
                 )

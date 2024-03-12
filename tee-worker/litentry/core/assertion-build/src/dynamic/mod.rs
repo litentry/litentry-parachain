@@ -223,6 +223,7 @@ pub mod tests {
 	};
 	use ethabi::Token;
 	use itp_types::Assertion;
+	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
 	use litentry_primitives::{Address32, Identity, IdentityString, Web3Network};
 	use sp_core::{crypto::AccountId32, H160};
@@ -274,6 +275,39 @@ pub mod tests {
 			_ => panic!("Expected Token::Tuple"),
 		}
 	}
+
+	#[test]
+	pub fn test_a20_true() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run(19527).unwrap();
+		// given
+		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
+
+		let substrate_identity = Identity::Substrate(AccountId32::new([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]).into());
+
+		let request = AssertionBuildRequest {
+			shard: Default::default(),
+			signer: AccountId32::new([0; 32]),
+			who: Identity::Twitter(IdentityString::new(vec![])),
+			assertion: Assertion::Dynamic(hash(1)),
+			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
+			top_hash: Default::default(),
+			parachain_block_number: Default::default(),
+			sidechain_block_number: Default::default(),
+			maybe_key: None,
+			req_ext_hash: Default::default(),
+			should_create_id_graph: Default::default(),
+		};
+
+		let repository = InMemorySmartContractRepo::new();
+
+		// when
+		let credential = build(&request, hash(1), repository).unwrap();
+
+		// then
+		assert!(credential.credential_subject.values[0]);
+	}
+
 
 	#[test]
 	pub fn test_a1_true() {
