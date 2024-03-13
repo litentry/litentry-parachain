@@ -18,10 +18,14 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::{perform_direct_operation, perform_trusted_operation},
+	trusted_operation::send_direct_batch_vc_request,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
+use codec::Decode;
+use ita_stf::{
+	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
+	Index, TrustedCall, TrustedCallSigning, VecAssertion,
+};
 use itp_stf_primitives::types::KeyPair;
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
@@ -34,6 +38,8 @@ use litentry_primitives::{
 	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
+use sp_runtime::BoundedVec;
+use std::sync::mpsc::channel;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -312,14 +318,6 @@ AchainableCommandArgs!(TokenArg, {
 
 impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
-		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
-		println!(">>>id: {:?}", id);
-
-		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
-		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
-		println!(">>>nonce: {}", nonce);
-
 		println!(">>>command: {:#?}", self.command);
 
 		let assertion = match &self.command {
@@ -509,34 +507,69 @@ impl RequestVcCommand {
 			},
 		};
 
-		let key = Self::random_aes_key();
+		let assertions: Vec<Assertion> = vec![assertion];
+		println!("assertions: {:?}", assertions);
+		let assertions: VecAssertion = BoundedVec::try_from(assertions).unwrap();
+		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
+		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
+		println!(">>>id: {:?}", id);
 
-		let top = TrustedCall::request_vc(
+		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
+		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
+		println!(">>>nonce: {}", nonce);
+		let key = Self::random_aes_key();
+		let top = TrustedCall::request_batch_vc(
 			alice.public().into(),
 			id,
-			assertion,
+			assertions,
 			Some(key),
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		let maybe_vc = if self.stf {
-			perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top)
-		} else {
-			perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key)
-		};
+		let (sender, receiver) = channel::<Result<RequestVcResultOrError, String>>();
 
-		match maybe_vc {
-			Ok(mut vc) => {
-				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-				println!("----Generated VC-----");
-				println!("{}", credential_str);
-			},
-			Err(e) => {
-				println!("{:?}", e);
-			},
+		send_direct_batch_vc_request(cli, trusted_cli, &top, key, sender);
+
+		let mut len = 0u8;
+		let mut cnt = 0u8;
+		loop {
+			match receiver.recv() {
+				Ok(res) => match res {
+					Ok(response) => {
+						cnt += 1;
+						if len < response.len {
+							len = response.len;
+						}
+						if response.is_error {
+							println!(
+								"received one error: {:?}",
+								String::from_utf8(response.payload)
+							);
+						} else {
+							let mut vc =
+								RequestVCResult::decode(&mut response.payload.as_slice()).unwrap();
+							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+							let credential_str =
+								String::from_utf8(decrypted).expect("Found invalid UTF-8");
+							println!("----Generated VC-----");
+							println!("{}", credential_str);
+						}
+						if cnt >= len {
+							break
+						}
+					},
+					Err(e) => {
+						println!("Response error: {:?}", e);
+						break
+					},
+				},
+				Err(e) => {
+					println!("channel receiver error: {:?}", e);
+					break
+				},
+			}
 		}
 
 		Ok(CliResultOk::None)

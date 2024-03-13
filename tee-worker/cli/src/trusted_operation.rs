@@ -23,9 +23,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
-use ita_stf::{
-	trusted_call_result::RequestVcResultOrError, Getter, StfError, TrustedCall, TrustedCallSigned,
-};
+use ita_stf::{trusted_call_result::RequestVcResultOrError, Getter, StfError, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
@@ -70,22 +68,6 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 		TrustedOperation::direct_call(_) => send_direct_request::<T>(cli, trusted_args, top),
 		TrustedOperation::get(getter) =>
 			execute_getter_from_cli_args::<T>(cli, trusted_args, getter),
-	}
-}
-
-pub(crate) fn perform_direct_operation<T: Decode + Debug>(
-	cli: &Cli,
-	trusted_args: &TrustedCli,
-	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	key: RequestAesKey,
-) -> TrustedOpResult<T> {
-	match top {
-		TrustedOperation::direct_call(call) => match call.call {
-			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
-			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
-		},
-		_ =>
-			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
 	}
 }
 
@@ -359,65 +341,6 @@ fn send_direct_request<T: Decode + Debug>(
 	}
 }
 
-fn send_direct_vc_request<T: Decode + Debug>(
-	cli: &Cli,
-	trusted_args: &TrustedCli,
-	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	key: RequestAesKey,
-) -> TrustedOpResult<T> {
-	let encryption_key = get_shielding_key(cli).unwrap();
-	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
-
-	debug!("get direct api");
-	let direct_api = get_worker_api_direct(cli);
-
-	debug!("setup sender and receiver");
-	let (sender, receiver) = channel();
-	direct_api.watch(jsonrpc_call, sender);
-
-	debug!("waiting for rpc response");
-	loop {
-		match receiver.recv() {
-			Ok(response) => {
-				debug!("received response");
-				let response: RpcResponse = serde_json::from_str(&response).unwrap();
-				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
-					debug!("successfully decoded rpc response: {:?}", return_value);
-					match return_value.status {
-						DirectRequestStatus::Error => {
-							debug!("request status is error");
-							if let Ok(value) = String::decode(&mut return_value.value.as_slice()) {
-								error!("{}", value);
-							}
-							direct_api.close().unwrap();
-							return Err(TrustedOperationError::Default {
-								msg: "[Error] DirectRequestStatus::Error".to_string(),
-							})
-						},
-						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
-							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
-						},
-						DirectRequestStatus::Ok => {
-							debug!("request status is ignored");
-							direct_api.close().unwrap();
-							let value = decode_response_value(&mut return_value.value.as_slice())?;
-							return Ok(value)
-						},
-					}
-				};
-			},
-			Err(e) => {
-				error!("failed to receive rpc response: {:?}", e);
-				direct_api.close().unwrap();
-				return Err(TrustedOperationError::Default {
-					msg: "failed to receive rpc response".to_string(),
-				})
-			},
-		};
-	}
-}
-
 pub(crate) fn send_direct_batch_vc_request(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
@@ -438,6 +361,7 @@ pub(crate) fn send_direct_batch_vc_request(
 
 	debug!("waiting for rpc response");
 	let mut req_cnt = 0u8;
+	let mut ignore_first = true;
 	std::thread::spawn(move || loop {
 		match receiver.recv() {
 			Ok(response) => {
@@ -446,6 +370,10 @@ pub(crate) fn send_direct_batch_vc_request(
 				let response: RpcResponse = serde_json::from_str(&response).unwrap();
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					debug!("successfully decoded rpc response: {:?}", return_value);
+					if ignore_first {
+						ignore_first = false;
+						continue
+					}
 					match return_value.status {
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
