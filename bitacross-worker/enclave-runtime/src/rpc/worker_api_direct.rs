@@ -154,15 +154,25 @@ where
 	io.add_sync_method("bitacross_getPublicKeys", move |_: Params| {
 		debug!("worker_api_direct rpc was called: bitacross_getPublicKeys");
 
-		let signer = signing_key_repository.retrieve_key().expect("Signing key should exist");
-		let bitcoin_key = bitcoin_key_repository.retrieve_key().expect("Bitcoind key should exist");
-		let ethereum_key =
-			ethereum_key_repository.retrieve_key().expect("Ethereum key should exist");
+		let signer = match signing_key_repository.retrieve_key() {
+			Ok(pair) => pair.public().0.to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain signer key"),
+		};
+
+		let bitcoin_key = match bitcoin_key_repository.retrieve_key() {
+			Ok(pair) => pair.public_bytes().to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain bitcoin key"),
+		};
+
+		let ethereum_key = match ethereum_key_repository.retrieve_key() {
+			Ok(pair) => pair.public_bytes().to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain ethereum key"),
+		};
 
 		Ok(json!({
-			"signer": signer.public().0.to_hex(),
-			"bitcoin_key": bitcoin_key.public_bytes().to_hex(),
-			"ethereum_key": ethereum_key.public_bytes().to_hex()
+			"signer": signer,
+			"bitcoin_key": bitcoin_key,
+			"ethereum_key": ethereum_key
 		}))
 	});
 

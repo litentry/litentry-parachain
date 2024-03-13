@@ -211,8 +211,8 @@ pub(crate) fn init_enclave(
 		shielding_key_repository,
 		ocall_api.clone(),
 		signing_key_repository.clone(),
-		bitcoin_key_repository.clone(),
-		ethereum_key_repository.clone(),
+		bitcoin_key_repository,
+		ethereum_key_repository,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
