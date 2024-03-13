@@ -21,6 +21,7 @@ use crate::{
 	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError,
 	LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;

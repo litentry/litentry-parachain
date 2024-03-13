@@ -21,6 +21,7 @@ use crate::{
 	build_client_with_cert, convert_balance_hex_json_value_to_u128, DataProviderConfig, Error,
 	HttpError, ReqPath, RetryOption, RetryableRestPost,
 };
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;

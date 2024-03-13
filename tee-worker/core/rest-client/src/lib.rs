@@ -45,6 +45,7 @@ pub mod rest_client;
 pub mod mocks;
 
 use crate::error::Error;
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use std::string::String;
 

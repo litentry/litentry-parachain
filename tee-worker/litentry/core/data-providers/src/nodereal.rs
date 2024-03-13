@@ -27,6 +27,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
 
 use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;

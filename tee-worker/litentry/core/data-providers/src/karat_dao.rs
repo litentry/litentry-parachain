@@ -24,6 +24,7 @@ use crate::{
 	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
 	RetryableRestGet,
 };
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;

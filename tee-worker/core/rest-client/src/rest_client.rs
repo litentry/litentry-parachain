@@ -26,6 +26,7 @@ use crate::{
 	RestPost, RestPut,
 };
 
+#[cfg(feature = "async")]
 use async_trait::async_trait;
 use log::*;
 use std::string::{String, ToString};

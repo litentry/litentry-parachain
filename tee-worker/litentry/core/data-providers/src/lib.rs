@@ -50,14 +50,18 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
 
+#[cfg(feature = "async")]
 use async_trait::async_trait;
+#[cfg(feature = "async")]
+use std::future::Future;
+
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
 };
+
 use std::{
 	env, format,
-	future::Future,
 	string::{String, ToString},
 	vec::Vec,
 };
