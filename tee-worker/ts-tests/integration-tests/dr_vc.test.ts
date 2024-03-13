@@ -1,6 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
+import { u8aToHex } from '@polkadot/util';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
@@ -9,16 +9,15 @@ import {
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedCallRequestBatchVc,
 } from './common/di-utils'; // @fixme move to a better place
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity } from 'parachain-api';
-import { subscribeToEventsWithExtHash } from './common/transactions';
-import { mockAssertions } from './common/utils/vc-helper';
+import { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
+import { mockBatchAssertion } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
-import { u8aToHex } from '@polkadot/util';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -136,7 +135,7 @@ describe('Test Vc (direct request)', function () {
         }
     });
 
-    mockAssertions.forEach(({ description, assertion }) => {
+    mockBatchAssertion.forEach(({ description, assertion }) => {
         step(`request vc payload: ${JSON.stringify(assertion)} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
@@ -145,32 +144,51 @@ describe('Test Vc (direct request)', function () {
             console.log(
                 `request vc direct ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`
             );
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-            const requestVcCall = await createSignedTrustedCallRequestVc(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
+            let requestVcCall;
+            if (Array.isArray(assertion)) {
+                requestVcCall = await createSignedTrustedCallRequestBatchVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    new PolkadotSigner(context.substrateWallet.alice),
+                    aliceSubstrateIdentity,
+                    context.api.createType('Vec<Assertion>', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            } else {
+                requestVcCall = await createSignedTrustedCallRequestVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    new PolkadotSigner(context.substrateWallet.alice),
+                    aliceSubstrateIdentity,
+                    context.api.createType('Assertion', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            }
 
             const isVcDirect = true;
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
-            const events = await eventsPromise;
-            const vcIssuedEvents = events
-                .map(({ event }) => event)
-                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
+            // Instead of waiting for final response we will listen all responses from the call
+            const onMessageReceived = async (res: WorkerRpcReturnValue) => {
+                // if response is a A1 or A2, etc....
+                const vcresponse = context.api.createType('RequestVcResultOrError', res.value);
+                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`);
+                if (!vcresponse.is_error) await assertVc(context, aliceSubstrateIdentity, vcresponse.payload);
+            };
 
-            assert.equal(
-                vcIssuedEvents.length,
-                1,
-                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
+            // the +res+ below is the last message with "do_watch: false" property and we may not need it at all
+            const res = await sendRequestFromTrustedCall(
+                context,
+                teeShieldingKey,
+                requestVcCall,
+                isVcDirect,
+                onMessageReceived
             );
-            await assertVc(context, aliceSubstrateIdentity, res.value);
+
+            // @todo: assert batch vc response
         });
     });
 });

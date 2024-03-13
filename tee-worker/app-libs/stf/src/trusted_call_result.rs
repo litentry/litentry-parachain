@@ -101,3 +101,11 @@ pub struct RequestVCResult {
 	pub pre_mutated_id_graph: AesOutput,
 	pub pre_id_graph_hash: H256,
 }
+
+#[derive(Debug, Encode, Decode, Clone)]
+pub struct RequestVcResultOrError {
+	pub payload: Vec<u8>,
+	pub is_error: bool,
+	pub idx: u8,
+	pub len: u8,
+}

@@ -97,6 +97,8 @@ where
 	/// Litentry: set the rpc response value
 	fn update_connection_state(&self, updates: Vec<(Hash, (Vec<u8>, bool))>);
 
+	fn send_rpc_response(&self, hash: Hash, encoded_value: Vec<u8>, do_watch: bool);
+
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_rpc_connection_hash(&self, old_hash: Hash, new_hash: Hash);
 }
