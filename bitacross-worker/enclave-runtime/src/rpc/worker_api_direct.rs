@@ -160,9 +160,9 @@ where
 			ethereum_key_repository.retrieve_key().expect("Ethereum key should exist");
 
 		Ok(json!({
-			"signer": format!("{:?}", signer.public().0),
-			"bitcoin_key": format!("{:?}", bitcoin_key.public_bytes()),
-			"ethereum_key": format!("{:?}", ethereum_key.public_bytes())
+			"signer": signer.public().0.to_hex(),
+			"bitcoin_key": bitcoin_key.public_bytes().to_hex(),
+			"ethereum_key": ethereum_key.public_bytes().to_hex()
 		}))
 	});
 
