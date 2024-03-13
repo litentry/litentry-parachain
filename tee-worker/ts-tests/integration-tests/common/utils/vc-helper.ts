@@ -1,23 +1,4 @@
-export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed'): Promise<any> {
-    const results: any = [];
-    for (let k = 0; k < events.length; k++) {
-        switch (method) {
-            case 'VCIssued':
-                results.push({
-                    identity: events[k].data.identity.toHex(),
-                    index: events[k].data.index.toHex(),
-                });
-                break;
-            case 'Failed':
-                results.push(events[k].data.detail.toHuman());
-                break;
-            default:
-                break;
-        }
-    }
-    return [...results];
-}
-
+// @todo move to a better place, and make it more generic, at least define the type
 export const mockBatchAssertion = [
     {
         description: 'request_batch_vc trial test',
