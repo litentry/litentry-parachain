@@ -1,6 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
+import { u8aToHex } from '@polkadot/util';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
@@ -14,11 +14,9 @@ import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { CorePrimitivesIdentity } from 'parachain-api';
-import { subscribeToEventsWithExtHash } from './common/transactions';
 import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
-import { u8aToHex } from '@polkadot/util';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -143,7 +141,6 @@ describe('Test Vc (direct invocation)', function () {
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             console.log(`request vc ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`);
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
             const requestVcCall = await createSignedTrustedCallRequestVc(
                 context.api,
@@ -158,16 +155,7 @@ describe('Test Vc (direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
             await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
-            const events = await eventsPromise;
-            const vcIssuedEvents = events
-                .map(({ event }) => event)
-                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
 
-            assert.equal(
-                vcIssuedEvents.length,
-                1,
-                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
-            );
             await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });

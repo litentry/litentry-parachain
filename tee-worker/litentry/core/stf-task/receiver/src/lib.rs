@@ -96,7 +96,7 @@ pub struct StfTaskContext<
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub shielding_key: Arc<ShieldingKeyRepository>,
-	author_api: Arc<A>,
+	pub author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,

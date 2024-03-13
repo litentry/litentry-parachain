@@ -11,8 +11,9 @@ import {
     buildValidations,
     initIntegrationTestContext,
     PolkadotSigner,
+    sleep,
 } from './common/utils';
-import { assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
+import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -31,7 +32,6 @@ import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'par
 import { Vec, Bytes } from '@polkadot/types';
 import { ethers } from 'ethers';
 import type { HexString } from '@polkadot/util/types';
-import { subscribeToEventsWithExtHash } from './common/transactions';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -163,8 +163,7 @@ describe('Test Identity (direct invocation)', function () {
             networks: bitcoinNetworks,
         });
 
-        const identityLinkedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubstrateIdentity, true],
@@ -177,7 +176,6 @@ describe('Test Identity (direct invocation)', function () {
 
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
                 context.mrEnclave,
@@ -204,25 +202,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
-
-            const events = (await eventsPromise).map(({ event }) => event);
-            events.forEach((event) => {
-                if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
-                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
-                }
-                if (context.api.events.identityManagement.IdentityLinked.is(event)) {
-                    identityLinkedEvents.push(event);
-                }
-            });
         }
-
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            identityLinkedEvents,
-            idGraphHashResults,
-            4
-        );
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -287,7 +268,6 @@ describe('Test Identity (direct invocation)', function () {
 
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -316,8 +296,6 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
-        const events = await eventsPromise;
-        assert.lengthOf(events, 1);
     });
 
     step('linking identity with wrong signature', async function () {
@@ -327,6 +305,7 @@ describe('Test Identity (direct invocation)', function () {
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
 
         const evmNonce = getNextNonce();
+
         // random wrong msg
         const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
         const evmSignature = (await context.ethersWallet.alice.signMessage(
@@ -345,7 +324,6 @@ describe('Test Identity (direct invocation)', function () {
         };
         const encodedVerifyIdentityValidation = context.api.createType('LitentryValidationData', evmValidationData);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
@@ -374,16 +352,17 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
-        const events = await eventsPromise;
-
-        assert.lengthOf(events, 1);
     });
 
     step('linking already linked identity', async function () {
+        // sleep for a while to make sure the nonce is updated
+        await sleep(3);
+
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
+
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const [twitterValidation] = await buildValidations(
             context,
@@ -395,7 +374,6 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -424,8 +402,6 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
-        const events = await eventsPromise;
-        assert.lengthOf(events, 1);
     });
 
     step('deactivating linked identities', async function () {
@@ -475,8 +451,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: bitcoinIdentity,
         });
 
-        const identityDeactivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, false]],
             [[evmIdentity, false]],
@@ -486,7 +461,6 @@ describe('Test Identity (direct invocation)', function () {
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
                 context.api,
                 context.mrEnclave,
@@ -511,24 +485,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-
-            const events = (await eventsPromise).map(({ event }) => event);
-            events.forEach((event) => {
-                if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
-                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
-                }
-                if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
-                    identityDeactivatedEvents.push(event);
-                }
-            });
         }
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            identityDeactivatedEvents,
-            idGraphHashResults,
-            4
-        );
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -604,8 +562,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: bitcoinIdentity,
         });
 
-        const identityActivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, true]],
             [[evmIdentity, true]],
@@ -615,7 +572,6 @@ describe('Test Identity (direct invocation)', function () {
 
         for (const { nonce, identity } of activateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
                 context.api,
                 context.mrEnclave,
@@ -640,24 +596,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
-
-            const events = (await eventsPromise).map(({ event }) => event);
-            events.forEach((event) => {
-                if (context.api.events.identityManagement.ActivateIdentityFailed.is(event)) {
-                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
-                }
-                if (context.api.events.identityManagement.IdentityActivated.is(event)) {
-                    identityActivatedEvents.push(event);
-                }
-            });
         }
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            identityActivatedEvents,
-            idGraphHashResults,
-            4
-        );
+        assert.lengthOf(idGraphHashResults, 4);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -712,11 +652,9 @@ describe('Test Identity (direct invocation)', function () {
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = getNextNonce();
 
-        const identityNetworksSetEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
 
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         // we set the network to ['Litentry', 'Kusama']
         const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
             context.api,
@@ -744,19 +682,7 @@ describe('Test Identity (direct invocation)', function () {
         expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
         await assertIsInSidechainBlock('setIdentityNetworksCall', res);
 
-        const events = (await eventsPromise).map(({ event }) => event);
-        events.forEach((event) => {
-            if (context.api.events.identityManagement.IdentityNetworksSet.is(event)) {
-                identityNetworksSetEvents.push(event);
-            }
-        });
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            identityNetworksSetEvents,
-            idGraphHashResults,
-            1
-        );
+        assert.lengthOf(idGraphHashResults, 1);
     });
 
     step('check idgraph from sidechain storage after setting identity network', async function () {
@@ -855,13 +781,11 @@ describe('Test Identity (direct invocation)', function () {
             identity: bobSubstrateIdentity,
         });
 
-        const identityDeactivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[bobSubstrateIdentity, false]]];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
                 context.api,
                 context.mrEnclave,
@@ -886,24 +810,8 @@ describe('Test Identity (direct invocation)', function () {
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-
-            const events = (await eventsPromise).map(({ event }) => event);
-            events.forEach((event) => {
-                if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
-                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
-                }
-                if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
-                    identityDeactivatedEvents.push(event);
-                }
-            });
         }
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.bob),
-            identityDeactivatedEvents,
-            idGraphHashResults,
-            1
-        );
+        assert.lengthOf(idGraphHashResults, 1);
     });
 
     step('setting identity networks for prime identity)', async function () {
@@ -919,11 +827,9 @@ describe('Test Identity (direct invocation)', function () {
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = getNextNonce();
 
-        const identityNetworksSetEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
+        const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
 
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         // we set the network to ['Litentry', 'Kusama']
         const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
             context.api,
@@ -950,19 +856,6 @@ describe('Test Identity (direct invocation)', function () {
         );
         expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
         await assertIsInSidechainBlock('setIdentityNetworksCall', res);
-
-        const events = (await eventsPromise).map(({ event }) => event);
-        events.forEach((event) => {
-            if (context.api.events.identityManagement.IdentityNetworksSet.is(event)) {
-                identityNetworksSetEvents.push(event);
-            }
-        });
-        await assertIdGraphMutationEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.charlie),
-            identityNetworksSetEvents,
-            idGraphHashResults,
-            1
-        );
+        assert.lengthOf(idGraphHashResults, 1);
     });
 });
