@@ -21,8 +21,7 @@ use crate::{
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
 	initialization::global_components::{
-		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+		EnclaveBitcoinKeyRepository, EnclaveEthereumKeyRepository, EnclaveSigningKeyRepository,
 	},
 	std::string::ToString,
 	utils::{
@@ -37,15 +36,13 @@ use futures_sgx::channel::oneshot;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
-	ecdsa, ed25519,
 	ed25519_derivation::DeriveEd25519,
 	key_repository::{AccessKey, AccessPubkey},
-	schnorr, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
+	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
 use itp_top_pool_author::traits::AuthorApi;
@@ -57,9 +54,9 @@ use litentry_macros::if_not_production;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::ed25519;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
+use sp_core::crypto::Pair;
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -80,9 +77,9 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	ocall_api: Arc<OcallApi>,
-	signer: ed25519::Pair,
-	bitcoin_key: schnorr::Pair,
-	ethereum_key: ecdsa::Pair,
+	signing_key_repository: Arc<EnclaveSigningKeyRepository>,
+	bitcoin_key_repository: Arc<EnclaveBitcoinKeyRepository>,
+	ethereum_key_repository: Arc<EnclaveEthereumKeyRepository>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -158,6 +155,11 @@ where
 		debug!("worker_api_direct rpc was called: bitacross_getPublicKeys");
 
 		async move {
+			let signer = signing_key_repository.retrieve_key().expect("Signing key should exist");
+			let bitcoin_key =
+				bitcoin_key_repository.retrieve_key().expect("Bitcoind key should exist");
+			let ethereum_key =
+				ethereum_key_repository.retrieve_key().expect("Ethereum key should exist");
 			Ok(json!({
 				"signer": format!("{:?}", signer.public().0),
 				"bitcoin_key": format!("{:?}", bitcoin_key.public_bytes()),
