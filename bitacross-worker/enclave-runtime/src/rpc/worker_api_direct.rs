@@ -151,21 +151,19 @@ where
 		}
 	});
 
-	io.add_method("bitacross_getPublicKeys", move |_: Params| {
+	io.add_sync_method("bitacross_getPublicKeys", move |_: Params| {
 		debug!("worker_api_direct rpc was called: bitacross_getPublicKeys");
 
-		async move {
-			let signer = signing_key_repository.retrieve_key().expect("Signing key should exist");
-			let bitcoin_key =
-				bitcoin_key_repository.retrieve_key().expect("Bitcoind key should exist");
-			let ethereum_key =
-				ethereum_key_repository.retrieve_key().expect("Ethereum key should exist");
-			Ok(json!({
-				"signer": format!("{:?}", signer.public().0),
-				"bitcoin_key": format!("{:?}", bitcoin_key.public_bytes()),
-				"ethereum_key": format!("{:?}", ethereum_key.public_bytes())
-			}))
-		}
+		let signer = signing_key_repository.retrieve_key().expect("Signing key should exist");
+		let bitcoin_key = bitcoin_key_repository.retrieve_key().expect("Bitcoind key should exist");
+		let ethereum_key =
+			ethereum_key_repository.retrieve_key().expect("Ethereum key should exist");
+
+		Ok(json!({
+			"signer": format!("{:?}", signer.public().0),
+			"bitcoin_key": format!("{:?}", bitcoin_key.public_bytes()),
+			"ethereum_key": format!("{:?}", ethereum_key.public_bytes())
+		}))
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
