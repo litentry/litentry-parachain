@@ -54,9 +54,9 @@ use litentry_macros::if_not_production;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
-use sp_core::crypto::Pair;
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
