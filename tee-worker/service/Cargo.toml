@@ -1,6 +1,6 @@
 [package]
 name = 'litentry-worker'
-version = '0.0.1'
+version = '0.0.2'
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 build = 'build.rs'
 edition = '2021'
