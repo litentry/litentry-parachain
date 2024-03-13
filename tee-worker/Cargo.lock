@@ -12790,7 +12790,7 @@ dependencies = [
 [[package]]
 name = "sgx_crypto_sys"
 version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#cf82364359b4c3297a77111ca967b0f5c0dd32da"
 dependencies = [
  "sgx_build_helper",
  "sgx_download_prebuilt",

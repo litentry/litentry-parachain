@@ -177,3 +177,12 @@ sgx_tse = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch
 sgx_tseal = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+
+# overriding as we've got c compilation error on ubuntu 22.04 (maybe due to a newer gcc version)
+[patch."https://github.com/apache/incubator-teaclave-sgx-sdk"]
+sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+
+[patch."https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk"]
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_build_helper = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_download_prebuilt = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
