@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, subscribeToEvents } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, subscribeToEvents, sudoWrapperGC, sudoWrapperTC } from '../common/utils';
 import Web3 from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
@@ -139,7 +139,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         console.time('Test precompile staking contract');
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             let temp = await context.api.rpc.chain.getBlock();
             console.log(`setMode await Before: ${temp.block.header.number}`);
             await signAndSend(extrinsic, context.alice);
@@ -292,7 +292,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         expect(balanceAfterDelegate.reserved.toNumber()).to.eq(toBigNumber(57));
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
 
         console.timeEnd('Test precompile staking contract');
@@ -307,14 +307,14 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         }
 
         // update chain bridge fee
-        const updateFeeTx = context.api.tx.sudo.sudo(context.api.tx.chainBridge.updateFee(0, bn1e12 / 1000));
+        const updateFeeTx = await sudoWrapperGC(context.api, context.api.tx.chainBridge.updateFee(0, bn1e12 / 1000));
         await signAndSend(updateFeeTx, context.alice);
 
         const bridge_fee = await context.api.query.chainBridge.bridgeFee(0);
         expect(bridge_fee.toString()).to.eq((bn1e12 / 1000).toString());
 
         // set chainId to whitelist
-        const whitelistChainTx = context.api.tx.sudo.sudo(context.api.tx.chainBridge.whitelistChain(0));
+        const whitelistChainTx = await sudoWrapperGC(context.api, context.api.tx.chainBridge.whitelistChain(0));
         await signAndSend(whitelistChainTx, context.alice);
 
         // The above two steps are necessary, otherwise the contract transaction will be reverted.
