@@ -16,8 +16,7 @@
 */
 
 use crate::{
-	block_importer::BlockImporter,
-	test::{fixtures::validateer, mocks::peer_updater_mock::PeerUpdaterMock},
+	block_importer::BlockImporter, test::mocks::peer_updater_mock::PeerUpdaterMock,
 	ShardIdentifierFor,
 };
 use codec::Encode;
