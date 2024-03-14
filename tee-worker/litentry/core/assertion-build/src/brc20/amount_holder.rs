@@ -46,7 +46,7 @@ pub fn build(
 	})?;
 
 	if response.is_empty() {
-		Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity)
+		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
 	} else {
 		let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
 			error!("Generate unsigned credential failed {:?}", e);
