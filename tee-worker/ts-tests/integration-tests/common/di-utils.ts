@@ -10,7 +10,7 @@ import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { blake2AsHex, base58Encode } from '@polkadot/util-crypto';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -297,17 +297,38 @@ export async function createSignedTrustedGetterIdGraph(
 
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
-    teeShieldingKey: KeyObject,
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
-    // wait for the nonce to be updated in sidechain
-    await sleep(5);
-    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
-    const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
-    const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    const request = createJsonRpcRequest(
+        'author_getNextNonce',
+        [base58Encode(hexToU8a(context.mrEnclave)), getHexAddressFromIdentity(primeIdentity)],
+        nextRequestId(context)
+    );
+    const res = await sendRequest(context.tee, request, context.api);
+    const nonceHex = res.value.toHex();
+    let nonce = 0;
+
+    if (nonceHex) {
+        nonce = context.api.createType('Index', '0x' + nonceHex.slice(2)?.match(/../g)?.reverse().join('')).toNumber();
+    }
+
     return context.api.createType('Index', nonce);
 };
+
+function getHexAddressFromIdentity(identity: CorePrimitivesIdentity) {
+    let hexAddress;
+    if (identity.isEvm) {
+        hexAddress = identity.asEvm.toHex();
+    } else if (identity.isSubstrate) {
+        hexAddress = identity.asSubstrate.toHex();
+    } else if (identity.isBitcoin) {
+        hexAddress = identity.asBitcoin.toHex();
+    } else {
+        throw new Error(`Couldn't resolve hexAddress for identity type ${identity.type}`);
+    }
+
+    return hexAddress;
+}
 
 export const getIdGraphHash = async (
     context: IntegrationTestContext,
