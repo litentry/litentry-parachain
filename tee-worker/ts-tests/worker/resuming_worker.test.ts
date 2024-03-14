@@ -24,7 +24,6 @@ type WorkerConfig = {
     trustedWorkerPort: number;
     untrustedWorkerPort: number;
     enableMockServer: boolean;
-    requestStateOnLaunch: boolean;
 };
 
 const workerConfig: Record<'worker0' | 'worker1', WorkerConfig> = {
@@ -35,7 +34,6 @@ const workerConfig: Record<'worker0' | 'worker1', WorkerConfig> = {
         trustedWorkerPort: 2000,
         untrustedWorkerPort: 3000,
         enableMockServer: true,
-        requestStateOnLaunch: false,
     },
     worker1: {
         name: 'worker1',
@@ -44,7 +42,6 @@ const workerConfig: Record<'worker0' | 'worker1', WorkerConfig> = {
         trustedWorkerPort: 2001,
         untrustedWorkerPort: 3001,
         enableMockServer: false,
-        requestStateOnLaunch: true,
     },
 } as const;
 
@@ -78,7 +75,6 @@ function generateWorkerCommandArguments(
         `run`,
         `--skip-ra`,
         `--dev`,
-        ...(isLaunch && workerParams.requestStateOnLaunch ? ['--request-state'] : []),
     ].join(' ');
 }
 
