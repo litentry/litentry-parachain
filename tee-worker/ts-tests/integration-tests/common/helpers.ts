@@ -73,16 +73,21 @@ export function randomBitcoinWallet(): ECPairInterface {
     return keyPair;
 }
 
+export function genesisSubstrateWallets(name: string): KeyringPair {
+    const keyPair = keyring.addFromUri(`//${name}`, { name });
+    return keyPair;
+}
+
 export const createWeb3Wallets = (): Wallets => {
     const wallets: Wallets = {
         evm: {},
         substrate: {},
         bitcoin: {},
     };
-    const walletNames = ['alice', 'bob', 'charlie', 'dave', 'eve'];
+    const walletNames = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'];
     for (const name of walletNames) {
         wallets.evm[name] = new EthersSigner(randomEvmSigner());
-        wallets.substrate[name] = new PolkadotSigner(randomSubstrateWallet());
+        wallets.substrate[name] = new PolkadotSigner(genesisSubstrateWallets(name));
         wallets.bitcoin[name] = new BitcoinSigner(randomBitcoinWallet());
     }
 
