@@ -143,6 +143,7 @@ where
 	let local_top_pool_author = top_pool_author.clone();
 	let local_state = state.clone();
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {
 			Some(s) => s,
 			None =>
