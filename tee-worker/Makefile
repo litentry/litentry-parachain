@@ -28,6 +28,11 @@ SGX_PRODUCTION ?= 0
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
 
+######## Litentry ########
+# otherwise `sgx_crypto_sys` and `sgx_tlibc_sys` complain prebuilt libs can't be found
+# There's `optimized_libs/external/libirc/efi2/libirc.a` but not `libm*`
+USE_OPT_LIBS ?= 0
+
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk
 include rust-sgx-sdk/buildenv.mk
