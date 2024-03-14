@@ -356,19 +356,15 @@ describe('Test Identity (direct invocation)', function () {
 
     step('linking already linked identity', async function () {
         // sleep for a while to make sure the nonce is updated
-        await sleep(3);
+        await sleep(10);
 
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const twitterNonce = getNextNonce();
-
+        const currentNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const [twitterValidation] = await buildValidations(
             context,
             [aliceSubstrateIdentity],
             [twitterIdentity],
-            twitterNonce,
+            currentNonce.toNumber(),
             'twitter'
         );
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
@@ -377,7 +373,7 @@ describe('Test Identity (direct invocation)', function () {
         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
-            context.api.createType('Index', twitterNonce),
+            currentNonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubstrateIdentity,
             twitterIdentity.toHex(),
