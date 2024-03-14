@@ -29,7 +29,7 @@ use crate::{
 		worker_on_chain_ocall::WorkerOnChainOCall,
 	},
 	prometheus_metrics::ReceiveEnclaveMetrics,
-	worker_peers_registry::PeersRegistry,
+	worker_peers_updater::PeersRegistry,
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, remote_attestation::RemoteAttestationCallBacks};
 use itp_node_api::node_api_factory::CreateNodeApi;
