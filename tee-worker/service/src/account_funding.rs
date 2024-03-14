@@ -106,7 +106,7 @@ fn estimate_funds_needed_to_run_for_a_while(
 	info!("[{:?}] a single transfer costs {:?}", parentchain_id, transfer_fee);
 	min_required_funds += 1000 * transfer_fee;
 
-	// TODO(Litentry): shall we charge RA fee?
+	// TODO(Litentry P-628): shall we charge RA fee?
 	info!("[{:?}] not adding RA fees for now", parentchain_id);
 
 	info!(

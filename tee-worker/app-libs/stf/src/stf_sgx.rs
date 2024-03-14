@@ -289,7 +289,7 @@ where
 				.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
 				.map_err(|e| {
 					Self::Error::Dispatch(format!(
-						"Update parentchain integritee block error: {:?}",
+						"Update parentchain litentry block error: {:?}",
 						e.error
 					))
 				})
