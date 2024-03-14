@@ -167,7 +167,6 @@ export class BitcoinSigner implements Signer {
 }
 
 
-// todolist:
-// 1. remove walletItem
-// 2. use signers instead of walletItem
-// 3. use signer in test steps directly
+
+
+

@@ -16,9 +16,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
-            ethersWallet: {},
-            substrateWallet: {},
-            bitcoinWallet: {},
+            web3Wallets:{} as any,
             sidechainMetaData: {} as Metadata,
             sidechainRegistry: {} as TypeRegistry,
             // default LitentryRococo
@@ -34,9 +32,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
-            context.ethersWallet = tmp.ethersWallet;
-            context.substrateWallet = tmp.substrateWallet;
-            context.bitcoinWallet = tmp.bitcoinWallet;
+            context.web3Wallets= tmp.web3Wallets;
             context.sidechainMetaData = tmp.sidechainMetaData;
             context.sidechainRegistry = tmp.sidechainRegistry;
             context.chainIdentifier = tmp.chainIdentifier;
