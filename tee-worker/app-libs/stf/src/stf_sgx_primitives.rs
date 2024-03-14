@@ -19,7 +19,6 @@ use std::marker::PhantomData;
 
 pub mod types {
 	pub use itp_types::{AccountData, AccountInfo, BlockNumber, Header as ParentchainHeader};
-
 	pub type State = itp_sgx_externalities::SgxExternalities;
 	pub type StateType = itp_sgx_externalities::SgxExternalitiesType;
 	pub type StateDiffType = itp_sgx_externalities::SgxExternalitiesDiffType;

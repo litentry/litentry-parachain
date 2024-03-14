@@ -161,7 +161,7 @@ subcommands:
                     help: Set the URL for prometheus metrics. Probably put some meaningful description
                     takes_value: true
     - request-state:
-          about: join a shard by requesting key provisioning from another worker
+          about: (Deprecated - TODO) join a shard by requesting key provisioning from another worker
           args:
               - shard:
                     long: shard

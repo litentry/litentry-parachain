@@ -17,7 +17,7 @@
 
 use crate::{
 	worker::{Url, WorkerResult},
-	worker_peers_registry::PeersRegistry,
+	worker_peers_updater::PeersRegistry,
 };
 
 pub struct WorkerPeersRegistryMock;

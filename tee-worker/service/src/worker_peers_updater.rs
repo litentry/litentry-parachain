@@ -22,12 +22,13 @@ use mockall::predicate::*;
 use mockall::*;
 
 use crate::worker::{GetPeers, UpdatePeers, Url, WorkerResult};
+use itp_types::ShardIdentifier;
 use std::sync::Arc;
 
 /// Updates the peers of the global worker.
 #[cfg_attr(test, automock)]
 pub trait PeersRegistry {
-	fn update_peers(&self) -> WorkerResult<()>;
+	fn update_peers(&self, shard: ShardIdentifier) -> WorkerResult<()>;
 	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>>;
 }
 
@@ -45,8 +46,8 @@ impl<WorkerType> PeersRegistry for WorkerPeersRegistry<WorkerType>
 where
 	WorkerType: UpdatePeers + GetPeers,
 {
-	fn update_peers(&self) -> WorkerResult<()> {
-		self.worker.update_peers()
+	fn update_peers(&self, shard: ShardIdentifier) -> WorkerResult<()> {
+		self.worker.update_peers(shard)
 	}
 
 	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>> {

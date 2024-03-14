@@ -22,6 +22,7 @@ itp-hashing = { default-features = false, path = "../../core-primitives/hashing"
 itp-node-api = { default-features = false, path = "../../core-primitives/node-api" }
 itp-node-api-metadata = { default-features = false, path = "../../core-primitives/node-api/metadata" }
 itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
+itp-sgx-runtime-primitives = { default-features = false, path = "../../core-primitives/sgx-runtime-primitives" }
 itp-stf-interface = { default-features = false, path = "../../core-primitives/stf-interface" }
 itp-stf-primitives = { default-features = false, path = "../../core-primitives/stf-primitives" }
 itp-storage = { default-features = false, path = "../../core-primitives/storage" }
@@ -51,7 +52,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 [features]
 default = ["std"]
 evm = ["ita-sgx-runtime/evm"]
-evm_std = ["evm", "ita-sgx-runtime/evm_std"]
 sgx = [
     "sgx_tstd",
     "itp-sgx-externalities/sgx",

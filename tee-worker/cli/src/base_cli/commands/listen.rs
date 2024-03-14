@@ -16,11 +16,10 @@
 */
 
 use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
-use base58::ToBase58;
-use codec::Encode;
+
+use itp_types::parentchain::{BalanceTransfer, ParentchainBlockProcessed};
 use log::*;
-use my_node_runtime::{Hash, RuntimeEvent};
-use substrate_api_client::SubscribeEvents;
+use substrate_api_client::{GetChainInfo, SubscribeEvents};
 
 #[derive(Parser)]
 pub struct ListenCommand {
@@ -37,7 +36,7 @@ impl ListenCommand {
 	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
 		println!("{:?} {:?}", self.events, self.blocks);
 		let api = get_chain_api(cli);
-		info!("Subscribing to events");
+		info!("Subscribing to events (solo or para)");
 		let mut count = 0u32;
 		let mut blocks = 0u32;
 		let mut subscription = api.subscribe_events().unwrap();
@@ -53,81 +52,36 @@ impl ListenCommand {
 				}
 			};
 
-			let event_results = subscription.next_events::<RuntimeEvent, Hash>().unwrap();
+			let events = subscription.next_events_from_metadata().unwrap().unwrap();
 			blocks += 1;
-			match event_results {
-				Ok(evts) =>
-					for evr in &evts {
-						println!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
-						match &evr.event {
-							RuntimeEvent::Balances(be) => {
-								println!(">>>>>>>>>> balances event: {:?}", be);
-								match &be {
-									pallet_balances::Event::Transfer { from, to, amount } => {
-										println!("From: {:?}", from);
-										println!("To: {:?}", to);
-										println!("Value: {:?}", amount);
-									},
-									_ => {
-										debug!("ignoring unsupported balances event");
-									},
-								}
+			let header = api.get_header(None).unwrap().unwrap();
+			println!("block number (HEAD): {}", header.number);
+			for event in events.iter() {
+				let event = event.unwrap();
+				count += 1;
+				match event.pallet_name() {
+					"System" => continue,
+					"TransactionPayment" => continue,
+					"Treasury" => continue,
+					"Balances" => match event.variant_name() {
+						"Deposit" => continue,
+						"Withdraw" => continue,
+						"Transfer" =>
+							if let Ok(Some(ev)) = event.as_event::<BalanceTransfer>() {
+								println!("{:?}", ev);
 							},
-							RuntimeEvent::Teebag(ee) => {
-								println!(">>>>>>>>>> litentry teebag event: {:?}", ee);
-								count += 1;
-								match &ee {
-									my_node_runtime::pallet_teebag::Event::EnclaveAdded {
-										who,
-										worker_type,
-										url,
-									} => {
-										println!(
-											"EnclaveAdded: {:?} [{:?}] at url {}",
-											who,
-											worker_type,
-											String::from_utf8(url.to_vec())
-												.unwrap_or_else(|_| "error".to_string())
-										);
-									},
-									my_node_runtime::pallet_teebag::Event::EnclaveRemoved {
-										who,
-									} => {
-										println!("EnclaveRemoved: {:?}", who);
-									},
-									my_node_runtime::pallet_teebag::Event::OpaqueTaskPosted { shard } => {
-										println!(
-											"OpaqueTaskPosted for shard {}",
-											shard.encode().to_base58()
-										);
-									},
-									my_node_runtime::pallet_teebag::Event::ParentchainBlockProcessed {
-										who,
-										block_number,
-										block_hash,
-										task_merkle_root,
-									} => {
-										println!(
-											"ParentchainBlockProcessed from {} with hash {:?}, number {} and merkle root {:?}",
-											who, block_hash, block_number, task_merkle_root
-										);
-									},
-									my_node_runtime::pallet_teebag::Event::SidechainBlockFinalized {
-										who,
-										sidechain_block_number,
-									} => {
-										println!(
-											"SidechainBlockFinalized from {} with number {:?}",
-											who, sidechain_block_number
-										);
-									},
-									_ => debug!("ignoring unsupported teebag event: {:?}", ee),
-								}
-							},
-							_ => debug!("ignoring unsupported module event: {:?}", evr.event),
-						}
+						_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
 					},
-				Err(_) => error!("couldn't decode event record list"),
+					"Teebag" => match event.variant_name() {
+						"ParentchainBlockProcessed" => {
+							if let Ok(Some(ev)) = event.as_event::<ParentchainBlockProcessed>() {
+								println!("{:?}", ev);
+							}
+						},
+						_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
+					},
+					_ => println!("{}::{}", event.pallet_name(), event.variant_name()),
+				}
 			}
 		}
 	}
