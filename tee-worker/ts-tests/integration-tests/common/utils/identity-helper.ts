@@ -2,15 +2,12 @@ import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
-import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
+import { decryptWithAes, Signer } from './crypto';
 import { ethers } from 'ethers';
-import type { Bytes, TypeRegistry, Vec } from '@polkadot/types';
+import type { TypeRegistry } from '@polkadot/types';
 import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import type { KeyringPair } from '@polkadot/keyring/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
-import { buffer } from 'stream/consumers';
 
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
