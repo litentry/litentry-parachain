@@ -51,7 +51,7 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_not_production;
-use litentry_primitives::DecryptableRequest;
+use litentry_primitives::{DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -153,7 +153,7 @@ where
 		};
 
 		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
+			Ok((shard_base58, identity_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(id) => id,
 					Err(msg) => {
@@ -162,8 +162,9 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
+
+				let account_id = match Identity::from_hex(identity_hex.as_str()) {
+					Ok(identity) => identity.to_account_id(),
 					Err(msg) => {
 						let error_msg: String = format!(
 							"Could not retrieve author_getNextNonce calls due to: {:?}",
@@ -173,14 +174,23 @@ where
 					},
 				};
 
+				if account_id.is_none() {
+					let error_msg: String = format!(
+						"Could not retrieve author_getNextNonce calls due to: invalid account"
+					);
+					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+				}
+
+				let account_id = account_id.unwrap();
+
 				match local_state.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
 						let trusted_calls =
-							local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
+							local_top_pool_author.get_pending_trusted_calls_for(shard, &account_id);
 						let pending_tx_count = trusted_calls.len();
 						#[allow(clippy::unwrap_used)]
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = state.execute_with(|| System::account_nonce(&account));
+						let nonce = state.execute_with(|| System::account_nonce(&account_id));
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce.saturating_add(pending_tx_count)).encode(),
