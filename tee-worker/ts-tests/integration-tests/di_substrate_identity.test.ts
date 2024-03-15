@@ -410,7 +410,7 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const evmNonce = getNextNonce();
-        const evmIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
+        const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
 
         deactivateIdentityRequestParams.push({
             nonce: evmNonce,
