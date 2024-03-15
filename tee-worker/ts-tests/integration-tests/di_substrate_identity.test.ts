@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, u8aToString, bufferToU8a } from '@polkadot/util';
+import { u8aToHex, u8aToString } from '@polkadot/util';
 import {
     assertIdGraphMutationResult,
     assertIdGraphHash,
@@ -10,7 +10,6 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    PolkadotSigner,
     sleep,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
