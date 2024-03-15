@@ -6,7 +6,7 @@ import { Wallet } from 'ethers';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { ECPairInterface } from 'ecpair';
-import {Signer} from './utils/crypto';
+import { Signer } from './utils/crypto';
 // If there are types already defined in the client-api, please avoid redefining these types.
 // Instead, make every effort to use the types that have been generated within the client-api.
 

@@ -43,7 +43,6 @@ describe('Test Vc (direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
-
     });
 
     step('linking identities (alice)', async function () {
@@ -75,7 +74,7 @@ describe('Test Vc (direct invocation)', function () {
             aliceSubstrateIdentity,
             evmIdentity,
             evmNonce,
-            "ethereum",
+            'ethereum',
             context.web3Wallets.evm.Alice
         );
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);

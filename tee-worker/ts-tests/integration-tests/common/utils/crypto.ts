@@ -165,8 +165,3 @@ export class BitcoinSigner implements Signer {
         return buildIdentityHelper(u8aToHex(this.getAddressRaw()), 'Bitcoin', context);
     }
 }
-
-
-
-
-

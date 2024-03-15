@@ -250,7 +250,7 @@ describe('Test Identity (evm direct invocation)', function () {
     step('check idGraph from sidechain storage after deactivating', async function () {
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-             context.web3Wallets.evm.Alice,
+            context.web3Wallets.evm.Alice,
             aliceEvmIdentity
         );
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
@@ -310,7 +310,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                 context.web3Wallets.evm.Alice,
+                context.web3Wallets.evm.Alice,
                 aliceEvmIdentity,
                 identity.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
@@ -337,7 +337,7 @@ describe('Test Identity (evm direct invocation)', function () {
     step('check idGraph from sidechain storage after activating', async function () {
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-                             context.web3Wallets.evm.Alice,
+            context.web3Wallets.evm.Alice,
 
             aliceEvmIdentity
         );

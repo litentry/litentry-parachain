@@ -99,7 +99,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
         // link another bitcoin account with prettified signature
         const bobBitcoinNonce = getNextNonce();
-        const bobBitcoinValidation= await buildValidations(
+        const bobBitcoinValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
             bobBitcoinIdentity,

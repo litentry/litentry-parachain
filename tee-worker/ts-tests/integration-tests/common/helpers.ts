@@ -10,7 +10,7 @@ import { ECPairFactory, ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { ethers, Wallet } from 'ethers';
 import { EthersSigner, PolkadotSigner, BitcoinSigner } from './utils/crypto';
-import {Wallets} from './common-types';
+import { Wallets } from './common-types';
 export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
     return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
 }
