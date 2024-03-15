@@ -34,10 +34,6 @@ pub fn build(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
-		error!("Generate unsigned credential failed {:?}", e);
-		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
-	})?;
 	let mut client = GeniidataClient::new(data_provider_config)
 		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
@@ -48,7 +44,16 @@ pub fn build(
 			)),
 		)
 	})?;
-	credential_unsigned.update_brc20_amount_holder_credential(&response);
 
-	Ok(credential_unsigned)
+	if response.is_empty() {
+		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
+	} else {
+		let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
+			error!("Generate unsigned credential failed {:?}", e);
+			Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+		})?;
+		credential_unsigned.update_brc20_amount_holder_credential(&response);
+
+		Ok(credential_unsigned)
+	}
 }
