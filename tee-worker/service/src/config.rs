@@ -17,6 +17,7 @@
 
 use clap::ArgMatches;
 use itc_rest_client::rest_client::Url;
+use itp_types::parentchain::ParentchainId;
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -307,12 +308,12 @@ pub struct RunConfig {
 	skip_ra: bool,
 	/// Set this flag if running in development mode to bootstrap enclave account on parentchain via //Alice.
 	dev: bool,
-	/// Request key and state provisioning from a peer worker.
-	request_state: bool,
 	/// Shard identifier base58 encoded. Defines the shard that this worker operates on. Default is mrenclave.
 	shard: Option<String>,
 	/// Marblerun's Prometheus endpoint base URL
 	marblerun_base_url: Option<String>,
+	/// parentchain which should be used for shielding/unshielding the stf's native token
+	pub shielding_target: Option<ParentchainId>,
 }
 
 impl RunConfig {
@@ -322,10 +323,6 @@ impl RunConfig {
 
 	pub fn dev(&self) -> bool {
 		self.dev
-	}
-
-	pub fn request_state(&self) -> bool {
-		self.request_state
 	}
 
 	pub fn shard(&self) -> Option<&str> {
@@ -344,7 +341,6 @@ impl From<&ArgMatches<'_>> for RunConfig {
 	fn from(m: &ArgMatches<'_>) -> Self {
 		let skip_ra = m.is_present("skip-ra");
 		let dev = m.is_present("dev");
-		let request_state = m.is_present("request-state");
 		let shard = m.value_of("shard").map(|s| s.to_string());
 
 		let marblerun_base_url = m.value_of("marblerun-url").map(|i| {
@@ -353,7 +349,16 @@ impl From<&ArgMatches<'_>> for RunConfig {
 				.to_string()
 		});
 
-		Self { skip_ra, dev, request_state, shard, marblerun_base_url }
+		let shielding_target = m.value_of("shielding-target").map(|i| match i {
+			"litentry" => ParentchainId::Litentry,
+			"target_a" => ParentchainId::TargetA,
+			"target_b" => ParentchainId::TargetB,
+			_ => panic!(
+				"failed to parse shielding-target: {} must be one of litentry|target_a|target_b",
+				i
+			),
+		});
+		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target }
 	}
 }
 
@@ -489,7 +494,6 @@ mod test {
 		let empty_args = ArgMatches::default();
 		let run_config = RunConfig::from(&empty_args);
 
-		assert_eq!(run_config.request_state, false);
 		assert_eq!(run_config.dev, false);
 		assert_eq!(run_config.skip_ra, false);
 		assert!(run_config.shard.is_none());
@@ -501,7 +505,6 @@ mod test {
 
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
-			("request-state", Default::default()),
 			("dev", Default::default()),
 			("skip-ra", Default::default()),
 			("shard", Default::default()),
@@ -511,7 +514,6 @@ mod test {
 
 		let run_config = RunConfig::from(&args);
 
-		assert_eq!(run_config.request_state, true);
 		assert_eq!(run_config.dev, true);
 		assert_eq!(run_config.skip_ra, true);
 		assert_eq!(run_config.shard.unwrap(), shard_identifier.to_string());
