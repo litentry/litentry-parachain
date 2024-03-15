@@ -9,29 +9,8 @@ import { randomBytes } from 'crypto';
 import { ECPairFactory, ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { ethers, Wallet } from 'ethers';
-import { Signer, EthersSigner, PolkadotSigner, BitcoinSigner } from './utils/crypto';
+import { EthersSigner, PolkadotSigner, BitcoinSigner } from './utils/crypto';
 import {Wallets} from './common-types';
-// format and setup
-const keyring = new Keyring({ type: 'sr25519' });
-export function getSubstrateSigner(): {
-    alice: KeyringPair;
-    bob: KeyringPair;
-    charlie: KeyringPair;
-    eve: KeyringPair;
-} {
-    const alice = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    const charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
-    const eve = keyring.addFromUri('//Eve', { name: 'Eve' });
-    const signers = {
-        alice,
-        bob,
-        charlie,
-        eve,
-    };
-    return signers;
-}
-
 export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
     return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
 }
@@ -59,7 +38,7 @@ export function nextRequestId(context: IntegrationTestContext): number {
     return nextId;
 }
 
-export function randomEvmSigner(): Wallet {
+export function randomEvmWallet(): Wallet {
     return ethers.Wallet.createRandom();
 }
 export function randomSubstrateWallet(): KeyringPair {
@@ -73,7 +52,8 @@ export function randomBitcoinWallet(): ECPairInterface {
     return keyPair;
 }
 
-export function genesisSubstrateWallets(name: string): KeyringPair {
+export function genesisSubstrateWallet(name: string): KeyringPair {
+    const keyring = new Keyring({ type: 'sr25519' });
     const keyPair = keyring.addFromUri(`//${name}`, { name });
     return keyPair;
 }
@@ -86,8 +66,8 @@ export const createWeb3Wallets = (): Wallets => {
     };
     const walletNames = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'];
     for (const name of walletNames) {
-        wallets.evm[name] = new EthersSigner(randomEvmSigner());
-        wallets.substrate[name] = new PolkadotSigner(genesisSubstrateWallets(name));
+        wallets.evm[name] = new EthersSigner(randomEvmWallet());
+        wallets.substrate[name] = new PolkadotSigner(genesisSubstrateWallet(name));
         wallets.bitcoin[name] = new BitcoinSigner(randomBitcoinWallet());
     }
 
