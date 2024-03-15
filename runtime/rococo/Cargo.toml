@@ -281,6 +281,7 @@ try-runtime = [
     "pallet-identity/try-runtime",
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
+    "pallet-group/try-runtime",
     "pallet-identity-management/try-runtime",
     "pallet-membership/try-runtime",
     "pallet-multisig/try-runtime",
