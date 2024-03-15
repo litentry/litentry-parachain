@@ -39,7 +39,6 @@ use itp_sgx_crypto::{
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
-use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
@@ -164,7 +163,14 @@ where
 				};
 
 				let account_id = match Identity::from_hex(identity_hex.as_str()) {
-					Ok(identity) => identity.to_account_id(),
+					Ok(identity) =>
+						if let Some(account_id) = identity.to_account_id() {
+							account_id
+						} else {
+							return Ok(json!(compute_hex_encoded_return_error(
+								"Could not retrieve author_getNextNonce calls due to: invalid identity"
+							)))
+						},
 					Err(msg) => {
 						let error_msg: String = format!(
 							"Could not retrieve author_getNextNonce calls due to: {:?}",
@@ -173,15 +179,6 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-
-				if account_id.is_none() {
-					let error_msg: String = format!(
-						"Could not retrieve author_getNextNonce calls due to: invalid account"
-					);
-					return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-				}
-
-				let account_id = account_id.unwrap();
 
 				match local_state.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
