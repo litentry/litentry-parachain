@@ -30,10 +30,10 @@ describeLitentry('Test Base Filter', ``, (context) => {
     });
 
     step('Transfer 1000 unit from Eve to Bob with Sudo', async function () {
-        // only work for litentry|rococo
+        // only work for rococo
         const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
-        if (parachain === 'litmus-dev') {
-            console.log('Skip litmus (no sudo)');
+        if (parachain !== 'rococo-dev') {
+            console.log('Skip litmus/litentry (no sudo)');
             return;
         }
         // Get the initial balance of Alice and Bob

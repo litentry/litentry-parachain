@@ -24,7 +24,7 @@ use ita_sgx_runtime::Executive;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
 	runtime_upgrade::RuntimeUpgradeInterface,
 	sudo_pallet::SudoPalletInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
@@ -254,8 +254,8 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime, ParentchainHeader> ParentchainPalletInterface<State, ParentchainHeader>
-	for Stf<TCS, G, State, Runtime>
+impl<TCS, G, State, Runtime, ParentchainHeader>
+	ParentchainPalletInstancesInterface<State, ParentchainHeader> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config<Header = ParentchainHeader> + pallet_parentchain::Config,

@@ -20,7 +20,7 @@ use crate::{
 	setup, sync_state, tests,
 	utils::extract_shard,
 	worker::Worker,
-	worker_peers_registry::WorkerPeersRegistry,
+	worker_peers_updater::WorkerPeersRegistry,
 };
 use base58::ToBase58;
 use clap::{load_yaml, App, ArgMatches};
