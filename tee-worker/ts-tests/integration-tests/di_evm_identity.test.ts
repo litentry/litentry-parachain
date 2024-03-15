@@ -1,376 +1,364 @@
-// import { randomBytes, KeyObject } from 'crypto';
-// import { step } from 'mocha-steps';
-// import { assert } from 'chai';
-// import { u8aToHex } from '@polkadot/util';
-// import {
-//     buildIdentityFromKeypair,
-//     buildIdentityHelper,
-//     buildValidations,
-//     initIntegrationTestContext,
-//     EthersSigner,
-//     assertIdGraphMutationResult,
-//     assertIdGraphHash,
-// } from './common/utils';
-// import { assertIsInSidechainBlock } from './common/utils/assertion';
-// import {
-//     createSignedTrustedCallLinkIdentity,
-//     createSignedTrustedGetterIdGraph,
-//     createSignedTrustedCallDeactivateIdentity,
-//     createSignedTrustedCallActivateIdentity,
-//     decodeIdGraph,
-//     getSidechainNonce,
-//     getTeeShieldingKey,
-//     sendRequestFromGetter,
-//     sendRequestFromTrustedCall,
-// } from './common/di-utils'; // @fixme move to a better place
-// import type { IntegrationTestContext } from './common/common-types';
-// import { aesKey } from './common/call';
-// import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-// import { Vec, Bytes } from '@polkadot/types';
-// import type { HexString } from '@polkadot/util/types';
+import { randomBytes, KeyObject } from 'crypto';
+import { step } from 'mocha-steps';
+import { assert } from 'chai';
+import {
+    buildValidations,
+    initIntegrationTestContext,
+    assertIdGraphMutationResult,
+    assertIdGraphHash,
+} from './common/utils';
+import { assertIsInSidechainBlock } from './common/utils/assertion';
+import {
+    createSignedTrustedCallLinkIdentity,
+    createSignedTrustedGetterIdGraph,
+    createSignedTrustedCallDeactivateIdentity,
+    createSignedTrustedCallActivateIdentity,
+    decodeIdGraph,
+    getSidechainNonce,
+    getTeeShieldingKey,
+    sendRequestFromGetter,
+    sendRequestFromTrustedCall,
+} from './common/di-utils'; // @fixme move to a better place
+import type { IntegrationTestContext } from './common/common-types';
+import { aesKey } from './common/call';
+import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
+import { Vec, Bytes } from '@polkadot/types';
+import type { HexString } from '@polkadot/util/types';
 
-// describe('Test Identity (evm direct invocation)', function () {
-//     let context: IntegrationTestContext = undefined as any;
-//     let teeShieldingKey: KeyObject = undefined as any;
-//     let aliceEvmIdentity: CorePrimitivesIdentity = undefined as any;
-//     let bobEvmIdentity: CorePrimitivesIdentity;
+describe('Test Identity (evm direct invocation)', function () {
+    let context: IntegrationTestContext = undefined as any;
+    let teeShieldingKey: KeyObject = undefined as any;
+    let aliceEvmIdentity: CorePrimitivesIdentity = undefined as any;
+    let bobEvmIdentity: CorePrimitivesIdentity;
 
-//     // Alice links:
-//     // - a `mock_user` twitter
-//     // - alice's evm identity
-//     // - eve's substrate identity (as alice can't link her own substrate again)
-//     const linkIdentityRequestParams: {
-//         nonce: number;
-//         identity: CorePrimitivesIdentity;
-//         validation: LitentryValidationData;
-//         networks: Bytes | Vec<Web3Network>;
-//     }[] = [];
-//     this.timeout(6000000);
+    // Alice links:
+    // - a `mock_user` twitter
+    // - alice's evm identity
+    // - eve's substrate identity (as alice can't link her own substrate again)
+    const linkIdentityRequestParams: {
+        nonce: number;
+        identity: CorePrimitivesIdentity;
+        validation: LitentryValidationData;
+        networks: Bytes | Vec<Web3Network>;
+    }[] = [];
+    this.timeout(6000000);
 
-//     before(async () => {
-//         context = await initIntegrationTestContext(
-//             process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-//             process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
-//         );
-//         teeShieldingKey = await getTeeShieldingKey(context);
+    before(async () => {
+        context = await initIntegrationTestContext(
+            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
+            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
+        );
+        teeShieldingKey = await getTeeShieldingKey(context);
 
-//         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
-//         bobEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.bob), context);
-//     });
+        aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
+        bobEvmIdentity = await context.web3Wallets.evm.Bob.getIdentity(context);
+    });
 
-//     step('check idGraph from sidechain storage before linking', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new EthersSigner(context.ethersWallet.alice),
-//             aliceEvmIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+    step('check idGraph from sidechain storage before linking', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            context.web3Wallets.evm.Alice,
+            aliceEvmIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         assert.lengthOf(idGraph, 0);
-//     });
+        assert.lengthOf(idGraph, 0);
+    });
 
-//     step('linking identities (alice evm account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+    step('linking identities (alice evm account)', async function () {
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
 
-//         const bobEvmNonce = getNextNonce();
-//         const [bobEvmValidation] = await buildValidations(
-//             context,
-//             [aliceEvmIdentity],
-//             [bobEvmIdentity],
-//             bobEvmNonce,
-//             'ethereum',
-//             undefined,
-//             [context.ethersWallet.bob]
-//         );
-//         const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-//         linkIdentityRequestParams.push({
-//             nonce: bobEvmNonce,
-//             identity: bobEvmIdentity,
-//             validation: bobEvmValidation,
-//             networks: bobEvmNetworks,
-//         });
+        const bobEvmNonce = getNextNonce();
+        const bobEvmValidation = await buildValidations(
+            context,
+            aliceEvmIdentity,
+            bobEvmIdentity,
+            bobEvmNonce,
+            'ethereum',
+            context.web3Wallets.evm.Bob
+        );
+        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        linkIdentityRequestParams.push({
+            nonce: bobEvmNonce,
+            identity: bobEvmIdentity,
+            validation: bobEvmValidation,
+            networks: bobEvmNetworks,
+        });
 
-//         const eveSubstrateNonce = getNextNonce();
-//         const eveSubstrateIdentity = await buildIdentityHelper(
-//             u8aToHex(context.substrateWallet.eve.addressRaw),
-//             'Substrate',
-//             context
-//         );
-//         const [eveSubstrateValidation] = await buildValidations(
-//             context,
-//             [aliceEvmIdentity],
-//             [eveSubstrateIdentity],
-//             eveSubstrateNonce,
-//             'substrate',
-//             context.substrateWallet.eve
-//         );
-//         const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']);
-//         linkIdentityRequestParams.push({
-//             nonce: eveSubstrateNonce,
-//             identity: eveSubstrateIdentity,
-//             validation: eveSubstrateValidation,
-//             networks: eveSubstrateNetworks,
-//         });
+        const eveSubstrateNonce = getNextNonce();
 
-//         const idGraphHashResults: HexString[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
-//             [
-//                 [aliceEvmIdentity, true],
-//                 [bobEvmIdentity, true],
-//             ],
-//             [[eveSubstrateIdentity, true]],
-//         ];
+        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
+        const eveSubstrateValidation = await buildValidations(
+            context,
+            aliceEvmIdentity,
+            eveSubstrateIdentity,
+            eveSubstrateNonce,
+            'substrate',
+            context.web3Wallets.substrate.Eve
+        );
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']);
+        linkIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
+            identity: eveSubstrateIdentity,
+            validation: eveSubstrateValidation,
+            networks: eveSubstrateNetworks,
+        });
 
-//         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new EthersSigner(context.ethersWallet.alice),
-//                 aliceEvmIdentity,
-//                 identity.toHex(),
-//                 validation.toHex(),
-//                 networks.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+        const idGraphHashResults: HexString[] = [];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
+            [
+                [aliceEvmIdentity, true],
+                [bobEvmIdentity, true],
+            ],
+            [[eveSubstrateIdentity, true]],
+        ];
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceEvmIdentity,
-//                     res,
-//                     'LinkIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('linkIdentityCall', res);
-//         }
-//         assert.lengthOf(idGraphHashResults, 2);
-//     });
+        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                context.web3Wallets.evm.Alice,
+                aliceEvmIdentity,
+                identity.toHex(),
+                validation.toHex(),
+                networks.toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
 
-//     step('check user sidechain storage after linking', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new EthersSigner(context.ethersWallet.alice),
-//             aliceEvmIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceEvmIdentity,
+                    res,
+                    'LinkIdentityResult',
+                    expectedIdGraphs[0]
+                )
+            );
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+            await assertIsInSidechainBlock('linkIdentityCall', res);
+        }
+        assert.lengthOf(idGraphHashResults, 2);
+    });
 
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+    step('check user sidechain storage after linking', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            context.web3Wallets.evm.Alice,
+            aliceEvmIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
-//         // according to the order of linkIdentityRequestParams
-//         const expectedWeb3Networks = [
-//             ['Ethereum', 'Bsc'],
-//             ['Litentry', 'Khala'],
-//         ];
-//         let currentIndex = 0;
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         for (const { identity } of linkIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+        // according to the order of linkIdentityRequestParams
+        const expectedWeb3Networks = [
+            ['Ethereum', 'Bsc'],
+            ['Litentry', 'Khala'],
+        ];
+        let currentIndex = 0;
 
-//             const web3networks = idGraphNode![1].web3networks.toHuman();
-//             assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
+        for (const { identity } of linkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Active',
-//                 `status should be active for identity: ${identityDump}`
-//             );
-//             console.debug('active ✅');
+            const web3networks = idGraphNode![1].web3networks.toHuman();
+            assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
 
-//             currentIndex++;
-//         }
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Active',
+                `status should be active for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
-//     });
-//     step('deactivating identity(alice evm account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+            currentIndex++;
+        }
 
-//         const deactivateIdentityRequestParams: {
-//             nonce: number;
-//             identity: CorePrimitivesIdentity;
-//         }[] = [];
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
+    });
+    step('deactivating identity(alice evm account)', async function () {
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
 
-//         const bobEvmNonce = getNextNonce();
+        const deactivateIdentityRequestParams: {
+            nonce: number;
+            identity: CorePrimitivesIdentity;
+        }[] = [];
 
-//         deactivateIdentityRequestParams.push({
-//             nonce: bobEvmNonce,
-//             identity: bobEvmIdentity,
-//         });
+        const bobEvmNonce = getNextNonce();
 
-//         const eveSubstrateNonce = getNextNonce();
-//         const eveSubstrateIdentity = await buildIdentityHelper(
-//             u8aToHex(context.substrateWallet.eve.addressRaw),
-//             'Substrate',
-//             context
-//         );
-//         deactivateIdentityRequestParams.push({
-//             nonce: eveSubstrateNonce,
-//             identity: eveSubstrateIdentity,
-//         });
+        deactivateIdentityRequestParams.push({
+            nonce: bobEvmNonce,
+            identity: bobEvmIdentity,
+        });
 
-//         const idGraphHashResults: HexString[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
-//             [[bobEvmIdentity, false]],
-//             [[eveSubstrateIdentity, false]],
-//         ];
+        const eveSubstrateNonce = getNextNonce();
 
-//         for (const { nonce, identity } of deactivateIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new EthersSigner(context.ethersWallet.alice),
-//                 aliceEvmIdentity,
-//                 identity.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
+        deactivateIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
+            identity: eveSubstrateIdentity,
+        });
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceEvmIdentity,
-//                     res,
-//                     'DeactivateIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('deactivateIdentityCall', res);
-//         }
-//         assert.lengthOf(idGraphHashResults, 2);
-//     });
+        const idGraphHashResults: HexString[] = [];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
+            [[bobEvmIdentity, false]],
+            [[eveSubstrateIdentity, false]],
+        ];
 
-//     step('check idGraph from sidechain storage after deactivating', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new EthersSigner(context.ethersWallet.alice),
-//             aliceEvmIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        for (const { nonce, identity } of deactivateIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                context.web3Wallets.evm.Alice,
+                aliceEvmIdentity,
+                identity.toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
 
-//         for (const { identity } of linkIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceEvmIdentity,
+                    res,
+                    'DeactivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
+            );
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+            await assertIsInSidechainBlock('deactivateIdentityCall', res);
+        }
+        assert.lengthOf(idGraphHashResults, 2);
+    });
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Inactive',
-//                 `status should be Inactive for identity: ${identityDump}`
-//             );
-//             console.debug('inactive ✅');
-//         }
+    step('check idGraph from sidechain storage after deactivating', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+             context.web3Wallets.evm.Alice,
+            aliceEvmIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
-//     });
-//     step('activating identity(alice evm account)', async function () {
-//         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
-//         const getNextNonce = () => currentNonce++;
+        for (const { identity } of linkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
 
-//         const activateIdentityRequestParams: {
-//             nonce: number;
-//             identity: CorePrimitivesIdentity;
-//         }[] = [];
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Inactive',
+                `status should be Inactive for identity: ${identityDump}`
+            );
+            console.debug('inactive ✅');
+        }
 
-//         const bobEvmNonce = getNextNonce();
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
+    });
+    step('activating identity(alice evm account)', async function () {
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
 
-//         activateIdentityRequestParams.push({
-//             nonce: bobEvmNonce,
-//             identity: bobEvmIdentity,
-//         });
+        const activateIdentityRequestParams: {
+            nonce: number;
+            identity: CorePrimitivesIdentity;
+        }[] = [];
 
-//         const eveSubstrateNonce = getNextNonce();
-//         const eveSubstrateIdentity = await buildIdentityHelper(
-//             u8aToHex(context.substrateWallet.eve.addressRaw),
-//             'Substrate',
-//             context
-//         );
-//         activateIdentityRequestParams.push({
-//             nonce: eveSubstrateNonce,
-//             identity: eveSubstrateIdentity,
-//         });
+        const bobEvmNonce = getNextNonce();
 
-//         const idGraphHashResults: HexString[] = [];
-//         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
-//             [[bobEvmIdentity, true]],
-//             [[eveSubstrateIdentity, true]],
-//         ];
+        activateIdentityRequestParams.push({
+            nonce: bobEvmNonce,
+            identity: bobEvmIdentity,
+        });
 
-//         for (const { nonce, identity } of activateIdentityRequestParams) {
-//             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-//             const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
-//                 context.api,
-//                 context.mrEnclave,
-//                 context.api.createType('Index', nonce),
-//                 new EthersSigner(context.ethersWallet.alice),
-//                 aliceEvmIdentity,
-//                 identity.toHex(),
-//                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-//                 requestIdentifier
-//             );
+        const eveSubstrateNonce = getNextNonce();
 
-//             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
-//             idGraphHashResults.push(
-//                 await assertIdGraphMutationResult(
-//                     context,
-//                     teeShieldingKey,
-//                     aliceEvmIdentity,
-//                     res,
-//                     'ActivateIdentityResult',
-//                     expectedIdGraphs[0]
-//                 )
-//             );
-//             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-//             await assertIsInSidechainBlock('activateIdentityCall', res);
-//         }
-//         assert.lengthOf(idGraphHashResults, 2);
-//     });
+        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
 
-//     step('check idGraph from sidechain storage after activating', async function () {
-//         const idGraphGetter = await createSignedTrustedGetterIdGraph(
-//             context.api,
-//             new EthersSigner(context.ethersWallet.alice),
-//             aliceEvmIdentity
-//         );
-//         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-//         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        activateIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
+            identity: eveSubstrateIdentity,
+        });
 
-//         for (const { identity } of linkIdentityRequestParams) {
-//             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-//             console.debug(`checking identity: ${identityDump}`);
-//             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-//             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-//             const [, idGraphNodeContext] = idGraphNode!;
+        const idGraphHashResults: HexString[] = [];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
+            [[bobEvmIdentity, true]],
+            [[eveSubstrateIdentity, true]],
+        ];
 
-//             assert.equal(
-//                 idGraphNodeContext.status.toString(),
-//                 'Active',
-//                 `status should be active for identity: ${identityDump}`
-//             );
-//             console.debug('active ✅');
-//         }
+        for (const { nonce, identity } of activateIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                 context.web3Wallets.evm.Alice,
+                aliceEvmIdentity,
+                identity.toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
 
-//         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
-//     });
-// });
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceEvmIdentity,
+                    res,
+                    'ActivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
+            );
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+            await assertIsInSidechainBlock('activateIdentityCall', res);
+        }
+        assert.lengthOf(idGraphHashResults, 2);
+    });
+
+    step('check idGraph from sidechain storage after activating', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+                             context.web3Wallets.evm.Alice,
+
+            aliceEvmIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        for (const { identity } of linkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
+
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Active',
+                `status should be active for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
+        }
+
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
+    });
+});
