@@ -31,8 +31,7 @@ use ita_stf::{
 	aes_encrypt_default,
 	helpers::ensure_self,
 	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
-	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation,
-	H256,
+	Getter, TrustedCall, TrustedCallSigned,
 };
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
@@ -43,11 +42,13 @@ use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveO
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
+	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall,
+	ShardIdentifier, H256,
 };
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;

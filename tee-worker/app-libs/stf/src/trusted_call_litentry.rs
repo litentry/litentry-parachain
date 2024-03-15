@@ -24,18 +24,21 @@ use crate::{
 		verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, ShardIdentifier, StfError, StfResult, H256,
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{
 	pallet_imt::{get_eligible_identities, IdentityContext},
-	BlockNumber, Parentchain, RuntimeOrigin, System,
+	BlockNumber, ParentchainLitentry, RuntimeOrigin, System,
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_types::parentchain::ParentchainCall;
+use itp_stf_primitives::{
+	error::{StfError, StfResult},
+	types::{AccountId, ShardIdentifier},
+};
+use itp_types::{parentchain::ParentchainCall, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -195,7 +198,7 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
 		);
 
-		let parachain_block_number = Parentchain::block_number();
+		let parachain_block_number = ParentchainLitentry::block_number();
 		let sidechain_block_number = System::block_number();
 
 		let assertion_build: RequestType = AssertionBuildRequest {
