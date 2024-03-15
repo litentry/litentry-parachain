@@ -61,6 +61,7 @@ members = [
     "bitacross/core/bc-task-receiver",
     "bitacross/core/bc-task-sender",
     "bitacross/core/bc-relayer-registry",
+    "bitacross/core/bc-musig2"
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
