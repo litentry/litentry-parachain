@@ -29,6 +29,7 @@ use lc_data_providers::{
 
 use crate::*;
 
+#[cfg(not(feature = "async"))]
 pub fn is_user(
 	addresses: Vec<String>,
 	data_provider_config: &DataProviderConfig,
@@ -37,6 +38,27 @@ pub fn is_user(
 	let mut client = KaratDaoClient::new(data_provider_config);
 	for address in addresses {
 		match client.user_verification(address, true) {
+			Ok(response) => {
+				is_user = response.result.is_valid;
+				if is_user {
+					break
+				}
+			},
+			Err(err) => return Err(err.into_error_detail()),
+		}
+	}
+	Ok(is_user)
+}
+
+#[cfg(feature = "async")]
+pub async fn is_user(
+	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	let mut is_user = false;
+	let mut client = KaratDaoClient::new(data_provider_config);
+	for address in addresses {
+		match client.user_verification(address, true).await {
 			Ok(response) => {
 				is_user = response.result.is_valid;
 				if is_user {

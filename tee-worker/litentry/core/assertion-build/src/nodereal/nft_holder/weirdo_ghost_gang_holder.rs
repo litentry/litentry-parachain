@@ -32,6 +32,7 @@ use lc_data_providers::{DataProviderConfig, Error as DataProviderError};
 
 const NFT_TOKEN_ADDRESS: &str = "0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197";
 
+#[cfg(not(feature = "async"))]
 fn check_has_nft(
 	client: &mut NoderealJsonrpcClient,
 	address: &str,
@@ -54,6 +55,30 @@ fn check_has_nft(
 	}
 }
 
+#[cfg(feature = "async")]
+async fn check_has_nft(
+	client: &mut NoderealJsonrpcClient,
+	address: &str,
+) -> result::Result<bool, DataProviderError> {
+	let param = GetTokenBalance721Param {
+		token_address: NFT_TOKEN_ADDRESS.into(),
+		account_address: address.into(),
+		block_number: "latest".into(),
+	};
+
+	match client.get_token_balance_721(&param, false).await {
+		Ok(res) => {
+			debug!("Get token balance 721 response: {:?}", res);
+			Ok(res > 0)
+		},
+		Err(e) => {
+			error!("Error get token balance 721 by param: {:?}, {:?}", param, e);
+			Err(e)
+		},
+	}
+}
+
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -73,6 +98,63 @@ pub fn build(
 	let mut errors: Vec<DataProviderError> = Vec::new();
 	for address in addresses {
 		match check_has_nft(&mut client, address.as_str()) {
+			Ok(res) => {
+				has_nft = res;
+				break
+			},
+			Err(err) => {
+				errors.push(err);
+			},
+		}
+	}
+
+	if !has_nft && !errors.is_empty() {
+		return Err(Error::RequestVCFailed(
+			Assertion::WeirdoGhostGangHolder,
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				errors
+					.into_iter()
+					.map(|e| format!("{e:?}"))
+					.collect::<Vec<String>>()
+					.join(", ")
+					.as_bytes()
+					.to_vec(),
+			)),
+		))
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_weirdo_ghost_gang_holder_assertion(has_nft);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::WeirdoGhostGangHolder, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("WeirdoGhostGang holder");
+
+	let mut has_nft = false;
+	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.filter(|(newtwork_type, _)| *newtwork_type == Web3Network::Ethereum)
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut errors: Vec<DataProviderError> = Vec::new();
+	for address in addresses {
+		match check_has_nft(&mut client, address.as_str()).await {
 			Ok(res) => {
 				has_nft = res;
 				break

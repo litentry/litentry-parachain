@@ -33,6 +33,7 @@ const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
 ///    * 1,000+ followers
 ///    * 10,000+ followers
 ///    * 100,000+ followers
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -49,6 +50,79 @@ pub fn build(
 		if let Identity::Twitter(address) = &identity.0 {
 			let twitter_handler = address.inner_ref().to_vec();
 			let user = client.query_user_by_name(twitter_handler).map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::A6,
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", e).into())),
+				)
+			})?;
+
+			if let Some(metrics) = user.public_metrics {
+				sum += metrics.followers_count;
+			}
+		}
+	}
+
+	let min: u32;
+	let max: u32;
+
+	match sum {
+		0 | 1 => {
+			min = 0;
+			max = 1;
+		},
+		2..=100 => {
+			min = 1;
+			max = 100;
+		},
+		101..=1000 => {
+			min = 100;
+			max = 1000;
+		},
+		1001..=10000 => {
+			min = 1000;
+			max = 10000;
+		},
+		10001..=100000 => {
+			min = 10000;
+			max = 100000;
+		},
+		100001..=u32::MAX => {
+			min = 100000;
+			max = u32::MAX;
+		},
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_A6_SUBJECT_DESCRIPTION, VC_A6_SUBJECT_TYPE);
+			credential_unsigned.add_assertion_a6(min, max);
+
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A6, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A6 build, who: {:?}", account_id_to_string(&req.who),);
+
+	let mut client = TwitterOfficialClient::v2(
+		&data_provider_config.twitter_official_url,
+		&data_provider_config.twitter_auth_token_v2,
+	);
+	let mut sum: u32 = 0;
+
+	for identity in &req.identities {
+		if let Identity::Twitter(address) = &identity.0 {
+			let twitter_handler = address.inner_ref().to_vec();
+			let user = client.query_user_by_name(twitter_handler).await.map_err(|e| {
 				Error::RequestVCFailed(
 					Assertion::A6,
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", e).into())),

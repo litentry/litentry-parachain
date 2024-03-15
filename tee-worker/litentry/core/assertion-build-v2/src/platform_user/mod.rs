@@ -30,6 +30,7 @@ use log::debug;
 
 use crate::*;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	platform_user_type: PlatformUserType,
@@ -47,6 +48,51 @@ pub fn build(
 
 	let result =
 		is_user(platform_user_type.clone(), addresses, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::PlatformUser(platform_user_type.clone()),
+				ErrorDetail::DataProviderError(ErrorString::truncate_from(
+					format!("{e:?}").as_bytes().to_vec(),
+				)),
+			)
+		});
+
+	match result {
+		Ok(value) => match Credential::new(&req.who, &req.shard) {
+			Ok(mut credential_unsigned) => {
+				credential_unsigned.update_platform_user_assertion(platform_user_type, value);
+				Ok(credential_unsigned)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(Error::RequestVCFailed(
+					Assertion::PlatformUser(platform_user_type),
+					e.into_error_detail(),
+				))
+			},
+		},
+		Err(e) => Err(e),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	platform_user_type: PlatformUserType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("platform user: {:?}", platform_user_type);
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses: Vec<String> = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses.into_iter())
+		.collect::<HashSet<String>>()
+		.into_iter()
+		.collect();
+
+	let result = is_user(platform_user_type.clone(), addresses, data_provider_config)
+		.await
+		.map_err(|e| {
 			Error::RequestVCFailed(
 				Assertion::PlatformUser(platform_user_type.clone()),
 				ErrorDetail::DataProviderError(ErrorString::truncate_from(

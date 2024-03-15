@@ -40,7 +40,7 @@ use std::{
 };
 
 pub struct AchainableClient {
-	client: RestClient<HttpClient<SendWithCertificateVerification>>,
+	pub client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl AchainableClient {

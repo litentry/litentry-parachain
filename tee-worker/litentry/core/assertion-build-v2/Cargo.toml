@@ -40,6 +40,21 @@ lc-mock-server = { path = "../mock-server" }
 
 [features]
 default = ["std"]
+async = []
+async_std = [
+    "async",
+    "std",
+    "lc-service/async_std",
+    "lc-credentials-v2/async_std",
+    "lc-assertion-build/async_std",
+]
+async_sgx = [
+    "async",
+    "sgx",
+    "lc-service/async_sgx",
+    "lc-credentials-v2/async_sgx",
+    "lc-assertion-build/async_sgx",
+]
 sgx = [
     "sgx_tstd",
     "thiserror_sgx",

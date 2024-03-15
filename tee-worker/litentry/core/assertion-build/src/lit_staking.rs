@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::*;
+use async_trait::async_trait;
 use codec::Decode;
 use frame_support::{StorageHasher, Twox64Concat};
 use http::header::CONNECTION;
@@ -87,6 +88,7 @@ impl LitentryStakingClient {
 		LitentryStakingClient { client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn send_request(&mut self, data: &JsonRPCRequest) -> Result<JsonRPCResponse> {
 		self.client
 			.post_capture::<String, JsonRPCRequest, JsonRPCResponse>(String::default(), data)
@@ -99,12 +101,35 @@ impl LitentryStakingClient {
 				)
 			})
 	}
+
+	#[cfg(feature = "async")]
+	pub async fn send_request(&mut self, data: &JsonRPCRequest) -> Result<JsonRPCResponse> {
+		self.client
+			.post_capture::<String, JsonRPCRequest, JsonRPCResponse>(String::default(), data)
+			.await
+			.map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::LITStaking,
+					ErrorDetail::DataProviderError(ErrorString::truncate_from(
+						format!("{e:?}").as_bytes().to_vec(),
+					)),
+				)
+			})
+	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait QueryParachainStaking {
 	fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait QueryParachainStaking {
+	async fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>>;
+}
+
+#[cfg(not(feature = "async"))]
 impl QueryParachainStaking for LitentryStakingClient {
 	fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>> {
 		let data = JsonRPCRequest::state_getstorage(key);
@@ -114,8 +139,20 @@ impl QueryParachainStaking for LitentryStakingClient {
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl QueryParachainStaking for LitentryStakingClient {
+	async fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>> {
+		let data = JsonRPCRequest::state_getstorage(key);
+		let res = self.send_request(&data).await?;
+
+		Ok(res.result)
+	}
+}
+
 pub struct DelegatorState;
 impl DelegatorState {
+	#[cfg(not(feature = "async"))]
 	pub fn query_lit_staking(
 		&mut self,
 		client: &mut LitentryStakingClient,
@@ -126,6 +163,29 @@ impl DelegatorState {
 		for identity in identities {
 			let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
 			let storage_in_hex = client.query_delegator_state(&storage_key)?;
+
+			if let Some(storage_in_hex) = storage_in_hex {
+				let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
+				let total = delegator.total;
+
+				total_staking_amount += total;
+			}
+		}
+
+		Ok(total_staking_amount / LIT_TOKEN_DECIMALS)
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn query_lit_staking(
+		&mut self,
+		client: &mut LitentryStakingClient,
+		identities: &[Identity],
+	) -> Result<u128> {
+		let mut total_staking_amount = 0_u128;
+
+		for identity in identities {
+			let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
+			let storage_in_hex = client.query_delegator_state(&storage_key).await?;
 
 			if let Some(storage_in_hex) = storage_in_hex {
 				let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
@@ -171,6 +231,7 @@ impl DelegatorState {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion building LIT staking amount");
 
@@ -184,6 +245,32 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	let mut client = LitentryStakingClient::new();
 	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_lit_staking_amount(staking_amount);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::LITStaking, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	debug!("Assertion building LIT staking amount");
+
+	let mut identities = vec![];
+	req.identities
+		.iter()
+		.filter(|(identity, _)| identity.is_substrate())
+		.for_each(|identity| {
+			identities.push(identity.0.clone());
+		});
+
+	let mut client = LitentryStakingClient::new();
+	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities).await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_lit_staking_amount(staking_amount);

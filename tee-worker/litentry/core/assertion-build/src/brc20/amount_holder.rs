@@ -24,6 +24,7 @@ use crate::*;
 use lc_credentials::brc20::amount_holder::BRC20AmountHolderCredential;
 use lc_data_providers::{geniidata::GeniidataClient, DataProviderConfig};
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -41,6 +42,36 @@ pub fn build(
 	let mut client = GeniidataClient::new(data_provider_config)
 		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::BRC20AmountHolder,
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				format!("{e:?}").as_bytes().to_vec(),
+			)),
+		)
+	})?;
+	credential_unsigned.update_brc20_amount_holder_credential(&response);
+
+	Ok(credential_unsigned)
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
+		error!("Generate unsigned credential failed {:?}", e);
+		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+	})?;
+	let mut client = GeniidataClient::new(data_provider_config)
+		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
+	let response = client.create_brc20_amount_holder_sum(addresses).await.map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::BRC20AmountHolder,
 			ErrorDetail::DataProviderError(ErrorString::truncate_from(

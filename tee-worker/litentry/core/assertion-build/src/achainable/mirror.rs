@@ -46,6 +46,7 @@ use litentry_primitives::AchainableMirror;
 //     "includeMetadata": true
 // }
 
+#[cfg(not(feature = "async"))]
 pub fn build_on_mirror(
 	req: &AssertionBuildRequest,
 	param: AchainableMirror,
@@ -65,6 +66,42 @@ pub fn build_on_mirror(
 		)
 	})?;
 	let value = request_achainable(addresses, achainable_param.clone(), data_provider_config)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_mirror(mtype, value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build_on_mirror(
+	req: &AssertionBuildRequest,
+	param: AchainableMirror,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let achainable_param = AchainableParams::Mirror(param);
+	let mtype = AchainableNameMirror::from(achainable_param.name()).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+	let value =
+		request_achainable(addresses, achainable_param.clone(), data_provider_config).await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_mirror(mtype, value);

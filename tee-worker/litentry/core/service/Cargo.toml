@@ -31,6 +31,9 @@ litentry-primitives = { path = "../../primitives", default-features = false }
 
 [features]
 default = ["std"]
+async = []
+async_std = ["async", "std", "lc-data-providers/async_std"]
+async_sgx = ["async", "sgx", "lc-data-providers/async_sgx"]
 sgx = [
     "sgx_tstd",
     "thiserror_sgx",

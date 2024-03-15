@@ -26,6 +26,7 @@ use crate::*;
 
 mod common;
 
+#[cfg(not(feature = "async"))]
 pub fn has_nft(
 	nft_type: Web3NftType,
 	addresses: Vec<(Web3Network, String)>,
@@ -35,5 +36,19 @@ pub fn has_nft(
 		Web3NftType::WeirdoGhostGang =>
 			common::has_nft_721(addresses, nft_type, data_provider_config),
 		Web3NftType::Club3Sbt => common::has_nft_1155(addresses, nft_type, data_provider_config),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn has_nft(
+	nft_type: Web3NftType,
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	match nft_type {
+		Web3NftType::WeirdoGhostGang =>
+			common::has_nft_721(addresses, nft_type, data_provider_config).await,
+		Web3NftType::Club3Sbt =>
+			common::has_nft_1155(addresses, nft_type, data_provider_config).await,
 	}
 }

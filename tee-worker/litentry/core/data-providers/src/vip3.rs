@@ -18,6 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
+#[cfg(feature = "async")]
+use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -35,6 +37,12 @@ use std::{
 #[cfg(not(feature = "async"))]
 pub trait VIP3QuerySet {
 	fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error>;
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait VIP3QuerySet {
+	async fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -93,7 +101,8 @@ impl VIP3QuerySet for VIP3Client {
 }
 
 #[cfg(feature = "async")]
-impl VIP3Client {
+#[async_trait]
+impl VIP3QuerySet for VIP3Client {
 	async fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error> {
 		let path = "/api/v1/sbt/info".to_string();
 		let query = vec![("addr", address)];

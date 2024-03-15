@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 pub mod card;
 
 use crate::*;
+use async_trait::async_trait;
 use lc_data_providers::{
 	vip3::{VIP3Client, VIP3QuerySet},
 	DataProviderConfig,
@@ -43,6 +44,7 @@ impl VIP3SBTInfo {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait VIP3SBTLogicInterface {
 	fn has_card_level(
 		&mut self,
@@ -51,6 +53,17 @@ pub trait VIP3SBTLogicInterface {
 	) -> core::result::Result<bool, ErrorDetail>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait VIP3SBTLogicInterface {
+	async fn has_card_level(
+		&mut self,
+		addresses: Vec<String>,
+		level: &VIP3MembershipCardLevel,
+	) -> core::result::Result<bool, ErrorDetail>;
+}
+
+#[cfg(not(feature = "async"))]
 impl VIP3SBTLogicInterface for VIP3SBTInfo {
 	fn has_card_level(
 		&mut self,
@@ -61,6 +74,27 @@ impl VIP3SBTLogicInterface for VIP3SBTInfo {
 
 		for address in addresses.iter() {
 			let info = self.client.sbt_info(address).map_err(|e| e.into_error_detail())?;
+			if info.data.level == level.to_level() {
+				return Ok(true)
+			}
+		}
+
+		Ok(false)
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl VIP3SBTLogicInterface for VIP3SBTInfo {
+	async fn has_card_level(
+		&mut self,
+		addresses: Vec<String>,
+		level: &VIP3MembershipCardLevel,
+	) -> core::result::Result<bool, ErrorDetail> {
+		debug!("HAS specific card level");
+
+		for address in addresses.iter() {
+			let info = self.client.sbt_info(address).await.map_err(|e| e.into_error_detail())?;
 			if info.data.level == level.to_level() {
 				return Ok(true)
 			}

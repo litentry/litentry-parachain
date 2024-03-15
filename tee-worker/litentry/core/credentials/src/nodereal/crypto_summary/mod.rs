@@ -222,6 +222,7 @@ impl CryptoSummaryClient {
 		Self { eth_client, bsc_client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn logic(
 		&mut self,
 		identities: &Vec<(Web3Network, Vec<String>)>,
@@ -339,6 +340,142 @@ impl CryptoSummaryClient {
 					let tx = self
 						.eth_client
 						.get_transaction_count(address, false)
+						.map_err(|e| e.into_error_detail())?;
+					total_txs += tx;
+				}
+			}
+		}
+
+		// Update ETH and BNB
+		flag_bsc_token[11] = is_bnb_holder;
+		flag_eth_token[14] = is_eth_holder;
+
+		Ok((total_txs, SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft)))
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn logic(
+		&mut self,
+		identities: &Vec<(Web3Network, Vec<String>)>,
+	) -> core::result::Result<(u64, SummaryHoldings), ErrorDetail> {
+		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
+		let mut flag_bsc_token: [bool; 12] = [false; 12];
+		let mut flag_eth_token: [bool; 15] = [false; 15];
+		let mut flag_eth_nft: [bool; 15] = [false; 15];
+
+		// ETH and BNB holder use different APIs than other tokens, so they need to be handled separately
+		let mut is_eth_holder = false;
+		let mut is_bnb_holder = false;
+
+		let mut total_txs = 0_u64;
+
+		for (network, addresses) in identities {
+			if *network == Web3Network::Bsc {
+				// Query Token
+				for address in addresses {
+					let res = self
+						.bsc_client
+						.get_token_holdings(address, false)
+						.await
+						.map_err(|e| e.into_error_detail())?;
+
+					let result: ResponseTokenResult =
+						serde_json::from_value(res.result).map_err(|_| ErrorDetail::ParseError)?;
+					let mut token_addresses = vec![];
+					if let Some(details) = result.details {
+						details.iter().for_each(|detail| {
+							token_addresses.push(detail.token_address.clone());
+						});
+						Self::update_holding_flag(
+							&mut flag_bsc_token,
+							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+							&token_addresses,
+						);
+					}
+
+					// Query BNB balance on BSC
+					if !is_bnb_holder {
+						let native_balance = result.native_token_balance;
+						let balance = get_native_token_balance(&native_balance);
+						if balance > 0.0 {
+							is_bnb_holder = true;
+						}
+					}
+
+					// Total txs on BSC
+					let tx = self
+						.bsc_client
+						.get_transaction_count(address, false)
+						.await
+						.map_err(|e| e.into_error_detail())?;
+					total_txs += tx;
+				}
+			}
+
+			if *network == Web3Network::Ethereum {
+				for address in addresses {
+					// Query Token
+					let res_token = self
+						.eth_client
+						.get_token_holdings(address, false)
+						.await
+						.map_err(|e| e.into_error_detail())?;
+					let result: ResponseTokenResult = serde_json::from_value(res_token.result)
+						.map_err(|_| ErrorDetail::ParseError)?;
+
+					let mut token_addresses = vec![];
+					if let Some(details) = result.details {
+						details.iter().for_each(|detail| {
+							token_addresses.push(detail.token_address.clone());
+						});
+						Self::update_holding_flag(
+							&mut flag_eth_token,
+							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+							&token_addresses,
+						);
+					}
+
+					// Query ETH balance on Ethereum
+					if !is_eth_holder {
+						let native_balance = result.native_token_balance;
+						let balance = get_native_token_balance(&native_balance);
+						if balance > 0.0 {
+							is_eth_holder = true;
+						}
+					}
+
+					// Query NFT
+					let param = GetNFTHoldingsParam {
+						account_address: address.to_string(),
+						token_type: "ERC721".to_string(),
+						page: 1,
+						page_size: 100,
+					};
+
+					let res_nft = self
+						.eth_client
+						.get_nft_holdings(&param, false)
+						.await
+						.map_err(|e| e.into_error_detail())?;
+
+					let details = res_nft.details;
+
+					let mut nft_addresses = vec![];
+					details.iter().for_each(|detail| {
+						nft_addresses.push(detail.token_address.clone());
+					});
+
+					Self::update_holding_flag(
+						&mut flag_eth_nft,
+						&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
+						&nft_addresses,
+					);
+
+					// Total txs on Ethereum
+					let tx = self
+						.eth_client
+						.get_transaction_count(address, false)
+						.await
 						.map_err(|e| e.into_error_detail())?;
 					total_txs += tx;
 				}

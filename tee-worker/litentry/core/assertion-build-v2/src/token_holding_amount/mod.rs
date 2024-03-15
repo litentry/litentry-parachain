@@ -28,6 +28,7 @@ use log::debug;
 
 use crate::*;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	token_type: Web3TokenType,
@@ -45,6 +46,51 @@ pub fn build(
 
 	let result =
 		get_token_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::TokenHoldingAmount(token_type.clone()),
+				ErrorDetail::DataProviderError(ErrorString::truncate_from(
+					format!("{e:?}").as_bytes().to_vec(),
+				)),
+			)
+		});
+
+	match result {
+		Ok(value) => match Credential::new(&req.who, &req.shard) {
+			Ok(mut credential_unsigned) => {
+				credential_unsigned.update_token_holding_amount_assertion(token_type, value);
+				Ok(credential_unsigned)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(Error::RequestVCFailed(
+					Assertion::TokenHoldingAmount(token_type),
+					e.into_error_detail(),
+				))
+			},
+		},
+		Err(e) => Err(e),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	token_type: Web3TokenType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("token holding amount: {:?}", token_type);
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(network_type, addresses)| {
+			addresses.into_iter().map(move |address| (network_type, address))
+		})
+		.collect::<Vec<(Web3Network, String)>>();
+
+	let result = get_token_balance(token_type.clone(), addresses, data_provider_config)
+		.await
+		.map_err(|e| {
 			Error::RequestVCFailed(
 				Assertion::TokenHoldingAmount(token_type.clone()),
 				ErrorDetail::DataProviderError(ErrorString::truncate_from(

@@ -24,6 +24,7 @@ use crate::{oneblock::query_oneblock_status, *};
 use lc_credentials::oneblock::OneBlockAssertionUpdate;
 use lc_data_providers::DataProviderConfig;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	course_type: OneBlockCourseType,
@@ -36,6 +37,31 @@ pub fn build(
 		.collect::<Vec<String>>();
 
 	let value = query_oneblock_status(&course_type, addresses, data_provider_config)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_notion_assertion(&course_type, value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::OneBlock(course_type), e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	course_type: OneBlockCourseType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let value = query_oneblock_status(&course_type, addresses, data_provider_config).await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_notion_assertion(&course_type, value);

@@ -30,6 +30,7 @@ use lc_data_providers::nodereal_jsonrpc::{
 use crate::*;
 
 // only support to get balance for non-native token
+#[cfg(not(feature = "async"))]
 pub fn get_balance_from_evm(
 	addresses: Vec<(Web3Network, String)>,
 	token_type: Web3TokenType,
@@ -52,6 +53,43 @@ pub fn get_balance_from_evm(
 					network.create_nodereal_jsonrpc_client(data_provider_config)
 				{
 					match client.get_token_balance_20(&param, false) {
+						Ok(balance) => {
+							total_balance += calculate_balance_with_decimals(balance, decimals);
+						},
+						Err(err) => return Err(err.into_error_detail()),
+					}
+				}
+			},
+			_ => {},
+		}
+	}
+
+	Ok(total_balance)
+}
+
+#[cfg(feature = "async")]
+pub async fn get_balance_from_evm(
+	addresses: Vec<(Web3Network, String)>,
+	token_type: Web3TokenType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<f64, Error> {
+	let mut total_balance = 0_f64;
+
+	for address in addresses.iter() {
+		let network = address.0;
+		let decimals = token_type.get_decimals(network);
+		let param = GetTokenBalance20Param {
+			contract_address: token_type.get_token_address(network).unwrap_or_default().into(),
+			address: address.1.clone(),
+			block_number: "latest".into(),
+		};
+
+		match network {
+			Web3Network::Bsc | Web3Network::Ethereum => {
+				if let Some(mut client) =
+					network.create_nodereal_jsonrpc_client(data_provider_config)
+				{
+					match client.get_token_balance_20(&param, false).await {
 						Ok(balance) => {
 							total_balance += calculate_balance_with_decimals(balance, decimals);
 						},

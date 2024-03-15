@@ -22,6 +22,7 @@ use lc_credentials::vip3::UpdateVIP3MembershipCardCredential;
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::VIP3MembershipCardLevel;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	level: VIP3MembershipCardLevel,
@@ -39,6 +40,39 @@ pub fn build(
 		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
 	let value = sbt
 		.has_card_level(addresses, &level)
+		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_vip3_membership_card(level, value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::VIP3MembershipCard(level), e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	level: VIP3MembershipCardLevel,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Building VIP3 membership card level: {:?}", level);
+
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut sbt = VIP3SBTInfo::new(data_provider_config)
+		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
+	let value = sbt
+		.has_card_level(addresses, &level)
+		.await
 		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
 
 	match Credential::new(&req.who, &req.shard) {

@@ -27,6 +27,7 @@ use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
 use std::string::ToString;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	rtype: GenericDiscordRoleType,
@@ -44,6 +45,54 @@ pub fn build(
 		if let Identity::Discord(address) = &identity.0 {
 			let resp =
 				client.has_role(role_id.clone(), address.inner_ref().to_vec()).map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::GenericDiscordRole(rtype.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+
+			debug!("Litentry & Discord user has role response: {:?}", resp);
+
+			// data is true if the user has the specified role, otherwise, it is false.
+			if resp.data {
+				has_role_value = true;
+				break
+			}
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_generic_discord_role_assertion(rtype, has_role_value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential GenericDiscordRole failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype), e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	rtype: GenericDiscordRoleType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	let role_id =
+		get_generic_discord_role_id(&rtype, data_provider_config).map_err(|error_detail| {
+			Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype.clone()), error_detail)
+		})?;
+
+	let mut has_role_value = false;
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
+	for identity in &req.identities {
+		if let Identity::Discord(address) = &identity.0 {
+			let resp = client
+				.has_role(role_id.clone(), address.inner_ref().to_vec())
+				.await
+				.map_err(|e| {
 					Error::RequestVCFailed(
 						Assertion::GenericDiscordRole(rtype.clone()),
 						e.into_error_detail(),
