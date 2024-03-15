@@ -301,7 +301,7 @@ export const getSidechainNonce = async (
 ): Promise<Index> => {
     const request = createJsonRpcRequest(
         'author_getNextNonce',
-        [base58Encode(hexToU8a(context.mrEnclave)), getHexAddressFromIdentity(primeIdentity)],
+        [base58Encode(hexToU8a(context.mrEnclave)), primeIdentity.toHex()],
         nextRequestId(context)
     );
     const res = await sendRequest(context.tee, request, context.api);
@@ -314,21 +314,6 @@ export const getSidechainNonce = async (
 
     return context.api.createType('Index', nonce);
 };
-
-function getHexAddressFromIdentity(identity: CorePrimitivesIdentity) {
-    let hexAddress;
-    if (identity.isEvm) {
-        hexAddress = identity.asEvm.toHex();
-    } else if (identity.isSubstrate) {
-        hexAddress = identity.asSubstrate.toHex();
-    } else if (identity.isBitcoin) {
-        hexAddress = identity.asBitcoin.toHex();
-    } else {
-        throw new Error(`Couldn't resolve hexAddress for identity type ${identity.type}`);
-    }
-
-    return hexAddress;
-}
 
 export const getIdGraphHash = async (
     context: IntegrationTestContext,
