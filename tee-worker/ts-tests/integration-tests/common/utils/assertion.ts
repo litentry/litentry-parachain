@@ -1,4 +1,3 @@
-import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
@@ -11,7 +10,7 @@ import { aesKey } from '../call';
 import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
-import { Signer, decryptWithAes } from './crypto';
+import { decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
