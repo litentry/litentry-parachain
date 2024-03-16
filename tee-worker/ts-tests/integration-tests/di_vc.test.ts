@@ -1,7 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { u8aToHex } from '@polkadot/util';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { initIntegrationTestContext } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -43,10 +42,7 @@ describe('Test Vc (direct invocation)', function () {
             process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
-        aliceSubstrateIdentity = await buildIdentityFromKeypair(
-            new PolkadotSigner(context.substrateWallet.alice),
-            context
-        );
+        aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
     });
 
     step('linking identities (alice)', async function () {
@@ -55,10 +51,10 @@ describe('Test Vc (direct invocation)', function () {
 
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const [twitterValidation] = await buildValidations(
+        const twitterValidation = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
-            [twitterIdentity],
+            aliceSubstrateIdentity,
+            twitterIdentity,
             twitterNonce,
             'twitter'
         );
@@ -71,15 +67,15 @@ describe('Test Vc (direct invocation)', function () {
         });
 
         const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-        const [evmValidation] = await buildValidations(
+
+        const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
+        const evmValidation = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
-            [evmIdentity],
+            aliceSubstrateIdentity,
+            evmIdentity,
             evmNonce,
             'ethereum',
-            undefined,
-            [context.ethersWallet.alice]
+            context.web3Wallets.evm.Alice
         );
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
@@ -90,21 +86,16 @@ describe('Test Vc (direct invocation)', function () {
         });
 
         const bitcoinNonce = getNextNonce();
-        const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(context.bitcoinWallet.alice.publicKey),
-            'Bitcoin',
-            context
-        );
+
+        const bitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
         console.log('bitcoin id: ', bitcoinIdentity.toHuman());
-        const [bitcoinValidation] = await buildValidations(
+        const bitcoinValidation = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
-            [bitcoinIdentity],
+            aliceSubstrateIdentity,
+            bitcoinIdentity,
             bitcoinNonce,
             'bitcoin',
-            undefined,
-            undefined,
-            context.bitcoinWallet.alice
+            context.web3Wallets.bitcoin.Alice
         );
         const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
@@ -120,7 +111,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
+                context.web3Wallets.substrate.Alice,
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
@@ -146,7 +137,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
+                context.web3Wallets.substrate.Alice,
                 aliceSubstrateIdentity,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
