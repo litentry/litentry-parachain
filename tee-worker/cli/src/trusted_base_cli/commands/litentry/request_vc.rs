@@ -226,6 +226,7 @@ pub enum TokenHoldingAmountCommand {
 	Gtc,
 	Ton,
 	Trx,
+	Nfp,
 }
 
 #[derive(Subcommand, Debug)]
@@ -497,6 +498,7 @@ impl RequestVcCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+				TokenHoldingAmountCommand::Nfp => Assertion::TokenHoldingAmount(Web3TokenType::Nfp),
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser =>
