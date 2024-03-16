@@ -68,7 +68,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('linking identities (alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const bobEvmNonce = getNextNonce();
@@ -188,7 +188,7 @@ describe('Test Identity (evm direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('deactivating identity(alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const deactivateIdentityRequestParams: {
@@ -274,7 +274,7 @@ describe('Test Identity (evm direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('activating identity(alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const activateIdentityRequestParams: {

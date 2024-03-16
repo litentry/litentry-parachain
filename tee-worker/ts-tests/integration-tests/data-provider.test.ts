@@ -86,7 +86,7 @@ describe('Test Vc (direct invocation)', function () {
 
         console.log('assertion: ', assertion);
 
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
+        let currentNonce = (await getSidechainNonce(context, substrateIdentities[index])).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
 

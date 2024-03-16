@@ -77,7 +77,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('linking identities (alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const aliceEvmNonce = getNextNonce();
@@ -194,7 +194,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('deactivating identity(alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const aliceEvmNonce = getNextNonce();
@@ -265,7 +265,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('activating identity(alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const aliceEvmNonce = getNextNonce();

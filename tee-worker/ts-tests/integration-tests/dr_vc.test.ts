@@ -47,7 +47,7 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('linking identities (alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
@@ -128,7 +128,7 @@ describe('Test Vc (direct request)', function () {
 
     mockBatchAssertion.forEach(({ description, assertion }) => {
         step(`request vc payload: ${JSON.stringify(assertion)} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+            let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
