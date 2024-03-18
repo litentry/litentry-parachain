@@ -31,6 +31,7 @@ use crate::*;
 
 use super::common::calculate_balance_with_decimals;
 
+#[cfg(not(feature = "async"))]
 pub fn get_balance(
 	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
@@ -58,6 +59,51 @@ pub fn get_balance(
 							block_number: "latest".into(),
 						};
 						client.get_token_balance_20(&param, false)
+					};
+
+					match result {
+						Ok(balance) => {
+							total_balance += calculate_balance_with_decimals(balance, decimals);
+						},
+						Err(err) => return Err(err.into_error_detail()),
+					}
+				}
+			},
+			_ => {},
+		}
+	}
+
+	Ok(total_balance)
+}
+
+#[cfg(feature = "async")]
+pub async fn get_balance(
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<f64, Error> {
+	let mut total_balance = 0_f64;
+
+	for address in addresses.iter() {
+		let network = address.0;
+
+		match network {
+			Web3Network::Bsc | Web3Network::Ethereum => {
+				let decimals = Web3TokenType::Eth.get_decimals(network);
+				if let Some(mut client) =
+					network.create_nodereal_jsonrpc_client(data_provider_config)
+				{
+					let result = if network == Web3Network::Ethereum {
+						client.get_balance(address.1.as_str(), false).await
+					} else {
+						let param = GetTokenBalance20Param {
+							contract_address: Web3TokenType::Eth
+								.get_token_address(network)
+								.unwrap_or_default()
+								.into(),
+							address: address.1.clone(),
+							block_number: "latest".into(),
+						};
+						client.get_token_balance_20(&param, false).await
 					};
 
 					match result {

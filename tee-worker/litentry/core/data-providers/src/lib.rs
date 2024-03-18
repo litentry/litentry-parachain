@@ -50,10 +50,16 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
 
+#[cfg(feature = "async")]
+use async_trait::async_trait;
+#[cfg(feature = "async")]
+use std::future::Future;
+
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
 };
+
 use std::{
 	env, format,
 	string::{String, ToString},
@@ -631,6 +637,7 @@ where
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait RetryableRestGet {
 	// set retry_option to None for fail fast
 	fn get_retry<U, R>(&mut self, params: U, retry_option: Option<RetryOption>) -> Result<R, Error>
@@ -650,6 +657,32 @@ pub trait RetryableRestGet {
 		R: serde::de::DeserializeOwned + RestPath<U>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait RetryableRestGet {
+	// set retry_option to None for fail fast
+	async fn get_retry<U, R>(
+		&mut self,
+		params: U,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy + std::marker::Send,
+		R: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send;
+
+	// set retry_option to None for fail fast
+	async fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy + std::marker::Send,
+		R: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send;
+}
+
+#[cfg(not(feature = "async"))]
 impl<T> RetryableRestGet for RestHttpClient<T>
 where
 	T: Send,
@@ -676,6 +709,45 @@ where
 	}
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+impl<T> RetryableRestGet for RestHttpClient<T>
+where
+	T: Send + std::marker::Send,
+{
+	async fn get_retry<U, R>(
+		&mut self,
+		params: U,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy + std::marker::Send,
+		R: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send,
+	{
+		// TODO: Need to reimplement retry for async context
+		self.get(params)
+			.await
+			.map_err(|e| Error::RequestError(format!("call rest api error: {}", e)))
+		// self.retry(|c| c.get(params), retry_option.unwrap_or(DEFAULT_RETRY_OPTION)).await
+	}
+
+	async fn get_with_retry<U, R>(
+		&mut self,
+		params: U,
+		query: &Query<'_>,
+		retry_option: Option<RetryOption>,
+	) -> Result<R, Error>
+	where
+		U: Copy + std::marker::Send,
+		R: serde::de::DeserializeOwned + RestPath<U> + std::marker::Send,
+	{
+		// self.retry(|c| c.get_with(params, query), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+		self.get_with(params, query)
+			.await
+			.map_err(|e| Error::RequestError(format!("call rest api error: {}", e)))
+	}
+}
+#[cfg(not(feature = "async"))]
 pub trait RetryableRestPost {
 	// set retry_option to None for fail fast
 	fn post_capture_retry<U, D, K>(
@@ -690,6 +762,22 @@ pub trait RetryableRestPost {
 		K: serde::de::DeserializeOwned;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait RetryableRestPost {
+	// set retry_option to None for fail fast
+	async fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy + std::marker::Send,
+		D: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		K: serde::de::DeserializeOwned + std::marker::Send;
+}
+#[cfg(not(feature = "async"))]
 impl<T> RetryableRestPost for RestHttpClient<T>
 where
 	T: Send,
@@ -706,6 +794,29 @@ where
 		K: serde::de::DeserializeOwned,
 	{
 		self.retry(|c| c.post_capture(params, data), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+	}
+}
+#[cfg(feature = "async")]
+#[async_trait]
+impl<T> RetryableRestPost for RestHttpClient<T>
+where
+	T: Send + std::marker::Send,
+{
+	async fn post_capture_retry<U, D, K>(
+		&mut self,
+		params: U,
+		data: &D,
+		retry_option: Option<RetryOption>,
+	) -> Result<K, Error>
+	where
+		U: Copy + std::marker::Send,
+		D: serde::Serialize + RestPath<U> + std::marker::Send + std::marker::Sync,
+		K: serde::de::DeserializeOwned + std::marker::Send,
+	{
+		// self.retry(|c| c.post_capture(params, data), retry_option.unwrap_or(DEFAULT_RETRY_OPTION))
+		self.post_capture(params, data)
+			.await
+			.map_err(|e| Error::RequestError(format!("call rest api error: {}", e)))
 	}
 }
 

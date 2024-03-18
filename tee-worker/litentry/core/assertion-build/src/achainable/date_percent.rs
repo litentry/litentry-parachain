@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{achainable::request_achainable, *};
 use lc_data_providers::DataProviderConfig;
 
+#[cfg(not(feature = "async"))]
 pub fn build_date_percent(
 	req: &AssertionBuildRequest,
 	param: AchainableDatePercent,
@@ -38,6 +39,34 @@ pub fn build_date_percent(
 
 	let achainable_param = AchainableParams::DatePercent(param.clone());
 	let _flag = request_achainable(addresses, achainable_param, data_provider_config)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::DatePercent(param)),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build_date_percent(
+	req: &AssertionBuildRequest,
+	param: AchainableDatePercent,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion Achainable build_date_percent, who: {:?}", account_id_to_string(&req.who));
+
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let achainable_param = AchainableParams::DatePercent(param.clone());
+	let _flag = request_achainable(addresses, achainable_param, data_provider_config).await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {

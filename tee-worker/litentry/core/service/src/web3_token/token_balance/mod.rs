@@ -29,6 +29,7 @@ mod common;
 mod eth_balance;
 mod lit_balance;
 
+#[cfg(not(feature = "async"))]
 pub fn get_token_balance(
 	token_type: Web3TokenType,
 	addresses: Vec<(Web3Network, String)>,
@@ -39,5 +40,19 @@ pub fn get_token_balance(
 		Web3TokenType::Eth => eth_balance::get_balance(addresses, data_provider_config),
 		Web3TokenType::Lit => lit_balance::get_balance(addresses, data_provider_config),
 		_ => common::get_balance_from_evm(addresses, token_type, data_provider_config),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn get_token_balance(
+	token_type: Web3TokenType,
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<f64, Error> {
+	match token_type {
+		Web3TokenType::Bnb => bnb_balance::get_balance(addresses, data_provider_config).await,
+		Web3TokenType::Eth => eth_balance::get_balance(addresses, data_provider_config).await,
+		Web3TokenType::Lit => lit_balance::get_balance(addresses, data_provider_config).await,
+		_ => common::get_balance_from_evm(addresses, token_type, data_provider_config).await,
 	}
 }

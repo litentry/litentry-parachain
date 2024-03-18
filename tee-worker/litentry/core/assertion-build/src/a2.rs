@@ -30,6 +30,7 @@ Server link: https://discord.gg/phBSa3eMX9
 Guild ID: 807161594245152800.";
 const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	guild_id: ParameterString,
@@ -58,6 +59,62 @@ pub fn build(
 				//Assign role "ID-Hubber" to each discord account
 				if let Ok(response) =
 					client.assign_id_hubber(guild_id.to_vec(), address.inner_ref().to_vec())
+				{
+					if !response.data {
+						error!("assign_id_hubber {} {}", response.message, response.msg_code);
+					}
+				}
+			}
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_A2_SUBJECT_DESCRIPTION, VC_A2_SUBJECT_TYPE);
+
+			let value = discord_cnt > 0 && has_joined;
+			credential_unsigned.add_assertion_a2(value, guild_id_s);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential A2 failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A2(guild_id), e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	guild_id: ParameterString,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
+
+	let mut discord_cnt: i32 = 0;
+	let mut has_joined: bool = false;
+
+	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
+	})?;
+
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
+	for identity in &req.identities {
+		if let Identity::Discord(address) = &identity.0 {
+			discord_cnt += 1;
+			let resp = client
+				.check_join(guild_id.to_vec(), address.inner_ref().to_vec())
+				.await
+				.map_err(|e| {
+					Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail())
+				})?;
+			if resp.data {
+				has_joined = true;
+
+				//Assign role "ID-Hubber" to each discord account
+				if let Ok(response) =
+					client.assign_id_hubber(guild_id.to_vec(), address.inner_ref().to_vec()).await
 				{
 					if !response.data {
 						error!("assign_id_hubber {} {}", response.message, response.msg_code);

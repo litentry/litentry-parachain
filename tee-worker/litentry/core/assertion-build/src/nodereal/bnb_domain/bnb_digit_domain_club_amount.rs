@@ -26,6 +26,7 @@ use lc_credentials::nodereal::bnb_domain::bnb_digit_domain_club_amount::UpdateDi
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::BnbDigitDomainType;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	digit_domain_type: BnbDigitDomainType,
@@ -44,6 +45,38 @@ pub fn build(
 		&digit_domain_type,
 		data_provider_config,
 	)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_digit_domain_club_amount(&digit_domain_type, amount);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::BnbDigitDomainClub(digit_domain_type),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	digit_domain_type: BnbDigitDomainType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("building digit_domain credential: {:?}", digit_domain_type);
+
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let amount = BnbDomainInfo
+		.get_bnb_digit_domain_club_amount(&addresses, &digit_domain_type, data_provider_config)
+		.await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_digit_domain_club_amount(&digit_domain_type, amount);

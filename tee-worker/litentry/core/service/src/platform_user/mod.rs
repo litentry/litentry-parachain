@@ -29,6 +29,7 @@ use crate::*;
 
 mod karat_dao_user;
 
+#[cfg(not(feature = "async"))]
 pub fn is_user(
 	platform_user_type: PlatformUserType,
 	addresses: Vec<String>,
@@ -36,5 +37,17 @@ pub fn is_user(
 ) -> Result<bool, Error> {
 	match platform_user_type {
 		PlatformUserType::KaratDaoUser => karat_dao_user::is_user(addresses, data_provider_config),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn is_user(
+	platform_user_type: PlatformUserType,
+	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	match platform_user_type {
+		PlatformUserType::KaratDaoUser =>
+			karat_dao_user::is_user(addresses, data_provider_config).await,
 	}
 }

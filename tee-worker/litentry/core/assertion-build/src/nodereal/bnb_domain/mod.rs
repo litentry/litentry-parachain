@@ -24,6 +24,7 @@ pub mod bnb_digit_domain_club_amount;
 pub mod bnb_domain_holding_amount;
 
 use crate::*;
+use async_trait::async_trait;
 use lc_data_providers::{
 	nodereal::{BnbDomainApiList, DomainInfo, NoderealClient},
 	DataProviderConfig,
@@ -34,6 +35,7 @@ use std::string::ToString;
 
 pub struct BnbDomainInfo;
 impl BnbDomainInfo {
+	#[cfg(not(feature = "async"))]
 	fn get_bnb_domain_data_by_owners(
 		&self,
 		owners: &[String],
@@ -42,8 +44,19 @@ impl BnbDomainInfo {
 		let mut client = NoderealClient::new(config);
 		client.by_owners(owners).map_err(|e| e.into_error_detail())
 	}
+
+	#[cfg(feature = "async")]
+	async fn get_bnb_domain_data_by_owners(
+		&self,
+		owners: &[String],
+		config: &DataProviderConfig,
+	) -> core::result::Result<serde_json::Value, ErrorDetail> {
+		let mut client = NoderealClient::new(config);
+		client.by_owners(owners).await.map_err(|e| e.into_error_detail())
+	}
 }
 
+#[cfg(not(feature = "async"))]
 pub trait BnbDomainInfoInterface {
 	fn get_bnb_domain_holding_amount(
 		&self,
@@ -58,6 +71,23 @@ pub trait BnbDomainInfoInterface {
 	) -> Result<usize>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait BnbDomainInfoInterface {
+	async fn get_bnb_domain_holding_amount(
+		&self,
+		addresses: &[String],
+		config: &DataProviderConfig,
+	) -> Result<usize>;
+	async fn get_bnb_digit_domain_club_amount(
+		&self,
+		owners: &[String],
+		digit_domain_type: &BnbDigitDomainType,
+		data_provider_config: &DataProviderConfig,
+	) -> Result<usize>;
+}
+
+#[cfg(not(feature = "async"))]
 impl BnbDomainInfoInterface for BnbDomainInfo {
 	fn get_bnb_domain_holding_amount(
 		&self,
@@ -82,6 +112,46 @@ impl BnbDomainInfoInterface for BnbDomainInfo {
 	) -> Result<usize> {
 		let response =
 			self.get_bnb_domain_data_by_owners(owners, data_provider_config).map_err(|e| {
+				Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
+			})?;
+
+		let owned_domains: Domains = Domains::from_value(&response).map_err(|e| {
+			Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
+		})?;
+
+		Ok(owned_domains.digit_club_domains(digit_domain_type)?.len())
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl BnbDomainInfoInterface for BnbDomainInfo {
+	async fn get_bnb_domain_holding_amount(
+		&self,
+		owners: &[String],
+		data_provider_config: &DataProviderConfig,
+	) -> Result<usize> {
+		let response = self
+			.get_bnb_domain_data_by_owners(owners, data_provider_config)
+			.await
+			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
+
+		let owned_domains: Domains = Domains::from_value(&response)
+			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
+
+		Ok(owned_domains.non_expired_domain_infos()?.len())
+	}
+
+	async fn get_bnb_digit_domain_club_amount(
+		&self,
+		owners: &[String],
+		digit_domain_type: &BnbDigitDomainType,
+		data_provider_config: &DataProviderConfig,
+	) -> Result<usize> {
+		let response = self
+			.get_bnb_domain_data_by_owners(owners, data_provider_config)
+			.await
+			.map_err(|e| {
 				Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
 			})?;
 

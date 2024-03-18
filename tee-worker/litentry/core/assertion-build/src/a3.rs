@@ -29,6 +29,7 @@ const VC_A3_SUBJECT_DESCRIPTION: &str =
 	"You have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882";
 const VC_A3_SUBJECT_TYPE: &str = "Active Discord ID-Hubber";
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	guild_id: ParameterString,
@@ -70,6 +71,84 @@ pub fn build(
 					role_id.to_vec(),
 					address.inner_ref().to_vec(),
 				)
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+
+			if resp.data {
+				has_commented = true;
+				break
+			}
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_A3_SUBJECT_DESCRIPTION, VC_A3_SUBJECT_TYPE);
+			credential_unsigned.add_assertion_a3(
+				has_commented,
+				guild_id_s,
+				channel_id_s,
+				role_id_s,
+			);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential A3 failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::A3(guild_id, channel_id, role_id),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	guild_id: ParameterString,
+	channel_id: ParameterString,
+	role_id: ParameterString,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A3 build, who: {:?}", account_id_to_string(&req.who),);
+
+	let mut has_commented: bool = false;
+
+	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let channel_id_s = vec_to_string(channel_id.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let role_id_s = vec_to_string(role_id.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
+	for identity in &req.identities {
+		if let Identity::Discord(address) = &identity.0 {
+			let resp = client
+				.check_id_hubber(
+					guild_id.to_vec(),
+					channel_id.to_vec(),
+					role_id.to_vec(),
+					address.inner_ref().to_vec(),
+				)
+				.await
 				.map_err(|e| {
 					Error::RequestVCFailed(
 						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),

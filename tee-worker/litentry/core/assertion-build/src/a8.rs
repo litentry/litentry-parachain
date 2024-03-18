@@ -30,6 +30,7 @@ use litentry_primitives::BoundedWeb3Network;
 const VC_A8_SUBJECT_DESCRIPTION: &str = "Gets the range of number of transactions a user has made for a specific token on all supported networks (invalid transactions are also counted)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count";
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -48,6 +49,57 @@ pub fn build(
 		networks_set.insert(network);
 
 		let txs = client.total_transactions(&network, &addresses).map_err(|e| {
+			error!("Assertion A8 query total_transactions error: {:?}", e);
+			Error::RequestVCFailed(
+				Assertion::A8(bounded_web3networks.clone()),
+				e.into_error_detail(),
+			)
+		})?;
+
+		total_txs += txs;
+	}
+	debug!("Assertion A8 total_transactions: {}", total_txs);
+
+	let networks = if networks_set.is_empty() {
+		req.assertion.get_supported_web3networks()
+	} else {
+		networks_set.into_iter().collect::<Vec<Web3Network>>()
+	};
+
+	let (min, max) = get_total_tx_ranges(total_txs);
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
+			credential_unsigned.add_assertion_a8(networks, min, max);
+
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
+	// It should never fail because `req.assertion.get_supported_web3networks()`
+	// returns the vector which is converted from a BoundedVec
+	let bounded_web3networks: BoundedWeb3Network =
+		req.assertion.get_supported_web3networks().try_into().unwrap();
+	let mut client = AchainableClient::new(data_provider_config);
+	let mut total_txs: u64 = 0;
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let mut networks_set: HashSet<Web3Network> = HashSet::new();
+	for (network, addresses) in identities {
+		networks_set.insert(network);
+
+		let txs = client.total_transactions(&network, &addresses).await.map_err(|e| {
 			error!("Assertion A8 query total_transactions error: {:?}", e);
 			Error::RequestVCFailed(
 				Assertion::A8(bounded_web3networks.clone()),

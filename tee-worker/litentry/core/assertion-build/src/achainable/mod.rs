@@ -51,6 +51,7 @@ pub mod date_percent;
 pub mod mirror;
 pub mod token;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	param: AchainableParams,
@@ -78,6 +79,35 @@ pub fn build(
 	}
 }
 
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	match param {
+		AchainableParams::AmountHolding(param) =>
+			build_amount_holding(req, param, data_provider_config).await,
+		AchainableParams::AmountToken(param) =>
+			build_amount_token(req, param, data_provider_config).await,
+		AchainableParams::Amount(param) => build_amount(req, param, data_provider_config).await,
+		AchainableParams::Amounts(param) => build_amounts(req, param, data_provider_config).await,
+		AchainableParams::Basic(param) => build_basic(req, param, data_provider_config).await,
+		AchainableParams::BetweenPercents(param) =>
+			build_between_percents(req, param, data_provider_config).await,
+		AchainableParams::ClassOfYear(param) =>
+			build_class_of_year(req, param, data_provider_config).await,
+		AchainableParams::DateInterval(param) =>
+			build_date_interval(req, param, data_provider_config).await,
+		AchainableParams::DatePercent(param) =>
+			build_date_percent(req, param, data_provider_config).await,
+		AchainableParams::Date(param) => build_date(req, param, data_provider_config).await,
+		AchainableParams::Token(param) => build_token(req, param, data_provider_config).await,
+		AchainableParams::Mirror(param) => build_on_mirror(req, param, data_provider_config).await,
+	}
+}
+
+#[cfg(not(feature = "async"))]
 pub fn request_achainable(
 	addresses: Vec<String>,
 	param: AchainableParams,
@@ -102,6 +132,32 @@ pub fn request_achainable(
 	Ok(false)
 }
 
+#[cfg(feature = "async")]
+pub async fn request_achainable(
+	addresses: Vec<String>,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool> {
+	let request_param = Params::try_from(param.clone())?;
+
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+
+	for address in &addresses {
+		let ret = client.query_system_label(address, request_param.clone()).await.map_err(|e| {
+			error!("Request achainable failed {:?}", e);
+
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
+
+		if ret {
+			return Ok(true)
+		}
+	}
+
+	Ok(false)
+}
+
+#[cfg(not(feature = "async"))]
 pub fn request_uniswap_v2_or_v3_user(
 	addresses: Vec<String>,
 	param: AchainableParams,
@@ -126,7 +182,34 @@ pub fn request_uniswap_v2_or_v3_user(
 	Ok((v2_user, v3_user))
 }
 
+#[cfg(feature = "async")]
+pub async fn request_uniswap_v2_or_v3_user(
+	addresses: Vec<String>,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<(bool, bool)> {
+	let _request_param = Params::try_from(param.clone())?;
+
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+
+	let mut v2_user = false;
+	let mut v3_user = false;
+	for address in &addresses {
+		v2_user |= client.uniswap_v2_user(address).await.map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
+
+		v3_user |= client.uniswap_v3_user(address).await.map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?
+	}
+
+	Ok((v2_user, v3_user))
+}
+
 const INVALID_CLASS_OF_YEAR: &str = "Invalid";
+
+#[cfg(not(feature = "async"))]
 pub fn request_achainable_classofyear(
 	addresses: Vec<String>,
 	param: AchainableParams,
@@ -154,6 +237,36 @@ pub fn request_achainable_classofyear(
 	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
 }
 
+#[cfg(feature = "async")]
+pub async fn request_achainable_classofyear(
+	addresses: Vec<String>,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<(bool, String)> {
+	let request_param = Params::try_from(param.clone())?;
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+
+	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
+	for address in &addresses {
+		let year =
+			client.query_class_of_year(address, request_param.clone()).await.map_err(|e| {
+				Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+			})?;
+
+		// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
+		if year.parse::<u32>().is_err() {
+			continue
+		}
+
+		if year < longest_created_year {
+			longest_created_year = year;
+		}
+	}
+
+	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
+}
+
+#[cfg(not(feature = "async"))]
 pub fn request_achainable_balance(
 	addresses: Vec<String>,
 	param: AchainableParams,
@@ -168,6 +281,22 @@ pub fn request_achainable_balance(
 	Ok(balance)
 }
 
+#[cfg(feature = "async")]
+pub async fn request_achainable_balance(
+	addresses: Vec<String>,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<String> {
+	let request_param = Params::try_from(param.clone())?;
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+	let balance = client.holding_amount(addresses, request_param).await.map_err(|e| {
+		Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+	})?;
+
+	Ok(balance)
+}
+
+#[cfg(not(feature = "async"))]
 pub fn query_lit_holding_amount(
 	aparam: &AchainableParams,
 	identities: &Vec<(Web3Network, Vec<String>)>,
@@ -207,6 +336,64 @@ pub fn query_lit_holding_amount(
 		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
 		let balance = client
 			.holding_amount(addresses.clone(), params)
+			.map_err(|e| {
+				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
+			})?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(aparam.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
+
+		total_lit_balance += balance;
+	}
+
+	Ok(total_lit_balance as usize)
+}
+
+#[cfg(feature = "async")]
+pub async fn query_lit_holding_amount(
+	aparam: &AchainableParams,
+	identities: &Vec<(Web3Network, Vec<String>)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<usize> {
+	let mut total_lit_balance = 0_f64;
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+
+	for (network, addresses) in identities {
+		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
+			(
+				AchainableNameAmountToken::ERC20BalanceOverAmount,
+				Web3Network::Ethereum,
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			)
+		} else if *network == Web3Network::Bsc {
+			(
+				AchainableNameAmountToken::BEP20BalanceOverAmount,
+				Web3Network::Bsc,
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			)
+		} else if *network == Web3Network::Litentry {
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
+		} else if *network == Web3Network::Litmus {
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
+		} else {
+			continue
+		};
+
+		let q_param = ParamsBasicTypeWithAmountToken::new(
+			q_name.name().to_string(),
+			&q_network,
+			"0".to_string(),
+			q_token,
+		);
+
+		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
+		let balance = client
+			.holding_amount(addresses.clone(), params)
+			.await
 			.map_err(|e| {
 				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
 			})?

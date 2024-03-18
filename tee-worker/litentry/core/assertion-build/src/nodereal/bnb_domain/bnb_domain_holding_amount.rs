@@ -26,6 +26,7 @@ use lc_data_providers::DataProviderConfig;
 use super::{BnbDomainInfo, BnbDomainInfoInterface};
 use crate::*;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -39,6 +40,34 @@ pub fn build(
 		.collect::<Vec<String>>();
 
 	let amount = BnbDomainInfo.get_bnb_domain_holding_amount(&addresses, data_provider_config)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_bnb_holding_amount(amount);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("bnb domain holding amount");
+
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let amount = BnbDomainInfo
+		.get_bnb_domain_holding_amount(&addresses, data_provider_config)
+		.await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_bnb_holding_amount(amount);

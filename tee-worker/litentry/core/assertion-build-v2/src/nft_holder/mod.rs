@@ -28,6 +28,7 @@ use log::debug;
 
 use crate::*;
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	nft_type: Web3NftType,
@@ -44,6 +45,46 @@ pub fn build(
 		.collect::<Vec<(Web3Network, String)>>();
 
 	let result = has_nft(nft_type.clone(), addresses, data_provider_config).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::NftHolder(nft_type.clone()),
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				format!("{e:?}").as_bytes().to_vec(),
+			)),
+		)
+	});
+
+	match result {
+		Ok(has_nft) => match Credential::new(&req.who, &req.shard) {
+			Ok(mut credential_unsigned) => {
+				credential_unsigned.update_nft_holder_assertion(nft_type, has_nft);
+				Ok(credential_unsigned)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(Error::RequestVCFailed(Assertion::NftHolder(nft_type), e.into_error_detail()))
+			},
+		},
+		Err(e) => Err(e),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	nft_type: Web3NftType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("nft holder: {:?}", nft_type);
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(network_type, addresses)| {
+			addresses.into_iter().map(move |address| (network_type, address))
+		})
+		.collect::<Vec<(Web3Network, String)>>();
+
+	let result = has_nft(nft_type.clone(), addresses, data_provider_config).await.map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::NftHolder(nft_type.clone()),
 			ErrorDetail::DataProviderError(ErrorString::truncate_from(

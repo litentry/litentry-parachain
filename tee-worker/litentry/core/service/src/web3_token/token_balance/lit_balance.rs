@@ -34,6 +34,7 @@ use crate::*;
 
 use super::common::calculate_balance_with_decimals;
 
+#[cfg(not(feature = "async"))]
 pub fn get_balance(
 	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
@@ -77,6 +78,66 @@ pub fn get_balance(
 						None,
 					));
 				match client.holding_amount(vec![account_address], param) {
+					Ok(balance) => match balance.parse::<f64>() {
+						Ok(balance_value) => {
+							total_balance += balance_value;
+						},
+						Err(_) => return Err(Error::ParseError),
+					},
+					Err(err) => return Err(err.into_error_detail()),
+				}
+			},
+			_ => {},
+		}
+	}
+
+	Ok(total_balance)
+}
+
+#[cfg(feature = "async")]
+pub async fn get_balance(
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<f64, Error> {
+	let mut total_balance = 0_f64;
+
+	for address in addresses.iter() {
+		let network = address.0;
+		let account_address = address.1.clone();
+		match network {
+			Web3Network::Bsc | Web3Network::Ethereum => {
+				let decimals = Web3TokenType::Lit.get_decimals(network);
+				let param = GetTokenBalance20Param {
+					contract_address: Web3TokenType::Lit
+						.get_token_address(address.0)
+						.unwrap_or_default()
+						.into(),
+					address: account_address,
+					block_number: "latest".into(),
+				};
+
+				if let Some(mut client) =
+					network.create_nodereal_jsonrpc_client(data_provider_config)
+				{
+					match client.get_token_balance_20(&param, false).await {
+						Ok(balance) => {
+							total_balance += calculate_balance_with_decimals(balance, decimals);
+						},
+						Err(err) => return Err(err.into_error_detail()),
+					}
+				}
+			},
+			Web3Network::Litentry | Web3Network::Litmus => {
+				let mut client = AchainableClient::new(data_provider_config);
+
+				let param =
+					Params::ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken::new(
+						AchainableNameAmountToken::BalanceOverAmount.name().into(),
+						&network,
+						"0".into(),
+						None,
+					));
+				match client.holding_amount(vec![account_address], param).await {
 					Ok(balance) => match balance.parse::<f64>() {
 						Ok(balance_value) => {
 							total_balance += balance_value;

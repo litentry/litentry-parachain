@@ -43,6 +43,7 @@ impl RestPath<String> for OneBlockResponse {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 fn fetch_data_from_notion(
 	course_type: &OneBlockCourseType,
 	data_provider_config: &DataProviderConfig,
@@ -58,6 +59,31 @@ fn fetch_data_from_notion(
 	let mut client = build_client_with_cert(oneblock_notion_url.as_str(), headers);
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::OneBlock(course_type.clone()),
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				format!("{e:?}").as_bytes().to_vec(),
+			)),
+		)
+	})
+}
+
+#[cfg(feature = "async")]
+async fn fetch_data_from_notion(
+	course_type: &OneBlockCourseType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<OneBlockResponse> {
+	let oneblock_notion_key = data_provider_config.oneblock_notion_key.to_string();
+	let oneblock_notion_url = data_provider_config.oneblock_notion_url.to_string();
+
+	let mut headers = Headers::new();
+	headers.insert(CONNECTION.as_str(), "close");
+	headers.insert("Notion-Version", "2022-06-28");
+	headers.insert(AUTHORIZATION.as_str(), oneblock_notion_key.as_str());
+
+	let mut client = build_client_with_cert(oneblock_notion_url.as_str(), headers);
+
+	client.get::<String, OneBlockResponse>(String::default()).await.map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::OneBlock(course_type.clone()),
 			ErrorDetail::DataProviderError(ErrorString::truncate_from(
@@ -172,12 +198,25 @@ impl OneBlockAssertionQualify for OneBlockData {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub fn query_oneblock_status(
 	course_type: &OneBlockCourseType,
 	addresses: Vec<String>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool> {
 	let oneblock_response = fetch_data_from_notion(course_type, data_provider_config)?;
+	debug!("OneBlock Assertion Response: {oneblock_response:?}");
+
+	Ok(check_oneblock_data(&oneblock_response, course_type, addresses))
+}
+
+#[cfg(feature = "async")]
+pub async fn query_oneblock_status(
+	course_type: &OneBlockCourseType,
+	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool> {
+	let oneblock_response = fetch_data_from_notion(course_type, data_provider_config).await?;
 	debug!("OneBlock Assertion Response: {oneblock_response:?}");
 
 	Ok(check_oneblock_data(&oneblock_response, course_type, addresses))

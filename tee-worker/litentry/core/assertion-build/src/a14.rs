@@ -83,6 +83,7 @@ impl A14Client {
 		A14Client { client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	pub fn send_request(&mut self, data: &A14Data) -> Result<A14Response> {
 		self.client
 			.post_capture::<String, A14Data, A14Response>(String::default(), data)
@@ -95,8 +96,24 @@ impl A14Client {
 				)
 			})
 	}
+
+	#[cfg(feature = "async")]
+	pub async fn send_request(&mut self, data: &A14Data) -> Result<A14Response> {
+		self.client
+			.post_capture::<String, A14Data, A14Response>(String::default(), data)
+			.await
+			.map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::A14,
+					ErrorDetail::DataProviderError(ErrorString::truncate_from(
+						format!("{e:?}").as_bytes().to_vec(),
+					)),
+				)
+			})
+	}
 }
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -122,6 +139,60 @@ pub fn build(
 			include_widgets: false,
 		};
 		let response = client.send_request(&data)?;
+
+		let result = response
+			.data
+			.get("result")
+			.and_then(|r| r.as_bool())
+			.ok_or(Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
+		if result {
+			value = result;
+			break
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			// add subject info
+			credential_unsigned.add_subject_info(VC_A14_SUBJECT_DESCRIPTION, VC_A14_SUBJECT_TYPE);
+
+			// add assertion
+			credential_unsigned.add_assertion_a14(value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A14, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A14 build, who: {:?}", account_id_to_string(&req.who));
+
+	// achainable expects polkadot addresses (those start with 1...)
+	let mut polkadot_addresses = vec![];
+	for identity in &req.identities {
+		if let Identity::Substrate(address) = identity.0 {
+			let address = ss58_address_of(address.as_ref(), "polkadot")
+				.map_err(|_| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
+			polkadot_addresses.push(address);
+		}
+	}
+	let mut value = false;
+	let mut client = A14Client::new(data_provider_config);
+
+	for address in polkadot_addresses {
+		let data = A14Data {
+			params: A14DataParams { address },
+			include_metadata: false,
+			include_widgets: false,
+		};
+		let response = client.send_request(&data).await?;
 
 		let result = response
 			.data

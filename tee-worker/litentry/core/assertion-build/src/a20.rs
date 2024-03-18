@@ -47,6 +47,7 @@ impl RestPath<String> for EarlyBirdResponse {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	data_provider_config: &DataProviderConfig,
@@ -69,6 +70,52 @@ pub fn build(
 	let query = vec![("account", who.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())
+		.map(|data| data.has_joined)
+		.map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::A20,
+				ErrorDetail::DataProviderError(ErrorString::truncate_from(
+					format!("{e:?}").as_bytes().to_vec(),
+				)),
+			)
+		})?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_A20_SUBJECT_DESCRIPTION, VC_A20_SUBJECT_TYPE);
+			credential_unsigned.add_assertion_a20(value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A20, e.into_error_detail()))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	// Note: it's not perfectly implemented here
+	//       it only attests if the main address meets the criteria, but we should have implemented
+	//       the supported web3networks and attested the linked identities.
+	//       However, this VC is probably too old to change
+	let who = match req.who {
+		Identity::Substrate(account) => account_id_to_string(&account),
+		Identity::Evm(account) => account_id_to_string(&account),
+		Identity::Bitcoin(account) => account_id_to_string(&account),
+		_ => unreachable!(),
+	};
+	debug!("Assertion A20 build, who: {:?}", who);
+
+	let mut headers = Headers::new();
+	headers.insert(CONNECTION.as_str(), "close");
+	let mut client = build_client_with_cert(&data_provider_config.litentry_archive_url, headers);
+	let query = vec![("account", who.as_str())];
+	let value = client
+		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())
+		.await
 		.map(|data| data.has_joined)
 		.map_err(|e| {
 			Error::RequestVCFailed(

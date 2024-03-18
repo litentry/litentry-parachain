@@ -18,6 +18,8 @@
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate futures_sgx as futures;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
 use crate::*;
@@ -73,6 +75,7 @@ use std::string::ToString;
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
 
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	htype: AmountHoldingTimeType,
@@ -94,6 +97,31 @@ pub fn build(
 
 	generate_vc(req, &htype, &q_min_balance, holding_date)
 		.map_err(|e| emit_error(&htype, &min_balance, e))
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	htype: AmountHoldingTimeType,
+	min_balance: ParameterString,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
+
+	let q_min_balance = prepare_min_balance(&htype, &min_balance)?;
+	let accounts = prepare_accounts(&req.identities, &htype);
+
+	// Redundant check in principle, but better safe than sorry :)
+	if accounts.is_empty() {
+		return Err(emit_error(&htype, &min_balance, ErrorDetail::NoEligibleIdentity))
+	}
+
+	// TODO: Needs to rewritten for async context, cannot refactor as it is
+	// let holding_date = search_holding_date(data_provider_config, accounts, &q_min_balance)
+	// 	.await
+	// 	.map_err(|e| emit_error(&htype, &min_balance, e))?;
+
+	generate_vc(req, &htype, &q_min_balance, None).map_err(|e| emit_error(&htype, &min_balance, e))
 }
 
 fn prepare_min_balance(
@@ -148,6 +176,7 @@ fn is_inconclusive(outcome: &QueryOutcome) -> bool {
 }
 
 // Check against the data provider whether a single account has been holding since the given date.
+#[cfg(not(feature = "async"))]
 fn account_is_holding(
 	client: &mut AchainableClient,
 	q_min_balance: &String,
@@ -166,8 +195,27 @@ fn account_is_holding(
 	})
 }
 
-// Check against the data provider whether any of the given accounts has been holding since the given date.
-// If at least one positive outcome is found, the accounts that yielded a (conclusive) negative outcome are eliminated.
+#[cfg(feature = "async")]
+async fn account_is_holding(
+	client: AchainableClient,
+	q_min_balance: &String,
+	account: &Account,
+	date: &str,
+) -> QueryOutcome {
+	let holding = ParamsBasicTypeWithAmountHolding::new(
+		&account.network,
+		q_min_balance.to_string(),
+		date.to_string(),
+		account.token.clone(),
+	);
+	let mut new_client = AchainableClient { client: client.client };
+	return new_client.is_holder(account.address.as_str(), holding).await.map_err(|e| {
+		error!("Assertion HoldingTime request error: {:?}", e);
+		e.into_error_detail()
+	})
+}
+
+#[cfg(not(feature = "async"))]
 fn holding_time_search_step(
 	client: &mut AchainableClient,
 	q_min_balance: &String,
@@ -210,6 +258,52 @@ fn holding_time_search_step(
 	(outcome, accounts)
 }
 
+// TODO: Needs to be rewritten for async context, cannot be refactored as it is
+// async fn holding_time_search_step(
+// 	client: AchainableClient,
+// 	q_min_balance: &String,
+// 	accounts: Vec<Account>,
+// 	date: &str,
+// ) -> (QueryOutcome, Vec<Account>) {
+// 	// Check all remaining identities on the given date
+
+// 	let future_outcomes: Vec<_> = accounts
+// 		.iter()
+// 		.map(|account| async { account_is_holding(client.clone(), q_min_balance, account, date).await } )
+// 		.collect();
+
+// 	let outcomes: Vec<QueryOutcome> = futures::future::join_all(future_outcomes).await;
+
+// 	// If any positive result is found:
+// 	//   - Discard all identities that yielded a _negative_ result
+// 	//     - but KEEP the ones that yielded error; they may still be relevant!
+// 	//   - Return the remaining identities with a positive value to continue the search
+// 	if outcomes.iter().any(is_positive) {
+// 		let new_accounts = accounts
+// 			.into_iter()
+// 			.zip(outcomes.iter())
+// 			.filter_map(|(account, outcome)| (!is_negative(outcome)).then_some(account))
+// 			.collect();
+// 		return (Ok(true), new_accounts)
+// 	}
+
+// 	/*
+// 	 * If any error is found:
+// 	 *   - The search is stuck; bubble the error
+// 	 *     TODO: retry?
+// 	 *
+// 	 * Otherwise (all results were negative):
+// 	 *   - Keep all identities
+// 	 *   - Return with a negative result and continue the search
+// 	 */
+// 	let outcome = match outcomes.into_iter().find(is_inconclusive) {
+// 		Some(Err(e)) => Err(e),
+// 		_ => Ok(false),
+// 	};
+
+// 	(outcome, accounts)
+// }
+
 const ASSERTION_DATE_LEN: usize = 15;
 const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 	"2017-01-01",
@@ -233,6 +327,7 @@ const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 
 // Search against the data provider for the holding time of the user's longest holding account.
 // Return the date if successful, `None` if none of the accounts is currently holding.
+#[cfg(not(feature = "async"))]
 fn search_holding_date(
 	data_provider_config: &DataProviderConfig,
 	mut accounts: Vec<Account>,
@@ -255,6 +350,32 @@ fn search_holding_date(
 		}
 	})
 }
+
+// TODO: Needs to be rewritten for async context, cannot be refactored as it is
+// async fn search_holding_date(
+// 	data_provider_config: &DataProviderConfig,
+// 	mut accounts: Vec<Account>,
+// 	q_min_balance: &String,
+// ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
+// 	let mut client = AchainableClient::new(data_provider_config);
+
+// 	let mut pred = |date: &&str| {
+// 		Box::new(async move {
+// 			let (outcome, new_accounts) =
+// 				holding_time_search_step(client, q_min_balance, accounts.clone(), date).await;
+// 			accounts = new_accounts;
+// 			outcome.map(|is_holding| !is_holding) // Negated to match the partition_point API
+// 		}) as Box<dyn Future<Output = Result<bool, ErrorDetail>> + Send>
+// 	};
+
+// 	partition_point(ASSERTION_FROM_DATE.as_ref(), &mut pred).await.map(|index| {
+// 		if index < ASSERTION_DATE_LEN {
+// 			Some(ASSERTION_FROM_DATE[index])
+// 		} else {
+// 			None
+// 		}
+// 	})
+// }
 
 fn generate_vc(
 	req: &AssertionBuildRequest,
@@ -312,6 +433,7 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 	}
 }
 
+#[cfg(not(feature = "async"))]
 fn partition_point<T, E, P>(vector: &[T], pred: &mut P) -> core::result::Result<usize, E>
 where
 	P: FnMut(&T) -> core::result::Result<bool, E>,
@@ -335,6 +457,31 @@ where
 		None => Ok(index),
 	}
 }
+
+// TODO: Needs to be rewritten for async context, cannot be refactored as it is.
+// async fn partition_point<T, E, P>(vector: &[T], pred: &mut P) -> core::result::Result<usize, E>
+// where
+// 	P: for<'a> FnMut(&'a T) -> Box<dyn Future<Output = core::result::Result<bool, E>> + Send + 'a>,
+// {
+// 	let mut trapped_error: Option<E> = None;
+// 	let wrapped_pred = |element: &T| -> bool {
+// 		if trapped_error.is_some() {
+// 			return true
+// 		}
+// 		match pred(element).await {
+// 			Ok(result) => result,
+// 			Err(error) => {
+// 				trapped_error = Some(error);
+// 				true
+// 			},
+// 		}
+// 	};
+// 	let index = vector.partition_point(wrapped_pred);
+// 	match trapped_error {
+// 		Some(error) => Err(error),
+// 		None => Ok(index),
+// 	}
+// }
 
 #[cfg(test)]
 mod tests {

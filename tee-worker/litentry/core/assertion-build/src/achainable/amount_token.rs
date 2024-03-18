@@ -50,6 +50,7 @@ use lc_data_providers::{
 /// }
 ///
 ///
+#[cfg(not(feature = "async"))]
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountToken,
@@ -92,6 +93,66 @@ pub fn build_amount_token(
 				achainable_param.clone(),
 				data_provider_config,
 			)?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(achainable_param.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
+
+			credential.update_token_balance(token, balance);
+		},
+	}
+
+	Ok(credential)
+}
+
+#[cfg(feature = "async")]
+pub async fn build_amount_token(
+	req: &AssertionBuildRequest,
+	param: AchainableAmountToken,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion Building AchainableAmountToken");
+
+	let identities = transpose_identity(&req.identities);
+	let achainable_param = AchainableParams::AmountToken(param.clone());
+
+	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+
+	let amount_token_name =
+		AchainableNameAmountToken::from(achainable_param.name()).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param.clone()),
+				e.into_error_detail(),
+			)
+		})?;
+	match amount_token_name {
+		AchainableNameAmountToken::LITHoldingAmount => {
+			let lit_holding_amount =
+				query_lit_holding_amount(&achainable_param, &identities, data_provider_config)
+					.await?;
+			credential.update_lit_holding_amount(lit_holding_amount);
+		},
+		_ => {
+			// Token Holder
+			let addresses = identities
+				.into_iter()
+				.flat_map(|(_, addresses)| addresses)
+				.collect::<Vec<String>>();
+			let token = ETokenAddress::from_vec(param.token.unwrap_or_default());
+			let balance = request_achainable_balance(
+				addresses,
+				achainable_param.clone(),
+				data_provider_config,
+			)
+			.await?
 			.parse::<f64>()
 			.map_err(|_| {
 				Error::RequestVCFailed(

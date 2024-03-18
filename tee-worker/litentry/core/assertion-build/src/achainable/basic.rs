@@ -27,6 +27,7 @@ use crate::{
 use lc_credentials::achainable::{bab_holder::UpdateBABHolder, uniswap_user::UpdateUniswapUser};
 use lc_data_providers::{achainable_names::AchainableNameBasic, DataProviderConfig};
 
+#[cfg(not(feature = "async"))]
 pub fn build_basic(
 	req: &AssertionBuildRequest,
 	param: AchainableBasic,
@@ -63,6 +64,51 @@ pub fn build_basic(
 		AchainableNameBasic::BABHolder => {
 			let is_bab_holder =
 				request_achainable(addresses, achainable_param, data_provider_config)?;
+			credential.update_bab_holder(is_bab_holder);
+		},
+	}
+
+	Ok(credential)
+}
+
+#[cfg(feature = "async")]
+pub async fn build_basic(
+	req: &AssertionBuildRequest,
+	param: AchainableBasic,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion Achainable building Basic");
+
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let achainable_param = AchainableParams::Basic(param.clone());
+	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+
+	let basic_name = AchainableNameBasic::from(param.name).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+	match basic_name {
+		AchainableNameBasic::UniswapV23User => {
+			let (v2_user, v3_user) =
+				request_uniswap_v2_or_v3_user(addresses, achainable_param, data_provider_config)
+					.await?;
+			credential.update_uniswap_user(v2_user, v3_user);
+		},
+		AchainableNameBasic::BABHolder => {
+			let is_bab_holder =
+				request_achainable(addresses, achainable_param, data_provider_config).await?;
 			credential.update_bab_holder(is_bab_holder);
 		},
 	}

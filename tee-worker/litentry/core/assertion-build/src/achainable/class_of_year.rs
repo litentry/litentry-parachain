@@ -57,6 +57,7 @@ const VC_SUBJECT_TYPE: &str = "Account Class Of Year";
 /// }
 /// ]
 
+#[cfg(not(feature = "async"))]
 pub fn build_class_of_year(
 	req: &AssertionBuildRequest,
 	param: AchainableClassOfYear,
@@ -72,6 +73,40 @@ pub fn build_class_of_year(
 	let achainable_param = AchainableParams::ClassOfYear(param);
 	let (ret, created_date) =
 		request_achainable_classofyear(addresses, achainable_param.clone(), data_provider_config)?;
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.update_class_of_year(ret, created_date);
+
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build_class_of_year(
+	req: &AssertionBuildRequest,
+	param: AchainableClassOfYear,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let achainable_param = AchainableParams::ClassOfYear(param);
+	let (ret, created_date) =
+		request_achainable_classofyear(addresses, achainable_param.clone(), data_provider_config)
+			.await?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);

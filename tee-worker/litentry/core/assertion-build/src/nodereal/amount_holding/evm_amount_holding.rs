@@ -37,6 +37,7 @@ use lc_data_providers::{
 };
 use litentry_primitives::EVMTokenType;
 
+#[cfg(not(feature = "async"))]
 fn get_holding_balance(
 	token_type: EVMTokenType,
 	addresses: Vec<(Web3Network, String)>,
@@ -75,6 +76,46 @@ fn get_holding_balance(
 		+ ((total_balance % decimals as u128) as f64 / decimals))
 }
 
+#[cfg(feature = "async")]
+async fn get_holding_balance(
+	token_type: EVMTokenType,
+	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
+) -> result::Result<f64, DataProviderError> {
+	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
+	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
+	let mut total_balance = 0_u128;
+
+	let decimals = token_type.get_decimals();
+
+	for address in addresses.iter() {
+		let param = GetTokenBalance20Param {
+			contract_address: token_type.get_address(address.0).unwrap_or_default().into(),
+			address: address.1.clone(),
+			block_number: "latest".into(),
+		};
+		match address.0 {
+			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false).await {
+				Ok(balance) => {
+					total_balance += balance;
+				},
+				Err(err) => return Err(err),
+			},
+			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false).await {
+				Ok(balance) => {
+					total_balance += balance;
+				},
+				Err(err) => return Err(err),
+			},
+			_ => {},
+		}
+	}
+
+	Ok((total_balance / decimals as u128) as f64
+		+ ((total_balance % decimals as u128) as f64 / decimals))
+}
+
+#[cfg(not(feature = "async"))]
 pub fn build(
 	req: &AssertionBuildRequest,
 	token_type: EVMTokenType,
@@ -93,6 +134,52 @@ pub fn build(
 
 	let result =
 		get_holding_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::EVMAmountHolding(token_type.clone()),
+				ErrorDetail::DataProviderError(ErrorString::truncate_from(
+					format!("{e:?}").as_bytes().to_vec(),
+				)),
+			)
+		});
+
+	match result {
+		Ok(value) => match Credential::new(&req.who, &req.shard) {
+			Ok(mut credential_unsigned) => {
+				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+				Ok(credential_unsigned)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(Error::RequestVCFailed(
+					Assertion::EVMAmountHolding(token_type),
+					e.into_error_detail(),
+				))
+			},
+		},
+		Err(e) => Err(e),
+	}
+}
+
+#[cfg(feature = "async")]
+pub async fn build(
+	req: &AssertionBuildRequest,
+	token_type: EVMTokenType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	debug!("evm amount holding: {:?}", token_type);
+
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.filter(|(newtwork_type, _)| newtwork_type.is_evm())
+		.flat_map(|(newtwork_type, addresses)| {
+			addresses.into_iter().map(move |address| (newtwork_type, address))
+		})
+		.collect::<Vec<(Web3Network, String)>>();
+
+	let result = get_holding_balance(token_type.clone(), addresses, data_provider_config)
+		.await
+		.map_err(|e| {
 			Error::RequestVCFailed(
 				Assertion::EVMAmountHolding(token_type.clone()),
 				ErrorDetail::DataProviderError(ErrorString::truncate_from(
