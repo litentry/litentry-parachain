@@ -66,7 +66,7 @@ async fn get_enclave_url_of_primary_worker_for_shard<NodeApi: PalletTeebagApi>(
 	shard: &ShardIdentifier,
 ) -> Result<String> {
 	let enclave = node_api
-		.primary_enclave_for_shard(WorkerType::Identity, shard, None)?
+		.primary_enclave_for_shard(WorkerType::BitAcross, shard, None)?
 		.ok_or_else(|| Error::NoWorkerForShardFound(*shard))?;
 	let worker_api_direct =
 		DirectWorkerApi::new(String::from_utf8_lossy(enclave.url.as_slice()).to_string());

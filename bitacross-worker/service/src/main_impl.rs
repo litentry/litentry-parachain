@@ -499,7 +499,7 @@ fn start_worker<E, T, InitializationHandler>(
 	//    2c. `get_shard_creation_info` is non-empty it's run before => do nothing
 	let (we_are_primary_validateer, re_init_parentchain_needed) =
 		match litentry_rpc_api
-			.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+			.primary_enclave_identifier_for_shard(WorkerType::BitAcross, shard, None)
 			.unwrap()
 		{
 			Some(account) => {
