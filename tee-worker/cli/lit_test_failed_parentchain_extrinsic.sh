@@ -54,7 +54,7 @@ echo "Initial ID Graph Hash of Bob: ${INITIAL_ID_GRAPH_HASH}"
 
 SECOND_NEW_ACCOUNT=$(${CLIENT} new-account)
 echo "New Account created: ${SECOND_NEW_ACCOUNT}" 
-# Step 5: Link new account to Bob with Alice as delegate signer 
+
 echo "Linking new identity to Bob with Eve as delegate signer"
 OUTPUT=$(${CLIENT} link-identity //Bob "did:litentry:substrate:${SECOND_NEW_ACCOUNT}" litentry -d //Eve) || { echo "Link identity command failed"; exit 1; }
 echo "Finished Linking identity to Bob"
