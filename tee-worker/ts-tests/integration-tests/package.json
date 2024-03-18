@@ -6,7 +6,8 @@
         "check-format": "prettier --check .",
         "format": "prettier --write .",
         "pretest": "eslint .",
-        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm"
+        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm",
+        "check-types": "tsc --noEmit"
     },
     "dependencies": {
         "@litentry/vc-schema-validator": "^0.0.1",
