@@ -18,14 +18,11 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::send_direct_batch_vc_request,
+	trusted_operation::send_direct_vc_request,
 	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
-use ita_stf::{
-	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
-	Index, TrustedCall, VecAssertion,
-};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, VecAssertion};
 use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
@@ -39,7 +36,6 @@ use litentry_primitives::{
 };
 use sp_core::Pair;
 use sp_runtime::BoundedVec;
-use std::sync::mpsc::channel;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -86,7 +82,6 @@ pub struct RequestBatchVcCommand {
 impl RequestBatchVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let mut assertions: Vec<Assertion> = vec![];
-		println!("assertions1: {:?}", assertions);
 
 		for (command, params) in self.command_parser() {
 			match Self::create_assertion(command, params) {
@@ -122,48 +117,23 @@ impl RequestBatchVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		let (sender, receiver) = channel::<Result<RequestVcResultOrError, String>>();
-
-		send_direct_batch_vc_request(cli, trusted_cli, &top, key, sender);
-
-		let mut len = 0u8;
-		let mut cnt = 0u8;
-		loop {
-			match receiver.recv() {
-				Ok(res) => match res {
-					Ok(response) => {
-						cnt += 1;
-						if len < response.len {
-							len = response.len;
-						}
-						if response.is_error {
-							println!(
-								"received one error: {:?}",
-								String::from_utf8(response.payload)
-							);
-						} else {
-							let mut vc =
-								RequestVCResult::decode(&mut response.payload.as_slice()).unwrap();
-							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-							let credential_str =
-								String::from_utf8(decrypted).expect("Found invalid UTF-8");
-							println!("----Generated VC-----");
-							println!("{}", credential_str);
-						}
-						if cnt >= len {
-							break
-						}
-					},
-					Err(e) => {
-						println!("Response error: {:?}", e);
-						break
-					},
+		match send_direct_vc_request(cli, trusted_cli, &top, key) {
+			Ok(result) =>
+				for res in result {
+					if res.is_error {
+						println!("received one error: {:?}", String::from_utf8(res.payload));
+					} else {
+						let mut vc = RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
+						let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+						let credential_str =
+							String::from_utf8(decrypted).expect("Found invalid UTF-8");
+						println!("----Generated VC-----");
+						println!("{}", credential_str);
+					}
 				},
-				Err(e) => {
-					println!("channel receiver error: {:?}", e);
-					break
-				},
-			}
+			Err(e) => {
+				println!("{:?}", e);
+			},
 		}
 
 		Ok(CliResultOk::None)
@@ -239,7 +209,7 @@ impl RequestBatchVcCommand {
 			"achainable" => {
 				let param0 = params.get(0).ok_or("Achainable: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
-					"amountholding" => Ok(Assertion::Achainable(AchainableParams::AmountHolding(
+					"amount-holding" => Ok(Assertion::Achainable(AchainableParams::AmountHolding(
 						AchainableAmountHolding {
 							name: to_para_str(
 								&params
@@ -268,7 +238,7 @@ impl RequestBatchVcCommand {
 							token: params.get(5).map(|v| to_para_str(v)),
 						},
 					))),
-					"amounttoken" => Ok(Assertion::Achainable(AchainableParams::AmountToken(
+					"amount-token" => Ok(Assertion::Achainable(AchainableParams::AmountToken(
 						AchainableAmountToken {
 							name: to_para_str(
 								&params
@@ -351,7 +321,7 @@ impl RequestBatchVcCommand {
 								params.get(2).ok_or("Achainable Basic: Missing parameter")?.clone(),
 							),
 						}))),
-					"betweenpercents" => Ok(Assertion::Achainable(
+					"between-percents" => Ok(Assertion::Achainable(
 						AchainableParams::BetweenPercents(AchainableBetweenPercents {
 							name: to_para_str(
 								&params
@@ -379,7 +349,7 @@ impl RequestBatchVcCommand {
 							),
 						}),
 					)),
-					"classofyear" => Ok(Assertion::Achainable(AchainableParams::ClassOfYear(
+					"class-of-year" => Ok(Assertion::Achainable(AchainableParams::ClassOfYear(
 						AchainableClassOfYear {
 							name: to_para_str(
 								&params
@@ -395,7 +365,7 @@ impl RequestBatchVcCommand {
 							),
 						},
 					))),
-					"dateinterval" => Ok(Assertion::Achainable(AchainableParams::DateInterval(
+					"date-interval" => Ok(Assertion::Achainable(AchainableParams::DateInterval(
 						AchainableDateInterval {
 							name: to_para_str(
 								&params
@@ -423,7 +393,7 @@ impl RequestBatchVcCommand {
 							),
 						},
 					))),
-					"datepercent" => Ok(Assertion::Achainable(AchainableParams::DatePercent(
+					"date-percent" => Ok(Assertion::Achainable(AchainableParams::DatePercent(
 						AchainableDatePercent {
 							name: to_para_str(
 								&params
@@ -519,7 +489,7 @@ impl RequestBatchVcCommand {
 				}
 			},
 			"a20" => Ok(Assertion::A20),
-			"oneblock" => {
+			"one-block" => {
 				let param0 = params.get(0).ok_or("OneBlock: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"completion" => Ok(Assertion::OneBlock(OneBlockCourseType::CourseCompletion)),
@@ -529,7 +499,7 @@ impl RequestBatchVcCommand {
 					_ => Err("OneBlock: Wrong parameter".to_string()),
 				}
 			},
-			"genericdiscordrole" => {
+			"generic-discord-role" => {
 				let param0 = params.get(0).ok_or("GenericDiscordRole: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"contest" => {
@@ -548,7 +518,7 @@ impl RequestBatchVcCommand {
 							_ => Err("GenericDiscordRole: Wrong parameter".to_string()),
 						}
 					},
-					"soraquiz" => {
+					"sora-quiz" => {
 						let role_type2 =
 							params.get(1).ok_or("GenericDiscordRole: Missing parameter")?.clone();
 						match role_type2.to_lowercase().as_str() {
@@ -564,18 +534,18 @@ impl RequestBatchVcCommand {
 					_ => Err("GenericDiscordRole: Wrong parameter".to_string()),
 				}
 			},
-			"bnbdomainholding" => Ok(Assertion::BnbDomainHolding),
-			"bnbdigitdomainclub" => {
+			"bnb-domain-holding" => Ok(Assertion::BnbDomainHolding),
+			"bnb-digit-domain-club" => {
 				let param0 = params.get(0).ok_or("BnbDigitDomainClub: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
-					"bnb999clubmember" =>
+					"bnb-999-club-member" =>
 						Ok(Assertion::BnbDigitDomainClub(BnbDigitDomainType::Bnb999ClubMember)),
-					"bnb10kclubmember" =>
+					"bnb-10k-club-member" =>
 						Ok(Assertion::BnbDigitDomainClub(BnbDigitDomainType::Bnb10kClubMember)),
 					_ => Err("BnbDigitDomainClub: Wrong parameter".to_string()),
 				}
 			},
-			"vip3membershipcard" => {
+			"vip3-membership-card" => {
 				let param0 = params.get(0).ok_or("VIP3MembershipCard: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"gold" => Ok(Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Gold)),
@@ -583,9 +553,9 @@ impl RequestBatchVcCommand {
 					_ => Err("VIP3MembershipCard: Wrong parameter".to_string()),
 				}
 			},
-			"weirdoghostganholder" => Ok(Assertion::WeirdoGhostGangHolder),
-			"litstaking" => Ok(Assertion::LITStaking),
-			"evmamountholding" => {
+			"weirdo-ghost-gan-holder" => Ok(Assertion::WeirdoGhostGangHolder),
+			"lit-staking" => Ok(Assertion::LITStaking),
+			"evm-amount-holding" => {
 				let param0 = params.get(0).ok_or("EVMAmountHolding: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"ton" => Ok(Assertion::EVMAmountHolding(EVMTokenType::Ton)),
@@ -593,9 +563,9 @@ impl RequestBatchVcCommand {
 					_ => Err("EVMAmountHolding: Wrong parameter".to_string()),
 				}
 			},
-			"brc20amountholder" => Ok(Assertion::BRC20AmountHolder),
-			"cryptosummary" => Ok(Assertion::CryptoSummary),
-			"tokenholdingamount" => {
+			"brc20-amount-holder" => Ok(Assertion::BRC20AmountHolder),
+			"crypto-summary" => Ok(Assertion::CryptoSummary),
+			"token-holding-amount" => {
 				let param0 = params.get(0).ok_or("TokenHoldingAmount: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"bnb" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Bnb)),
@@ -624,17 +594,17 @@ impl RequestBatchVcCommand {
 					_ => Err("TokenHoldingAmount: Wrong parameter".to_string()),
 				}
 			},
-			"platformuser" => {
+			"platform-user" => {
 				let param0 = params.get(0).ok_or("PlatformUser: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
-					"karatdaouser" => Ok(Assertion::PlatformUser(PlatformUserType::KaratDaoUser)),
+					"karat-dao-user" => Ok(Assertion::PlatformUser(PlatformUserType::KaratDaoUser)),
 					_ => Err("PlatformUser: Wrong parameter".to_string()),
 				}
 			},
-			"nftholder" => {
+			"nft-holder" => {
 				let param0 = params.get(0).ok_or("NFTHolder: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
-					"weirdoghostgang" => Ok(Assertion::NftHolder(Web3NftType::WeirdoGhostGang)),
+					"weirdo-ghost-gang" => Ok(Assertion::NftHolder(Web3NftType::WeirdoGhostGang)),
 					"club3sbt" => Ok(Assertion::NftHolder(Web3NftType::Club3Sbt)),
 					_ => Err("NFTHolder: Wrong parameter".to_string()),
 				}
