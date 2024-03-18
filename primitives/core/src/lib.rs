@@ -25,6 +25,7 @@ pub mod identity;
 
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
+pub use assertion::Assertion;
 pub use constants::*;
 pub use error::*;
 pub use identity::*;
