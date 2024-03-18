@@ -16,67 +16,54 @@
 */
 mod event_filter;
 mod event_handler;
-mod extrinsic_parser;
+
 use crate::{
 	decode_and_log_error,
-	indirect_calls::{
-		transfer_to_alice_shields_funds::TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID,
-	},
+	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic},
+	indirect_calls::timestamp_set::TimestampSetArgs,
+	TargetA,
 };
 use codec::{Decode, Encode};
-use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
 pub use event_handler::ParentchainEventHandler;
-pub use extrinsic_parser::ParentchainExtrinsicParser;
-use extrinsic_parser::ParseExtrinsic;
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
 	error::{Error, Result},
 	filter_metadata::FilterIntoDataFrom,
 	IndirectDispatch,
 };
-use itp_node_api::metadata::pallet_balances::BalancesCallIndexes;
+use itp_api_client_types::ParentchainSignedExtra;
+use itp_node_api::metadata::pallet_timestamp::TimestampCallIndexes;
 use itp_stf_primitives::traits::IndirectExecutor;
-use log::{debug, trace};
+use log::*;
+
+/// Parses the extrinsics corresponding to the parentchain.
+pub type ParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
 
 /// The default indirect call (extrinsic-triggered) of the Target-A-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
-	TransferToAliceShieldsFunds(TransferToAliceShieldsFundsArgs),
+	TimestampSet(TimestampSetArgs<TargetA>),
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
 	type Args = ();
-	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		debug!("shielding from TargetA extrinsic to Alice suppressed");
-		/*
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::TransferToAliceShieldsFunds(args) => args.dispatch(executor, ()),
+			IndirectCall::TimestampSet(timestamp_set_args) =>
+				timestamp_set_args.dispatch(executor, ()),
 		}
-
-		 */
-		Ok(())
 	}
 }
 
-/// Simple demo filter for testing.
-///
-/// A transfer to Alice will issue the corresponding balance to Alice in the enclave.
-/// It does not do anything else.
-pub struct TransferToAliceShieldsFundsFilter<ExtrinsicParser> {
-	_phantom: PhantomData<ExtrinsicParser>,
-}
+pub struct ExtrinsicFilter {}
 
-impl<ExtrinsicParser, NodeMetadata: BalancesCallIndexes> FilterIntoDataFrom<NodeMetadata>
-	for TransferToAliceShieldsFundsFilter<ExtrinsicParser>
-where
-	ExtrinsicParser: ParseExtrinsic,
-{
+impl<NodeMetadata: TimestampCallIndexes> FilterIntoDataFrom<NodeMetadata> for ExtrinsicFilter {
 	type Output = IndirectCall;
-	type ParseParentchainMetadata = ExtrinsicParser;
+	type ParseParentchainMetadata = ParentchainExtrinsicParser;
 
 	fn filter_into_from_metadata(
 		encoded_data: &[u8],
@@ -89,26 +76,17 @@ where
 		let xt = match Self::ParseParentchainMetadata::parse(call_mut) {
 			Ok(xt) => xt,
 			Err(e) => {
-				log::error!("[TransferToAliceShieldsFundsFilter] Could not parse parentchain extrinsic: {:?}", e);
+				error!("ExtrinsicFilter: Could not parse parentchain extrinsic: {:?}", e);
 				return None
 			},
 		};
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
-		trace!("[TransferToAliceShieldsFundsFilter] attempting to execute indirect call with index {:?}", index);
-		if index == metadata.transfer_call_indexes().ok()?
-			|| index == metadata.transfer_keep_alive_call_indexes().ok()?
-			|| index == metadata.transfer_allow_death_call_indexes().ok()?
-		{
-			debug!("found `transfer` or `transfer_allow_death` or `transfer_keep_alive` call.");
-			let args = decode_and_log_error::<TransferToAliceShieldsFundsArgs>(call_args)?;
-			if args.destination == ALICE_ACCOUNT_ID.into() {
-				Some(IndirectCall::TransferToAliceShieldsFunds(args))
-			} else {
-				debug!("Parentchain transfer extrinsic was not for Alice; ignoring...");
-				// No need to put it into the top pool if it isn't executed in the first place.
-				None
-			}
+		trace!("ExtrinsicFilter: attempting to execute indirect call with index {:?}", index);
+		if index == metadata.timestamp_set_call_indexes().ok()? {
+			debug!("ExtrinsicFilter: found timestamp set extrinsic");
+			let args = decode_and_log_error::<TimestampSetArgs<TargetA>>(call_args)?;
+			Some(IndirectCall::TimestampSet(args))
 		} else {
 			None
 		}

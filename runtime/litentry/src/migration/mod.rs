@@ -18,6 +18,8 @@ use frame_support::{
 	StorageHasher, Twox128,
 };
 use sp_std::marker::PhantomData;
+#[cfg(feature = "try-runtime")]
+use sp_std::vec::Vec;
 
 pub struct RemoveSudoAndStorage<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for RemoveSudoAndStorage<T>

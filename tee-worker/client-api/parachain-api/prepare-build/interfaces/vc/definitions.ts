@@ -181,6 +181,7 @@ export default {
                 "Gtc",
                 "Ton",
                 "Trx",
+                "Nfp",
             ],
         },
         // PlatformUserType

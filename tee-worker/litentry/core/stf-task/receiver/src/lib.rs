@@ -44,12 +44,13 @@ use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
 };
 use ita_sgx_runtime::Hash;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_primitives::types::TrustedOperation;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};

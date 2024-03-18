@@ -66,6 +66,8 @@ pub enum Web3TokenType {
 	Ton,
 	#[codec(index = 21)]
 	Trx,
+	#[codec(index = 22)]
+	Nfp,
 }
 
 impl Web3TokenType {
@@ -79,6 +81,7 @@ impl Web3TokenType {
 				Web3Network::Litentry,
 				Web3Network::Litmus,
 			],
+			Self::Nfp => vec![Web3Network::Bsc],
 			_ => vec![Web3Network::Ethereum],
 		}
 	}
