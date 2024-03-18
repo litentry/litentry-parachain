@@ -505,27 +505,19 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(feature = "dcap")]
 	enclave.set_sgx_qpl_logging().expect("QPL logging setup failed");
 
-	let enclave2 = enclave.clone();
-	let node_api2 = litentry_rpc_api.clone();
-	let tee_accountid2 = tee_accountid.clone();
-	let trusted_url2 = trusted_url.clone();
-
-	#[cfg(not(feature = "dcap"))]
-	let register_xt = move || enclave2.generate_ias_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
-	#[cfg(feature = "dcap")]
-	let register_xt = move || enclave2.generate_dcap_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
-
-	let send_register_xt = move || {
-		println!("[+] Send register enclave extrinsic");
-		send_litentry_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
-	};
-
 	// Litentry: send the registration extrinsic regardless of being registered or not,
 	//           the reason is the mrenclave could change in between, so we rely on the
 	//           on-chain logic to handle everything.
 	//           this is the same behavior as upstream
-	let register_enclave_block_hash =
-		send_register_xt().expect("enclave RA registration must be successful to continue");
+	let register_enclave_block_hash = register_enclave(
+		enclave.clone(),
+		&litentry_rpc_api,
+		&tee_accountid,
+		&trusted_url,
+		skip_ra,
+		is_development_mode,
+	)
+	.expect("enclave RA registration must be successful to continue");
 
 	let api_register_enclave_xt_header =
 		litentry_rpc_api.get_header(Some(register_enclave_block_hash)).unwrap().unwrap();
@@ -598,6 +590,17 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 							enclave.as_ref(),
 							skip_ra,
 						);
+
+						info!("re-register the enclave to update the keys after provisioning");
+						register_enclave(
+							enclave.clone(),
+							&litentry_rpc_api,
+							&tee_accountid,
+							&trusted_url,
+							skip_ra,
+							is_development_mode,
+						)
+						.expect("enclave RA registration must be successful to continue");
 					}
 					(false, true)
 				}
@@ -1117,4 +1120,24 @@ pub fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 	let tee_public = enclave_api.get_ecc_signing_pubkey().unwrap();
 	trace!("[+] Got ed25519 account of TEE = {}", tee_public.to_ss58check());
 	AccountId32::from(*tee_public.as_array_ref())
+}
+
+fn register_enclave<E>(
+	enclave: Arc<E>,
+	api: &ParentchainApi,
+	tee_account: &AccountId32,
+	url: &str,
+	skip_ra: bool,
+	is_development_mode: bool,
+) -> ServiceResult<Hash>
+where
+	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+{
+	#[cfg(not(feature = "dcap"))]
+	let register_xt = move || enclave.generate_ias_ra_extrinsic(url, skip_ra).unwrap();
+	#[cfg(feature = "dcap")]
+	let register_xt = move || enclave.generate_dcap_ra_extrinsic(url, skip_ra).unwrap();
+
+	println!("[+] Send register enclave extrinsic");
+	send_litentry_extrinsic(register_xt(), api, tee_account, is_development_mode)
 }
