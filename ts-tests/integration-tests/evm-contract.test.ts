@@ -1,7 +1,7 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC} from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
 import Web3 from 'web3';
 

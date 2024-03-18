@@ -28,7 +28,9 @@ use itp_enclave_api::{
 };
 use itp_node_api::api_client::PalletTeebagApi;
 use itp_types::{ShardIdentifier, WorkerType};
+use log::info;
 use sgx_types::sgx_quote_sign_type_t;
+use sp_runtime::MultiSigner;
 use std::string::String;
 
 pub(crate) fn sync_state<
@@ -40,10 +42,10 @@ pub(crate) fn sync_state<
 	enclave_api: &E,
 	skip_ra: bool,
 ) {
-	// FIXME: we now assume that keys are equal for all shards.
 	let provider_url =
-		executor::block_on(get_enclave_url_of_first_registered(node_api, enclave_api))
-			.expect("Author of last finalized sidechain block could not be found");
+		// TODO(Litentry P-629): maybe implement `get_enclave_url_of_last_active`
+		executor::block_on(get_enclave_url_of_primary_worker_for_shard(node_api, shard))
+			.expect("Author of primary worker for shard could not be found");
 
 	println!("Requesting state provisioning from worker at {}", &provider_url);
 
@@ -56,6 +58,19 @@ pub(crate) fn sync_state<
 	)
 	.unwrap();
 	println!("[+] State provisioning successfully performed.");
+}
+
+/// Returns the url of the primary worker for the given shard
+async fn get_enclave_url_of_primary_worker_for_shard<NodeApi: PalletTeebagApi>(
+	node_api: &NodeApi,
+	shard: &ShardIdentifier,
+) -> Result<String> {
+	let enclave = node_api
+		.primary_enclave_for_shard(WorkerType::Identity, shard, None)?
+		.ok_or_else(|| Error::NoWorkerForShardFound(*shard))?;
+	let worker_api_direct =
+		DirectWorkerApi::new(String::from_utf8_lossy(enclave.url.as_slice()).to_string());
+	Ok(worker_api_direct.get_mu_ra_url()?)
 }
 
 /// Returns the url of the first Enclave that matches our own MRENCLAVE.
