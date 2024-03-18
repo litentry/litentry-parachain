@@ -18,21 +18,71 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_std::{vec, vec::Vec};
 
-use crate::Web3Network;
+use crate::assertion::network::Web3Network;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum Web3NftType {
+pub enum Web3TokenType {
 	#[codec(index = 0)]
-	WeirdoGhostGang,
+	Bnb,
 	#[codec(index = 1)]
-	Club3Sbt,
+	Eth,
+	#[codec(index = 2)]
+	SpaceId,
+	#[codec(index = 3)]
+	Lit,
+	#[codec(index = 4)]
+	Wbtc,
+	#[codec(index = 5)]
+	Usdc,
+	#[codec(index = 6)]
+	Usdt,
+	#[codec(index = 7)]
+	Crv,
+	#[codec(index = 8)]
+	Matic,
+	#[codec(index = 9)]
+	Dydx,
+	#[codec(index = 10)]
+	Amp,
+	#[codec(index = 11)]
+	Cvx,
+	#[codec(index = 12)]
+	Tusd,
+	#[codec(index = 13)]
+	Usdd,
+	#[codec(index = 14)]
+	Gusd,
+	#[codec(index = 15)]
+	Link,
+	#[codec(index = 16)]
+	Grt,
+	#[codec(index = 17)]
+	Comp,
+	#[codec(index = 18)]
+	People,
+	#[codec(index = 19)]
+	Gtc,
+	#[codec(index = 20)]
+	Ton,
+	#[codec(index = 21)]
+	Trx,
+	#[codec(index = 22)]
+	Nfp,
 }
 
-impl Web3NftType {
+impl Web3TokenType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::WeirdoGhostGang => vec![Web3Network::Ethereum],
-			Self::Club3Sbt => vec![Web3Network::Bsc, Web3Network::Polygon, Web3Network::Arbitrum],
+			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx =>
+				vec![Web3Network::Bsc, Web3Network::Ethereum],
+			Self::Lit => vec![
+				Web3Network::Bsc,
+				Web3Network::Ethereum,
+				Web3Network::Litentry,
+				Web3Network::Litmus,
+			],
+			Self::Nfp => vec![Web3Network::Bsc],
+			_ => vec![Web3Network::Ethereum],
 		}
 	}
 }
