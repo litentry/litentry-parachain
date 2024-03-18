@@ -26,13 +26,13 @@ help:
 
 # build release
 
-.PHONY: build-all ## Build release all with `tee-dev` feature
+.PHONY: build-all ## Build release all
 build-all:
-	cargo build --locked --release --features=tee-dev
+	cargo build --locked --release
 
-.PHONY: build-node ## Build release node with `tee-dev` feature
+.PHONY: build-node ## Build release node
 build-node:
-	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release --features=tee-dev,fast-runtime
+	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release
 
 .PHONY: build-runtime-litentry ## Build litentry release runtime
 build-runtime-litentry:
@@ -59,9 +59,8 @@ srtool-build-wasm-rococo:
 	@./scripts/build-wasm.sh rococo
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
-# with `tee-dev` feature as we use release profile in dev
 build-docker-release:
-	@./scripts/build-docker.sh release latest --features=tee-dev,fast-runtime
+	@./scripts/build-docker.sh release latest
 
 .PHONY: build-docker-production ## Build docker image using cargo profile `production`
 build-docker-production:
@@ -117,11 +116,11 @@ launch-custom-binary-rococo:
 
 .PHONY: test-cargo-all ## cargo test --all
 test-cargo-all:
-	@cargo test --release --all --features=skip-ias-check
+	@cargo test --release --all
 
 .PHONY: test-cargo-all-benchmarks ## cargo test --all --features runtime-benchmarks
 test-cargo-all-benchmarks:
-	@cargo test --release --all --features runtime-benchmarks --features=skip-ias-check
+	@cargo test --release --all --features runtime-benchmarks
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
@@ -206,8 +205,8 @@ fmt-taplo:
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
-	@cd ts-tests && pnpm run format
-	@cd tee-worker/ts-tests && pnpm run format
+	@cd ts-tests && pnpm install && pnpm run format
+	@cd tee-worker/ts-tests && pnpm install && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:

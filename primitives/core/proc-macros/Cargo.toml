@@ -10,6 +10,6 @@ proc-macro = true
 
 [dependencies]
 cargo_toml = "0.19"
-proc-macro2 = { version = "1" }
-quote = { version = "1" }
-syn = { version = "2", features = ["full", "visit-mut"] }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true, features = ["full", "visit-mut"] }

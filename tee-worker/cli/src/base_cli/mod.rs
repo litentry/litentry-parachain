@@ -17,8 +17,11 @@
 
 use crate::{
 	base_cli::commands::{
-		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
-		litentry::id_graph_hash::IDGraphHashCommand, register_tcb_info::RegisterTcbInfoCommand,
+		balance::BalanceCommand,
+		faucet::FaucetCommand,
+		listen::ListenCommand,
+		litentry::{id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand},
+		register_tcb_info::RegisterTcbInfoCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
@@ -78,6 +81,9 @@ pub enum BaseCommand {
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
 
+	/// create idenity graph
+	LinkIdentity(LinkIdentityCommand),
+
 	/// get the IDGraph hash of the given identity
 	IDGraphHash(IDGraphHashCommand),
 }
@@ -97,6 +103,7 @@ impl BaseCommand {
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
+			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 		}
 	}
@@ -104,10 +111,11 @@ impl BaseCommand {
 
 fn new_account() -> CliResult {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
+	let key: sp_core::sr25519::Public =
+		LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
 	let key_base58 = key.to_ss58check();
 	drop(store);
-	println!("{}", key_base58);
+	println!("0x{}", hex::encode(key.0));
 	Ok(CliResultOk::PubKeysBase58 {
 		pubkeys_sr25519: Some(vec![key_base58]),
 		pubkeys_ed25519: None,
@@ -120,7 +128,7 @@ fn list_accounts() -> CliResult {
 	let mut keys_sr25519 = vec![];
 	for pubkey in store.sr25519_public_keys(SR25519_KEY_TYPE).into_iter() {
 		let key_ss58 = pubkey.to_ss58check();
-		println!("{}", key_ss58);
+		println!("0x{}", hex::encode(pubkey.0));
 		keys_sr25519.push(key_ss58);
 	}
 	println!("ed25519 keys:");

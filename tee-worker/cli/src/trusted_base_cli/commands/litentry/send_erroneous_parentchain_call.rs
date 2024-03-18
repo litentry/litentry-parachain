@@ -21,8 +21,8 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{Index, TrustedCall, TrustedCallSigning};
-use itp_stf_primitives::types::KeyPair;
+use ita_stf::{Index, TrustedCall};
+use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use sp_core::Pair;
 
 #[derive(Parser)]

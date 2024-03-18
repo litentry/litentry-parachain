@@ -15,3 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod id_graph_hash;
+pub mod link_identity;
+
+pub const IMP: &str = "IdentityManagement";

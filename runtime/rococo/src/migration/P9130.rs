@@ -25,7 +25,7 @@ use pallet_parachain_staking::{
 use sp_runtime::Percent;
 use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 extern crate alloc;
 #[cfg(feature = "try-runtime")]
 use alloc::{format, string::ToString};

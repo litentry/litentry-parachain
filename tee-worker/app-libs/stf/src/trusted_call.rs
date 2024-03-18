@@ -26,9 +26,7 @@ use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_addre
 #[cfg(not(feature = "production"))]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
-	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash,
-	},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self, shard_vault},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
 		SetIdentityNetworksResult, TrustedCallResult,
@@ -39,23 +37,25 @@ use codec::{Compact, Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-pub use ita_sgx_runtime::{Balance, IDGraph, Index, Runtime, System};
+pub use ita_sgx_runtime::{
+	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
+	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System,
+};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{
 	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
-use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
-pub use itp_stf_primitives::{
-	error::{StfError, StfResult},
+use itp_stf_interface::ExecuteCall;
+use itp_stf_primitives::{
+	error::StfError,
 	traits::{TrustedCallSigning, TrustedCallVerification},
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{ParentchainCall, ProxyType},
-	Address,
+	parentchain::{ParentchainCall, ParentchainId, ProxyType},
+	Address, Moment, OpaqueCall, H256,
 };
-pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
@@ -68,11 +68,13 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::MultiAddress;
+use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
+pub type MaxAssertionLength = ConstU32<32>;
+pub type VecAssertion = BoundedVec<Assertion, MaxAssertionLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -119,6 +121,8 @@ pub enum TrustedCall {
 	#[cfg(not(feature = "production"))]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
+	#[codec(index = 6)]
+	request_batch_vc(Identity, Identity, VecAssertion, Option<RequestAesKey>, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
@@ -152,13 +156,15 @@ pub enum TrustedCall {
 	#[codec(index = 53)]
 	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	#[codec(index = 54)]
-	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
-	#[cfg(feature = "evm")]
+	balance_shield(Identity, AccountId, Balance, ParentchainId), // (Root, AccountIncognito, Amount, origin parentchain)
 	#[codec(index = 55)]
+	timestamp_set(Identity, Moment, ParentchainId),
+	#[cfg(feature = "evm")]
+	#[codec(index = 56)]
 	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 56)]
+	#[codec(index = 57)]
 	evm_call(
 		Identity,
 		H160,
@@ -173,7 +179,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 57)]
+	#[codec(index = 58)]
 	evm_create(
 		Identity,
 		H160,
@@ -187,7 +193,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 58)]
+	#[codec(index = 59)]
 	evm_create2(
 		Identity,
 		H160,
@@ -210,6 +216,7 @@ impl TrustedCall {
 			Self::balance_transfer(sender_identity, ..) => sender_identity,
 			Self::balance_unshield(sender_identity, ..) => sender_identity,
 			Self::balance_shield(sender_identity, ..) => sender_identity,
+			Self::timestamp_set(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
 			Self::evm_withdraw(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
@@ -232,6 +239,7 @@ impl TrustedCall {
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
 			#[cfg(not(feature = "production"))]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
+			Self::request_batch_vc(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -491,11 +499,10 @@ where
 					value,
 				)?;
 
-				let vault_pubkey: [u8; 32] = get_storage_by_key_hash(SHARD_VAULT_KEY.into())
-					.ok_or_else(|| {
-						StfError::Dispatch("shard vault key hasn't been set".to_string())
-					})?;
-				let vault_address = Address::from(AccountId::from(vault_pubkey));
+				let (vault, parentchain_id) = shard_vault().ok_or_else(|| {
+					StfError::Dispatch("shard vault key hasn't been set".to_string())
+				})?;
+				let vault_address = Address::from(vault);
 				let vault_transfer_call = OpaqueCall::from_tuple(&(
 					node_metadata_repo
 						.get_from_metadata(|m| m.transfer_keep_alive_call_indexes())
@@ -513,19 +520,45 @@ where
 					None::<ProxyType>,
 					vault_transfer_call,
 				));
-				calls.push(ParentchainCall::TargetA(proxy_call));
+				let parentchain_call = match parentchain_id {
+					ParentchainId::Litentry => ParentchainCall::Litentry(proxy_call),
+					ParentchainId::TargetA => ParentchainCall::TargetA(proxy_call),
+					ParentchainId::TargetB => ParentchainCall::TargetB(proxy_call),
+				};
+				calls.push(parentchain_call);
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::balance_shield(enclave_account, who, value) => {
+			TrustedCall::balance_shield(enclave_account, who, value, parentchain_id) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
-				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
+				debug!(
+					"balance_shield({}, {}, {:?})",
+					account_id_to_string(&who),
+					value,
+					parentchain_id
+				);
+				let (_vault_account, vault_parentchain_id) =
+					shard_vault().ok_or(StfError::NoShardVaultAssigned)?;
+				ensure!(
+					parentchain_id == vault_parentchain_id,
+					StfError::WrongParentchainIdForShardVault
+				);
+				std::println!("⣿STF⣿ 🛡 will shield to {}", account_id_to_string(&who));
 				shield_funds(who, value)?;
 
 				// Litentry: we don't have publish_hash call in teebag
 				Ok(TrustedCallResult::Empty)
 			},
+			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
+				let account_id: AccountId32 =
+					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&account_id)?;
+				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
+				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
+				Ok(TrustedCallResult::Empty)
+			},
+
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
@@ -852,6 +885,12 @@ where
 					e
 				})?;
 				Ok(TrustedCallResult::Streamed)
+			},
+			TrustedCall::request_batch_vc(..) => {
+				error!(
+					"TrustedCall::request_batch_vc is not supported here. Will be removed later."
+				);
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::request_vc_callback(
 				signer,

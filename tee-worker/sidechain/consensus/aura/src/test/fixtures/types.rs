@@ -15,7 +15,7 @@
 
 */
 
-use crate::{test::mocks::environment_mock::EnvironmentMock, Aura};
+use crate::Aura;
 use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
 use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 use itp_types::Block as ParentchainBlock;

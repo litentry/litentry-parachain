@@ -32,7 +32,7 @@ mod sync_state;
 mod tests;
 mod utils;
 mod worker;
-mod worker_peers_registry;
+mod worker_peers_updater;
 
 #[cfg(feature = "link-binary")]
 pub mod main_impl;

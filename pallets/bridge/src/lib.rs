@@ -33,7 +33,6 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use codec::{Decode, Encode, EncodeLike};
 	use frame_support::{
 		dispatch::GetDispatchInfo,
 		traits::{fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons},
@@ -43,6 +42,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		{self as system},
 	};
+	use parity_scale_codec::{Decode, Encode, EncodeLike};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},

@@ -3,9 +3,11 @@ import 'mocha';
 import '@polkadot/api-augment';
 import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { ISubmittableResult } from '@polkadot/types/types';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from '../utils';
+import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapperGC } from '../utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');
@@ -133,28 +135,24 @@ async function setupCrossChainTransfer(
     await eConfig.erc20.grantRole(MINTER_ROLE, eConfig.erc20Handler.address);
 
     // parachain setup
-    let extrinsic = [];
+    let extrinsic: SubmittableExtrinsic<"promise", ISubmittableResult>[] = [];
     for (let i = 0; i < parachainRelayers.length; i++) {
         const isRelayer = await pConfig.api.query.chainBridge.relayers(parachainRelayers[i]);
         if (!isRelayer.toHuman()) {
-            extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i])));
+            const temp = await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i]));
+            extrinsic.push(temp);
         }
     }
 
-    // const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman();
-    // if ('Test' !== filterMode) {
-    //     extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.extrinsicFilter.setMode('Test')));
-    // }
-
     const whitelist = await pConfig.api.query.chainBridge.chainNonces(sourceChainID);
     if (!whitelist.toHuman()) {
-        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
+        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
 
     const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
     if (resource.toHuman() !== 'BridgeTransfer.transfer') {
         extrinsic.push(
-            await sudoWrapper(
+            await sudoWrapperGC(
                 pConfig.api,
                 pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
             )
@@ -163,7 +161,7 @@ async function setupCrossChainTransfer(
 
     const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
     if (!fee || fee.toString() !== parachainFee.toString()) {
-        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
+        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
     }
 
     if (extrinsic.length > 0) {

@@ -53,6 +53,7 @@ impl TokenName for Web3TokenType {
 			Self::Gtc => "GTC",
 			Self::Ton => "TON",
 			Self::Trx => "TRX",
+			Self::Nfp => "NFP",
 		}
 	}
 }
@@ -138,6 +139,8 @@ impl TokenAddress for Web3TokenType {
 			(Self::Trx, Web3Network::Bsc) => Some("0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3"),
 			(Self::Trx, Web3Network::Ethereum) =>
 				Some("0x50327c6c5a14dcade707abad2e27eb517df87ab5"),
+			// Nfp
+			(Self::Nfp, Web3Network::Bsc) => Some("0x75e8ddb518bb757b4282cd5b83bb70d4101d12fb"),
 			_ => None,
 		}
 	}
@@ -185,7 +188,9 @@ impl TokenDecimals for Web3TokenType {
 			// People
 			(Self::People, Web3Network::Ethereum) |
 			// Gtc
-			(Self::Gtc, Web3Network::Ethereum) => 18,
+			(Self::Gtc, Web3Network::Ethereum) |
+			// Nfp
+			(Self::Nfp, Web3Network::Bsc) => 18,
 			// Ton
 			(Self::Ton, Web3Network::Bsc) | (Self::Ton, Web3Network::Ethereum) => 9,
 			// Wbtc
