@@ -52,7 +52,9 @@ impl LinkIdentityCommand {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = direct_api.get_state_mrenclave().unwrap();
 		let shard = ShardIdentifier::decode(&mut &mrenclave[..]).unwrap();
-		let nonce = direct_api.get_next_nonce(&shard, &self.get_primary_account_id()).unwrap();
+		let nonce = direct_api
+			.get_next_nonce(&shard, &self.get_primary_account_id().into())
+			.unwrap();
 
 		let signer = self.get_signer();
 		let who: sr25519_core::Pair = get_pair_from_str(&self.account).into();
