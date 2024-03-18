@@ -165,7 +165,10 @@ mod impl_ffi {
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
+			ensure!(
+				(unchecked_extrinsic_size as usize) < unchecked_extrinsic.len(),
+				Error::Sgx(sgx_status_t::SGX_ERROR_INVALID_PARAMETER)
+			);
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
 		fn generate_dcap_ra_extrinsic_from_quote(
@@ -194,7 +197,10 @@ mod impl_ffi {
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
+			ensure!(
+				(unchecked_extrinsic_size as usize) < unchecked_extrinsic.len(),
+				Error::Sgx(sgx_status_t::SGX_ERROR_INVALID_PARAMETER)
+			);
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
 
@@ -274,7 +280,10 @@ mod impl_ffi {
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
+			ensure!(
+				(unchecked_extrinsic_size as usize) < unchecked_extrinsic.len(),
+				Error::Sgx(sgx_status_t::SGX_ERROR_INVALID_PARAMETER)
+			);
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
 
@@ -307,7 +316,10 @@ mod impl_ffi {
 				free_status == sgx_quote3_error_t::SGX_QL_SUCCESS,
 				Error::SgxQuote(free_status)
 			);
-
+			ensure!(
+				(unchecked_extrinsic_size as usize) < unchecked_extrinsic.len(),
+				Error::Sgx(sgx_status_t::SGX_ERROR_INVALID_PARAMETER)
+			);
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
 
@@ -337,7 +349,10 @@ mod impl_ffi {
 				free_status == sgx_quote3_error_t::SGX_QL_SUCCESS,
 				Error::SgxQuote(free_status)
 			);
-
+			ensure!(
+				(unchecked_extrinsic_size as usize) < unchecked_extrinsic.len(),
+				Error::Sgx(sgx_status_t::SGX_ERROR_INVALID_PARAMETER)
+			);
 			Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 		}
 
@@ -792,13 +807,13 @@ mod impl_ffi {
 	}
 
 	fn create_system_path(file_name: &str) -> String {
-		info!("create_system_path:: file_name={}", &file_name);
+		trace!("create_system_path:: file_name={}", &file_name);
 		let default_path = format!("{}{}", OS_SYSTEM_PATH, file_name);
 
 		let full_path = find_library_by_name(file_name).unwrap_or(default_path);
 
 		let c_terminated_path = format!("{}{}", full_path, C_STRING_ENDING);
-		info!("create_system_path:: created path={}", &c_terminated_path);
+		trace!("create_system_path:: created path={}", &c_terminated_path);
 		c_terminated_path
 	}
 
