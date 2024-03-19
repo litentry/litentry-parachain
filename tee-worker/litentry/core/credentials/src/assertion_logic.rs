@@ -78,7 +78,12 @@ impl AssertionLogic {
 	}
 
 	pub fn new_item<T: ToString>(src: T, op: Op, dst: T) -> Self {
-		Self::Item { src: src.to_string(), op, dst: dst.to_string() }
+		let mut src_string = src.to_string();
+		if !src_string.starts_with("$") {
+			log::warn!("AssertionLogic::new_item - src missing $ prefix: {}", src_string);
+			src_string.insert_str(0, "$");
+		}
+		Self::Item { src: src_string, op, dst: dst.to_string() }
 	}
 	pub fn add_item(mut self, item: AssertionLogic) -> Self {
 		match &mut self {
@@ -151,5 +156,23 @@ mod tests {
 
 		let a1 = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
 		assert_eq!(a1.eval(), true);
+	}
+
+	#[test]
+	fn assertion_new_item_adds_dollar_prefix_if_missing() {
+		let item = AssertionLogic::new_item("some_src", Op::GreaterEq, "7");
+		assert_eq!(
+			item,
+			AssertionLogic::Item { src: "$some_src".into(), op: Op::GreaterEq, dst: "7".into() }
+		);
+	}
+
+	#[test]
+	fn assertion_new_item_preserves_dollar_prefix_if_present() {
+		let item = AssertionLogic::new_item("$some_src", Op::GreaterEq, "7");
+		assert_eq!(
+			item,
+			AssertionLogic::Item { src: "$some_src".into(), op: Op::GreaterEq, dst: "7".into() }
+		);
 	}
 }
