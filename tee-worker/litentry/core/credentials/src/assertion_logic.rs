@@ -79,9 +79,10 @@ impl AssertionLogic {
 
 	pub fn new_item<T: ToString>(src: T, op: Op, dst: T) -> Self {
 		let mut src_string = src.to_string();
-		if !src_string.starts_with("$") {
+		let prefix = '$';
+		if !src_string.starts_with(prefix) {
 			log::warn!("AssertionLogic::new_item - src missing $ prefix: {}", src_string);
-			src_string.insert_str(0, "$");
+			src_string.insert(0, prefix);
 		}
 		Self::Item { src: src_string, op, dst: dst.to_string() }
 	}
