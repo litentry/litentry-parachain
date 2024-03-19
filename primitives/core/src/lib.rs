@@ -18,21 +18,23 @@
 #![allow(clippy::identity_op)]
 
 mod error;
+pub use error::*;
+
 mod vc;
+pub use vc::*;
 
 pub mod assertion;
+pub use assertion::Assertion;
+
 pub mod identity;
+pub use identity::*;
 
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub use assertion::Assertion;
 pub use constants::*;
-pub use error::*;
-pub use identity::*;
 pub use litentry_proc_macros::*;
 pub use opaque::*;
 pub use types::*;
-pub use vc::*;
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
