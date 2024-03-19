@@ -171,26 +171,30 @@ impl Config {
 	}
 
 	pub fn trusted_worker_url_internal(&self) -> String {
-		format!("{}:{}", self.worker_ip, self.trusted_worker_port)
+		// use the same scheme as `trusted_worker_url_external`
+		let url = url::Url::parse(self.trusted_worker_url_external().as_str()).unwrap();
+		format!("{}://{}:{}", url.scheme(), self.worker_ip, self.trusted_worker_port)
 	}
 
 	/// Returns the trusted worker url that should be addressed by external clients.
 	pub fn trusted_worker_url_external(&self) -> String {
 		match &self.trusted_external_worker_address {
-			Some(external_address) => external_address.to_string(),
-			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port), // fallback to TLS
+			Some(external_address) => ensure_ws_or_wss(external_address),
+			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port), // fallback to wss
 		}
 	}
 
 	pub fn untrusted_worker_url(&self) -> String {
-		format!("{}:{}", self.worker_ip, self.untrusted_worker_port)
+		// use the same scheme as `untrusted_worker_url_external`
+		let url = url::Url::parse(self.untrusted_worker_url_external().as_str()).unwrap();
+		format!("{}://{}:{}", url.scheme(), self.worker_ip, self.untrusted_worker_port)
 	}
 
 	/// Returns the untrusted worker url that should be addressed by external clients.
 	pub fn untrusted_worker_url_external(&self) -> String {
 		match &self.untrusted_external_worker_address {
-			Some(external_address) => external_address.to_string(),
-			None => format!("ws://{}:{}", self.worker_ip, self.untrusted_worker_port),
+			Some(external_address) => ensure_ws_or_wss(external_address),
+			None => format!("ws://{}:{}", self.worker_ip, self.untrusted_worker_port), // fallback to ws
 		}
 	}
 
@@ -378,6 +382,19 @@ fn add_port_if_necessary(url: &str, port: &str) -> String {
 		1 => format!("{}:{}", url, port),
 		_ => panic!("Invalid worker url format in url input {:?}", url),
 	}
+}
+
+fn ensure_ws_or_wss(url_str: &str) -> String {
+	let url = url::Url::parse(url_str)
+		.map_err(|e| {
+			log::error!("Parse url [{}] error: {}", url_str, e);
+		})
+		.unwrap();
+
+	if url.scheme() != "wss" && url.scheme() != "ws" {
+		panic!("Parse url [{}] error: expect ws or wss, but get {}", url_str, url.scheme());
+	}
+	url.into()
 }
 
 pub fn pwd() -> PathBuf {

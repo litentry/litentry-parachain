@@ -212,7 +212,7 @@ where
 	type Connection = TungsteniteWsConnection<Handler>;
 
 	fn run(&self) -> WebSocketResult<()> {
-		debug!("Running tungstenite web socket server on {}", self.ws_address);
+		info!("Running tungstenite web socket server on {}", self.ws_address);
 
 		let socket_addr: SocketAddr =
 			self.ws_address.parse().map_err(WebSocketError::InvalidWsAddress)?;

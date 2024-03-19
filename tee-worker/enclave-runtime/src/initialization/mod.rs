@@ -401,8 +401,11 @@ pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResul
 		None
 	};
 
-	let web_socket_server =
-		Arc::new(TungsteniteWsServer::new(server_addr, maybe_config_provider, rpc_handler));
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 
