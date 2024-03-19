@@ -20,7 +20,7 @@ use crate::{
 		fixtures::test_server_config_provider::TestServerConfigProvider,
 		mocks::web_socket_handler_mock::WebSocketHandlerMock,
 	},
-	TungsteniteWsServer,
+	ws_server::TungsteniteWsServer,
 };
 use std::{string::String, sync::Arc};
 
