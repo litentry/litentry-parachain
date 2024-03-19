@@ -25,14 +25,30 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
     });
 }
 
+// After removing the sudo module, we use `EnsureRootOrHalfTechnicalCommittee` instead of `Sudo`,
+// and there are only one council members in litmus-dev/rococo-dev/litentry-dev.
+// So only `propose` is required, no vote.
+//
+// TODO: support to send the `vote extrinsic`, if the number of council members is greater than 2.
+export async function sudoWrapperTC(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
+    const chain = (await api.rpc.system.chain()).toString().toLowerCase();
+    if (chain != 'rococo-dev') {
+        const threshold = api.createType('Compact<u32>', 1);
+        const call = api.createType('Call', tx);
+        return api.tx.technicalCommittee.propose(threshold, call, api.createType('Compact<u32>', tx.length));
+    } else {
+        return api.tx.sudo.sudo(tx);
+    }
+}
+
 // After removing the sudo module, we use `EnsureRootOrHalfCouncil` instead of `Sudo`,
 // and there are only two council members in litmus-dev/rococo-dev/litentry-dev.
 // So only `propose` is required, no vote.
 //
 // TODO: support to send the `vote extrinsic`, if the number of council members is greater than 2.
-export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
+export async function sudoWrapperGC(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
     const chain = (await api.rpc.system.chain()).toString().toLowerCase();
-    if (chain == 'litmus-dev') {
+    if (chain != 'rococo-dev') {
         const threshold = api.createType('Compact<u32>', 1);
         const call = api.createType('Call', tx);
         return api.tx.council.propose(threshold, call, api.createType('Compact<u32>', tx.length));

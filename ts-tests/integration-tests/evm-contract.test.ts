@@ -1,7 +1,7 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
 import Web3 from 'web3';
 
@@ -16,7 +16,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             await signAndSend(extrinsic, context.alice);
         }
 
@@ -71,7 +71,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         );
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 
@@ -80,7 +80,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Normal' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Normal'));
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Normal'));
             await signAndSend(extrinsic, context.alice);
         }
 
@@ -180,7 +180,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 });

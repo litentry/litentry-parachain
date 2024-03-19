@@ -22,7 +22,9 @@ use codec::{Decode, Encode};
 
 use sp_runtime::traits::Block;
 
+use itp_types::ShardIdentifier;
 pub use itp_types::{parentchain::ParentchainId, Block as ParachainBlock, Block as SolochainBlock};
+
 pub type HeaderFor<B> = <B as Block>::Header;
 pub type SolochainHeader = HeaderFor<SolochainBlock>;
 pub type ParachainHeader = HeaderFor<ParachainBlock>;
@@ -33,10 +35,8 @@ pub type ParachainParams = SimpleParams<ParachainHeader>;
 /// Allows to use a single E-call for the initialization of different parentchain types.
 #[derive(Encode, Decode, Clone)]
 pub enum ParentchainInitParams {
-	#[codec(index = 0)]
-	Solochain { id: ParentchainId, params: SolochainParams },
-	#[codec(index = 1)]
-	Parachain { id: ParentchainId, params: ParachainParams },
+	Solochain { id: ParentchainId, shard: ShardIdentifier, params: SolochainParams },
+	Parachain { id: ParentchainId, shard: ShardIdentifier, params: ParachainParams },
 }
 
 impl ParentchainInitParams {
@@ -46,16 +46,22 @@ impl ParentchainInitParams {
 			Self::Parachain { id, .. } => id,
 		}
 	}
-}
-
-impl From<(ParentchainId, SolochainParams)> for ParentchainInitParams {
-	fn from(value: (ParentchainId, SolochainParams)) -> Self {
-		Self::Solochain { id: value.0, params: value.1 }
+	pub fn is_solochain(&self) -> bool {
+		matches!(self, Self::Solochain { .. })
+	}
+	pub fn is_parachain(&self) -> bool {
+		matches!(self, Self::Parachain { .. })
 	}
 }
 
-impl From<(ParentchainId, ParachainParams)> for ParentchainInitParams {
-	fn from(value: (ParentchainId, ParachainParams)) -> Self {
-		Self::Parachain { id: value.0, params: value.1 }
+impl From<(ParentchainId, ShardIdentifier, SolochainParams)> for ParentchainInitParams {
+	fn from(value: (ParentchainId, ShardIdentifier, SolochainParams)) -> Self {
+		Self::Solochain { id: value.0, shard: value.1, params: value.2 }
+	}
+}
+
+impl From<(ParentchainId, ShardIdentifier, ParachainParams)> for ParentchainInitParams {
+	fn from(value: (ParentchainId, ShardIdentifier, ParachainParams)) -> Self {
+		Self::Parachain { id: value.0, shard: value.1, params: value.2 }
 	}
 }

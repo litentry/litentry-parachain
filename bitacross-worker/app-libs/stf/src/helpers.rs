@@ -16,8 +16,14 @@
 */
 use crate::ENCLAVE_ACCOUNT_KEY;
 use codec::{Decode, Encode};
-use itp_stf_primitives::error::{StfError, StfResult};
+use ita_sgx_runtime::{ParentchainLitentry, ParentchainTargetA, ParentchainTargetB};
+use itp_stf_interface::{BlockMetadata, ShardCreationInfo};
+use itp_stf_primitives::{
+	error::{StfError, StfResult},
+	types::AccountId,
+};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
+use itp_types::parentchain::ParentchainId;
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use std::prelude::v1::*;
@@ -68,11 +74,11 @@ pub fn get_storage_by_key_hash<V: Decode>(key: Vec<u8>) -> Option<V> {
 		if let Ok(value) = Decode::decode(&mut value_encoded.as_slice()) {
 			Some(value)
 		} else {
-			error!("could not decode state for key {:x?}", key);
+			error!("could not decode state for key {:?}", hex::encode(&key));
 			None
 		}
 	} else {
-		info!("key not found in state {:x?}", key);
+		info!("key not found in state {:?}", hex::encode(key));
 		None
 	}
 }
@@ -119,6 +125,45 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 		Some(ref who) =>
 			signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
 		None => false,
+	}
+}
+
+/// get shard vault from any of the parentchain interfaces
+/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
+pub fn shard_vault() -> Option<(AccountId, ParentchainId)> {
+	get_shard_vaults().into_iter().next()
+}
+
+/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
+pub fn get_shard_vaults() -> Vec<(AccountId, ParentchainId)> {
+	[
+		(ParentchainLitentry::shard_vault(), ParentchainId::Litentry),
+		(ParentchainTargetA::shard_vault(), ParentchainId::TargetA),
+		(ParentchainTargetB::shard_vault(), ParentchainId::TargetB),
+	]
+	.into_iter()
+	.filter_map(|vp| vp.0.map(|v| (v, vp.1)))
+	.collect()
+}
+
+pub fn shard_creation_info() -> ShardCreationInfo {
+	let maybe_litentry_info: Option<BlockMetadata> = ParentchainLitentry::creation_block_number()
+		.and_then(|number| {
+			ParentchainLitentry::creation_block_hash().map(|hash| BlockMetadata { number, hash })
+		});
+	let maybe_target_a_info: Option<BlockMetadata> = ParentchainTargetA::creation_block_number()
+		.and_then(|number| {
+			ParentchainTargetA::creation_block_hash().map(|hash| BlockMetadata { number, hash })
+		});
+	let maybe_target_b_info: Option<BlockMetadata> = ParentchainTargetB::creation_block_number()
+		.and_then(|number| {
+			ParentchainTargetB::creation_block_hash().map(|hash| BlockMetadata { number, hash })
+		});
+
+	ShardCreationInfo {
+		litentry: maybe_litentry_info,
+		target_a: maybe_target_a_info,
+		target_b: maybe_target_b_info,
 	}
 }
 

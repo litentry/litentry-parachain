@@ -15,12 +15,14 @@
 
 */
 
-use crate::OpaqueCall;
+use crate::{OpaqueCall, ShardIdentifier};
 use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_core::bounded::alloc;
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 use substrate_api_client::ac_node_api::StaticEvent;
@@ -37,6 +39,7 @@ pub type AccountId = sp_core::crypto::AccountId32;
 pub type AccountData = pallet_balances::AccountData<Balance>;
 pub type AccountInfo = frame_system::AccountInfo<Index, AccountData>;
 pub type Address = MultiAddress<AccountId, ()>;
+
 // todo! make generic
 /// The type used to represent the kinds of proxying allowed.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, Debug)]
@@ -56,6 +59,7 @@ pub type BlockHash = sp_core::H256;
 pub type Signature = MultiSignature;
 
 #[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ParentchainId {
 	/// The Litentry Parentchain, the trust root of the enclave and serving finality to sidechains.
 	#[codec(index = 0)]
@@ -72,9 +76,9 @@ pub enum ParentchainId {
 impl std::fmt::Display for ParentchainId {
 	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
 		let message = match self {
-			ParentchainId::Litentry => "L1:Litentry",
-			ParentchainId::TargetA => "L1:AssetHub",
-			ParentchainId::TargetB => "L1:UNDEFINED",
+			ParentchainId::Litentry => "Litentry",
+			ParentchainId::TargetA => "TargetA",
+			ParentchainId::TargetB => "TargetB",
 		};
 		write!(f, "{}", message)
 	}
@@ -135,6 +139,29 @@ impl core::fmt::Display for BalanceTransfer {
 impl StaticEvent for BalanceTransfer {
 	const PALLET: &'static str = "Balances";
 	const EVENT: &'static str = "Transfer";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct ParentchainBlockProcessed {
+	pub shard: ShardIdentifier,
+	pub block_number: BlockNumber,
+	pub block_hash: Hash,
+	pub task_merkle_root: Hash,
+}
+
+impl core::fmt::Display for crate::parentchain::ParentchainBlockProcessed {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"ParentchainBlockProcessed :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
+			self.block_number, self.shard, self.task_merkle_root, self.block_hash
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for ParentchainBlockProcessed {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "ParentchainBlockProcessed";
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>

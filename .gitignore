@@ -23,3 +23,5 @@ gethdata
 /log-backup
 **/__pycache__/
 **/.env
+
+rust-analyzer.json

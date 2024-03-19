@@ -24,9 +24,9 @@ use crate::{
 use codec::Decode;
 use ita_stf::{
 	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
-	Index, TrustedCall, TrustedCallSigning, VecAssertion,
+	Index, TrustedCall, VecAssertion,
 };
-use itp_stf_primitives::types::KeyPair;
+use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
@@ -620,6 +620,8 @@ impl RequestBatchVcCommand {
 					"gtc" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Gtc)),
 					"ton" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Ton)),
 					"trx" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Trx)),
+					"nfp" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Nfp)),
+					"sol" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Sol)),
 					_ => Err("TokenHoldingAmount: Wrong parameter".to_string()),
 				}
 			},

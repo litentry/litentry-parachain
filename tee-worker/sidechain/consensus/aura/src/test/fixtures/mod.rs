@@ -22,6 +22,6 @@ use std::time::Duration;
 
 pub const SLOT_DURATION: Duration = Duration::from_millis(300);
 
-pub fn validateer(account: AccountId) -> Enclave {
+pub fn _validateer(_account: AccountId) -> Enclave {
 	Enclave::default()
 }

@@ -17,8 +17,8 @@
 pub mod assertion;
 pub mod identity_verification;
 
-use ita_stf::{TrustedCall, H256};
-use itp_types::ShardIdentifier;
+use ita_stf::TrustedCall;
+use itp_types::{ShardIdentifier, H256};
 use std::sync::mpsc::Sender;
 
 pub trait TaskHandler {

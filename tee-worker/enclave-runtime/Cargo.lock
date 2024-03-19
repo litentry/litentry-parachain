@@ -449,12 +449,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
-name = "bumpalo"
-version = "3.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
-
-[[package]]
 name = "byte-slice-cast"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -571,6 +565,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12f8e7987cbd042a63249497f41aed09f8e65add917ea6566effbc56578d6801"
 dependencies = [
  "generic-array 0.14.7",
+]
+
+[[package]]
+name = "common-primitives"
+version = "0.1.0"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
+dependencies = [
+ "derive_more",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -871,12 +878,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "enclave-bridge-primitives"
+version = "0.1.0"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
+dependencies = [
+ "common-primitives",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde 1.0.193",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
  "cid",
  "derive_more",
+ "enclave-bridge-primitives",
  "env_logger",
  "frame-support",
  "frame-system",
@@ -890,6 +914,7 @@ dependencies = [
  "itc-offchain-worker-executor",
  "itc-parentchain",
  "itc-parentchain-block-import-dispatcher",
+ "itc-parentchain-block-importer",
  "itc-parentchain-test",
  "itc-peer-top-broadcaster",
  "itc-tls-websocket-server",
@@ -1871,6 +1896,7 @@ dependencies = [
  "bs58",
  "ita-sgx-runtime",
  "ita-stf",
+ "itc-parentchain",
  "itc-parentchain-indirect-calls-executor",
  "itp-api-client-types",
  "itp-node-api",
@@ -1926,6 +1952,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
  "itp-sgx-externalities",
+ "itp-sgx-runtime-primitives",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-storage",
@@ -2038,6 +2065,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-stf-executor",
+ "itp-stf-interface",
  "itp-types",
  "log",
  "parity-scale-codec",
@@ -2615,6 +2643,7 @@ dependencies = [
  "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
+ "serde 1.0.193",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -2711,6 +2740,7 @@ name = "its-consensus-common"
 version = "0.9.0"
 dependencies = [
  "itc-parentchain-light-client",
+ "itertools 0.10.5",
  "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-import-queue",
@@ -2720,9 +2750,11 @@ dependencies = [
  "itp-settings",
  "itp-sgx-crypto",
  "itp-types",
+ "itp-utils",
  "its-block-verification",
  "its-primitives",
  "its-state",
+ "litentry-hex-utils",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2835,15 +2867,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "js-sys"
-version = "0.3.67"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a1d36f1235bc969acba30b7f5990b864423a6068a10f7c90ae8f0112e3a59d1"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
 name = "jsonrpc-core"
 version = "18.0.0"
 source = "git+https://github.com/scs/jsonrpc?branch=no_std_v18#0faf53c491c3222b96242a973d902dd06e9b6674"
@@ -2927,6 +2950,7 @@ dependencies = [
 name = "lc-assertion-build-v2"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "itc-rest-client",
  "itp-ocall-api",
  "itp-stf-primitives",
@@ -3084,6 +3108,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-top-pool-author",
  "itp-types",
@@ -3146,6 +3171,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
  "itp-top-pool-author",
@@ -3333,6 +3359,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
 
 [[package]]
+name = "memoffset"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
+dependencies = [
+ "autocfg 1.1.0",
+]
+
+[[package]]
 name = "memory-db"
 version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3452,6 +3487,17 @@ dependencies = [
  "autocfg 0.1.8",
  "num-traits 0.2.10",
  "sgx_tstd",
+]
+
+[[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -3924,6 +3970,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ptr_meta"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0738ccf7ea06b608c10564b31debd4f5bc5e197fc8bfe088f68ae5ce81e7a4f1"
+dependencies = [
+ "ptr_meta_derive",
+]
+
+[[package]]
+name = "ptr_meta_derive"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16b845dbfca988fa33db069c0e230574d15a3088f147a87b64c7589eb662c9ac"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.2"
 source = "git+https://github.com/mesalock-linux/quick-error-sgx#468bf2cce746f34dd3df8c1c5b4a5a6494914d36"
@@ -4114,16 +4180,41 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.16.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3053cf52e236a3ed746dfc745aa9cacf1b791d846bdaf412f60a8d7d6e17c8fc"
+source = "git+https://github.com/betrusted-io/ring-xous?branch=0.16.20-cleanup#4296c2e7904898766cf7d8d589759a129794783b"
 dependencies = [
  "cc",
  "libc",
+ "log",
  "once_cell 1.18.0",
+ "rkyv",
  "spin",
  "untrusted 0.7.1",
- "web-sys",
  "winapi",
+ "xous",
+ "xous-api-names",
+ "xous-ipc",
+]
+
+[[package]]
+name = "rkyv"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70de01b38fe7baba4ecdd33b777096d2b326993d8ea99bc5b6ede691883d3010"
+dependencies = [
+ "memoffset",
+ "ptr_meta",
+ "rkyv_derive",
+]
+
+[[package]]
+name = "rkyv_derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95a169f6bc5a81033e86ed39d0f4150e2608160b73d2b93c6e8e6a3efa873f14"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -5656,70 +5747,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
-name = "wasm-bindgen"
-version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1223296a201415c7fad14792dbefaace9bd52b62d33453ade1c5b5f07555406"
-dependencies = [
- "cfg-if 1.0.0",
- "wasm-bindgen-macro",
-]
-
-[[package]]
-name = "wasm-bindgen-backend"
-version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcdc935b63408d58a32f8cc9738a0bffd8f05cc7c002086c6ef20b7312ad9dcd"
-dependencies = [
- "bumpalo",
- "log",
- "once_cell 1.18.0",
- "proc-macro2",
- "quote 1.0.33",
- "syn 2.0.37",
- "wasm-bindgen-shared",
-]
-
-[[package]]
-name = "wasm-bindgen-macro"
-version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e4c238561b2d428924c49815533a8b9121c664599558a5d9ec51f8a1740a999"
-dependencies = [
- "quote 1.0.33",
- "wasm-bindgen-macro-support",
-]
-
-[[package]]
-name = "wasm-bindgen-macro-support"
-version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bae1abb6806dc1ad9e560ed242107c0f6c84335f1749dd4e8ddb012ebd5e25a7"
-dependencies = [
- "proc-macro2",
- "quote 1.0.33",
- "syn 2.0.37",
- "wasm-bindgen-backend",
- "wasm-bindgen-shared",
-]
-
-[[package]]
-name = "wasm-bindgen-shared"
-version = "0.2.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
-
-[[package]]
-name = "web-sys"
-version = "0.3.67"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58cd2333b6e0be7a39605f0e255892fd7418a682d8da8fe042fe25128794d2ed"
-dependencies = [
- "js-sys",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "webpki"
 version = "0.21.4"
 source = "git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx#8dbe6fbeefadf05582ae47c7fa818b04db49c61e"
@@ -5800,6 +5827,54 @@ dependencies = [
 ]
 
 [[package]]
+name = "xous"
+version = "0.9.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb93122c9dab77f8bde501ff0677d3df7777982f9faa23603423aeb5eae4e55d"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
+name = "xous-api-log"
+version = "0.1.54"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "941f7fd7c114e1e0c401bbbe8222e8adbb4bc8ebeb782f7812d8f1678a578934"
+dependencies = [
+ "log",
+ "num-derive",
+ "num-traits 0.2.16",
+ "xous",
+ "xous-ipc",
+]
+
+[[package]]
+name = "xous-api-names"
+version = "0.9.56"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "471502d9379d198738ec55dec7cd688ce21e1cfe7d93af6dad25e38c1c404d1c"
+dependencies = [
+ "log",
+ "num-derive",
+ "num-traits 0.2.16",
+ "rkyv",
+ "xous",
+ "xous-api-log",
+ "xous-ipc",
+]
+
+[[package]]
+name = "xous-ipc"
+version = "0.9.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f5081581314f115e2005403ee2cc0957d86cbfc49edf6e8b05d2fcf6c226c5d"
+dependencies = [
+ "bitflags",
+ "rkyv",
+ "xous",
+]
+
+[[package]]
 name = "yasna"
 version = "0.3.1"
 source = "git+https://github.com/mesalock-linux/yasna.rs-sgx?rev=sgx_1.1.3#a1f50714cd3eb29608ecf7888cacedc173edfdb2"
@@ -5829,8 +5904,3 @@ dependencies = [
  "quote 1.0.33",
  "syn 2.0.37",
 ]
-
-[[patch.unused]]
-name = "getrandom"
-version = "0.2.3"
-source = "git+https://github.com/integritee-network/getrandom-sgx?branch=update-v2.3#0a4af01fe1df0e6200192e7a709fd18da413466e"

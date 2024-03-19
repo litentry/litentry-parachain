@@ -18,7 +18,7 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_std::{vec, vec::Vec};
 
-use crate::Web3Network;
+use crate::assertion::network::Web3Network;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum Web3TokenType {
@@ -66,6 +66,10 @@ pub enum Web3TokenType {
 	Ton,
 	#[codec(index = 21)]
 	Trx,
+	#[codec(index = 22)]
+	Nfp,
+	#[codec(index = 23)]
+	Sol,
 }
 
 impl Web3TokenType {
@@ -79,6 +83,8 @@ impl Web3TokenType {
 				Web3Network::Litentry,
 				Web3Network::Litmus,
 			],
+			Self::Nfp => vec![Web3Network::Bsc],
+			Self::Sol => vec![Web3Network::Bsc, Web3Network::Ethereum, Web3Network::Solana],
 			_ => vec![Web3Network::Ethereum],
 		}
 	}

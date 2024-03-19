@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { buildIdentityFromKeypair, decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { randomSubstrateWallet } from './common/helpers';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -54,8 +54,7 @@ describe('Test Vc (direct invocation)', function () {
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
         const formatAddress = u8aToHex(keyringPair.publicKey);
-
-        const substrateIdentity = await buildIdentityFromKeypair(new PolkadotSigner(keyringPair), context);
+        const substrateIdentity = await new PolkadotSigner(keyringPair).getIdentity(context);
         substrateIdentities.push(substrateIdentity);
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
@@ -87,7 +86,7 @@ describe('Test Vc (direct invocation)', function () {
 
         console.log('assertion: ', assertion);
 
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
+        let currentNonce = (await getSidechainNonce(context, substrateIdentities[index])).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
 
