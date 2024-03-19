@@ -96,7 +96,7 @@ where
 
 		let mut web_socket_connection = TungsteniteWsConnection::new(
 			socket,
-			tls_session,
+			Some(tls_session),
 			token,
 			self.connection_handler.clone(),
 		)?;
