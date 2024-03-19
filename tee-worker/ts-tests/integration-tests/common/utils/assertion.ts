@@ -16,6 +16,7 @@ import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
+import { fail } from 'assert';
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -165,6 +166,10 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     );
 
     // step 9
+    // check runtime version is present
+    fail('add this test :D');
+
+    // step 10
     // validate VC aganist schema
 
     const schemaResult = await validateVcSchema(vcPayloadJson);
