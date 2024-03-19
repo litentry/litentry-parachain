@@ -232,7 +232,7 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         # TODO: use Popen and copy the stdout also to node.log
-        run(["./tee-worker/scripts/litentry/start_parachain.sh"], check=True)
+        run(["./local-setup/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary-standalone":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)

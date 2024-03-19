@@ -21,7 +21,7 @@ function start_local_parachain() {
     echo "------------------------------------------------------------"
     echo "Start local parachain: ${PARACHAIN} ..."
     # TODO: only `rococo` is supported for the moment. And it's hard-coded inside `start_parachain.sh`
-    ./scripts/litentry/start_parachain.sh
+    ./../local-setup/start_parachain.sh
     if [ $? -ne 0 ]; then
         exit 1
     fi
