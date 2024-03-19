@@ -26,6 +26,7 @@ export default {
                 __Unused_evm_account_codes: "Null",
                 __Unused_evm_account_storages: "Null",
                 id_graph: "(LitentryIdentity)",
+                __Unused_id_graph_stats: "(LitentryIdentity)",
             },
         },
         //important
