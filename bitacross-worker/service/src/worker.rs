@@ -26,6 +26,7 @@ use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
+use itp_types::ShardIdentifier;
 use jsonrpsee::{
 	types::{to_json_value, traits::Client},
 	ws_client::WsClientBuilder,
@@ -84,12 +85,12 @@ impl<Config, NodeApiFactory, Enclave, InitializationHandler>
 
 /// Looks for new peers and updates them.
 pub trait UpdatePeers {
-	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>>;
+	fn search_peers(&self, shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>>;
 
 	fn set_peers_urls(&self, peers: HashSet<PeerUrls>) -> WorkerResult<()>;
 
-	fn update_peers(&self) -> WorkerResult<()> {
-		let peers = self.search_peers()?;
+	fn update_peers(&self, shard: ShardIdentifier) -> WorkerResult<()> {
+		let peers = self.search_peers(shard)?;
 		self.set_peers_urls(peers)
 	}
 }
@@ -119,7 +120,7 @@ where
 	NodeApiFactory: CreateNodeApi + Send + Sync,
 	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
-	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>> {
+	fn search_peers(&self, shard: ShardIdentifier) -> WorkerResult<HashSet<PeerUrls>> {
 		let worker_url_external = self._config.trusted_worker_url_external();
 		let node_api = self
 			.node_api_factory
@@ -130,6 +131,7 @@ where
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
 			let enclave_url = String::from_utf8_lossy(enclave.url.as_slice()).to_string();
+			trace!("found peer rpc url: {}", enclave_url);
 			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
@@ -141,6 +143,7 @@ where
 				},
 			}
 		}
+		debug!("found {} peers in shard state for {:?}", peer_urls.len(), shard);
 		Ok(peer_urls)
 	}
 

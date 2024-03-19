@@ -135,7 +135,7 @@ async function setupCrossChainTransfer(
     await eConfig.erc20.grantRole(MINTER_ROLE, eConfig.erc20Handler.address);
 
     // parachain setup
-    let extrinsic: SubmittableExtrinsic<"promise", ISubmittableResult>[] = [];
+    let extrinsic: SubmittableExtrinsic<'promise', ISubmittableResult>[] = [];
     for (let i = 0; i < parachainRelayers.length; i++) {
         const isRelayer = await pConfig.api.query.chainBridge.relayers(parachainRelayers[i]);
         if (!isRelayer.toHuman()) {

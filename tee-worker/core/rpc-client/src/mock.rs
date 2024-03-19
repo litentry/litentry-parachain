@@ -111,7 +111,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_next_nonce(&self, _shard: &ShardIdentifier, _account: &AccountId) -> Result<u32> {
+	fn get_next_nonce(&self, _shard: &ShardIdentifier, _account: &Identity) -> Result<u32> {
 		Ok(self.nonce)
 	}
 
