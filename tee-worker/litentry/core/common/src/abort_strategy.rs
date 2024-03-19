@@ -34,21 +34,27 @@ pub enum AbortStrategy<F> {
 	ContinueUntilEnd,
 }
 
+pub enum LoopControls {
+	Break,
+	Continue,
+}
+
 pub fn loop_with_abort_strategy<F, T>(
+	// List of items to iterate over
 	items: Vec<T>,
-	mut action: impl FnMut(&T) -> Result<bool, Error>, // Closure to perform action, returns a boolean indicating whether to exit the loop
-	abort_strategy: AbortStrategy<F>,                  // Control when to abort the loop
+	// Closure to perform action, returns a LoopControls value indicating whether to exit the loop
+	mut action: impl FnMut(&T) -> Result<LoopControls, Error>,
+	// Control when to abort the loop
+	abort_strategy: AbortStrategy<F>,
 ) -> Result<(), Error>
 where
 	F: Fn(&T) -> bool, // Type of the predicate function, takes a parameter of type T and returns a boolean
 {
 	for (index, item) in items.iter().enumerate() {
 		match action(item) {
-			Ok(exit_loop) => {
-				// If the action returns true, break the loop immediately
-				if exit_loop {
-					break
-				}
+			Ok(control) => match control {
+				LoopControls::Break => break,
+				LoopControls::Continue => continue,
 			},
 			Err(err) => match abort_strategy {
 				AbortStrategy::FailFast => return Err(err), // If FailFast is chosen, return the error immediately
@@ -87,10 +93,10 @@ mod tests {
 			|item| {
 				result = *item;
 				if *item == "item2" {
-					return Ok(true)
+					return Ok(LoopControls::Break)
 				}
 
-				Ok(false)
+				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
 		);
@@ -114,7 +120,7 @@ mod tests {
 					)))
 				}
 
-				Ok(false)
+				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
 		);
@@ -155,7 +161,7 @@ mod tests {
 				result = *item;
 
 				if *item == "item4" {
-					return Ok(false)
+					return Ok(LoopControls::Break)
 				}
 				Err(Error::DataProviderError(ErrorString::truncate_from(
 					"test error".as_bytes().to_vec(),

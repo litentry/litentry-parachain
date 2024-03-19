@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use core::result::Result;
 
 use lc_common::{
-	abort_strategy::{loop_with_abort_strategy, AbortStrategy},
+	abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls},
 	web3_token::{TokenAddress, TokenDecimals},
 };
 use lc_data_providers::{
@@ -65,12 +65,12 @@ pub fn get_balance(
 								Ok(balance) => {
 									total_balance +=
 										calculate_balance_with_decimals(balance, decimals);
-									Ok(false)
+									Ok(LoopControls::Continue)
 								},
 								Err(err) => Err(err.into_error_detail()),
 							}
 						},
-						None => Ok(false),
+						None => Ok(LoopControls::Continue),
 					}
 				},
 				Web3Network::Solana => {
@@ -81,7 +81,7 @@ pub fn get_balance(
 						Ok(response) => match response.solana.parse::<f64>() {
 							Ok(balance) => {
 								total_balance += balance;
-								Ok(false)
+								Ok(LoopControls::Continue)
 							},
 							Err(err) => {
 								error!("Failed to parse {} to f64: {}", response.solana, err);
@@ -91,7 +91,7 @@ pub fn get_balance(
 						Err(err) => Err(err.into_error_detail()),
 					}
 				},
-				_ => Ok(false),
+				_ => Ok(LoopControls::Continue),
 			}
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
