@@ -32,6 +32,7 @@ use std::{
 	vec,
 };
 
+#[cfg(not(feature = "async"))]
 pub trait VIP3QuerySet {
 	fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error>;
 }
@@ -79,6 +80,7 @@ impl VIP3Client {
 	}
 }
 
+#[cfg(not(feature = "async"))]
 impl VIP3QuerySet for VIP3Client {
 	fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error> {
 		let path = "/api/v1/sbt/info".to_string();
@@ -86,6 +88,19 @@ impl VIP3QuerySet for VIP3Client {
 
 		self.client
 			.get_with::<String, VIP3SBTInfoResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+}
+
+#[cfg(feature = "async")]
+impl VIP3Client {
+	async fn sbt_info(&mut self, address: &str) -> Result<VIP3SBTInfoResponse, Error> {
+		let path = "/api/v1/sbt/info".to_string();
+		let query = vec![("addr", address)];
+
+		self.client
+			.get_with::<String, VIP3SBTInfoResponse>(path, query.as_slice())
+			.await
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 }

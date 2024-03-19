@@ -45,6 +45,10 @@ pub mod rest_client;
 pub mod mocks;
 
 use crate::error::Error;
+#[cfg(feature = "async")]
+use async_trait::async_trait;
+#[cfg(feature = "async")]
+use std::marker::{Send, Sync};
 use std::string::String;
 
 /// Type for URL query parameters.
@@ -75,6 +79,7 @@ pub trait RestPath<T> {
 /// REST HTTP GET trait
 ///
 /// Provides the GET verb for a REST API
+#[cfg(not(feature = "async"))]
 pub trait RestGet {
 	/// Plain GET request
 	fn get<U, T>(&mut self, params: U) -> Result<T, Error>
@@ -87,9 +92,26 @@ pub trait RestGet {
 		T: serde::de::DeserializeOwned + RestPath<U>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait RestGet {
+	/// Plain GET request
+	async fn get<U, T>(&mut self, params: U) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + RestPath<U> + Send,
+		U: Send;
+
+	/// GET request with query parameters.
+	async fn get_with<U, T>(&mut self, params: U, query: &Query<'_>) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + RestPath<U> + Send,
+		U: Send;
+}
+
 /// REST HTTP POST trait
 ///
 /// Provides the POST verb for a REST API
+#[cfg(not(feature = "async"))]
 pub trait RestPost {
 	/// Plain POST request.
 	fn post<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -117,6 +139,46 @@ pub trait RestPost {
 	where
 		T: serde::Serialize + RestPath<U>,
 		K: serde::de::DeserializeOwned;
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait RestPost {
+	/// Plain POST request.
+	async fn post<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
+	where
+		T: serde::Serialize + RestPath<U> + Send + Sync,
+		U: Send;
+
+	/// Make POST request with query parameters.
+	async fn post_with<U, T>(
+		&mut self,
+		params: U,
+		data: &T,
+		query: &Query<'_>,
+	) -> Result<(), Error>
+	where
+		T: serde::Serialize + RestPath<U> + Send + Sync,
+		U: Send;
+
+	/// Make a POST request and capture returned body.
+	async fn post_capture<U, T, K>(&mut self, params: U, data: &T) -> Result<K, Error>
+	where
+		T: serde::Serialize + RestPath<U> + Send + Sync,
+		K: serde::de::DeserializeOwned + Send,
+		U: Send;
+
+	/// Make a POST request with query parameters and capture returned body.
+	async fn post_capture_with<U, T, K>(
+		&mut self,
+		params: U,
+		data: &T,
+		query: &Query<'_>,
+	) -> Result<K, Error>
+	where
+		T: serde::Serialize + RestPath<U> + Send + Sync,
+		K: serde::de::DeserializeOwned + Send,
+		U: Send;
 }
 
 /// REST HTTP PUT trait

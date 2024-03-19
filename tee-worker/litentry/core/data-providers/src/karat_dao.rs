@@ -24,6 +24,8 @@ use crate::{
 	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
 	RetryableRestGet,
 };
+#[cfg(feature = "async")]
+use async_trait::async_trait;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -66,6 +68,7 @@ impl KaratDaoClient {
 		KaratDaoClient { retry_option, client }
 	}
 
+	#[cfg(not(feature = "async"))]
 	fn get<T>(&mut self, params: KaraDaoRequest, fast_fail: bool) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
@@ -83,6 +86,30 @@ impl KaratDaoClient {
 		} else {
 			self.client
 				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
+		}
+	}
+
+	#[cfg(feature = "async")]
+	async fn get<T>(&mut self, params: KaraDaoRequest, fast_fail: bool) -> Result<T, Error>
+	where
+		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>> + std::marker::Send,
+	{
+		let retry_option: Option<RetryOption> =
+			if fast_fail { None } else { Some(self.retry_option.clone()) };
+		if let Some(query) = params.query {
+			let transformed_query: Vec<(&str, &str)> =
+				query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+			self.client
+				.get_with_retry::<ReqPath, T>(
+					ReqPath::new(params.path.as_str()),
+					&transformed_query,
+					retry_option,
+				)
+				.await
+		} else {
+			self.client
+				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
+				.await
 		}
 	}
 }
@@ -105,6 +132,7 @@ pub struct UserVerificationResult {
 	pub is_valid: bool,
 }
 
+#[cfg(not(feature = "async"))]
 pub trait KaraDaoApi {
 	fn user_verification(
 		&mut self,
@@ -113,6 +141,17 @@ pub trait KaraDaoApi {
 	) -> Result<UserVerificationResponse, Error>;
 }
 
+#[cfg(feature = "async")]
+#[async_trait]
+pub trait KaraDaoApi {
+	async fn user_verification(
+		&mut self,
+		address: String,
+		fail_fast: bool,
+	) -> Result<UserVerificationResponse, Error>;
+}
+
+#[cfg(not(feature = "async"))]
 impl KaraDaoApi for KaratDaoClient {
 	fn user_verification(
 		&mut self,
@@ -126,6 +165,33 @@ impl KaraDaoApi for KaratDaoClient {
 		debug!("user_verification, params: {:?}", params);
 
 		match self.get::<UserVerificationResponse>(params, fail_fast) {
+			Ok(resp) => {
+				debug!("user_verification, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("user_verification, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
+#[cfg(feature = "async")]
+#[async_trait]
+impl KaraDaoApi for KaratDaoClient {
+	async fn user_verification(
+		&mut self,
+		address: String,
+		fail_fast: bool,
+	) -> Result<UserVerificationResponse, Error> {
+		let query: Vec<(String, String)> = vec![("address".to_string(), address)];
+
+		let params = KaraDaoRequest { path: "user/verification".into(), query: Some(query) };
+
+		debug!("user_verification, params: {:?}", params);
+
+		match self.get::<UserVerificationResponse>(params, fail_fast).await {
 			Ok(resp) => {
 				debug!("user_verification, response: {:?}", resp);
 				Ok(resp)

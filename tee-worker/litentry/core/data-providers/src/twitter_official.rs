@@ -165,6 +165,7 @@ impl TwitterOfficialClient {
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
+	#[cfg(not(feature = "async"))]
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
 		debug!("Twitter query tweet, id: {}", tweet_id);
@@ -190,10 +191,38 @@ impl TwitterOfficialClient {
 		Ok(tweet)
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
+		let tweet_id = vec_to_string(tweet_id)?;
+		debug!("Twitter query tweet, id: {}", tweet_id);
+
+		let path = format!("/2/tweets/{}", tweet_id);
+		let query: Vec<(&str, &str)> = vec![("expansions", "author_id")];
+
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<Tweet>>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let mut tweet = resp.data.ok_or(Error::RequestError("tweet not found".into()))?;
+
+		// have to replace user_id with includes -> users -> username, otherwise the handle verification would fail
+		if let Some(tweet_users) = resp.includes {
+			if tweet_users.users.is_empty() {
+				return Err(Error::RequestError("user not found from tweet".to_string()))
+			}
+			tweet.author_id = tweet_users.users[0].id.clone();
+		}
+
+		Ok(tweet)
+	}
+
 	/// V2, https://developer.twitter.com/en/docs/twitter-api/tweets/retweets/api-reference/get-tweets-id-retweeted_by
 	/// rate limit: 75/15min(per App) 75/15min(per User)
 	/// Note: The maximum result is 100 latest, when a user requests too late (after 100 retweets by others),
 	/// the verification will fail.
+	#[cfg(not(feature = "async"))]
 	pub fn query_retweeted_by(&mut self, original_tweet_id: Vec<u8>) -> Result<Retweeted, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
 		debug!("Twitter original tweet id: {}", original_tweet_id);
@@ -209,7 +238,28 @@ impl TwitterOfficialClient {
 		Ok(resp)
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn query_retweeted_by(
+		&mut self,
+		original_tweet_id: Vec<u8>,
+	) -> Result<Retweeted, Error> {
+		let original_tweet_id = vec_to_string(original_tweet_id)?;
+		debug!("Twitter original tweet id: {}", original_tweet_id);
+
+		let path = format!("/2/tweets/{}/retweeted_by", original_tweet_id);
+		let query: Vec<(&str, &str)> = vec![("max_results", "100")];
+
+		let resp = self
+			.client
+			.get_with::<String, Retweeted>(path, query.as_slice())
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		Ok(resp)
+	}
+
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
+	#[cfg(not(feature = "async"))]
 	pub fn query_user_by_name(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user_name)?;
 		debug!("Twitter query user by name, name: {}", user);
@@ -227,7 +277,27 @@ impl TwitterOfficialClient {
 		Ok(user)
 	}
 
+	#[cfg(feature = "async")]
+	pub async fn query_user_by_name(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
+		let user = vec_to_string(user_name)?;
+		debug!("Twitter query user by name, name: {}", user);
+
+		let query = vec![("user.fields", "public_metrics")];
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
+				format!("/2/users/by/username/{}", user),
+				query.as_slice(),
+			)
+			.await
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
+		Ok(user)
+	}
+
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
+	#[cfg(not(feature = "async"))]
 	pub fn query_user_by_id(&mut self, id: Vec<u8>) -> Result<TwitterUser, Error> {
 		let id = vec_to_string(id)?;
 		debug!("Twitter query user by id, id: {}", id);
@@ -239,6 +309,25 @@ impl TwitterOfficialClient {
 				format!("/2/users/{}", id),
 				query.as_slice(),
 			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
+		Ok(user)
+	}
+
+	#[cfg(feature = "async")]
+	pub async fn query_user_by_id(&mut self, id: Vec<u8>) -> Result<TwitterUser, Error> {
+		let id = vec_to_string(id)?;
+		debug!("Twitter query user by id, id: {}", id);
+
+		let query = vec![("user.fields", "public_metrics")];
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
+				format!("/2/users/{}", id),
+				query.as_slice(),
+			)
+			.await
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
