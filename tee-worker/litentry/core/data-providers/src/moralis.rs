@@ -45,8 +45,8 @@ pub struct MoralisRequest {
 }
 
 enum ClientType {
-	EVM,
-	SOLANA,
+	Evm,
+	Solana,
 }
 
 pub struct MoralisClient {
@@ -86,8 +86,8 @@ impl MoralisClient {
 		let retry_option: Option<RetryOption> =
 			if fast_fail { None } else { Some(self.retry_option.clone()) };
 		let client = match client_type {
-			ClientType::EVM => &mut self.client,
-			ClientType::SOLANA => &mut self.solana_client,
+			ClientType::Evm => &mut self.client,
+			ClientType::Solana => &mut self.solana_client,
 		};
 		if let Some(query) = params.query {
 			let transformed_query: Vec<(&str, &str)> =
@@ -201,7 +201,7 @@ impl NftApiList for MoralisClient {
 
 		debug!("get_nfts_by_wallet, params: {:?}", params);
 
-		match self.get::<GetNftsByWalletResponse>(ClientType::EVM, params, fast_fail) {
+		match self.get::<GetNftsByWalletResponse>(ClientType::Evm, params, fast_fail) {
 			Ok(resp) => {
 				debug!("get_nfts_by_wallet, response: {:?}", resp);
 				Ok(resp)
@@ -247,7 +247,7 @@ impl BalanceApiList for MoralisClient {
 		debug!("get_solana_native_balance_by_wallet, address: {:?}", address);
 
 		match self.get::<GetSolanaNativeBalanceBalanceByWalletResponse>(
-			ClientType::SOLANA,
+			ClientType::Solana,
 			params,
 			fast_fail,
 		) {

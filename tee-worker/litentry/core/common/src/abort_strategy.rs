@@ -43,7 +43,7 @@ where
 	F: Fn(&T) -> bool, // Type of the predicate function, takes a parameter of type T and returns a boolean
 {
 	for (index, item) in items.iter().enumerate() {
-		match action(&item) {
+		match action(item) {
 			Ok(exit_loop) => {
 				// If the action returns true, break the loop immediately
 				if exit_loop {
@@ -54,7 +54,7 @@ where
 				AbortStrategy::FailFast => return Err(err), // If FailFast is chosen, return the error immediately
 				AbortStrategy::ContinueUntil(ref predicate) => {
 					// If ContinueUntil is chosen, decide whether to return the error based on the predicate function
-					if predicate(&item) {
+					if predicate(item) {
 						return Err(err)
 					}
 				},
