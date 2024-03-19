@@ -2950,6 +2950,7 @@ dependencies = [
 name = "lc-assertion-build-v2"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "itc-rest-client",
  "itp-ocall-api",
  "itp-stf-primitives",
