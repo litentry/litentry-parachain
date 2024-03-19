@@ -344,7 +344,9 @@ mod tests {
 			.unwrap();
 		data_provider_config.set_achainable_url(url.clone()).unwrap();
 		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
-		rdata_provider_config.set_moralis_solana_api_url(url.clone() + "/moralis_solana/").unwrap();
+		data_provider_config
+			.set_moralis_solana_api_url(url.clone() + "/moralis_solana/")
+			.unwrap();
 		data_provider_config
 	}
 

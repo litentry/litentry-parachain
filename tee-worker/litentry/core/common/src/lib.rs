@@ -24,6 +24,8 @@ extern crate sgx_tstd as std;
 
 use litentry_primitives::Web3Network;
 
+pub mod abort_strategy;
+
 pub mod platform_user;
 pub mod web3_nft;
 pub mod web3_token;
