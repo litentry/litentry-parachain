@@ -387,7 +387,7 @@ fn add_port_if_necessary(url: &str, port: &str) -> String {
 fn ensure_ws_or_wss(url_str: &str) -> String {
 	let url = url::Url::parse(url_str)
 		.map_err(|e| {
-			log::error!("Parse url [{}] error: {}", url_str, e);
+			println!("Parse url [{}] error: {}", url_str, e);
 		})
 		.unwrap();
 
@@ -569,8 +569,8 @@ mod test {
 
 	#[test]
 	fn external_addresses_are_returned_correctly_if_set() {
-		let trusted_ext_addr = "wss://1.1.1.2:700";
-		let untrusted_ext_addr = "ws://1.723.3.1:11";
+		let trusted_ext_addr = "wss://1.1.1.2:700/";
+		let untrusted_ext_addr = "ws://1.123.3.1:11/";
 		let mu_ra_ext_addr = "1.1.3.1:1000";
 
 		let mut args = ArgMatches::default();
