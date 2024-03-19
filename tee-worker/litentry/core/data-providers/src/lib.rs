@@ -195,6 +195,7 @@ pub struct DataProviderConfig {
 	pub karat_dao_api_retry_times: u16,
 	pub karat_dao_api_url: String,
 	pub moralis_api_url: String,
+	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
 	pub moralis_api_retry_times: u16,
 	pub moralis_api_key: String,
@@ -238,6 +239,7 @@ impl DataProviderConfig {
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
 			moralis_api_url: "https://deep-index.moralis.io/api/v2.2/".to_string(),
+			moralis_solana_api_url: "https://solana-gateway.moralis.io/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -307,6 +309,9 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("MORALIS_API_URL") {
 				config.set_moralis_api_url(v)?;
+			}
+			if let Ok(v) = env::var("MORALIS_SOLANA_API_URL") {
+				config.set_moralis_solana_api_url(v)?;
 			}
 			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
 				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
@@ -485,6 +490,12 @@ impl DataProviderConfig {
 		check_url(&v)?;
 		debug!("set_moralis_api_url: {:?}", v);
 		self.moralis_api_url = v;
+		Ok(())
+	}
+	pub fn set_moralis_solana_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_moralis_solana_api_url: {:?}", v);
+		self.moralis_solana_api_url = v;
 		Ok(())
 	}
 }

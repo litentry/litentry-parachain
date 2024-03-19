@@ -1,7 +1,14 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, subscribeToEvents, sudoWrapperGC, sudoWrapperTC } from '../common/utils';
+import {
+    signAndSend,
+    describeLitentry,
+    loadConfig,
+    subscribeToEvents,
+    sudoWrapperGC,
+    sudoWrapperTC,
+} from '../common/utils';
 import Web3 from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
