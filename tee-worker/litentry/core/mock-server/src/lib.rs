@@ -68,6 +68,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(nodereal_jsonrpc::query())
 					.or(karat_dao::query())
 					.or(moralis::query())
+					.or(moralis::query_solana())
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())

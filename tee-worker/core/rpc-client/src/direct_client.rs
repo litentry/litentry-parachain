@@ -25,7 +25,7 @@ use frame_metadata::RuntimeMetadataPrefixed;
 use ita_stf::{Getter, PublicGetter};
 use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
-use itp_stf_primitives::types::{AccountId, ShardIdentifier};
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{DirectRequestStatus, MrEnclave, RsaRequest};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::Identity;
@@ -61,7 +61,7 @@ pub trait DirectApi {
 
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &Identity) -> Result<u32>;
 	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 	fn get_id_graph_hash(&self, shard: &ShardIdentifier, identity: &Identity) -> Result<H256>;
 }
@@ -232,7 +232,7 @@ impl DirectApi for DirectClient {
 		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &Identity) -> Result<u32> {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			Id::Text("1".to_string()),
 			"author_getNextNonce".to_owned(),

@@ -46,6 +46,7 @@ use std::{
 	sync::Arc,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum ProvisioningPayload {
 	Everything,
@@ -55,7 +56,7 @@ enum ProvisioningPayload {
 impl From<WorkerMode> for ProvisioningPayload {
 	fn from(m: WorkerMode) -> Self {
 		match m {
-			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
+			WorkerMode::OffChainWorker => ProvisioningPayload::Everything,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
 		}
 	}
@@ -264,7 +265,7 @@ pub(crate) fn run_state_provisioning_server_internal<StateAndKeyUnsealer: Unseal
 	)?;
 	let (server_session, tcp_stream) = tls_server_session_stream(socket_fd, server_config)?;
 
-	let provisioning = ProvisioningPayload::ShieldingKeyAndLightClient;
+	let provisioning = ProvisioningPayload::Everything;
 
 	let mut server =
 		TlsServer::new(StreamOwned::new(server_session, tcp_stream), seal_handler, provisioning);

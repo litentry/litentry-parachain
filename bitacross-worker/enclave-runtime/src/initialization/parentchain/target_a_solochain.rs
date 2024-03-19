@@ -33,6 +33,7 @@ use crate::{
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 pub use itc_parentchain::primitives::{SolochainBlock, SolochainHeader, SolochainParams};
 use itp_component_container::ComponentGetter;
+use itp_stf_interface::ShardCreationInfo;
 use itp_types::parentchain::ParentchainId;
 use std::{path::PathBuf, sync::Arc};
 
@@ -46,7 +47,11 @@ pub struct TargetASolochainHandler {
 }
 
 impl TargetASolochainHandler {
-	pub fn init(_base_path: PathBuf, params: SolochainParams) -> Result<Self> {
+	pub fn init(
+		_base_path: PathBuf,
+		params: SolochainParams,
+		shard_creation_info: ShardCreationInfo,
+	) -> Result<Self> {
 		let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 		let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 		let light_client_seal = GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
@@ -81,6 +86,7 @@ impl TargetASolochainHandler {
 			stf_executor.clone(),
 			extrinsics_factory.clone(),
 			node_metadata_repository.clone(),
+			shard_creation_info,
 		)?;
 
 		let import_dispatcher = create_target_a_offchain_immediate_import_dispatcher(

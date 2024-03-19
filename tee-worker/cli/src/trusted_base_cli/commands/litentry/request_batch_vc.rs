@@ -620,6 +620,8 @@ impl RequestBatchVcCommand {
 					"gtc" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Gtc)),
 					"ton" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Ton)),
 					"trx" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Trx)),
+					"nfp" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Nfp)),
+					"sol" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Sol)),
 					_ => Err("TokenHoldingAmount: Wrong parameter".to_string()),
 				}
 			},

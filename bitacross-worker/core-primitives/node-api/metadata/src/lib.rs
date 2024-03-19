@@ -22,7 +22,8 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
+	pallet_utility::UtilityCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -39,6 +40,8 @@ pub mod pallet_teebag;
 pub mod pallet_utility;
 pub mod runtime_call;
 
+pub mod pallet_timestamp;
+
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
@@ -49,6 +52,7 @@ pub trait NodeMetadataTrait:
 	+ ProxyCallIndexes
 	+ BalancesCallIndexes
 	+ BitAcrossCallIndexes
+	+ TimestampCallIndexes
 {
 }
 impl<
@@ -57,7 +61,8 @@ impl<
 			+ UtilityCallIndexes
 			+ ProxyCallIndexes
 			+ BalancesCallIndexes
-			+ BitAcrossCallIndexes,
+			+ BitAcrossCallIndexes
+			+ TimestampCallIndexes,
 	> NodeMetadataTrait for T
 {
 }
