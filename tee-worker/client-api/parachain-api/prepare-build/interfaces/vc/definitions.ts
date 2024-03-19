@@ -182,6 +182,7 @@ export default {
                 "Ton",
                 "Trx",
                 "Nfp",
+                "Sol",
             ],
         },
         // PlatformUserType
