@@ -95,27 +95,6 @@ impl AssertionLogic {
 	}
 }
 
-pub trait Logic {
-	fn eval(&self) -> bool;
-}
-
-impl Logic for AssertionLogic {
-	fn eval(&self) -> bool {
-		match self {
-			Self::Item { src, op, dst } => match op {
-				Op::GreaterThan => src > dst,
-				Op::LessThan => src < dst,
-				Op::GreaterEq => src >= dst,
-				Op::LessEq => src <= dst,
-				Op::Equal => src == dst,
-				Op::NotEq => src != dst,
-			},
-			Self::And { items } => items.iter().all(|item| item.eval()),
-			Self::Or { items } => items.iter().any(|item| item.eval()),
-		}
-	}
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -147,15 +126,6 @@ mod tests {
 		let a1_from_struct = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
 
 		assert_eq!(a1_from_str, a1_from_struct);
-	}
-
-	#[test]
-	fn assertion_a1_eval_works() {
-		let web2_item = AssertionLogic::new_item("7", Op::GreaterEq, "7");
-		let web3_item = AssertionLogic::new_item("7", Op::GreaterThan, "3");
-
-		let a1 = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
-		assert_eq!(a1.eval(), true);
 	}
 
 	#[test]
