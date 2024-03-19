@@ -31,19 +31,21 @@ pub mod web3_nft;
 pub mod web3_token;
 
 use crate::{AccountId, ParameterString};
+
 use achainable::AchainableParams;
 use bnb_domain::BnbDigitDomainType;
 use evm_amount_holding::EVMTokenType;
 use generic_discord_role::GenericDiscordRoleType;
 use network::{all_web3networks, BoundedWeb3Network, Web3Network};
 use oneblock::OneBlockCourseType;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use platform_user::PlatformUserType;
-use scale_info::TypeInfo;
-use sp_std::{vec, vec::Vec};
 use vip3::VIP3MembershipCardLevel;
 use web3_nft::Web3NftType;
 use web3_token::Web3TokenType;
+
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
