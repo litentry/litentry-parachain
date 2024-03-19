@@ -19,7 +19,6 @@
 use crate::sgx_reexport_prelude::*;
 
 use log::*;
-use mio::net::TcpStream;
 use rustls::{ServerSession, Session, StreamOwned};
 use std::{
 	boxed::Box,
@@ -32,6 +31,7 @@ use tungstenite::{
 };
 
 // similar to `tungstenite::stream::MaybeTlsStream`, but with a server side implementation
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum MaybeServerTlsStream<S: Read + Write> {
 	Plain(S),
 	Rustls(StreamOwned<ServerSession, S>),
@@ -40,7 +40,7 @@ pub(crate) enum MaybeServerTlsStream<S: Read + Write> {
 impl<S: Read + Write> MaybeServerTlsStream<S> {
 	pub fn inner(&self) -> &S {
 		match self {
-			MaybeServerTlsStream::Plain(s) => &s,
+			MaybeServerTlsStream::Plain(s) => s,
 			MaybeServerTlsStream::Rustls(s) => &s.sock,
 		}
 	}
@@ -84,10 +84,6 @@ impl<S: Read + Write> Write for MaybeServerTlsStream<S> {
 		}
 	}
 }
-
-pub(crate) type RustlsStream = StreamOwned<ServerSession, TcpStream>;
-pub(crate) type RustlsServerHandshake = ServerHandshake<RustlsStream, NoCallback>;
-pub(crate) type RustlsWebSocket = WebSocket<RustlsStream>;
 
 /// Internal stream state representing different websocket statuses
 pub(crate) enum StreamState<S: Read + Write> {
@@ -145,6 +141,7 @@ impl<S: Read + Write> StreamState<S> {
 		}
 	}
 
+	#[allow(clippy::type_complexity)]
 	fn from_handshake_result(
 		handshake_result: Result<
 			WebSocket<MaybeServerTlsStream<S>>,

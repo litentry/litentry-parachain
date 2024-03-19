@@ -178,7 +178,7 @@ impl Config {
 	pub fn trusted_worker_url_external(&self) -> String {
 		match &self.trusted_external_worker_address {
 			Some(external_address) => external_address.to_string(),
-			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port),
+			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port), // fallback to TLS
 		}
 	}
 

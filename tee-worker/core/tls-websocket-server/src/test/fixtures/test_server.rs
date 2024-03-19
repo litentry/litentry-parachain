@@ -35,7 +35,10 @@ pub fn create_server(
 
 	let server_addr_string = format!("127.0.0.1:{}", port);
 
-	let server =
-		Arc::new(TungsteniteWsServer::new(server_addr_string, config_provider, handler.clone()));
+	let server = Arc::new(TungsteniteWsServer::new(
+		server_addr_string,
+		Some(config_provider),
+		handler.clone(),
+	));
 	(server, handler)
 }

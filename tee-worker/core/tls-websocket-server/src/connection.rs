@@ -66,8 +66,8 @@ where
 
 	fn maybe_do_tls_read(&mut self) -> ConnectionState {
 		match self.stream_state.internal_stream_mut() {
-			None => return ConnectionState::Closing,
-			Some(MaybeServerTlsStream::Plain(_)) => return ConnectionState::Alive,
+			None => ConnectionState::Closing,
+			Some(MaybeServerTlsStream::Plain(_)) => ConnectionState::Alive, // noop for non-TLS ws server
 			Some(MaybeServerTlsStream::Rustls(s)) => {
 				let tls_session = &mut s.sess;
 				match tls_session.read_tls(&mut s.sock) {
@@ -109,8 +109,8 @@ where
 
 	fn maybe_do_tls_write(&mut self) -> ConnectionState {
 		match self.stream_state.internal_stream_mut() {
-			None => return ConnectionState::Closing,
-			Some(MaybeServerTlsStream::Plain(_)) => return ConnectionState::Alive,
+			None => ConnectionState::Closing,
+			Some(MaybeServerTlsStream::Plain(_)) => ConnectionState::Alive, // noop for non-TLS ws server
 			Some(MaybeServerTlsStream::Rustls(s)) => match s.sess.write_tls(&mut s.sock) {
 				Ok(_) => {
 					trace!("TLS write successful, connection {} is alive", self.connection_token.0);
