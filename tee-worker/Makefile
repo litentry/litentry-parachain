@@ -126,10 +126,8 @@ Client_Name := $(Client_Path)/$(Client_Binary)
 
 ######## Enclave settings ########
 ifneq ($(SGX_MODE), HW)
-	Trts_Library_Name := sgx_trts_sim
 	Service_Library_Name := sgx_tservice_sim
 else
-	Trts_Library_Name := sgx_trts
 	Service_Library_Name := sgx_tservice
 endif
 Crypto_Library_Name := sgx_tcrypto
@@ -144,7 +142,6 @@ RustEnclave_Include_Paths := -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_COMMON_PATH)
 RustEnclave_Link_Libs := -L$(CUSTOM_LIBRARY_PATH) -lenclave
 RustEnclave_Compile_Flags := $(SGX_COMMON_CFLAGS) $(ENCLAVE_CFLAGS) $(RustEnclave_Include_Paths)
 RustEnclave_Link_Flags := -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
-	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
 	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -lsgx_dcap_tvl -l$(Crypto_Library_Name) -l$(Service_Library_Name) -l$(ProtectedFs_Library_Name) $(RustEnclave_Link_Libs) -Wl,--end-group \
 	-Wl,--version-script=enclave-runtime/Enclave.lds \
 	$(ENCLAVE_LDFLAGS)
