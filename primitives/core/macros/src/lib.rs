@@ -16,30 +16,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_export]
-macro_rules! if_production_or {
-	($prod_variant:expr, $non_prod_variant:expr) => {{
-		#[cfg(not(feature = "production"))]
-		{
-			$non_prod_variant
-		}
-		#[cfg(feature = "production")]
-		{
-			$prod_variant
-		}
-	}};
-}
-
-#[macro_export]
-macro_rules! if_not_production {
-	($expression:expr) => {
-		#[cfg(not(feature = "production"))]
-		{
-			$expression
-		}
-	};
-}
-
-#[macro_export]
 macro_rules! if_development_or {
 	($dev_variant:expr, $non_dev_variant:expr) => {{
 		#[cfg(not(feature = "development"))]
