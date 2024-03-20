@@ -18,16 +18,13 @@ evm = [
     "ita-sgx-runtime/evm",
     "ita-stf/evm",
 ]
-production = [
-    "ita-stf/production",
-    "itp-settings/production",
-    "itp-attestation-handler/production",
-    "lc-data-providers/production",
-    "lc-vc-task-receiver/production",
-    "litentry-primitives/production",
-    "litentry-macros/production",
-]
 development = [
+    "ita-stf/development",
+    "itp-settings/development",
+    "itp-attestation-handler/development",
+    "lc-data-providers/development",
+    "lc-vc-task-receiver/development",
+    "litentry-primitives/development",
     "litentry-macros/development",
 ]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]

@@ -66,6 +66,6 @@ evm = ["ita-stf/evm", "pallet-evm"]
 teeracle = []
 sidechain = []
 offchain-worker = []
-production = []
+development = []
 # dcap feature flag is not used in this crate, but for easier build purposes only it present here as well
 dcap = []
