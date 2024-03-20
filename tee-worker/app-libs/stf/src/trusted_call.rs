@@ -266,7 +266,7 @@ impl TrustedCall {
 				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
 				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets. Token: "),
 			},
-			_ => "".to_string(),
+			_ => "Token: ".to_string(),
 		}
 	}
 }
