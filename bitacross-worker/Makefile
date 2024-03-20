@@ -76,7 +76,7 @@ ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
 	SGX_SIGN_PASSFILE = $(SGX_PASSFILE)
-	WORKER_FEATURES := --features=production,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"

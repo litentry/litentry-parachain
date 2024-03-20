@@ -43,7 +43,7 @@ else
 endif
 
 ifeq ($(SGX_PRODUCTION), 1)
-	ENCLAVE_FEATURES = --features=production,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+	ENCLAVE_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 else
 	ENCLAVE_FEATURES = --features=test,development,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 endif
