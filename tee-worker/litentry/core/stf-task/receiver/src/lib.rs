@@ -25,7 +25,6 @@ pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
 	pub use hex_sgx as hex;
 	pub use thiserror_sgx as thiserror;
-	pub use threadpool_sgx as threadpool;
 	pub use url_sgx as url;
 }
 
@@ -39,7 +38,7 @@ pub mod handler;
 
 use codec::Encode;
 use frame_support::sp_tracing::warn;
-use futures::executor;
+use futures::{executor, executor::ThreadPoolBuilder};
 use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
 };
@@ -65,7 +64,6 @@ use std::{
 	thread,
 	time::Instant,
 };
-use threadpool::ThreadPool;
 
 #[cfg(test)]
 mod mock;
@@ -218,7 +216,7 @@ where
 	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 	let n_workers = 4;
-	let pool = ThreadPool::new(n_workers);
+	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 
 	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
 
@@ -238,7 +236,7 @@ where
 		let context_pool = context.clone();
 		let sender_pool = sender.clone();
 
-		pool.execute(move || {
+		pool.spawn_ok(async move {
 			let start_time = Instant::now();
 
 			match &req {
@@ -259,8 +257,6 @@ where
 			}
 		});
 	}
-
-	pool.join();
 	warn!("stf_task_receiver loop terminated");
 	Ok(())
 }
