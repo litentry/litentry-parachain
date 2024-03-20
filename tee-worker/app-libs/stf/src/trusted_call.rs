@@ -261,10 +261,10 @@ impl TrustedCall {
 
 	pub fn signature_message_prefix(&self) -> String {
 		match self {
-			Self::link_identity(..) => "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets.".to_string(),
+			Self::link_identity(..) => "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
 			Self::request_batch_vc(_, _, assertions, ..) =>  match assertions.len() {
-				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets.".to_string(),
-				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets."),
+				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets. Token: "),
 			},
 			_ => "".to_string(),
 		}
@@ -348,10 +348,10 @@ impl TrustedCallVerification for TrustedCallSigned {
 
 		let hashed = blake2_256(&payload);
 
-		let prettified_msg_raw = self.call.signature_message_prefix() + " " + &hex_encode(&payload);
+		let prettified_msg_raw = self.call.signature_message_prefix() + &hex_encode(&payload);
 		let prettified_msg_raw = prettified_msg_raw.as_bytes();
 
-		let prettified_msg_hash = self.call.signature_message_prefix() + " " + &hex_encode(&hashed);
+		let prettified_msg_hash = self.call.signature_message_prefix() + &hex_encode(&hashed);
 		let prettified_msg_hash = prettified_msg_hash.as_bytes();
 
 		self.signature.verify(&payload, self.call.sender_identity())
