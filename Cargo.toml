@@ -47,7 +47,7 @@ strip = "symbols"
 incremental = false
 
 [workspace.dependencies]
-async-trait = { version = "0.1.76" }
+async-trait = { version = "0.1.78" }
 assert_matches = { version = "1.3.0" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 base58 = { version = "0.2", default-features = false }
@@ -62,7 +62,7 @@ log = { version = "0.4", default-features = false }
 proc-macro2 = { version = "1" }
 quote = { version = "1" }
 syn = { version = "2" }
-scale-info = { version = "2.10", default-features = false, features = ["derive"] }
+scale-info = { version = "2.11", default-features = false, features = ["derive"] }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "max-encoded-len"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false }

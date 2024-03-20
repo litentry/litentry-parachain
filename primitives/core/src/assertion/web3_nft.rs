@@ -16,20 +16,23 @@
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
-use crate::{all_evm_web3networks, Web3Network};
+use crate::assertion::network::Web3Network;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub enum PlatformUserType {
+pub enum Web3NftType {
 	#[codec(index = 0)]
-	KaratDaoUser,
+	WeirdoGhostGang,
+	#[codec(index = 1)]
+	Club3Sbt,
 }
 
-impl PlatformUserType {
+impl Web3NftType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::KaratDaoUser => all_evm_web3networks(),
+			Self::WeirdoGhostGang => vec![Web3Network::Ethereum],
+			Self::Club3Sbt => vec![Web3Network::Bsc, Web3Network::Polygon, Web3Network::Arbitrum],
 		}
 	}
 }

@@ -17,7 +17,9 @@
 
 use std::collections::HashMap;
 
-use lc_data_providers::moralis::{GetNftsByWalletResult, MoralisPageResponse};
+use lc_data_providers::moralis::{
+	GetNftsByWalletResult, GetSolanaNativeBalanceBalanceByWalletResponse, MoralisPageResponse,
+};
 
 use warp::{http::Response, Filter};
 
@@ -48,6 +50,27 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					page: 1,
 					page_size: 100,
 					result: vec![],
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_solana(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("moralis_solana" / "account" / "mainnet" / String / "balance"))
+		.map(move |address| {
+			if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
+				let body = GetSolanaNativeBalanceBalanceByWalletResponse {
+					lamports: "5903457912".into(),
+					solana: "5.903457912".into(),
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				let body = GetSolanaNativeBalanceBalanceByWalletResponse {
+					lamports: "0".into(),
+					solana: "0".into(),
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
