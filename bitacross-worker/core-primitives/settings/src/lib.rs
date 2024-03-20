@@ -42,6 +42,10 @@ pub mod files {
 	// bitacross
 	pub const RELAYER_REGISTRY_FILE: &str = "relayer_registry_sealed.bin";
 
+	pub const ENCLAVE_REGISTRY_FILE: &str = "enclave_registry_sealed.bin";
+
+	pub const SIGNER_REGISTRY_FILE: &str = "signer_registry_sealed.bin";
+
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
 	// used by worker and enclave

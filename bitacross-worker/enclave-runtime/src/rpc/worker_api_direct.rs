@@ -29,7 +29,7 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
-use bc_task_sender::{BitAcrossRequest, BitAcrossRequestSender};
+use bc_task_sender::{BitAcrossProcessingResult, BitAcrossRequest, BitAcrossRequestSender};
 use codec::Encode;
 use core::result::Result;
 use futures_sgx::channel::oneshot;
@@ -471,14 +471,24 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Stri
 		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
-	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, String>>();
 
 	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {
-		Ok(Ok(response)) =>
-			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
+		Ok(Ok(response)) => match response {
+			BitAcrossProcessingResult::Ok(response_payload) => Ok(RpcReturnValue {
+				do_watch: false,
+				value: response_payload,
+				status: DirectRequestStatus::Ok,
+			}),
+			BitAcrossProcessingResult::Submitted(hash) => Ok(RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::Processing(hash.into()),
+			}),
+		},
 		Ok(Err(e)) => {
 			log::error!("Received error in jsonresponse: {:?} ", e);
 			Err(compute_hex_encoded_return_error(&e))

@@ -66,6 +66,14 @@ impl SealStateAndKeys for SealHandlerMock {
 		*self.light_client_state.write().unwrap() = bytes.to_vec();
 		Ok(())
 	}
+
+	fn seal_signers(&self, _bytes: &[u8]) -> EnclaveResult<()> {
+		Ok(())
+	}
+
+	fn seal_enclaves(&self, _bytes: &[u8]) -> EnclaveResult<()> {
+		Ok(())
+	}
 }
 
 impl UnsealStateAndKeys for SealHandlerMock {
@@ -83,5 +91,13 @@ impl UnsealStateAndKeys for SealHandlerMock {
 
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>> {
 		Ok(self.light_client_state.read().unwrap().clone())
+	}
+
+	fn unseal_signers(&self) -> EnclaveResult<Vec<u8>> {
+		Ok(vec![])
+	}
+
+	fn unseal_enclaves(&self) -> EnclaveResult<Vec<u8>> {
+		Ok(vec![])
 	}
 }

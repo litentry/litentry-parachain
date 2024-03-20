@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -56,9 +57,13 @@ type Rsa3072PubKey struct {
 }
 
 func main() {
+	portPtr := flag.String("port", "2000", "worker's port number")
+	flag.Parse()
+
+	fmt.Println("port:", *portPtr)
 
 	registerCustomTypes()
-	c := create_conn()
+	c := create_conn(*portPtr)
 
 	//** request shielding key
 	requestAuthorGetShieldingKey(*c)
@@ -93,9 +98,10 @@ func main() {
 	//generate random aes key :)
 	aesKey := []byte("AES256Key-1234123412341234123412")
 	prehashedEthereumMessage := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
+	merkleRootHash := [32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
 
 	//** prepare signed direct call
-	directCall := prepareSignEthereumDirectCall(identity, aesKey, prehashedEthereumMessage)
+	directCall := prepareSignBitcoinDirectCall(identity, aesKey, prehashedEthereumMessage, merkleRootHash)
 	encodedDirectCall := types.Encode("DirectCall", directCall)
 
 	encodedMrEnclave := types.Encode("[u8; 32]", getStateMrEnclaveResult)
@@ -137,9 +143,16 @@ func main() {
 	}
 
 	sendRequest(*c, serializedRequest)
-	signResp := read_response(*c)
 
 	// ** decode response and parse shielding key, status 0 means success
+
+	// should be processing ....
+	processing := read_response(*c)
+	fmt.Println("Got processing response")
+	fmt.Println(processing)
+
+	signResp := read_response(*c)
+
 	signResult, _ := decodeRpcReturnValue(signResp.Result)
 	resultAesOutput := decodeAesOutput(signResult)
 
@@ -225,15 +238,16 @@ func prepareSignedDirectCall(directCall map[string]interface{}, signature []byte
 	}
 }
 
-func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byte, prehashedEthereumMessage []byte) map[string]interface{} {
-	signEthereumDirectCall := map[string]interface{}{
+func prepareSignBitcoinDirectCall(identity map[string]interface{}, aesKey []byte, prehashedEthereumMessage []byte, merkleRootHash [32]byte) map[string]interface{} {
+	signBitcoinDirectCall := map[string]interface{}{
 		"col1": identity,
 		"col2": utiles.BytesToHex(aesKey),
 		"col3": utiles.BytesToHex(prehashedEthereumMessage),
+		"col4": utiles.BytesToHex(merkleRootHash[:]),
 	}
 
 	return map[string]interface{}{
-		"SignEthereum": signEthereumDirectCall,
+		"SignBitcoin": signBitcoinDirectCall,
 	}
 
 }
@@ -316,13 +330,16 @@ func read_response(c websocket.Conn) response {
 	return res
 }
 
-func create_conn() *websocket.Conn {
+func create_conn(port string) *websocket.Conn {
 
 	dialer := *websocket.DefaultDialer
+	url := "wss://localhost:" + port
+	fmt.Println("Connecting to worker:")
+	fmt.Println(url)
 
 	// this is not secure, use with caution
 	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	c, _, err := dialer.Dial("wss://bitacross-dev.litentry.io:2000", nil)
+	c, _, err := dialer.Dial(url, nil)
 	if err != nil {
 		fmt.Println("Could not connect to worker")
 		fmt.Println(err)

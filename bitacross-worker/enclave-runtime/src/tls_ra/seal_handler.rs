@@ -19,6 +19,8 @@
 //! shielding key, state key and state.
 
 use crate::error::{Error as EnclaveError, Result as EnclaveResult};
+use bc_enclave_registry::{EnclaveRegistryMap, EnclaveRegistrySealer};
+use bc_signer_registry::{SignerRegistryMap, SignerRegistrySealer};
 use codec::{Decode, Encode};
 use ita_stf::{State as StfState, StateType as StfStateType};
 use itc_parentchain::light_client::LightClientSealing;
@@ -35,23 +37,55 @@ use std::{sync::Arc, vec::Vec};
 
 /// Handles the sealing and unsealing of the shielding key, state key and the state.
 #[derive(Default)]
-pub struct SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> {
+pub struct SealHandler<
+	ShieldingKeyRepository,
+	StateKeyRepository,
+	StateHandler,
+	LightClientSeal,
+	SignersSeal,
+	EnclavesSeal,
+> {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	light_client_seal: Arc<LightClientSeal>,
+	signers_seal: Arc<SignersSeal>,
+	enclaves_seal: Arc<EnclavesSeal>,
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-	SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignersSeal,
+		EnclavesSeal,
+	>
+	SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignersSeal,
+		EnclavesSeal,
+	>
 {
 	pub fn new(
 		state_handler: Arc<StateHandler>,
 		state_key_repository: Arc<StateKeyRepository>,
 		shielding_key_repository: Arc<ShieldingKeyRepository>,
 		light_client_seal: Arc<LightClientSeal>,
+		signers_seal: Arc<SignersSeal>,
+		enclaves_seal: Arc<EnclavesSeal>,
 	) -> Self {
-		Self { state_handler, state_key_repository, shielding_key_repository, light_client_seal }
+		Self {
+			state_handler,
+			state_key_repository,
+			shielding_key_repository,
+			light_client_seal,
+			signers_seal,
+			enclaves_seal,
+		}
 	}
 }
 
@@ -61,6 +95,8 @@ pub trait SealStateAndKeys {
 	fn seal_state(&self, bytes: &[u8], shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_new_empty_state(&self, shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_light_client_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
+	fn seal_signers(&self, bytes: &[u8]) -> EnclaveResult<()>;
+	fn seal_enclaves(&self, bytes: &[u8]) -> EnclaveResult<()>;
 }
 
 pub trait UnsealStateAndKeys {
@@ -68,16 +104,33 @@ pub trait UnsealStateAndKeys {
 	fn unseal_state_key(&self) -> EnclaveResult<Vec<u8>>;
 	fn unseal_state(&self, shard: &ShardIdentifier) -> EnclaveResult<Vec<u8>>;
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>>;
+	fn unseal_signers(&self) -> EnclaveResult<Vec<u8>>;
+	fn unseal_enclaves(&self) -> EnclaveResult<Vec<u8>>;
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> SealStateAndKeys
-	for SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-where
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignersSeal,
+		EnclavesSeal,
+	> SealStateAndKeys
+	for SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignersSeal,
+		EnclavesSeal,
+	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Decode,
+	SignersSeal: SignerRegistrySealer,
+	EnclavesSeal: EnclaveRegistrySealer,
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key: Rsa3072KeyPair = serde_json::from_slice(bytes).map_err(|e| {
@@ -112,6 +165,26 @@ where
 		Ok(())
 	}
 
+	fn seal_signers(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
+		let state = SignerRegistryMap::decode(&mut bytes)?;
+		self.signers_seal.seal(state).map_err(|e| {
+			error!("    [Enclave] Could not seal signers");
+			EnclaveError::Other(e.into())
+		})?;
+		info!("Successfully sealed signers state");
+		Ok(())
+	}
+
+	fn seal_enclaves(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
+		let state = EnclaveRegistryMap::decode(&mut bytes)?;
+		self.enclaves_seal.seal(state).map_err(|e| {
+			error!("    [Enclave] Could not seal enclaves");
+			EnclaveError::Other(e.into())
+		})?;
+		info!("Successfully sealed enclaves state");
+		Ok(())
+	}
+
 	/// Seal an empty, newly initialized state.
 	///
 	/// Requires the shielding key to be sealed and updated before calling this.
@@ -126,14 +199,29 @@ where
 	}
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> UnsealStateAndKeys
-	for SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-where
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignerSeal,
+		EnclavesSeal,
+	> UnsealStateAndKeys
+	for SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		SignerSeal,
+		EnclavesSeal,
+	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Encode,
+	SignerSeal: SignerRegistrySealer,
+	EnclavesSeal: EnclaveRegistrySealer,
 {
 	fn unseal_shielding_key(&self) -> EnclaveResult<Vec<u8>> {
 		let shielding_key = self
@@ -157,11 +245,35 @@ where
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>> {
 		Ok(self.light_client_seal.unseal()?.encode())
 	}
+
+	fn unseal_signers(&self) -> EnclaveResult<Vec<u8>> {
+		Ok(self
+			.signers_seal
+			.unseal()
+			.map_err(|e| {
+				error!("    [Enclave] Could not unseal signers");
+				EnclaveError::Other(e.into())
+			})?
+			.encode())
+	}
+
+	fn unseal_enclaves(&self) -> EnclaveResult<Vec<u8>> {
+		Ok(self
+			.enclaves_seal
+			.unseal()
+			.map_err(|e| {
+				error!("    [Enclave] Could not unseal enclaves");
+				EnclaveError::Other(e.into())
+			})?
+			.encode())
+	}
 }
 
 #[cfg(feature = "test")]
 pub mod test {
 	use super::*;
+	use bc_enclave_registry::EnclaveRegistry;
+	use bc_signer_registry::SignerRegistry;
 	use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
@@ -174,6 +286,8 @@ pub mod test {
 		StateKeyRepositoryMock,
 		HandleStateMock,
 		LightValidationStateSealMock,
+		SignerRegistry,
+		EnclaveRegistry,
 	>;
 
 	pub fn seal_shielding_key_works() {

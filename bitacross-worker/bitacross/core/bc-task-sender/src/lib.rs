@@ -36,8 +36,16 @@ use std::{
 
 #[derive(Debug)]
 pub struct BitAcrossRequest {
-	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
+	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, String>>,
 	pub request: AesRequest,
+}
+
+#[derive(Encode, Decode, Clone, Debug)]
+pub enum BitAcrossProcessingResult {
+	// we got immediate response
+	Ok(Vec<u8>),
+	// the response will be produced in the future
+	Submitted([u8; 32]),
 }
 
 #[derive(Encode, Decode, Clone)]
@@ -81,7 +89,7 @@ impl BitAcrossRequestSender {
 	}
 }
 
-/// Initialization of the extrinsic sender. Needs to be called before any sender access.
+/// Initialization of the task sender. Needs to be called before any sender access.
 pub fn init_bit_across_task_sender_storage() -> Receiver<BitAcrossRequest> {
 	let (sender, receiver) = channel();
 	// It makes no sense to handle the unwrap, as this statement fails only if the lock has been poisoned

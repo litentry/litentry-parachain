@@ -1,0 +1,56 @@
+[package]
+name = "bc-musig2-ceremony"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# std dependencies
+
+# sgx dependencies
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
+
+
+bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
+itp-types = { path = "../../../core-primitives/types", default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr", "alloc"] }
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
+musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+
+log = { version = "0.4", default-features = false }
+rand = { version = "0.8.5", optional = true }
+sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+
+
+[dev-dependencies]
+rand = { version = "0.8.5" }
+
+
+[features]
+default = ["std"]
+std = [
+    "musig2",
+    "itc-direct-rpc-client/std",
+    "log/std",
+    "itp-types/std",
+    "bc-enclave-registry/std",
+    "litentry-primitives/std",
+    "itp-rpc/std",
+    "itp-sgx-crypto/std",
+    "rand",
+]
+sgx = [
+    "sgx_tstd",
+    "musig2_sgx",
+    "itc-direct-rpc-client/sgx",
+    "bc-enclave-registry/sgx",
+    "litentry-primitives/sgx",
+    "itp-rpc/sgx",
+    "itp-sgx-crypto/sgx",
+    "sgx_rand",
+]

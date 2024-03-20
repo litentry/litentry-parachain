@@ -30,6 +30,8 @@ use crate::{
 	rpc::rpc_response_channel::RpcResponseChannel,
 	tls_ra::seal_handler::SealHandler,
 };
+use bc_enclave_registry::EnclaveRegistry;
+use bc_signer_registry::SignerRegistry;
 use ita_parentchain_interface::{integritee, target_a, target_b};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
@@ -311,6 +313,8 @@ pub type EnclaveSealHandler = SealHandler<
 	EnclaveStateKeyRepository,
 	EnclaveStateHandler,
 	EnclaveLightClientSeal,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor::Executor<
 	ParentchainBlock,

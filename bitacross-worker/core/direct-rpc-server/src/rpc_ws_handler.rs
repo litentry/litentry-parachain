@@ -72,6 +72,7 @@ where
 			if let Ok(Some(connection_hash)) =
 				self.connection_watcher.must_be_watched(&rpc_response)
 			{
+				std::println!("Storing connection for further responses");
 				self.connection_registry.store(
 					connection_hash,
 					connection_token.into(),

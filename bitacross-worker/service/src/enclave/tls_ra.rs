@@ -25,6 +25,7 @@ use sgx_types::*;
 use std::{
 	net::{TcpListener, TcpStream},
 	os::unix::io::AsRawFd,
+	time::Duration,
 };
 
 pub fn enclave_run_state_provisioning_server<E: TlsRemoteAttestation>(
@@ -47,7 +48,8 @@ pub fn enclave_run_state_provisioning_server<E: TlsRemoteAttestation>(
 		match listener.accept() {
 			Ok((socket, addr)) => {
 				info!("[MU-RA-Server] a worker at {} is requesting key provisiong", addr);
-
+				// there is some race condition, lets wait until local state gets updated (signers are registered and updated locally through indirect calls)
+				std::thread::sleep(Duration::from_secs(3));
 				let result = enclave_api.run_state_provisioning_server(
 					socket.as_raw_fd(),
 					sign_type,

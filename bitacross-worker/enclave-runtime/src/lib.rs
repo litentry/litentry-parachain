@@ -593,7 +593,7 @@ fn dispatch_parentchain_blocks_for_import(
 	id: &ParentchainId,
 	immediate_import: bool,
 ) -> Result<()> {
-	trace!(
+	info!(
 		"[{:?}] Dispatching Import of {} blocks and {} events",
 		id,
 		blocks_to_sync.len(),

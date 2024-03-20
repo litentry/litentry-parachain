@@ -60,8 +60,11 @@ members = [
     "litentry/core/direct-call",
     "bitacross/core/bc-task-receiver",
     "bitacross/core/bc-task-sender",
+    "bitacross/core/bc-enclave-registry",
     "bitacross/core/bc-relayer-registry",
-    "bitacross/core/bc-musig2"
+    "bitacross/core/bc-signer-registry",
+    "bitacross/core/bc-musig2-ceremony",
+    "bitacross/core/bc-musig2-orchestrator",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

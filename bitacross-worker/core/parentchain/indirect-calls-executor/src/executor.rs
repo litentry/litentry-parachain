@@ -153,7 +153,7 @@ impl<
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 
-		trace!("Scanning block {:?} for relevant xt", block_number);
+		info!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
 
 		let events = self
@@ -327,7 +327,6 @@ mod test {
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
-	use std::assert_matches::assert_matches;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
