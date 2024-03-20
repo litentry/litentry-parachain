@@ -41,7 +41,6 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_hex_utils::hex_encode;
 use log::error;
 pub use pallet_teebag::{
 	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
@@ -90,8 +89,6 @@ use std::string::{String, ToString};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-pub const LITENTRY_PRETTIFIED_MESSAGE_PREFIX: &str = "Litentry authorization token: ";
-
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
@@ -107,15 +104,9 @@ pub enum LitentryMultiSignature {
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 4)]
-	EthereumPrettified(EthereumSignature),
 	/// Bitcoin signed message, a hex-encoded string of original &[u8] message, without `0x` prefix
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	Bitcoin(BitcoinSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 6)]
-	BitcoinPrettified(BitcoinSignature),
 }
 
 impl LitentryMultiSignature {
@@ -157,13 +148,6 @@ impl LitentryMultiSignature {
 			Self::Ethereum(ref sig) =>
 				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
 					|| verify_evm_signature(msg, sig, signer),
-			Self::EthereumPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				let msg = prettified_msg.as_bytes();
-				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
-					|| verify_evm_signature(msg, sig, signer)
-			},
 			_ => false,
 		}
 	}
@@ -172,11 +156,6 @@ impl LitentryMultiSignature {
 		match self {
 			Self::Bitcoin(ref sig) =>
 				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer),
-			Self::BitcoinPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				verify_bitcoin_signature(prettified_msg.as_str(), sig, signer)
-			},
 			_ => false,
 		}
 	}
