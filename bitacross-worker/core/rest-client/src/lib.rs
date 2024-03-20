@@ -38,7 +38,6 @@ pub mod sgx_reexport_prelude {
 
 pub mod error;
 pub mod http_client;
-pub mod http_client_builder;
 pub mod rest_client;
 
 #[cfg(test)]
