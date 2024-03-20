@@ -22,6 +22,9 @@ production = [
     "litentry-macros/production",
     "bc-task-receiver/production",
 ]
+development = [
+    "litentry-macros/development",
+]
 offchain-worker = [
     "itp-settings/offchain-worker",
     "itp-top-pool-author/offchain-worker",

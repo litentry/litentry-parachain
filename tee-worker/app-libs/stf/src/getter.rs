@@ -20,7 +20,7 @@ use ita_sgx_runtime::{IdentityManagement, System};
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::{traits::GetterAuthorization, types::KeyPair};
 use itp_utils::stringify::account_id_to_string;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::blake2_256;
@@ -162,16 +162,16 @@ impl TrustedGetterSigned {
 	pub fn verify_signature(&self) -> bool {
 		let payload = self.getter.encode();
 		// in non-prod, we accept signature from Alice too
-		if_production_or!(
-			{
-				self.signature.verify(&payload, self.getter.sender_identity())
-					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
-			},
+		if_development_or!(
 			{
 				self.signature.verify(&payload, self.getter.sender_identity())
 					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
 					|| self.signature.verify(&payload, &ALICE_ACCOUNTID32.into())
 					|| self.signature.verify(&blake2_256(&payload), &ALICE_ACCOUNTID32.into())
+			},
+			{
+				self.signature.verify(&payload, self.getter.sender_identity())
+					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
 			}
 		)
 	}

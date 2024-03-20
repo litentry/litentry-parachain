@@ -101,3 +101,6 @@ production = [
     "lc-data-providers/production",
     "litentry-macros/production",
 ]
+development = [
+    "litentry-macros/development",
+]

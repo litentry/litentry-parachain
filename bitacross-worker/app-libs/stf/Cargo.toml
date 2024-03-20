@@ -87,3 +87,6 @@ test = []
 production = [
     "litentry-macros/production",
 ]
+development = [
+    "litentry-macros/development",
+]

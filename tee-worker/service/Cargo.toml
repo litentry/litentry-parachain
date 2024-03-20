@@ -95,6 +95,9 @@ production = [
     "litentry-macros/production",
     "litentry-primitives/production",
 ]
+development = [
+    "litentry-macros/development",
+]
 dcap = []
 attesteer = ["dcap"]
 # Must be enabled to build a binary and link it with the enclave successfully.

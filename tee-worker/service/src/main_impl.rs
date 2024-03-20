@@ -48,7 +48,7 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use regex::Regex;
@@ -193,8 +193,7 @@ pub(crate) fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			if_production_or!(
-				warn!("Mock server not started. Node is running in production mode."),
+			if_development_or!(
 				{
 					let mock_server_port = config
 						.try_parse_mock_server_port()
@@ -203,7 +202,8 @@ pub(crate) fn main() {
 						info!("*** Starting mock server");
 						let _ = lc_mock_server::run(mock_server_port);
 					});
-				}
+				},
+				warn!("Mock server not started. Node is running in production mode.")
 			)
 		}
 

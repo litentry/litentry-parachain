@@ -75,7 +75,7 @@ use itp_sgx_crypto::key_repository::{AccessKey, AccessPubkey};
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -129,7 +129,10 @@ pub unsafe extern "C" fn init(
 	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
-	if_production_or!(
+	if_development_or!(
+		env_logger::builder()
+			.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
+			.init(),
 		{
 			let module_names = litentry_proc_macros::local_modules!();
 			println!(
@@ -143,10 +146,7 @@ pub unsafe extern "C" fn init(
 				builder.filter(Some(module), LevelFilter::Info);
 			});
 			builder.init();
-		},
-		env_logger::builder()
-			.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
-			.init()
+		}
 	);
 
 	let mu_ra_url =
@@ -250,11 +250,7 @@ pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u3
 
 #[no_mangle]
 pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
-	if_production_or!(
-		{
-			error!("Bitcoin wallet can only be retrieved in non-prod");
-			sgx_status_t::SGX_ERROR_UNEXPECTED
-		},
+	if_development_or!(
 		{
 			let bitcoin_key_repository = match GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get() {
 				Ok(s) => s,
@@ -273,17 +269,17 @@ pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) 
 			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
 			sgx_status_t::SGX_SUCCESS
+		},
+		{
+			error!("Bitcoin wallet can only be retrieved in non-prod");
+			sgx_status_t::SGX_ERROR_UNEXPECTED
 		}
 	)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
-	if_production_or!(
-		{
-			error!("Ethereum wallet can only be retrieved in non-prod");
-			sgx_status_t::SGX_ERROR_UNEXPECTED
-		},
+pub unsafe extern "C" fn get_ethereum_wallet_pair(_pair: *mut u8, _pair_size: u32) -> sgx_status_t {
+	if_development_or!(
 		{
 			let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
 				Ok(s) => s,
@@ -302,6 +298,10 @@ pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32)
 			privkey_slice.clone_from_slice(&keypair.private_bytes());
 
 			sgx_status_t::SGX_SUCCESS
+		},
+		{
+			error!("Ethereum wallet can only be retrieved in non-prod");
+			sgx_status_t::SGX_ERROR_UNEXPECTED
 		}
 	)
 }
