@@ -151,7 +151,7 @@ pub unsafe extern "C" fn init(
 				builder.filter(Some(module), LevelFilter::Info);
 			});
 			builder.init();
-		},
+		}
 	);
 
 	let mu_ra_url =
