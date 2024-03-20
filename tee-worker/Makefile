@@ -12,11 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Notes(Litentry):
+# 1. reference: https://github.com/apache/incubator-teaclave-sgx-sdk/blob/v2.0.0-preview-11-17/tests/Makefile
+# 2. the rust-sgx-sdk 2.0.0 branch only works with the intel sgx-sdk 2.17 for now, otherwise the signer version mismatches
+#    see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/387
+# 3. I have to use `USE_OPT_LIBS ?= 0`
+#    otherwise `sgx_crypto_sys` and `sgx_tlibc_sys` complain prebuilt libs can't be found
+#    There's `optimized_libs/external/libirc/efi2/libirc.a` but not `libm*`
+
 ######## Update SGX SDK ########
 # use this manually to update sdk
 #include UpdateRustSGXSDK.mk
 
 ######## SGX SDK Settings ########
+
 SGX_SDK ?= /opt/intel/sgxsdk
 SGX_MODE ?= HW
 SGX_ARCH ?= x64
@@ -25,12 +34,10 @@ SGX_PRERELEASE ?= 0
 SGX_PRODUCTION ?= 0
 
 ######## Worker Feature Settings ########
-# Set sidechain as default feature mode
+
 WORKER_MODE ?= sidechain
 
 ######## Litentry ########
-# otherwise `sgx_crypto_sys` and `sgx_tlibc_sys` complain prebuilt libs can't be found
-# There's `optimized_libs/external/libirc/efi2/libirc.a` but not `libm*`
 USE_OPT_LIBS ?= 0
 
 SKIP_WASM_BUILD = 1
@@ -46,13 +53,19 @@ endif
 ifeq ($(SGX_ARCH), x86)
 	SGX_COMMON_CFLAGS := -m32
 	SGX_LIBRARY_PATH := $(SGX_SDK)/lib
-	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x86/sgx_sign
-	SGX_EDGER8R := $(SGX_SDK)/bin/x86/sgx_edger8r
+	SGX_BIN_PATH := $(SGX_SDK)/bin/x86
 else
 	SGX_COMMON_CFLAGS := -m64
 	SGX_LIBRARY_PATH := $(SGX_SDK)/lib64
-	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
-	SGX_EDGER8R := $(SGX_SDK)/bin/x64/sgx_edger8r
+	SGX_BIN_PATH := $(SGX_SDK)/bin/x64
+endif
+
+SGX_EDGER8R := $(SGX_BIN_PATH)/sgx_edger8r
+ifneq ($(SGX_MODE), HYPER)
+	SGX_ENCLAVE_SIGNER := $(SGX_BIN_PATH)/sgx_sign
+else
+	SGX_ENCLAVE_SIGNER := $(SGX_BIN_PATH)/sgx_sign_hyper
+	SGX_EDGER8R_MODE := --sgx-mode $(SGX_MODE)
 endif
 
 ifeq ($(SGX_DEBUG), 1)
@@ -65,7 +78,7 @@ endif
 endif
 
 ifeq ($(SGX_DEBUG), 1)
-	SGX_COMMON_CFLAGS += -O0 -g -ggdb
+	SGX_COMMON_CFLAGS += -O0 -g
 	OUTPUT_PATH := debug
 	CARGO_TARGET :=
 else
@@ -92,106 +105,103 @@ endif
 
 CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 
-# check if running on Jenkins
-ifdef BUILD_ID
-	CARGO_TARGET += --verbose
-endif
-
 ######## CUSTOM settings ########
+
 CUSTOM_LIBRARY_PATH := ./lib
 CUSTOM_BIN_PATH := ./bin
 CUSTOM_EDL_PATH := ./rust-sgx-sdk/edl
 CUSTOM_COMMON_PATH := ./rust-sgx-sdk/common
 
 ######## EDL settings ########
+
 Enclave_EDL_Files := enclave-runtime/Enclave_t.c enclave-runtime/Enclave_t.h service/Enclave_u.c service/Enclave_u.h
 
-######## litentry-worker settings ########
-SRC_Files := $(shell find . -type f -name '*.rs') $(shell find . -type f -name 'Cargo.toml')
+######## Worker settings ########
+
+Worker_SRC_Files := $(shell find . -type f -name '*.rs') $(shell find . -type f -name 'Cargo.toml')
 Worker_Rust_Flags := $(CARGO_TARGET) $(WORKER_FEATURES)
-Worker_Include_Paths := -I ./service -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
-Worker_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(Worker_Include_Paths)
+Worker_Include_Paths := -I ./service -I$(SGX_SDK)/include -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_EDL_PATH)
+Worker_C_Flags := $(CFLAGS) $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(Worker_Include_Paths)
 
 Worker_Rust_Path := target/$(OUTPUT_PATH)
 Worker_Enclave_u_Object :=service/libEnclave_u.a
-Worker_Name := bin/app
+Worker_Binary := litentry-worker
+Worker_Name := $(CUSTOM_BIN_PATH)/$(Worker_Binary)
 
-######## litentry-cli settings ########
+######## Client settings ########
+
 Client_Rust_Flags := $(CARGO_TARGET) $(CLIENT_FEATURES)
-
 Client_Rust_Path := target/$(OUTPUT_PATH)
-Client_Path := bin
 Client_Binary := litentry-cli
-Client_Name := $(Client_Path)/$(Client_Binary)
+Client_Name := $(CUSTOM_BIN_PATH)/$(Client_Binary)
 
 ######## Enclave settings ########
-ifneq ($(SGX_MODE), HW)
-	Service_Library_Name := sgx_tservice_sim
-else
-	Service_Library_Name := sgx_tservice
-endif
-Crypto_Library_Name := sgx_tcrypto
-KeyExchange_Library_Name := sgx_tkey_exchange
-ProtectedFs_Library_Name := sgx_tprotected_fs
 
-RustEnclave_C_Files := $(wildcard ./enclave-runtime/*.c)
-RustEnclave_C_Objects := $(RustEnclave_C_Files:.c=.o)
-RustEnclave_Include_Paths := -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_COMMON_PATH)/inc/tlibc -I$(CUSTOM_EDL_PATH) \
-	-I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SDK)/include/epid -I ./enclave-runtime -I./include
+RustEnclave_Include_Paths := -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_COMMON_PATH)/inc/tlibc -I$(CUSTOM_EDL_PATH) -I./enclave-runtime
 
 RustEnclave_Link_Libs := -L$(CUSTOM_LIBRARY_PATH) -lenclave
-RustEnclave_Compile_Flags := $(SGX_COMMON_CFLAGS) $(ENCLAVE_CFLAGS) $(RustEnclave_Include_Paths)
-RustEnclave_Link_Flags := -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
-	-Wl,--start-group -lsgx_tcxx -lsgx_dcap_tvl -l$(Crypto_Library_Name) -l$(Service_Library_Name) -l$(ProtectedFs_Library_Name) $(RustEnclave_Link_Libs) -Wl,--end-group \
+RustEnclave_C_Flags := $(CFLAGS) $(ENCLAVE_CFLAGS) $(SGX_COMMON_CFLAGS) $(RustEnclave_Include_Paths)
+RustEnclave_Link_Flags := -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles \
+	 -Wl,--start-group $(RustEnclave_Link_Libs) -Wl,--end-group \
 	-Wl,--version-script=enclave-runtime/Enclave.lds \
 	$(ENCLAVE_LDFLAGS)
 
-RustEnclave_Name := enclave-runtime/enclave.so
-Signed_RustEnclave_Name := bin/enclave.signed.so
+RustEnclave_Name := $(CUSTOM_BIN_PATH)/enclave.so
+Signed_RustEnclave_Name := $(CUSTOM_BIN_PATH)/enclave.signed.so
 
 ######## Targets ########
+
 .PHONY: all
-all: $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
+all: $(Enclave_EDL_Files) $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
 service: $(Worker_Name)
 client: $(Client_Name)
 githooks: .git/hooks/pre-commit
 
 ######## EDL objects ########
+
 $(Enclave_EDL_Files): $(SGX_EDGER8R) enclave-runtime/Enclave.edl
-	$(SGX_EDGER8R) --trusted enclave-runtime/Enclave.edl --search-path $(SGX_SDK)/include --search-path $(CUSTOM_EDL_PATH) --trusted-dir enclave-runtime
-	$(SGX_EDGER8R) --untrusted enclave-runtime/Enclave.edl --search-path $(SGX_SDK)/include --search-path $(CUSTOM_EDL_PATH) --untrusted-dir service
+	$(SGX_EDGER8R) $(SGX_EDGER8R_MODE) --trusted enclave-runtime/Enclave.edl --search-path $(CUSTOM_COMMON_PATH)/inc --search-path $(CUSTOM_EDL_PATH) --trusted-dir enclave-runtime
+	$(SGX_EDGER8R) $(SGX_EDGER8R_MODE) --untrusted enclave-runtime/Enclave.edl --search-path $(CUSTOM_COMMON_PATH)/inc --search-path $(CUSTOM_EDL_PATH) --untrusted-dir service
 	@echo "GEN  =>  $(Enclave_EDL_Files)"
 
-######## litentry-worker objects ########
+######## Worker objects ########
+
 service/Enclave_u.o: $(Enclave_EDL_Files)
 	@$(CC) $(Worker_C_Flags) -c service/Enclave_u.c -o $@
 	@echo "CC   <=  $<"
 
 $(Worker_Enclave_u_Object): service/Enclave_u.o
-	$(AR) rcsD $@ $^
-	cp $(Worker_Enclave_u_Object) ./lib
+	@mkdir -p $(CUSTOM_LIBRARY_PATH)
+	@$(AR) rcsD $@ $^
+	@cp $(Worker_Enclave_u_Object) $(CUSTOM_LIBRARY_PATH)/
 
-$(Worker_Name): $(Worker_Enclave_u_Object) $(SRC_Files)
+$(Worker_Name): $(Worker_Enclave_u_Object) $(Worker_SRC_Files)
+	@mkdir -p $(CUSTOM_BIN_PATH)
 	@echo
-	@echo "Building the litentry-worker: $(Worker_Rust_Flags)"
-	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p litentry-worker $(Worker_Rust_Flags)
+	@echo "Building $(Worker_Binary): $(Worker_Rust_Flags)"
+	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p $(Worker_Binary) $(Worker_Rust_Flags)
 	@echo "Cargo  =>  $@"
-	cp $(Worker_Rust_Path)/litentry-worker ./bin
+	cp $(Worker_Rust_Path)/$(Worker_Binary) $(CUSTOM_BIN_PATH)/
 
-######## litentry-client objects ########
-$(Client_Name): $(SRC_Files)
+######## Client objects ########
+
+$(Client_Name): $(Worker_SRC_Files)
+	@mkdir -p $(CUSTOM_BIN_PATH)
 	@echo
-	@echo "Building the litentry-cli $(Client_Rust_Flags)"
-	@cargo build -p litentry-cli $(Client_Rust_Flags)
+	@echo "Building the $(Client_Binary) $(Client_Rust_Flags)"
+	@cargo build -p $(Client_Binary) $(Client_Rust_Flags)
 	@echo "Cargo  =>  $@"
-	cp $(Client_Rust_Path)/$(Client_Binary) ./bin
+	cp $(Client_Rust_Path)/$(Client_Binary) $(CUSTOM_BIN_PATH)/
 
 ######## Enclave objects ########
+
 enclave-runtime/Enclave_t.o: $(Enclave_EDL_Files)
-	@$(CC) $(RustEnclave_Compile_Flags) -c enclave-runtime/Enclave_t.c -o $@
+	@$(CC) $(RustEnclave_C_Flags) -c enclave-runtime/Enclave_t.c -o $@
 	@echo "CC   <=  $<"
 
-$(RustEnclave_Name): enclave enclave-runtime/Enclave_t.o
+$(RustEnclave_Name): enclave-runtime/Enclave_t.o enclave
+	@mkdir -p $(CUSTOM_LIBRARY_PATH)
+	@mkdir -p $(CUSTOM_BIN_PATH)
 	@echo Compiling $(RustEnclave_Name)
 	@$(CXX) enclave-runtime/Enclave_t.o -o $@ $(RustEnclave_Link_Flags)
 	@echo "LINK =>  $@"
@@ -204,7 +214,6 @@ $(Signed_RustEnclave_Name): $(RustEnclave_Name)
 	@echo "SGX_ENCLAVE_CONFIG: $(SGX_ENCLAVE_CONFIG)"
 	@echo "SGX_SIGN_PASSFILE: $(SGX_SIGN_PASSFILE)"
 	@echo "SGX_SIGN_KEY: $(SGX_SIGN_KEY)"
-
 
 # TODO: figure out if/how to use the passphrase file in PROD
 ifeq ($(SGX_PRODUCTION), 1)
@@ -263,10 +272,6 @@ mrsigner:
 
 .PHONY: identity
 identity: mrenclave mrsigner
-
-.PHONY: release-pkg
-release-pkg:
-	@./scripts/litentry/release/generate_release_pkg.sh
 
 .PHONY: help
 help:

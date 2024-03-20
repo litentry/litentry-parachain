@@ -15,25 +15,25 @@
 */
 
 enclave {
-	from "sgx_backtrace.edl" import *;
-	from "sgx_tstd.edl" import *;
-	from "sgx_stdio.edl" import *;
-	from "sgx_backtrace.edl" import *;
-	from "sgx_tstdc.edl" import *;
-	from "sgx_tprotected_fs.edl" import *;
+	// copied from https://github.com/apache/incubator-teaclave-sgx-sdk/blob/v2.0.0-preview-11-17/tests/enclave/enclave.edl
+	from "sgx_thread.edl" import *;
+	from "sgx_mem.edl" import *;
+	from "sgx_msbuf.edl" import *;
 	from "sgx_fs.edl" import *;
 	from "sgx_net.edl" import *;
-	from "sgx_time.edl" import *;
-	from "sgx_env.edl" import *;
-	from "sgx_thread.edl" import *;
 	from "sgx_pipe.edl" import *;
-	from "sgx_file.edl" import *;
-	from "sgx_dcap_tvl.edl" import *;
+	from "sgx_cpuid.edl" import *;
+	from "sgx_process.edl" import *;
+	from "sgx_backtrace.edl" import *;
+	from "sgx_env.edl" import *;
+	from "sgx_tstd.edl" import *;
+	from "sgx_tprotected_fs.edl" import *;
 
-	include "sgx_quote.h"
-	include "sgx_report.h"
-	include "sgx_ql_quote.h"
+	include "sgx_error.h"
+	include "sgx_key_exchange.h"
+	include "sgx_ql_lib_common.h"
 	include "sgx_qve_header.h"
+	include "sgx_ql_quote.h"
 
 	trusted {
 		/* define ECALLs here. */
