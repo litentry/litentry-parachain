@@ -72,7 +72,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 
 	// Step 2: call sgx_create_enclave to initialize an enclave instance
 	// Debug Support: 1 = debug mode, 0 = not debug mode
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	let debug = 1;
 	#[cfg(feature = "production")]
 	let debug = 0;

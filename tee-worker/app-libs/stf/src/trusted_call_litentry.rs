@@ -51,7 +51,7 @@ use litentry_primitives::{
 use log::*;
 use std::{sync::Arc, vec::Vec};
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
 
 impl TrustedCallSigned {

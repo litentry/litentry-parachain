@@ -40,7 +40,7 @@ use sp_runtime::transaction_validity::{
 	TransactionValidityError, UnknownTransaction, ValidTransaction,
 };
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::ALICE_ACCOUNTID32;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

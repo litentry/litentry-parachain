@@ -71,9 +71,9 @@ pub const SIGRL_SUFFIX: &str = "/sgx/dev/attestation/v4/sigrl/";
 #[cfg(feature = "production")]
 pub const REPORT_SUFFIX: &str = "/sgx/dev/attestation/v4/report";
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 pub const SIGRL_SUFFIX: &str = "/sgx/dev/attestation/v4/sigrl/";
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 pub const REPORT_SUFFIX: &str = "/sgx/dev/attestation/v4/report";
 
 /// Trait to provide an abstraction to the attestation logic

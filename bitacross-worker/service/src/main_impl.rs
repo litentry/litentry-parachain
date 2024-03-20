@@ -85,7 +85,7 @@ pub(crate) fn main() {
 	// stdout from the service
 	#[cfg(feature = "production")]
 	info!("*** Starting service in SGX production mode");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	info!("*** Starting service in SGX debug mode");
 
 	let mut lockfile = PathBuf::from(config.data_dir());
@@ -312,7 +312,7 @@ fn start_worker<E, T, InitializationHandler>(
 	println!("  DCAP is disabled");
 	#[cfg(feature = "production")]
 	println!("  Production Mode is enabled");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	println!("  Production Mode is disabled");
 
 	info!("starting worker on shard {}", shard.encode().to_base58());

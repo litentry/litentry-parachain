@@ -52,9 +52,9 @@ pub mod files {
 	#[cfg(feature = "production")]
 	pub static RA_API_KEY_FILE: &str = "key_production.txt";
 
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_SPID_FILE: &str = "spid.txt";
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_API_KEY_FILE: &str = "key.txt";
 
 	pub const SPID_MIN_LENGTH: usize = 32;

@@ -25,7 +25,7 @@ use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPool;
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
 	aes_encrypt_default,

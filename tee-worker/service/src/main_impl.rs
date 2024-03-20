@@ -98,7 +98,7 @@ pub(crate) fn main() {
 	// stdout from the service
 	#[cfg(feature = "production")]
 	info!("*** Starting service in SGX production mode");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	info!("*** Starting service in SGX debug mode");
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
@@ -356,7 +356,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("  DCAP is disabled");
 	#[cfg(feature = "production")]
 	println!("  Production Mode is enabled");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	println!("  Production Mode is disabled");
 	#[cfg(feature = "evm")]
 	println!("  EVM is enabled");

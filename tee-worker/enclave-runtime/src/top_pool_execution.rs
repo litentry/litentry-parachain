@@ -15,7 +15,7 @@
 
 */
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::initialization::global_components::GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT;
 use crate::{
 	error::{Error, Result},
@@ -188,7 +188,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let authority = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	let fail_on_demand = GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.get()?;
 
 	match yield_next_slot(
