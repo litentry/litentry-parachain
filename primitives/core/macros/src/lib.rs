@@ -38,3 +38,27 @@ macro_rules! if_not_production {
 		}
 	};
 }
+
+#[macro_export]
+macro_rules! if_development_or {
+	($dev_variant:expr, $non_dev_variant:expr) => {{
+		#[cfg(not(feature = "development"))]
+		{
+			$non_dev_variant
+		}
+		#[cfg(feature = "development")]
+		{
+			$dev_variant
+		}
+	}};
+}
+
+#[macro_export]
+macro_rules! if_development {
+	($expression:expr) => {
+		#[cfg(feature = "development")]
+		{
+			$expression
+		}
+	};
+}
