@@ -19,10 +19,7 @@ use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
-#[cfg(feature = "skip-ias-check")]
-use test_utils::ias::consts::TEST8_CERT;
-
-use test_utils::ias::consts::TEST8_MRENCLAVE;
+use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE};
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
 const BOB_PUBKEY: &[u8; 32] = &[2u8; 32];
@@ -31,7 +28,7 @@ const EDDIE_PUBKEY: &[u8; 32] = &[5u8; 32];
 #[test]
 fn link_identity_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
@@ -50,8 +47,8 @@ fn link_identity_without_delegatee_works() {
 #[test]
 fn link_identity_with_authorized_delegatee_works() {
 	new_test_ext().execute_with(|| {
-		let eddie: SystemAccountId = test_utils::get_signer(EDDIE_PUBKEY);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let eddie: SystemAccountId = get_signer(EDDIE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
@@ -70,8 +67,8 @@ fn link_identity_with_authorized_delegatee_works() {
 #[test]
 fn link_identity_with_unauthorized_delegatee_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			IdentityManagement::link_identity(
@@ -90,7 +87,7 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 #[test]
 fn deactivate_identity_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::deactivate_identity(
 			RuntimeOrigin::signed(alice),
@@ -106,7 +103,7 @@ fn deactivate_identity_works() {
 #[test]
 fn activate_identity_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::activate_identity(
 			RuntimeOrigin::signed(alice),
@@ -120,44 +117,9 @@ fn activate_identity_works() {
 }
 
 #[test]
-#[cfg(feature = "skip-ias-check")]
-fn tee_callback_with_registered_enclave_works() {
-	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
-	const URL: &[u8] =
-		&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(alice.clone()),
-			Default::default(),
-			Default::default(),
-			TEST8_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-			Default::default(),
-		));
-
-		assert_ok!(IdentityManagement::some_error(
-			RuntimeOrigin::signed(alice),
-			None,
-			IMPError::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle),
-			H256::default(),
-		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityFailed {
-				prime_identity: None,
-				detail: ErrorDetail::WrongWeb2Handle,
-				req_ext_hash: H256::default(),
-			},
-		));
-	});
-}
-
-#[test]
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		assert_noop!(
 			IdentityManagement::some_error(
 				RuntimeOrigin::signed(alice),
@@ -173,7 +135,7 @@ fn tee_callback_with_unregistered_enclave_fails() {
 #[test]
 fn extrinsic_whitelist_origin_works() {
 	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		// activate the whitelist which is empty at the beginning
 		assert_ok!(IMPExtrinsicWhitelist::switch_group_control_on(RuntimeOrigin::root()));
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);

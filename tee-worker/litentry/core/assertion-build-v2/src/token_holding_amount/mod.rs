@@ -74,6 +74,7 @@ pub fn build(
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use base58::FromBase58;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
 	use lc_common::web3_token::{TokenAddress, TokenName};
@@ -283,15 +284,69 @@ mod tests {
 		})
 	}
 
+	fn create_sol_assertion_logic() -> Box<AssertionLogic> {
+		Box::new(AssertionLogic::Or {
+			items: vec![
+				Box::new(AssertionLogic::And {
+					items: vec![
+						Box::new(AssertionLogic::Item {
+							src: "$network".into(),
+							op: Op::Equal,
+							dst: "bsc".into(),
+						}),
+						Box::new(AssertionLogic::Item {
+							src: "$address".into(),
+							op: Op::Equal,
+							dst: Web3TokenType::Sol
+								.get_token_address(Web3Network::Bsc)
+								.unwrap()
+								.into(),
+						}),
+					],
+				}),
+				Box::new(AssertionLogic::And {
+					items: vec![
+						Box::new(AssertionLogic::Item {
+							src: "$network".into(),
+							op: Op::Equal,
+							dst: "ethereum".into(),
+						}),
+						Box::new(AssertionLogic::Item {
+							src: "$address".into(),
+							op: Op::Equal,
+							dst: Web3TokenType::Sol
+								.get_token_address(Web3Network::Ethereum)
+								.unwrap()
+								.into(),
+						}),
+					],
+				}),
+				Box::new(AssertionLogic::And {
+					items: vec![Box::new(AssertionLogic::Item {
+						src: "$network".into(),
+						op: Op::Equal,
+						dst: "solana".into(),
+					})],
+				}),
+			],
+		})
+	}
+
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/");
-		data_provider_config.set_achainable_url(url.clone());
+		data_provider_config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e2".into());
+		data_provider_config
+			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
+			.unwrap();
+		data_provider_config.set_achainable_url(url.clone()).unwrap();
+		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
+		data_provider_config
+			.set_moralis_solana_api_url(url.clone() + "/moralis_solana/")
+			.unwrap();
 		data_provider_config
 	}
 
@@ -501,6 +556,50 @@ mod tests {
 			},
 			Err(e) => {
 				panic!("build lit TokenHoldingAmount failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_sol_holding_amount_works() {
+		let data_provider_config = init();
+		let address = "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+			.from_base58()
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Solana(address), vec![Web3Network::Solana])];
+
+		let req = crate_assertion_build_request(Web3TokenType::Sol, identities);
+
+		match build(&req, Web3TokenType::Sol, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build sol TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Sol),
+							create_sol_assertion_logic(),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "1".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "50".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build sol TokenHoldingAmount failed with error {:?}", e);
 			},
 		}
 	}

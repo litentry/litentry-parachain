@@ -219,6 +219,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
+name = "base58"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6107fe1be6682a68940da878d9e9f5e90ca5745b3dec9fd1bb393c8777d4f581"
+
+[[package]]
 name = "base64"
 version = "0.13.0"
 source = "git+https://github.com/mesalock-linux/rust-base64-sgx?tag=sgx_1.1.3#dc7389e10817b078f289386b3b6a852ab6c4c021"
@@ -480,12 +486,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
-name = "bumpalo"
-version = "3.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
-
-[[package]]
 name = "byte-slice-cast"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -605,6 +605,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-primitives"
+version = "0.1.0"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
+dependencies = [
+ "derive_more",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -632,6 +645,7 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 name = "core-primitives"
 version = "0.9.12"
 dependencies = [
+ "base58",
  "frame-support",
  "litentry-hex-utils",
  "litentry-macros",
@@ -903,6 +917,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "enclave-bridge-primitives"
+version = "0.1.0"
+source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
+dependencies = [
+ "common-primitives",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde 1.0.193",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
@@ -912,6 +942,7 @@ dependencies = [
  "bc-task-sender",
  "cid",
  "derive_more",
+ "enclave-bridge-primitives",
  "env_logger",
  "frame-support",
  "futures 0.3.8",
@@ -925,6 +956,7 @@ dependencies = [
  "itc-offchain-worker-executor",
  "itc-parentchain",
  "itc-parentchain-block-import-dispatcher",
+ "itc-parentchain-block-importer",
  "itc-parentchain-light-client",
  "itc-parentchain-test",
  "itc-peer-top-broadcaster",
@@ -1804,11 +1836,13 @@ dependencies = [
  "bs58",
  "ita-sgx-runtime",
  "ita-stf",
+ "itc-parentchain",
  "itc-parentchain-indirect-calls-executor",
  "itp-api-client-types",
  "itp-node-api",
  "itp-stf-primitives",
  "itp-types",
+ "itp-utils",
  "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
@@ -1817,6 +1851,7 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1847,12 +1882,14 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "hex 0.4.3",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
  "itp-sgx-externalities",
+ "itp-sgx-runtime-primitives",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-storage",
@@ -1963,6 +2000,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-stf-executor",
+ "itp-stf-interface",
  "itp-types",
  "log",
  "parity-scale-codec",
@@ -2514,6 +2552,7 @@ dependencies = [
  "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
+ "serde 1.0.193",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -2527,15 +2566,6 @@ dependencies = [
  "hex 0.4.3",
  "litentry-hex-utils",
  "parity-scale-codec",
-]
-
-[[package]]
-name = "js-sys"
-version = "0.3.65"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54c0c35952f67de54bb584e9fd912b3023117cbafc0a77d8f3dee1fb5f572fe8"
-dependencies = [
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -2772,6 +2802,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
 
 [[package]]
+name = "memoffset"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
+dependencies = [
+ "autocfg 1.1.0",
+]
+
+[[package]]
 name = "memory-db"
 version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2888,6 +2927,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.41"
 source = "git+https://github.com/mesalock-linux/num-integer-sgx#404c50e5378ca635261688b080dee328ff42b6bd"
@@ -2991,6 +3041,7 @@ name = "pallet-evm"
 version = "6.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
+ "environmental 1.1.4",
  "evm",
  "fp-account",
  "fp-evm",
@@ -3046,6 +3097,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex 0.4.3",
+ "hex-literal",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -3265,6 +3317,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ptr_meta"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0738ccf7ea06b608c10564b31debd4f5bc5e197fc8bfe088f68ae5ce81e7a4f1"
+dependencies = [
+ "ptr_meta_derive",
+]
+
+[[package]]
+name = "ptr_meta_derive"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16b845dbfca988fa33db069c0e230574d15a3088f147a87b64c7589eb662c9ac"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.2"
 source = "git+https://github.com/mesalock-linux/quick-error-sgx#468bf2cce746f34dd3df8c1c5b4a5a6494914d36"
@@ -3455,16 +3527,41 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.16.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3053cf52e236a3ed746dfc745aa9cacf1b791d846bdaf412f60a8d7d6e17c8fc"
+source = "git+https://github.com/betrusted-io/ring-xous?branch=0.16.20-cleanup#4296c2e7904898766cf7d8d589759a129794783b"
 dependencies = [
  "cc",
  "libc",
+ "log",
  "once_cell 1.18.0",
+ "rkyv",
  "spin",
  "untrusted 0.7.1",
- "web-sys",
  "winapi",
+ "xous",
+ "xous-api-names",
+ "xous-ipc",
+]
+
+[[package]]
+name = "rkyv"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70de01b38fe7baba4ecdd33b777096d2b326993d8ea99bc5b6ede691883d3010"
+dependencies = [
+ "memoffset",
+ "ptr_meta",
+ "rkyv_derive",
+]
+
+[[package]]
+name = "rkyv_derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95a169f6bc5a81033e86ed39d0f4150e2608160b73d2b93c6e8e6a3efa873f14"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -3647,9 +3744,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
+checksum = "2ef2175c2907e7c8bc0a9c3f86aeb5ec1f3b275300ad58a44d0c3ae379a5e52e"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -4927,70 +5024,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
-name = "wasm-bindgen"
-version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7daec296f25a1bae309c0cd5c29c4b260e510e6d813c286b19eaadf409d40fce"
-dependencies = [
- "cfg-if 1.0.0",
- "wasm-bindgen-macro",
-]
-
-[[package]]
-name = "wasm-bindgen-backend"
-version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e397f4664c0e4e428e8313a469aaa58310d302159845980fd23b0f22a847f217"
-dependencies = [
- "bumpalo",
- "log",
- "once_cell 1.18.0",
- "proc-macro2",
- "quote 1.0.33",
- "syn 2.0.37",
- "wasm-bindgen-shared",
-]
-
-[[package]]
-name = "wasm-bindgen-macro"
-version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5961017b3b08ad5f3fe39f1e79877f8ee7c23c5e5fd5eb80de95abc41f1f16b2"
-dependencies = [
- "quote 1.0.33",
- "wasm-bindgen-macro-support",
-]
-
-[[package]]
-name = "wasm-bindgen-macro-support"
-version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5353b8dab669f5e10f5bd76df26a9360c748f054f862ff5f3f8aae0c7fb3907"
-dependencies = [
- "proc-macro2",
- "quote 1.0.33",
- "syn 2.0.37",
- "wasm-bindgen-backend",
- "wasm-bindgen-shared",
-]
-
-[[package]]
-name = "wasm-bindgen-shared"
-version = "0.2.88"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d046c5d029ba91a1ed14da14dca44b68bf2f124cfbaf741c54151fdb3e0750b"
-
-[[package]]
-name = "web-sys"
-version = "0.3.65"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5db499c5f66323272151db0e666cd34f78617522fb0c1604d31a27c50c206a85"
-dependencies = [
- "js-sys",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "webpki"
 version = "0.21.4"
 source = "git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx#8dbe6fbeefadf05582ae47c7fa818b04db49c61e"
@@ -5068,6 +5101,54 @@ dependencies = [
  "der 0.6.1",
  "flagset",
  "spki 0.6.0",
+]
+
+[[package]]
+name = "xous"
+version = "0.9.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb93122c9dab77f8bde501ff0677d3df7777982f9faa23603423aeb5eae4e55d"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
+name = "xous-api-log"
+version = "0.1.54"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "941f7fd7c114e1e0c401bbbe8222e8adbb4bc8ebeb782f7812d8f1678a578934"
+dependencies = [
+ "log",
+ "num-derive",
+ "num-traits 0.2.16",
+ "xous",
+ "xous-ipc",
+]
+
+[[package]]
+name = "xous-api-names"
+version = "0.9.56"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "471502d9379d198738ec55dec7cd688ce21e1cfe7d93af6dad25e38c1c404d1c"
+dependencies = [
+ "log",
+ "num-derive",
+ "num-traits 0.2.16",
+ "rkyv",
+ "xous",
+ "xous-api-log",
+ "xous-ipc",
+]
+
+[[package]]
+name = "xous-ipc"
+version = "0.9.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f5081581314f115e2005403ee2cc0957d86cbfc49edf6e8b05d2fcf6c226c5d"
+dependencies = [
+ "bitflags",
+ "rkyv",
+ "xous",
 ]
 
 [[package]]

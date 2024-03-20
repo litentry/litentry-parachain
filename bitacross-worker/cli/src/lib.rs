@@ -32,7 +32,6 @@ mod attesteer;
 mod base_cli;
 mod benchmark;
 mod command_utils;
-mod error;
 mod trusted_base_cli;
 mod trusted_cli;
 mod trusted_command_utils;

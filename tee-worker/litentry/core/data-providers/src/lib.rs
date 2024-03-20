@@ -195,6 +195,7 @@ pub struct DataProviderConfig {
 	pub karat_dao_api_retry_times: u16,
 	pub karat_dao_api_url: String,
 	pub moralis_api_url: String,
+	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
 	pub moralis_api_retry_times: u16,
 	pub moralis_api_key: String,
@@ -216,9 +217,7 @@ impl DataProviderConfig {
 			achainable_auth_key: "".to_string(),
 			credential_endpoint: "wss://rpc.rococo-parachain.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
-			oneblock_notion_url:
-				"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children"
-					.to_string(),
+			oneblock_notion_url: "https://api.notion.com/".to_string(),
 			sora_quiz_master_id: "1164463721989554218".to_string(),
 			sora_quiz_attendee_id: "1166941149219532800".to_string(),
 			nodereal_api_key: "".to_string(),
@@ -230,7 +229,7 @@ impl DataProviderConfig {
 			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
 			contest_participant_discord_role_id: "1172576734135210104".to_string(),
 			vip3_url: "https://dappapi.vip3.io/".to_string(),
-			geniidata_url: "https://api.geniidata.com/api/1/brc20/balance?".to_string(),
+			geniidata_url: "https://api.geniidata.com/".to_string(),
 			geniidata_api_key: "".to_string(),
 			litentry_archive_url: "https://archive-test.litentry.io".to_string(),
 			karat_dao_api_retry_delay: 5000,
@@ -240,6 +239,7 @@ impl DataProviderConfig {
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
 			moralis_api_url: "https://deep-index.moralis.io/api/v2.2/".to_string(),
+			moralis_solana_api_url: "https://solana-gateway.moralis.io/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -309,6 +309,9 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("MORALIS_API_URL") {
 				config.set_moralis_api_url(v)?;
+			}
+			if let Ok(v) = env::var("MORALIS_SOLANA_API_URL") {
+				config.set_moralis_solana_api_url(v)?;
 			}
 			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
 				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
@@ -487,6 +490,12 @@ impl DataProviderConfig {
 		check_url(&v)?;
 		debug!("set_moralis_api_url: {:?}", v);
 		self.moralis_api_url = v;
+		Ok(())
+	}
+	pub fn set_moralis_solana_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_moralis_solana_api_url: {:?}", v);
+		self.moralis_solana_api_url = v;
 		Ok(())
 	}
 }

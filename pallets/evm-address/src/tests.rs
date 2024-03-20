@@ -16,10 +16,10 @@
 
 #![cfg(test)]
 use super::mock::*;
-use codec::Encode;
 use frame_support::assert_ok;
 use hex_literal::hex;
 use pallet_evm::EnsureAddressOrigin;
+use parity_scale_codec::Encode;
 use sp_core::{H160, U256};
 #[test]
 fn address_mapping() {

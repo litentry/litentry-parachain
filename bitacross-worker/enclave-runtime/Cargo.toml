@@ -5,6 +5,7 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [workspace]
+resolver = "2"
 members = []
 
 [lib]
@@ -83,6 +84,7 @@ webpki = { git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_
 base58 = { rev = "sgx_1.1.3", package = "rust-base58", default-features = false, features = ["mesalock_sgx"], git = "https://github.com/mesalock-linux/rust-base58-sgx" }
 
 cid = { default-features = false, git = "https://github.com/whalelephant/rust-cid", branch = "nstd" }
+enclave-bridge-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.12.11-polkadot-v0.9.42" }
 multibase = { default-features = false, git = "https://github.com/whalelephant/rust-multibase", branch = "nstd" }
 
 # local deps
@@ -94,6 +96,7 @@ itc-direct-rpc-server = { path = "../core/direct-rpc-server", default-features =
 itc-offchain-worker-executor = { path = "../core/offchain-worker-executor", default-features = false, features = ["sgx"] }
 itc-parentchain = { path = "../core/parentchain/parentchain-crate", default-features = false, features = ["sgx"] }
 itc-parentchain-block-import-dispatcher = { path = "../core/parentchain/block-import-dispatcher", default-features = false, features = ["sgx"] }
+itc-parentchain-block-importer = { path = "../core/parentchain/block-importer", default-features = false, features = ["sgx"] }
 itc-parentchain-light-client = { path = "../core/parentchain/light-client", default-features = false }
 itc-parentchain-test = { path = "../core/parentchain/test", default-features = false }
 itc-peer-top-broadcaster = { path = "../core/peer-top-broadcaster", default-features = false, features = ["sgx"] }
@@ -147,6 +150,7 @@ itp-sgx-temp-dir = { version = "0.1", default-features = false, optional = true,
 [patch.crates-io]
 env_logger = { git = "https://github.com/integritee-network/env_logger-sgx" }
 log = { git = "https://github.com/integritee-network/log-sgx" }
+ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
 
 [patch."https://github.com/mesalock-linux/log-sgx"]
 log = { git = "https://github.com/integritee-network/log-sgx" }

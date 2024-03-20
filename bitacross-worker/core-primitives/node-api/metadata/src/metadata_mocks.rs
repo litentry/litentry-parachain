@@ -18,8 +18,8 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
-	runtime_call::RuntimeCall,
+	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
+	pallet_utility::UtilityCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -62,6 +62,8 @@ pub struct NodeMetadataMock {
 	transfer: u8,
 	transfer_keep_alive: u8,
 	transfer_allow_death: u8,
+	timestamp_module: u8,
+	timestamp_set: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 
@@ -101,6 +103,8 @@ impl NodeMetadataMock {
 			transfer: 7u8,
 			transfer_keep_alive: 3u8,
 			transfer_allow_death: 0u8,
+			timestamp_module: 3,
+			timestamp_set: 0,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
 
@@ -216,5 +220,11 @@ impl BitAcrossCallIndexes for NodeMetadataMock {
 
 	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.bitacross_module, self.eth_wallet_generated])
+	}
+}
+
+impl TimestampCallIndexes for NodeMetadataMock {
+	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.timestamp_module, self.timestamp_set])
 	}
 }

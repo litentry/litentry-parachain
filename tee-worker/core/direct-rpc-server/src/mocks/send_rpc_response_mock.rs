@@ -64,6 +64,15 @@ where
 		Ok(())
 	}
 
+	fn send_rpc_response(
+		&self,
+		_hash: Self::Hash,
+		_encoded_value: Vec<u8>,
+		_do_watch: bool,
+	) -> DirectRpcResult<()> {
+		Ok(())
+	}
+
 	fn swap_hash(&self, _old_hash: Self::Hash, _new_hash: Self::Hash) -> DirectRpcResult<()> {
 		Ok(())
 	}

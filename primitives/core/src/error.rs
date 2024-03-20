@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::Assertion;
-use codec::{Decode, Encode, MaxEncodedLen};
+use crate::assertion::Assertion;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{ConstU32, Printable},

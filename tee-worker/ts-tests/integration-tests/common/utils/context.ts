@@ -1,20 +1,16 @@
 import { WsProvider, ApiPromise } from 'parachain-api';
-import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { hexToString } from '@polkadot/util';
-import { ethers } from 'ethers';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
-import { getEvmSigner, getSubstrateSigner } from '../helpers';
-import type { IntegrationTestContext, Web3Wallets } from '../common-types';
+import { createWeb3Wallets } from '../helpers';
+import type { IntegrationTestContext } from '../common-types';
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
-import bitcore from 'bitcore-lib';
-
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
 
@@ -38,20 +34,7 @@ export async function initIntegrationTestContext(
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
 
-    const ethersWallet = {
-        alice: new ethers.Wallet(getEvmSigner().alice),
-        bob: new ethers.Wallet(getEvmSigner().bob),
-        charlie: new ethers.Wallet(getEvmSigner().charlie),
-        dave: new ethers.Wallet(getEvmSigner().dave),
-        eve: new ethers.Wallet(getEvmSigner().eve),
-    };
-
-    const substrateWallet = getSubstrateSigner();
-
-    const bitcoinWallet = {
-        alice: new bitcore.PrivateKey(),
-        bob: new bitcore.PrivateKey(),
-    };
+    const web3Wallets = createWeb3Wallets();
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
 
@@ -72,9 +55,7 @@ export async function initIntegrationTestContext(
         api,
         teeShieldingKey,
         mrEnclave,
-        ethersWallet,
-        substrateWallet,
-        bitcoinWallet,
+        web3Wallets,
         sidechainMetaData,
         sidechainRegistry,
         chainIdentifier,
@@ -108,22 +89,4 @@ export async function getEnclave(api: ApiPromise): Promise<{
         mrEnclave,
         teeShieldingKey,
     };
-}
-
-export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]> {
-    const seed = 'litentry seed';
-    const addresses: Web3Wallets[] = [];
-    const keyring = new Keyring({ type: 'sr25519' });
-
-    for (let i = 0; i < count; i++) {
-        const substratePair = keyring.addFromUri(`${seed}//${i}`);
-        const evmWallet = ethers.Wallet.createRandom();
-        const bitcoinPair = new bitcore.PrivateKey();
-        addresses.push({
-            substrateWallet: substratePair,
-            evmWallet: evmWallet,
-            bitcoinWallet: bitcoinPair,
-        });
-    }
-    return addresses;
 }

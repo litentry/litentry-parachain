@@ -257,6 +257,8 @@ pub trait TrustedOperationPool<TOP>: Send + Sync {
 	#[allow(clippy::type_complexity)]
 	fn update_connection_state(&self, updates: Vec<(TxHash, (Vec<u8>, bool))>);
 
+	fn send_rpc_response(&self, hash: TxHash, encoded_value: Vec<u8>, do_watch: bool);
+
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_rpc_connection_hash(&self, old_hash: TxHash, new_hash: TxHash);
 }

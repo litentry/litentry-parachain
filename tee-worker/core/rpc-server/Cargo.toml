@@ -27,4 +27,4 @@ std = []
 env_logger = { version = "*" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 its-test = { path = "../../sidechain/test" }
-parity-scale-codec = "3.0.0"
+codec = { package = "parity-scale-codec", version = "3.0.0" }

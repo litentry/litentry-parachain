@@ -41,6 +41,14 @@ export default {
         },
         RequestVCResult: {
             vc_payload: "AesOutput",
+            pre_mutated_id_graph: "AesOutput",
+            pre_id_graph_hash: "H256",
+        },
+        RequestVcResultOrError: {
+            payload: "Vec<u8>",
+            is_error: "bool",
+            idx: "u8",
+            len: "u8",
         },
         // Achainable
         AchainableParams: {
@@ -173,6 +181,8 @@ export default {
                 "Gtc",
                 "Ton",
                 "Trx",
+                "Nfp",
+                "Sol",
             ],
         },
         // PlatformUserType

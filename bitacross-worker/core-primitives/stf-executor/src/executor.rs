@@ -25,8 +25,8 @@ use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	StateCallInterface, StfExecutionResult, UpdateState,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
+	runtime_upgrade::RuntimeUpgradeInterface, StateCallInterface, StfExecutionResult, UpdateState,
 };
 use itp_stf_primitives::{
 	traits::TrustedCallVerification,
@@ -176,10 +176,11 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + ParentchainPalletInterface<StateHandler::StateT, ParentchainHeader>,
+		> + ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-	<Stf as ParentchainPalletInterface<StateHandler::StateT, ParentchainHeader>>::Error: Debug,
+	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>>::Error:
+		Debug,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
@@ -193,10 +194,6 @@ where
 		debug!("Update STF storage upon block import!");
 		let storage_hashes = Stf::storage_hashes_to_update_on_block(parentchain_id);
 
-		if storage_hashes.is_empty() {
-			return Ok(())
-		}
-
 		// global requests they are the same for every shard
 		let state_diff_update = self
 			.ocall_api
@@ -209,7 +206,7 @@ where
 		let shards = self.state_handler.list_shards()?;
 		for shard_id in shards {
 			let (state_lock, mut state) = self.state_handler.load_for_mutation(&shard_id)?;
-			match Stf::update_parentchain_block(&mut state, header.clone()) {
+			match Stf::update_parentchain_litentry_block(&mut state, header.clone()) {
 				Ok(_) => {
 					self.state_handler.write_after_mutation(state, state_lock, &shard_id)?;
 				},
@@ -238,12 +235,13 @@ impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
 where
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>> + IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-	<Stf as ParentchainPalletInterface<StateHandler::StateT, ParentchainHeader>>::Error: Debug,
+	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>>::Error:
+		Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256> + QueryShardState,
 	StateHandler::StateT: Encode + SgxExternalitiesTrait,
-	Stf: ParentchainPalletInterface<StateHandler::StateT, ParentchainHeader>
+	Stf: ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>
 		+ UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
@@ -272,7 +270,7 @@ where
 
 			Stf::apply_state_diff(&mut state, per_shard_update.into());
 			Stf::apply_state_diff(&mut state, state_diff_update.clone().into());
-			if let Err(e) = Stf::update_parentchain_block(&mut state, header.clone()) {
+			if let Err(e) = Stf::update_parentchain_litentry_block(&mut state, header.clone()) {
 				error!("Could not update parentchain block. {:?}: {:?}", shard_id, e)
 			}
 

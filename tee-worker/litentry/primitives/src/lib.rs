@@ -48,18 +48,35 @@ pub use pallet_teebag::{
 	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
 };
 pub use parentchain_primitives::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
-	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
-	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableMirror, AchainableNameClassOfYear, AchainableParams, AchainableToken,
-	AmountHoldingTimeType, Assertion, Balance as ParentchainBalance,
-	BlockNumber as ParentchainBlockNumber, BnbDigitDomainType, BoundedWeb3Network, ContestType,
-	EVMTokenType, ErrorDetail, ErrorString, GenericDiscordRoleType, Hash as ParentchainHash,
+	assertion::{
+		achainable::{
+			AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
+			AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
+			AchainableDateInterval, AchainableDatePercent, AchainableMirror,
+			AchainableNameClassOfYear, AchainableParams, AchainableToken, AmountHoldingTimeType,
+		},
+		bnb_domain::BnbDigitDomainType,
+		contest::ContestType,
+		evm_amount_holding::EVMTokenType,
+		generic_discord_role::GenericDiscordRoleType,
+		network::{
+			all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks,
+			all_web3networks, BoundedWeb3Network, Web3Network,
+		},
+		oneblock::OneBlockCourseType,
+		platform_user::PlatformUserType,
+		soraquiz::SoraQuizType,
+		vip3::VIP3MembershipCardLevel,
+		web3_nft::Web3NftType,
+		web3_token::Web3TokenType,
+		Assertion,
+	},
+	identity::*,
+	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
 	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
-	OneBlockCourseType, ParameterString, PlatformUserType, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, SoraQuizType, VCMPError, VIP3MembershipCardLevel,
-	Web3Network, Web3NftType, Web3TokenType, MINUTES,
+	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
+	VCMPError, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

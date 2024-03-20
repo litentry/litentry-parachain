@@ -36,7 +36,6 @@ UNTRUSTED_WORKER_PORT="3000"
 
 F_CLEAN=""
 FSUBCMD_DEV=""
-FSUBCMD_REQ_STATE=""
 
 WAIT_INTERVAL_SECONDS=10
 WAIT_ROUNDS=20
@@ -87,10 +86,6 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	echo ""
 	echo "--------------------setup worker(${worker_name})----------------------------------------"
 
-	if ((i > 0)); then
-		FSUBCMD_REQ_STATE="--request-state"
-	fi
-
 	if ((i == 0)); then
 		MOCK_SERVER="--enable-mock-server"
 	fi
@@ -128,7 +123,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 --untrusted-external-address ws://${WORKER_ENDPOINT} \
 --untrusted-http-port ${untrusted_http_port} \
 --untrusted-worker-port ${untrusted_worker_port} \
-run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
+run --skip-ra ${FSUBCMD_DEV}"
 
 	echo "${worker_name} command: ${launch_command}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
