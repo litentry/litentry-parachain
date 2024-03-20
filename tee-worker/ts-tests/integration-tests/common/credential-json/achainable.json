@@ -101,7 +101,7 @@
             "id": "achainable",
             "payload": {
                 "ClassOfYear": {
-                    "name": "Account created between {dates}",
+                    "name": "ClassOfYear",
                     "chain": "Ethereum"
                 }
             }

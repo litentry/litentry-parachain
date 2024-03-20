@@ -95,7 +95,7 @@ export const mockAssertions = [
         assertion: {
             Achainable: {
                 ClassOfYear: {
-                    name: 'Account created between {dates}',
+                    name: 'ClassOfYear',
                     chain: ['Ethereum'],
                 },
             },
