@@ -50,7 +50,7 @@ use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -311,7 +311,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if_not_production!({
+	if_development!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {

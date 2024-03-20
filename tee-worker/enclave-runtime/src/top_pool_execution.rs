@@ -75,7 +75,7 @@ use its_sidechain::{
 	validateer_fetch::ValidateerFetch,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+use litentry_macros::if_development;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::{crypto::UncheckedFrom, Pair};
@@ -213,7 +213,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				ocall_api.clone(),
 			);
 
-			if_not_production!({
+			if_development!({
 				if let Some(ref fail_on_demand) = *fail_on_demand {
 					fail_on_demand.next_slot();
 					if fail_on_demand.check_before_on_slot() {
@@ -236,7 +236,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 					state_handler,
 				)?;
 
-			if_not_production!({
+			if_development!({
 				if let Some(ref fail_on_demand) = *fail_on_demand {
 					if fail_on_demand.check_after_on_slot() {
 						Result::Err(crate::error::Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
