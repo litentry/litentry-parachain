@@ -257,7 +257,7 @@ mod impl_ffi {
 			parentchain_id: &ParentchainId,
 			header: &Header,
 		) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 			let parentchain_id_enc = parentchain_id.encode();
 			let header_bytes = header.encode();
 			let shard_bytes = shard.encode();
@@ -274,8 +274,8 @@ mod impl_ffi {
 				)
 			};
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 
 			Ok(())
 		}
@@ -284,7 +284,7 @@ mod impl_ffi {
 			&self,
 			shard: &ShardIdentifier,
 		) -> EnclaveResult<ShardCreationInfo> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut retval = SgxStatus::Success;
 			let mut creation_info = [0u8; std::mem::size_of::<ShardCreationInfo>()];
 			let shard_bytes = shard.encode();
 
@@ -299,8 +299,8 @@ mod impl_ffi {
 				)
 			};
 
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(result == SgxStatus::Success, Error::Sgx(result));
+			ensure!(retval == SgxStatus::Success, Error::Sgx(retval));
 			Decode::decode(&mut creation_info.as_slice()).map_err(|e| Error::Codec(e.into()))
 		}
 
