@@ -69,7 +69,7 @@ pub unsafe extern "C" fn init_proxied_shard_vault(
 		Ok(bal) => bal,
 		Err(e) => {
 			error!("Could not decode funding_balance: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 

@@ -33,7 +33,7 @@ use itp_types::{
 };
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
-use sgx_types::sgx_status_t;
+use sgx_types::error::*;
 use std::slice;
 
 #[no_mangle]
@@ -44,14 +44,14 @@ pub unsafe extern "C" fn init_shard_creation_parentchain_header(
 	parentchain_id_size: u32,
 	header: *const u8,
 	header_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let shard_identifier =
 		ShardIdentifier::from_slice(slice::from_raw_parts(shard, shard_size as usize));
 	let header = match Header::decode(&mut slice::from_raw_parts(header, header_size as usize)) {
 		Ok(hdr) => hdr,
 		Err(e) => {
 			error!("Could not decode header: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	let parentchain_id =
@@ -59,7 +59,7 @@ pub unsafe extern "C" fn init_shard_creation_parentchain_header(
 			Ok(id) => id,
 			Err(e) => {
 				error!("Could not decode parentchain id: {:?}", e);
-				return sgx_status_t::SGX_ERROR_UNEXPECTED
+				return SgxStatus::Unexpected
 			},
 		};
 
@@ -70,9 +70,9 @@ pub unsafe extern "C" fn init_shard_creation_parentchain_header(
 			"Failed to initialize first relevant parentchain header [{:?}]: {:?}",
 			parentchain_id, e
 		);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
+		return SgxStatus::Unexpected
 	}
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }
 
 fn init_shard_creation_parentchain_header_internal(
@@ -124,14 +124,14 @@ pub unsafe extern "C" fn get_shard_creation_info(
 	shard_size: u32,
 	creation: *mut u8,
 	creation_size: u32,
-) -> sgx_status_t {
+) -> SgxStatus {
 	let shard = ShardIdentifier::from_slice(slice::from_raw_parts(shard, shard_size as usize));
 
 	let shard_creation_info = match get_shard_creation_info_internal(shard) {
 		Ok(creation) => creation,
 		Err(e) => {
 			warn!("Failed to fetch creation header: {:?}", e);
-			return sgx_status_t::SGX_ERROR_UNEXPECTED
+			return SgxStatus::Unexpected
 		},
 	};
 	trace!("fetched shard creation header from state: {:?}", shard_creation_info);
@@ -140,5 +140,5 @@ pub unsafe extern "C" fn get_shard_creation_info(
 	if let Err(e) = write_slice_and_whitespace_pad(creation_slice, shard_creation_info.encode()) {
 		return Error::BufferError(e).into()
 	};
-	sgx_status_t::SGX_SUCCESS
+	SgxStatus::Success
 }

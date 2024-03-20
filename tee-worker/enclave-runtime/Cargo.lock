@@ -106,7 +106,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
  "getrandom",
- "once_cell 1.18.0",
+ "once_cell",
  "version_check",
 ]
 
@@ -117,7 +117,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
 dependencies = [
  "cfg-if 1.0.0",
- "once_cell 1.18.0",
+ "once_cell",
  "version_check",
 ]
 
@@ -984,7 +984,7 @@ dependencies = [
  "litentry-proc-macros",
  "log",
  "multibase",
- "once_cell 1.18.0",
+ "once_cell",
  "parity-scale-codec",
  "primitive-types",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
@@ -1443,30 +1443,15 @@ checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
 [[package]]
 name = "futures"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
- "futures-channel 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-core 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-executor 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-io 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-sink 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-task 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-util 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
-dependencies = [
- "futures-channel 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-core 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-executor 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-io 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-sink 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-task 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-util 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
+ "futures-channel 0.3.8",
+ "futures-core 0.3.8",
+ "futures-executor",
+ "futures-io 0.3.8",
+ "futures-sink 0.3.8",
+ "futures-task 0.3.8",
+ "futures-util 0.3.8",
  "sgx_tstd",
 ]
 
@@ -1487,20 +1472,10 @@ dependencies = [
 [[package]]
 name = "futures-channel"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
- "futures-core 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-sink 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures-channel"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
-dependencies = [
- "futures-core 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-sink 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
+ "futures-core 0.3.8",
+ "futures-sink 0.3.8",
  "sgx_tstd",
 ]
 
@@ -1517,15 +1492,7 @@ dependencies = [
 [[package]]
 name = "futures-core"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures-core"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
  "sgx_tstd",
 ]
@@ -1539,22 +1506,11 @@ checksum = "4bca583b7e26f571124fe5b7561d49cb2868d79116cfa0eefce955557c6fee8c"
 [[package]]
 name = "futures-executor"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
- "futures-core 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-task 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-util 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures-executor"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
-dependencies = [
- "futures-core 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-task 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-util 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
+ "futures-core 0.3.8",
+ "futures-task 0.3.8",
+ "futures-util 0.3.8",
  "num_cpus",
  "sgx_tstd",
 ]
@@ -1562,15 +1518,7 @@ dependencies = [
 [[package]]
 name = "futures-io"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures-io"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
  "sgx_tstd",
 ]
@@ -1584,18 +1532,7 @@ checksum = "4fff74096e71ed47f8e023204cfd0aa1289cd54ae5430a9523be060cdb849964"
 [[package]]
 name = "futures-macro"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
-dependencies = [
- "proc-macro-hack",
- "proc-macro2",
- "quote 1.0.33",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "futures-macro"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
  "proc-macro-hack",
  "proc-macro2",
@@ -1606,12 +1543,7 @@ dependencies = [
 [[package]]
 name = "futures-sink"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
-
-[[package]]
-name = "futures-sink"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 
 [[package]]
 name = "futures-sink"
@@ -1622,18 +1554,9 @@ checksum = "f43be4fe21a13b9781a69afa4985b0f6ee0e1afab2c6f454a8cf30e2b2237b6e"
 [[package]]
 name = "futures-task"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
- "once_cell 1.18.0",
- "sgx_tstd",
-]
-
-[[package]]
-name = "futures-task"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
-dependencies = [
- "once_cell 1.4.0",
+ "once_cell",
  "sgx_tstd",
 ]
 
@@ -1646,34 +1569,14 @@ checksum = "76d3d132be6c0e6aa1534069c705a74a5997a356c0dc2f86a47765e5617c5b65"
 [[package]]
 name = "futures-util"
 version = "0.3.8"
-source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#ccb7323754982fb5b8f6f846100b521d1e8c440c"
+source = "git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0#db48df2eac7a6034f93d7c2b486554274d2f8fad"
 dependencies = [
- "futures-channel 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-core 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-io 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-macro 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-sink 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "futures-task 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
- "memchr 2.2.1",
- "pin-project-lite",
- "pin-utils",
- "proc-macro-hack",
- "proc-macro-nested",
- "sgx_tstd",
- "slab 0.4.2",
-]
-
-[[package]]
-name = "futures-util"
-version = "0.3.8"
-source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
-dependencies = [
- "futures-channel 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-core 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-io 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-macro 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-sink 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
- "futures-task 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
+ "futures-channel 0.3.8",
+ "futures-core 0.3.8",
+ "futures-io 0.3.8",
+ "futures-macro",
+ "futures-sink 0.3.8",
+ "futures-task 0.3.8",
  "memchr 2.2.1",
  "pin-project-lite",
  "pin-utils",
@@ -2166,7 +2069,7 @@ dependencies = [
  "binary-merkle-tree",
  "bs58",
  "core-primitives",
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "itp-api-client-types",
  "itp-node-api",
  "itp-sgx-crypto",
@@ -2883,7 +2786,7 @@ dependencies = [
 name = "its-rpc-handler"
 version = "0.9.0"
 dependencies = [
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "itp-rpc",
  "itp-stf-primitives",
  "itp-top-pool-author",
@@ -2950,7 +2853,7 @@ name = "jsonrpc-core"
 version = "18.0.0"
 source = "git+https://github.com/Kailai-Wang/jsonrpc-sgx?branch=sgx-sdk-2.0.0#08cac91756d4614550783696fe6b9d751dbbe433"
 dependencies = [
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "log",
  "serde",
  "serde_derive",
@@ -3125,7 +3028,7 @@ name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "hex 0.4.0",
  "http",
  "http_req",
@@ -3177,7 +3080,7 @@ name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
@@ -3239,7 +3142,7 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.8 (git+https://github.com/mesalock-linux/futures-rs-sgx)",
+ "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
@@ -3276,7 +3179,7 @@ dependencies = [
 name = "lc-vc-task-sender"
 version = "0.1.0"
 dependencies = [
- "futures 0.3.8 (git+https://github.com/Kailai-Wang/futures-rs-sgx?branch=sgx-sdk-2.0.0)",
+ "futures 0.3.8",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -3631,8 +3534,8 @@ dependencies = [
 
 [[package]]
 name = "num_cpus"
-version = "1.13.0"
-source = "git+https://github.com/mesalock-linux/num_cpus-sgx#48fef62b75f6c059c356efb2233b3e884b63dca8"
+version = "1.16.0"
+source = "git+https://github.com/Kailai-Wang/num_cpus-sgx?branch=sgx-sdk-2.0.0#6ef27f610c3bf63ce1c46fd128aa7d9cbe97f000"
 dependencies = [
  "sgx_trts",
 ]
@@ -3644,14 +3547,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5e609fc8b72da3dabd56427be9489d8a9f4bd2e4dc41660dd033c3c8e90b93c"
 dependencies = [
  "cipher",
-]
-
-[[package]]
-name = "once_cell"
-version = "1.4.0"
-source = "git+https://github.com/mesalock-linux/once_cell-sgx#cefcaa03fed4d85276b3235d875f1b45d399cc3c"
-dependencies = [
- "sgx_tstd",
 ]
 
 [[package]]
@@ -3986,7 +3881,7 @@ version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f4c021e1093a56626774e81216a4ce732a735e5bad4868a03f3ed65ca0c3919"
 dependencies = [
- "once_cell 1.18.0",
+ "once_cell",
  "toml_edit 0.19.15",
 ]
 
@@ -4207,7 +4102,7 @@ dependencies = [
  "cc",
  "libc",
  "log",
- "once_cell 1.18.0",
+ "once_cell",
  "rkyv",
  "spin",
  "untrusted 0.7.1",

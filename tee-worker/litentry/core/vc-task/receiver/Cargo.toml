@@ -11,7 +11,7 @@ futures = { version = "0.3.8", optional = true }
 thiserror = { version = "1.0.26", optional = true }
 
 # sgx dependencies
-futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true, features = ["thread-pool"] }
+futures_sgx = { package = "futures", git = "https://github.com/Kailai-Wang/futures-rs-sgx", branch = "sgx-sdk-2.0.0", features = ["thread-pool"], optional = true }
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"], optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", features = ["net", "thread"], optional = true }
 
