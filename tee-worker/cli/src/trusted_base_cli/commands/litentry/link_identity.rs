@@ -22,8 +22,8 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use ita_stf::{Index, TrustedCall, TrustedCallSigning};
-use itp_stf_primitives::types::KeyPair;
+use ita_stf::{Index, TrustedCall};
+use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_primitives::{Identity, Web3Network};
 use sp_core::Pair;
 

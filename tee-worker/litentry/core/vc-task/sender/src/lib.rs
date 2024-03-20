@@ -16,8 +16,6 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-use codec::{Decode, Encode};
-use futures::channel::oneshot;
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
 use log::*;
@@ -28,18 +26,11 @@ use std::{
 		mpsc::{channel, Receiver, Sender as MpscSender},
 		Arc, Mutex,
 	},
-	vec::Vec,
 };
 
 #[derive(Debug)]
 pub struct VCRequest {
-	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
 	pub request: AesRequest,
-}
-
-#[derive(Encode, Decode, Clone)]
-pub struct VCResponse {
-	pub vc_payload: Vec<u8>,
 }
 
 pub type VcSender = MpscSender<VCRequest>;

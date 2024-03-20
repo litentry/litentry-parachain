@@ -16,6 +16,7 @@ itc-parentchain-light-client = { path = "../light-client", default-features = fa
 itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-interface = { path = "../../../core-primitives/stf-interface", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 
 # sgx enabled external libraries
@@ -42,6 +43,7 @@ std = [
     "itp-enclave-metrics/std",
     "itp-extrinsics-factory/std",
     "itp-stf-executor/std",
+    "itp-stf-interface/std",
     "itp-types/std",
     # no-std compatible libraries
     "codec/std",

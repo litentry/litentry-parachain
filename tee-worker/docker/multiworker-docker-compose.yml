@@ -130,7 +130,9 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
+      - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -185,7 +187,9 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
+      - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -206,7 +210,7 @@ services:
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-2 -T wss://litentry-worker-2
       -u ws://litentry-node -U ws://litentry-worker-2 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server
-      run --dev --skip-ra --request-state"
+      run --dev --skip-ra"
     restart: "no"
   litentry-worker-3:
     image: litentry/litentry-worker:latest
@@ -240,7 +244,9 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
+      - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -261,7 +267,7 @@ services:
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-3 -T wss://litentry-worker-3
       -u ws://litentry-node -U ws://litentry-worker-3 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server
-      run --dev --skip-ra --request-state"
+      run --dev --skip-ra"
     restart: "no"
 volumes:
   ? relaychain-alice

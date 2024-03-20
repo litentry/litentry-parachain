@@ -17,8 +17,11 @@
 pub extern crate alloc;
 
 use crate::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
-	all_substrate_web3networks, AccountId, Web3Network,
+	assertion::network::{
+		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
+		all_substrate_web3networks, Web3Network,
+	},
+	AccountId,
 };
 use alloc::{format, str, string::String};
 use base58::{FromBase58, ToBase58};

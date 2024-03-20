@@ -21,8 +21,8 @@ use crate::{
 	trusted_operation::{perform_direct_operation, perform_trusted_operation},
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
-use itp_stf_primitives::types::KeyPair;
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall};
+use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
@@ -226,6 +226,8 @@ pub enum TokenHoldingAmountCommand {
 	Gtc,
 	Ton,
 	Trx,
+	Nfp,
+	Sol,
 }
 
 #[derive(Subcommand, Debug)]
@@ -497,6 +499,8 @@ impl RequestVcCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+				TokenHoldingAmountCommand::Nfp => Assertion::TokenHoldingAmount(Web3TokenType::Nfp),
+				TokenHoldingAmountCommand::Sol => Assertion::TokenHoldingAmount(Web3TokenType::Sol),
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser =>

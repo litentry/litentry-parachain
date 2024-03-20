@@ -253,6 +253,8 @@ where
 
 	fn update_connection_state(&self, _updates: Vec<(H256, (Vec<u8>, bool))>) {}
 
+	fn send_rpc_response(&self, _hash: H256, _encoded_value: Vec<u8>, _do_watch: bool) {}
+
 	fn swap_rpc_connection_hash(&self, _old_hash: H256, _new_hash: H256) {}
 }
 

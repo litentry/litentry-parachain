@@ -44,9 +44,15 @@ pub struct MoralisRequest {
 	query: Option<Vec<(String, String)>>,
 }
 
+enum ClientType {
+	Evm,
+	Solana,
+}
+
 pub struct MoralisClient {
 	retry_option: RetryOption,
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
+	solana_client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl MoralisClient {
@@ -55,34 +61,44 @@ impl MoralisClient {
 		let api_retry_delay = data_provider_config.moralis_api_retry_delay;
 		let api_retry_times = data_provider_config.moralis_api_retry_times;
 		let api_url = data_provider_config.moralis_api_url.clone();
+		let solana_api_url = data_provider_config.moralis_solana_api_url.clone();
 		let retry_option =
 			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert("X-API-Key", api_key.as_str());
-		let client = build_client_with_cert(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers.clone());
+		let solana_client = build_client_with_cert(solana_api_url.as_str(), headers.clone());
 
-		MoralisClient { retry_option, client }
+		MoralisClient { retry_option, client, solana_client }
 	}
 
-	fn get<T>(&mut self, params: MoralisRequest, fast_fail: bool) -> Result<T, Error>
+	fn get<T>(
+		&mut self,
+		client_type: ClientType,
+		params: MoralisRequest,
+		fast_fail: bool,
+	) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
 	{
 		let retry_option: Option<RetryOption> =
 			if fast_fail { None } else { Some(self.retry_option.clone()) };
+		let client = match client_type {
+			ClientType::Evm => &mut self.client,
+			ClientType::Solana => &mut self.solana_client,
+		};
 		if let Some(query) = params.query {
 			let transformed_query: Vec<(&str, &str)> =
 				query.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
-			self.client.get_with_retry::<ReqPath, T>(
+			client.get_with_retry::<ReqPath, T>(
 				ReqPath::new(params.path.as_str()),
 				&transformed_query,
 				retry_option,
 			)
 		} else {
-			self.client
-				.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
+			client.get_retry::<ReqPath, T>(ReqPath::new(params.path.as_str()), retry_option)
 		}
 	}
 }
@@ -185,13 +201,62 @@ impl NftApiList for MoralisClient {
 
 		debug!("get_nfts_by_wallet, params: {:?}", params);
 
-		match self.get::<GetNftsByWalletResponse>(params, fast_fail) {
+		match self.get::<GetNftsByWalletResponse>(ClientType::Evm, params, fast_fail) {
 			Ok(resp) => {
 				debug!("get_nfts_by_wallet, response: {:?}", resp);
 				Ok(resp)
 			},
 			Err(e) => {
 				debug!("get_nfts_by_wallet, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetSolanaNativeBalanceBalanceByWalletResponse {
+	pub lamports: String,
+	pub solana: String,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for GetSolanaNativeBalanceBalanceByWalletResponse {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
+pub trait BalanceApiList {
+	fn get_solana_native_balance_by_wallet(
+		&mut self,
+		address: String,
+		fast_fail: bool,
+	) -> Result<GetSolanaNativeBalanceBalanceByWalletResponse, Error>;
+}
+
+impl BalanceApiList for MoralisClient {
+	// https://docs.moralis.io/web3-data-api/solana/reference/sol-balance
+	fn get_solana_native_balance_by_wallet(
+		&mut self,
+		address: String,
+		fast_fail: bool,
+	) -> Result<GetSolanaNativeBalanceBalanceByWalletResponse, Error> {
+		let params =
+			MoralisRequest { path: format!("account/mainnet/{}/balance", address), query: None };
+
+		debug!("get_solana_native_balance_by_wallet, address: {:?}", address);
+
+		match self.get::<GetSolanaNativeBalanceBalanceByWalletResponse>(
+			ClientType::Solana,
+			params,
+			fast_fail,
+		) {
+			Ok(resp) => {
+				debug!("get_solana_native_balance_by_wallet, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_solana_native_balance_by_wallet, error: {:?}", e);
 				Err(e)
 			},
 		}
@@ -205,11 +270,12 @@ mod tests {
 
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/moralis/";
+		let url = run(0).unwrap();
 
 		let mut config = DataProviderConfig::new().unwrap();
 		config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
-		config.set_moralis_api_url(url);
+		config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
+		config.set_moralis_solana_api_url(url.clone() + "/moralis_solana/").unwrap();
 		config
 	}
 
@@ -234,5 +300,27 @@ mod tests {
 		assert_eq!(result.result[0].token_address, "0xfff54e6fe44fd47c8814c4b1d62c924c54364ad3");
 		assert_eq!(result.result[0].contract_type, "ERC721");
 		assert_eq!(result.result[0].owner_of, "0xff3879b8a363aed92a6eaba8f61f1a96a9ec3c1e");
+	}
+
+	#[test]
+	fn does_get_solana_native_balance_by_wallet_works() {
+		let config = init();
+		let mut client = MoralisClient::new(&config);
+		let mut result = client
+			.get_solana_native_balance_by_wallet(
+				"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6".into(),
+				true,
+			)
+			.unwrap();
+		assert_eq!(result.lamports, "5903457912");
+		assert_eq!(result.solana, "5.903457912");
+		result = client
+			.get_solana_native_balance_by_wallet(
+				"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ1".into(),
+				true,
+			)
+			.unwrap();
+		assert_eq!(result.lamports, "0");
+		assert_eq!(result.solana, "0");
 	}
 }

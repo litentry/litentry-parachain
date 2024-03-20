@@ -16,10 +16,9 @@
 
 use crate::{
 	handler::TaskHandler, EnclaveOnChainOCallApi, Getter, StfTaskContext, TrustedCall,
-	TrustedCallSigned,
+	TrustedCallSigned, H256,
 };
 use ita_sgx_runtime::Hash;
-use ita_stf::H256;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;

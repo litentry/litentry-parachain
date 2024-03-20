@@ -47,7 +47,7 @@ strip = "symbols"
 incremental = false
 
 [workspace.dependencies]
-async-trait = { version = "0.1.76" }
+async-trait = { version = "0.1.78" }
 assert_matches = { version = "1.3.0" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 base58 = { version = "0.2", default-features = false }
@@ -56,13 +56,13 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 clap = { version = "4.3", features = ["derive"] }
 der = { version = "0.6.0", default-features = false }
 derive_more = { version = "0.99" }
-env_logger = { version = "0.10.0" }
+env_logger = { version = "0.10.2" }
 impl-trait-for-tuples = { version = "0.2.2" }
 log = { version = "0.4", default-features = false }
 proc-macro2 = { version = "1" }
 quote = { version = "1" }
 syn = { version = "2" }
-scale-info = { version = "2.10", default-features = false, features = ["derive"] }
+scale-info = { version = "2.11", default-features = false, features = ["derive"] }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "max-encoded-len"] }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false }
@@ -71,7 +71,7 @@ hex-literal = { version = "0.4.1", default-features = false }
 similar-asserts = { version = "1.5.0" }
 sha3 = { version = "0.10", default-features = false }
 futures = { version = "0.3.30", features = ["compat"] }
-jsonrpsee = { version = "0.16.2", features = ["server"] }
+jsonrpsee = { version = "0.16.3", features = ["server"] }
 tokio = { version = "1.36.0", features = ["macros", "sync"] }
 strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }

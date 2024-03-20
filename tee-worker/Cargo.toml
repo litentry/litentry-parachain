@@ -19,6 +19,7 @@ members = [
     "core/rpc-server",
     "core/tls-websocket-server",
     "core-primitives/attestation-handler",
+    "core-primitives/binary-merkle-tree",
     "core-primitives/import-queue",
     "core-primitives/component-container",
     "core-primitives/enclave-api",
@@ -115,6 +116,6 @@ substrate-wasm-builder = { git = "https://github.com/Kailai-Wang/substrate", bra
 sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 [patch."https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk"]
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_build_helper = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_download_prebuilt = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }

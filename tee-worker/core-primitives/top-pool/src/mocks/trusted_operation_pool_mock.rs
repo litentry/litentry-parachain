@@ -216,6 +216,8 @@ where
 
 	fn update_connection_state(&self, _updates: Vec<(TxHash, (Vec<u8>, bool))>) {}
 
+	fn send_rpc_response(&self, _hash: TxHash, _encoded_value: Vec<u8>, _do_watch: bool) {}
+
 	fn swap_rpc_connection_hash(&self, _old_hash: TxHash, _new_hash: TxHash) {}
 }
 

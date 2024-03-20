@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+itertools = { version = "0.10.1", default-features = false, features = ["use_alloc"] }
 log = { version = "0.4", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
@@ -20,6 +21,7 @@ itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features 
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 its-block-verification = { path = "../../block-verification", optional = true, default-features = false }
 its-primitives = { path = "../../primitives", default-features = false }
 its-state = { path = "../../state", default-features = false }
@@ -31,6 +33,8 @@ thiserror-sgx = { package = "thiserror", optional = true, git = "https://github.
 
 # substrate deps
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
+litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 
 [dev-dependencies]
 # local
@@ -51,6 +55,7 @@ std = [
     "thiserror",
     # local
     "itc-parentchain-light-client/std",
+    "itertools/use_std",
     "itp-import-queue/std",
     "itp-enclave-metrics/std",
     "itp-extrinsics-factory/std",
@@ -60,6 +65,7 @@ std = [
     "itp-sgx-crypto/std",
     "itp-sgx-externalities/std",
     "itp-types/std",
+    "itp-utils/std",
     "its-primitives/std",
     "its-block-verification/std",
     "its-state/std",

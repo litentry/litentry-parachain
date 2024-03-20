@@ -47,6 +47,7 @@ use std::{
 	sync::Arc,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum ProvisioningPayload {
 	Everything,
@@ -56,7 +57,7 @@ enum ProvisioningPayload {
 impl From<WorkerMode> for ProvisioningPayload {
 	fn from(m: WorkerMode) -> Self {
 		match m {
-			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
+			WorkerMode::OffChainWorker => ProvisioningPayload::Everything,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
 		}
 	}

@@ -248,6 +248,10 @@ where
 		self.pool.validated_pool().update_connection_state(updates);
 	}
 
+	fn send_rpc_response(&self, hash: TxHash, encoded_value: Vec<u8>, do_watch: bool) {
+		self.pool.validated_pool().send_rpc_response(hash, encoded_value, do_watch);
+	}
+
 	fn swap_rpc_connection_hash(&self, old_hash: TxHash, new_hash: TxHash) {
 		self.pool.validated_pool().swap_rpc_connection_hash(old_hash, new_hash);
 	}

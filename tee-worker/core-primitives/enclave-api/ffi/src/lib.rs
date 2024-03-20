@@ -67,6 +67,28 @@ extern "C" {
 		shard_size: u32,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		funding_balance: *const u8,
+		funding_balance_size: u32,
+	) -> SgxStatus;
+
+	pub fn init_shard_creation_parentchain_header(
+		eid: EnclaveId,
+		retval: *mut SgxStatus,
+		shard: *const u8,
+		shard_size: u32,
+		parentchain_id: *const u8,
+		parentchain_id_size: u32,
+		header: *const u8,
+		header_size: u32,
+	) -> SgxStatus;
+
+	pub fn get_shard_creation_info(
+		eid: EnclaveId,
+		retval: *mut SgxStatus,
+		shard: *const u8,
+		shard_size: u32,
+		creation: *mut u8,
+		creation_size: u32,
 	) -> SgxStatus;
 
 	pub fn execute_trusted_calls(eid: EnclaveId, retval: *mut SgxStatus) -> SgxStatus;
@@ -82,7 +104,7 @@ extern "C" {
 		events_proofs_size: usize,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
-		is_syncing: c_int,
+		immediate_import: c_int,
 	) -> SgxStatus;
 
 	pub fn set_nonce(

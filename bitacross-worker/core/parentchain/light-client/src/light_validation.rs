@@ -180,6 +180,13 @@ where
 		if *header.number() > self.ignore_validation_until
 			&& relay.last_finalized_block_header.hash() != *header.parent_hash()
 		{
+			error!("header ancestry mismatch! last imported was block nr {:?} with hash {:?}, attempting to import nr {:?} with hash {:?} and ancestor {:?}",
+			relay.last_finalized_block_header.number(),
+			relay.last_finalized_block_header.hash(),
+			header.number(),
+			header.hash(),
+			header.parent_hash()
+			);
 			return Err(Error::HeaderAncestryMismatch)
 		}
 
