@@ -124,8 +124,6 @@ pub enum TrustedGetter {
 	// litentry
 	#[codec(index = 5)]
 	id_graph(Identity),
-	#[codec(index = 6)]
-	id_graph_stats(Identity),
 }
 
 impl TrustedGetter {
@@ -141,7 +139,6 @@ impl TrustedGetter {
 			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
 			TrustedGetter::id_graph(sender_identity) => sender_identity,
-			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
 	}
 
@@ -253,14 +250,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 				},
 			// litentry
 			TrustedGetter::id_graph(who) => Some(IdentityManagement::id_graph(&who).encode()),
-
-			// TODO: we need to re-think it
-			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
-			//       In fact, in the production no one should have access to the concrete identities
-			//       but maybe it makes sense to get some statistic information
-			// Disabled until it's resolved
-			// Disabled the test `lit-id-graph-stats` too
-			TrustedGetter::id_graph_stats(_who) => None,
 		}
 	}
 

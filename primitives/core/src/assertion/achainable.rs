@@ -17,7 +17,10 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{BoundedWeb3Network, ParameterString, Web3Network};
+use crate::{
+	assertion::network::{BoundedWeb3Network, Web3Network},
+	ParameterString,
+};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
