@@ -25,8 +25,9 @@ ifneq ('$(LOCAL_VERSION)','$(REMOTE_VERSION)')
 	@rm -rf $(SDK_PATH_GIT)
 	@$(GIT) clone $(REPO) $(SDK_PATH_GIT)
 	@$(GIT) -C  $(SDK_PATH_GIT) checkout $(REMOTE_VERSION)
-	rsync -a $(SDK_PATH_GIT)/sgx_edl/edl $(SDK_PATH)
-	rsync -a $(SDK_PATH_GIT)/common $(SDK_PATH)
+	rm -rf $(SDK_PATH)/edl $(SDK_PATH)/common
+	cp -r $(SDK_PATH_GIT)/sgx_edl/edl $(SDK_PATH)
+	cp -r $(SDK_PATH_GIT)/common $(SDK_PATH)
 	cp -f $(SDK_PATH_GIT)/buildenv.mk $(SDK_PATH)/
 	rm -rf $(SDK_PATH_GIT)
 	@echo $(REMOTE_VERSION) > $(VERSION_FILE)
