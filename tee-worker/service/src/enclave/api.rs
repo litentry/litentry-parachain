@@ -74,7 +74,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	// Debug Support: 1 = debug mode, 0 = not debug mode
 	#[cfg(feature = "development")]
 	let debug = 1;
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	let debug = 0;
 
 	let mut misc_attr =

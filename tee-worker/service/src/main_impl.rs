@@ -96,7 +96,7 @@ pub(crate) fn main() {
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	info!("*** Starting service in SGX production mode");
 	#[cfg(feature = "development")]
 	info!("*** Starting service in SGX debug mode");
@@ -354,7 +354,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("  DCAP is enabled");
 	#[cfg(not(feature = "dcap"))]
 	println!("  DCAP is disabled");
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	println!("  Production Mode is enabled");
 	#[cfg(feature = "development")]
 	println!("  Production Mode is disabled");
