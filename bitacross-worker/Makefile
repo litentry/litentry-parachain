@@ -82,7 +82,7 @@ else
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
 	SGX_SIGN_PASSFILE = ""
-	WORKER_FEATURES := --features=default,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=default,development,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 endif
 
 CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
