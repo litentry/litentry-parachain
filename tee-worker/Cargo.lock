@@ -4601,8 +4601,6 @@ dependencies = [
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "threadpool 1.8.0",
- "threadpool 1.8.1",
  "url 2.1.1",
 ]
 
@@ -8792,23 +8790,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "threadpool"
-version = "1.8.0"
-source = "git+https://github.com/Kailai-Wang/rust-threadpool-sgx?branch=sgx-sdk-2.0.0#9973868ff4c5cdf66ced4735637ca761920258b4"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
-dependencies = [
- "num_cpus 1.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "time"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10185,8 +10166,3 @@ dependencies = [
  "quote 1.0.33",
  "syn 2.0.32",
 ]
-
-[[patch.unused]]
-name = "substrate-wasm-builder"
-version = "5.0.0-dev"
-source = "git+https://github.com/Kailai-Wang/substrate?branch=polkadot-v0.9.42-wasm-metadata#62d5e04430b35c00348b0634bc7b73308cfe215a"

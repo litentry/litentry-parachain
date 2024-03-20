@@ -97,20 +97,6 @@ sgx_urts = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branc
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
 
-# TODO(Litentry):
-# otherwise `cargo metadata --all-features` will throw out an error when building parachain runtime:
-#       the crate `sgx_crypto v2.0.0` depends on crate `sgx_serialize v2.0.0` multiple times with different names
-#
-# see `itp-sgx-crypto` crate for more information. We have to enable both "tserialize" features to bring trait into scope.
-# it actually compiles, but the substrate wasm build script isn't happy
-# this is something we can't avoid as it comes from the rust-sgx-sdk.
-#
-# it's not inexplicable as polkadot removes this feature too in a later PR:
-# https://github.com/paritytech/polkadot-sdk/pull/2282
-#
-[patch."https://github.com/paritytech/substrate"]
-substrate-wasm-builder = { git = "https://github.com/Kailai-Wang/substrate", branch = "polkadot-v0.9.42-wasm-metadata" }
-
 # overriding as we've got c compilation error on ubuntu 22.04 (maybe due to a newer gcc version)
 [patch."https://github.com/apache/incubator-teaclave-sgx-sdk"]
 sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }

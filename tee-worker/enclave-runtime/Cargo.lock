@@ -3107,7 +3107,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "thiserror",
- "threadpool",
  "url",
 ]
 
@@ -5371,14 +5370,6 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.33",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.0"
-source = "git+https://github.com/Kailai-Wang/rust-threadpool-sgx?branch=sgx-sdk-2.0.0#9973868ff4c5cdf66ced4735637ca761920258b4"
-dependencies = [
- "sgx_tstd",
 ]
 
 [[package]]

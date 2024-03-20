@@ -21,9 +21,9 @@ use crate::{
 		get_shard::GetShardCommand,
 		get_shard_vault::GetShardVaultCommand,
 		litentry::{
-			get_storage::GetStorageCommand, id_graph_stats::IDGraphStats,
-			link_identity::LinkIdentityCommand, remove_identity::RemoveIdentityCommand,
-			request_batch_vc::RequestBatchVcCommand, request_vc::RequestVcCommand,
+			get_storage::GetStorageCommand, link_identity::LinkIdentityCommand,
+			remove_identity::RemoveIdentityCommand, request_batch_vc::RequestBatchVcCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
@@ -81,9 +81,6 @@ pub enum TrustedBaseCommand {
 	/// send an erroneous parentchain call intentionally, only used in tests
 	SendErroneousParentchainCall(SendErroneousParentchainCallCommand),
 
-	/// Disabled for now: get count of all keys account + identity in the IDGraphs
-	IDGraphStats(IDGraphStats),
-
 	/// Link the given identity to the prime identity, with specified networks
 	LinkIdentity(LinkIdentityCommand),
 
@@ -115,7 +112,6 @@ impl TrustedBaseCommand {
 			// Litentry's commands below
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),

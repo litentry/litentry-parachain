@@ -16,7 +16,6 @@
 
 pub mod get_storage;
 pub mod id_graph;
-pub mod id_graph_stats;
 pub mod link_identity;
 pub mod remove_identity;
 pub mod request_batch_vc;
