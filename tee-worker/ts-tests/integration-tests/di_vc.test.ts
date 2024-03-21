@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { initIntegrationTestContext } from './common/utils';
-import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
 import {
     getSidechainNonce,
     createSignedTrustedCallLinkIdentity,
@@ -16,6 +16,7 @@ import { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
+import { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -149,5 +150,36 @@ describe('Test Vc (direct invocation)', function () {
 
             await assertVc(context, aliceSubstrateIdentity, res.value);
         });
+    });
+
+    step("request invalid vc (Alice request Bob's A1 VC)", async function () {
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const nonce = getNextNonce();
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
+
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            context.web3Wallets.substrate.Alice,
+            bobSubstrateIdentity,
+            context.api.createType('Assertion', { A1: 'A1' }).toHex(),
+            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+            requestIdentifier
+        );
+
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
+        assertWorkerError(
+            context,
+            (v) => {
+                assert.isTrue(v.isMissingPrivileges, `expected MissingPrivileges, received ${v.type} instead`);
+                assert.equal(v.asMissingPrivileges.toString(), `{"twitter":"0x"}`);
+            },
+            res
+        );
+        console.log('requestInvalidVc call returned', res.toHuman());
+        assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
     });
 });
