@@ -293,11 +293,11 @@ jobs:
           cargo clippy --release --features development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain, development -- -D warnings
+          cargo clippy --release --features sidechain,development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
-          cargo clippy --release --features offchain-worker, development -- -D warnings
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
@@ -379,7 +379,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           echo "::group::build docker image"
-          ./scripts/build-docker.sh release latest --features=fast-runtime
+          ./scripts/build-docker.sh release latest --features=fast-runtime,development
           echo "::endgroup::"
           echo "::group::docker images"
           docker images --all
