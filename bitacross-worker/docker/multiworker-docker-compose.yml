@@ -130,7 +130,8 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
@@ -184,7 +185,8 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
@@ -238,7 +240,8 @@ services:
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
       - SORA_QUIZ_ATTENDEE_ID=SORA_QUIZ_ATTENDEE_ID
-      - MORALIS_API_URL=http://localhost:19527
+      - MORALIS_API_URL=http://localhost:19527/moralis/
+      - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY

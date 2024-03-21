@@ -4384,6 +4384,7 @@ dependencies = [
 name = "lc-assertion-build-v2"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "env_logger 0.10.0",
  "itc-rest-client",
  "itp-ocall-api",
@@ -4602,8 +4603,6 @@ dependencies = [
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "threadpool 1.8.0",
- "threadpool 1.8.1",
  "url 2.1.1",
 ]
 
@@ -7279,9 +7278,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
+checksum = "2ef2175c2907e7c8bc0a9c3f86aeb5ec1f3b275300ad58a44d0c3ae379a5e52e"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -8823,23 +8822,6 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell 1.18.0",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.0"
-source = "git+https://github.com/mesalock-linux/rust-threadpool-sgx?tag=sgx_1.1.3#098d98a85b7e2b02e2bb451a3dec0b027017ff4c"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
-dependencies = [
- "num_cpus 1.16.0",
 ]
 
 [[package]]

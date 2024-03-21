@@ -17,11 +17,42 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{
-	all_web3networks, AccountId, AchainableParams, BnbDigitDomainType, BoundedWeb3Network,
-	EVMTokenType, GenericDiscordRoleType, OneBlockCourseType, ParameterString, PlatformUserType,
-	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
-};
+pub mod achainable;
+use achainable::AchainableParams;
+
+pub mod bnb_domain;
+use bnb_domain::BnbDigitDomainType;
+
+pub mod contest;
+
+pub mod evm_amount_holding;
+use evm_amount_holding::EVMTokenType;
+
+pub mod generic_discord_role;
+use generic_discord_role::GenericDiscordRoleType;
+
+pub mod network;
+use network::{all_web3networks, BoundedWeb3Network, Web3Network};
+
+pub mod oneblock;
+use oneblock::OneBlockCourseType;
+
+pub mod platform_user;
+use platform_user::PlatformUserType;
+
+pub mod soraquiz;
+
+pub mod vip3;
+use vip3::VIP3MembershipCardLevel;
+
+pub mod web3_nft;
+use web3_nft::Web3NftType;
+
+pub mod web3_token;
+use web3_token::Web3TokenType;
+
+use crate::{AccountId, ParameterString};
+
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_std::{vec, vec::Vec};

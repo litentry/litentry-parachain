@@ -18,9 +18,10 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::{perform_direct_operation, perform_trusted_operation},
+	trusted_operation::{perform_trusted_operation, send_direct_vc_request},
 	Cli, CliResult, CliResultOk,
 };
+use codec::Decode;
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall};
 use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
@@ -227,6 +228,7 @@ pub enum TokenHoldingAmountCommand {
 	Ton,
 	Trx,
 	Nfp,
+	Sol,
 }
 
 #[derive(Subcommand, Debug)]
@@ -499,6 +501,7 @@ impl RequestVcCommand {
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
 				TokenHoldingAmountCommand::Nfp => Assertion::TokenHoldingAmount(Web3TokenType::Nfp),
+				TokenHoldingAmountCommand::Sol => Assertion::TokenHoldingAmount(Web3TokenType::Sol),
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser =>
@@ -523,23 +526,39 @@ impl RequestVcCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
-		let maybe_vc = if self.stf {
-			perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top)
+		if self.stf {
+			match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+				Ok(mut vc) => {
+					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+					println!("----Generated VC-----");
+					println!("{}", credential_str);
+				},
+				Err(e) => {
+					println!("{:?}", e);
+				},
+			}
 		} else {
-			perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key)
+			match send_direct_vc_request(cli, trusted_cli, &top, key) {
+				Ok(result) =>
+					for res in result {
+						if res.is_error {
+							println!("received one error: {:?}", String::from_utf8(res.payload));
+						} else {
+							let mut vc =
+								RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
+							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+							let credential_str =
+								String::from_utf8(decrypted).expect("Found invalid UTF-8");
+							println!("----Generated VC-----");
+							println!("{}", credential_str);
+						}
+					},
+				Err(e) => {
+					println!("{:?}", e);
+				},
+			}
 		};
-
-		match maybe_vc {
-			Ok(mut vc) => {
-				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-				println!("----Generated VC-----");
-				println!("{}", credential_str);
-			},
-			Err(e) => {
-				println!("{:?}", e);
-			},
-		}
 
 		Ok(CliResultOk::None)
 	}

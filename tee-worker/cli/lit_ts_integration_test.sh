@@ -32,7 +32,7 @@ NPORT=${NPORT:-9912}
 NODEURL=${NODEURL:-"ws://litentry-node"}
 NODEHTTPURL=${NODEHTTPURL:-"http://litentry-node"}
 WORKER1PORT=${WORKER1PORT:-2011}
-WORKER1URL=${WORKER1URL:-"wss://litentry-worker-1"}
+WORKER1URL=${WORKER1URL:-"ws://litentry-worker-1"}
 
 CLIENT_BIN=${CLIENT_BIN:-"/usr/local/bin/litentry-cli"}
 
