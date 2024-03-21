@@ -60,6 +60,7 @@ use crate::{
 };
 use codec::Decode;
 use core::ffi::c_int;
+#[cfg(feature = "development")]
 use initialization::global_components::{
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 };
@@ -71,7 +72,9 @@ use itc_parentchain::{
 use itp_component_container::ComponentGetter;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_sgx_crypto::key_repository::{AccessKey, AccessPubkey};
+#[cfg(feature = "development")]
+use itp_sgx_crypto::key_repository::AccessKey;
+use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
@@ -249,6 +252,7 @@ pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u3
 }
 
 #[no_mangle]
+#[cfg_attr(not(feature = "development"), allow(unused_variables))]
 pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
 	if_development_or!(
 		{
@@ -278,7 +282,8 @@ pub unsafe extern "C" fn get_bitcoin_wallet_pair(pair: *mut u8, pair_size: u32) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_ethereum_wallet_pair(_pair: *mut u8, _pair_size: u32) -> sgx_status_t {
+#[cfg_attr(not(feature = "development"), allow(unused_variables))]
+pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
 	if_development_or!(
 		{
 			let ethereum_key_repository = match GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get() {
