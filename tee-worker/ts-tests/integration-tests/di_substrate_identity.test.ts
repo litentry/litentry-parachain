@@ -238,19 +238,20 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking invalid identity', async function () {
+        // Bob try to have Alice link a twitter identity
         const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
 
         let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const twitterNonce = getNextNonce();
-        const evmNonce = getNextNonce();
-        const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
-        const evmValidation = await buildValidations(
+        const aliceEvmNonce = getNextNonce();
+        const aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
+        const aliceEvmValidation = await buildValidations(
             context,
             bobSubstrateIdentity,
-            evmIdentity,
-            evmNonce,
+            aliceEvmIdentity,
+            aliceEvmNonce,
             'ethereum',
             context.web3Wallets.evm.Bob
         );
@@ -262,9 +263,9 @@ describe('Test Identity (direct invocation)', function () {
             context.mrEnclave,
             context.api.createType('Index', twitterNonce),
             context.web3Wallets.substrate.Bob,
-            bobSubstrateIdentity,
+            aliceEvmIdentity,
             twitterIdentity.toHex(),
-            evmValidation.toHex(),
+            aliceEvmValidation.toHex(),
             evmNetworks.toHex(),
             context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
@@ -274,14 +275,13 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        console.log('linkInvalidIdentity call returned', res.toHuman());
+
         assertWorkerError(
             context,
             (v) => {
-                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
-                assert.isTrue(
-                    v.asLinkIdentityFailed.isInvalidIdentity,
-                    `expected InvalidIdentity, received ${v.asLinkIdentityFailed.type} instead`
-                );
+                assert.isTrue(v.isMissingPrivileges, `expected MissingPrivileges, received ${v.type} instead`);
+                assert.equal(v.asMissingPrivileges.toString(), `{"twitter":"0x"}`);
             },
             res
         );
