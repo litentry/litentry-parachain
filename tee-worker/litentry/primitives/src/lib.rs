@@ -155,7 +155,11 @@ impl LitentryMultiSignature {
 	fn verify_bitcoin(&self, msg: &[u8], signer: &Address33) -> bool {
 		match self {
 			Self::Bitcoin(ref sig) =>
-				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer),
+				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer)
+					|| match std::str::from_utf8(msg) {
+						Err(_) => false,
+						Ok(prettified) => verify_bitcoin_signature(prettified, sig, signer),
+					},
 			_ => false,
 		}
 	}
