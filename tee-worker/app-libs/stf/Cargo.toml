@@ -93,4 +93,5 @@ std = [
 test = []
 development = [
     "litentry-macros/development",
+    "ita-sgx-runtime/development",
 ]
