@@ -23,6 +23,7 @@ import {
     sendRequestFromGetter,
     sendRequestFromTrustedCall,
     createSignedTrustedCallSetIdentityNetworks,
+    createSignedTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
@@ -237,8 +238,7 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
 
-    step('linking invalid identity', async function () {
-        // Bob try to have Alice link a twitter identity
+    step('linking invalid identity with different identities', async function () {
         const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
 
         let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
@@ -258,17 +258,27 @@ describe('Test Identity (direct invocation)', function () {
 
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
+
+        const linkIdentityCall = await createSignedTrustedCall(
             context.api,
-            context.mrEnclave,
-            context.api.createType('Index', twitterNonce),
+            [
+                'link_identity',
+                '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
+            ],
             context.web3Wallets.substrate.Bob,
-            aliceEvmIdentity,
-            twitterIdentity.toHex(),
-            aliceEvmValidation.toHex(),
-            evmNetworks.toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
+            context.mrEnclave,
+
+            context.api.createType('Index', twitterNonce),
+
+            [
+                bobSubstrateIdentity.toHuman(),
+                aliceEvmIdentity.toHuman(),
+                twitterIdentity,
+                aliceEvmValidation,
+                evmNetworks,
+                aesKey,
+                requestIdentifier,
+            ]
         );
 
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -280,8 +290,7 @@ describe('Test Identity (direct invocation)', function () {
         assertWorkerError(
             context,
             (v) => {
-                assert.isTrue(v.isMissingPrivileges, `expected MissingPrivileges, received ${v.type} instead`);
-                assert.equal(v.asMissingPrivileges.toString(), `{"twitter":"0x"}`);
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
             },
             res
         );

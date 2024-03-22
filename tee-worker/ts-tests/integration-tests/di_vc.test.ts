@@ -8,6 +8,7 @@ import {
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
@@ -152,33 +153,29 @@ describe('Test Vc (direct invocation)', function () {
         });
     });
 
-    step("request invalid vc (Alice request Bob's A1 VC)", async function () {
+    step('request invalid vc with different primeIdentities', async function () {
         let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
-
-        const requestVcCall = await createSignedTrustedCallRequestVc(
+        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
+        const call = await createSignedTrustedCall(
             context.api,
+            ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)'],
+            context.web3Wallets.substrate.Alice,
             context.mrEnclave,
             context.api.createType('Index', nonce),
-            context.web3Wallets.substrate.Alice,
-            bobSubstrateIdentity,
-            context.api.createType('Assertion', { A1: 'A1' }).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
+            [
+                eveSubstrateIdentity.toHuman(),
+                bobSubstrateIdentity.toHuman(),
+                context.api.createType('Assertion', { A1: 'A1' }).toHex(),
+                aesKey,
+                requestIdentifier,
+            ]
         );
 
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-        assertWorkerError(
-            context,
-            (v) => {
-                assert.isTrue(v.isMissingPrivileges, `expected MissingPrivileges, received ${v.type} instead`);
-                assert.equal(v.asMissingPrivileges.toString(), `{"twitter":"0x"}`);
-            },
-            res
-        );
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, call);
         console.log('requestInvalidVc call returned', res.toHuman());
         assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
     });
