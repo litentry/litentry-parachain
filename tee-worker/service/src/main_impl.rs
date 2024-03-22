@@ -505,33 +505,100 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(feature = "dcap")]
 	enclave.set_sgx_qpl_logging().expect("QPL logging setup failed");
 
-	// Litentry: send the registration extrinsic regardless of being registered or not,
-	//           the reason is the mrenclave could change in between, so we rely on the
-	//           on-chain logic to handle everything.
-	//           this is the same behavior as upstream
-	let register_enclave_block_hash = register_enclave(
-		enclave.clone(),
-		&litentry_rpc_api,
-		&tee_accountid,
-		&trusted_url,
-		skip_ra,
-		is_development_mode,
-	)
-	.expect("enclave RA registration must be successful to continue");
+	// Litentry:
+	// the logic differs from upstream a bit here (due to different impl in parachain pallet),
+	// `primary_enclave_identifier_for_shard` returns None if there is no worker registered for the shard.
+	//
+	// The logic here is as follows:
+	// in the case it's Some, it means there is a primary worker registered for the shard, then we are a non-primary worker
+	// and we need to register as a worker on the parentchain.
+	//
+	// in case it's None, it means there is no primary worker registered for the shard, then we are the primary worker
+	//
+	// based on the check of `enclave.get_shard_creation_info` to tell if this worker has run before - this is similar to upstream.
+	// There're a few cases:
+	// 1. `--clean-reset` is set, then the shard should have been initalized earlier already and it's empty state anyway
+	// 2. `--clean-reset` is not set:
+	//    2a. `get_shard_creation_info` is empty and we are primary worker => it's never run before => init everything
+	//    2b. `get_shard_creation_info` is empty and we are non-primary worker => it's never run before => request to sync state
+	//    2c. `get_shard_creation_info` is non-empty it's run before => do nothing
+	let is_first_run = enclave
+		.get_shard_creation_info(shard)
+		.unwrap()
+		.for_parentchain(ParentchainId::Litentry)
+		.is_none();
 
-	let api_register_enclave_xt_header =
-		litentry_rpc_api.get_header(Some(register_enclave_block_hash)).unwrap().unwrap();
+	let primary_enclave_id = litentry_rpc_api
+		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+		.expect("primary_enclave_identifier_for_shard failed");
 
-	// TODO: #1451: Fix api-client type hacks
-	let register_enclave_xt_header =
-		Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
-			.expect("Can decode previously encoded header; qed");
+	let mut register_enclave_xt_header: Header;
 
-	println!(
-		"[+] Enclave registered at block number: {:?}, hash: {:?}",
-		register_enclave_xt_header.number(),
-		register_enclave_xt_header.hash()
-	);
+	let (we_are_primary_validateer, re_init_parentchain_needed) = match primary_enclave_id {
+		Some(primary_account_id) => {
+			// We are not the primary worker
+			println!("Primary enclave for shard is: {:?}", primary_account_id);
+			if is_first_run {
+				info!("my state doesn't know the creation header of the shard. will request provisioning");
+				// obtain provisioning from last active worker as this hasn't been done before
+				sync_state::sync_state::<_, _, WorkerModeProvider>(
+					&litentry_rpc_api,
+					&shard,
+					enclave.as_ref(),
+					skip_ra,
+				);
+			}
+			let register_enclave_block_hash = register_enclave(
+				enclave.clone(),
+				&litentry_rpc_api,
+				&tee_accountid,
+				&trusted_url,
+				skip_ra,
+				is_development_mode,
+			)
+			.expect("enclave RA registration must be successful to continue");
+
+			register_enclave_xt_header =
+				get_registered_enclave_xt_header(&litentry_rpc_api, register_enclave_block_hash);
+
+			(false, true)
+		},
+		None => {
+			// we are the primary worker
+			println!("No primary enclave for shard is found");
+			println!("Registering enclave as primary worker");
+			// register as primary worker here
+			let register_enclave_block_hash = register_enclave(
+				enclave.clone(),
+				&litentry_rpc_api,
+				&tee_accountid,
+				&trusted_url,
+				skip_ra,
+				is_development_mode,
+			)
+			.expect("enclave RA registration must be successful to continue");
+
+			register_enclave_xt_header =
+				get_registered_enclave_xt_header(&litentry_rpc_api, register_enclave_block_hash);
+
+			if is_first_run {
+				enclave.init_shard(shard.encode()).unwrap();
+				enclave
+					.init_shard_creation_parentchain_header(
+						shard,
+						&ParentchainId::Litentry,
+						&register_enclave_xt_header,
+					)
+					.unwrap();
+				debug!("shard config should be initialized on litentry network now");
+
+				(true, true)
+			} else {
+				(true, false)
+			}
+		},
+	};
+
 	// double-check
 	let my_enclave = litentry_rpc_api
 		.enclave(&tee_accountid, None)
@@ -539,76 +606,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.expect("our enclave should be registered at this point");
 	trace!("verified that our enclave is registered: {:?}", my_enclave);
 
-	// Litentry:
-	// the logic differs from upstream a bit here (due to different impl in parachain pallet),
-	// theoretically the `primary_enclave_identifier_for_shard` should never be empty, unless the previous
-	// registration failed (e.g. due to unexpected mrenclave). In that case it's expected not to continue with anything.
-	//
-	// in case it's non-empty, it relies on the check of `enclave.get_shard_creation_info` to tell if this worker
-	// has run before - this is similar to upstream.
-	// There're a few cases:
-	// 1. `--clean-reset` is set, then the shard should have been initalized earlier already and it's empty state anyway
-	// 2. `--clean-reset` is not set:
-	//    2a. `get_shard_creation_info` is empty and we are primary worker => it's never run before => init everything
-	//    2b. `get_shard_creation_info` is empty and we are non-primary worker => it's never run before => request to sync state
-	//    2c. `get_shard_creation_info` is non-empty it's run before => do nothing
-	let (we_are_primary_validateer, re_init_parentchain_needed) =
-		match litentry_rpc_api
-			.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
-			.unwrap()
-		{
-			Some(account) => {
-				let first_run = enclave
-					.get_shard_creation_info(shard)
-					.unwrap()
-					.for_parentchain(ParentchainId::Litentry)
-					.is_none();
-				if account == tee_accountid {
-					println!("We are the primary worker, first_run: {}", first_run);
-					if first_run {
-						enclave.init_shard(shard.encode()).unwrap();
-						enclave
-							.init_shard_creation_parentchain_header(
-								shard,
-								&ParentchainId::Litentry,
-								&register_enclave_xt_header,
-							)
-							.unwrap();
-						debug!("shard config should be initialized on litentry network now");
-						(true, true)
-					} else {
-						(true, false)
-					}
-				} else {
-					println!("We are NOT primary worker, the primary worker is {}", account);
-					if first_run {
-						// obtain provisioning from last active worker as this hasn't been done before
-						info!("my state doesn't know the creation header of the shard. will request provisioning");
-						sync_state::sync_state::<_, _, WorkerModeProvider>(
-							&litentry_rpc_api,
-							&shard,
-							enclave.as_ref(),
-							skip_ra,
-						);
-
-						info!("re-register the enclave to update the keys after provisioning");
-						register_enclave(
-							enclave.clone(),
-							&litentry_rpc_api,
-							&tee_accountid,
-							&trusted_url,
-							skip_ra,
-							is_development_mode,
-						)
-						.expect("enclave RA registration must be successful to continue");
-					}
-					(false, true)
-				}
-			},
-			None => {
-				panic!("No primary enclave account is found - was the enclave successfully registered?");
-			},
-		};
 	debug!("getting shard creation: {:?}", enclave.get_shard_creation_info(shard));
 	initialization_handler.registered_on_parentchain();
 
@@ -1140,4 +1137,25 @@ where
 
 	println!("[+] Send register enclave extrinsic");
 	send_litentry_extrinsic(register_xt(), api, tee_account, is_development_mode)
+}
+
+fn get_registered_enclave_xt_header(
+	api: &ParentchainApi,
+	register_enclave_block_hash: Hash,
+) -> Header {
+	let api_register_enclave_xt_header =
+		api.get_header(Some(register_enclave_block_hash)).unwrap().unwrap();
+
+	// TODO: #1451: Fix api-client type hacks
+	let register_enclave_xt_header =
+		Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
+			.expect("Can decode previously encoded header; qed");
+
+	println!(
+		"[+] Enclave registered at block number: {:?}, hash: {:?}",
+		register_enclave_xt_header.number(),
+		register_enclave_xt_header.hash()
+	);
+
+	register_enclave_xt_header
 }
