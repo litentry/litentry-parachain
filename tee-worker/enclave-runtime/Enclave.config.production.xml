@@ -2,11 +2,18 @@
 <EnclaveConfiguration>
   <ProdID>0</ProdID>
   <ISVSVN>0</ISVSVN>
-  <StackMaxSize>0x40000</StackMaxSize>
+  <StackMinSize>0x80000</StackMinSize>
+  <StackMaxSize>0x400000</StackMaxSize>
+  <HeapMinSize>0x800000</HeapMinSize>
   <HeapMaxSize>0x20000000</HeapMaxSize>
-  <TCSNum>32</TCSNum>
-  <TCSPolicy>0</TCSPolicy> <!-- 0 = Thread Control Structure (TCS) is bound to the untrusted thread -->
-  <DisableDebug>1</DisableDebug>
+  <ReservedMemMinSize>0x20000</ReservedMemMinSize>
+  <ReservedMemInitSize>0x40000</ReservedMemInitSize>
+  <ReservedMemMaxSize>0x400000</ReservedMemMaxSize>
+  <TCSMaxNum>64</TCSMaxNum>
+  <TCSNum>64</TCSNum>
+  <TCSMinPool>64</TCSMinPool>
+  <TCSPolicy>0</TCSPolicy>
+  <DisableDebug>0</DisableDebug>
   <MiscSelect>0</MiscSelect>
   <MiscMask>0xFFFFFFFF</MiscMask>
 </EnclaveConfiguration>

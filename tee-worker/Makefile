@@ -137,6 +137,7 @@ Client_Name := $(CUSTOM_BIN_PATH)/$(Client_Binary)
 
 ######## Enclave settings ########
 
+Custom_EDL_Files := $(shell find $(CUSTOM_EDL_PATH) -type f -name '*.edl')
 RustEnclave_Include_Paths := -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_COMMON_PATH)/inc/tlibc -I$(CUSTOM_EDL_PATH) -I./enclave-runtime
 
 RustEnclave_Link_Libs := -L$(CUSTOM_LIBRARY_PATH) -lenclave
@@ -159,7 +160,7 @@ githooks: .git/hooks/pre-commit
 
 ######## EDL objects ########
 
-$(Enclave_EDL_Files): $(SGX_EDGER8R) enclave-runtime/Enclave.edl
+$(Enclave_EDL_Files): $(SGX_EDGER8R) enclave-runtime/Enclave.edl $(Custom_EDL_Files)
 	$(SGX_EDGER8R) $(SGX_EDGER8R_MODE) --trusted enclave-runtime/Enclave.edl --search-path $(CUSTOM_COMMON_PATH)/inc --search-path $(CUSTOM_EDL_PATH) --trusted-dir enclave-runtime
 	$(SGX_EDGER8R) $(SGX_EDGER8R_MODE) --untrusted enclave-runtime/Enclave.edl --search-path $(CUSTOM_COMMON_PATH)/inc --search-path $(CUSTOM_EDL_PATH) --untrusted-dir service
 	@echo "GEN  =>  $(Enclave_EDL_Files)"

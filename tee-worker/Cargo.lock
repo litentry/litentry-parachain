@@ -7452,7 +7452,7 @@ version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
  "cc",
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -7460,6 +7460,11 @@ dependencies = [
 name = "sgx_build_helper"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
+
+[[package]]
+name = "sgx_build_helper"
+version = "2.0.0"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 
 [[package]]
 name = "sgx_crypto"
@@ -7476,10 +7481,10 @@ dependencies = [
 [[package]]
 name = "sgx_crypto_sys"
 version = "2.0.0"
-source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#cf82364359b4c3297a77111ca967b0f5c0dd32da"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 dependencies = [
- "sgx_build_helper",
- "sgx_download_prebuilt",
+ "sgx_build_helper 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+ "sgx_download_prebuilt 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -7493,7 +7498,15 @@ name = "sgx_download_prebuilt"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+]
+
+[[package]]
+name = "sgx_download_prebuilt"
+version = "2.0.0"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
+dependencies = [
+ "sgx_build_helper 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
 ]
 
 [[package]]
@@ -7582,8 +7595,8 @@ name = "sgx_tlibc_sys"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
- "sgx_download_prebuilt",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+ "sgx_download_prebuilt 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -7649,13 +7662,13 @@ name = "sgx_unwind"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
 ]
 
 [[package]]
 name = "sgx_uprotected_fs"
 version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 dependencies = [
  "libc",
  "sgx_types",
@@ -7664,7 +7677,7 @@ dependencies = [
 [[package]]
 name = "sgx_urts"
 version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 dependencies = [
  "libc",
  "sgx_types",
@@ -9187,7 +9200,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.7",
  "rand 0.8.5",
  "static_assertions",

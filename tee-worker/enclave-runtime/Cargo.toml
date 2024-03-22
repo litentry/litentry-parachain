@@ -182,6 +182,4 @@ sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", bran
 sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 [patch."https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk"]
-sgx_build_helper = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_download_prebuilt = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }

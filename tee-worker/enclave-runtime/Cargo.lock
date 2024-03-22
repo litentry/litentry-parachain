@@ -4451,7 +4451,7 @@ version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
  "cc",
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -4459,6 +4459,11 @@ dependencies = [
 name = "sgx_build_helper"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
+
+[[package]]
+name = "sgx_build_helper"
+version = "2.0.0"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 
 [[package]]
 name = "sgx_crypto"
@@ -4474,10 +4479,10 @@ dependencies = [
 [[package]]
 name = "sgx_crypto_sys"
 version = "2.0.0"
-source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#cf82364359b4c3297a77111ca967b0f5c0dd32da"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
 dependencies = [
- "sgx_build_helper",
- "sgx_download_prebuilt",
+ "sgx_build_helper 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+ "sgx_download_prebuilt 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -4502,7 +4507,15 @@ name = "sgx_download_prebuilt"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+]
+
+[[package]]
+name = "sgx_download_prebuilt"
+version = "2.0.0"
+source = "git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#7d5cdcd81473c2d79fbc756610a9dafc4d8a13dd"
+dependencies = [
+ "sgx_build_helper 2.0.0 (git+https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
 ]
 
 [[package]]
@@ -4607,8 +4620,8 @@ name = "sgx_tlibc_sys"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
- "sgx_download_prebuilt",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
+ "sgx_download_prebuilt 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
  "sgx_types",
 ]
 
@@ -4694,7 +4707,7 @@ name = "sgx_unwind"
 version = "2.0.0"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17#05ead98e52cac2231f35b825a0b41a1ff4107e1e"
 dependencies = [
- "sgx_build_helper",
+ "sgx_build_helper 2.0.0 (git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview-11-17)",
 ]
 
 [[package]]
