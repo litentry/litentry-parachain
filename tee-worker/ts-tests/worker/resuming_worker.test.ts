@@ -66,7 +66,7 @@ function generateWorkerCommandArguments(
         `--mu-ra-port ${workerParams.muRaPort}`,
         `--untrusted-http-port ${workerParams.untrustedHttpPort}`,
         '--ws-external',
-        '--trusted-external-address wss://localhost',
+        '--trusted-external-address ws://localhost',
         `--trusted-worker-port ${workerParams.trustedWorkerPort}`,
         '--untrusted-external-address ws://localhost',
         `--untrusted-worker-port ${workerParams.untrustedWorkerPort}`,

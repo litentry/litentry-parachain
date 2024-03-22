@@ -150,7 +150,7 @@ services:
       timeout: 10s
       retries: 20
     entrypoint:
-      "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-1 -T wss://litentry-worker-1
+      "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-1 -T ws://litentry-worker-1
       -u ws://litentry-node -U ws://litentry-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
