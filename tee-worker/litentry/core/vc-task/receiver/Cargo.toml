@@ -98,8 +98,9 @@ std = [
     "itp-storage/std",
     "lc-vc-task-sender/std",
 ]
-production = [
-    "ita-stf/production",
-    "lc-data-providers/production",
-    "litentry-macros/production",
+development = [
+    "ita-stf/development",
+    "lc-data-providers/development",
+    "litentry-macros/development",
+    "pallet-identity-management-tee/development",
 ]

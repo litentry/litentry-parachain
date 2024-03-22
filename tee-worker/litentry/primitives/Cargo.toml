@@ -38,8 +38,8 @@ base64 = { version = "0.22", features = ["alloc"] }
 
 [features]
 default = ["std"]
-production = [
-    "parentchain-primitives/production",
+development = [
+    "parentchain-primitives/development",
 ]
 sgx = [
     "sgx_tstd",

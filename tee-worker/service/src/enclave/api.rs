@@ -31,9 +31,9 @@ use itp_enclave_api::{Enclave, SgxEnclave};
 pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	// call sgx_create_enclave to initialize an enclave instance
 	// Debug Support: 1 = debug mode, 0 = not debug mode
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	let debug = true;
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	let debug = false;
 
 	let enclave = (SgxEnclave::create(ENCLAVE_FILE, debug)).map_err(EnclaveApiError::Sgx)?;
