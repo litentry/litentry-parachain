@@ -37,7 +37,7 @@ pub trait RangeCredentialDetail {
 		let breakdown = self.get_breakdown();
 		let range = self.get_range();
 		let index = self.get_index(amount);
-		let items = match index {
+		match index {
 			Some(index) => {
 				let min = range[index - 1];
 				let max = range[index];
@@ -57,9 +57,7 @@ pub trait RangeCredentialDetail {
 				);
 				vec![min_item]
 			},
-		};
-
-		items
+		}
 	}
 }
 

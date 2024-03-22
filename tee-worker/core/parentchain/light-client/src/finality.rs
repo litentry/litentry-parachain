@@ -83,8 +83,7 @@ where
 		Self::apply_validator_set_change(relay, &header);
 
 		// Check that the header has been finalized
-		let voter_set =
-			VoterSet::new(validator_set.clone().into_iter()).expect("VoterSet may not be empty");
+		let voter_set = VoterSet::new(validator_set.clone()).expect("VoterSet may not be empty");
 
 		// ensure justifications is a grandpa justification
 		let grandpa_justification =

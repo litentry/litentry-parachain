@@ -15,7 +15,7 @@
 
 */
 
-///! Integritee worker. Inspiration for this design came from parity's substrate Client.
+/// Litentry worker. Inspiration for this design came from parity's substrate Client.
 ///
 /// This should serve as a proof of concept for a potential refactoring design. Ultimately, everything
 /// from the main.rs should be covered by the worker struct here - hidden and split across

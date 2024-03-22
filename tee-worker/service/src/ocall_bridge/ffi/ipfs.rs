@@ -48,7 +48,7 @@ fn write_ipfs(
 	let state = unsafe { slice::from_raw_parts(enc_state, enc_state_size as usize) };
 	let cid = unsafe { slice::from_raw_parts_mut(cid, cid_size as usize) };
 
-	return match ipfs_api.write_to_ipfs(state) {
+	match ipfs_api.write_to_ipfs(state) {
 		Ok(r) => {
 			cid.clone_from_slice(&r);
 			SgxStatus::Success

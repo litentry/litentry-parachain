@@ -156,11 +156,11 @@ impl<Ex> FutureTrustedOperations<Ex> {
 			);
 		}
 
-		let tx_pool_waiting_map = self.waiting.entry(shard).or_insert_with(HashMap::new);
-		let tx_pool_wanted_map = self.wanted_tags.entry(shard).or_insert_with(HashMap::new);
+		let tx_pool_waiting_map = self.waiting.entry(shard).or_default();
+		let tx_pool_wanted_map = self.wanted_tags.entry(shard).or_default();
 		// Add all tags that are missing
 		for tag in &tx.missing_tags {
-			let entry = tx_pool_wanted_map.entry(tag.clone()).or_insert_with(HashSet::new);
+			let entry = tx_pool_wanted_map.entry(tag.clone()).or_default();
 			entry.insert(tx.operation.hash);
 		}
 

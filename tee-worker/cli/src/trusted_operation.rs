@@ -26,7 +26,6 @@ use ita_stf::{trusted_call_result::RequestVcResultOrError, Getter, TrustedCallSi
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ApiClientError, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
-use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::{
 	error::StfError,
 	types::{ShardIdentifier, TrustedOperation},

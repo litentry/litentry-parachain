@@ -279,7 +279,7 @@ fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 fn get_request_payload(params: Params) -> Result<String, String> {
 	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
 
-	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
+	let s = s_vec.first().ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
 	Ok(s.to_owned())
 }

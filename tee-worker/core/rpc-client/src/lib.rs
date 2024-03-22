@@ -15,6 +15,8 @@
 
 */
 
+#![allow(clippy::result_large_err)]
+
 pub mod direct_client;
 pub mod error;
 #[cfg(test)]

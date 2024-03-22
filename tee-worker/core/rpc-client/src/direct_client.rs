@@ -100,15 +100,13 @@ impl DirectClient {
 			return None
 		}
 
-		let maybe_state = Option::decode(&mut rpc_return_value.value.as_slice())
+		Option::decode(&mut rpc_return_value.value.as_slice())
 			// Replace with `inspect_err` once it's stable.
 			.map_err(|e| {
 				error!("Failed to decode return value: {:?}", e);
 				e
 			})
-			.ok()?;
-
-		maybe_state
+			.ok()?
 	}
 
 	// common helper function for `get_state_metadata` and `get_state_metadata_raw`

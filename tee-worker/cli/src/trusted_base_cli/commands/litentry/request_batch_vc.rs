@@ -57,8 +57,8 @@ use sp_runtime::BoundedVec;
 // ./bin/litentry-cli trusted -d request-batch-vc \
 //   did:litentry:substrate:0x52a6c52dc82940a36fefd1474cc0778517bb1a56b7bda0e308b6c19152dd7510 a achainable amount-token test-name -c=bsc,ethereum 1 token-value
 
-fn to_para_str(s: &str) -> ParameterString {
-	ParameterString::truncate_from(s.as_bytes().to_vec())
+fn to_para_str<T: AsRef<[u8]>>(s: T) -> ParameterString {
+	ParameterString::truncate_from(s.as_ref().to_vec())
 }
 
 fn to_chains(networks: String) -> BoundedWeb3Network {
@@ -174,97 +174,80 @@ impl RequestBatchVcCommand {
 		println!("command: {:?}, param: {:?}", command, params);
 		match command.to_lowercase().as_str() {
 			"a1" => Ok(Assertion::A1),
-			"a2" => Ok(Assertion::A2(to_para_str(
-				&params.get(0).ok_or("A2: Missing parameter")?.clone(),
-			))),
+			"a2" => Ok(Assertion::A2(to_para_str(params.first().ok_or("A2: Missing parameter")?))),
 			"a3" => Ok(Assertion::A3(
-				to_para_str(&params.get(0).ok_or("A3: Missing parameter")?.clone()),
-				to_para_str(&params.get(1).ok_or("A3: Missing parameter")?.clone()),
-				to_para_str(&params.get(2).ok_or("A3: Missing parameter")?.clone()),
+				to_para_str(params.first().ok_or("A3: Missing parameter")?),
+				to_para_str(params.get(1).ok_or("A3: Missing parameter")?),
+				to_para_str(params.get(2).ok_or("A3: Missing parameter")?),
 			)),
-			"a4" => Ok(Assertion::A4(to_para_str(
-				&params.get(0).ok_or("A4: Missing parameter")?.clone(),
-			))),
+			"a4" => Ok(Assertion::A4(to_para_str(params.first().ok_or("A4: Missing parameter")?))),
 			"a6" => Ok(Assertion::A6),
-			"a7" => Ok(Assertion::A7(to_para_str(
-				&params.get(0).ok_or("A7: Missing parameter")?.clone(),
+			"a7" => Ok(Assertion::A7(to_para_str(params.first().ok_or("A7: Missing parameter")?))),
+			"a8" => Ok(Assertion::A8(to_chains(
+				params.first().ok_or("A8: Missing parameter")?.to_string(),
 			))),
-			"a8" =>
-				Ok(Assertion::A8(to_chains(params.get(0).ok_or("A8: Missing parameter")?.clone()))),
-			"a10" => Ok(Assertion::A10(to_para_str(
-				&params.get(0).ok_or("A10: Missing parameter")?.clone(),
-			))),
-			"a11" => Ok(Assertion::A11(to_para_str(
-				&params.get(0).ok_or("A11: Missing parameter")?.clone(),
-			))),
+			"a10" =>
+				Ok(Assertion::A10(to_para_str(params.first().ok_or("A10: Missing parameter")?))),
+			"a11" =>
+				Ok(Assertion::A11(to_para_str(params.first().ok_or("A11: Missing parameter")?))),
 			"a13" => {
-				let raw: [u8; 32] =
-					decode_hex(&params.get(0).ok_or("A13: Missing parameter")?.clone())
-						.unwrap()
-						.try_into()
-						.unwrap();
+				let raw: [u8; 32] = decode_hex(params.first().ok_or("A13: Missing parameter")?)
+					.unwrap()
+					.try_into()
+					.unwrap();
 				Ok(Assertion::A13(raw.into()))
 			},
 			"a14" => Ok(Assertion::A14),
 			"achainable" => {
-				let param0 = params.get(0).ok_or("Achainable: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("Achainable: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"amount-holding" => Ok(Assertion::Achainable(AchainableParams::AmountHolding(
 						AchainableAmountHolding {
 							name: to_para_str(
-								&params
+								params
 									.get(1)
-									.ok_or("Achainable AmountHolding: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable AmountHolding: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable AmountHolding: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							amount: to_para_str(
-								&params
+								params
 									.get(3)
-									.ok_or("Achainable AmountHolding: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable AmountHolding: Missing parameter")?,
 							),
 							date: to_para_str(
-								&params
+								params
 									.get(4)
-									.ok_or("Achainable AmountHolding: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable AmountHolding: Missing parameter")?,
 							),
-							token: params.get(5).map(|v| to_para_str(v)),
+							token: params.get(5).map(to_para_str),
 						},
 					))),
 					"amount-token" => Ok(Assertion::Achainable(AchainableParams::AmountToken(
 						AchainableAmountToken {
 							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable AmountToken: Missing parameter")?
-									.clone(),
+								params.get(1).ok_or("Achainable AmountToken: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable AmountToken: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							amount: to_para_str(
-								&params
-									.get(3)
-									.ok_or("Achainable AmountToken: Missing parameter")?
-									.clone(),
+								params.get(3).ok_or("Achainable AmountToken: Missing parameter")?,
 							),
-							token: params.get(4).map(|v| to_para_str(v)),
+							token: params.get(4).map(to_para_str),
 						},
 					))),
 					"amount" =>
 						Ok(Assertion::Achainable(AchainableParams::Amount(AchainableAmount {
 							name: to_para_str(
-								&params
+								params
 									.get(1)
 									.ok_or("Achainable Amount: Missing parameter")?
 									.clone(),
@@ -273,224 +256,176 @@ impl RequestBatchVcCommand {
 								params
 									.get(2)
 									.ok_or("Achainable Amount: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							amount: to_para_str(
-								&params
-									.get(3)
-									.ok_or("Achainable Amount: Missing parameter")?
-									.clone(),
+								params.get(3).ok_or("Achainable Amount: Missing parameter")?,
 							),
 						}))),
 					"amounts" =>
 						Ok(Assertion::Achainable(AchainableParams::Amounts(AchainableAmounts {
 							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable amounts: Missing parameter")?
-									.clone(),
+								params.get(1).ok_or("Achainable amounts: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable amounts: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							amount1: to_para_str(
-								&params
-									.get(3)
-									.ok_or("Achainable amounts: Missing parameter")?
-									.clone(),
+								params.get(3).ok_or("Achainable amounts: Missing parameter")?,
 							),
 							amount2: to_para_str(
-								&params
-									.get(4)
-									.ok_or("Achainable amounts: Missing parameter")?
-									.clone(),
+								params.get(4).ok_or("Achainable amounts: Missing parameter")?,
 							),
 						}))),
 					"basic" =>
 						Ok(Assertion::Achainable(AchainableParams::Basic(AchainableBasic {
 							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable Basic: Missing parameter")?
-									.clone(),
+								params.get(1).ok_or("Achainable Basic: Missing parameter")?,
 							),
 							chain: to_chains(
-								params.get(2).ok_or("Achainable Basic: Missing parameter")?.clone(),
+								params
+									.get(2)
+									.ok_or("Achainable Basic: Missing parameter")?
+									.to_string(),
 							),
 						}))),
 					"between-percents" => Ok(Assertion::Achainable(
 						AchainableParams::BetweenPercents(AchainableBetweenPercents {
 							name: to_para_str(
-								&params
+								params
 									.get(1)
-									.ok_or("Achainable BetweenPercents: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable BetweenPercents: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable BetweenPercents: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							greater_than_or_equal_to: to_para_str(
-								&params
+								params
 									.get(3)
-									.ok_or("Achainable BetweenPercents: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable BetweenPercents: Missing parameter")?,
 							),
 							less_than_or_equal_to: to_para_str(
-								&params
+								params
 									.get(4)
-									.ok_or("Achainable BetweenPercents: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable BetweenPercents: Missing parameter")?,
 							),
 						}),
 					)),
 					"class-of-year" => Ok(Assertion::Achainable(AchainableParams::ClassOfYear(
 						AchainableClassOfYear {
 							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable ClassOfYear: Missing parameter")?
-									.clone(),
+								params.get(1).ok_or("Achainable ClassOfYear: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable ClassOfYear: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 						},
 					))),
 					"date-interval" => Ok(Assertion::Achainable(AchainableParams::DateInterval(
 						AchainableDateInterval {
 							name: to_para_str(
-								&params
+								params
 									.get(1)
-									.ok_or("Achainable DateInterval: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable DateInterval: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable DateInterval: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							start_date: to_para_str(
-								&params
+								params
 									.get(3)
-									.ok_or("Achainable DateInterval: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable DateInterval: Missing parameter")?,
 							),
 							end_date: to_para_str(
-								&params
+								params
 									.get(4)
-									.ok_or("Achainable DateInterval: Missing parameter")?
-									.clone(),
+									.ok_or("Achainable DateInterval: Missing parameter")?,
 							),
 						},
 					))),
 					"date-percent" => Ok(Assertion::Achainable(AchainableParams::DatePercent(
 						AchainableDatePercent {
 							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable DatePercent: Missing parameter")?
-									.clone(),
+								params.get(1).ok_or("Achainable DatePercent: Missing parameter")?,
 							),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or("Achainable DatePercent: Missing parameter")?
-									.clone(),
+									.to_string(),
 							),
 							date: to_para_str(
-								&params
-									.get(3)
-									.ok_or("Achainable DatePercent: Missing parameter")?
-									.clone(),
+								params.get(3).ok_or("Achainable DatePercent: Missing parameter")?,
 							),
 							percent: to_para_str(
-								&params
-									.get(4)
-									.ok_or("Achainable DatePercent: Missing parameter")?
-									.clone(),
+								params.get(4).ok_or("Achainable DatePercent: Missing parameter")?,
 							),
 							token: to_para_str(
-								&params
-									.get(5)
-									.ok_or("Achainable DatePercent: Missing parameter")?
-									.clone(),
+								params.get(5).ok_or("Achainable DatePercent: Missing parameter")?,
 							),
 						},
 					))),
 					"date" => Ok(Assertion::Achainable(AchainableParams::Date(AchainableDate {
 						name: to_para_str(
-							&params.get(1).ok_or("Achainable Date: Missing parameter")?.clone(),
+							params.get(1).ok_or("Achainable Date: Missing parameter")?,
 						),
 						chain: to_chains(
-							params.get(2).ok_or("Achainable Date: Missing parameter")?.clone(),
+							params.get(2).ok_or("Achainable Date: Missing parameter")?.to_string(),
 						),
 						date: to_para_str(
-							&params.get(3).ok_or("Achainable Date: Missing parameter")?.clone(),
+							params.get(3).ok_or("Achainable Date: Missing parameter")?,
 						),
 					}))),
 					"token" =>
 						Ok(Assertion::Achainable(AchainableParams::Token(AchainableToken {
-							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or_else(|| {
-										"Achainable Token: Missing parameter".to_string()
-									})?
-									.clone(),
-							),
+							name: to_para_str(params.get(1).ok_or_else(|| {
+								"Achainable Token: Missing parameter".to_string()
+							})?),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or_else(|| {
 										"Achainable Token: Missing parameter".to_string()
 									})?
-									.clone(),
+									.to_string(),
 							),
-							token: to_para_str(
-								&params
-									.get(3)
-									.ok_or_else(|| {
-										"Achainable Token: Missing parameter".to_string()
-									})?
-									.clone(),
-							),
+							token: to_para_str(params.get(3).ok_or_else(|| {
+								"Achainable Token: Missing parameter".to_string()
+							})?),
 						}))),
 					"mirror" =>
 						Ok(Assertion::Achainable(AchainableParams::Mirror(AchainableMirror {
-							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or_else(|| {
-										"Achainable Token: Missing parameter".to_string()
-									})?
-									.clone(),
-							),
+							name: to_para_str(params.get(1).ok_or_else(|| {
+								"Achainable Token: Missing parameter".to_string()
+							})?),
 							chain: to_chains(
 								params
 									.get(2)
 									.ok_or_else(|| {
 										"Achainable Token: Missing parameter".to_string()
 									})?
-									.clone(),
+									.to_string(),
 							),
-							post_quantity: params.get(3).map(|v| to_para_str(v)),
+							post_quantity: params.get(3).map(to_para_str),
 						}))),
 					_ => Err("Achainable: Wrong parameter".to_string()),
 				}
 			},
 			"a20" => Ok(Assertion::A20),
 			"one-block" => {
-				let param0 = params.get(0).ok_or("OneBlock: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("OneBlock: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"completion" => Ok(Assertion::OneBlock(OneBlockCourseType::CourseCompletion)),
 					"outstanding" => Ok(Assertion::OneBlock(OneBlockCourseType::CourseOutstanding)),
@@ -500,7 +435,7 @@ impl RequestBatchVcCommand {
 				}
 			},
 			"generic-discord-role" => {
-				let param0 = params.get(0).ok_or("GenericDiscordRole: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("GenericDiscordRole: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"contest" => {
 						let param1 =
@@ -536,7 +471,7 @@ impl RequestBatchVcCommand {
 			},
 			"bnb-domain-holding" => Ok(Assertion::BnbDomainHolding),
 			"bnb-digit-domain-club" => {
-				let param0 = params.get(0).ok_or("BnbDigitDomainClub: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("BnbDigitDomainClub: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"bnb-999-club-member" =>
 						Ok(Assertion::BnbDigitDomainClub(BnbDigitDomainType::Bnb999ClubMember)),
@@ -546,7 +481,7 @@ impl RequestBatchVcCommand {
 				}
 			},
 			"vip3-membership-card" => {
-				let param0 = params.get(0).ok_or("VIP3MembershipCard: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("VIP3MembershipCard: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"gold" => Ok(Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Gold)),
 					"silver" => Ok(Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver)),
@@ -556,7 +491,7 @@ impl RequestBatchVcCommand {
 			"weirdo-ghost-gan-holder" => Ok(Assertion::WeirdoGhostGangHolder),
 			"lit-staking" => Ok(Assertion::LITStaking),
 			"evm-amount-holding" => {
-				let param0 = params.get(0).ok_or("EVMAmountHolding: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("EVMAmountHolding: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"ton" => Ok(Assertion::EVMAmountHolding(EVMTokenType::Ton)),
 					"trx" => Ok(Assertion::EVMAmountHolding(EVMTokenType::Trx)),
@@ -566,7 +501,7 @@ impl RequestBatchVcCommand {
 			"brc20-amount-holder" => Ok(Assertion::BRC20AmountHolder),
 			"crypto-summary" => Ok(Assertion::CryptoSummary),
 			"token-holding-amount" => {
-				let param0 = params.get(0).ok_or("TokenHoldingAmount: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("TokenHoldingAmount: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"bnb" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Bnb)),
 					"eth" => Ok(Assertion::TokenHoldingAmount(Web3TokenType::Eth)),
@@ -596,14 +531,14 @@ impl RequestBatchVcCommand {
 				}
 			},
 			"platform-user" => {
-				let param0 = params.get(0).ok_or("PlatformUser: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("PlatformUser: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"karat-dao-user" => Ok(Assertion::PlatformUser(PlatformUserType::KaratDaoUser)),
 					_ => Err("PlatformUser: Wrong parameter".to_string()),
 				}
 			},
 			"nft-holder" => {
-				let param0 = params.get(0).ok_or("NFTHolder: Missing parameter")?.clone();
+				let param0 = params.first().ok_or("NFTHolder: Missing parameter")?.clone();
 				match param0.to_lowercase().as_str() {
 					"weirdo-ghost-gang" => Ok(Assertion::NftHolder(Web3NftType::WeirdoGhostGang)),
 					"club3sbt" => Ok(Assertion::NftHolder(Web3NftType::Club3Sbt)),

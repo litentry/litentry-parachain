@@ -22,7 +22,6 @@ use crate::{
 use codec::{Decode, Encode};
 use ita_stf::{helpers::get_expected_raw_message, Web3Network};
 use itc_rpc_client::direct_client::DirectApi;
-use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use litentry_primitives::{Identity, LitentryMultiSignature, Web3CommonValidationData};

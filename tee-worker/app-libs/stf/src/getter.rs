@@ -198,7 +198,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 		match self.getter {
 			TrustedGetter::free_balance(who) =>
 				if let Some(account_id) = who.to_account_id() {
-					let info = System::account(&account_id);
+					let info = System::account(account_id);
 					debug!("TrustedGetter free_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 					std::println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
@@ -208,7 +208,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 				},
 			TrustedGetter::reserved_balance(who) =>
 				if let Some(account_id) = who.to_account_id() {
-					let info = System::account(&account_id);
+					let info = System::account(account_id);
 					debug!("TrustedGetter reserved_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 					debug!("Account reserved balance is {}", info.data.reserved);
@@ -264,7 +264,7 @@ impl ExecuteGetter for PublicGetter {
 			PublicGetter::some_value => Some(42u32.encode()),
 			PublicGetter::nonce(identity) =>
 				if let Some(account_id) = identity.to_account_id() {
-					let nonce = System::account_nonce(&account_id);
+					let nonce = System::account_nonce(account_id);
 					debug!("PublicGetter nonce");
 					debug!("Account nonce is {}", nonce);
 					Some(nonce.encode())

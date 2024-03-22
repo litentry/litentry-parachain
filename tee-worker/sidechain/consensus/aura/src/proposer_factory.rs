@@ -37,7 +37,7 @@ use sp_runtime::{
 };
 use std::{marker::PhantomData, sync::Arc};
 
-///! `ProposerFactory` instance containing all the data to create the `SlotProposer` for the
+/// `ProposerFactory` instance containing all the data to create the `SlotProposer` for the
 /// next `Slot`.
 pub struct ProposerFactory<
 	ParentchainBlock: Block,

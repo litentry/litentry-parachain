@@ -19,6 +19,6 @@
 #[cfg(not(feature = "test"))]
 #[no_mangle]
 #[allow(clippy::unreachable)]
-pub extern "C" fn test_main_entrance() -> sgx_types::size_t {
+pub extern "C" fn test_main_entrance() -> sgx_types::types::size_t {
 	unreachable!("Tests are not available when compiled in production mode.")
 }

@@ -144,7 +144,7 @@ fn is_negative(outcome: &QueryOutcome) -> bool {
 }
 
 fn is_inconclusive(outcome: &QueryOutcome) -> bool {
-	matches!(outcome, Err(_))
+	outcome.is_err()
 }
 
 // Check against the data provider whether a single account has been holding since the given date.

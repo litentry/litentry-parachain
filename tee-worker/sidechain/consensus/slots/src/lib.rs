@@ -65,7 +65,6 @@ mod per_shard_slot_worker_tests;
 use itp_types::parentchain::ParentchainCall;
 #[cfg(feature = "std")]
 pub use slot_stream::*;
-pub use slots::*;
 
 /// The result of [`SlotWorker::on_slot`].
 #[derive(Debug, Clone, Encode, From)]

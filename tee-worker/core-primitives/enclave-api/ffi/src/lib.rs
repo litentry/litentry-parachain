@@ -1,7 +1,6 @@
-use sgx_types::error::*;
-///! FFI's that call into the enclave. These functions need to be added to the
-/// enclave edl file and be implemented within the enclave.
-use sgx_types::types::*;
+//! FFI's that call into the enclave. These functions need to be added to the
+// enclave edl file and be implemented within the enclave.
+use sgx_types::{error::*, types::*};
 
 extern "C" {
 

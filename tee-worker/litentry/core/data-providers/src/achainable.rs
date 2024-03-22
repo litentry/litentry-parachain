@@ -65,7 +65,7 @@ impl AchainableClient {
 		let v = value
 			.get("metadata")
 			.and_then(|res| res.as_array())
-			.and_then(|v| v.get(0))
+			.and_then(|v| v.first())
 			.and_then(|v| v.as_str());
 
 		Ok(v.and_then(|v| v.get(0..4)).unwrap_or("Invalid").into())

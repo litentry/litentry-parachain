@@ -72,7 +72,7 @@ use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
 
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::WorkerModeProvider;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
@@ -554,7 +554,7 @@ unsafe fn sync_parentchain_internal(
 		}
 	}
 
-	dispatch_parentchain_blocks_for_import::<WorkerModeProvider>(
+	dispatch_parentchain_blocks_for_import(
 		blocks_to_sync,
 		events_to_sync,
 		&parentchain_id,
@@ -587,7 +587,7 @@ pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
 /// * The sidechain uses a triggered dispatcher, where the import of a parentchain block is
 ///   synchronized and triggered by the sidechain block production cycle.
 ///
-fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>(
+fn dispatch_parentchain_blocks_for_import(
 	blocks_to_sync: Vec<SignedBlock>,
 	events_to_sync: Vec<Vec<u8>>,
 	id: &ParentchainId,

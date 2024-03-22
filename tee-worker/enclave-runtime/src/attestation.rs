@@ -419,7 +419,7 @@ fn create_extrinsics(call: OpaqueCall) -> EnclaveResult<OpaqueExtrinsic> {
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 
-	match extrinsics.get(0) {
+	match extrinsics.first() {
 		Some(xt) => Ok(xt.clone()),
 		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
 	}

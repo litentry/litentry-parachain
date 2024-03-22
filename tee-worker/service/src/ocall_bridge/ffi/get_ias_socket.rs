@@ -30,7 +30,7 @@ fn get_ias_socket(ret_fd: *mut c_int, ra_api: Arc<dyn RemoteAttestationBridge>) 
 	debug!("    Entering ocall_get_ias_socket");
 	let socket_result = ra_api.get_ias_socket();
 
-	return match socket_result {
+	match socket_result {
 		Ok(s) => {
 			unsafe {
 				*ret_fd = s;
@@ -39,7 +39,7 @@ fn get_ias_socket(ret_fd: *mut c_int, ra_api: Arc<dyn RemoteAttestationBridge>) 
 		},
 		Err(e) => {
 			error!("[-]  Failed to get IAS socket: {:?}", e);
-			return e.into()
+			e.into()
 		},
 	}
 }

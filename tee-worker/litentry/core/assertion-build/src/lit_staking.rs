@@ -147,7 +147,7 @@ impl DelegatorState {
 			.ok_or(Error::RequestVCFailed(Assertion::LITStaking, ErrorDetail::ParseError))?;
 		let cocat = Twox64Concat::hash(acc.as_ref());
 
-		Ok(params.to_string() + &hex::encode(&cocat))
+		Ok(params.to_string() + &hex::encode(cocat))
 	}
 
 	fn decode_delegator(storage_in_hex: &str) -> Result<Delegator<AccountId, ParentchainBalance>> {

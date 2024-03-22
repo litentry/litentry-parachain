@@ -40,7 +40,7 @@ use sp_runtime::{
 use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration, vec::Vec};
 
 pub type ExternalitiesFor<T> = <T as StateUpdateProposer<TrustedCallSigned, Getter>>::Externalities;
-///! `SlotProposer` instance that has access to everything needed to propose a sidechain block.
+// `SlotProposer` instance that has access to everything needed to propose a sidechain block.
 pub struct SlotProposer<
 	ParentchainBlock: Block,
 	SignedSidechainBlock: SignedSidechainBlockTrait,

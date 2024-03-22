@@ -23,6 +23,7 @@
 #![feature(trait_alias)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(assert_matches))]
+#![allow(clippy::result_large_err)]
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");

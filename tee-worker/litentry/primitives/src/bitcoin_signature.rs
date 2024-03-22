@@ -52,7 +52,7 @@ impl<'de> Deserialize<'de> for BitcoinSignature {
 	where
 		D: Deserializer<'de>,
 	{
-		let signature_hex = hex::decode(&String::deserialize(deserializer)?)
+		let signature_hex = hex::decode(String::deserialize(deserializer)?)
 			.map_err(|e| de::Error::custom(format!("{:?}", e)))?;
 		BitcoinSignature::try_from(signature_hex.as_ref())
 			.map_err(|e| de::Error::custom(format!("{:?}", e)))

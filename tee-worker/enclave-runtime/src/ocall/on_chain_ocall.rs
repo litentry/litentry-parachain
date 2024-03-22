@@ -138,7 +138,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 			.collect();
 
 		// we should only have one response as we only sent one request
-		let first_response = responses.get(0).ok_or(StorageError::WrongValue)?;
+		let first_response = responses.first().ok_or(StorageError::WrongValue)?;
 		Ok(first_response.clone())
 	}
 }

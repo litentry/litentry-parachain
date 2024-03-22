@@ -19,7 +19,7 @@
 
 #![no_std]
 
-#[cfg(any(all(feature = "sidechain", feature = "offchain-worker"),))]
+#[cfg(all(feature = "sidechain", feature = "offchain-worker"))]
 compile_error!("feature \"sidechain\" or \"offchain-worker\" cannot be enabled at the same time");
 
 pub mod worker_mode;

@@ -181,7 +181,7 @@ pub(crate) fn init_enclave(
 	// validateer completely breaking (IO PipeError).
 	// Corresponding GH issues are #545 and #600.
 
-	let response_channel = Arc::new(RpcResponseChannel::default());
+	let response_channel = Arc::new(RpcResponseChannel);
 	let rpc_responder =
 		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
 

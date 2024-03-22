@@ -351,36 +351,35 @@ where
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {
-				Ok((bn, mrenclave)) =>
-					return match hex::decode(&mrenclave) {
-						Ok(mrenclave) => {
-							let mut enclave_to_set: MrEnclave = [0u8; 32];
-							if mrenclave.len() != enclave_to_set.len() {
-								return Ok(json!(compute_hex_encoded_return_error(
-									"mrenclave len mismatch, expected 32 bytes long"
-								)))
-							}
+				Ok((bn, mrenclave)) => match hex::decode(mrenclave) {
+					Ok(mrenclave) => {
+						let mut enclave_to_set: MrEnclave = [0u8; 32];
+						if mrenclave.len() != enclave_to_set.len() {
+							return Ok(json!(compute_hex_encoded_return_error(
+								"mrenclave len mismatch, expected 32 bytes long"
+							)))
+						}
 
-							enclave_to_set.copy_from_slice(&mrenclave);
-							return match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
-								Ok(()) => Ok(json!(RpcReturnValue::new(
-									vec![],
-									false,
-									DirectRequestStatus::Ok
-								)
-								.to_hex())),
-								Err(e) => {
-									let error_msg =
-										format!("Failed to set scheduled mrenclave {:?}", e);
-									Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-								},
-							}
-						},
-						Err(e) => {
-							let error_msg = format!("Failed to decode mrenclave {:?}", e);
-							Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
+						enclave_to_set.copy_from_slice(&mrenclave);
+						match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
+							Ok(()) => Ok(json!(RpcReturnValue::new(
+								vec![],
+								false,
+								DirectRequestStatus::Ok
+							)
+							.to_hex())),
+							Err(e) => {
+								let error_msg =
+									format!("Failed to set scheduled mrenclave {:?}", e);
+								Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+							},
+						}
 					},
+					Err(e) => {
+						let error_msg = format!("Failed to decode mrenclave {:?}", e);
+						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				},
 				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
@@ -427,7 +426,7 @@ where
 						},
 						Err(e) => {
 							let error_msg = format!("load shard failure due to: {:?}", e);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+							Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 						},
 					}
 				},
@@ -472,7 +471,7 @@ fn execute_getter_inner<GE: ExecuteGetter>(
 ) -> Result<Option<Vec<u8>>, String> {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
-	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let param = &hex_encoded_params.first().ok_or("Could not get first param")?;
 	let request = RsaRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let shard: ShardIdentifier = request.shard();
@@ -496,7 +495,7 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 		))
 	}
 
-	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let param = &hex_encoded_params.first().ok_or("Could not get first param")?;
 	let encoded_quote_to_forward: Vec<u8> =
 		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
@@ -529,7 +528,7 @@ fn attesteer_forward_ias_attestation_report_inner(
 		))
 	}
 
-	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let param = &hex_encoded_params.first().ok_or("Could not get first param")?;
 	let ias_attestation_report =
 		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
