@@ -53,7 +53,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
-use lc_stf_task_sender::{stf_task_sender, RequestType};
+use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
 use std::{
 	boxed::Box,
@@ -212,7 +212,7 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
-	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
+	let stf_task_receiver = init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 	let n_workers = 4;
 	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
