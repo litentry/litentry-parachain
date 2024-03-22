@@ -548,6 +548,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 					skip_ra,
 				);
 			}
+			// we register the enclave to have the keys up to date after provisioning
 			let register_enclave_block_hash = register_enclave(
 				enclave.clone(),
 				&litentry_rpc_api,
@@ -567,7 +568,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			// we are the primary worker
 			println!("No primary enclave for shard is found");
 			println!("Registering enclave as primary worker");
-			// register as primary worker here
+
 			let register_enclave_block_hash = register_enclave(
 				enclave.clone(),
 				&litentry_rpc_api,
