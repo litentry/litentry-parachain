@@ -31,7 +31,6 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
 use log::*;
 use sgx_crypto::rsa::Rsa3072KeyPair;
-use sgx_serialize::opaque;
 use std::{sync::Arc, vec::Vec};
 
 /// Handles the sealing and unsealing of the shielding key, state key and the state.
@@ -81,10 +80,10 @@ where
 	LightClientSeal::LightClientState: Decode,
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
-		let key: Rsa3072KeyPair = opaque::decode(bytes).ok_or_else(|| {
-			error!("    [Enclave] Received Invalid RSA key");
-			EnclaveError::Other("seal error".into())
-		})?;
+		let key_str = std::str::from_utf8(bytes)
+			.map_err(|_| EnclaveError::Other("RSA key seal error".into()))?;
+		let key: Rsa3072KeyPair = sgx_serialize::json::decode(key_str)
+			.map_err(|_| EnclaveError::Other("RSA key seal error".into()))?;
 		self.shielding_key_repository.update_key(key)?;
 		info!("Successfully stored a new shielding key");
 		Ok(())
@@ -141,7 +140,9 @@ where
 			.shielding_key_repository
 			.retrieve_key()
 			.map_err(|e| EnclaveError::Other(format!("{:?}", e).into()))?;
-		opaque::encode(&shielding_key).ok_or(EnclaveError::Other("unseal error".into()))
+		sgx_serialize::json::encode(&shielding_key)
+			.map(|s| s.as_bytes().to_vec())
+			.map_err(|_| EnclaveError::Other("RSA key unseal error".into()))
 	}
 
 	fn unseal_state_key(&self) -> EnclaveResult<Vec<u8>> {
@@ -179,8 +180,8 @@ pub mod test {
 
 	pub fn seal_shielding_key_works() {
 		let seal_handler = SealHandlerMock::default();
-		let encoded_key = opaque::encode(&Rsa3072KeyPair::default()).unwrap();
-		let key_pair_in_bytes = encoded_key.as_slice();
+		let encoded_key = sgx_serialize::json::encode(&Rsa3072KeyPair::default()).unwrap();
+		let key_pair_in_bytes = encoded_key.as_bytes();
 
 		let result = seal_handler.seal_shielding_key(&key_pair_in_bytes);
 

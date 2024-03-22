@@ -115,7 +115,6 @@ mod impl_ffi {
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto::rsa::Rsa3072PublicKey;
-	use sgx_serialize::json;
 	use sgx_types::{error::*, types::*};
 	use sp_core::ed25519;
 
@@ -371,7 +370,7 @@ mod impl_ffi {
 
 			let pubkey_str = std::str::from_utf8(&pubkey).unwrap();
 			let rsa_pubkey: Rsa3072PublicKey =
-				json::decode(pubkey_str).expect("Invalid public key");
+				sgx_serialize::json::decode(pubkey_str).expect("Invalid public key");
 			debug!("got RSA pubkey {:?}", rsa_pubkey);
 			Ok(rsa_pubkey)
 		}

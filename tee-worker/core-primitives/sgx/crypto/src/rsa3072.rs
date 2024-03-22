@@ -81,7 +81,6 @@ mod sgx {
 	use crate::key_repository::KeyRepository;
 	use itp_sgx_io::{seal, unseal, SealedIO};
 	use log::*;
-	use sgx_serialize::opaque;
 	use std::path::PathBuf;
 
 	/// Gets a repository for an Rsa3072 keypair and initializes
@@ -145,13 +144,15 @@ mod sgx {
 
 		fn unseal(&self) -> Result<Self::Unsealed> {
 			let raw = unseal(self.path())?;
-			let key: Rsa3072KeyPair = opaque::decode(&raw).ok_or(Error::Serde)?;
+			let raw_str = std::str::from_utf8(&raw).map_err(|_| Error::Serde)?;
+			let key: Rsa3072KeyPair =
+				sgx_serialize::json::decode(&raw_str).map_err(|_| Error::Serde)?;
 			Ok(key.into())
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
-			let key_json = opaque::encode(unsealed).ok_or(Error::Serde)?;
-			Ok(seal(&key_json, self.path())?)
+			let key_str = sgx_serialize::json::encode(unsealed).map_err(|_| Error::Serde)?;
+			Ok(seal(key_str.as_bytes(), self.path())?)
 		}
 	}
 }

@@ -144,12 +144,13 @@ where
 			send,
 			send_null_body,
 			timeout,
-			headers: headers.unwrap_or_else(Headers::new),
+			headers: headers.unwrap_or_default(),
 			authorization,
 		}
 	}
 
 	/// Set credentials for HTTP Basic authentication.
+	#[allow(deprecated)]
 	pub fn set_auth(&mut self, user: &str, pass: &str) {
 		let mut s: String = user.to_string();
 		s.push(':');

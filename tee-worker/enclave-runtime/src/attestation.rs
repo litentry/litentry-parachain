@@ -55,7 +55,6 @@ use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKe
 use itp_types::{AttestationType, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
-use sgx_serialize::json;
 use sgx_types::{error::*, types::*};
 use sp_core::{ed25519::Public as Ed25519Public, Pair};
 use sp_runtime::OpaqueExtrinsic;
@@ -560,7 +559,7 @@ fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
 		.retrieve_key()
 		.and_then(|keypair| {
 			let pubkey = keypair.public_key();
-			json::encode(&pubkey)
+			sgx_serialize::json::encode(&pubkey)
 				.map(|s| s.as_bytes().to_vec())
 				.map_err(|_| itp_sgx_crypto::Error::Serde)
 		})

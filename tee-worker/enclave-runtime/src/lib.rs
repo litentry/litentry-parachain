@@ -80,7 +80,6 @@ use itp_utils::write_slice_and_whitespace_pad;
 use litentry_macros::if_production_or;
 use log::*;
 use once_cell::sync::OnceCell;
-use sgx_serialize::json;
 use sgx_types::error::*;
 use sp_runtime::traits::BlakeTwo256;
 use std::{
@@ -208,7 +207,7 @@ pub unsafe extern "C" fn get_rsa_encryption_pubkey(pubkey: *mut u8, pubkey_size:
 		Err(e) => return e.into(),
 	};
 
-	let rsa_pubkey_json = match json::encode(&rsa_pubkey) {
+	let rsa_pubkey_json = match sgx_serialize::json::encode(&rsa_pubkey) {
 		Ok(k) => k,
 		Err(x) => {
 			println!("[Enclave] can't serialize rsa_pubkey {:?} {}", rsa_pubkey, x);

@@ -31,7 +31,6 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto::rsa::Rsa3072PublicKey;
-use sgx_serialize::json;
 use sp_core::H256;
 use std::{
 	sync::{
@@ -175,7 +174,8 @@ impl DirectApi for DirectClient {
 		let response_str = self.get(&jsonrpc_call)?;
 
 		let shielding_pubkey_string = decode_from_rpc_response::<String>(&response_str)?;
-		let shielding_pubkey: Rsa3072PublicKey = json::decode(&shielding_pubkey_string).unwrap();
+		let shielding_pubkey: Rsa3072PublicKey =
+			sgx_serialize::json::decode(&shielding_pubkey_string).unwrap();
 
 		info!("[+] Got RSA public key of enclave");
 		Ok(shielding_pubkey)

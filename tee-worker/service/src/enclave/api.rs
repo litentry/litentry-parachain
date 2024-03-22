@@ -29,51 +29,7 @@ use std::{
 use itp_enclave_api::{Enclave, SgxEnclave};
 
 pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
-	const LEN: usize = 1024;
-
-	// TODO(Litentry): what to do with the launch token?
-
-	// let mut launch_token = [0; LEN];
-	// let mut launch_token_updated = 0;
-
-	// Step 1: try to retrieve the launch token saved by last transaction
-	//         if there is no token, then create a new one.
-	//
-	// try to get the token saved in $HOME */
-	// let mut home_dir = PathBuf::new();
-	// let use_token = match dirs::home_dir() {
-	// 	Some(path) => {
-	// 		info!("[+] Home dir is {}", path.display());
-	// 		home_dir = path;
-	// 		true
-	// 	},
-	// 	None => {
-	// 		error!("[-] Cannot get home dir");
-	// 		false
-	// 	},
-	// };
-	// let token_file = home_dir.join(ENCLAVE_TOKEN);
-	// if use_token {
-	// 	match File::open(&token_file) {
-	// 		Err(_) => {
-	// 			info!(
-	// 				"[-] Token file {} not found! Will create one.",
-	// 				token_file.as_path().to_str().unwrap()
-	// 			);
-	// 		},
-	// 		Ok(mut f) => {
-	// 			info!("[+] Open token file success! ");
-	// 			match f.read(&mut launch_token) {
-	// 				Ok(LEN) => {
-	// 					info!("[+] Token file valid!");
-	// 				},
-	// 				_ => info!("[+] Token file invalid, will create new token file"),
-	// 			}
-	// 		},
-	// 	}
-	// }
-
-	// Step 2: call sgx_create_enclave to initialize an enclave instance
+	// call sgx_create_enclave to initialize an enclave instance
 	// Debug Support: 1 = debug mode, 0 = not debug mode
 	#[cfg(not(feature = "production"))]
 	let debug = true;
@@ -81,20 +37,6 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	let debug = false;
 
 	let enclave = (SgxEnclave::create(ENCLAVE_FILE, debug)).map_err(EnclaveApiError::Sgx)?;
-
-	// Step 3: save the launch token if it is updated
-	// if use_token && launch_token_updated != 0 {
-	// 	// reopen the file with write capability
-	// 	match File::create(&token_file) {
-	// 		Ok(mut f) => match f.write_all(&launch_token) {
-	// 			Ok(()) => info!("[+] Saved updated launch token!"),
-	// 			Err(_) => error!("[-] Failed to save updated launch token!"),
-	// 		},
-	// 		Err(_) => {
-	// 			warn!("[-] Failed to save updated enclave token, but doesn't matter");
-	// 		},
-	// 	}
-	// }
 
 	// create an enclave API and initialize it
 	let enclave_api = Enclave::new(enclave);

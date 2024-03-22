@@ -17,7 +17,6 @@
 
 use crate::error::{Error, Result};
 use sgx_crypto::rsa::Rsa3072KeyPair;
-use sgx_serialize::opaque;
 use sp_core::{blake2_256, ed25519::Pair as Ed25519Pair, Pair};
 
 /// Trait to derive an Ed25519 key pair.
@@ -27,8 +26,8 @@ pub trait DeriveEd25519 {
 
 impl DeriveEd25519 for Rsa3072KeyPair {
 	fn derive_ed25519(&self) -> Result<Ed25519Pair> {
-		let encoded_key = opaque::encode(self).ok_or(Error::Serde)?;
-		let seed = blake2_256(&encoded_key);
+		let encoded_str = sgx_serialize::json::encode(self).map_err(|_| Error::Serde)?;
+		let seed = blake2_256(encoded_str.as_bytes());
 		Ok(Ed25519Pair::from_seed(&seed))
 	}
 }

@@ -42,7 +42,6 @@ mod needs_enclave {
 	};
 	use itp_types::ShardIdentifier;
 	use log::*;
-	use sgx_serialize::json;
 	use std::{fs, fs::File, path::Path};
 
 	/// Initializes the shard and generates the key files.
@@ -116,7 +115,7 @@ mod needs_enclave {
 		info!("*** Get the public key from the TEE\n");
 		let pubkey = enclave.get_rsa_shielding_pubkey().unwrap();
 		let file = File::create(SHIELDING_KEY_FILE).unwrap();
-		let pubkey_str = json::encode(&pubkey).unwrap();
+		let pubkey_str = sgx_serialize::json::encode(&pubkey).unwrap();
 		match serde_json::to_writer(file, &pubkey_str) {
 			Err(x) => {
 				error!("[-] Failed to write '{}'. {}", SHIELDING_KEY_FILE, x);
