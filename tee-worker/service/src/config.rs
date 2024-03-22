@@ -171,26 +171,30 @@ impl Config {
 	}
 
 	pub fn trusted_worker_url_internal(&self) -> String {
-		format!("{}:{}", self.worker_ip, self.trusted_worker_port)
+		// use the same scheme as `trusted_worker_url_external`
+		let url = url::Url::parse(self.trusted_worker_url_external().as_str()).unwrap();
+		format!("{}://{}:{}", url.scheme(), self.worker_ip, self.trusted_worker_port)
 	}
 
 	/// Returns the trusted worker url that should be addressed by external clients.
 	pub fn trusted_worker_url_external(&self) -> String {
 		match &self.trusted_external_worker_address {
-			Some(external_address) => external_address.to_string(),
-			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port),
+			Some(external_address) => ensure_ws_or_wss(external_address),
+			None => format!("wss://{}:{}", self.worker_ip, self.trusted_worker_port), // fallback to wss
 		}
 	}
 
 	pub fn untrusted_worker_url(&self) -> String {
-		format!("{}:{}", self.worker_ip, self.untrusted_worker_port)
+		// use the same scheme as `untrusted_worker_url_external`
+		let url = url::Url::parse(self.untrusted_worker_url_external().as_str()).unwrap();
+		format!("{}://{}:{}", url.scheme(), self.worker_ip, self.untrusted_worker_port)
 	}
 
 	/// Returns the untrusted worker url that should be addressed by external clients.
 	pub fn untrusted_worker_url_external(&self) -> String {
 		match &self.untrusted_external_worker_address {
-			Some(external_address) => external_address.to_string(),
-			None => format!("ws://{}:{}", self.worker_ip, self.untrusted_worker_port),
+			Some(external_address) => ensure_ws_or_wss(external_address),
+			None => format!("ws://{}:{}", self.worker_ip, self.untrusted_worker_port), // fallback to ws
 		}
 	}
 
@@ -380,6 +384,19 @@ fn add_port_if_necessary(url: &str, port: &str) -> String {
 	}
 }
 
+fn ensure_ws_or_wss(url_str: &str) -> String {
+	let url = url::Url::parse(url_str)
+		.map_err(|e| {
+			println!("Parse url [{}] error: {}", url_str, e);
+		})
+		.unwrap();
+
+	if url.scheme() != "wss" && url.scheme() != "ws" {
+		panic!("Parse url [{}] error: expect ws or wss, but get {}", url_str, url.scheme());
+	}
+	url.into()
+}
+
 pub fn pwd() -> PathBuf {
 	std::env::current_dir().expect("works on all supported platforms; qed.")
 }
@@ -552,8 +569,8 @@ mod test {
 
 	#[test]
 	fn external_addresses_are_returned_correctly_if_set() {
-		let trusted_ext_addr = "wss://1.1.1.2:700";
-		let untrusted_ext_addr = "ws://1.723.3.1:11";
+		let trusted_ext_addr = "wss://1.1.1.2:700/";
+		let untrusted_ext_addr = "ws://1.123.3.1:11/";
 		let mu_ra_ext_addr = "1.1.3.1:1000";
 
 		let mut args = ArgMatches::default();
