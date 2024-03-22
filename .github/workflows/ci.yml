@@ -312,7 +312,7 @@ jobs:
       - sequentialise
     if: needs.set-condition.outputs.rebuild_bitacross == 'true'
     #    todo: we might want to change this image in the future
-    container: "litentry/litentry-tee-dev:latest"
+    container: "litentry/litentry-tee-dev:intel-sgx-sdk-2.17"
     steps:
       - uses: actions/checkout@v4
 
