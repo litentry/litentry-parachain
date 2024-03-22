@@ -27,12 +27,6 @@ pub enum Error {
 	ComponentNotInitialized,
 	#[error("Could not access Mutex")]
 	MutexAccess,
-	#[error("URL parse error: {0}")]
-	Url(#[from] url::ParseError),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
-	#[error("failed create extrinsic")]
-	FailedCreateExtrinsic,
-	#[error("failed send extrinsic")]
-	FailedSendExtrinsic,
 }

@@ -4632,7 +4632,6 @@ dependencies = [
  "sp-std 5.0.0",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "url 2.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
 ]
 
 [[package]]

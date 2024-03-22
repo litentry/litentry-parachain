@@ -16,7 +16,6 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
-url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 
 # substrate dependencies
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", default-features = false }
@@ -40,7 +39,6 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "thiserror",
-    "url/std",
     "itp-types/std",
     "itp-stf-primitives/std",
     "litentry-primitives/std",

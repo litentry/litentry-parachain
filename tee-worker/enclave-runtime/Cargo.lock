@@ -3157,7 +3157,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "thiserror",
- "url 2.5.0",
 ]
 
 [[package]]

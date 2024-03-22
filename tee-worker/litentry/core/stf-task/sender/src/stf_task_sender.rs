@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 use crate::error::{Error, Result};
 use lazy_static::lazy_static;
 use log::*;
