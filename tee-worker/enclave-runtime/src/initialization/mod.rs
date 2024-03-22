@@ -59,7 +59,8 @@ use itc_direct_rpc_server::{
 };
 use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ed25519_self_signed_certificate,
+	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
@@ -381,19 +382,30 @@ pub(crate) fn init_enclave_sidechain_components(
 }
 
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
+	info!("Initialize direct invocation server on {}", &server_addr);
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	let cert =
-		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	let url = url::Url::parse(&server_addr).map_err(|e| Error::Other(format!("{}", e).into()))?;
+	let maybe_config_provider = if url.scheme() == "wss" {
+		let cert = ed25519_self_signed_certificate(signer, "Enclave")
+			.map_err(|e| Error::Other(e.into()))?;
 
-	// Serialize certificate(s) and private key to PEM.
-	// PEM format is needed as a certificate chain can only be serialized into PEM.
-	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
-	let private_key = cert.serialize_private_key_pem();
+		// Serialize certificate(s) and private key to PEM.
+		// PEM format is needed as a certificate chain can only be serialized into PEM.
+		let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
+		let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
+	} else {
+		None
+	};
+
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 
