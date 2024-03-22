@@ -130,19 +130,18 @@ pub struct DirectRpcClient {
 
 impl DirectRpcClient {
 	pub fn new(url: &str, response_sink: SyncSender<Response>) -> Result<Self, Box<dyn Error>> {
-		let ws_server_url =
+		let server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
 		// we need to set this cert verifier or client will fail to connect with following error
 		// HandshakeError::Failure(Io(Custom { kind: InvalidData, error: WebPKIError(UnknownIssuer) }))
 		config.dangerous().set_certificate_verifier(Arc::new(IgnoreCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let addrs = ws_server_url.socket_addrs(|| None).unwrap();
-		let stream = TcpStream::connect(&*addrs)
-			.map_err(|e| format!("Could not connect to {:?}, reason: {:?}", &addrs, e))?;
+		let stream = TcpStream::connect(server_url.authority())
+			.map_err(|e| format!("Could not connect to {:?}, reason: {:?}", url, e))?;
 
 		let (mut socket, _response) =
-			client_tls_with_config(ws_server_url, stream, None, Some(connector))
+			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
 		let (request_sender, request_receiver) = channel();
