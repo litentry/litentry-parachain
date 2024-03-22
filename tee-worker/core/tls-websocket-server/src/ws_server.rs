@@ -509,10 +509,10 @@ mod tests {
 		let mut config = ClientConfig::new();
 		config.dangerous().set_certificate_verifier(Arc::new(NoCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let stream = TcpStream::connect(server_addr).unwrap();
+		let stream = TcpStream::connect(server_url.authority()).unwrap();
 
 		let (socket, _response) =
-			client_tls_with_config(server_url.authority(), stream, None, Some(connector))
+			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.expect("Can't connect");
 
 		socket
