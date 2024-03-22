@@ -27,7 +27,6 @@ extern crate sgx_tstd as std;
 pub mod sgx_reexport_prelude {
 	pub use rustls_sgx as rustls;
 	pub use tungstenite_sgx as tungstenite;
-	pub use url_sgx as url;
 	pub use webpki_sgx as webpki;
 }
 

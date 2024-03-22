@@ -27,7 +27,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 // TODO: the sidechain block number type is chaotic from upstream
