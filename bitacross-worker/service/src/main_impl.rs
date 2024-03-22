@@ -37,7 +37,6 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use litentry_macros::if_production_or;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use regex::Regex;
@@ -84,9 +83,9 @@ pub(crate) fn main() {
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	info!("*** Starting service in SGX production mode");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	info!("*** Starting service in SGX debug mode");
 
 	let mut lockfile = PathBuf::from(config.data_dir());
@@ -311,9 +310,9 @@ fn start_worker<E, T, InitializationHandler>(
 	println!("  DCAP is enabled");
 	#[cfg(not(feature = "dcap"))]
 	println!("  DCAP is disabled");
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	println!("  Production Mode is enabled");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	println!("  Production Mode is disabled");
 
 	info!("starting worker on shard {}", shard.encode().to_base58());
