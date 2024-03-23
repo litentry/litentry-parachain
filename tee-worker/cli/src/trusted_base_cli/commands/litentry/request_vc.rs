@@ -38,6 +38,7 @@ use litentry_primitives::{
 use sp_core::Pair;
 
 // usage example below
+//
 // Basically, the assertion subcommand needs to be quoted to signal the value group for certain assertion.
 // You can specifiy `-a "<value>"` multiple times to pass in a batched vc request
 //
