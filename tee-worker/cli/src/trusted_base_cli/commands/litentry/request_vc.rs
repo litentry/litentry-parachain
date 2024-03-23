@@ -37,25 +37,32 @@ use litentry_primitives::{
 };
 use sp_core::Pair;
 
-// usage example (you can always use --help on subcommands to see more details)
+// usage example below
+// Basically, the assertion subcommand needs to be quoted to signal the value group for certain assertion.
+// You can specifiy `-a "<value>"` multiple times to pass in a batched vc request
 //
-// a8:
-// ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
+// Printing `--help` give some information but clap doesn't know anything about the value specifiction.
+// However, if you put mismatched parameters for subcommands you'll get an error hint during the parsing.
+// For example:
+// -a "a2 p1 p2" will give you:
+//   error: unexpected argument 'p2'
+//   Usage: placeholder a2 <GUILD_ID>
+// as a2 expects A2Arg which only has one field `guild_id`
 //
-// OneBlock VC:
+// single a8 VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 one-block completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 -a "a8 litentry,litmus"
 //
-// achainable VC:
+// single OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 -a "one-block completion"
 //
+// batched achainable VC + vip3 VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 vip3-membership-card gold
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
+//   -a "achainable amount-holding a -c=litentry 1 2014-05-01" \
+//   -a "vip3-membership-card gold"
 //
-// ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x52a6c52dc82940a36fefd1474cc0778517bb1a56b7bda0e308b6c19152dd7510 achainable amount-token test-name -c=bsc,ethereum 1 token-value
 
 pub fn to_para_str<T>(s: T) -> ParameterString
 where
@@ -348,8 +355,9 @@ impl RequestVcCommand {
 			})
 			.collect();
 
-		let key = Self::random_aes_key();
+		println!(">>> assertions: {:?}", assertions);
 
+		let key = Self::random_aes_key();
 		let top = TrustedCall::request_batch_vc(
 			alice.public().into(),
 			identity,
@@ -440,14 +448,14 @@ impl Command {
 						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						date: to_para_str(&arg.date),
-						token: arg.token.as_ref().map(|s| to_para_str(s)),
+						token: arg.token.as_ref().map(to_para_str),
 					})),
 				AchainableCommand::AmountToken(arg) =>
 					Achainable(AchainableParams::AmountToken(AchainableAmountToken {
 						name: to_para_str(&arg.name),
 						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
-						token: arg.token.as_ref().map(|s| to_para_str(s)),
+						token: arg.token.as_ref().map(to_para_str),
 					})),
 				AchainableCommand::Amount(arg) =>
 					Achainable(AchainableParams::Amount(AchainableAmount {
