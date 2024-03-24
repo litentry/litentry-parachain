@@ -50,20 +50,24 @@ use sp_core::Pair;
 //   Usage: placeholder a2 <GUILD_ID>
 // as a2 expects A2Arg which only has one field `guild_id`
 //
-// single a8 VC:
+// single a8:
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 -a "a8 litentry,litmus"
 //
-// single OneBlock VC:
+// single OneBlock:
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 -a "one-block completion"
 //
-// batched achainable VC + vip3 VC:
+// batched a1 + a2 + a3:
+// ./bin/litentry-cli trusted -d request-vc \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
+//   -a "a1" -a "a2 gid" -a "a3 gid cid rid"
+//
+// batched achainable + vip3:
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
 //   -a "achainable amount-holding a -c=litentry 1 2014-05-01" \
 //   -a "vip3-membership-card gold"
-//
 
 pub fn to_para_str<T>(s: T) -> ParameterString
 where
