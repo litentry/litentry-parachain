@@ -528,12 +528,6 @@ jobs:
 
       - run: docker images --all
 
-      - name: Test enclave
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        # cargo test is not supported in the enclave
-        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/litentry-worker:latest test --all
-
       - name: Save docker images
         run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
 
@@ -543,6 +537,13 @@ jobs:
           name: litentry-tee
           path: litentry-tee.tar.gz
           if-no-files-found: error
+
+      - name: Test enclave
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/litentry-worker:latest test --all
+
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
