@@ -143,7 +143,7 @@ mod tests {
 		let json = br#"{"tcbInfo":{"id":"SGX","version":3,"issueDate":"2022-11-17T12:45:32Z"},"signature":"71746f2"}"#;
 		let (data, signature) =
 			SgxQlQveCollateral::separate_json_data_and_signature("tcbInfo", json).unwrap();
-		assert_eq!(data, r#"{"id":"SGX","version":3,"issueDate":"2022-11-17T12:45:32Z"}"#);
+		assert_eq!(data, r#"{"id":"SGX","issueDate":"2022-11-17T12:45:32Z","version":3}"#);
 		assert_eq!(signature, "71746f2");
 
 		let json = br#"{"tcbInfo":{not_a_valid_json},"nosignature":"thesignature"}"#;

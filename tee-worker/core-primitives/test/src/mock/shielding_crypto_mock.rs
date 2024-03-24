@@ -20,18 +20,21 @@ use itp_sgx_crypto::{
 };
 use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::ed25519::Pair as Ed25519Pair;
-use std::{format, vec::Vec};
+use std::vec::Vec;
+
+// TODO(Litentry):
+// `Rsa3072KeyPair::create()` seems to be broken for `ucrypto` feature under v2.0 SDK, see
+// https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456
 
 #[derive(Clone)]
 pub struct ShieldingCryptoMock {
 	key: Rsa3072KeyPair,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for ShieldingCryptoMock {
 	fn default() -> Self {
-		ShieldingCryptoMock {
-			key: Rsa3072KeyPair::create().expect("default RSA3072 key for shielding key mock"),
-		}
+		ShieldingCryptoMock { key: Rsa3072KeyPair::default() }
 	}
 }
 
@@ -39,9 +42,10 @@ impl ShieldingCryptoEncrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		self.key
-			.encrypt(data)
-			.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()))
+		// self.key
+		// 	.encrypt(data)
+		// 	.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()))
+		Ok(data.to_vec())
 	}
 }
 
@@ -49,9 +53,10 @@ impl ShieldingCryptoDecrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		self.key
-			.decrypt(data)
-			.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()))
+		// self.key
+		// 	.decrypt(data)
+		// 	.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()))
+		Ok(data.to_vec())
 	}
 }
 
