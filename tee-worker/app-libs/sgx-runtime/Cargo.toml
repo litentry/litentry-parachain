@@ -39,6 +39,9 @@ pallet-parentchain = { package = "pallet-parentchain", path = "../../litentry/pa
 default = ["std"]
 # Compile the sgx-runtime with evm support.
 evm = ["pallet-evm"]
+development = [
+    "pallet-imt/development",
+]
 std = [
     "codec/std",
     "scale-info/std",

@@ -47,14 +47,14 @@ pub mod files {
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";
 
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	pub static RA_SPID_FILE: &str = "spid_production.txt";
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	pub static RA_API_KEY_FILE: &str = "key_production.txt";
 
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_SPID_FILE: &str = "spid.txt";
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_API_KEY_FILE: &str = "key.txt";
 
 	pub const SPID_MIN_LENGTH: usize = 32;
