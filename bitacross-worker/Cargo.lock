@@ -2817,7 +2817,6 @@ dependencies = [
  "frame-system",
  "itp-sgx-runtime-primitives",
  "pallet-balances",
- "pallet-parentchain",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -2853,7 +2852,6 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
- "pallet-parentchain",
  "pallet-sudo",
  "parity-scale-codec",
  "rlp",
@@ -4921,19 +4919,6 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-parentchain"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "sp-runtime",
 ]
 
 [[package]]

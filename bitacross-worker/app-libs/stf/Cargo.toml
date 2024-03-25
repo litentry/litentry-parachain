@@ -42,7 +42,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 # litentry
 litentry-macros = { path = "../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
 [dev-dependencies]
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -78,7 +77,6 @@ std = [
     "frame-support/std",
     "sp-runtime/std",
     # scs/integritee
-    "pallet-parentchain/std",
     "sp-io/std",
     # litentry
     "litentry-primitives/std",

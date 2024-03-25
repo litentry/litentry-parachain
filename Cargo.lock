@@ -7696,22 +7696,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-parentchain"
-version = "0.9.0"
-dependencies = [
- "env_logger 0.10.2",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-keyring",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
