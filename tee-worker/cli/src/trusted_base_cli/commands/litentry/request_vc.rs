@@ -347,7 +347,7 @@ impl RequestVcCommand {
 		println!(">>> identity: {:?}", identity);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
-		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
+		let mut nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 		println!(">>> nonce: {}", nonce);
 
 		let assertions: Vec<Assertion> = self
@@ -363,29 +363,43 @@ impl RequestVcCommand {
 		println!(">>> assertions: {:?}", assertions);
 
 		let key = Self::random_aes_key();
-		let top = TrustedCall::request_batch_vc(
-			alice.public().into(),
-			identity,
-			assertions.try_into().unwrap(),
-			Some(key),
-			Default::default(),
-		)
-		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_cli.direct);
 
 		if self.stf {
-			match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-				Ok(mut vc) => {
-					let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-					let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
-					println!("----Generated VC-----");
-					println!("{}", credential_str);
-				},
-				Err(e) => {
-					println!("{:?}", e);
-				},
-			}
+			assertions.into_iter().for_each(|a| {
+				let top = TrustedCall::request_vc(
+					alice.public().into(),
+					identity.clone(),
+					a,
+					Some(key),
+					Default::default(),
+				)
+				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_cli.direct);
+				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+					Ok(mut vc) => {
+						let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+						let credential_str =
+							String::from_utf8(decrypted).expect("Found invalid UTF-8");
+						println!("----Generated VC-----");
+						println!("{}", credential_str);
+					},
+					Err(e) => {
+						println!("{:?}", e);
+					},
+				}
+				nonce += 1;
+			});
 		} else {
+			let top = TrustedCall::request_batch_vc(
+				alice.public().into(),
+				identity,
+				assertions.try_into().unwrap(),
+				Some(key),
+				Default::default(),
+			)
+			.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+			.into_trusted_operation(trusted_cli.direct);
+
 			match send_direct_vc_request(cli, trusted_cli, &top, key) {
 				Ok(result) =>
 					for res in result {
