@@ -510,8 +510,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// `primary_enclave_identifier_for_shard` returns None if there is no worker registered for the shard.
 	//
 	// The logic here is as follows:
-	// in the case it's Some, it means there is a primary worker registered for the shard, then we are a non-primary worker
-	// and we need to register as a worker on the parentchain.
+	// in the case it's Some, it means there is a primary worker registered for the shard, we are a non-primary worker if it is first run
+	// so we need to request provisioning. Finally in any case we register worker.
 	//
 	// in case it's None, it means there is no primary worker registered for the shard, then we are the primary worker
 	//
