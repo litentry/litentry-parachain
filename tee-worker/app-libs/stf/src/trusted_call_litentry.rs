@@ -44,14 +44,14 @@ use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
 use std::{sync::Arc, vec::Vec};
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
 
 impl TrustedCallSigned {
@@ -160,14 +160,14 @@ impl TrustedCallSigned {
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
-			_ => if_production_or!(
-				ensure!(
-					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
-				),
+			_ => if_development_or!(
 				ensure!(
 					ensure_enclave_signer_or_self(&signer, who.to_account_id())
 						|| ensure_alice(&signer),
+					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+				),
+				ensure!(
+					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 				)
 			),
@@ -228,18 +228,18 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 	) -> StfResult<()> {
-		if_production_or!(
-			{
-				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-				ensure_enclave_signer_account(&signer)
-					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
-			},
+		if_development_or!(
 			{
 				// In non-prod: we allow to use `Alice` as the dummy signer
 				ensure!(
 					ensure_enclave_signer_or_alice(&signer),
 					StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 				);
+			},
+			{
+				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+				ensure_enclave_signer_account(&signer)
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 			}
 		);
 		IMTCall::link_identity { who, identity, web3networks }

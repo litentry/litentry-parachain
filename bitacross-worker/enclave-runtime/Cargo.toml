@@ -14,13 +14,13 @@ crate-type = ["staticlib"]
 
 [features]
 default = []
-production = [
-    "ita-stf/production",
-    "itp-settings/production",
-    "itp-attestation-handler/production",
-    "litentry-primitives/production",
-    "litentry-macros/production",
-    "bc-task-receiver/production",
+development = [
+    "ita-stf/development",
+    "itp-settings/development",
+    "itp-attestation-handler/development",
+    "litentry-primitives/development",
+    "litentry-macros/development",
+    "bc-task-receiver/development",
 ]
 offchain-worker = [
     "itp-settings/offchain-worker",
