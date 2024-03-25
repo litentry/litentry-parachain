@@ -522,12 +522,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	//    2a. `get_shard_creation_info` is empty and we are primary worker => it's never run before => init everything
 	//    2b. `get_shard_creation_info` is empty and we are non-primary worker => it's never run before => request to sync state
 	//    2c. `get_shard_creation_info` is non-empty it's run before => do nothing
-	let is_first_run = enclave
-		.get_shard_creation_info(shard)
-		.unwrap()
-		.for_parentchain(ParentchainId::Litentry)
-		.is_none();
-
 	let primary_enclave_id = litentry_rpc_api
 		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
 		.expect("primary_enclave_identifier_for_shard failed");
@@ -537,7 +531,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let (we_are_primary_validateer, re_init_parentchain_needed) = match primary_enclave_id {
 		Some(primary_account_id) => {
 			println!("Primary enclave for shard is: {:?}", primary_account_id);
+			let is_first_run = enclave
+				.get_shard_creation_info(shard)
+				.unwrap()
+				.for_parentchain(ParentchainId::Litentry)
+				.is_none();
+
 			if is_first_run {
+				// we are not primary worker
 				info!("my state doesn't know the creation header of the shard. will request provisioning");
 				// obtain provisioning from last active worker as this hasn't been done before
 				sync_state::sync_state::<_, _, WorkerModeProvider>(
@@ -561,7 +562,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			register_enclave_xt_header =
 				get_registered_enclave_xt_header(&litentry_rpc_api, register_enclave_block_hash);
 
-			(false, true)
+			(primary_account_id == tee_accountid, is_first_run)
 		},
 		None => {
 			println!("No primary enclave for shard was found");
@@ -580,21 +581,17 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			register_enclave_xt_header =
 				get_registered_enclave_xt_header(&litentry_rpc_api, register_enclave_block_hash);
 
-			if is_first_run {
-				enclave.init_shard(shard.encode()).unwrap();
-				enclave
-					.init_shard_creation_parentchain_header(
-						shard,
-						&ParentchainId::Litentry,
-						&register_enclave_xt_header,
-					)
-					.unwrap();
-				debug!("shard config should be initialized on litentry network now");
+			enclave.init_shard(shard.encode()).unwrap();
+			enclave
+				.init_shard_creation_parentchain_header(
+					shard,
+					&ParentchainId::Litentry,
+					&register_enclave_xt_header,
+				)
+				.unwrap();
+			debug!("shard config should be initialized on litentry network now");
 
-				(true, true)
-			} else {
-				(true, false)
-			}
+			(true, true)
 		},
 	};
 
