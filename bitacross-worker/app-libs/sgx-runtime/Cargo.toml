@@ -29,6 +29,8 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 
+pallet-parentchain = { path = "../../../tee-worker/litentry/pallets/parentchain", default-features = false }
+
 [features]
 default = ["std"]
 runtime-benchmarks = [
@@ -49,6 +51,7 @@ std = [
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment/std",
+    "pallet-parentchain/std",
     "sp-api/std",
     "sp-core/std",
     "sp-runtime/std",
