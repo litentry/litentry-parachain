@@ -504,15 +504,15 @@ mod tests {
 	}
 
 	fn connect_tls_client(server_addr: &str) -> WebSocket<MaybeTlsStream<TcpStream>> {
-		let ws_server_url = Url::parse(format!("wss://{}", server_addr).as_str()).unwrap();
+		let server_url = Url::parse(format!("wss://{}", server_addr).as_str()).unwrap();
 
 		let mut config = ClientConfig::new();
 		config.dangerous().set_certificate_verifier(Arc::new(NoCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let stream = TcpStream::connect(server_addr).unwrap();
+		let stream = TcpStream::connect(server_url.authority()).unwrap();
 
 		let (socket, _response) =
-			client_tls_with_config(ws_server_url, stream, None, Some(connector))
+			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.expect("Can't connect");
 
 		socket

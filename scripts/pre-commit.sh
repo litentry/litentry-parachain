@@ -5,10 +5,10 @@
 set -eo pipefail
 
 function worker_clippy() {
-    cargo clippy --release -- -D warnings
-    cargo clippy --release --features evm -- -D warnings
-    cargo clippy --release --features sidechain -- -D warnings
-    cargo clippy --release --features offchain-worker -- -D warnings
+    cargo clippy --release --features development -- -D warnings
+    cargo clippy --release --features evm,development -- -D warnings
+    cargo clippy --release --features sidechain,development -- -D warnings
+    cargo clippy --release --features offchain-worker,development -- -D warnings
 }
 
 function bitacross_clippy() {
@@ -54,7 +54,7 @@ cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
 
 echo "[Step 4], tee-worker cargo test"
 cd "$root_dir/tee-worker"
-RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
+RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release --features development -- --show-output
 
 echo "[Step 5], tee-worker service test"
 clean_up
