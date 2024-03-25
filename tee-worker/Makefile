@@ -19,6 +19,9 @@
 # 3. I have to use `USE_OPT_LIBS ?= 0`
 #    otherwise `sgx_crypto_sys` and `sgx_tlibc_sys` complain prebuilt libs can't be found
 #    There's `optimized_libs/external/libirc/efi2/libirc.a` but not `libm*`
+# 4. The SGX_DEBUG needs to be set to 1 - otherwise I get SEGV when creating SgxFile. It seems to come from `Box::new(*Report::get_self())`,
+#    but I haven't spent enough time figuring out why.
+#    The workaround for now is use SGX_DEBUG=1 in compilation and strip unneeded symbols for binaries.
 
 ######## Update SGX SDK ########
 # use this manually to update sdk
@@ -29,7 +32,7 @@
 SGX_SDK ?= /opt/intel/sgxsdk
 SGX_MODE ?= HW
 SGX_ARCH ?= x64
-SGX_DEBUG ?= 0
+SGX_DEBUG ?= 1
 SGX_PRERELEASE ?= 0
 SGX_PRODUCTION ?= 0
 
@@ -154,7 +157,7 @@ Signed_RustEnclave_Name := $(CUSTOM_BIN_PATH)/enclave.signed.so
 ######## Targets ########
 
 .PHONY: all
-all: $(Enclave_EDL_Files) $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
+all: $(Enclave_EDL_Files) $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name) strip-all
 service: $(Worker_Name)
 client: $(Client_Name)
 githooks: .git/hooks/pre-commit
@@ -274,6 +277,12 @@ mrsigner:
 
 .PHONY: identity
 identity: mrenclave mrsigner
+
+.PHONY: strip-all
+strip-all:
+	strip --strip-unneeded $(Worker_Name)
+	strip --strip-unneeded $(Client_Name)
+	strip --strip-unneeded $(Signed_RustEnclave_Name)
 
 .PHONY: help
 help:
