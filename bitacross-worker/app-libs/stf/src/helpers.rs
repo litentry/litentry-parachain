@@ -28,7 +28,7 @@ use itp_utils::stringify::account_id_to_string;
 use log::*;
 use std::prelude::v1::*;
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 pub use non_prod::*;
 
 pub fn get_storage_value<V: Decode>(
@@ -167,7 +167,7 @@ pub fn shard_creation_info() -> ShardCreationInfo {
 	}
 }
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 mod non_prod {
 	use super::*;
 	use hex_literal::hex;

@@ -94,6 +94,7 @@ pub enum TrustedBaseCommand {
 	RequestBatchVc(RequestBatchVcCommand),
 
 	/// Remove Identity from the prime identity
+	#[cfg(feature = "development")]
 	RemoveIdentity(RemoveIdentityCommand),
 }
 
@@ -116,6 +117,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestBatchVc(cmd) => cmd.run(cli, trusted_cli),
+			#[cfg(feature = "development")]
 			TrustedBaseCommand::RemoveIdentity(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
