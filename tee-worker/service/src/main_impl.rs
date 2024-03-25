@@ -536,7 +536,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	let (we_are_primary_validateer, re_init_parentchain_needed) = match primary_enclave_id {
 		Some(primary_account_id) => {
-			// We are not the primary worker
 			println!("Primary enclave for shard is: {:?}", primary_account_id);
 			if is_first_run {
 				info!("my state doesn't know the creation header of the shard. will request provisioning");
@@ -565,8 +564,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			(false, true)
 		},
 		None => {
-			// we are the primary worker
-			println!("No primary enclave for shard is found");
+			println!("No primary enclave for shard was found");
 			println!("Registering enclave as primary worker");
 
 			let register_enclave_block_hash = register_enclave(
