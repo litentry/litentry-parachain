@@ -39,13 +39,9 @@ Rust_Enclave_Name := libenclave.a
 Rust_Enclave_Files := $(wildcard src/*.rs) $(wildcard ../stf/src/*.rs)
 RUSTFLAGS :="-C target-feature=+avx2"
 
-ifeq ($(SGX_DEBUG), 1)
-	OUTPUT_PATH := debug
-	CARGO_TARGET :=
-else
-	OUTPUT_PATH := release
-	CARGO_TARGET := --release
-endif
+# see ../Makefile why debug symbol is used
+OUTPUT_PATH := debug
+CARGO_TARGET :=
 
 ifeq ($(SGX_PRODUCTION), 1)
 	ENCLAVE_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
