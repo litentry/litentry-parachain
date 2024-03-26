@@ -185,10 +185,11 @@ impl TrustedGetterSigned {
 		let prettified_msg_hash = self.getter.signature_message_prefix() + &hex_encode(&hashed);
 		let prettified_msg_hash = prettified_msg_hash.as_bytes();
 
-		let is_valid = self.signature.verify(&payload, self.getter.sender_identity())
+		// Most common signatures variants by clients are verified first (4 and 2).
+		let is_valid = self.signature.verify(prettified_msg_hash, self.getter.sender_identity())
 			|| self.signature.verify(&hashed, self.getter.sender_identity())
+			|| self.signature.verify(&payload, self.getter.sender_identity());
 			|| self.signature.verify(prettified_msg_raw, self.getter.sender_identity())
-			|| self.signature.verify(prettified_msg_hash, self.getter.sender_identity());
 
 		// in non-prod, we accept signature from Alice too
 		if_development_or!(
