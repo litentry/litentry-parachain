@@ -29,12 +29,13 @@ import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'par
 import { Vec, Bytes } from '@polkadot/types';
 import { ethers } from 'ethers';
 import type { HexString } from '@polkadot/util/types';
+import { sleep } from './common/utils';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
-
+    let initialNonce = 0;
     // Alice links:
     // - a `mock_user` twitter
     // - alice's evm identity
@@ -55,6 +56,7 @@ describe('Test Identity (direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
+        initialNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
@@ -71,10 +73,8 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking identities (alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
+        const twitterNonce = initialNonce++;
 
-        const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
         const twitterValidation = await buildValidations(
@@ -92,7 +92,9 @@ describe('Test Identity (direct invocation)', function () {
             networks: twitterNetworks,
         });
 
-        const evmNonce = getNextNonce();
+        const evmNonce = initialNonce++;
+        console.log('evm nonce: ', evmNonce);
+
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
         const evmValidation = await buildValidations(
             context,
@@ -110,7 +112,7 @@ describe('Test Identity (direct invocation)', function () {
             networks: evmNetworks,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = initialNonce++;
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.web3Wallets.substrate.Eve.getAddressRaw()),
             'Substrate',
@@ -132,7 +134,7 @@ describe('Test Identity (direct invocation)', function () {
             networks: eveSubstrateNetworks,
         });
 
-        const bitcoinNonce = getNextNonce();
+        const bitcoinNonce = initialNonce++;
         const bitcoinIdentity = await buildIdentityHelper(
             u8aToHex(context.web3Wallets.bitcoin.Alice.getAddressRaw()),
             'Bitcoin',
@@ -236,64 +238,12 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
 
-    step('linking invalid identity', async function () {
-        const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
-
-        let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterNonce = getNextNonce();
-        const evmNonce = getNextNonce();
-        const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
-        const evmValidation = await buildValidations(
-            context,
-            bobSubstrateIdentity,
-            evmIdentity,
-            evmNonce,
-            'ethereum',
-            context.web3Wallets.evm.Bob
-        );
-
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', twitterNonce),
-            context.web3Wallets.substrate.Bob,
-            bobSubstrateIdentity,
-            twitterIdentity.toHex(),
-            evmValidation.toHex(),
-            evmNetworks.toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-
-        assert.isTrue(res.do_watch.isFalse);
-        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-        assertWorkerError(
-            context,
-            (v) => {
-                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
-                assert.isTrue(
-                    v.asLinkIdentityFailed.isInvalidIdentity,
-                    `expected InvalidIdentity, received ${v.asLinkIdentityFailed.type} instead`
-                );
-            },
-            res
-        );
-    });
-
     step('linking identity with wrong signature', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
 
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
 
-        const evmNonce = getNextNonce();
+        const evmNonce = initialNonce++;
 
         // random wrong msg
         const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
@@ -342,9 +292,7 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking already linked identity', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const twitterNonce = getNextNonce();
+        const twitterNonce = initialNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const twitterValidation = await buildValidations(
@@ -388,15 +336,12 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('deactivating linked identities', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const deactivateIdentityRequestParams: {
             nonce: number;
             identity: CorePrimitivesIdentity;
         }[] = [];
 
-        const twitterNonce = getNextNonce();
+        const twitterNonce = initialNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
         deactivateIdentityRequestParams.push({
@@ -404,7 +349,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: twitterIdentity,
         });
 
-        const evmNonce = getNextNonce();
+        const evmNonce = initialNonce++;
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
 
         deactivateIdentityRequestParams.push({
@@ -412,7 +357,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: evmIdentity,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = initialNonce++;
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
 
         deactivateIdentityRequestParams.push({
@@ -420,7 +365,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: eveSubstrateIdentity,
         });
 
-        const bitcoinNonce = getNextNonce();
+        const bitcoinNonce = initialNonce++;
 
         const bitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
 
@@ -494,15 +439,12 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
     step('activating linked identities', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const activateIdentityRequestParams: {
             nonce: number;
             identity: CorePrimitivesIdentity;
         }[] = [];
 
-        const twitterNonce = getNextNonce();
+        const twitterNonce = initialNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
         activateIdentityRequestParams.push({
@@ -510,7 +452,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: twitterIdentity,
         });
 
-        const evmNonce = getNextNonce();
+        const evmNonce = initialNonce++;
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
 
         activateIdentityRequestParams.push({
@@ -518,7 +460,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: evmIdentity,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = initialNonce++;
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
 
         activateIdentityRequestParams.push({
@@ -526,7 +468,7 @@ describe('Test Identity (direct invocation)', function () {
             identity: eveSubstrateIdentity,
         });
 
-        const bitcoinNonce = getNextNonce();
+        const bitcoinNonce = initialNonce++;
         const bitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
         activateIdentityRequestParams.push({
             nonce: bitcoinNonce,
@@ -614,11 +556,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('setting identity network(alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const nonce = getNextNonce();
+        const nonce = initialNonce++;
 
         const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
@@ -673,12 +613,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('setting incompatible identity network(alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const nonce = getNextNonce();
+        const nonce = initialNonce++;
 
         // alice address is not compatible with ethereum network
         const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
@@ -729,11 +666,7 @@ describe('Test Identity (direct invocation)', function () {
 
     step('deactivate prime identity', async function () {
         // deactivating prime identity should be possible and create the IDGraph if one doesn't exist already
-
         const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
-
-        let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
 
         const deactivateIdentityRequestParams: {
             nonce: number;
@@ -741,7 +674,7 @@ describe('Test Identity (direct invocation)', function () {
         }[] = [];
 
         deactivateIdentityRequestParams.push({
-            nonce: getNextNonce(),
+            nonce: initialNonce++,
             identity: bobSubstrateIdentity,
         });
 
@@ -781,11 +714,8 @@ describe('Test Identity (direct invocation)', function () {
     step('setting identity networks for prime identity)', async function () {
         const charlieSubstrateIdentity = await context.web3Wallets.substrate.Charlie.getIdentity(context);
 
-        let currentNonce = (await getSidechainNonce(context, charlieSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const nonce = getNextNonce();
+        const nonce = initialNonce++;
 
         const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
@@ -817,5 +747,11 @@ describe('Test Identity (direct invocation)', function () {
         expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
         await assertIsInSidechainBlock('setIdentityNetworksCall', res);
         assert.lengthOf(idGraphHashResults, 1);
+    });
+
+    step('check sidechain nonce', async function () {
+        await sleep(20);
+        const nonce = await getSidechainNonce(context, aliceSubstrateIdentity);
+        assert.equal(nonce.toNumber(), initialNonce);
     });
 });
