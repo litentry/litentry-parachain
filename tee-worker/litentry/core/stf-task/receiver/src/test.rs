@@ -10,7 +10,7 @@ use itp_test::mock::{
 	shielding_crypto_mock::ShieldingCryptoMock,
 };
 use itp_top_pool_author::mocks::AuthorApiMock;
-use lc_stf_task_sender::stf_task_sender::{SendStfRequest, StfRequestSender};
+use lc_stf_task_sender::{SendStfRequest, StfRequestSender};
 use litentry_primitives::Assertion;
 
 #[test]
