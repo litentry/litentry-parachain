@@ -31,7 +31,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
