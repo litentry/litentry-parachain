@@ -93,6 +93,10 @@ pub trait FilterEvents {
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
+
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error>;
 }
 
 #[derive(Encode, Decode, Debug)]
