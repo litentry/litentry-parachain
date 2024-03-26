@@ -81,6 +81,10 @@ pub mod pallet {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
 		LinkIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>, // TODO: check if this is the correct type
+			encrypted_validation_data: Vec<u8>,
+			encrypted_web3networks: Vec<u8>,
 		},
 		DeactivateIdentityRequested {
 			shard: ShardIdentifier,
@@ -210,7 +214,13 @@ pub mod pallet {
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorizedUser
 			);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::LinkIdentityRequested {
+				shard,
+				account: user,
+				encrypted_identity,
+				encrypted_validation_data,
+				encrypted_web3networks,
+			});
 			Ok(().into())
 		}
 
