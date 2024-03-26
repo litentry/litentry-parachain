@@ -333,7 +333,7 @@ fn send_direct_request<T: Decode + Debug>(
 								})
 							}
 							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
-								println!("Trusted call {:?} is {:?}", value, status);
+								debug!("Trusted call {:?} is {:?}", value, status);
 							}
 							if !return_value.do_watch {
 								direct_api.close().unwrap();
@@ -515,7 +515,7 @@ pub(crate) fn wait_until(
 								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
 								{
-									println!("Trusted call {:?} is {:?}", value, status);
+									debug!("Trusted call {:?} is {:?}", value, status);
 									if until(status.clone()) {
 										return Some((top_hash, Instant::now()))
 									} else if status == TrustedOperationStatus::Invalid {

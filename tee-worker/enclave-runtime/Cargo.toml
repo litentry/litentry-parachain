@@ -73,8 +73,7 @@ ipfs-unixfs = { default-features = false, git = "https://github.com/whalelephant
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "serde_no_std"] }
-serde_json = { version = "1.0", default-features = false }
-url = { git = "https://github.com/integritee-network/rust-url", branch = "sgx-no-std", default-features = false, features = ["alloc"] }
+url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 
 # although `once_cell` has no_std support, it demands any `critical-section` implementation (which is unclear under sgx for me)
 env_logger = { git = "https://github.com/Kailai-Wang/env_logger-sgx", branch = "sgx-sdk-2.0.0", default-features = false, features = ["mesalock_sgx"] }
