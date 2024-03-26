@@ -9,7 +9,6 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    sleep,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -343,16 +342,16 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking already linked identity', async function () {
-        // sleep for a while to make sure the nonce is updated
-        await sleep(10);
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const twitterNonce = getNextNonce();
 
-        const twitterNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const twitterValidation = await buildValidations(
             context,
             aliceSubstrateIdentity,
             twitterIdentity,
-            twitterNonce.toNumber(),
+            twitterNonce,
             'twitter'
         );
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
