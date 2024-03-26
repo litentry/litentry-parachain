@@ -82,7 +82,7 @@ pub mod pallet {
 		LinkIdentityRequested {
 			shard: ShardIdentifier,
 			account: T::AccountId,
-			encrypted_identity: Vec<u8>, // TODO: check if this is the correct type
+			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
 			encrypted_web3networks: Vec<u8>,
 		},
