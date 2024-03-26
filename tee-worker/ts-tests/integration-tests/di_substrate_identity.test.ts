@@ -93,7 +93,6 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const evmNonce = initialNonce++;
-        console.log('evm nonce: ', evmNonce);
 
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
         const evmValidation = await buildValidations(
