@@ -39,8 +39,8 @@ dependencies:
     specifier: ^1.8.1
     version: 1.10.2
   web3-utils:
-    specifier: ^1.10.1
-    version: 1.10.2
+    specifier: ^4.2.1
+    version: 4.2.1
 
 devDependencies:
   '@types/chai':
@@ -4955,6 +4955,13 @@ packages:
       - supports-color
     dev: false
 
+  /web3-errors@1.1.4:
+    resolution: {integrity: sha512-WahtszSqILez+83AxGecVroyZsMuuRT+KmQp4Si5P4Rnqbczno1k748PCrZTS1J4UCPmXMG2/Vt+0Bz2zwXkwQ==}
+    engines: {node: '>=14', npm: '>=6.12.0'}
+    dependencies:
+      web3-types: 1.5.0
+    dev: false
+
   /web3-eth-abi@1.10.2:
     resolution: {integrity: sha512-pY4fQUio7W7ZRSLf+vsYkaxJqaT/jHcALZjIxy+uBQaYAJ3t6zpQqMZkJB3Dw7HUODRJ1yI0NPEFGTnkYf/17A==}
     engines: {node: '>=8.0.0'}
@@ -5117,6 +5124,11 @@ packages:
       - supports-color
     dev: false
 
+  /web3-types@1.5.0:
+    resolution: {integrity: sha512-geWuMIeegQ8AedKAO6wO4G4j1gyQ1F/AyKLMw2vud4bsfZayyzWJgCMDZtjYMm5uo2a7i8j1W3/4QFmzlSy5cw==}
+    engines: {node: '>=14', npm: '>=6.12.0'}
+    dev: false
+
   /web3-utils@1.10.2:
     resolution: {integrity: sha512-TdApdzdse5YR+5GCX/b/vQnhhbj1KSAtfrDtRW7YS0kcWp1gkJsN62gw6GzCaNTeXookB7UrLtmDUuMv65qgow==}
     engines: {node: '>=8.0.0'}
@@ -5129,6 +5141,28 @@ packages:
       number-to-bn: 1.7.0
       randombytes: 2.1.0
       utf8: 3.0.0
+    dev: false
+
+  /web3-utils@4.2.1:
+    resolution: {integrity: sha512-Fk29BlEqD9Q9Cnw4pBkKw7czcXiRpsSco/BzEUl4ye0ZTSHANQFfjsfQmNm4t7uY11u6Ah+8F3tNjBeU4CA80A==}
+    engines: {node: '>=14', npm: '>=6.12.0'}
+    dependencies:
+      ethereum-cryptography: 2.1.2
+      eventemitter3: 5.0.1
+      web3-errors: 1.1.4
+      web3-types: 1.5.0
+      web3-validator: 2.0.4
+    dev: false
+
+  /web3-validator@2.0.4:
+    resolution: {integrity: sha512-qRxVePwdW+SByOmTpDZFWHIUAa7PswvxNszrOua6BoGqAhERo5oJZBN+EbWtK/+O+ApNxt5FR3nCPmiZldiOQA==}
+    engines: {node: '>=14', npm: '>=6.12.0'}
+    dependencies:
+      ethereum-cryptography: 2.1.2
+      util: 0.12.5
+      web3-errors: 1.1.4
+      web3-types: 1.5.0
+      zod: 3.22.4
     dev: false
 
   /web3@1.10.2:
@@ -5353,3 +5387,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+    dev: false
