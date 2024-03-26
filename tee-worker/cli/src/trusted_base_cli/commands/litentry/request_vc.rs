@@ -30,7 +30,7 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
+	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType, EVMTokenType,
 	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
 	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	REQUEST_AES_KEY_LEN,
@@ -122,22 +122,24 @@ pub enum Command {
 	A11(HolderArg),
 	A13(A13Arg),
 	A14,
+	#[clap(subcommand)]
+	Achainable(AchainableCommand),
 	A20,
-	BnbDomainHolding,
 	#[clap(subcommand)]
 	OneBlock(OneblockCommand),
 	#[clap(subcommand)]
-	Achainable(AchainableCommand),
-	#[clap(subcommand)]
 	GenericDiscordRole(GenericDiscordRoleCommand),
+	BnbDomainHolding,
+	#[clap(subcommand)]
+	BnbDigitalDomainClub(BnbDigitalDomainClubCommand),
 	#[clap(subcommand)]
 	VIP3MembershipCard(VIP3MembershipCardLevelCommand),
 	WeirdoGhostGangHolder,
+	LITStaking,
 	#[clap(subcommand)]
 	EVMAmountHolding(EVMAmountHoldingCommand),
-	CryptoSummary,
-	LITStaking,
 	BRC20AmountHolder,
+	CryptoSummary,
 	#[clap(subcommand)]
 	TokenHoldingAmount(TokenHoldingAmountCommand),
 	#[clap(subcommand)]
@@ -176,13 +178,6 @@ pub struct A13Arg {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum OneblockCommand {
-	Completion,
-	Outstanding,
-	Participation,
-}
-
-#[derive(Subcommand, Debug)]
 pub enum AchainableCommand {
 	AmountHolding(AmountHoldingArg),
 	AmountToken(AmountTokenArg),
@@ -198,17 +193,18 @@ pub enum AchainableCommand {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum OneblockCommand {
+	Completion,
+	Outstanding,
+	Participation,
+}
+
+#[derive(Subcommand, Debug)]
 pub enum GenericDiscordRoleCommand {
 	#[clap(subcommand)]
 	Contest(ContestCommand),
 	#[clap(subcommand)]
 	SoraQuiz(SoraQuizCommand),
-}
-
-#[derive(Subcommand, Debug)]
-pub enum VIP3MembershipCardLevelCommand {
-	Gold,
-	Silver,
 }
 
 #[derive(Subcommand, Debug)]
@@ -222,6 +218,18 @@ pub enum ContestCommand {
 pub enum SoraQuizCommand {
 	Attendee,
 	Master,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum BnbDigitalDomainClubCommand {
+	Bnb999ClubMember,
+	Bnb10kClubMember,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum VIP3MembershipCardLevelCommand {
+	Gold,
+	Silver,
 }
 
 #[derive(Subcommand, Debug)]
@@ -453,13 +461,6 @@ impl Command {
 				A13(raw.into())
 			},
 			Command::A14 => A14,
-			Command::A20 => A20,
-			Command::BnbDomainHolding => BnbDomainHolding,
-			Command::OneBlock(c) => match c {
-				OneblockCommand::Completion => OneBlock(OneBlockCourseType::CourseCompletion),
-				OneblockCommand::Outstanding => OneBlock(OneBlockCourseType::CourseOutstanding),
-				OneblockCommand::Participation => OneBlock(OneBlockCourseType::CourseParticipation),
-			},
 			Command::Achainable(c) => match c {
 				AchainableCommand::AmountHolding(arg) =>
 					Achainable(AchainableParams::AmountHolding(AchainableAmountHolding {
@@ -534,6 +535,12 @@ impl Command {
 						token: to_para_str(&arg.token),
 					})),
 			},
+			Command::A20 => A20,
+			Command::OneBlock(c) => match c {
+				OneblockCommand::Completion => OneBlock(OneBlockCourseType::CourseCompletion),
+				OneblockCommand::Outstanding => OneBlock(OneBlockCourseType::CourseOutstanding),
+				OneblockCommand::Participation => OneBlock(OneBlockCourseType::CourseParticipation),
+			},
 			Command::GenericDiscordRole(c) => match c {
 				GenericDiscordRoleCommand::Contest(s) => match s {
 					ContestCommand::Legend =>
@@ -550,6 +557,13 @@ impl Command {
 					SoraQuizCommand::Master =>
 						GenericDiscordRole(GenericDiscordRoleType::SoraQuiz(SoraQuizType::Master)),
 				},
+			},
+			Command::BnbDomainHolding => BnbDomainHolding,
+			Command::BnbDigitalDomainClub(c) => match c {
+				BnbDigitalDomainClubCommand::Bnb999ClubMember =>
+					BnbDigitDomainClub(BnbDigitDomainType::Bnb999ClubMember),
+				BnbDigitalDomainClubCommand::Bnb10kClubMember =>
+					BnbDigitDomainClub(BnbDigitDomainType::Bnb10kClubMember),
 			},
 			Command::VIP3MembershipCard(arg) => match arg {
 				VIP3MembershipCardLevelCommand::Gold =>
