@@ -144,10 +144,6 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
 		// Litentry
-		} else if index == metadata.link_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
-			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.deactivate_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<DeactivateIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
