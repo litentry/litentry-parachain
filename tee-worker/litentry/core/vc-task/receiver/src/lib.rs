@@ -90,7 +90,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	N::MetadataType: NodeMetadataTrait,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
-	let n_workers = 12;
+	let n_workers = 960;
 	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 
 	let (tc_sender, tc_receiver) = channel::<(ShardIdentifier, TrustedCall)>();
