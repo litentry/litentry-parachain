@@ -537,7 +537,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				.for_parentchain(ParentchainId::Litentry)
 				.is_none();
 
-			if is_first_run {
+			if is_first_run && tee_accountid != primary_account_id {
 				// we are not primary worker
 				info!("my state doesn't know the creation header of the shard. will request provisioning");
 				// obtain provisioning from last active worker as this hasn't been done before
