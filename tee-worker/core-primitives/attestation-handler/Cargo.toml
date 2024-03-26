@@ -36,7 +36,7 @@ sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", bra
 sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_trts = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
 sgx_tse = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["capi"], optional = true }
-sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["untrusted_fs", "net", "backtrace"], optional = true }
+sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", features = ["untrusted_fs", "net", "backtrace", "env"], optional = true }
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
 
 # local deps
