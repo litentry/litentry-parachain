@@ -41,8 +41,8 @@ use itp_stf_primitives::{
 use itp_types::{parentchain::ParentchainCall, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
-	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
+	AssertionBuildRequest, RequestType, SendStfRequest, StfRequestSender,
+	Web2IdentityVerificationRequest,
 };
 use litentry_macros::if_development_or;
 use litentry_primitives::{

@@ -30,7 +30,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
