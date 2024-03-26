@@ -37,6 +37,7 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
+use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use regex::Regex;
@@ -195,6 +196,9 @@ pub(crate) fn main() {
 		setup::generate_signing_key_file(enclave.as_ref());
 		let tee_accountid = enclave_account(enclave.as_ref());
 		println!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
+	} else if matches.is_present("scheduled-enclave") {
+		//// Somestuf here
+		println!("Scheduled Enclave: {:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry);
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]

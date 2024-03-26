@@ -49,7 +49,6 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-#[cfg(feature = "development")]
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
@@ -175,6 +174,11 @@ where
 			"bitcoin_key": bitcoin_key,
 			"ethereum_key": ethereum_key
 		}))
+	});
+
+	io.add_sync_method("bitacross_getScheduledEnclaveList", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_getScheduledEnclaveList");
+		Ok(json!({ "signer": format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.current_mrenclave) }))
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
