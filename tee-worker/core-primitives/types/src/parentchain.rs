@@ -212,6 +212,7 @@ where
 pub enum ParentchainError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
+	LinkIdentityFailure,
 }
 
 impl core::fmt::Display for ParentchainError {
@@ -219,6 +220,7 @@ impl core::fmt::Display for ParentchainError {
 		let message = match &self {
 			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
 			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
+			ParentchainError::LinkIdentityFailure => "Parentchain Error: LinkIdentityFailure",
 		};
 		write!(f, "{}", message)
 	}
