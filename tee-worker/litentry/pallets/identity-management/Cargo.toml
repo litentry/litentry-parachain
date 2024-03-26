@@ -38,3 +38,5 @@ std = [
     "pallet-balances/std",
     "litentry-primitives/std",
 ]
+
+development = []

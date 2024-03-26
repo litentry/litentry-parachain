@@ -30,7 +30,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -45,7 +44,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
-use litentry_macros::if_not_production;
+use litentry_macros::if_development;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
@@ -243,7 +242,7 @@ impl DataProviderConfig {
 		};
 
 		// we allow to override following config properties for non prod dev
-		if_not_production!({
+		if_development!({
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;
 			}
