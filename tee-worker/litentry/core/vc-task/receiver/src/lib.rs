@@ -25,7 +25,7 @@ use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPoolBuilder;
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
 	aes_encrypt_default,
@@ -53,7 +53,7 @@ use itp_types::{
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
@@ -521,12 +521,12 @@ where
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
-			_ => if_production_or!(
-				ensure!(ensure_self(&signer, &who), "Unauthorized signer",),
+			_ => if_development_or!(
 				ensure!(
 					ensure_self(&signer, &who) || ensure_alice(&signer_account),
 					"Unauthorized signer",
-				)
+				),
+				ensure!(ensure_self(&signer, &who), "Unauthorized signer",)
 			),
 		}
 

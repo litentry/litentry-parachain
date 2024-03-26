@@ -23,7 +23,7 @@ use std::vec::Vec;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self, shard_vault},
@@ -118,7 +118,7 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
 	#[codec(index = 6)]
@@ -237,7 +237,7 @@ impl TrustedCall {
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
-			#[cfg(not(feature = "production"))]
+			#[cfg(feature = "development")]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 			Self::request_batch_vc(sender_identity, ..) => sender_identity,
 		}
@@ -734,7 +734,7 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
-			#[cfg(not(feature = "production"))]
+			#[cfg(feature = "development")]
 			TrustedCall::remove_identity(signer, who, identities) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 

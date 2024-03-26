@@ -73,10 +73,10 @@ litentry-primitives = { path = "../litentry/primitives" }
 [features]
 default = []
 offchain-worker = ["itp-settings/offchain-worker"]
-production = [
-    "itp-settings/production",
-    "litentry-macros/production",
-    "litentry-primitives/production",
+development = [
+    "itp-settings/development",
+    "litentry-macros/development",
+    "litentry-primitives/development",
 ]
 dcap = []
 attesteer = ["dcap"]

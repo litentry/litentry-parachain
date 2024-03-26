@@ -29,8 +29,7 @@ base64 = { version = "0.13", features = ["alloc"] }
 
 [features]
 default = ["std"]
-production = [
-]
+development = []
 sgx = [
     "sgx_tstd",
     "thiserror-sgx",
