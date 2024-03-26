@@ -29,10 +29,10 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableMirror,
-	AchainableParams, AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network,
-	ContestType, EVMTokenType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	ParameterString, PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
-	Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
+	AchainableNameClassOfYear, AchainableParams, AchainableToken, Assertion, BnbDigitDomainType,
+	BoundedWeb3Network, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
+	OneBlockCourseType, ParameterString, PlatformUserType, RequestAesKey, SoraQuizType,
+	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 use sp_runtime::BoundedVec;
@@ -351,12 +351,7 @@ impl RequestBatchVcCommand {
 					)),
 					"class-of-year" => Ok(Assertion::Achainable(AchainableParams::ClassOfYear(
 						AchainableClassOfYear {
-							name: to_para_str(
-								&params
-									.get(1)
-									.ok_or("Achainable ClassOfYear: Missing parameter")?
-									.clone(),
-							),
+							name: AchainableNameClassOfYear::ClassOfYear,
 							chain: to_chains(
 								params
 									.get(2)

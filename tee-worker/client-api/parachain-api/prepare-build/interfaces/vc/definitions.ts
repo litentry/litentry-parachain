@@ -39,6 +39,9 @@ export default {
         AssertionSupportedNetwork: {
             _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
+        AchainableNameClassOfYear: {
+            _enum: ["ClassOfYear"],
+        },
         RequestVCResult: {
             vc_payload: "AesOutput",
             pre_mutated_id_graph: "AesOutput",
@@ -101,7 +104,7 @@ export default {
             lessThanOrEqualTo: "Bytes",
         },
         AchainableClassOfYear: {
-            name: "Bytes",
+            name: "AchainableNameClassOfYear",
             chain: "Vec<Web3Network>",
         },
         AchainableDateInterval: {

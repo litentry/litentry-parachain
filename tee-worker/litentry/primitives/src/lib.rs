@@ -52,8 +52,8 @@ pub use parentchain_primitives::{
 		achainable::{
 			AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 			AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
-			AchainableDateInterval, AchainableDatePercent, AchainableMirror, AchainableParams,
-			AchainableToken, AmountHoldingTimeType,
+			AchainableDateInterval, AchainableDatePercent, AchainableMirror,
+			AchainableNameClassOfYear, AchainableParams, AchainableToken, AmountHoldingTimeType,
 		},
 		bnb_domain::BnbDigitDomainType,
 		contest::ContestType,
