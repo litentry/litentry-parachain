@@ -93,6 +93,10 @@ pub trait FilterEvents {
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
+
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error>;
 }
 
 #[derive(Encode, Decode, Debug)]
@@ -142,6 +146,34 @@ impl StaticEvent for BalanceTransfer {
 }
 
 #[derive(Encode, Decode, Debug)]
+pub struct LinkIdentityRequested {
+	pub shard: ShardIdentifier,
+	pub account: AccountId,
+	pub encrypted_identity: Vec<u8>,
+	pub encrypted_validation_data: Vec<u8>,
+	pub encrypted_web3networks: Vec<u8>,
+}
+
+impl core::fmt::Display for LinkIdentityRequested {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"LinkIdentityRequested :: shard: {}, account: {}, identity: {:?}, validation_data: {:?}, web3networks: {:?}",
+			self.shard,
+			account_id_to_string::<AccountId>(&self.account),
+			self.encrypted_identity,
+			self.encrypted_validation_data,
+			self.encrypted_web3networks
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for LinkIdentityRequested {
+	const PALLET: &'static str = "IdentityManagement";
+	const EVENT: &'static str = "LinkIdentityRequested";
+}
+
+#[derive(Encode, Decode, Debug)]
 pub struct ParentchainBlockProcessed {
 	pub shard: ShardIdentifier,
 	pub block_number: BlockNumber,
@@ -180,6 +212,7 @@ where
 pub enum ParentchainError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
+	LinkIdentityFailure,
 }
 
 impl core::fmt::Display for ParentchainError {
@@ -187,6 +220,7 @@ impl core::fmt::Display for ParentchainError {
 		let message = match &self {
 			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
 			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
+			ParentchainError::LinkIdentityFailure => "Parentchain Error: LinkIdentityFailure",
 		};
 		write!(f, "{}", message)
 	}

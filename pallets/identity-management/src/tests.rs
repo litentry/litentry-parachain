@@ -33,13 +33,19 @@ fn link_identity_without_delegatee_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -53,13 +59,19 @@ fn link_identity_with_authorized_delegatee_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -156,13 +168,19 @@ fn extrinsic_whitelist_origin_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }

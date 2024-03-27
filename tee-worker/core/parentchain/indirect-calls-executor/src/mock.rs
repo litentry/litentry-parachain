@@ -15,7 +15,10 @@ use itp_sgx_runtime_primitives::types::{AccountId, Balance};
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
-	parentchain::{BalanceTransfer, ExtrinsicStatus, FilterEvents, HandleParentchainEvents},
+	parentchain::{
+		BalanceTransfer, ExtrinsicStatus, FilterEvents, HandleParentchainEvents,
+		LinkIdentityRequested,
+	},
 	Address, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
@@ -173,6 +176,12 @@ impl FilterEvents for MockEvents {
 			amount: Balance::default(),
 		};
 		Ok(Vec::from([transfer]))
+	}
+
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
 

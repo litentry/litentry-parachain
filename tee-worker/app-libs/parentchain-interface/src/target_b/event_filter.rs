@@ -22,6 +22,7 @@ use itp_api_client_types::Events;
 use itp_types::{
 	parentchain::{
 		BalanceTransfer, ExtrinsicFailed, ExtrinsicStatus, ExtrinsicSuccess, FilterEvents,
+		LinkIdentityRequested,
 	},
 	H256,
 };
@@ -73,6 +74,23 @@ impl FilterEvents for FilterableEvents {
 			.iter()
 			.flatten() // flatten filters out the nones
 			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<LinkIdentityRequested>() {
 				Ok(maybe_event) => maybe_event,
 				Err(e) => {
 					log::error!("Could not decode event: {:?}", e);
