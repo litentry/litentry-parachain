@@ -37,7 +37,7 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use regex::Regex;
@@ -197,8 +197,17 @@ pub(crate) fn main() {
 		let tee_accountid = enclave_account(enclave.as_ref());
 		println!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("scheduled-enclave") {
-		//// Somestuf here
-		println!("Scheduled Enclave: {:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry);
+		warn!("Triggering scheduled enclave");
+		println!("Print Triggering scheduled enclave");
+		// let seal_path = GLOBAL_SCHEDULED_ENCLAVE.seal_path.read();
+		// let enclave_seal = SealIO::new(seal_path.clone());
+
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		println!("check mrenclave, {:?}", &mrenclave.0);
+		thread::sleep(Duration::from_secs(2));
+		&GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave.0).unwrap();
+		thread::sleep(Duration::from_secs(2));
+		println!("Scheduled Enclave: {:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]

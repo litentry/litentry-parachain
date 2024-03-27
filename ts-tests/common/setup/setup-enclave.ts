@@ -21,7 +21,7 @@ async function setScheduledEnclave(api: ApiPromise, config: any) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
 
-    const tx = api.tx.teebag.setScheduledEnclave('Identity', block, hexToU8a(`0x${mrenclave}`));
+    const tx = api.tx.teebag.setScheduledEnclave('BitAcross', block, hexToU8a(`0x${mrenclave}`));
 
     console.log('Schedule Enclave Extrinsic sent');
     return signAndSend(tx, alice);
