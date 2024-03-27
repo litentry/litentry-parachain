@@ -16,7 +16,6 @@ use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
 	parentchain::{
-		events::{BalanceTransfer, LinkIdentityRequested},
 		ExtrinsicStatus, FilterEvents, HandleParentchainEvents,
 	},
 	Address, RsaRequest, ShardIdentifier, H256,

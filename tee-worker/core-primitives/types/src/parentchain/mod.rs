@@ -16,7 +16,6 @@
 */
 
 pub mod events;
-use events::{BalanceTransfer, LinkIdentityRequested};
 
 use crate::OpaqueCall;
 use alloc::vec::Vec;

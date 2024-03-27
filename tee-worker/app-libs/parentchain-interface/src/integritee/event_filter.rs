@@ -21,7 +21,7 @@ use itp_api_client_types::{Events, StaticEvent};
 
 use itp_types::{
 	parentchain::{
-		events::{BalanceTransfer, ExtrinsicFailed, ExtrinsicSuccess, LinkIdentityRequested},
+		events::{ExtrinsicFailed, ExtrinsicSuccess},
 		ExtrinsicStatus, FilterEvents,
 	},
 	H256,
