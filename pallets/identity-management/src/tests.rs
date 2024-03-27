@@ -107,7 +107,10 @@ fn deactivate_identity_works() {
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::DeactivateIdentityRequested { shard },
+			crate::Event::DeactivateIdentityRequested {
+				shard,
+				encrypted_identity: vec![1u8; 2048],
+			},
 		));
 	});
 }
