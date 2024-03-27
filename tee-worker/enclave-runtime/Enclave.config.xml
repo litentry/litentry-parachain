@@ -9,8 +9,8 @@
   <ReservedMemMinSize>0x20000</ReservedMemMinSize>
   <ReservedMemInitSize>0x40000</ReservedMemInitSize>
   <ReservedMemMaxSize>0x400000</ReservedMemMaxSize>
-  <TCSMaxNum>64</TCSMaxNum>
-  <TCSNum>64</TCSNum>
+  <TCSMaxNum>1024</TCSMaxNum>
+  <TCSNum>1024</TCSNum>
   <TCSMinPool>64</TCSMinPool>
   <TCSPolicy>0</TCSPolicy>
   <DisableDebug>0</DisableDebug>
