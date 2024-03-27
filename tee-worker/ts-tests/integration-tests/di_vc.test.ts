@@ -1,13 +1,14 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { initIntegrationTestContext } from './common/utils';
-import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
 import {
     getSidechainNonce,
     createSignedTrustedCallLinkIdentity,
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
@@ -16,6 +17,7 @@ import { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
+import { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -149,5 +151,32 @@ describe('Test Vc (direct invocation)', function () {
 
             await assertVc(context, aliceSubstrateIdentity, res.value);
         });
+    });
+
+    step('request invalid vc with different primeIdentities', async function () {
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const nonce = getNextNonce();
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const bobSubstrateIdentity = await context.web3Wallets.substrate.Bob.getIdentity(context);
+        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
+        const call = await createSignedTrustedCall(
+            context.api,
+            ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)'],
+            context.web3Wallets.substrate.Alice,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            [
+                eveSubstrateIdentity.toHuman(),
+                bobSubstrateIdentity.toHuman(),
+                context.api.createType('Assertion', { A1: 'A1' }).toHex(),
+                aesKey,
+                requestIdentifier,
+            ]
+        );
+
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, call);
+        console.log('requestInvalidVc call returned', res.toHuman());
+        assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
     });
 });
