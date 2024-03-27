@@ -142,6 +142,7 @@ impl DomainInfo {
 		serde_json::from_value(v.clone()).map_err(|_| ErrorDetail::ParseError)
 	}
 
+	#[allow(deprecated)]
 	pub fn is_expired(&self) -> Result<bool, Error> {
 		// e.g. "2014-11-28T12:45:59.324310806Z"
 		let now = now();

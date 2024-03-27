@@ -11,7 +11,7 @@ LOCAL_VERSION = $(shell cat $(VERSION_FILE))
 COMMAND = git ls-remote $(REPO) HEAD | awk '{ print $$1 }'
 REMOTE_VERSION = $(shell $(COMMAND))
 # or specify the exact hash if you need a non-default branch / tag / commit etc.
-REMOTE_VERSION = v2.0.0-preview-11-17
+REMOTE_VERSION = v2.0.0-preview
 
 # update the SDK files
 all: updatesdk
