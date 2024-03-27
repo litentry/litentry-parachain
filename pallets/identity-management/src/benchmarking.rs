@@ -64,7 +64,7 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::LinkIdentityRequested{
 			shard,
-			account: caller.clone(),
+			account: caller,
 			encrypted_identity: vec![1u8; 2048],
 			encrypted_validation_data: vec![1u8; 2048],
 			encrypted_web3networks: vec![1u8; 2048],
