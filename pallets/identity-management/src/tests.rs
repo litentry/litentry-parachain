@@ -102,13 +102,14 @@ fn deactivate_identity_works() {
 		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::deactivate_identity(
-			RuntimeOrigin::signed(alice),
+			RuntimeOrigin::signed(alice.clone()),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::DeactivateIdentityRequested {
 				shard,
+				account: alice,
 				encrypted_identity: vec![1u8; 2048],
 			},
 		));
@@ -121,12 +122,16 @@ fn activate_identity_works() {
 		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::activate_identity(
-			RuntimeOrigin::signed(alice),
+			RuntimeOrigin::signed(alice.clone()),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::ActivateIdentityRequested { shard, encrypted_identity: vec![1u8; 2048] },
+			crate::Event::ActivateIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+			},
 		));
 	});
 }
