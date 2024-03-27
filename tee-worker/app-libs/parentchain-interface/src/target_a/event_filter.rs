@@ -17,7 +17,7 @@
 //! Various way to filter Parentchain events
 
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
-use itp_api_client_types::Events;
+use itp_api_client_types::{Events, StaticEvent};
 
 use itp_types::{
 	parentchain::{
@@ -68,29 +68,12 @@ impl FilterEvents for FilterableEvents {
 			.collect())
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.flatten() // flatten filters out the nones
-			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
-				Ok(maybe_event) => maybe_event,
-				Err(e) => {
-					log::error!("Could not decode event: {:?}", e);
-					None
-				},
-			})
-			.collect())
-	}
-
-	fn get_link_identity_events(
-		&self,
-	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
+	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
 			.flatten()
-			.filter_map(|ev| match ev.as_event::<LinkIdentityRequested>() {
+			.filter_map(|ev| match ev.as_event::<T>() {
 				Ok(maybe_event) => maybe_event,
 				Err(e) => {
 					log::error!("Could not decode event: {:?}", e);

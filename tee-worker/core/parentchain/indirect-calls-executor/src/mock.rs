@@ -73,7 +73,7 @@ where
 pub struct ExtrinsicParser<SignedExtra> {
 	_phantom: PhantomData<SignedExtra>,
 }
-use itp_api_client_types::ParentchainSignedExtra;
+use itp_api_client_types::{ParentchainSignedExtra, StaticEvent};
 use itp_stf_primitives::types::TrustedOperation;
 
 /// Parses the extrinsics corresponding to the parentchain.
@@ -169,18 +169,7 @@ impl FilterEvents for MockEvents {
 		Ok(Vec::from([ExtrinsicStatus::Success]))
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
-		let transfer = BalanceTransfer {
-			to: [0u8; 32].into(),
-			from: [0u8; 32].into(),
-			amount: Balance::default(),
-		};
-		Ok(Vec::from([transfer]))
-	}
-
-	fn get_link_identity_events(
-		&self,
-	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
+	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error> {
 		Ok(Vec::new())
 	}
 }

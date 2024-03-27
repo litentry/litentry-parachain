@@ -27,6 +27,7 @@ use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use serde::{Deserialize, Serialize};
 use sp_core::bounded::alloc;
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
+use substrate_api_client::ac_node_api::StaticEvent;
 
 pub type StorageProof = Vec<Vec<u8>>;
 
@@ -93,11 +94,7 @@ pub trait FilterEvents {
 	type Error: From<ParentchainError> + core::fmt::Debug;
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
-
-	fn get_link_identity_events(
-		&self,
-	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error>;
+	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error>;
 }
 
 #[derive(Debug)]

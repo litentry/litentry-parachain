@@ -65,12 +65,12 @@ where
 		events: impl FilterEvents,
 		vault_account: &AccountId,
 	) -> Result<(), Error> {
-		let filter_events = events.get_transfer_events();
+		let transfer_events = events.get_events::<BalanceTransfer>();
 		trace!(
 			"[TargetA] filtering transfer events to shard vault account: {}",
 			hex_encode(vault_account.encode().as_slice())
 		);
-		if let Ok(events) = filter_events {
+		if let Ok(events) = transfer_events {
 			events
 				.iter()
 				.filter(|&event| event.to == *vault_account)
