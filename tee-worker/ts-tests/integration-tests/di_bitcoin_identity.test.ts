@@ -32,7 +32,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     let aliceBitcoinIdentity: CorePrimitivesIdentity = undefined as any;
     let aliceEvmIdentity: CorePrimitivesIdentity;
     let bobBitcoinIdentity: CorePrimitivesIdentity;
-    let initialNonce = 0;
+    let currentNonce = 0;
 
     // Alice links:
     // - alice's evm identity
@@ -65,7 +65,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         aliceBitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
         aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
         bobBitcoinIdentity = await context.web3Wallets.bitcoin.Bob.getIdentity(context);
-        initialNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
+        currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
@@ -80,7 +80,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('linking identities (alice bitcoin account)', async function () {
-        const aliceEvmNonce = initialNonce++;
+        const aliceEvmNonce = currentNonce++;
         const aliceEvmValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
@@ -98,7 +98,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         });
 
         // link another bitcoin account with prettified signature
-        const bobBitcoinNonce = initialNonce++;
+        const bobBitcoinNonce = currentNonce++;
         const bobBitcoinValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
@@ -194,7 +194,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('deactivating identity(alice bitcoin account)', async function () {
-        const aliceEvmNonce = initialNonce++;
+        const aliceEvmNonce = currentNonce++;
 
         deactivateIdentityRequestParams.push({
             nonce: aliceEvmNonce,
@@ -262,7 +262,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('activating identity(alice bitcoin account)', async function () {
-        const aliceEvmNonce = initialNonce++;
+        const aliceEvmNonce = currentNonce++;
 
         activateIdentityRequestParams.push({
             nonce: aliceEvmNonce,
@@ -332,6 +332,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     step('check sidechain nonce', async function () {
         await sleep(20);
         const nonce = await getSidechainNonce(context, aliceBitcoinIdentity);
-        assert.equal(nonce.toNumber(), initialNonce);
+        assert.equal(nonce.toNumber(), currentNonce);
     });
 });
