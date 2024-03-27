@@ -92,6 +92,7 @@ pub mod pallet {
 		},
 		ActivateIdentityRequested {
 			shard: ShardIdentifier,
+			encrypted_identity: Vec<u8>,
 		},
 		// event that should be triggered by TEECallOrigin
 		// we return the request-extrinsic-hash for better tracking
@@ -247,7 +248,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::ActivateIdentityRequested { shard });
+			Self::deposit_event(Event::ActivateIdentityRequested { shard, encrypted_identity });
 			Ok(().into())
 		}
 

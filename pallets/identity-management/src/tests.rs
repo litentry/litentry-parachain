@@ -126,7 +126,7 @@ fn activate_identity_works() {
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::ActivateIdentityRequested { shard },
+			crate::Event::ActivateIdentityRequested { shard, encrypted_identity: vec![1u8; 2048] },
 		));
 	});
 }
