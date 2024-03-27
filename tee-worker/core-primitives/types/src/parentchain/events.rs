@@ -108,7 +108,9 @@ impl core::fmt::Display for DeactivateIdentityRequested {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
 			"DeactivateIdentityRequested :: shard: {}, account: {}, identity: {:?}",
-			self.shard, self.encrypted_identity
+			self.shard,
+			account_id_to_string::<AccountId>(&self.account),
+			self.encrypted_identity
 		);
 		write!(f, "{}", message)
 	}
@@ -130,7 +132,9 @@ impl core::fmt::Display for ActivateIdentityRequested {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
 			"ActivateIdentityRequested :: shard: {}, account: {}, identity: {:?}",
-			self.shard, self.encrypted_identity
+			self.shard,
+			account_id_to_string::<AccountId>(&self.account),
+			self.encrypted_identity
 		);
 		write!(f, "{}", message)
 	}
