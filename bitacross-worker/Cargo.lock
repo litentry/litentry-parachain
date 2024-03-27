@@ -517,6 +517,7 @@ dependencies = [
  "itp-utils",
  "jsonrpsee",
  "lazy_static",
+ "lc-scheduled-enclave",
  "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",

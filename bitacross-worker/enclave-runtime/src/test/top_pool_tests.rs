@@ -40,10 +40,7 @@ use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
 };
-use itp_types::{
-	parentchain::{Address, ParentchainId},
-	Block, RsaRequest, ShardIdentifier, H256,
-};
+use itp_types::{RsaRequest, ShardIdentifier};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;

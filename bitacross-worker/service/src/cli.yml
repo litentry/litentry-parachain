@@ -148,6 +148,8 @@ subcommands:
         about: Get the public RSA3072 key from the TEE to be used to encrypt requests
     - signing-key:
         about: Get the public ed25519 key the TEE uses to sign messages and extrinsics
+    - scheduled-enclave:
+        about: Get the sealed state of scheduled enclave
     - dump-ra:
         about: Perform RA and dump cert to disk
     - wallet:
