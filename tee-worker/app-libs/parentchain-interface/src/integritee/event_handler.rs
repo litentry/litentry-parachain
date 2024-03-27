@@ -24,7 +24,10 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::parentchain::{
-	events::{BalanceTransfer, LinkIdentityRequested},
+	events::{
+		ActivateIdentityRequested, BalanceTransfer, DeactivateIdentityRequested,
+		LinkIdentityRequested,
+	},
 	AccountId, FilterEvents, HandleParentchainEvents, ParentchainError, ParentchainId,
 };
 use litentry_hex_utils::hex_encode;
@@ -93,6 +96,62 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn deactivate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		executor: &Executor,
+		account: &AccountId,
+		encrypted_identity: Vec<u8>,
+	) -> Result<(), Error> {
+		let shard = executor.get_default_shard();
+		let enclave_account_id = executor.get_enclave_account().expect("no enclave account");
+
+		let identity: Identity =
+			Identity::decode(&mut executor.decrypt(&encrypted_identity)?.as_slice())?;
+
+		let trusted_call = TrustedCall::deactivate_identity(
+			enclave_account_id.into(),
+			account.clone().into(),
+			identity,
+			None,
+			Default::default(),
+		);
+		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation =
+			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
+
+		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
+		executor.submit_trusted_call(shard, encrypted_trusted_call);
+
+		Ok(())
+	}
+
+	fn activate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		executor: &Executor,
+		account: &AccountId,
+		encrypted_identity: Vec<u8>,
+	) -> Result<(), Error> {
+		let shard = executor.get_default_shard();
+		let enclave_account_id = executor.get_enclave_account().expect("no enclave account");
+
+		let identity: Identity =
+			Identity::decode(&mut executor.decrypt(&encrypted_identity)?.as_slice())?;
+
+		let trusted_call = TrustedCall::activate_identity(
+			enclave_account_id.into(),
+			account.clone().into(),
+			identity,
+			None,
+			Default::default(),
+		);
+		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation =
+			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
+
+		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
+		executor.submit_trusted_call(shard, encrypted_trusted_call);
+
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -137,6 +196,36 @@ where
 					)
 				})
 				.map_err(|_| ParentchainError::LinkIdentityFailure)?;
+		}
+
+		if let Ok(events) = events.get_events::<DeactivateIdentityRequested>() {
+			debug!("Handling deactivate_identity events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					info!("found deactivate_identity_event: {}", event);
+					Self::deactivate_identity(
+						executor,
+						&event.account,
+						event.encrypted_identity.clone(),
+					)
+				})
+				.map_err(|_| ParentchainError::DeactivateIdentityFailure)?;
+		}
+
+		if let Ok(events) = events.get_events::<ActivateIdentityRequested>() {
+			debug!("Handling activate_identity events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					info!("found activate_identity_event: {}", event);
+					Self::activate_identity(
+						executor,
+						&event.account,
+						event.encrypted_identity.clone(),
+					)
+				})
+				.map_err(|_| ParentchainError::ActivateIdentityFailure)?;
 		}
 
 		Ok(())
