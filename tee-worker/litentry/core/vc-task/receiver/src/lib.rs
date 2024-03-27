@@ -23,7 +23,7 @@ use std::sync::SgxMutex as Mutex;
 
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
-use futures::executor::ThreadPool;
+use futures::executor::ThreadPoolBuilder;
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 #[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
@@ -90,7 +90,8 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	N::MetadataType: NodeMetadataTrait,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
-	let pool = ThreadPool::new().unwrap();
+	let n_workers = 960;
+	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 
 	let (tc_sender, tc_receiver) = channel::<(ShardIdentifier, TrustedCall)>();
 
@@ -195,8 +196,22 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				);
 
 				// Totally fine to `unwrap` here. Because new item was just added above.
-				let do_watch = req_registry_pool.update_item(connection_hash).unwrap();
-				send_vc_response(connection_hash, context_pool, response, 0u8, 1, do_watch);
+				match req_registry_pool.update_item(connection_hash) {
+					Ok(do_watch) => {
+						send_vc_response(connection_hash, context_pool, response, 0u8, 1, do_watch);
+					},
+					Err(e) => {
+						error!("1 couldn't find connection_hash: {:?}", e);
+						send_vc_response(
+							connection_hash,
+							context_pool,
+							Err(format!("1 couldn't find connection_hash: {:?}", e)),
+							0u8,
+							1,
+							false,
+						);
+					},
+				}
 			});
 		} else if let TrustedCall::request_batch_vc(
 			signer,
@@ -248,27 +263,55 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 						);
 
 						// Totally fine to `unwrap` here. Because new item was just added above.
-						let do_watch = req_registry_pool.update_item(connection_hash).unwrap();
-						send_vc_response(
-							connection_hash,
-							context_pool,
-							response,
-							idx as u8,
-							assertion_len,
-							do_watch,
-						);
+						match req_registry_pool.update_item(connection_hash) {
+							Ok(do_watch) => {
+								send_vc_response(
+									connection_hash,
+									context_pool,
+									response,
+									idx as u8,
+									assertion_len,
+									do_watch,
+								);
+							},
+							Err(e) => {
+								error!("2 couldn't find connection_hash: {:?}", e);
+								send_vc_response(
+									connection_hash,
+									context_pool,
+									Err(format!("2 couldn't find connection_hash: {:?}", e)),
+									idx as u8,
+									assertion_len,
+									false,
+								);
+							},
+						}
 					});
 				} else {
 					// Totally fine to `unwrap` here. Because new item was just added above.
-					let do_watch = req_registry.update_item(connection_hash).unwrap();
-					send_vc_response(
-						connection_hash,
-						context.clone(),
-						Err("Duplicate assertion request".to_string()),
-						idx as u8,
-						assertion_len,
-						do_watch,
-					);
+					match req_registry.update_item(connection_hash) {
+						Ok(do_watch) => {
+							send_vc_response(
+								connection_hash,
+								context.clone(),
+								Err("Duplicate assertion request".to_string()),
+								idx as u8,
+								assertion_len,
+								do_watch,
+							);
+						},
+						Err(e) => {
+							error!("3 couldn't find connection_hash: {:?}", e);
+							send_vc_response(
+								connection_hash,
+								context.clone(),
+								Err(format!("3 couldn't find connection_hash: {:?}", e)),
+								idx as u8,
+								assertion_len,
+								false,
+							);
+						},
+					}
 				}
 			}
 		} else {
