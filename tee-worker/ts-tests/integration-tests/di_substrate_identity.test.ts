@@ -247,7 +247,6 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking invalid identity with different identities', async function () {
-
         let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
