@@ -67,9 +67,9 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 # litentry
 config = "0.13.3"
+lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
-lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false }
 
 [features]
 default = []
