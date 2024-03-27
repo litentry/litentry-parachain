@@ -62,7 +62,13 @@ benchmarks! {
 		let encrypted_web3networks = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::LinkIdentityRequested{
+			shard,
+			account: caller.clone(),
+			encrypted_identity: vec![1u8; 2048],
+			encrypted_validation_data: vec![1u8; 2048],
+			encrypted_web3networks: vec![1u8; 2048],
+		}.into());
 	}
 
 	// Benchmark `deactivate_identity`. There are no worst conditions. The benchmark showed that
