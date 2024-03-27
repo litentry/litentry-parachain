@@ -55,14 +55,10 @@ type TestAuthor<Filter, BroadcastedFilter> = Author<
 
 #[test]
 fn top_encryption_works() {
-	// TODO(Litentry): noop for now as Rsa3072KeyPair creation doesn't work
-	// see comment in `ShieldingCryptoDecrypt``
-	/*
 	let top_call = mock_top_direct_trusted_call_signed();
 	let top_getter = mock_top_trusted_getter_signed();
 	assert_eq!(top_call, encrypt_and_decrypt_top(&top_call));
 	assert_eq!(top_getter, encrypt_and_decrypt_top(&top_getter));
-	*/
 }
 
 fn encrypt_and_decrypt_top(top: &TrustedOperationMock) -> TrustedOperationMock {

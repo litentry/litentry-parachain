@@ -18,9 +18,9 @@
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
-use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
+use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::ed25519::Pair as Ed25519Pair;
-use std::vec::Vec;
+use std::{format, vec::Vec};
 
 #[derive(Clone)]
 pub struct ShieldingCryptoMock {
@@ -30,7 +30,7 @@ pub struct ShieldingCryptoMock {
 impl Default for ShieldingCryptoMock {
 	fn default() -> Self {
 		ShieldingCryptoMock {
-			key: Rsa3072KeyPair::new().expect("default RSA3072 key for shielding key mock"),
+			key: Rsa3072KeyPair::create().expect("default RSA3072 key for shielding key mock"),
 		}
 	}
 }
@@ -39,7 +39,9 @@ impl ShieldingCryptoEncrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		self.key.encrypt(data)
+		self.key
+			.encrypt(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()))
 	}
 }
 
@@ -47,7 +49,9 @@ impl ShieldingCryptoDecrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		self.key.decrypt(data)
+		self.key
+			.decrypt(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()))
 	}
 }
 
