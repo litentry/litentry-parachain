@@ -189,7 +189,7 @@ impl TrustedGetterSigned {
 		let is_valid = self.signature.verify(prettified_msg_hash, self.getter.sender_identity())
 			|| self.signature.verify(&hashed, self.getter.sender_identity())
 			|| self.signature.verify(&payload, self.getter.sender_identity());
-			|| self.signature.verify(prettified_msg_raw, self.getter.sender_identity())
+		|| self.signature.verify(prettified_msg_raw, self.getter.sender_identity());
 
 		// in non-prod, we accept signature from Alice too
 		if_development_or!(
