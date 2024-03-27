@@ -119,6 +119,8 @@ pub enum ParentchainError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
 	LinkIdentityFailure,
+	DeactivateIdentityFailure,
+	ActivateIdentityFailure,
 }
 
 impl core::fmt::Display for ParentchainError {
@@ -127,6 +129,12 @@ impl core::fmt::Display for ParentchainError {
 			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
 			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
 			ParentchainError::LinkIdentityFailure => "Parentchain Error: LinkIdentityFailure",
+			ParentchainError::DeactivateIdentityFailure => {
+				"Parentchain Error: DeactivateIdentityFailure"
+			},
+			ParentchainError::ActivateIdentityFailure => {
+				"Parentchain Error: ActivateIdentityFailure"
+			},
 		};
 		write!(f, "{}", message)
 	}
