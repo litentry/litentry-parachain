@@ -18,14 +18,14 @@ evm = [
     "ita-sgx-runtime/evm",
     "ita-stf/evm",
 ]
-production = [
-    "ita-stf/production",
-    "itp-settings/production",
-    "itp-attestation-handler/production",
-    "lc-data-providers/production",
-    "lc-vc-task-receiver/production",
-    "litentry-primitives/production",
-    "litentry-macros/production",
+development = [
+    "ita-stf/development",
+    "itp-settings/development",
+    "itp-attestation-handler/development",
+    "lc-data-providers/development",
+    "lc-vc-task-receiver/development",
+    "litentry-primitives/development",
+    "litentry-macros/development",
 ]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
@@ -73,7 +73,7 @@ hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 ipfs-unixfs = { default-features = false, git = "https://github.com/whalelephant/rust-ipfs", branch = "w-nstd" }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "serde_no_std"] }
-url = { git = "https://github.com/integritee-network/rust-url", branch = "sgx-no-std", default-features = false, features = ["alloc"] }
+url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 
 # scs / integritee
 jsonrpc-core = { default-features = false, git = "https://github.com/scs/jsonrpc", branch = "no_std_v18" }
