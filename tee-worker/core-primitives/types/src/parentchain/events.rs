@@ -96,3 +96,45 @@ impl StaticEvent for LinkIdentityRequested {
 	const PALLET: &'static str = "IdentityManagement";
 	const EVENT: &'static str = "LinkIdentityRequested";
 }
+
+#[derive(Encode, Decode, Debug)]
+pub struct DeactivateIdentityRequested {
+	pub shard: ShardIdentifier,
+	pub encrypted_identity: Vec<u8>,
+}
+
+impl core::fmt::Display for DeactivateIdentityRequested {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"DeactivateIdentityRequested :: shard: {}, identity: {:?}",
+			self.shard, self.encrypted_identity
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for DeactivateIdentityRequested {
+	const PALLET: &'static str = "IdentityManagement";
+	const EVENT: &'static str = "DeactivateIdentityRequested";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct ActivateIdentityRequested {
+	pub shard: ShardIdentifier,
+	pub encrypted_identity: Vec<u8>,
+}
+
+impl core::fmt::Display for ActivateIdentityRequested {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"ActivateIdentityRequested :: shard: {}, identity: {:?}",
+			self.shard, self.encrypted_identity
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for ActivateIdentityRequested {
+	const PALLET: &'static str = "IdentityManagement";
+	const EVENT: &'static str = "ActivateIdentityRequested";
+}
