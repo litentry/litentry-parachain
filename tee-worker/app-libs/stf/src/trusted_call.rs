@@ -74,7 +74,7 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
-pub type MaxAssertionLength = ConstU32<32>;
+pub type MaxAssertionLength = ConstU32<128>;
 pub type VecAssertion = BoundedVec<Assertion, MaxAssertionLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
