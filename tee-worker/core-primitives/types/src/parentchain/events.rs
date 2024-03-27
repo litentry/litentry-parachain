@@ -46,6 +46,30 @@ impl StaticEvent for BalanceTransfer {
 }
 
 #[derive(Encode, Decode, Debug)]
+pub struct ParentchainBlockProcessed {
+	pub shard: ShardIdentifier,
+	pub block_number: BlockNumber,
+	pub block_hash: Hash,
+	pub task_merkle_root: Hash,
+}
+
+impl core::fmt::Display for ParentchainBlockProcessed {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"ParentchainBlockProcessed :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
+			self.block_number, self.shard, self.task_merkle_root, self.block_hash
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for ParentchainBlockProcessed {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "ParentchainBlockProcessed";
+}
+
+// IdentityManagement events
+#[derive(Encode, Decode, Debug)]
 pub struct LinkIdentityRequested {
 	pub shard: ShardIdentifier,
 	pub account: AccountId,
@@ -71,27 +95,4 @@ impl core::fmt::Display for LinkIdentityRequested {
 impl StaticEvent for LinkIdentityRequested {
 	const PALLET: &'static str = "IdentityManagement";
 	const EVENT: &'static str = "LinkIdentityRequested";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct ParentchainBlockProcessed {
-	pub shard: ShardIdentifier,
-	pub block_number: BlockNumber,
-	pub block_hash: Hash,
-	pub task_merkle_root: Hash,
-}
-
-impl core::fmt::Display for ParentchainBlockProcessed {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"ParentchainBlockProcessed :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
-			self.block_number, self.shard, self.task_merkle_root, self.block_hash
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for ParentchainBlockProcessed {
-	const PALLET: &'static str = "Teebag";
-	const EVENT: &'static str = "ParentchainBlockProcessed";
 }
