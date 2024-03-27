@@ -83,22 +83,22 @@ members = [
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
-sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_libc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_serialize_derive = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_libc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_serialize_derive = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
 
 # overriding as we've got c compilation error on ubuntu 22.04 (maybe due to a newer gcc version)
 [patch."https://github.com/apache/incubator-teaclave-sgx-sdk"]
-sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
-sgx_urts = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_urts = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 
 [patch."https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk"]
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }

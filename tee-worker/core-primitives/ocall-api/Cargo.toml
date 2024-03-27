@@ -9,7 +9,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 derive_more = { version = "0.99.5" }
 
 # sgx deps
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 
 # substrate deps
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

@@ -23,7 +23,7 @@ strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
 
 # sgx dependencies
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", default-features = false }
+sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview", default-features = false }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 # internal dependencies

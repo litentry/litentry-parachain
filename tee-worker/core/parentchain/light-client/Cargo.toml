@@ -11,9 +11,9 @@ log = { version = "0.4", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # sgx-deps
-sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17", optional = true }
+sgx_tprotected_fs = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"], optional = true }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
 
 # local deps

@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 
 # local dependencies
 itp-api-client-types = { path = "../../../core-primitives/node-api/api-client-types", default-features = false }

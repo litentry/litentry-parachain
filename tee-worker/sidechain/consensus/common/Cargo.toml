@@ -28,7 +28,7 @@ its-state = { path = "../../state", default-features = false }
 
 # sgx deps
 sgx_tstd = { optional = true, git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview-11-17" }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
 thiserror-sgx = { package = "thiserror", optional = true, git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }
 
 # substrate deps
