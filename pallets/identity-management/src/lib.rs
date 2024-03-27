@@ -237,6 +237,10 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorizedUser
+			);
 			Self::deposit_event(Event::DeactivateIdentityRequested {
 				shard,
 				account: who,
@@ -254,6 +258,10 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorizedUser
+			);
 			Self::deposit_event(Event::ActivateIdentityRequested {
 				shard,
 				account: who,
