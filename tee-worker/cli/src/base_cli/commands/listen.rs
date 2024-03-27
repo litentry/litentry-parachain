@@ -17,7 +17,7 @@
 
 use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
 
-use itp_types::parentchain::{BalanceTransfer, ParentchainBlockProcessed};
+use itp_types::parentchain::events::{BalanceTransfer, ParentchainBlockProcessed};
 use log::*;
 use substrate_api_client::{GetChainInfo, SubscribeEvents};
 
