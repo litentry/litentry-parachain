@@ -88,9 +88,13 @@ pub mod pallet {
 		},
 		DeactivateIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>,
 		},
 		ActivateIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>,
 		},
 		// event that should be triggered by TEECallOrigin
 		// we return the request-extrinsic-hash for better tracking
@@ -232,8 +236,16 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::DeactivateIdentityRequested { shard });
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorizedUser
+			);
+			Self::deposit_event(Event::DeactivateIdentityRequested {
+				shard,
+				account: who,
+				encrypted_identity,
+			});
 			Ok(().into())
 		}
 
@@ -245,8 +257,16 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::ActivateIdentityRequested { shard });
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorizedUser
+			);
+			Self::deposit_event(Event::ActivateIdentityRequested {
+				shard,
+				account: who,
+				encrypted_identity,
+			});
 			Ok(().into())
 		}
 

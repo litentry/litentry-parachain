@@ -22,7 +22,8 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::parentchain::{
-	AccountId, FilterEvents, HandleParentchainEvents, ParentchainError, ParentchainId,
+	events::BalanceTransfer, AccountId, FilterEvents, HandleParentchainEvents, ParentchainError,
+	ParentchainId,
 };
 use litentry_hex_utils::hex_encode;
 use log::*;
@@ -65,12 +66,12 @@ where
 		events: impl FilterEvents,
 		vault_account: &AccountId,
 	) -> Result<(), Error> {
-		let filter_events = events.get_transfer_events();
+		let transfer_events = events.get_events::<BalanceTransfer>();
 		trace!(
 			"[TargetA] filtering transfer events to shard vault account: {}",
 			hex_encode(vault_account.encode().as_slice())
 		);
-		if let Ok(events) = filter_events {
+		if let Ok(events) = transfer_events {
 			events
 				.iter()
 				.filter(|&event| event.to == *vault_account)
