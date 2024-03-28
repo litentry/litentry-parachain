@@ -54,7 +54,7 @@ impl ActivateIdentityCommand {
 
 		let xt = compose_extrinsic!(chain_api, IMP, "activate_identity", shard, encrypted_identity);
 
-		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Broadcast).unwrap();
+		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 		println!("[+] ActivateIdentityCommand got finalized. Hash: {:?}", tx_hash);
 
 		Ok(CliResultOk::None)
