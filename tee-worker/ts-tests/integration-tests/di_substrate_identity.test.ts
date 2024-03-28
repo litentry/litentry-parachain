@@ -246,62 +246,6 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
 
-    step('linking invalid identity with different identities', async function () {
-        let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterNonce = getNextNonce();
-        const aliceEvmNonce = getNextNonce();
-        const aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
-        const aliceEvmValidation = await buildValidations(
-            context,
-            bobSubstrateIdentity,
-            aliceEvmIdentity,
-            aliceEvmNonce,
-            'ethereum',
-            context.web3Wallets.evm.Bob
-        );
-
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-
-        const linkIdentityCall = await createSignedTrustedCall(
-            context.api,
-            [
-                'link_identity',
-                '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
-            ],
-            context.web3Wallets.substrate.Bob,
-            context.mrEnclave,
-
-            context.api.createType('Index', twitterNonce),
-
-            [
-                bobSubstrateIdentity.toHuman(),
-                aliceEvmIdentity.toHuman(),
-                twitterIdentity,
-                aliceEvmValidation,
-                evmNetworks,
-                aesKey,
-                requestIdentifier,
-            ]
-        );
-
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-
-        assert.isTrue(res.do_watch.isFalse);
-        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-        console.log('linkInvalidIdentity call returned', res.toHuman());
-
-        assertWorkerError(
-            context,
-            (v) => {
-                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
-            },
-            res
-        );
-    });
-
     step('linking identity with wrong signature', async function () {
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
 
@@ -808,9 +752,67 @@ describe('Test Identity (direct invocation)', function () {
         assert.lengthOf(idGraphHashResults, 1);
     });
 
+    step('linking invalid identity with different identities', async function () {
+        let currentNonce = (await getSidechainNonce(context, bobSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const twitterNonce = getNextNonce();
+        const aliceEvmNonce = getNextNonce();
+        const aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
+        const aliceEvmValidation = await buildValidations(
+            context,
+            bobSubstrateIdentity,
+            aliceEvmIdentity,
+            aliceEvmNonce,
+            'ethereum',
+            context.web3Wallets.evm.Bob
+        );
+
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+
+        const linkIdentityCall = await createSignedTrustedCall(
+            context.api,
+            [
+                'link_identity',
+                '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
+            ],
+            context.web3Wallets.substrate.Bob,
+            context.mrEnclave,
+
+            context.api.createType('Index', twitterNonce),
+
+            [
+                bobSubstrateIdentity.toHuman(),
+                aliceEvmIdentity.toHuman(),
+                twitterIdentity,
+                aliceEvmValidation,
+                evmNetworks,
+                aesKey,
+                requestIdentifier,
+            ]
+        );
+
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        console.log('linkInvalidIdentity call returned', res.toHuman());
+
+        assertWorkerError(
+            context,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+            },
+            res
+        );
+    });
     step('check sidechain nonce', async function () {
         await sleep(20);
         const aliceNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
+        console.log('alice nonce: ', aliceNonce.toNumber());
+        console.log('aliceCurrentNonce', aliceCurrentNonce);
+        
         assert.equal(aliceNonce.toNumber(), aliceCurrentNonce);
     });
 });
