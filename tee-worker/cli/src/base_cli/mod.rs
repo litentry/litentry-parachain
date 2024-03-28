@@ -21,6 +21,7 @@ use crate::{
 		faucet::FaucetCommand,
 		listen::ListenCommand,
 		litentry::{
+			activate_identity::ActivateIdentityCommand,
 			deactivate_identity::DeactivateIdentityCommand, id_graph_hash::IDGraphHashCommand,
 			link_identity::LinkIdentityCommand,
 		},
@@ -92,6 +93,9 @@ pub enum BaseCommand {
 
 	/// Deactivate Identity
 	DeactivateIdentity(DeactivateIdentityCommand),
+
+	/// Activate identity
+	ActivateIdentity(ActivateIdentityCommand),
 }
 
 impl BaseCommand {
@@ -112,6 +116,7 @@ impl BaseCommand {
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 			BaseCommand::DeactivateIdentity(cmd) => cmd.run(cli),
+			BaseCommand::ActivateIdentity(cmd) => cmd.run(cli),
 		}
 	}
 }
