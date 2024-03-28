@@ -144,10 +144,6 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
 		// Litentry
-		} else if index == metadata.request_vc_call_indexes().ok()? {
-			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
-			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::RequestVC(args, address, hashed_extrinsic))
 		} else if index == metadata.set_scheduled_enclave_call_indexes().ok()? {
 			let args = decode_and_log_error::<SetScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::SetScheduledEnclave(args))
