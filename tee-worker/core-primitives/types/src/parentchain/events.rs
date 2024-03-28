@@ -1,5 +1,5 @@
 use super::alloc::{format, vec::Vec};
-use crate::{AccountId, Balance, BlockNumber, Hash, ShardIdentifier};
+use crate::{AccountId, Assertion, Balance, BlockNumber, Hash, ShardIdentifier};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_utils::stringify::account_id_to_string;
@@ -69,6 +69,7 @@ impl StaticEvent for ParentchainBlockProcessed {
 }
 
 // IdentityManagement events
+
 #[derive(Encode, Decode, Debug)]
 pub struct LinkIdentityRequested {
 	pub shard: ShardIdentifier,
@@ -143,4 +144,30 @@ impl core::fmt::Display for ActivateIdentityRequested {
 impl StaticEvent for ActivateIdentityRequested {
 	const PALLET: &'static str = "IdentityManagement";
 	const EVENT: &'static str = "ActivateIdentityRequested";
+}
+
+// VCManagement events
+
+#[derive(Encode, Decode, Debug)]
+pub struct VCRequested {
+	pub shard: ShardIdentifier,
+	pub account: AccountId,
+	pub assertion: Assertion,
+}
+
+impl core::fmt::Display for VCRequested {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"VCRequested :: shard: {}, account: {}, assertion: {:?}",
+			self.shard,
+			account_id_to_string::<AccountId>(&self.account),
+			self.assertion
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for VCRequested {
+	const PALLET: &'static str = "VCManagement";
+	const EVENT: &'static str = "VCRequested";
 }
