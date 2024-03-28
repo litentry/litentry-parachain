@@ -810,9 +810,6 @@ describe('Test Identity (direct invocation)', function () {
     step('check sidechain nonce', async function () {
         await sleep(20);
         const aliceNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
-        console.log('alice nonce: ', aliceNonce.toNumber());
-        console.log('aliceCurrentNonce', aliceCurrentNonce);
-        
         assert.equal(aliceNonce.toNumber(), aliceCurrentNonce);
     });
 });
