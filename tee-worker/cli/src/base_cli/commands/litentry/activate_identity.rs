@@ -20,14 +20,11 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use codec::{Decode, Encode};
-use ita_stf::{helpers::get_expected_raw_message, Web3Network};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use litentry_primitives::{Identity, LitentryMultiSignature, Web3CommonValidationData};
+use litentry_primitives::Identity;
 use log::*;
-use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
@@ -49,14 +46,11 @@ impl ActivateIdentityCommand {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = direct_api.get_state_mrenclave().unwrap();
 		let shard = ShardIdentifier::decode(&mut &mrenclave[..]).unwrap();
-		let nonce = direct_api
-			.get_next_nonce(&shard, &self.get_primary_account_id().into())
-			.unwrap();
-
 		let signer = self.get_signer();
+
 		chain_api.set_signer(signer.into());
 
-		let (identity, encrypted_identity) = self.encrypt_identity(cli);
+		let (_, encrypted_identity) = self.encrypt_identity(cli);
 
 		let xt = compose_extrinsic!(chain_api, IMP, "activate_identity", shard, encrypted_identity);
 
@@ -64,11 +58,6 @@ impl ActivateIdentityCommand {
 		println!("[+] ActivateIdentityCommand got finalized. Hash: {:?}", tx_hash);
 
 		Ok(CliResultOk::None)
-	}
-
-	fn get_primary_account_id(&self) -> AccountId {
-		let account: sr25519_core::Pair = get_pair_from_str(&self.account).into();
-		account.public().into()
 	}
 
 	fn get_signer(&self) -> sr25519_core::Pair {
