@@ -135,7 +135,7 @@ export async function buildValidations(
                 Bitcoin: {
                     message: '' as HexString,
                     signature: {
-                        BitcoinPrettified: '' as HexString,
+                        Bitcoin: '' as HexString,
                     },
                 },
             },
@@ -144,7 +144,7 @@ export async function buildValidations(
         bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
         bitcoinSignature = await signer!.sign('Litentry authorization token: ' + msg);
 
-        bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
+        bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
         console.log('bitcoin pubkey: ', u8aToHex(signer!.getAddressRaw()));
         console.log('bitcoin sig (base64): ', Buffer.from(bitcoinSignature).toString('base64'));
 
