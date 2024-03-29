@@ -1,9 +1,14 @@
 use super::alloc::{format, vec::Vec};
-use crate::{AccountId, Assertion, Balance, BlockNumber, Hash, ShardIdentifier};
+use crate::{
+	AccountId, Assertion, Balance, BlockNumber, Hash, MrEnclave, ShardIdentifier,
+	SidechainBlockNumber, WorkerType,
+};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_utils::stringify::account_id_to_string;
 use substrate_api_client::ac_node_api::StaticEvent;
+
+// System pallet events
 
 #[derive(Encode, Decode, Debug)]
 pub struct ExtrinsicSuccess;
@@ -28,6 +33,8 @@ pub struct BalanceTransfer {
 	pub amount: Balance,
 }
 
+// Balances pallet events
+
 impl core::fmt::Display for BalanceTransfer {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
@@ -44,6 +51,8 @@ impl StaticEvent for BalanceTransfer {
 	const PALLET: &'static str = "Balances";
 	const EVENT: &'static str = "Transfer";
 }
+
+// Teebag pallet events
 
 #[derive(Encode, Decode, Debug)]
 pub struct ParentchainBlockProcessed {
@@ -66,6 +75,49 @@ impl core::fmt::Display for ParentchainBlockProcessed {
 impl StaticEvent for ParentchainBlockProcessed {
 	const PALLET: &'static str = "Teebag";
 	const EVENT: &'static str = "ParentchainBlockProcessed";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct ScheduledEnclaveSet {
+	pub worker_type: WorkerType,
+	pub sidechain_block_number: SidechainBlockNumber,
+	pub mrenclave: MrEnclave,
+}
+
+impl core::fmt::Display for ScheduledEnclaveSet {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"ScheduledEnclaveSet :: worker_type: {:?}, sidechain_block_number: {}, mrenclave: {:?}",
+			self.worker_type, self.sidechain_block_number, self.mrenclave
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for ScheduledEnclaveSet {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "ScheduledEnclaveSet";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct ScheduledEnclaveRemoved {
+	pub worker_type: WorkerType,
+	pub sidechain_block_number: SidechainBlockNumber,
+}
+
+impl core::fmt::Display for ScheduledEnclaveRemoved {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"ScheduledEnclaveRemoved :: worker_type: {:?}, sidechain_block_number: {}",
+			self.worker_type, self.sidechain_block_number
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for ScheduledEnclaveRemoved {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "ScheduledEnclaveRemoved";
 }
 
 // IdentityManagement events
