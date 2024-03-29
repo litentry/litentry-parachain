@@ -143,9 +143,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         await sleep(2);
         let data = createERCDepositData(depositAmount, 32, destinationRecipientAddress);
 
-        // estimaste gas
-        const gasLimit = await bridge.estimateGas.deposit(destinationChainID, destResourceId, data);
-        console.log('gasLimit', gasLimit);
         await bridge.deposit(destinationChainID, destResourceId, data);
         let expectResult = false;
         const block = await context.parachainConfig.api.rpc.chain.getBlock();
