@@ -147,7 +147,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             return data;
         };
 
-        const message = await sayMessage(deployed.contractAddress!);
+        const message = (await sayMessage(deployed.contractAddress!)) as unknown as string;
         const initialResult = message === 'Hello World' ? 1 : 0;
         assert.equal(1, initialResult, 'Contract initial storage query mismatch');
 
@@ -175,7 +175,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
         const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
-        const sayMsg = await sayMessage(deployed.contractAddress!);
+        const sayMsg = (await sayMessage(deployed.contractAddress!)) as unknown as string;
         const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
