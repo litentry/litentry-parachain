@@ -122,6 +122,8 @@ pub enum ParentchainError {
 	DeactivateIdentityFailure,
 	ActivateIdentityFailure,
 	VCRequestedFailure,
+	ScheduledEnclaveSetFailure,
+	ScheduledEnclaveRemovedFailure,
 }
 
 impl core::fmt::Display for ParentchainError {
@@ -135,6 +137,10 @@ impl core::fmt::Display for ParentchainError {
 			ParentchainError::ActivateIdentityFailure =>
 				"Parentchain Error: ActivateIdentityFailure",
 			ParentchainError::VCRequestedFailure => "Parentchain Error: VCRequestedFailure",
+			ParentchainError::ScheduledEnclaveSetFailure =>
+				"Parentchain Error: ScheduledEnclaveSetFailure",
+			ParentchainError::ScheduledEnclaveRemovedFailure =>
+				"Parentchain Error: ScheduledEnclaveRemovedFailure",
 		};
 		write!(f, "{}", message)
 	}
