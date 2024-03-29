@@ -16,7 +16,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
 
-        const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
+        const depositAmount = toHex(BigNumber.from('100000000000000000000000').toString());
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
         console.log(destinationChainID);
 
@@ -30,6 +30,8 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
 
         // approve
         await erc20.approve(context.ethConfig.erc20Handler.address, depositAmount);
+        console.log('after approve');
+
         await sleep(6);
 
         // deposit
