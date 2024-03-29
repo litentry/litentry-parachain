@@ -15,7 +15,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
 
-        const depositAmount = numberToHex('100000000000000000000000');
+        const depositAmount = numberToHex('100,000,000,000,000,000,000'.replace(/,/g, ''));
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
         console.log(destinationChainID);
 
@@ -135,7 +135,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.wallets.bob.address,
             maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString()
         );
-        const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000'.replace(/,/g, '')).toString());
+        const depositAmount = numberToHex('100,000,000,000,000'.replace(/,/g, ''));
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
 
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
