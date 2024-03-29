@@ -75,8 +75,8 @@ impl LinkIdentityCommand {
 			encrypted_web3network
 		);
 
-		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
-		println!("[+] LinkIdentityCommand got finalized. Hash: {:?}", tx_hash);
+		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Broadcast).unwrap();
+		info!("[+] LinkIdentityCommand TrustedOperation got finalized. Hash: {:?}", tx_hash);
 
 		Ok(CliResultOk::None)
 	}
