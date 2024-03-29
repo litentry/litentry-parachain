@@ -1,6 +1,6 @@
 import { createERCDepositData, describeCrossChainTransfer } from '../common/setup/setup-bridge';
 import { step } from 'mocha-steps';
-import { toHex, numberToHex } from 'web3-utils';
+import { numberToHex } from 'web3-utils';
 import { signAndSend, sleep } from '../common/utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
