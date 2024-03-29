@@ -1,25 +1,27 @@
-import { createERCDepositData, describeCrossChainTransfer } from '../common/setup/setup-bridge';
+import { createERCDepositData, describeCrossChainTransfer } from './setup-bridge';
 import { step } from 'mocha-steps';
 import { toHex } from 'web3-utils';
-import { signAndSend, sleep } from '../common/utils';
+import { signAndSend, sleep } from './utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
+import { BN } from 'bn.js';
 
-const BN = require('bn.js');
 const bn100e12 = new BN(10).pow(new BN(12)).mul(new BN(100));
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step('Transfer 100 Lit from eth to parachain', async function () {
         let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
+
+        // get context.ethConfig.wallets.bob balance
+        const balance = await context.ethConfig.erc20.balanceOf(context.ethConfig.wallets.bob.address);
+        console.log('balance', balance);
+
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         // substrate native token
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
-
-        const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
+        const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000'.replace(/,/g, '')).toString());
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
-        console.log(destinationChainID);
-
         //FERDIE key command: polkadot key inspect //Ferdie
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
 
@@ -34,6 +36,11 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
 
         // deposit
         let data = createERCDepositData(depositAmount, 32, destinationRecipientAddress);
+
+        // estimaste gas
+        const gasLimit = await bridge.estimateGas.deposit(destinationChainID, destResourceId, data);
+        console.log('gasLimit', gasLimit);
+
         await bridge.deposit(destinationChainID, destResourceId, data);
         await sleep(12 * 4);
 
@@ -56,6 +63,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(bn100e12.toString(), receipt, 0),
             context.parachainConfig.alice
         );
+        // const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0)
         await sleep(15);
         const actual_receive = BigNumber.from('99,000,000,000,000,000,000'.replace(/,/g, ''));
         assert.equal(b.add(actual_receive).toString(), (await erc20.balanceOf(receipt)).toString());
@@ -67,7 +75,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.erc20Handler.address
         );
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0);
-        const Bridge = require('../common/abi/bridge/Bridge.json');
+        const Bridge = require('../bridge/contracts/Bridge.json');
         const inter = new ethers.utils.Interface(Bridge.abi);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(
