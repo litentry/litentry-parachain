@@ -3,7 +3,7 @@ import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 import { compiled } from '../common/utils/compile';
 
@@ -102,7 +102,6 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // Create deploy function
         const deploy = async (accountFrom: any) => {
             console.log(`Attempting to deploy from account ${accountFrom.address}`);
-
             // Create contract instance
             const hello = new web3.eth.Contract(abi);
 
@@ -117,6 +116,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                 {
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
                 },
                 accountFrom.privateKey
             );
