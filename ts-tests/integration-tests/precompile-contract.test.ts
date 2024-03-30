@@ -60,6 +60,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
                 data: delegateTransaction.encodeABI(),
                 gas: 1000000,
                 nonce: await web3.eth.getTransactionCount(evmAccountRaw.address),
+                gasPrice: await web3.eth.getGasPrice(),
             },
             evmAccountRaw.privateKey
         );
@@ -133,6 +134,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
                     to: precompileStakingContractAddress,
                     data: delegateWithAutoCompound.encodeABI(),
                     gas: await delegateWithAutoCompound.estimateGas(),
+                    gasPrice: await web3.eth.getGasPrice(),
                 },
                 secretKey
             );
