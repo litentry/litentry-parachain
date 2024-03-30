@@ -167,6 +167,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                     to: contractAddress,
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
+                    gasPrice: await web3.eth.getGasPrice(),
                 },
                 accountFrom.privateKey
             );
