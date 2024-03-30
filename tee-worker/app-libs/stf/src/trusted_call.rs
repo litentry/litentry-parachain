@@ -57,6 +57,7 @@ use itp_types::{
 	Address, Moment, OpaqueCall, H256,
 };
 use itp_utils::stringify::account_id_to_string;
+use litentry_hex_utils::hex_encode;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
@@ -257,6 +258,17 @@ impl TrustedCall {
 			_ => "unsupported_trusted_call",
 		}
 	}
+
+	pub fn signature_message_prefix(&self) -> String {
+		match self {
+			Self::link_identity(..) => "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+			Self::request_batch_vc(_, _, assertions, ..) =>  match assertions.len() {
+				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets. Token: "),
+			},
+			_ => "Token: ".to_string(),
+		}
+	}
 }
 
 impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
@@ -326,9 +338,27 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		// make it backwards compatible for now - will deprecate the old way later
-		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
+		// The signature should be valid in either case:
+		// 1. payload
+		// 2. blake2_256(payload)
+		// 3. Signature Prefix + payload
+		// 4. Signature Prefix + blake2_256(payload)
+		//
+		// @TODO P-639: Remove 1 and 3.
+
+		let hashed = blake2_256(&payload);
+
+		let prettified_msg_raw = self.call.signature_message_prefix() + &hex_encode(&payload);
+		let prettified_msg_raw = prettified_msg_raw.as_bytes();
+
+		let prettified_msg_hash = self.call.signature_message_prefix() + &hex_encode(&hashed);
+		let prettified_msg_hash = prettified_msg_hash.as_bytes();
+
+		// Most common signatures variants by clients are verified first (4 and 2).
+		self.signature.verify(prettified_msg_hash, self.call.sender_identity())
+			|| self.signature.verify(&hashed, self.call.sender_identity())
 			|| self.signature.verify(&payload, self.call.sender_identity())
+			|| self.signature.verify(prettified_msg_raw, self.call.sender_identity())
 	}
 
 	fn metric_name(&self) -> &'static str {
