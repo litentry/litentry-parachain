@@ -54,7 +54,7 @@ export async function buildValidations(
     signerIdentitity: CorePrimitivesIdentity,
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'bitcoinPrettified',
+    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin',
     signer?: Signer
 ): Promise<LitentryValidationData> {
     let evmSignature: HexString;
@@ -128,32 +128,6 @@ export async function buildValidations(
             'LitentryValidationData',
             bitcoinValidationData
         );
-        validation = encodedVerifyIdentityValidation;
-    } else if (network === 'bitcoinPrettified') {
-        const bitcoinValidationData = {
-            Web3Validation: {
-                Bitcoin: {
-                    message: '' as HexString,
-                    signature: {
-                        BitcoinPrettified: '' as HexString,
-                    },
-                },
-            },
-        };
-        console.log('post verification msg to bitcoin: ', msg);
-        bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
-        bitcoinSignature = await signer!.sign('Litentry authorization token: ' + msg);
-
-        bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
-        console.log('bitcoin pubkey: ', u8aToHex(signer!.getAddressRaw()));
-        console.log('bitcoin sig (base64): ', Buffer.from(bitcoinSignature).toString('base64'));
-
-        console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
-        const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
-            'LitentryValidationData',
-            bitcoinValidationData
-        );
-
         validation = encodedVerifyIdentityValidation;
     } else if (network === 'twitter') {
         console.log('post verification msg to twitter: ', msg);
