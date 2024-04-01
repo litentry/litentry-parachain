@@ -30,6 +30,8 @@ use std::path::PathBuf;
 pub mod error;
 use error::Result;
 pub mod io;
+#[cfg(feature = "sgx")]
+pub use io::sgx::ScheduledEnclaveSeal;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
