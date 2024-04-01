@@ -199,6 +199,7 @@ def get_flags(index, worker):
 
     return list(filter(None, [
         "--clean-reset",
+        "--ws-external",
         "-T", "wss://localhost",
         "-P", ports['trusted_worker_port'],
         "-w", ports['untrusted_worker_port'],
