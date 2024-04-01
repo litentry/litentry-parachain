@@ -41,6 +41,8 @@ use std::sync::SgxRwLock as RwLock;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 
+pub mod mock;
+
 lazy_static! {
 	/// Global instance of a ScheduledEnclave
 	pub static ref GLOBAL_SCHEDULED_ENCLAVE: Arc<ScheduledEnclave> = Default::default();

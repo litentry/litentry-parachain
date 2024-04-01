@@ -237,6 +237,7 @@ pub mod test {
 	use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
+	use lc_scheduled_enclave::mock::ScheduledEnclaveSealMock;
 
 	type StateKeyRepositoryMock = KeyRepositoryMock<Aes>;
 	type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
@@ -246,6 +247,7 @@ pub mod test {
 		StateKeyRepositoryMock,
 		HandleStateMock,
 		LightValidationStateSealMock,
+		ScheduledEnclaveSealMock,
 	>;
 
 	pub fn seal_shielding_key_works() {
