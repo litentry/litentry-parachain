@@ -20,7 +20,11 @@ use crate::{
 		balance::BalanceCommand,
 		faucet::FaucetCommand,
 		listen::ListenCommand,
-		litentry::{id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand},
+		litentry::{
+			activate_identity::ActivateIdentityCommand,
+			deactivate_identity::DeactivateIdentityCommand, id_graph_hash::IDGraphHashCommand,
+			link_identity::LinkIdentityCommand,
+		},
 		register_tcb_info::RegisterTcbInfoCommand,
 		transfer::TransferCommand,
 	},
@@ -86,6 +90,12 @@ pub enum BaseCommand {
 
 	/// get the IDGraph hash of the given identity
 	IDGraphHash(IDGraphHashCommand),
+
+	/// Deactivate Identity
+	DeactivateIdentity(DeactivateIdentityCommand),
+
+	/// Activate identity
+	ActivateIdentity(ActivateIdentityCommand),
 }
 
 impl BaseCommand {
@@ -105,6 +115,8 @@ impl BaseCommand {
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
+			BaseCommand::DeactivateIdentity(cmd) => cmd.run(cli),
+			BaseCommand::ActivateIdentity(cmd) => cmd.run(cli),
 		}
 	}
 }
