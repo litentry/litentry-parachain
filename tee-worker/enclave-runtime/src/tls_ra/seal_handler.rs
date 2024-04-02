@@ -27,7 +27,7 @@ use itp_sgx_crypto::{
 	Aes,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_sgx_io::{seal, unseal, SealedIO};
+use itp_sgx_io::SealedIO;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
 use lc_scheduled_enclave::{ScheduledEnclaveMap, ScheduledEnclaveSeal};
