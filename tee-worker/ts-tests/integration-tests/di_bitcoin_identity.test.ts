@@ -97,14 +97,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             networks: aliceEvmNetworks,
         });
 
-        // link another bitcoin account with prettified signature
+        // link another bitcoin account
         const bobBitcoinNonce = currentNonce++;
         const bobBitcoinValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
             bobBitcoinIdentity,
             bobBitcoinNonce,
-            'bitcoinPrettified',
+            'bitcoin',
             context.web3Wallets.bitcoin.Bob
         );
         const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
