@@ -42,13 +42,13 @@ dependencies:
     specifier: 0.8.18
     version: 0.8.18
   web3:
-    specifier: ^4.1.2
+    specifier: ^4.7.0
     version: 4.7.0(typescript@4.9.5)
   web3-types:
-    specifier: 1.2.0
-    version: 1.2.0
+    specifier: 1.5.0
+    version: 1.5.0
   web3-utils:
-    specifier: ^4.0.6
+    specifier: ^4.2.2
     version: 4.2.2
 
 devDependencies:
@@ -3584,11 +3584,6 @@ packages:
       - bufferutil
       - encoding
       - utf-8-validate
-    dev: false
-
-  /web3-types@1.2.0:
-    resolution: {integrity: sha512-ljx8mrkrOI8fRqvgOdxfpKYoso6n7I8T9LsqXl+Mz2Db0L+2H15an0xgdoWYpKndTPiU2NKRWFiopYifBQzcxQ==}
-    engines: {node: '>=14', npm: '>=6.12.0'}
     dev: false
 
   /web3-types@1.5.0:
