@@ -549,7 +549,6 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage before setting identity network', async function () {
-        const expectedWeb3Networks = ['Polkadot', 'Litentry'];
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             context.web3Wallets.substrate.Alice,
@@ -560,7 +559,13 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // the third (last) identity in the IDGraph is eveSubstrateIdentity
-        assert.equal(idGraph[3][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
+        const eveSubstrateIdentity = idGraph[3];
+        const [, { web3networks }] = eveSubstrateIdentity;
+        const expectedWeb3Networks = ['Polkadot', 'Litentry'];
+
+        assert.equal(web3networks.length, expectedWeb3Networks.length);
+        assert.equal(web3networks.indexOf('Polkadot') !== -1, true);
+        assert.equal(web3networks.indexOf('Litentry') !== -1, true);
     });
 
     step('setting identity network(alice)', async function () {
