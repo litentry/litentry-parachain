@@ -93,19 +93,22 @@ export const createSignedTrustedCall = async (
     const call = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
     });
-    let payload = Uint8Array.from([
-        ...call.toU8a(),
-        ...nonce.toU8a(),
-        ...hexToU8a(mrenclave),
-        ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
-    ]);
+    let payload = blake2AsU8a(
+        Uint8Array.from([
+            ...call.toU8a(),
+            ...nonce.toU8a(),
+            ...hexToU8a(mrenclave),
+            ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
+        ])
+    );
+
     if (withWrappedBytes) {
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
 
-    // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
     const signature = parachainApi.createType('LitentryMultiSignature', {
         [signer.type()]: u8aToHex(
+            // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
             await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
         ),
     });
