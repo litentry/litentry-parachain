@@ -33,30 +33,6 @@ pub struct BtcToEth {
 	pub tx_timestamp: u64,
 }
 
-impl BtcToEth {
-	fn new(
-		tx_index: u64,
-		btc_tx_hash: H256,
-		ethereum_receiver: H160,
-		ethereum_tx_hash: H256,
-		eth_tx_status: bool,
-		symbol: String,
-		amount: U256,
-		tx_timestamp: u64,
-	) -> Self {
-		Self {
-			tx_index,
-			btc_tx_hash,
-			ethereum_receiver,
-			ethereum_tx_hash,
-			eth_tx_status,
-			symbol,
-			amount,
-			tx_timestamp,
-		}
-	}
-}
-
 /// custodial bit cross record of a full single tx from ETH to BTC
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub struct EthToBtc {
@@ -71,28 +47,3 @@ pub struct EthToBtc {
 	pub tx_timestamp: u64,
 }
 
-impl EthToBtc {
-	fn new(
-		tx_index: u64,
-		btc_tx_hash: H256,
-		btc_receiver: PubKey,
-		btc_receiver_length: u32,
-		ethereum_tx_hash: H256,
-		eth_tx_status: bool,
-		symbol: String,
-		amount: U256,
-		tx_timestamp: u64,
-	) -> Self {
-		Self {
-			tx_index,
-			btc_tx_hash,
-			btc_receiver,
-			btc_receiver_length,
-			ethereum_tx_hash,
-			eth_tx_status,
-			symbol,
-			amount,
-			tx_timestamp,
-		}
-	}
-}
