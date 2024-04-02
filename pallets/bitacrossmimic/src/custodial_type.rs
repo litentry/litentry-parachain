@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+extern crate alloc;
 use alloc::string::String;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
