@@ -46,4 +46,3 @@ pub struct EthToBtc {
 	pub amount: U256,
 	pub tx_timestamp: u64,
 }
-
