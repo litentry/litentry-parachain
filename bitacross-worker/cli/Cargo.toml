@@ -49,6 +49,7 @@ itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
 
 # litentry
+bc-musig2-ceremony = { path = "../bitacross/core/bc-musig2-ceremony" }
 lc-direct-call = { path = "../litentry/core/direct-call" }
 litentry-primitives = { path = "../litentry/primitives" }
 

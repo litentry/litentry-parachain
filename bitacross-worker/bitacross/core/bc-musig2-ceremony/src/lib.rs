@@ -22,6 +22,7 @@ use musig2::{
 use std::{vec, vec::Vec};
 
 use crate::CeremonyEvent::CeremonyEnded;
+use codec::{Decode, Encode};
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 pub use k256::{elliptic_curve::sec1::FromEncodedPoint, PublicKey};
 use log::{debug, error, info};
@@ -29,9 +30,9 @@ pub use musig2::{PartialSignature, PubNonce};
 use std::collections::HashMap;
 
 //TODO: this should be a hash of message
-pub type CeremonyId = Vec<u8>;
+pub type CeremonyId = SignBitcoinPayload;
 pub type SignersList = Vec<SignerId>;
-pub type CeremonyRegistry<AK> = HashMap<CeremonyId, MuSig2Ceremony<Vec<u8>, AK>>;
+pub type CeremonyRegistry<AK> = HashMap<CeremonyId, MuSig2Ceremony<AK>>;
 
 #[derive(Debug)]
 pub enum CeremonyError {
@@ -69,10 +70,18 @@ pub enum CeremonyEvent {
 	SecondRoundStarted(SignersList, CeremonyId, PartialSignature),
 	CeremonyError(CeremonyError),
 	CeremonyEnded([u8; 64]),
+	CeremonyTimedOut,
 }
 
-pub struct MuSig2Ceremony<M: AsRef<[u8]> + Clone, AK: AccessKey<KeyType = SchnorrPair>> {
-	message: M,
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum SignBitcoinPayload {
+	Derived(Vec<u8>),
+	TaprootUnspendable(Vec<u8>),
+	TaprootSpendable(Vec<u8>, [u8; 32]),
+}
+
+pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
+	payload: SignBitcoinPayload,
 	//todo: move to layer above, ceremony should be communication agnostic
 	aes_key: [u8; 32],
 	me: SignerId,
@@ -81,19 +90,20 @@ pub struct MuSig2Ceremony<M: AsRef<[u8]> + Clone, AK: AccessKey<KeyType = Schnor
 	events: Vec<CeremonyEvent>,
 	signing_key_access: Arc<AK>,
 	first_round: Option<musig2::FirstRound>,
-	second_round: Option<musig2::SecondRound<M>>,
+	second_round: Option<musig2::SecondRound<Vec<u8>>>,
+	ticks_left: u8,
 }
 
-impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
+impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 	// Creates new ceremony and starts first round
 	pub fn new(
 		me: SignerId,
 		aes_key: [u8; 32],
 		signers: Vec<(SignerId, PublicKey)>,
-		message: Vec<u8>,
-		merkle_root: [u8; 32],
+		payload: SignBitcoinPayload,
 		commands: Vec<CeremonyCommand>,
 		signing_key_access: Arc<AK>,
+		ttl: u8,
 	) -> Result<Self, String> {
 		info!("Creating new ceremony with peers: {:?} and events {:?}", signers, commands);
 		if signers.len() < 3 {
@@ -102,10 +112,21 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 		// we are always the first key in the vector
 		let my_index = signers.iter().position(|r| r.0 == me).ok_or("Could not determine index")?;
 		let all_keys = signers.iter().map(|p| p.1).collect::<Vec<PublicKey>>();
-		let key_context = KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
-			.map_err(|e| format!("Key context creation error: {:?}", e))?
-			.with_taproot_tweak(&merkle_root)
-			.map_err(|e| format!("Key context creation error: {:?}", e))?;
+		let key_context = match &payload {
+			SignBitcoinPayload::TaprootSpendable(_, root_hash) =>
+				KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
+					.map_err(|e| format!("Key context creation error: {:?}", e))?
+					.with_taproot_tweak(root_hash)
+					.map_err(|e| format!("Key context creation error: {:?}", e))?,
+			SignBitcoinPayload::TaprootUnspendable(_) =>
+				KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
+					.map_err(|e| format!("Key context creation error: {:?}", e))?
+					.with_unspendable_taproot_tweak()
+					.map_err(|e| format!("Key context creation error: {:?}", e))?,
+			SignBitcoinPayload::Derived(_) =>
+				KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
+					.map_err(|e| format!("Key context creation error: {:?}", e))?,
+		};
 
 		let nonce_seed = random_seed();
 		let first_round =
@@ -115,12 +136,12 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 		let public_nonce = first_round.our_public_nonce();
 		let events = vec![CeremonyEvent::FirstRoundStarted(
 			signers.iter().filter(|e| e.0 != me).map(|s| s.0).collect(),
-			message.clone(),
+			payload.clone(),
 			public_nonce,
 		)];
 
 		Ok(Self {
-			message,
+			payload,
 			aes_key,
 			me,
 			signers,
@@ -129,12 +150,19 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 			signing_key_access,
 			first_round: Some(first_round),
 			second_round: None,
+			ticks_left: ttl,
 		})
 	}
 
 	pub fn tick(&mut self) -> Vec<CeremonyEvent> {
 		debug!("Ceremony {:?} tick", self.get_id_ref());
 		self.process_commands();
+		self.ticks_left -= 1;
+
+		if self.ticks_left == 0 {
+			self.events.push(CeremonyEvent::CeremonyTimedOut);
+		}
+
 		self.events.drain(0..).collect()
 	}
 
@@ -153,6 +181,11 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 			}
 		}
 		for command in commands_to_execute.into_iter() {
+			debug!(
+				"Processing ceremony command: {:?} for ceremony: {:?}",
+				command,
+				self.get_id_ref()
+			);
 			if let Err(e) = match command {
 				CeremonyCommand::SaveNonce(signer, nonce) => self.receive_nonce(signer, nonce),
 				CeremonyCommand::SavePartialSignature(signer, partial_signature) =>
@@ -208,19 +241,24 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 			.first_round
 			.take()
 			.ok_or(CeremonyError::NonceReceivingError(NonceReceivingErrorReason::IncorrectRound))?;
-		let second_round =
-			first_round.finalize(private_key, self.message.clone()).map_err(|e| {
-				error!("Could not start second round: {:?}", e);
-				CeremonyError::NonceReceivingError(
-					NonceReceivingErrorReason::FirstRoundFinalizationError,
-				)
-			})?;
+
+		let message = match &self.payload {
+			SignBitcoinPayload::TaprootSpendable(message, _) => message.clone(),
+			SignBitcoinPayload::Derived(message) => message.clone(),
+			SignBitcoinPayload::TaprootUnspendable(message) => message.clone(),
+		};
+		let second_round = first_round.finalize(private_key, message).map_err(|e| {
+			error!("Could not start second round: {:?}", e);
+			CeremonyError::NonceReceivingError(
+				NonceReceivingErrorReason::FirstRoundFinalizationError,
+			)
+		})?;
 
 		let partial_signature: PartialSignature = second_round.our_signature();
 
 		self.events.push(CeremonyEvent::SecondRoundStarted(
 			self.signers.iter().filter(|e| e.0 != self.me).map(|s| s.0).collect(),
-			self.message.clone(),
+			self.get_id_ref().clone(),
 			partial_signature,
 		));
 		self.second_round = Some(second_round);
@@ -269,7 +307,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<Vec<u8>, AK> {
 	}
 
 	pub fn get_id_ref(&self) -> &CeremonyId {
-		self.message.as_ref()
+		&self.payload
 	}
 	pub fn get_aes_key(&self) -> &[u8; 32] {
 		&self.aes_key

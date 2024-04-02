@@ -20,6 +20,7 @@ use crate::{
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	Cli, CliResult, CliResultOk,
 };
+use bc_musig2_ceremony::SignBitcoinPayload;
 use itp_stf_primitives::types::KeyPair;
 use lc_direct_call::DirectCall;
 use litentry_primitives::{aes_decrypt, AesOutput};
@@ -42,8 +43,10 @@ impl RequestDirectCallSignBitcoinCommand {
 		let dc = DirectCall::SignBitcoin(
 			alice.public().into(),
 			key,
-			self.payload.clone(),
-			merkle_root_bytes.try_into().unwrap(),
+			SignBitcoinPayload::TaprootSpendable(
+				self.payload.clone(),
+				merkle_root_bytes.try_into().unwrap(),
+			),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), &mrenclave, &shard);
 

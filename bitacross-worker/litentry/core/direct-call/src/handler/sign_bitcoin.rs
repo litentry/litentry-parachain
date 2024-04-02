@@ -11,10 +11,13 @@ use std::{
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use bc_musig2_ceremony::{CeremonyCommand, CeremonyRegistry, MuSig2Ceremony, PublicKey};
+use bc_musig2_ceremony::{
+	CeremonyCommand, CeremonyId, CeremonyRegistry, MuSig2Ceremony, PublicKey,
+};
 use bc_signer_registry::SignerRegistryLookup;
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
 
+use bc_musig2_ceremony::SignBitcoinPayload;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
@@ -25,18 +28,18 @@ pub fn handle<
 	AK: AccessKey<KeyType = SchnorrPair>,
 >(
 	signer: Identity,
-	payload: Vec<u8>,
+	payload: SignBitcoinPayload,
 	aes_key: [u8; 32],
-	merkle_root: [u8; 32],
 	relayer_registry: &RRL,
 	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_events: Arc<Mutex<HashMap<Vec<u8>, Vec<CeremonyCommand>>>>,
+	ceremony_events: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
 	signer_registry: Arc<SR>,
 	enclave_key_pub: &[u8; 32],
 	signer_access_key: Arc<AK>,
 ) -> Result<[u8; 64], String> {
 	if relayer_registry.contains_key(signer) {
 		let mut registry = ceremony_registry.lock().unwrap();
+		let ceremony_tick_to_live = 15;
 
 		let peers = signer_registry
 			.get_all()
@@ -47,15 +50,14 @@ pub fn handle<
 			.collect();
 
 		let events = ceremony_events.lock().unwrap().remove(&payload).unwrap_or_default();
-
 		let ceremony = MuSig2Ceremony::new(
 			*enclave_key_pub,
 			aes_key,
 			peers,
 			payload.clone(),
-			merkle_root,
 			events,
 			signer_access_key,
+			ceremony_tick_to_live,
 		)?;
 		registry.insert(payload, ceremony);
 

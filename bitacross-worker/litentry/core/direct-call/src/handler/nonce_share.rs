@@ -13,6 +13,7 @@ use std::sync::Mutex;
 
 use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry, PubNonce};
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
+use log::info;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
@@ -36,12 +37,13 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 		Identity::Substrate(address) => {
 			let mut registry = ceremony_registry.lock().unwrap();
 			if let Some(ceremony) = registry.get_mut(&ceremony_id) {
+				info!("Saving nonce for ceremony: {:?}", ceremony_id);
 				ceremony.save_event(CeremonyCommand::SaveNonce(
 					*address.as_ref(),
 					PubNonce::from_bytes(payload.as_slice()).unwrap(),
 				));
 			} else {
-				std::println!("Ceremony not found, saving events...");
+				info!("Ceremony {:?} not found, saving events...", ceremony_id);
 				let mut events = ceremony_events.lock().unwrap();
 				if let Some(events) = events.get_mut(&ceremony_id) {
 					std::println!("Events found, appending...");

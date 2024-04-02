@@ -20,9 +20,10 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	signer: Identity,
 	ceremony_id: CeremonyId,
 	signature: [u8; 32],
-	ceremony_registry: Arc<Mutex<HashMap<CeremonyId, MuSig2Ceremony<CeremonyId, AK>>>>,
+	ceremony_registry: Arc<Mutex<HashMap<CeremonyId, MuSig2Ceremony<AK>>>>,
 	enclave_registry: Arc<ER>,
 ) -> Result<Vec<u8>, String> {
+	log::info!("Partial signature share call for ceremony {:?}", ceremony_id);
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,
@@ -31,14 +32,14 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 		return Err("Signer is not a valid enclave".to_string())
 	}
 	let mut registry = ceremony_registry.lock().unwrap();
-	let ceremony = registry.get_mut(&ceremony_id).unwrap();
 	match signer {
-		Identity::Substrate(address) => {
-			ceremony.save_event(CeremonyCommand::SavePartialSignature(
-				*address.as_ref(),
-				PartialSignature::from_slice(&signature).unwrap(),
-			));
-		},
+		Identity::Substrate(address) =>
+			if let Some(ceremony) = registry.get_mut(&ceremony_id) {
+				ceremony.save_event(CeremonyCommand::SavePartialSignature(
+					*address.as_ref(),
+					PartialSignature::from_slice(&signature).unwrap(),
+				));
+			},
 		_ => return Err("Signer is not of substrate type".to_string()),
 	}
 

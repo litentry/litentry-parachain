@@ -288,6 +288,7 @@ dependencies = [
  "litentry-primitives",
  "log",
  "musig2",
+ "parity-scale-codec",
  "sgx_rand",
  "sgx_tstd",
 ]
@@ -2711,6 +2712,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "litentry-primitives",
+ "log",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",

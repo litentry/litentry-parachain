@@ -101,7 +101,7 @@ func main() {
 	merkleRootHash := [32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
 
 	//** prepare signed direct call
-	directCall := prepareSignBitcoinDirectCall(identity, aesKey, prehashedEthereumMessage, merkleRootHash)
+	directCall := prepareSignBitcoinTaprootSpendableDirectCall(identity, aesKey, prehashedEthereumMessage, merkleRootHash)
 	encodedDirectCall := types.Encode("DirectCall", directCall)
 
 	encodedMrEnclave := types.Encode("[u8; 32]", getStateMrEnclaveResult)
@@ -154,12 +154,30 @@ func main() {
 	signResp := read_response(*c)
 
 	signResult, _ := decodeRpcReturnValue(signResp.Result)
+
 	resultAesOutput := decodeAesOutput(signResult)
+	decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
 
-	signature := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
+	result := decodeResult(decryptedResult)
 
-	fmt.Println("Signature:")
-	fmt.Println(signature)
+	fmt.Println("Got result")
+	fmt.Println(result)
+
+	_, errorExists := result["Error"]
+	okVal, okExists := result["Ok"]
+
+	if errorExists {
+		fmt.Println("Got error")
+	} else if okExists {
+		fmt.Println("Got signature:")
+		fmt.Println(utiles.HexToBytes(okVal.(string)))
+	}
+
+	//
+	//signature := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
+	//
+	//fmt.Println("Signature:")
+	//fmt.Println(signature)
 
 }
 
@@ -238,12 +256,52 @@ func prepareSignedDirectCall(directCall map[string]interface{}, signature []byte
 	}
 }
 
-func prepareSignBitcoinDirectCall(identity map[string]interface{}, aesKey []byte, prehashedEthereumMessage []byte, merkleRootHash [32]byte) map[string]interface{} {
+func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"TaprootSpendable": map[string]interface{}{
+			"col1": utiles.BytesToHex(bitcoinPayload),
+			"col2": utiles.BytesToHex(merkleRootHash[:]),
+		},
+	}
+
 	signBitcoinDirectCall := map[string]interface{}{
 		"col1": identity,
 		"col2": utiles.BytesToHex(aesKey),
-		"col3": utiles.BytesToHex(prehashedEthereumMessage),
-		"col4": utiles.BytesToHex(merkleRootHash[:]),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": signBitcoinDirectCall,
+	}
+
+}
+
+func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"TaprootUnspendable": utiles.BytesToHex(bitcoinPayload),
+	}
+
+	signBitcoinDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": signBitcoinDirectCall,
+	}
+
+}
+
+func prepareSignBitcoinDerivedDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"Derived": utiles.BytesToHex(bitcoinPayload),
+	}
+
+	signBitcoinDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
 	}
 
 	return map[string]interface{}{
@@ -308,6 +366,22 @@ func decodeAesOutput(hexEncoded string) aesOutput {
 	m.Init(bytes, nil)
 	var output aesOutput
 	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("AesOutput").(interface{}), &output)
+
+	if err != nil {
+		fmt.Println("Unmarshall error!")
+		fmt.Println(err)
+	}
+	return output
+}
+
+func decodeResult(encoded []byte) map[string]interface{} {
+	bytes := scaleBytes.ScaleBytes{Data: encoded}
+	m := types.ScaleDecoder{}
+	m.Init(bytes, &types.ScaleDecoderOption{
+		SubType: "string,string",
+	})
+	var output map[string]interface{}
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("Result<[u8;64],()>").(interface{}), &output)
 
 	if err != nil {
 		fmt.Println("Unmarshall error!")

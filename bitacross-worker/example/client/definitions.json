@@ -30,12 +30,29 @@
     ]
   },
   "SignEthereumPayload": "(bool, bool, bool)",
+  "SignBitcoinPayload": {
+    "type": "enum",
+    "type_mapping": [
+      [
+        "Derived",
+        "Vec<u8>"
+      ],
+      [
+        "TaprootUnspendable",
+        "Vec<u8>"
+      ],
+      [
+        "TaprootSpendable",
+        "(Vec<u8>, [u8; 32])"
+      ]
+    ]
+  },
   "DirectCall": {
     "type": "enum",
     "type_mapping": [
       [
         "SignBitcoin",
-        "(LitentryIdentity, RequestAesKey, Vec<u8>, [u8; 32])"
+        "(LitentryIdentity, RequestAesKey, SignBitcoinPayload)"
       ],
       [
         "SignEthereum",

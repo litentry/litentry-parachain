@@ -27,7 +27,7 @@ use std::sync::SgxMutex as Mutex;
 
 use core::ops::Deref;
 
-use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry};
+use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry, SignBitcoinPayload};
 use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
@@ -127,7 +127,9 @@ where
 		musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<BKR>>>,
 		enclave_registry_lookup: Arc<ERL>,
 		signer_registry_lookup: Arc<SRL>,
-		musig2_ceremony_pending_commands: Arc<Mutex<HashMap<Vec<u8>, Vec<CeremonyCommand>>>>,
+		musig2_ceremony_pending_commands: Arc<
+			Mutex<HashMap<SignBitcoinPayload, Vec<CeremonyCommand>>>,
+		>,
 		signing_key_pub: [u8; 32],
 	) -> Self {
 		Self {
@@ -214,13 +216,12 @@ where
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 
 	match dc.call {
-		DirectCall::SignBitcoin(signer, aes_key, payload, merkle_root) => {
+		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());
 			sign_bitcoin::handle(
 				signer,
 				payload,
 				aes_key,
-				merkle_root,
 				context.relayer_registry_lookup.deref(),
 				context.musig2_ceremony_registry.clone(),
 				context.musig2_ceremony_pending_commands.clone(),

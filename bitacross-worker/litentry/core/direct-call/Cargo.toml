@@ -19,6 +19,8 @@ itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default
 litentry-primitives = { path = "../../primitives", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 
+log = { version = "0.4", default-features = false }
+
 # sgx dependencies
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true }
 

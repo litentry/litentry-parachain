@@ -376,6 +376,7 @@ dependencies = [
  "log 0.4.20",
  "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
  "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=sgx)",
+ "parity-scale-codec",
  "rand 0.8.5",
  "sgx_rand",
  "sgx_tstd",
@@ -529,6 +530,7 @@ version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
  "base58",
+ "bc-musig2-ceremony",
  "chrono 0.4.26",
  "clap 4.1.0",
  "env_logger",
@@ -4013,6 +4015,7 @@ dependencies = [
  "itp-stf-primitives",
  "k256",
  "litentry-primitives",
+ "log 0.4.20",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sgx_tstd",

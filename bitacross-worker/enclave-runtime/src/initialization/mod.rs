@@ -221,7 +221,7 @@ pub(crate) fn init_enclave(
 
 	let ceremony_registry = Arc::new(Mutex::new(HashMap::<
 		CeremonyId,
-		MuSig2Ceremony<Vec<u8>, KeyRepository<SchnorrPair, Seal>>,
+		MuSig2Ceremony<KeyRepository<SchnorrPair, Seal>>,
 	>::new()));
 
 	let pending_ceremony_commands =
@@ -320,7 +320,7 @@ fn initialize_state_observer(
 
 fn run_bit_across_handler(
 	musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
-	musig2_ceremony_pending_commands: Arc<Mutex<HashMap<Vec<u8>, Vec<CeremonyCommand>>>>,
+	musig2_ceremony_pending_commands: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
 	signing_key_pub: [u8; 32],
 ) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;

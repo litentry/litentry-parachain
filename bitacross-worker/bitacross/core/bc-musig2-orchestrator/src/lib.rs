@@ -80,6 +80,7 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 			});
 
 			let mut ceremony_registry = ceremony_registry.lock().unwrap();
+			let mut ceremonies_to_remove = vec![];
 			ceremony_registry.values_mut().for_each(|v| {
 				let events = v.tick();
 				// should be retrieved once, but cannot be at startup becuase it's not yet initialized so it panics ...
@@ -159,31 +160,69 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 								signature
 							);
 							let hash = blake2_256(&v.get_id_ref().encode());
-							let encrypted_signature =
-								aes_encrypt_default(v.get_aes_key(), &signature).encode();
+							let result: Result<[u8; 64], ()> = Ok(signature);
+							let encrypted_result =
+								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
-								encrypted_signature,
+								encrypted_result,
 								DirectRequestStatus::Processed(hash.into()),
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}
+							ceremonies_to_remove.push(v.get_id_ref().clone());
 						},
 						CeremonyEvent::CeremonyError(error) => {
 							debug!("Ceremony {:?} error {:?}", v.get_id_ref(), error);
 							//todo: stop the ceremony and ping other peers
+							let hash = blake2_256(&v.get_id_ref().encode());
+							let result: Result<(), ()> = Err(());
+							let encrypted_result =
+								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
+							if let Err(e) = responder.send_state_with_status(
+								Hash::from_slice(&hash),
+								encrypted_result,
+								DirectRequestStatus::Processed(hash.into()),
+							) {
+								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
+							}
+							ceremonies_to_remove.push(v.get_id_ref().clone());
+						},
+						CeremonyEvent::CeremonyTimedOut => {
+							debug!("Ceremony {:?} timed out", v.get_id_ref());
+							let hash = blake2_256(&v.get_id_ref().encode());
+							let result: Result<(), ()> = Err(());
+							let encrypted_result =
+								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
+							if let Err(e) = responder.send_state_with_status(
+								Hash::from_slice(&hash),
+								encrypted_result,
+								DirectRequestStatus::Processed(hash.into()),
+							) {
+								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
+							}
+							ceremonies_to_remove.push(v.get_id_ref().clone());
+							ceremonies_to_remove.push(v.get_id_ref().clone());
 						},
 					}
 				}
 			});
+
+			ceremonies_to_remove.iter().for_each(|ceremony_id| {
+				debug!("Removing ceremony {:?}", ceremony_id);
+				let _ = ceremony_registry.remove_entry(ceremony_id);
+			});
+
 			std::thread::sleep(Duration::from_millis(1000))
 		}
 	});
 
 	// here we will process all responses
 	std::thread::spawn(move || {
-		while let Ok((_id, _rpc_return_value)) = responses_receiver.recv() {
-			// currently we assume everything goes well
+		while let Ok((_id, rpc_return_value)) = responses_receiver.recv() {
+			if rpc_return_value.status == DirectRequestStatus::Error {
+				error!("Got unexpected direct request status: {:?}", rpc_return_value.status);
+			}
 		}
 	});
 }
