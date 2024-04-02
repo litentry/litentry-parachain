@@ -4,6 +4,7 @@ members = [
     'node',
     'pallets/account-fix',
     'pallets/bitacross',
+    'pallets/bitacrossmimic',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',
@@ -244,6 +245,7 @@ rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }
+pallet-bitacross-mimic = { path = "pallets/bitacrossmimic", default-features = false }
 pallet-bridge = { path = "pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "pallets/drop3", default-features = false }
