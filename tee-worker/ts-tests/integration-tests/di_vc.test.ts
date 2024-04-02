@@ -17,7 +17,7 @@ import type { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
-import type { assert } from 'chai';
+import { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
