@@ -17,7 +17,7 @@
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
-
+use alloc::string::String;
 pub type PubKey = [u8; 33];
 
 /// custodial bit cross record of a full single tx from BTC to ETH
