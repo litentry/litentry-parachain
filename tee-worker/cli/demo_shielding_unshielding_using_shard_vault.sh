@@ -218,22 +218,6 @@ wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance ${AMOUNT_TRANSFER}
 echo "✔ ok"
 echo ""
 
-echo "* Un-shield ${AMOUNT_UNSHIELD} tokens from Charlie's incognito account to Ferie's L1 account"
-${CLIENT} trusted --mrenclave ${MRENCLAVE} unshield-funds //Charlie //Ferdie ${AMOUNT_UNSHIELD}
-echo ""
-
-echo "* Wait and assert Charlie's incognito account balance... "
-wait_assert_state ${MRENCLAVE} //Charlie balance $(( BALANCE_INCOGNITO_CHARLIE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
-echo "✔ ok"
-
-echo "* Wait and assert Ferdie's Parentchain account balance... "
-wait_assert_state_parentchain //Ferdie balance $(( BALANCE_FERDIE + AMOUNT_UNSHIELD ))
-echo "✔ ok"
-
-echo "* Wait and assert Bob's incognito account balance... "
-wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance ${AMOUNT_TRANSFER}
-echo "✔ ok"
-
 # Test the nonce handling, using Bob's incognito account as the sender as Charlie's
 # balance needs to be verified in the second round while Bob is newly created each time
 

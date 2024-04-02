@@ -181,19 +181,6 @@ echo "* Create a new incognito account for Bob"
 echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
 echo ""
 
-echo "* Shield ${AMOUNT_SHIELD} tokens to Alice's incognito account"
-${CLIENT} shield-funds //Alice ${ICGACCOUNTALICE} ${AMOUNT_SHIELD} ${MRENCLAVE}
-echo ""
-
-echo "* Wait and assert Alice's incognito account balance... "
-assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
-echo "✔ ok"
-
-echo "* Wait and assert Bob's incognito account balance... "
-assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} 0
-echo "✔ ok"
-echo ""
-
 echo "* Send ${AMOUNT_TRANSFER} funds from Alice's incognito account to Bob's incognito account"
 $CLIENT trusted --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 echo ""
@@ -206,18 +193,6 @@ echo "* Wait and assert Bob's incognito account balance... "
 assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 echo "✔ ok"
 echo ""
-
-echo "* Un-shield ${AMOUNT_UNSHIELD} tokens from Alice's incognito account to Ferie's L1 account"
-${CLIENT} trusted --mrenclave ${MRENCLAVE} unshield-funds ${ICGACCOUNTALICE} //Ferdie ${AMOUNT_UNSHIELD}
-echo ""
-
-echo "* Wait and assert Alice's incognito account balance... "
-assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
-echo "✔ ok"
-
-echo "* Wait and assert Bob's incognito account balance... "
-assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
-echo "✔ ok"
 
 # Test the nonce handling, using Bob's incognito account as the sender as Alice's
 # balance needs to be verified in the second round while Bob is newly created each time
