@@ -92,7 +92,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             aliceEVMMappedAccount, // evm like
             to.address, // evm like
             '0x',
-            toBigNumber(65),
+            toBigNumber(85),
             1000000,
             25000,
             null,
