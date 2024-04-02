@@ -4,13 +4,20 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { WorkerRpcReturnValue, TrustedCallSigned, Getter, CorePrimitivesIdentity } from 'parachain-api';
+import type {
+    WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
+    CorePrimitivesIdentity,
+    LitentryMultiSignature,
+    TrustedGetterSigned,
+} from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
-import { blake2AsHex, base58Encode } from '@polkadot/util-crypto';
+import { blake2AsHex, base58Encode, blake2AsU8a } from '@polkadot/util-crypto';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -115,29 +122,25 @@ export const createSignedTrustedGetter = async (
     trustedGetter: [string, string],
     signer: Signer,
     params: any
-) => {
+): Promise<TrustedGetterSigned> => {
     const [variant, argType] = trustedGetter;
     const getter = parachainApi.createType('TrustedGetter', {
         [variant]: parachainApi.createType(argType, params),
     });
-    const payload = getter.toU8a();
+    const payload = blake2AsU8a(getter.toU8a(), 256);
 
-    let signature;
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
+    const signature = await signer.sign(
+        // bitcoin signature expects a hex-encoded `string` without `0x` prefix
+        signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload
+    );
 
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    let litentryMultiSignature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type()]: signature,
+    });
 
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
-        signature: signature,
+        signature: litentryMultiSignature,
     });
 };
 
