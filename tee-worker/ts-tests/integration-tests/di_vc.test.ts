@@ -13,11 +13,11 @@ import {
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity } from 'parachain-api';
+import type { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec, Bytes } from '@polkadot/types';
-import { assert } from 'chai';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { Vec, Bytes } from '@polkadot/types';
+import type { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;

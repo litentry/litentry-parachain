@@ -22,8 +22,8 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Bytes, Vec } from '@polkadot/types';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
+import type { Bytes, Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
