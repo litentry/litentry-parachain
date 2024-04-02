@@ -339,17 +339,10 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut shard.encode());
 
 		// The signature should be valid in either case:
-		// 1. payload
-		// 2. blake2_256(payload)
-		// 3. Signature Prefix + payload
-		// 4. Signature Prefix + blake2_256(payload)
-		//
-		// @TODO P-639: Remove 1 and 3.
+		// 1. blake2_256(payload)
+		// 2. Signature Prefix + blake2_256(payload)
 
 		let hashed = blake2_256(&payload);
-
-		let prettified_msg_raw = self.call.signature_message_prefix() + &hex_encode(&payload);
-		let prettified_msg_raw = prettified_msg_raw.as_bytes();
 
 		let prettified_msg_hash = self.call.signature_message_prefix() + &hex_encode(&hashed);
 		let prettified_msg_hash = prettified_msg_hash.as_bytes();
@@ -357,8 +350,6 @@ impl TrustedCallVerification for TrustedCallSigned {
 		// Most common signatures variants by clients are verified first (4 and 2).
 		self.signature.verify(prettified_msg_hash, self.call.sender_identity())
 			|| self.signature.verify(&hashed, self.call.sender_identity())
-			|| self.signature.verify(&payload, self.call.sender_identity())
-			|| self.signature.verify(prettified_msg_raw, self.call.sender_identity())
 	}
 
 	fn metric_name(&self) -> &'static str {
