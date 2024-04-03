@@ -182,7 +182,7 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
 								encrypted_result,
-								DirectRequestStatus::Processed(hash.into()),
+								DirectRequestStatus::Ok,
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}
@@ -198,7 +198,7 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
 								encrypted_result,
-								DirectRequestStatus::Processed(hash.into()),
+								DirectRequestStatus::Ok,
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}
@@ -213,7 +213,7 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
 								encrypted_result,
-								DirectRequestStatus::Processed(hash.into()),
+								DirectRequestStatus::Ok,
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}

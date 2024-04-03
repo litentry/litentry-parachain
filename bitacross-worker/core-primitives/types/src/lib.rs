@@ -91,8 +91,6 @@ pub enum DirectRequestStatus {
 	Error,
 	#[codec(index = 3)]
 	Processing(H256),
-	#[codec(index = 4)]
-	Processed(H256),
 }
 
 #[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]

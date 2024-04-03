@@ -342,9 +342,7 @@ fn send_direct_request<T: Decode + Debug>(
 								return Ok(value)
 							}
 						},
-						DirectRequestStatus::Ok
-						| DirectRequestStatus::Processing(_)
-						| DirectRequestStatus::Processed(_) => {
+						DirectRequestStatus::Ok | DirectRequestStatus::Processing(_) => {
 							debug!("request status is ignored");
 							direct_api.close().unwrap();
 							return Err(TrustedOperationError::Default {
@@ -426,9 +424,7 @@ pub(crate) fn wait_until(
 									}
 								}
 							},
-							DirectRequestStatus::Ok
-							| DirectRequestStatus::Processing(_)
-							| DirectRequestStatus::Processed(_) => {
+							DirectRequestStatus::Ok | DirectRequestStatus::Processing(_) => {
 								debug!("request status is ignored");
 								return None
 							},

@@ -108,11 +108,6 @@ pub fn send_direct_request_and_watch<T: Decode>(
 						DirectRequestStatus::Processing(_hash) => {
 							println!("Request is processing...");
 						},
-						DirectRequestStatus::Processed(hash) => {
-							println!("Request processed: {:?}...", hash);
-							let value = decode_response_value(&mut return_value.value.as_slice())?;
-							return Ok(value)
-						},
 						DirectRequestStatus::Ok => {
 							debug!("request status is ignored");
 							direct_api.close().unwrap();

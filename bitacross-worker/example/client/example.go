@@ -154,11 +154,6 @@ func main() {
 
 	// ** decode response and parse shielding key, status 0 means success
 
-	// should be processing ....
-	processing := read_response(*c)
-	fmt.Println("Got processing response")
-	fmt.Println(processing)
-
 	signResp := read_response(*c)
 
 	signResult, _ := decodeRpcReturnValue(signResp.Result)

@@ -134,8 +134,7 @@ where
 
 					DirectRequestStatus::Ok
 					| DirectRequestStatus::Error
-					| DirectRequestStatus::Processing(_)
-					| DirectRequestStatus::Processed(_) => {
+					| DirectRequestStatus::Processing(_) => {
 						log::warn!(
 							"Got unexpected direct request status: {:?}",
 							rpc_return_value.status
