@@ -3,7 +3,7 @@ import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 import { compiled } from '../common/utils/compile';
 
@@ -102,7 +102,6 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // Create deploy function
         const deploy = async (accountFrom: any) => {
             console.log(`Attempting to deploy from account ${accountFrom.address}`);
-
             // Create contract instance
             const hello = new web3.eth.Contract(abi);
 
@@ -117,6 +116,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                 {
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    gasPrice: await web3.eth.getGasPrice(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
                 },
                 accountFrom.privateKey
             );
@@ -134,13 +135,13 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         }
 
         // Test get message contract method
-        const sayMessage = async (contractAddress: string) => {
+        const sayMessage = async (contractAddress: string): Promise<string> => {
             // 4. Create contract instance
             const hello = new web3.eth.Contract(abi, contractAddress);
             console.log(`Making a call to contract at address: ${contractAddress}`);
 
             // 6. Call contract
-            const data = await hello.methods.sayMessage().call();
+            const data: string = await hello.methods.sayMessage().call();
 
             console.log(`The current message is: ${data}`);
 
@@ -166,6 +167,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                     to: contractAddress,
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
+                    gasPrice: await web3.eth.getGasPrice(),
                 },
                 accountFrom.privateKey
             );
@@ -175,7 +178,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
         const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
-        const sayMsg = await sayMessage(deployed.contractAddress!);
+        const sayMsg = await sayMessage(deployed.contractAddress!)
         const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
