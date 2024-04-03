@@ -135,6 +135,14 @@ pub trait SendRpcResponse: Send + Sync {
 		force_wait: bool,
 	) -> DirectRpcResult<()>;
 
+	// Litentry: send out new rpc response
+	fn send_rpc_response(
+		&self,
+		hash: Self::Hash,
+		encoded_value: Vec<u8>,
+		do_watch: bool,
+	) -> DirectRpcResult<()>;
+
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()>;
 

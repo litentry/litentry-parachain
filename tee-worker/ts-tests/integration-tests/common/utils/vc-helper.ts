@@ -1,25 +1,9 @@
-export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed'): Promise<any> {
-    const results: any = [];
-    for (let k = 0; k < events.length; k++) {
-        switch (method) {
-            case 'VCIssued':
-                results.push({
-                    identity: events[k].data.identity.toHex(),
-                    index: events[k].data.index.toHex(),
-                });
-                break;
-            case 'Failed':
-                results.push(events[k].data.detail.toHuman());
-                break;
-            default:
-                break;
-        }
-    }
-    return [...results];
-}
-
-// https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
-export const defaultAssertions = [
+// @todo move to a better place, and make it more generic, at least define the type
+export const mockBatchAssertion = [
+    {
+        description: 'request_batch_vc trial test',
+        assertion: [{ A7: '5' }, { A8: ['Litentry'] }, { A20: 'A20' }],
+    },
     {
         description: 'Have identified at least one account/address in both Web2 and Web3.',
         assertion: {
@@ -29,7 +13,37 @@ export const defaultAssertions = [
     {
         description: 'The user is a member of Litentry Discord.',
         assertion: {
-            A2: 'A2',
+            A2: '807161594245152800',
+        },
+    },
+
+    {
+        description:
+            'Have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882',
+        assertion: {
+            A3: ['A3', 'A3', 'A3'],
+        },
+    },
+    {
+        description: 'The length of time a user continues to hold LIT token',
+        assertion: {
+            A4: '10',
+        },
+    },
+];
+
+// https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
+export const mockAssertions = [
+    {
+        description: 'Have identified at least one account/address in both Web2 and Web3.',
+        assertion: {
+            A1: 'A1',
+        },
+    },
+    {
+        description: 'The user is a member of Litentry Discord.',
+        assertion: {
+            A2: '807161594245152800',
         },
     },
 
@@ -41,25 +55,7 @@ export const defaultAssertions = [
         },
     },
 
-    {
-        description: 'The length of time a user continues to hold LIT token',
-        assertion: {
-            A4: '10',
-        },
-    },
-    {
-        description: 'The length of time a user continues to hold DOT token',
-        assertion: {
-            A7: '10.01',
-        },
-    },
-    {
-        description:
-            'The range of number of transactions a user has made for a specific token on all supported networks(Litentry)',
-        assertion: {
-            A8: ['Litentry'],
-        },
-    },
+    // litentry-archive
     {
         description:
             'The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.',
@@ -69,7 +65,6 @@ export const defaultAssertions = [
     },
 
     // Achainable
-    // https://www.notion.so/web3builders/Assertion-interface-9126ba85a925417a922f2c6ae5d62e87
     {
         description: `A trader or liquidity provider of Uniswap V2 or V3
                       Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f
@@ -90,7 +85,6 @@ export const defaultAssertions = [
                 Amount: {
                     name: 'Balance over {amount}',
                     chain: ['Ethereum'],
-
                     amount: '0',
                 },
             },
@@ -119,6 +113,25 @@ export const defaultAssertions = [
             },
         },
     },
+    {
+        description: 'The length of time a user continues to hold LIT token',
+        assertion: {
+            A4: '10',
+        },
+    },
+    {
+        description: 'The length of time a user continues to hold DOT token',
+        assertion: {
+            A7: '5',
+        },
+    },
+    {
+        description:
+            'The range of number of transactions a user has made for a specific token on all supported networks(Litentry)',
+        assertion: {
+            A8: ['Litentry'],
+        },
+    },
 
     // SORA
     {
@@ -137,22 +150,7 @@ export const defaultAssertions = [
             VIP3MembershipCard: 'Silver',
         },
     },
-];
-
-// In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
-// For the 'OneBlock' assertion, need to configure the Polkadot/Kusma address,
-// and for 'bnb,' need to configure the NODEREAL_API_KEY
-// We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
-export const unconfiguredAssertions = [
-    // OneBlock
-    {
-        description: 'A participant to the course co-created by OneBlock+ and Parity',
-        assertion: {
-            OneBlock: 'CourseParticipation',
-        },
-    },
-
-    // BNB domain
+    // BNB domain-nodereal
     {
         description: 'Holding a certain amount of bnb domain names',
         assertion: {
@@ -165,86 +163,52 @@ export const unconfiguredAssertions = [
             BnbDigitDomainClub: 'Bnb999ClubMember',
         },
     },
-];
-export const jsonSchema = {
-    type: 'object',
-    properties: {
-        id: {
-            type: 'string',
-        },
-        type: {
-            type: 'array',
-        },
-        issuer: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                name: {
-                    type: 'string',
-                },
-                shard: {
-                    type: 'string',
-                },
-            },
-        },
-        issuanceDate: {
-            type: 'string',
-        },
-        credentialSubject: {
-            type: 'object',
-            properties: {
-                id: {
-                    type: 'string',
-                },
-                description: {
-                    type: 'string',
-                },
-                type: {
-                    type: 'string',
-                },
-                tag: {
-                    type: 'array',
-                },
-                assertions: {
-                    type: 'array',
-                    items: {
-                        type: 'object',
-                    },
-                },
-                values: {
-                    type: 'array',
-                    items: {
-                        type: 'boolean',
-                    },
-                },
-                endpoint: {
-                    type: 'string',
-                },
-            },
-            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
-        },
-        proof: {
-            type: 'object',
-            properties: {
-                created: {
-                    type: 'string',
-                },
-                type: {
-                    enum: ['Ed25519Signature2020'],
-                },
-                proofPurpose: {
-                    enum: ['assertionMethod'],
-                },
-                proofValue: {
-                    type: 'string',
-                },
-                verificationMethod: {
-                    type: 'string',
-                },
-            },
+    // OneBlock
+    {
+        description: 'A participant to the course co-created by OneBlock+ and Parity',
+        assertion: {
+            Oneblock: 'CourseCompletion',
         },
     },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
-};
+    // Geniidata
+    {
+        description: 'NFT holder',
+        assertion: {
+            Brc20AmountHolder: [],
+        },
+    },
+
+    // nodereal_jsonrpc
+    {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'WeirdoGhostGang',
+        },
+    },
+    {
+        description: 'The amount of TRX you are holding',
+        assertion: {
+            TokenHoldingAmount: 'TRX',
+        },
+    },
+
+    {
+        description: 'The amount of LIT you are staking',
+        assertion: {
+            LITStaking: 'LITStaking',
+        },
+    },
+    {
+        description: 'The amount of a Ton you are holding',
+        assertion: {
+            EVMAmountHolding: 'Ton',
+        },
+    },
+
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'KaratDaoUser',
+        },
+    },
+];

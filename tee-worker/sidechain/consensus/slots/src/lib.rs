@@ -291,12 +291,12 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				Ok(Some(peeked_header)) => peeked_header,
 				Ok(None) => slot_info.last_imported_integritee_parentchain_head.clone(),
 				Err(e) => {
-					warn!("Failed to peek latest Integritee parentchain block header: {:?}", e);
+					warn!("Failed to peek latest Litentry parentchain block header: {:?}", e);
 					return None
 				},
 			};
 		trace!(
-			"on_slot: a priori latest Integritee block number: {:?}",
+			"on_slot: a priori latest Litentry block number: {:?}",
 			latest_integritee_parentchain_header.number()
 		);
 		// fixme: we need proper error handling here. we just assume there is no target_a if there is an error here, which is very brittle
@@ -392,7 +392,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			Ok(h) => h,
 			Err(e) => {
 				debug!(
-					"Failed to import Integritee blocks until nr{:?}: {:?}",
+					"Failed to import Litentry blocks until nr{:?}: {:?}",
 					latest_integritee_parentchain_header.number(),
 					e
 				);
@@ -400,7 +400,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			},
 		};
 		trace!(
-			"on_slot: a posteriori latest Integritee block number: {:?}",
+			"on_slot: a posteriori latest Litentry block number (if there is a new one): {:?}",
 			last_imported_integritee_header.clone().map(|h| *h.number())
 		);
 
@@ -466,7 +466,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 
 		if is_single_worker {
-			error!("Running as single worker, skipping timestamp within slot check")
+			warn!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
@@ -478,7 +478,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 		if last_imported_integritee_header.is_some() {
 			println!(
-				"Syncing Parentchains: Integritee: {:?} TargetA: {:?}, TargetB: {:?}, Sidechain: {:?}",
+				"Syncing Parentchains: Litentry: {:?} TargetA: {:?}, TargetB: {:?}, Sidechain: {:?}",
 				latest_integritee_parentchain_header.number(),
 				maybe_latest_target_a_parentchain_header.map(|h| *h.number()),
 				maybe_latest_target_b_parentchain_header.map(|h| *h.number()),
@@ -563,7 +563,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 					)
 				},
 				None => info!(
-					"Did not propose a block for slot {} in shard {:?}",
+					"Did not produce a block for slot {} in shard {:?}",
 					*slot_info.slot, shard
 				),
 			}

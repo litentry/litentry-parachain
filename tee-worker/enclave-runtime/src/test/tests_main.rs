@@ -32,7 +32,7 @@ use crate::{
 	tls_ra,
 };
 use codec::Decode;
-use ita_sgx_runtime::Parentchain;
+use ita_sgx_runtime::ParentchainLitentry;
 use ita_stf::{
 	helpers::{account_key_hash, set_block_number},
 	stf_sgx_tests,
@@ -46,7 +46,7 @@ use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	StateCallInterface,
 };
@@ -57,7 +57,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Balance, Block, Header};
+use itp_types::{parentchain::ParentchainId, AccountId, Balance, Block, Header};
 use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
@@ -494,11 +494,11 @@ fn test_call_set_update_parentchain_block() {
 		Default::default(),
 	);
 
-	TestStf::update_parentchain_block(&mut state, header.clone()).unwrap();
+	TestStf::update_parentchain_litentry_block(&mut state, header.clone()).unwrap();
 
-	assert_eq!(header.hash(), state.execute_with(Parentchain::block_hash));
-	assert_eq!(parent_hash, state.execute_with(Parentchain::parent_hash));
-	assert_eq!(block_number, state.execute_with(Parentchain::block_number));
+	assert_eq!(header.hash(), state.execute_with(ParentchainLitentry::block_hash));
+	assert_eq!(parent_hash, state.execute_with(ParentchainLitentry::parent_hash));
+	assert_eq!(block_number, state.execute_with(ParentchainLitentry::block_number));
 }
 
 fn test_signature_must_match_public_sender_in_call() {
@@ -574,6 +574,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 		Identity::Substrate(sender_acc.clone().into()),
 		sender_acc,
 		1000,
+		ParentchainId::Litentry,
 	)
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 
@@ -604,6 +605,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 		Identity::Substrate(enclave_call_signer.public().into()),
 		sender_account,
 		1000,
+		ParentchainId::Litentry,
 	)
 	.sign(&enclave_call_signer.into(), 0, &mrenclave, &shard);
 	let trusted_operation =

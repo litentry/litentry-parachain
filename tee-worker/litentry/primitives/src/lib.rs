@@ -41,25 +41,41 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_hex_utils::hex_encode;
 use log::error;
 pub use pallet_teebag::{
 	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
 	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
 };
 pub use parentchain_primitives::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
-	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
-	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
-	BoundedWeb3Network, ContestType, EVMTokenType, ErrorDetail, ErrorString,
-	GenericDiscordRoleType, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	PlatformUserType, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
-	SoraQuizType, VCMPError, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
-	MINUTES,
+	assertion::{
+		achainable::{
+			AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
+			AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
+			AchainableDateInterval, AchainableDatePercent, AchainableMirror, AchainableParams,
+			AchainableToken, AmountHoldingTimeType,
+		},
+		bnb_domain::BnbDigitDomainType,
+		contest::ContestType,
+		evm_amount_holding::EVMTokenType,
+		generic_discord_role::GenericDiscordRoleType,
+		network::{
+			all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks,
+			all_web3networks, BoundedWeb3Network, Web3Network,
+		},
+		oneblock::OneBlockCourseType,
+		platform_user::PlatformUserType,
+		soraquiz::SoraQuizType,
+		vip3::VIP3MembershipCardLevel,
+		web3_nft::Web3NftType,
+		web3_token::Web3TokenType,
+		Assertion,
+	},
+	identity::*,
+	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
+	VCMPError, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
@@ -72,8 +88,6 @@ use std::string::{String, ToString};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-pub const LITENTRY_PRETTIFIED_MESSAGE_PREFIX: &str = "Litentry authorization token: ";
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -90,15 +104,9 @@ pub enum LitentryMultiSignature {
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 4)]
-	EthereumPrettified(EthereumSignature),
 	/// Bitcoin signed message, a hex-encoded string of original &[u8] message, without `0x` prefix
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	Bitcoin(BitcoinSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 6)]
-	BitcoinPrettified(BitcoinSignature),
 }
 
 impl LitentryMultiSignature {
@@ -140,13 +148,6 @@ impl LitentryMultiSignature {
 			Self::Ethereum(ref sig) =>
 				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
 					|| verify_evm_signature(msg, sig, signer),
-			Self::EthereumPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				let msg = prettified_msg.as_bytes();
-				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
-					|| verify_evm_signature(msg, sig, signer)
-			},
 			_ => false,
 		}
 	}
@@ -154,12 +155,11 @@ impl LitentryMultiSignature {
 	fn verify_bitcoin(&self, msg: &[u8], signer: &Address33) -> bool {
 		match self {
 			Self::Bitcoin(ref sig) =>
-				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer),
-			Self::BitcoinPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				verify_bitcoin_signature(prettified_msg.as_str(), sig, signer)
-			},
+				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer)
+					|| match std::str::from_utf8(msg) {
+						Err(_) => false,
+						Ok(prettified) => verify_bitcoin_signature(prettified, sig, signer),
+					},
 			_ => false,
 		}
 	}

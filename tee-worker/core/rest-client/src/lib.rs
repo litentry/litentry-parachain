@@ -33,12 +33,10 @@ pub mod sgx_reexport_prelude {
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 pub mod error;
 pub mod http_client;
-pub mod http_client_builder;
 pub mod rest_client;
 
 #[cfg(test)]

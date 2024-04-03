@@ -17,6 +17,10 @@
 */
 
 use crate::{
+	initialization::global_components::{
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+	},
 	rpc::worker_api_direct::public_api_rpc_handler,
 	test::{
 		fixtures::components::create_ocall_api,
@@ -32,6 +36,7 @@ use itc_direct_rpc_server::{
 };
 use itc_parentchain_test::ParentchainHeaderBuilder;
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
+use itp_component_container::ComponentGetter;
 use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
 use itp_sgx_temp_dir::TempDir;
@@ -68,6 +73,9 @@ pub fn state_get_mrenclave_works() {
 		getter_executor,
 		Arc::new(rsa_repository),
 		ocall_api.into(),
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
@@ -117,6 +125,9 @@ pub fn get_state_request_works() {
 		getter_executor,
 		Arc::new(rsa_repository),
 		ocall_api,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 

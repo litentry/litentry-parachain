@@ -20,6 +20,9 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
+	initialization::global_components::{
+		EnclaveBitcoinKeyRepository, EnclaveEthereumKeyRepository, EnclaveSigningKeyRepository,
+	},
 	std::string::ToString,
 	utils::{
 		get_stf_enclave_signer_from_solo_or_parachain,
@@ -46,12 +49,13 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
+#[cfg(feature = "development")]
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::Pair;
+use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -74,6 +78,9 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	ocall_api: Arc<OcallApi>,
+	signing_key_repository: Arc<EnclaveSigningKeyRepository>,
+	bitcoin_key_repository: Arc<EnclaveBitcoinKeyRepository>,
+	ethereum_key_repository: Arc<EnclaveEthereumKeyRepository>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -143,6 +150,31 @@ where
 			};
 			Ok(json!(json_value))
 		}
+	});
+
+	io.add_sync_method("bitacross_getPublicKeys", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_getPublicKeys");
+
+		let signer = match signing_key_repository.retrieve_key() {
+			Ok(pair) => pair.public().0.to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain signer key"),
+		};
+
+		let bitcoin_key = match bitcoin_key_repository.retrieve_key() {
+			Ok(pair) => pair.public_bytes().to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain bitcoin key"),
+		};
+
+		let ethereum_key = match ethereum_key_repository.retrieve_key() {
+			Ok(pair) => pair.public_bytes().to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain ethereum key"),
+		};
+
+		Ok(json!({
+			"signer": signer,
+			"bitcoin_key": bitcoin_key,
+			"ethereum_key": ethereum_key
+		}))
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
@@ -280,7 +312,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if_not_production!({
+	if_development!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {

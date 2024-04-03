@@ -26,7 +26,7 @@ use crate::*;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::{build_client, DataProviderConfig};
+use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
 
@@ -38,8 +38,8 @@ pub struct OneBlockResponse {
 }
 
 impl RestPath<String> for OneBlockResponse {
-	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
-		Ok(path)
+	fn get_path(_path: String) -> core::result::Result<String, RestClientError> {
+		Ok("v1/blocks/e4068e6a326243468f35dcdc0c43f686/children".to_string())
 	}
 }
 
@@ -55,7 +55,7 @@ fn fetch_data_from_notion(
 	headers.insert("Notion-Version", "2022-06-28");
 	headers.insert(AUTHORIZATION.as_str(), oneblock_notion_key.as_str());
 
-	let mut client = build_client(oneblock_notion_url.as_str(), headers);
+	let mut client = build_client_with_cert(oneblock_notion_url.as_str(), headers);
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
 		Error::RequestVCFailed(

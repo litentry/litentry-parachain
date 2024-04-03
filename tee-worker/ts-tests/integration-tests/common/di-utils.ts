@@ -10,7 +10,7 @@ import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { blake2AsHex, base58Encode } from '@polkadot/util-crypto';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -27,7 +27,8 @@ import { createJsonRpcRequest, nextRequestId } from './helpers';
 async function sendRequest(
     wsClient: WebSocketAsPromised,
     request: JsonRpcRequest,
-    api: ApiPromise
+    api: ApiPromise,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
         wsClient.onMessage.addListener((data) => {
@@ -36,7 +37,7 @@ async function sendRequest(
                 const result = parsed.result;
                 const res = api.createType('WorkerRpcReturnValue', result);
 
-                console.log('Got response: ' + JSON.stringify(res.toHuman()));
+                console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
 
                 if (res.status.isError) {
                     console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
@@ -45,6 +46,8 @@ async function sendRequest(
                 if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
                     console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
                 }
+                // sending every response we receive from websocket
+                if (onMessageReceived) onMessageReceived(res);
 
                 // resolve it once `do_watch` is false, meaning it's the final response
                 if (res.do_watch.isFalse) {
@@ -122,6 +125,7 @@ export const createSignedTrustedGetter = async (
     let signature;
     if (signer.type() === 'bitcoin') {
         const payloadStr = u8aToHex(payload).substring(2);
+
         signature = parachainApi.createType('LitentryMultiSignature', {
             [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
         });
@@ -130,6 +134,7 @@ export const createSignedTrustedGetter = async (
             [signer.type()]: u8aToHex(await signer.sign(payload)),
         });
     }
+
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,
@@ -214,6 +219,29 @@ export async function createSignedTrustedCallRequestVc(
     );
 }
 
+export async function createSignedTrustedCallRequestBatchVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    assertion: string,
+    aesKey: string,
+    hash: string
+) {
+    return await createSignedTrustedCall(
+        parachainApi,
+        [
+            'request_batch_vc',
+            '(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)',
+        ],
+        signer,
+        mrenclave,
+        nonce,
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+    );
+}
+
 export async function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -269,13 +297,21 @@ export async function createSignedTrustedGetterIdGraph(
 
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
-    teeShieldingKey: KeyObject,
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
-    const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
-    const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    const request = createJsonRpcRequest(
+        'author_getNextNonce',
+        [base58Encode(hexToU8a(context.mrEnclave)), primeIdentity.toHex()],
+        nextRequestId(context)
+    );
+    const res = await sendRequest(context.tee, request, context.api);
+    const nonceHex = res.value.toHex();
+    let nonce = 0;
+
+    if (nonceHex) {
+        nonce = context.api.createType('Index', '0x' + nonceHex.slice(2)?.match(/../g)?.reverse().join('')).toNumber();
+    }
+
     return context.api.createType('Index', nonce);
 };
 
@@ -299,7 +335,8 @@ export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     call: TrustedCallSigned,
-    isVcDirect = false
+    isVcDirect = false,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
@@ -318,7 +355,7 @@ export const sendRequestFromTrustedCall = async (
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
-    return sendRequest(context.tee, request, context.api);
+    return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
 export const sendRequestFromGetter = async (

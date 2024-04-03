@@ -39,6 +39,7 @@ use crate::{
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, LightClientState};
 pub use itc_parentchain::primitives::{ParachainBlock, ParachainHeader, ParachainParams};
 use itp_component_container::ComponentGetter;
+use itp_stf_interface::ShardCreationInfo;
 use itp_types::parentchain::ParentchainId;
 use std::{path::PathBuf, sync::Arc};
 
@@ -53,7 +54,11 @@ pub struct TargetAParachainHandler {
 }
 
 impl TargetAParachainHandler {
-	pub fn init(_base_path: PathBuf, params: ParachainParams) -> Result<Self> {
+	pub fn init(
+		_base_path: PathBuf,
+		params: ParachainParams,
+		shard_creation_info: ShardCreationInfo,
+	) -> Result<Self> {
 		let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 		let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 		let node_metadata_repository = Arc::new(EnclaveNodeMetadataRepository::default());
@@ -88,6 +93,7 @@ impl TargetAParachainHandler {
 			stf_executor.clone(),
 			extrinsics_factory.clone(),
 			node_metadata_repository.clone(),
+			shard_creation_info,
 		)?;
 
 		let import_dispatcher = create_target_a_offchain_immediate_import_dispatcher(

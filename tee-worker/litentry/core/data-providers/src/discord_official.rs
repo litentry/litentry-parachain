@@ -125,8 +125,8 @@ mod tests {
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		let mut data_provider_config = DataProviderConfig::new();
-		data_provider_config.set_discord_official_url(url);
+		let mut data_provider_config = DataProviderConfig::new().unwrap();
+		data_provider_config.set_discord_official_url(url).unwrap();
 		data_provider_config
 	}
 

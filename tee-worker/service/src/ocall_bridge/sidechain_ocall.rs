@@ -20,15 +20,18 @@ use crate::{
 	globals::tokio_handle::GetTokioHandle,
 	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, SidechainBridge},
 	sync_block_broadcaster::BroadcastBlocks,
-	worker_peers_registry::PeersRegistry,
+	worker_peers_updater::PeersRegistry,
 };
 use codec::{Decode, Encode};
 use itp_types::{BlockHash, ShardIdentifier};
 use its_peer_fetch::FetchBlocksFromPeer;
-use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
+use its_primitives::{
+	traits::{Block, Header},
+	types::SignedBlock as SignedSidechainBlock,
+};
 use its_storage::BlockStorage;
 use log::*;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 pub struct SidechainOCall<
 	BlockBroadcaster,
@@ -89,35 +92,48 @@ where
 				},
 			};
 
-		if !signed_blocks.is_empty() {
-			info!(
-				"Enclave produced sidechain blocks: {:?}",
-				signed_blocks
-					.iter()
-					.map(|b| b.block.header().block_number)
-					.collect::<Vec<u64>>()
-			);
-		} else {
+		if signed_blocks.is_empty() {
 			debug!("Enclave did not produce sidechain blocks");
+			return status
 		}
 
+		info!(
+			"Enclave produced sidechain blocks: {:?}",
+			signed_blocks
+				.iter()
+				.map(|b| b.block.header().block_number)
+				.collect::<Vec<u64>>()
+		);
+
+		let shards: Vec<ShardIdentifier> = signed_blocks
+			.iter()
+			.map(|b| b.block.header().shard_id())
+			.collect::<HashSet<_>>()
+			.into_iter()
+			.collect();
+
+		if shards.len() > 1 {
+			error!("operating multiple shards is not supported");
+		}
+		let shard = shards[0];
+
 		// FIXME: When & where should peers be updated?
-		debug!("Updating peers..");
-		if let Err(e) = self.peer_registry.update_peers() {
+		trace!("Updating peers..");
+		if let Err(e) = self.peer_registry.update_peers(shard) {
 			error!("Error updating peers: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
 		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
 		} else {
-			info!("Successfully updated peers");
+			debug!("Successfully updated peers");
 		}
 
-		debug!("Broadcasting sidechain blocks ...");
+		trace!("Broadcasting sidechain blocks ...");
 		if let Err(e) = self.block_broadcaster.broadcast_blocks(signed_blocks) {
 			error!("Error broadcasting blocks: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
 		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
 		} else {
-			info!("Successfully broadcast blocks");
+			debug!("Successfully broadcast blocks");
 		}
 
 		status
@@ -264,7 +280,8 @@ mod tests {
 	) -> TestSidechainOCall {
 		let block_broadcaster_mock = Arc::new(BroadcastBlocksMock {});
 		let block_storage_mock = Arc::new(BlockStorageMock {});
-		let worker_peers_registry_mock = Arc::new(WorkerPeersRegistryMock {});
+		let worker_peers_registry_mock: Arc<WorkerPeersRegistryMock> =
+			Arc::new(WorkerPeersRegistryMock {});
 		let peer_block_fetcher_mock = Arc::new(
 			FetchBlocksFromPeerMock::<SignedSidechainBlock>::default()
 				.with_signed_blocks(peer_blocks_map),

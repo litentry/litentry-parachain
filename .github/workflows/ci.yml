@@ -119,7 +119,7 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rebuild-bitacross-docker }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
             rebuild_bitacross=true
-          fi          
+          fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
@@ -133,7 +133,7 @@ jobs:
           fi
           if [ "${{ steps.filter.outputs.bitacross_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_bitacross" = "true" ]; then
             run_bitacross_test=true
-          fi          
+          fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
           echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
@@ -153,7 +153,7 @@ jobs:
       - name: Install pre-built taplo
         run: |
           mkdir -p $HOME/.local/bin
-          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz                    
+          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz
           gzip -d taplo-linux-x86_64.gz
           cp taplo-linux-x86_64 $HOME/.local/bin/taplo
           chmod a+x $HOME/.local/bin/taplo
@@ -259,20 +259,20 @@ jobs:
       - name: Pallet unittests
         working-directory: ./tee-worker
         run: |
-          cargo test --release -p pallet-* --lib
+          cargo test --release -p pallet-* --lib --features development
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
           echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
+          cargo clippy --release --features development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
+          cargo clippy --release --features sidechain,development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Clean up disk
@@ -290,14 +290,14 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
+          cargo clippy --release --features development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
+          cargo clippy --release --features sidechain,development -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
@@ -379,7 +379,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           echo "::group::build docker image"
-          make build-docker-release
+          ./scripts/build-docker.sh release latest --features=fast-runtime,development
           echo "::endgroup::"
           echo "::group::docker images"
           docker images --all
@@ -619,23 +619,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run pallet-teerex unittests
-        run: |
-          rustup show
-          cargo +stable install cargo-hack --locked
-          cargo hack test --feature-powerset --features=default --locked --release -p pallet-teerex --lib
-
       - name: Run all unittests
         run: |
+          echo "::group::core-primitives unittest"
           cargo test --locked --release -p core-primitives --lib
-          # no `skip-ias-check` feature
+          echo "::endgroup::"
+          echo "::group::all pallets unittest"
           cargo test --locked --release -p pallet-* --lib
-          # with `skip-ias-check` feature only
-          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
-          # with `runtime-benchmarks` feature only
+          echo "::endgroup::"
+          echo "::group::all pallets unittest with runtime-benchmarks feature"
           cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
-          # with both `skip-ias-check` and `runtime-benchmarks` features
-          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -659,18 +653,19 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      # We could use matrix but don't have to. Since this ci has many jobs already,
-      # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
+      # We could have used matrix but the runtime tests are executed sequentially for a cleaner GHA visualisation graph.
       # It won't take much longer as we run them back to back.
-      # We intentionally write 3 steps for better readability in GHA tab if one of them fails.
-      - name: Run rococo runtime test
-        run: cargo test --locked --release -p rococo-parachain-runtime --lib
-
-      - name: Run litmus runtime test
-        run: cargo test --locked --release -p litmus-parachain-runtime --lib
-
-      - name: Run litentry runtime test
-        run: cargo test --locked --release -p litentry-parachain-runtime --lib
+      - name: Run runtime tests
+        run: |
+          echo "::group::rococo runtime test"
+          cargo test --locked --release -p rococo-parachain-runtime --lib
+          echo "::endgroup::"
+          echo "::group::litmus runtime test"
+          cargo test --locked --release -p litmus-parachain-runtime --lib
+          echo "::endgroup::"
+          echo "::group::litentry runtime test"
+          cargo test --locked --release -p litentry-parachain-runtime --lib
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -687,15 +682,13 @@ jobs:
       matrix:
         include:
           # Litentry
-          - test_name: lit-ii-vc-test
-          - test_name: lit-ii-identity-test
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
-          - test_name: lit-ii-batch-test
+          - test_name: lit-test-failed-parentchain-extrinsic
     steps:
       - uses: actions/checkout@v4
 
@@ -776,9 +769,6 @@ jobs:
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
-          - test_name: lit-ii-batch-test-multiworker
-          - test_name: lit-ii-identity-multiworker-test
-          - test_name: lit-ii-vc-multiworker-test
           - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4

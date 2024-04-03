@@ -394,7 +394,7 @@ pub mod __ {
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 		RB: Fn(
 				Arc<ParachainClient<RuntimeApi>>,
@@ -459,7 +459,7 @@ pub mod __ {
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>
 			+ moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>
@@ -752,7 +752,7 @@ pub mod __ {
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	{
 		start_node_impl::<RuntimeApi, _, _, _>(
@@ -864,7 +864,7 @@ pub mod __ {
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>
 			+ moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>
@@ -982,7 +982,7 @@ pub mod __ {
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	{
 		__
@@ -1017,7 +1017,7 @@ pub mod __ {
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>,
 		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 		Executor: sc_executor::NativeExecutionDispatch + 'static,
@@ -1133,7 +1133,7 @@ pub mod __ {
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ sp_consensus_aura::AuraApi<Block, AuraId>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>
 			+ moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>
@@ -1388,7 +1388,7 @@ pub mod __ {
 			+ sp_block_builder::BlockBuilder<Block>
 			+ cumulus_primitives_core::CollectCollationInfo<Block>
 			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>
 			+ moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 			+ fp_rpc::EthereumRuntimeRPCApi<Block>

@@ -17,7 +17,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
-use codec::Decode;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo},
 	ensure,
@@ -25,6 +24,7 @@ use frame_support::{
 	traits::Get,
 };
 use frame_system::pallet_prelude::*;
+use parity_scale_codec::Decode;
 use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
@@ -270,7 +270,7 @@ pub mod pallet {
 		///
 		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::call_index(0)]
-		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal))]
 		pub fn set_admin(
 			origin: OriginFor<T>,
 			new_admin: T::AccountId,
@@ -285,7 +285,7 @@ pub mod pallet {
 		///
 		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::call_index(1)]
-		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::Yes))]
+		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal))]
 		pub fn set_mode(
 			origin: OriginFor<T>,
 			new_mode: OperationalMode,
@@ -297,7 +297,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn force_add_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -309,7 +309,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn force_remove_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -320,7 +320,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn force_remove_enclave_by_mrenclave(
 			origin: OriginFor<T>,
 			mrenclave: MrEnclave,
@@ -345,7 +345,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn force_remove_enclave_by_worker_type(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -371,7 +371,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn set_scheduled_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -385,11 +385,11 @@ pub mod pallet {
 				sidechain_block_number,
 				mrenclave,
 			});
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -405,11 +405,11 @@ pub mod pallet {
 				worker_type,
 				sidechain_block_number,
 			});
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn register_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -480,7 +480,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			Self::remove_enclave(&sender)?;
@@ -488,7 +488,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn register_quoting_enclave(
 			origin: OriginFor<T>,
 			enclave_identity: Vec<u8>,
@@ -500,11 +500,11 @@ pub mod pallet {
 			let quoting_enclave =
 				Self::verify_quoting_enclave(enclave_identity, signature, certificate_chain)?;
 			<QuotingEnclaveRegistry<T>>::put(quoting_enclave);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(11)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn register_tcb_info(
 			origin: OriginFor<T>,
 			tcb_info: Vec<u8>,
@@ -516,7 +516,7 @@ pub mod pallet {
 			let (fmspc, on_chain_info) =
 				Self::verify_tcb_info(tcb_info, signature, certificate_chain)?;
 			TcbInfo::<T>::insert(fmspc, on_chain_info);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		// ===============================================================================
@@ -524,7 +524,7 @@ pub mod pallet {
 		// ===============================================================================
 
 		#[pallet::call_index(20)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::OpaqueTaskPosted { shard: request.shard });
@@ -532,7 +532,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(21)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn parentchain_block_processed(
 			origin: OriginFor<T>,
 			block_hash: H256,
@@ -549,11 +549,11 @@ pub mod pallet {
 				block_hash,
 				task_merkle_root,
 			});
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(22)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn sidechain_block_imported(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -590,7 +590,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(().into())
+				return Ok(Pays::No.into())
 			}
 
 			let block_number = confirmation.block_number;
@@ -612,7 +612,7 @@ pub mod pallet {
 			);
 
 			Self::finalize_block(sender, shard, confirmation);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 	}
 }
@@ -785,5 +785,9 @@ impl<T: Config> Pallet<T> {
 
 #[cfg(test)]
 mod mock;
+
 #[cfg(test)]
 mod tests;
+
+#[cfg(any(test, feature = "runtime-benchmarks", feature = "test-util"))]
+pub mod test_util;

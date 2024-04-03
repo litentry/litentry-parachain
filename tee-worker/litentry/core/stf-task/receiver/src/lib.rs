@@ -25,8 +25,6 @@ pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
 	pub use hex_sgx as hex;
 	pub use thiserror_sgx as thiserror;
-	pub use threadpool_sgx as threadpool;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -39,22 +37,23 @@ pub mod handler;
 
 use codec::Encode;
 use frame_support::sp_tracing::warn;
-use futures::executor;
+use futures::{executor, executor::ThreadPoolBuilder};
 use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
 };
 use ita_sgx_runtime::Hash;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_primitives::types::TrustedOperation;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
-use lc_stf_task_sender::{stf_task_sender, RequestType};
+use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
 use std::{
 	boxed::Box,
@@ -64,7 +63,6 @@ use std::{
 	thread,
 	time::Instant,
 };
-use threadpool::ThreadPool;
 
 #[cfg(test)]
 mod mock;
@@ -96,7 +94,7 @@ pub struct StfTaskContext<
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub shielding_key: Arc<ShieldingKeyRepository>,
-	author_api: Arc<A>,
+	pub author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
@@ -214,10 +212,10 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
-	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
+	let stf_task_receiver = init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 	let n_workers = 4;
-	let pool = ThreadPool::new(n_workers);
+	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 
 	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
 
@@ -237,7 +235,7 @@ where
 		let context_pool = context.clone();
 		let sender_pool = sender.clone();
 
-		pool.execute(move || {
+		pool.spawn_ok(async move {
 			let start_time = Instant::now();
 
 			match &req {
@@ -258,8 +256,6 @@ where
 			}
 		});
 	}
-
-	pool.join();
 	warn!("stf_task_receiver loop terminated");
 	Ok(())
 }

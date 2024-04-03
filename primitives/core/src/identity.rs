@@ -17,15 +17,19 @@
 pub extern crate alloc;
 
 use crate::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, AccountId,
-	Web3Network,
+	assertion::network::{
+		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
+		all_substrate_web3networks, Web3Network,
+	},
+	AccountId,
 };
 use alloc::{format, str, string::String};
-use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
+use base58::{FromBase58, ToBase58};
 use core::fmt::{Debug, Formatter};
 use litentry_hex_utils::{decode_hex, hex_encode};
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
+use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{
 	crypto::{AccountId32, ByteArray},
@@ -84,9 +88,9 @@ impl IdentityString {
 
 impl Debug for IdentityString {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_struct("IdentityString").finish(),
-			f.debug_struct("IdentityString").field("inner", &self.inner).finish()
+		if_development_or!(
+			f.debug_struct("IdentityString").field("inner", &self.inner).finish(),
+			f.debug_struct("IdentityString").finish()
 		)
 	}
 }
@@ -123,9 +127,9 @@ impl<'a> TryFrom<&'a [u8]> for Address20 {
 
 impl Debug for Address20 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address20").finish(),
-			f.debug_tuple("Address20").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address20").field(&self.0).finish(),
+			f.debug_tuple("Address20").finish()
 		)
 	}
 }
@@ -193,9 +197,9 @@ impl From<ed25519::Public> for Address32 {
 
 impl Debug for Address32 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address32").finish(),
-			f.debug_tuple("Address32").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address32").field(&self.0).finish(),
+			f.debug_tuple("Address32").finish()
 		)
 	}
 }
@@ -255,9 +259,9 @@ impl From<ecdsa::Public> for Address33 {
 
 impl Debug for Address33 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address33").finish(),
-			f.debug_tuple("Address33").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address33").field(&self.0).finish(),
+			f.debug_tuple("Address33").finish()
 		)
 	}
 }
@@ -288,6 +292,9 @@ pub enum Identity {
 	// e.g. unisat-wallet: https://docs.unisat.io/dev/unisat-developer-service/unisat-wallet#getpublickey
 	#[codec(index = 5)]
 	Bitcoin(Address33),
+
+	#[codec(index = 6)]
+	Solana(Address32),
 }
 
 impl Identity {
@@ -296,7 +303,7 @@ impl Identity {
 	}
 
 	pub fn is_web3(&self) -> bool {
-		matches!(self, Self::Substrate(..) | Self::Evm(..) | Self::Bitcoin(..))
+		matches!(self, Self::Substrate(..) | Self::Evm(..) | Self::Bitcoin(..) | Self::Solana(..))
 	}
 
 	pub fn is_substrate(&self) -> bool {
@@ -311,11 +318,16 @@ impl Identity {
 		matches!(self, Self::Bitcoin(..))
 	}
 
+	pub fn is_solana(&self) -> bool {
+		matches!(self, Self::Solana(..))
+	}
+
 	pub fn default_web3networks(&self) -> Vec<Web3Network> {
 		match self {
 			Identity::Substrate(_) => all_substrate_web3networks(),
 			Identity::Evm(_) => all_evm_web3networks(),
 			Identity::Bitcoin(_) => all_bitcoin_web3networks(),
+			Identity::Solana(_) => all_solana_web3networks(),
 			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => Vec::new(),
 		}
 	}
@@ -327,6 +339,7 @@ impl Identity {
 				!networks.is_empty() && networks.iter().all(|n| n.is_substrate()),
 			Identity::Evm(_) => !networks.is_empty() && networks.iter().all(|n| n.is_evm()),
 			Identity::Bitcoin(_) => !networks.is_empty() && networks.iter().all(|n| n.is_bitcoin()),
+			Identity::Solana(_) => !networks.is_empty() && networks.iter().all(|n| n.is_solana()),
 			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) =>
 				networks.is_empty(),
 		}
@@ -335,7 +348,7 @@ impl Identity {
 	/// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.
 	pub fn to_account_id(&self) -> Option<AccountId> {
 		match self {
-			Identity::Substrate(address) => Some(address.into()),
+			Identity::Substrate(address) | Identity::Solana(address) => Some(address.into()),
 			Identity::Evm(address) =>
 				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()))),
 			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
@@ -370,6 +383,14 @@ impl Identity {
 						.try_into()
 						.map_err(|_| "Address33 conversion error")?;
 					return Ok(Identity::Bitcoin(handle))
+				} else if v[0] == "solana" {
+					let handle = v[1]
+						.from_base58()
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address32 conversion error")?;
+					return Ok(Identity::Solana(handle))
 				} else if v[0] == "github" {
 					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())))
 				} else if v[0] == "discord" {
@@ -395,6 +416,7 @@ impl Identity {
 				Identity::Substrate(address) =>
 					format!("substrate:{}", &hex_encode(address.as_ref())),
 				Identity::Bitcoin(address) => format!("bitcoin:{}", &hex_encode(address.as_ref())),
+				Identity::Solana(address) => format!("solana:{}", address.as_ref().to_base58()),
 				Identity::Twitter(handle) => format!(
 					"twitter:{}",
 					str::from_utf8(handle.inner_ref())
@@ -472,7 +494,7 @@ impl From<[u8; 33]> for Identity {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use codec::DecodeAll;
+	use parity_scale_codec::DecodeAll;
 	use sp_std::vec;
 	use strum::IntoEnumIterator;
 
@@ -488,6 +510,7 @@ mod tests {
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => false,
+					Identity::Solana(..) => false,
 				}
 			)
 		})
@@ -505,6 +528,7 @@ mod tests {
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => true,
 					Identity::Bitcoin(..) => true,
+					Identity::Solana(..) => true,
 				}
 			)
 		})
@@ -522,6 +546,7 @@ mod tests {
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => false,
+					Identity::Solana(..) => false,
 				}
 			)
 		})
@@ -539,6 +564,7 @@ mod tests {
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => true,
 					Identity::Bitcoin(..) => false,
+					Identity::Solana(..) => false,
 				}
 			)
 		})
@@ -556,6 +582,25 @@ mod tests {
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => true,
+					Identity::Solana(..) => false,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn is_solana_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_solana(),
+				match identity {
+					Identity::Twitter(..) => false,
+					Identity::Discord(..) => false,
+					Identity::Github(..) => false,
+					Identity::Substrate(..) => false,
+					Identity::Evm(..) => false,
+					Identity::Bitcoin(..) => false,
+					Identity::Solana(..) => true,
 				}
 			)
 		})
@@ -586,6 +631,17 @@ mod tests {
 		networks = vec![Web3Network::Bsc, Web3Network::Litentry];
 		assert!(!id.matches_web3networks(&networks));
 		networks = vec![Web3Network::Bsc, Web3Network::Ethereum];
+		assert!(id.matches_web3networks(&networks));
+
+		// solana identity
+		id = Identity::Solana(Default::default());
+		networks = vec![];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::Bsc, Web3Network::Litentry];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::Bsc, Web3Network::Ethereum];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::Solana];
 		assert!(id.matches_web3networks(&networks));
 	}
 
@@ -646,11 +702,20 @@ mod tests {
 	}
 
 	#[test]
-
 	fn test_github_did() {
 		let identity = Identity::Github(IdentityString::new("github_handle".as_bytes().to_vec()));
 		let did_str = "did:litentry:github:github_handle";
 		assert_eq!(identity.to_did().unwrap(), did_str);
 		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
+	}
+
+	#[test]
+	fn test_solana_did() {
+		let address = "4fuUiYxTQ6QCrdSq9ouBYcTM7bqSwYTSyLueGZLTy4T4";
+		let identity =
+			Identity::Solana(address.from_base58().unwrap().as_slice().try_into().unwrap());
+		let did = format!("did:litentry:solana:{}", address);
+		assert_eq!(identity.to_did().unwrap(), did.as_str());
+		assert_eq!(Identity::from_did(did.as_str()).unwrap(), identity);
 	}
 }

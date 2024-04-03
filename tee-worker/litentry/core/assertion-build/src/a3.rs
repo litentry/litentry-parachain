@@ -59,7 +59,8 @@ pub fn build(
 		)
 	})?;
 
-	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
+	let mut client =
+		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp = client
@@ -116,8 +117,10 @@ mod tests {
 
 	#[test]
 	fn build_a3_works() {
-		let mut data_provider_config = DataProviderConfig::new();
-		data_provider_config.set_discord_litentry_url("http://localhost:19527".to_string());
+		let mut data_provider_config = DataProviderConfig::new().unwrap();
+		data_provider_config
+			.set_litentry_discord_microservice_url("http://localhost:19527".to_string())
+			.unwrap();
 		let guild_id_u: u64 = 919848390156767232;
 		let channel_id_u: u64 = 919848392035794945;
 		let role_id_u: u64 = 1034083718425493544;

@@ -4,9 +4,9 @@ use super::{
 	collateral::{EnclaveIdentitySigned, TcbInfoSigned},
 	*,
 };
-use codec::Decode;
 use frame_support::assert_err;
 use hex_literal::hex;
+use parity_scale_codec::Decode;
 
 // reproduce with "litentry-worker dump_ra"
 const TEST1_CERT: &[u8] = include_bytes!("./test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
