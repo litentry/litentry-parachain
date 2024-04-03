@@ -53,6 +53,12 @@ pub type CeremonyCommandsRegistry = HashMap<CeremonyId, Vec<CeremonyCommand>>;
 pub type SignerId = [u8; 32];
 pub type SignersWithKeys = Vec<(SignerId, PublicKey)>;
 
+#[derive(Encode, Debug)]
+pub enum SignBitcoinError {
+	InvalidSigner,
+	CeremonyError,
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub enum CeremonyError {
 	NonceReceivingError(NonceReceivingErrorReason),

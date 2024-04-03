@@ -509,19 +509,33 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 	// we only expect one response, hence no loop
 	match receiver.await {
 		Ok(Ok(response)) => match response {
-			BitAcrossProcessingResult::Ok(response_payload) => Ok(RpcReturnValue {
-				do_watch: false,
-				value: response_payload,
-				status: DirectRequestStatus::Ok,
-			}),
-			BitAcrossProcessingResult::Submitted(hash) => Ok(RpcReturnValue {
-				do_watch: true,
-				value: vec![],
-				status: DirectRequestStatus::Processing(hash.into()),
-			}),
+			BitAcrossProcessingResult::Ok(response_payload) => {
+				println!("BitAcrossProcessingResult::Ok");
+
+				Ok(RpcReturnValue {
+					do_watch: false,
+					value: response_payload,
+					status: DirectRequestStatus::Ok,
+				})
+			},
+			BitAcrossProcessingResult::Submitted(hash) => {
+				println!("BitAcrossProcessingResult::Submitted");
+				Ok(RpcReturnValue {
+					do_watch: true,
+					value: vec![],
+					status: DirectRequestStatus::Processing(hash.into()),
+				})
+			},
 		},
-		Ok(Err(e)) => Err(e),
+		Ok(Err(e)) => {
+			println!("Got Ok(Err)");
+
+			Err(e)
+
+
+		},
 		Err(_) => {
+			println!("Got Err");
 			// This case will only happen if the sender has been dropped
 			Err(vec![])
 		},

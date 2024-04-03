@@ -40,9 +40,9 @@ type request struct {
 }
 
 type rpcResult struct {
-	Value    string `json:"value"`
-	Do_watch bool   `json:"do_watch"`
-	Status   uint64 `json:"status"`
+	Value    string                 `json:"value"`
+	Do_watch bool                   `json:"do_watch"`
+	Status   map[string]interface{} `json:"status"`
 }
 
 type aesOutput struct {
@@ -156,24 +156,21 @@ func main() {
 
 	signResp := read_response(*c)
 
-	signResult, _ := decodeRpcReturnValue(signResp.Result)
-
+	signResult, signStatus := decodeRpcReturnValue(signResp.Result)
 	resultAesOutput := decodeAesOutput(signResult)
 	decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
 
-	result := decodeResult(decryptedResult)
+	fmt.Println("Decrypted result")
+	fmt.Println(decryptedResult)
 
-	fmt.Println("Got result")
-	fmt.Println(result)
-
-	_, errorExists := result["Error"]
-	okVal, okExists := result["Ok"]
-
-	if errorExists {
-		fmt.Println("Got error")
-	} else if okExists {
+	if _, ok := signStatus["Error"]; ok {
+		signBitcoinError := decodeSignBitcoinError(decryptedResult)
+		fmt.Println("Got SignBitcoinError")
+		fmt.Println(signBitcoinError)
+	} else {
+		signature := decryptedResult
 		fmt.Println("Got signature:")
-		fmt.Println(utiles.HexToBytes(okVal.(string)))
+		fmt.Println(signature)
 	}
 }
 
@@ -350,7 +347,7 @@ func requestStateGetMrenclave(c websocket.Conn) {
 	}
 }
 
-func decodeRpcReturnValue(hexEncoded string) (string, uint64) {
+func decodeRpcReturnValue(hexEncoded string) (string, map[string]interface{}) {
 	bytes := scaleBytes.ScaleBytes{Data: utiles.HexToBytes(hexEncoded)}
 	m := types.ScaleDecoder{}
 	m.Init(bytes, nil)
@@ -378,14 +375,14 @@ func decodeAesOutput(hexEncoded string) aesOutput {
 	return output
 }
 
-func decodeResult(encoded []byte) map[string]interface{} {
+func decodeSignBitcoinError(encoded []byte) map[string]interface{} {
 	bytes := scaleBytes.ScaleBytes{Data: encoded}
 	m := types.ScaleDecoder{}
 	m.Init(bytes, &types.ScaleDecoderOption{
 		SubType: "string,string",
 	})
 	var output map[string]interface{}
-	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("Result<[u8;64],()>").(interface{}), &output)
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("SignBitcoinError").(interface{}), &output)
 
 	if err != nil {
 		fmt.Println("Unmarshall error!")

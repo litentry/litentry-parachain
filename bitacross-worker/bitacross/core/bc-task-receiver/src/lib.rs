@@ -247,7 +247,7 @@ where
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
-				e.encode()
+				aes_encrypt_default(&aes_key, &mut e.encode()).encode()
 			})?;
 			Ok(BitAcrossProcessingResult::Submitted(hash))
 		},
@@ -259,7 +259,7 @@ where
 		)
 		.map_err(|e| {
 			error!("SignEthereum error: {:?}", e);
-			e.encode()
+			aes_encrypt_default(&aes_key, &mut e.encode()).encode()
 		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::NonceShare(signer, aes_key, message, nonce) => nonce_share::handle(
@@ -272,7 +272,7 @@ where
 		)
 		.map_err(|e| {
 			error!("NonceShare error: {:?}", e);
-			e.encode()
+			aes_encrypt_default(&aes_key, &mut e.encode()).encode()
 		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
@@ -285,7 +285,7 @@ where
 			)
 			.map_err(|e| {
 				error!("PartialSignatureShare error: {:?}", e);
-				e.encode()
+				aes_encrypt_default(&aes_key, &mut e.encode()).encode()
 			})
 			.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 	}

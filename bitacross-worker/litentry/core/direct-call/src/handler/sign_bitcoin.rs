@@ -23,21 +23,13 @@ use std::sync::Arc;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use bc_musig2_ceremony::{
-	CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignersWithKeys,
-};
+use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignBitcoinError, SignersWithKeys};
 use bc_signer_registry::SignerRegistryLookup;
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
 
 use bc_musig2_ceremony::SignBitcoinPayload;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
-
-#[derive(Encode, Debug)]
-pub enum SignBitcoinError {
-	InvalidSigner,
-	CeremonyStartError,
-}
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle<
@@ -57,7 +49,7 @@ pub fn handle<
 ) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
 		let mut registry =
-			ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyStartError)?;
+			ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
 		let ceremony_tick_to_live = 30;
 
 		let peers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
@@ -65,14 +57,14 @@ pub fn handle<
 			.iter()
 			.map(|(address, pub_key)| {
 				let public_key = PublicKey::from_sec1_bytes(pub_key)
-					.map_err(|_| SignBitcoinError::CeremonyStartError)?;
+					.map_err(|_| SignBitcoinError::CeremonyError)?;
 				Ok((*address.as_ref(), public_key))
 			})
 			.collect();
 
 		let events = ceremony_commands
 			.lock()
-			.map_err(|_| SignBitcoinError::CeremonyStartError)?
+			.map_err(|_| SignBitcoinError::CeremonyError)?
 			.remove(&payload)
 			.unwrap_or_default();
 		let ceremony = MuSig2Ceremony::new(
@@ -84,7 +76,7 @@ pub fn handle<
 			signer_access_key,
 			ceremony_tick_to_live,
 		)
-		.map_err(|_| SignBitcoinError::CeremonyStartError)?;
+		.map_err(|_| SignBitcoinError::CeremonyError)?;
 		registry.insert(payload, ceremony);
 
 		Ok(())

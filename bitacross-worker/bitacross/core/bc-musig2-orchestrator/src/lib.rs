@@ -42,7 +42,7 @@ use std::collections::HashMap;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use bc_musig2_ceremony::{CeremonyEvent, CeremonyRegistry};
+use bc_musig2_ceremony::{CeremonyEvent, CeremonyRegistry, SignBitcoinError};
 
 use itp_rpc::{Id, RpcRequest};
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
@@ -176,7 +176,7 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 								signature
 							);
 							let hash = blake2_256(&v.get_id_ref().encode());
-							let result: Result<[u8; 64], ()> = Ok(signature);
+							let result = signature;
 							let encrypted_result =
 								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
 							if let Err(e) = responder.send_state_with_status(
@@ -192,13 +192,13 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 							debug!("Ceremony {:?} error {:?}", v.get_id_ref(), error);
 							//todo: stop the ceremony and ping other peers
 							let hash = blake2_256(&v.get_id_ref().encode());
-							let result: Result<(), ()> = Err(());
+							let result = SignBitcoinError::CeremonyError;
 							let encrypted_result =
 								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
 								encrypted_result,
-								DirectRequestStatus::Ok,
+								DirectRequestStatus::Error,
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}
@@ -207,17 +207,16 @@ pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SH
 						CeremonyEvent::CeremonyTimedOut => {
 							debug!("Ceremony {:?} timed out", v.get_id_ref());
 							let hash = blake2_256(&v.get_id_ref().encode());
-							let result: Result<(), ()> = Err(());
+							let result = SignBitcoinError::CeremonyError;
 							let encrypted_result =
 								aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
 							if let Err(e) = responder.send_state_with_status(
 								Hash::from_slice(&hash),
 								encrypted_result,
-								DirectRequestStatus::Ok,
+								DirectRequestStatus::Error,
 							) {
 								error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 							}
-							ceremonies_to_remove.push(v.get_id_ref().clone());
 							ceremonies_to_remove.push(v.get_id_ref().clone());
 						},
 					}

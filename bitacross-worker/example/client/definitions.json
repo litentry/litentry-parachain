@@ -12,7 +12,20 @@
       ],
       [
         "status",
-        "u64"
+        "DirectRequestStatus"
+      ]
+    ]
+  },
+  "DirectRequestStatus": {
+    "type": "enum",
+    "type_mapping": [
+      [
+        "Ok",
+        "()"
+      ],
+      [
+        "Error",
+        "()"
       ]
     ]
   },
@@ -58,6 +71,13 @@
         "SignEthereum",
         "(LitentryIdentity, RequestAesKey, PrehashedEthereumMessage)"
       ]
+    ]
+  },
+  "SignBitcoinError": {
+    "type": "enum",
+    "type_mapping": [
+      ["InvalidSigner", "()"],
+      ["CeremonyError", "()"]
     ]
   },
   "PrehashedEthereumMessage": "[u8; 32]",
