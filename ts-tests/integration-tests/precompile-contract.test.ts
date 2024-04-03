@@ -9,15 +9,13 @@ import {
     sudoWrapperGC,
     sudoWrapperTC,
 } from '../common/utils';
-import { Web3 } from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
 const BN = require('bn.js');
-import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
+import { evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
-import { randomEvmWallet } from '../../tee-worker/ts-tests/integration-tests/common/helpers';
 const toBigNumber = (int: number) => int * 1e12;
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
 
