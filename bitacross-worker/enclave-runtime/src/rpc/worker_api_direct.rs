@@ -145,7 +145,12 @@ where
 		async move {
 			let json_value = match request_bit_across_inner(params).await {
 				Ok(value) => value.to_hex(),
-				Err(error) => compute_hex_encoded_return_error(&error),
+				Err(error) => RpcReturnValue {
+					value: error,
+					do_watch: false,
+					status: DirectRequestStatus::Error,
+				}
+				.to_hex(),
 			};
 			Ok(json!(json_value))
 		}
@@ -465,13 +470,18 @@ fn attesteer_forward_ias_attestation_report_inner(
 	Ok(ext)
 }
 
-async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, String> {
+pub enum BitacrossRequestError {
+	DirectCallError(Vec<u8>),
+	Other(Vec<u8>),
+}
+
+async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
 	let payload = get_request_payload(params)?;
 	let request = AesRequest::from_hex(&payload)
 		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
-	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, String>>();
+	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
 	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
 
@@ -489,13 +499,10 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Stri
 				status: DirectRequestStatus::Processing(hash.into()),
 			}),
 		},
-		Ok(Err(e)) => {
-			log::error!("Received error in jsonresponse: {:?} ", e);
-			Err(compute_hex_encoded_return_error(&e))
-		},
+		Ok(Err(e)) => Err(e),
 		Err(_) => {
 			// This case will only happen if the sender has been dropped
-			Err(compute_hex_encoded_return_error("The sender has been dropped"))
+			Err(vec![])
 		},
 	}
 }

@@ -48,9 +48,10 @@ pub type CeremonyId = SignBitcoinPayload;
 pub type SignaturePayload = Vec<u8>;
 pub type Signers = Vec<SignerId>;
 pub type CeremonyRegistry<AK> = HashMap<CeremonyId, MuSig2Ceremony<AK>>;
+pub type CeremonyCommandsRegistry = HashMap<CeremonyId, Vec<CeremonyCommand>>;
 // enclave public key is used as signer identifier
 pub type SignerId = [u8; 32];
-type SignersWithKeys = Vec<(SignerId, PublicKey)>;
+pub type SignersWithKeys = Vec<(SignerId, PublicKey)>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum CeremonyError {

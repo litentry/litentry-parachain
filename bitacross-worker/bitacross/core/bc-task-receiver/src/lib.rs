@@ -202,7 +202,7 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 pub fn handle_request<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 	request: &mut AesRequest,
 	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>>,
-) -> Result<BitAcrossProcessingResult, String>
+) -> Result<BitAcrossProcessingResult, Vec<u8>>
 where
 	SKR: AccessKey,
 	EKR: AccessKey<KeyType = EcdsaPair>,
@@ -227,7 +227,7 @@ where
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".to_string()),
+		Err(_) => return Err("Failed to get mrenclave".encode()),
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 
@@ -244,7 +244,11 @@ where
 				context.signer_registry_lookup.clone(),
 				&context.signing_key_pub,
 				context.bitcoin_key_repository.clone(),
-			)?;
+			)
+			.map_err(|e| {
+				error!("SignBitcoin error: {:?}", e);
+				e.encode()
+			})?;
 			Ok(BitAcrossProcessingResult::Submitted(hash))
 		},
 		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
@@ -253,6 +257,10 @@ where
 			context.relayer_registry_lookup.deref(),
 			context.ethereum_key_repository.deref(),
 		)
+		.map_err(|e| {
+			error!("SignEthereum error: {:?}", e);
+			e.encode()
+		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::NonceShare(signer, aes_key, message, nonce) => nonce_share::handle(
 			signer,
@@ -262,6 +270,10 @@ where
 			context.musig2_ceremony_pending_commands.clone(),
 			context.enclave_registry_lookup.clone(),
 		)
+		.map_err(|e| {
+			error!("NonceShare error: {:?}", e);
+			e.encode()
+		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
 			partial_signature_share::handle(
@@ -271,6 +283,10 @@ where
 				context.musig2_ceremony_registry.clone(),
 				context.enclave_registry_lookup.clone(),
 			)
+			.map_err(|e| {
+				error!("PartialSignatureShare error: {:?}", e);
+				e.encode()
+			})
 			.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 	}
 }

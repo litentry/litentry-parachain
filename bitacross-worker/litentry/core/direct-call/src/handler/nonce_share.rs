@@ -16,70 +16,147 @@
 
 use bc_enclave_registry::EnclaveRegistryLookup;
 use parentchain_primitives::Identity;
-use std::{
-	collections::HashMap,
-	string::{String, ToString},
-	sync::Arc,
-	vec,
-	vec::Vec,
-};
+use std::{collections::HashMap, sync::Arc, vec, vec::Vec};
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
+use crate::handler::nonce_share::NonceShareError::InvalidSigner;
 use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry, PubNonce};
+use codec::Encode;
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
-use log::info;
+use log::debug;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
+
+#[derive(Encode, Debug)]
+pub enum NonceShareError {
+	InvalidSigner,
+	InvalidNonce,
+}
 
 pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	signer: Identity,
 	ceremony_id: CeremonyId,
 	payload: [u8; 66],
 	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_events: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
+	ceremony_commands: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
 	enclave_registry: Arc<ER>,
-) -> Result<Vec<u8>, String> {
+) -> Result<Vec<u8>, NonceShareError> {
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,
 	};
 	if !is_valid_signer {
-		return Err("Signer is not a valid enclave".to_string())
+		return Err(InvalidSigner)
 	}
+
+	let nonce =
+		PubNonce::from_bytes(payload.as_slice()).map_err(|_| NonceShareError::InvalidNonce)?;
 
 	match signer {
 		Identity::Substrate(address) => {
 			let mut registry = ceremony_registry.lock().unwrap();
 			if let Some(ceremony) = registry.get_mut(&ceremony_id) {
-				info!("Saving nonce for ceremony: {:?}", ceremony_id);
-				ceremony.save_event(CeremonyCommand::SaveNonce(
-					*address.as_ref(),
-					PubNonce::from_bytes(payload.as_slice()).unwrap(),
-				));
+				debug!("Saving nonce for ceremony: {:?}", ceremony_id);
+				ceremony.save_event(CeremonyCommand::SaveNonce(*address.as_ref(), nonce));
 			} else {
-				info!("Ceremony {:?} not found, saving events...", ceremony_id);
-				let mut events = ceremony_events.lock().unwrap();
+				debug!("Ceremony {:?} not found, saving events...", ceremony_id);
+				let mut events = ceremony_commands.lock().unwrap();
 				if let Some(events) = events.get_mut(&ceremony_id) {
 					std::println!("Events found, appending...");
-					events.push(CeremonyCommand::SaveNonce(
-						*address.as_ref(),
-						PubNonce::from_bytes(payload.as_slice()).unwrap(),
-					));
+					events.push(CeremonyCommand::SaveNonce(*address.as_ref(), nonce));
 				} else {
-					std::println!("Events not found, creating...");
+					debug!("Events not found, creating...");
 					events.insert(
 						ceremony_id,
-						vec![CeremonyCommand::SaveNonce(
-							*address.as_ref(),
-							PubNonce::from_bytes(payload.as_slice()).unwrap(),
-						)],
+						vec![CeremonyCommand::SaveNonce(*address.as_ref(), nonce)],
 					);
 				}
 			}
 		},
-		_ => return Err("Signer is not of substrate type".to_string()),
+		_ => return Err(InvalidSigner),
 	}
 	Ok(vec![])
+}
+
+#[cfg(test)]
+pub mod test {
+	use crate::handler::nonce_share::{handle, NonceShareError, SchnorrPair};
+	use alloc::sync::Arc;
+	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryLookup, EnclaveRegistryUpdater};
+	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
+	use codec::alloc::sync::Mutex;
+	use itp_sgx_crypto::{key_repository::AccessKey, Error};
+	use parentchain_primitives::{Address32, Identity};
+	use sp_core::{sr25519, Pair};
+
+	struct SignerAccess {}
+
+	impl AccessKey for SignerAccess {
+		type KeyType = SchnorrPair;
+
+		fn retrieve_key(&self) -> itp_sgx_crypto::Result<Self::KeyType> {
+			Err(Error::LockPoisoning)
+		}
+	}
+
+	#[test]
+	pub fn it_should_return_ok_for_enclave_signer() {
+		// given
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let signer_account = Identity::Substrate(alice_key_pair.public().into());
+		let ceremony_id = SignBitcoinPayload::Derived(vec![]);
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let enclave_registry = Arc::new(EnclaveRegistry::default());
+		enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
+
+		// when
+		let result = handle(
+			signer_account,
+			ceremony_id,
+			[
+				2, 121, 190, 102, 126, 249, 220, 187, 172, 85, 160, 98, 149, 206, 135, 11, 7, 2,
+				155, 252, 219, 45, 206, 40, 217, 89, 242, 129, 91, 22, 248, 23, 152, 3, 45, 226,
+				102, 38, 40, 201, 11, 3, 245, 231, 32, 40, 78, 181, 47, 247, 215, 31, 66, 132, 246,
+				39, 182, 138, 133, 61, 120, 199, 142, 31, 254, 147,
+			],
+			ceremony_registry,
+			ceremony_commands_registry,
+			enclave_registry,
+		);
+
+		// then
+		assert!(result.is_ok())
+	}
+
+	#[test]
+	pub fn it_should_return_err_for_non_enclave_signer() {
+		// given
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let signer_account = Identity::Substrate(alice_key_pair.public().into());
+		let ceremony_id = SignBitcoinPayload::Derived(vec![]);
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let enclave_registry = Arc::new(EnclaveRegistry::default());
+
+		// when
+		let result = handle(
+			signer_account,
+			ceremony_id,
+			[
+				2, 121, 190, 102, 126, 249, 220, 187, 172, 85, 160, 98, 149, 206, 135, 11, 7, 2,
+				155, 252, 219, 45, 206, 40, 217, 89, 242, 129, 91, 22, 248, 23, 152, 3, 45, 226,
+				102, 38, 40, 201, 11, 3, 245, 231, 32, 40, 78, 181, 47, 247, 215, 31, 66, 132, 246,
+				39, 182, 138, 133, 61, 120, 199, 142, 31, 254, 147,
+			],
+			ceremony_registry,
+			ceremony_commands_registry,
+			enclave_registry,
+		);
+
+		// then
+		assert!(matches!(result, Err(NonceShareError::InvalidSigner)))
+	}
 }

@@ -52,7 +52,7 @@ use std::{
 
 #[derive(Debug)]
 pub struct BitAcrossRequest {
-	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, String>>,
+	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>,
 	pub request: AesRequest,
 }
 

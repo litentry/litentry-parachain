@@ -15,20 +15,16 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_relayer_registry::RelayerRegistryLookup;
+use codec::Encode;
 use itp_sgx_crypto::key_repository::AccessKey;
 use parentchain_primitives::Identity;
-use std::{
-	collections::HashMap,
-	string::{String, ToString},
-	sync::Arc,
-	vec::Vec,
-};
+use std::sync::Arc;
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use bc_musig2_ceremony::{
-	CeremonyCommand, CeremonyId, CeremonyRegistry, MuSig2Ceremony, PublicKey,
+	CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignersWithKeys,
 };
 use bc_signer_registry::SignerRegistryLookup;
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
@@ -36,6 +32,12 @@ use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
 use bc_musig2_ceremony::SignBitcoinPayload;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
+
+#[derive(Encode, Debug)]
+pub enum SignBitcoinError {
+	InvalidSigner,
+	CeremonyStartError,
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle<
@@ -48,86 +50,162 @@ pub fn handle<
 	aes_key: [u8; 32],
 	relayer_registry: &RRL,
 	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_events: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
+	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	signer_registry: Arc<SR>,
 	enclave_key_pub: &[u8; 32],
 	signer_access_key: Arc<AK>,
-) -> Result<[u8; 64], String> {
+) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
-		let mut registry = ceremony_registry.lock().unwrap();
-		let ceremony_tick_to_live = 15;
+		let mut registry =
+			ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyStartError)?;
+		let ceremony_tick_to_live = 30;
 
-		let peers = signer_registry
+		let peers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
 			.iter()
 			.map(|(address, pub_key)| {
-				(*address.as_ref(), PublicKey::from_sec1_bytes(pub_key).unwrap())
+				let public_key = PublicKey::from_sec1_bytes(pub_key)
+					.map_err(|_| SignBitcoinError::CeremonyStartError)?;
+				Ok((*address.as_ref(), public_key))
 			})
 			.collect();
 
-		let events = ceremony_events.lock().unwrap().remove(&payload).unwrap_or_default();
+		let events = ceremony_commands
+			.lock()
+			.map_err(|_| SignBitcoinError::CeremonyStartError)?
+			.remove(&payload)
+			.unwrap_or_default();
 		let ceremony = MuSig2Ceremony::new(
 			*enclave_key_pub,
 			aes_key,
-			peers,
+			peers?,
 			payload.clone(),
 			events,
 			signer_access_key,
 			ceremony_tick_to_live,
-		)?;
+		)
+		.map_err(|_| SignBitcoinError::CeremonyStartError)?;
 		registry.insert(payload, ceremony);
 
-		Ok([0; 64])
+		Ok(())
 	} else {
-		Err("Unauthorized: Signer is not a valid relayer".to_string())
+		Err(SignBitcoinError::InvalidSigner)
 	}
 }
 
 #[cfg(test)]
 pub mod test {
-	// use crate::handler::sign_bitcoin::handle;
-	// use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
-	// use itp_sgx_crypto::mocks::KeyRepositoryMock;
-	// use k256::elliptic_curve::rand_core;
-	// use parentchain_primitives::Identity;
-	// use sp_core::{sr25519, Pair};
+	use crate::handler::sign_bitcoin::{handle, SignBitcoinError};
+	use alloc::sync::Arc;
+	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
+	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
+	use bc_signer_registry::{PubKey, SignerRegistryLookup};
+	use codec::alloc::sync::Mutex;
+	use itp_sgx_crypto::{
+		key_repository::AccessKey, mocks::KeyRepositoryMock, schnorr::Pair as SchnorrPair, Error,
+	};
+	use k256::elliptic_curve::{rand_core, PublicKey};
+	use parentchain_primitives::{Address32, Identity};
+	use sp_core::{sr25519, Pair};
 
-	// #[test]
-	// pub fn it_should_return_ok_for_relayer_signer() {
-	// 	//given
-	// 	let relayer_registry = RelayerRegistry::default();
-	// 	let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
-	// 	let relayer_account = Identity::Substrate(alice_key_pair.public().into());
-	// 	relayer_registry.update(relayer_account.clone()).unwrap();
-	//
-	// 	let private = k256::schnorr::SigningKey::random(&mut rand_core::OsRng);
-	// 	let signing_key = itp_sgx_crypto::schnorr::Pair::new(private);
-	//
-	// 	let key_repository = KeyRepositoryMock::new(signing_key);
-	//
-	// 	//when
-	// 	let result = handle(relayer_account, vec![], &relayer_registry, &key_repository);
-	//
-	// 	//then
-	// 	assert!(result.is_ok())
-	// }
+	struct SignersRegistryMock {}
 
-	// #[test]
-	// pub fn it_should_return_err_for_non_relayer_signer() {
-	// 	//given
-	// 	let relayer_registry = RelayerRegistry::default();
-	// 	let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
-	// 	let non_relayer_account = Identity::Substrate(alice_key_pair.public().into());
-	//
-	// 	let private = k256::schnorr::SigningKey::random(&mut rand_core::OsRng);
-	// 	let signing_key = itp_sgx_crypto::schnorr::Pair::new(private);
-	//
-	// 	let key_repository = KeyRepositoryMock::new(signing_key);
-	//
-	// 	//when
-	// 	let result = handle(non_relayer_account, vec![], &relayer_registry, &key_repository);
-	//
-	// 	//then
-	// 	assert!(result.is_err())
-	// }
+	impl SignerRegistryLookup for SignersRegistryMock {
+		fn contains_key(&self, account: &Address32) -> bool {
+			true
+		}
+
+		fn get_all(&self) -> Vec<(Address32, PubKey)> {
+			vec![
+				(
+					Address32::from([0u8; 32]),
+					[
+						2, 58, 165, 169, 140, 84, 151, 130, 21, 185, 32, 243, 101, 89, 29, 51, 56,
+						38, 233, 110, 219, 75, 23, 37, 81, 20, 189, 129, 185, 104, 46, 113, 33,
+					],
+				),
+				(
+					Address32::from([1u8; 32]),
+					[
+						2, 33, 158, 56, 188, 136, 36, 56, 255, 109, 228, 17, 179, 63, 196, 98, 40,
+						57, 207, 209, 184, 120, 220, 9, 54, 115, 189, 207, 56, 230, 136, 48, 51,
+					],
+				),
+				(
+					Address32::from([2u8; 32]),
+					[
+						2, 167, 108, 241, 140, 166, 89, 112, 114, 58, 251, 60, 114, 93, 85, 16,
+						221, 20, 31, 40, 78, 234, 124, 2, 156, 166, 18, 246, 230, 29, 49, 229, 58,
+					],
+				),
+			]
+		}
+	}
+
+	struct SignerAccess {}
+
+	impl AccessKey for SignerAccess {
+		type KeyType = SchnorrPair;
+
+		fn retrieve_key(&self) -> itp_sgx_crypto::Result<Self::KeyType> {
+			Err(Error::LockPoisoning)
+		}
+	}
+
+	#[test]
+	pub fn it_should_return_ok_for_relayer_signer() {
+		// given
+		let relayer_registry = RelayerRegistry::default();
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let relayer_account = Identity::Substrate(alice_key_pair.public().into());
+		relayer_registry.update(relayer_account.clone()).unwrap();
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let signers_registry = Arc::new(SignersRegistryMock {});
+		let signer_access_key = Arc::new(SignerAccess {});
+
+		// when
+		let result = handle(
+			relayer_account,
+			SignBitcoinPayload::Derived(vec![]),
+			[0u8; 32],
+			&relayer_registry,
+			ceremony_registry,
+			ceremony_commands_registry,
+			signers_registry,
+			&[0u8; 32],
+			signer_access_key,
+		);
+
+		// then
+		assert!(result.is_ok())
+	}
+
+	#[test]
+	pub fn it_should_return_err_for_non_relayer_signer() {
+		//given
+		let relayer_registry = RelayerRegistry::default();
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let non_relayer_account = Identity::Substrate(alice_key_pair.public().into());
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let signers_registry = Arc::new(SignersRegistryMock {});
+		let signer_access_key = Arc::new(SignerAccess {});
+
+		//when
+		let result = handle(
+			non_relayer_account,
+			SignBitcoinPayload::Derived(vec![]),
+			[0u8; 32],
+			&relayer_registry,
+			ceremony_registry,
+			ceremony_commands_registry,
+			signers_registry,
+			&alice_key_pair.public().0,
+			signer_access_key,
+		);
+
+		//then
+		assert!(matches!(result, Err(SignBitcoinError::InvalidSigner)))
+	}
 }
