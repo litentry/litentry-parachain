@@ -135,20 +135,20 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         }
 
         // Test get message contract method
-        const sayMessage = async (contractAddress: string) => {
+        const sayMessage = async (contractAddress: string): Promise<string> => {
             // 4. Create contract instance
             const hello = new web3.eth.Contract(abi, contractAddress);
             console.log(`Making a call to contract at address: ${contractAddress}`);
 
             // 6. Call contract
-            const data = await hello.methods.sayMessage().call();
+            const data: string = await hello.methods.sayMessage().call();
 
             console.log(`The current message is: ${data}`);
 
             return data;
         };
 
-        const message = (await sayMessage(deployed.contractAddress!)) as unknown as string;
+        const message = await sayMessage(deployed.contractAddress!);
         const initialResult = message === 'Hello World' ? 1 : 0;
         assert.equal(1, initialResult, 'Contract initial storage query mismatch');
 
@@ -178,7 +178,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
         const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
-        const sayMsg = (await sayMessage(deployed.contractAddress!)) as unknown as string;
+        const sayMsg = await sayMessage(deployed.contractAddress!)
         const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
