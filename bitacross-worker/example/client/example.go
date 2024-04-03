@@ -73,6 +73,14 @@ func main() {
 	getShieldingKeyResult, _ := decodeRpcReturnValue(res.Result)
 	pubKey := parseShieldingKey(getShieldingKeyResult)
 
+	//** request aggregated public key
+	requestAggregatedPublicKey(*c)
+	res = read_response(*c)
+
+	aggregatedPubKeyResult, _ := decodeRpcReturnValue(res.Result)
+	fmt.Println("Aggregated public key:")
+	fmt.Println(utiles.HexToBytes(aggregatedPubKeyResult))
+
 	//** request mrenclave
 	requestStateGetMrenclave(*c)
 	res = read_response(*c)
@@ -172,13 +180,6 @@ func main() {
 		fmt.Println("Got signature:")
 		fmt.Println(utiles.HexToBytes(okVal.(string)))
 	}
-
-	//
-	//signature := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
-	//
-	//fmt.Println("Signature:")
-	//fmt.Println(signature)
-
 }
 
 func prepareAesOutputObject(cipher []byte, aad []byte, nonce []byte) map[string]interface{} {
@@ -324,6 +325,14 @@ func parseShieldingKey(hexEncodedShieldingKey string) Rsa3072PubKey {
 
 func requestAuthorGetShieldingKey(c websocket.Conn) {
 	err := c.WriteMessage(websocket.TextMessage, []byte("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"author_getShieldingKey\",\"params\":[]}"))
+	if err != nil {
+		fmt.Println("Error sending message")
+		fmt.Println(err)
+	}
+}
+
+func requestAggregatedPublicKey(c websocket.Conn) {
+	err := c.WriteMessage(websocket.TextMessage, []byte("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"bitacross_aggregatedPublicKey\",\"params\":[]}"))
 	if err != nil {
 		fmt.Println("Error sending message")
 		fmt.Println(err)

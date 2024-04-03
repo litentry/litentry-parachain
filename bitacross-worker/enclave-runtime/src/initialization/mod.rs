@@ -227,25 +227,26 @@ pub(crate) fn init_enclave(
 	let pending_ceremony_commands =
 		Arc::new(Mutex::new(HashMap::<CeremonyId, Vec<CeremonyCommand>>::new()));
 
-	let io_handler = public_api_rpc_handler(
-		top_pool_author,
-		getter_executor,
-		shielding_key_repository,
-		ocall_api.clone(),
-		signing_key_repository.clone(),
-		bitcoin_key_repository,
-		ethereum_key_repository,
-	);
-	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
-	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
-
 	let attestation_handler =
-		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository));
+		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository.clone()));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
 	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 	GLOBAL_ENCLAVE_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 	GLOBAL_SIGNER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
+
+	let io_handler = public_api_rpc_handler(
+		top_pool_author,
+		getter_executor,
+		shielding_key_repository,
+		ocall_api.clone(),
+		signing_key_repository,
+		bitcoin_key_repository,
+		ethereum_key_repository,
+		GLOBAL_SIGNER_REGISTRY.clone(),
+	);
+	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
+	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
 	let ceremony_registry_cloned = ceremony_registry.clone();
 

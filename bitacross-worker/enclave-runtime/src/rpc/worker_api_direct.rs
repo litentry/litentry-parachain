@@ -29,6 +29,8 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
+use bc_musig2_ceremony::{generate_aggregated_public_key, PublicKey};
+use bc_signer_registry::SignerRegistryLookup;
 use bc_task_sender::{BitAcrossProcessingResult, BitAcrossRequest, BitAcrossRequestSender};
 use codec::Encode;
 use core::result::Result;
@@ -72,7 +74,8 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi>(
+#[allow(clippy::too_many_arguments)]
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi, SR>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
@@ -80,6 +83,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	signing_key_repository: Arc<EnclaveSigningKeyRepository>,
 	bitcoin_key_repository: Arc<EnclaveBitcoinKeyRepository>,
 	ethereum_key_repository: Arc<EnclaveEthereumKeyRepository>,
+	signer_lookup: Arc<SR>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -88,6 +92,7 @@ where
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
 	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
+	SR: SignerRegistryLookup + Send + Sync + 'static,
 {
 	let mut io = IoHandler::new();
 
@@ -153,6 +158,22 @@ where
 				.to_hex(),
 			};
 			Ok(json!(json_value))
+		}
+	});
+
+	io.add_sync_method("bitacross_aggregatedPublicKey", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_aggregatedPublicKey");
+		if let Ok(keys) = signer_lookup
+			.get_all()
+			.iter()
+			.map(|(_, pub_key)| PublicKey::from_sec1_bytes(pub_key))
+			.collect()
+		{
+			let key_bytes = generate_aggregated_public_key(keys).to_sec1_bytes().to_vec();
+			let json_value = RpcReturnValue::new(key_bytes, false, DirectRequestStatus::Ok);
+			Ok(json!(json_value.to_hex()))
+		} else {
+			Ok(json!(compute_hex_encoded_return_error("Could not produce aggregate key")))
 		}
 	});
 

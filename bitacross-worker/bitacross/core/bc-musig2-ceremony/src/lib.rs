@@ -99,6 +99,10 @@ pub enum SignBitcoinPayload {
 	TaprootSpendable(SignaturePayload, [u8; 32]),
 }
 
+pub fn generate_aggregated_public_key(public_keys: Vec<PublicKey>) -> PublicKey {
+	KeyAggContext::new(public_keys).unwrap().aggregated_pubkey()
+}
+
 pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	payload: SignBitcoinPayload,
 	//todo: move to layer above, ceremony should be communication agnostic
@@ -354,14 +358,6 @@ fn random_seed() -> [u8; 32] {
 
 #[cfg(test)]
 pub mod test {
-	// use crate::MuSig2Ceremony;
-	// use k256::{schnorr::SigningKey, PublicKey, SecretKey};
-	// use musig2::{secp, secp::Scalar, BinaryEncoding, PubNonce, SecNonce};
-	// use rand::{
-	// rngs::{StdRng, ThreadRng},
-	// thread_rng, RngCore,
-	// };
-
 	use crate::{
 		CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason,
 		SignBitcoinPayload, SignaturePayload, SignerId, SignersWithKeys,
