@@ -43,7 +43,7 @@ use std::sync::SgxMutex as Mutex;
 
 use core::ops::Deref;
 
-use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry, SignBitcoinPayload};
+use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry};
 use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
@@ -52,7 +52,6 @@ use litentry_primitives::{aes_encrypt_default, AesRequest};
 use log::*;
 use std::{
 	boxed::Box,
-	collections::HashMap,
 	format,
 	string::{String, ToString},
 	sync::Arc,
@@ -109,7 +108,7 @@ pub struct BitAcrossTaskContext<
 	pub musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<BKR>>>,
 	pub enclave_registry_lookup: Arc<ERL>,
 	pub signer_registry_lookup: Arc<SRL>,
-	pub musig2_ceremony_pending_commands: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
+	pub musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	pub signing_key_pub: [u8; 32],
 }
 
@@ -143,9 +142,7 @@ where
 		musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<BKR>>>,
 		enclave_registry_lookup: Arc<ERL>,
 		signer_registry_lookup: Arc<SRL>,
-		musig2_ceremony_pending_commands: Arc<
-			Mutex<HashMap<SignBitcoinPayload, Vec<CeremonyCommand>>>,
-		>,
+		musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 		signing_key_pub: [u8; 32],
 	) -> Self {
 		Self {
@@ -247,7 +244,7 @@ where
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
-				aes_encrypt_default(&aes_key, &mut e.encode()).encode()
+				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})?;
 			Ok(BitAcrossProcessingResult::Submitted(hash))
 		},
@@ -259,7 +256,7 @@ where
 		)
 		.map_err(|e| {
 			error!("SignEthereum error: {:?}", e);
-			aes_encrypt_default(&aes_key, &mut e.encode()).encode()
+			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::NonceShare(signer, aes_key, message, nonce) => nonce_share::handle(
@@ -272,9 +269,11 @@ where
 		)
 		.map_err(|e| {
 			error!("NonceShare error: {:?}", e);
-			aes_encrypt_default(&aes_key, &mut e.encode()).encode()
+			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
-		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
+		.map(|r| {
+			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
+		}),
 		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
 			partial_signature_share::handle(
 				signer,
@@ -285,8 +284,10 @@ where
 			)
 			.map_err(|e| {
 				error!("PartialSignatureShare error: {:?}", e);
-				aes_encrypt_default(&aes_key, &mut e.encode()).encode()
+				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})
-			.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
+			.map(|r| {
+				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
+			}),
 	}
 }

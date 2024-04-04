@@ -16,13 +16,16 @@
 
 use bc_enclave_registry::EnclaveRegistryLookup;
 use parentchain_primitives::Identity;
-use std::{collections::HashMap, sync::Arc, vec, vec::Vec};
+use std::{sync::Arc, vec};
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use crate::handler::nonce_share::NonceShareError::InvalidSigner;
-use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, CeremonyRegistry, PubNonce};
+use bc_musig2_ceremony::{
+	CeremonyCommand, CeremonyCommandsRegistry, CeremonyId, CeremonyRegistry,
+	PendingCeremonyCommand, PubNonce,
+};
 use codec::Encode;
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use log::debug;
@@ -40,9 +43,9 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	ceremony_id: CeremonyId,
 	payload: [u8; 66],
 	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_commands: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
+	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	enclave_registry: Arc<ER>,
-) -> Result<Vec<u8>, NonceShareError> {
+) -> Result<(), NonceShareError> {
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,
@@ -58,26 +61,26 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 		Identity::Substrate(address) => {
 			let mut registry = ceremony_registry.lock().unwrap();
 			if let Some(ceremony) = registry.get_mut(&ceremony_id) {
-				debug!("Saving nonce for ceremony: {:?}", ceremony_id);
 				ceremony.save_event(CeremonyCommand::SaveNonce(*address.as_ref(), nonce));
 			} else {
 				debug!("Ceremony {:?} not found, saving events...", ceremony_id);
-				let mut events = ceremony_commands.lock().unwrap();
-				if let Some(events) = events.get_mut(&ceremony_id) {
-					std::println!("Events found, appending...");
-					events.push(CeremonyCommand::SaveNonce(*address.as_ref(), nonce));
+				let mut commands = ceremony_commands.lock().unwrap();
+				let command = PendingCeremonyCommand {
+					ticks_left: 30,
+					command: CeremonyCommand::SaveNonce(*address.as_ref(), nonce),
+				};
+				if let Some(events) = commands.get_mut(&ceremony_id) {
+					debug!("Commands found, appending...");
+					events.push(command);
 				} else {
 					debug!("Events not found, creating...");
-					events.insert(
-						ceremony_id,
-						vec![CeremonyCommand::SaveNonce(*address.as_ref(), nonce)],
-					);
+					commands.insert(ceremony_id, vec![command]);
 				}
 			}
 		},
 		_ => return Err(InvalidSigner),
 	}
-	Ok(vec![])
+	Ok(())
 }
 
 #[cfg(test)]

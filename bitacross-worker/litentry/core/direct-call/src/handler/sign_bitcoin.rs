@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_relayer_registry::RelayerRegistryLookup;
-use codec::Encode;
 use itp_sgx_crypto::key_repository::AccessKey;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
@@ -23,7 +22,10 @@ use std::sync::Arc;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignBitcoinError, SignersWithKeys};
+use bc_musig2_ceremony::{
+	CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignBitcoinError,
+	SignersWithKeys,
+};
 use bc_signer_registry::SignerRegistryLookup;
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
 
@@ -48,11 +50,10 @@ pub fn handle<
 	signer_access_key: Arc<AK>,
 ) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
-		let mut registry =
-			ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
+		let mut registry = ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
 		let ceremony_tick_to_live = 30;
 
-		let peers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
+		let signers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
 			.iter()
 			.map(|(address, pub_key)| {
@@ -62,7 +63,7 @@ pub fn handle<
 			})
 			.collect();
 
-		let events = ceremony_commands
+		let pending_commands = ceremony_commands
 			.lock()
 			.map_err(|_| SignBitcoinError::CeremonyError)?
 			.remove(&payload)
@@ -70,9 +71,9 @@ pub fn handle<
 		let ceremony = MuSig2Ceremony::new(
 			*enclave_key_pub,
 			aes_key,
-			peers?,
+			signers?,
 			payload.clone(),
-			events,
+			pending_commands.into_iter().map(|c| c.command).collect(),
 			signer_access_key,
 			ceremony_tick_to_live,
 		)

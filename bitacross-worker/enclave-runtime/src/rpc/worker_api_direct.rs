@@ -531,8 +531,6 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 			println!("Got Ok(Err)");
 
 			Err(e)
-
-
 		},
 		Err(_) => {
 			println!("Got Err");

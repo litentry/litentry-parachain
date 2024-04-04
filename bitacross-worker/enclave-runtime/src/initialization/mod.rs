@@ -59,7 +59,7 @@ use itc_direct_rpc_server::{
 	rpc_ws_handler::RpcWsHandler,
 };
 
-use bc_musig2_ceremony::CeremonyId;
+use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId};
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
@@ -83,7 +83,6 @@ use itp_sgx_crypto::{
 	schnorr::{create_schnorr_repository, Pair as SchnorrPair, Seal},
 };
 
-use bc_musig2_ceremony::CeremonyCommand;
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
 	state_snapshot_repository::VersionedStateAccess,
@@ -96,7 +95,7 @@ use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sp_core::crypto::Pair;
-use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc, vec::Vec};
+use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
 
 use std::sync::SgxMutex as Mutex;
 
@@ -224,8 +223,7 @@ pub(crate) fn init_enclave(
 		MuSig2Ceremony<KeyRepository<SchnorrPair, Seal>>,
 	>::new()));
 
-	let pending_ceremony_commands =
-		Arc::new(Mutex::new(HashMap::<CeremonyId, Vec<CeremonyCommand>>::new()));
+	let pending_ceremony_commands = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
 
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository.clone()));
@@ -249,6 +247,7 @@ pub(crate) fn init_enclave(
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
 	let ceremony_registry_cloned = ceremony_registry.clone();
+	let pending_ceremony_commands_cloned = pending_ceremony_commands.clone();
 
 	std::thread::spawn(move || {
 		run_bit_across_handler(ceremony_registry, pending_ceremony_commands, signer.public().0)
@@ -262,6 +261,7 @@ pub(crate) fn init_enclave(
 		Arc::new(client_factory),
 		GLOBAL_ENCLAVE_REGISTRY.clone(),
 		ceremony_registry_cloned,
+		pending_ceremony_commands_cloned,
 		ocall_api,
 		rpc_responder,
 	);
@@ -321,7 +321,7 @@ fn initialize_state_observer(
 
 fn run_bit_across_handler(
 	musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
-	musig2_ceremony_pending_commands: Arc<Mutex<HashMap<CeremonyId, Vec<CeremonyCommand>>>>,
+	musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	signing_key_pub: [u8; 32],
 ) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;

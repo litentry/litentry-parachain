@@ -48,10 +48,21 @@ pub type CeremonyId = SignBitcoinPayload;
 pub type SignaturePayload = Vec<u8>;
 pub type Signers = Vec<SignerId>;
 pub type CeremonyRegistry<AK> = HashMap<CeremonyId, MuSig2Ceremony<AK>>;
-pub type CeremonyCommandsRegistry = HashMap<CeremonyId, Vec<CeremonyCommand>>;
+pub type CeremonyCommandsRegistry = HashMap<CeremonyId, Vec<PendingCeremonyCommand>>;
 // enclave public key is used as signer identifier
 pub type SignerId = [u8; 32];
 pub type SignersWithKeys = Vec<(SignerId, PublicKey)>;
+
+pub struct PendingCeremonyCommand {
+	pub ticks_left: u8,
+	pub command: CeremonyCommand,
+}
+
+impl PendingCeremonyCommand {
+	pub fn tick(&mut self) {
+		self.ticks_left -= 1;
+	}
+}
 
 #[derive(Encode, Debug)]
 pub enum SignBitcoinError {
@@ -227,6 +238,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 
 	// Saves signer's nonce
 	fn receive_nonce(&mut self, signer: SignerId, nonce: PubNonce) -> Result<(), CeremonyError> {
+		info!("Saving nonce from signer: {:?}", signer);
 		let peer_index =
 			self.signers.iter().position(|p| p.0 == signer).ok_or(
 				CeremonyError::NonceReceivingError(NonceReceivingErrorReason::SignerNotFound),
@@ -300,6 +312,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		signer: SignerId,
 		partial_signature: impl Into<PartialSignature>,
 	) -> Result<(), CeremonyError> {
+		info!("Saving partial signature from signer: {:?}", signer);
 		let peer_index = self.signers.iter().position(|p| p.0 == signer).ok_or(
 			CeremonyError::PartialSignatureReceivingError(
 				PartialSignatureReceivingErrorReason::SignerNotFound,
