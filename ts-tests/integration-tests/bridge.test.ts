@@ -1,11 +1,10 @@
 import { createERCDepositData, describeCrossChainTransfer } from '../common/setup/setup-bridge';
 import { step } from 'mocha-steps';
-import { toHex } from 'web3-utils';
+import { numberToHex } from 'web3-utils';
 import { signAndSend, sleep } from '../common/utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
-
-const BN = require('bn.js');
+import { BN } from 'bn.js';
 const bn100e12 = new BN(10).pow(new BN(12)).mul(new BN(100));
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
@@ -16,7 +15,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
 
-        const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
+        const depositAmount = numberToHex('100,000,000,000,000,000,000'.replace(/,/g, ''));
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
         console.log(destinationChainID);
 
@@ -122,6 +121,9 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
 
     step('Boundary testing on parachain', async function () {
         let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
+
+        // get context.ethConfig.wallets.bob balance
+        const balance = await context.ethConfig.erc20.balanceOf(context.ethConfig.wallets.bob.address);
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         // substrate native token
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
@@ -133,13 +135,14 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.wallets.bob.address,
             maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString()
         );
-        const depositAmount = maximum_issuance.sub(total_issuance).add(new BN(1000)).mul(new BN(1000000));
+        const depositAmount = numberToHex('100,000,000,000,000'.replace(/,/g, ''));
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
 
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
-        await erc20.approve(context.ethConfig.erc20Handler.address, `0x${depositAmount.toString('hex')}`);
+        await erc20.approve(context.ethConfig.erc20Handler.address, depositAmount);
         await sleep(2);
-        let data = createERCDepositData(`0x${depositAmount.toString('hex')}`, 32, destinationRecipientAddress);
+        let data = createERCDepositData(depositAmount, 32, destinationRecipientAddress);
+
         await bridge.deposit(destinationChainID, destResourceId, data);
         let expectResult = false;
         const block = await context.parachainConfig.api.rpc.chain.getBlock();
