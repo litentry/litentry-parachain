@@ -43,11 +43,6 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>>;
 }
 
-fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>> {
-	hex::decode(tweet.text.strip_prefix("0x").unwrap_or(tweet.text.as_str()))
-		.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))
-}
-
 fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 	let data = &discord.content;
 	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str()))
@@ -81,7 +76,7 @@ pub fn verify(
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 			let user_name = user.username;
 
-			let payload = payload_from_tweet(&tweet)?;
+			let payload = twitter::helpers::payload_from_tweet(&tweet)?;
 
 			Ok((user_name, payload))
 		},
