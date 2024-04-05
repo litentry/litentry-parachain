@@ -496,6 +496,53 @@ where
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
 		}
 	});
+
+	if_development!({
+		io.add_sync_method("identity_getTwitterCodeVerifier", |params: Params| {
+			match params.parse::<Vec<String>>() {
+				Ok(encoded_params) => {
+					if encoded_params.len() != 1 {
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Invalid number of params"
+						)))
+					}
+
+					let account_id = match Identity::from_hex(encoded_params[0].as_str()) {
+						Ok(identity) =>
+							if let Some(account_id) = identity.to_account_id() {
+								account_id
+							} else {
+								return Ok(json!(compute_hex_encoded_return_error(
+									"Invalid identity"
+								)))
+							},
+						Err(_) =>
+							return Ok(json!(compute_hex_encoded_return_error(
+								"Could not parse identity"
+							))),
+					};
+					match twitter::CodeVerifierStore::get_code(&account_id) {
+						Ok(maybe_code) =>
+							if let Some(code) = maybe_code {
+								debug!(">>> stored verifier code: {:?}", code);
+								return Ok(Value::String(code))
+							} else {
+								return Ok(json!(compute_hex_encoded_return_error(
+									"Could not get code verifier"
+								)))
+							},
+						Err(_) =>
+							return Ok(json!(compute_hex_encoded_return_error(
+								"Could not get code verifier"
+							))),
+					}
+				},
+
+				Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
+			}
+		});
+	});
+
 	let rpc_methods_string = get_all_rpc_methods_string(&io);
 	io.add_sync_method("rpc_methods", move |_: Params| {
 		debug!("worker_api_direct rpc was called: rpc_methods");
