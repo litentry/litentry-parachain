@@ -168,6 +168,9 @@ impl TokenFromString for ETokenAddress {
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_auth_token_v2: String,
+	pub twitter_client_id: String,
+	pub twitter_client_secret: String,
+	pub twitter_auth_redirect_url: String,
 	pub discord_official_url: String,
 	pub litentry_discord_microservice_url: String,
 	pub discord_auth_token: String,
@@ -208,6 +211,9 @@ impl DataProviderConfig {
 		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_auth_token_v2: "".to_string(),
+			twitter_client_id: "".to_string(),
+			twitter_client_secret: "".to_string(),
+			twitter_auth_redirect_url: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
 			litentry_discord_microservice_url: "https://tee-microservice.litentry.io:9528"
 				.to_string(),
@@ -323,6 +329,15 @@ impl DataProviderConfig {
 		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
 			config.set_twitter_auth_token_v2(v);
 		}
+		if let Ok(v) = env::var("TWITTER_CLIENT_ID") {
+			config.set_twitter_client_id(v);
+		}
+		if let Ok(v) = env::var("TWITTER_CLIENT_SECRET") {
+			config.set_twitter_client_secret(v);
+		}
+		if let Ok(v) = env::var("TWITTER_AUTH_REDIRECT_URL") {
+			config.twitter_auth_redirect_url = v;
+		}
 		if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
 			config.set_discord_auth_token(v);
 		}
@@ -352,6 +367,18 @@ impl DataProviderConfig {
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
+	}
+	pub fn set_twitter_client_id(&mut self, v: String) {
+		debug!("set_twitter_client_id: {:?}", v);
+		self.twitter_client_id = v;
+	}
+	pub fn set_twitter_client_secret(&mut self, v: String) {
+		debug!("set_twitter_client_secret: {:?}", v);
+		self.twitter_client_secret = v;
+	}
+	pub fn set_twitter_auth_redirect_url(&mut self, v: String) {
+		debug!("set_twitter_auth_redirect_url: {:?}", v);
+		self.twitter_auth_redirect_url = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) -> Result<(), Error> {
 		check_url(&v)?;
