@@ -49,6 +49,7 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
+use lc_identity_verification::web2::twitter;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_development;
 use litentry_primitives::{DecryptableRequest, Identity};
@@ -456,6 +457,45 @@ where
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
+	io.add_sync_method("identity_getTwitterAuthorizeUrl", move |params: Params| {
+		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
+
+		match params.parse::<Vec<String>>() {
+			Ok(encoded_params) => {
+				if encoded_params.len() != 1 {
+					return Ok(json!(compute_hex_encoded_return_error("Invalid number of params")))
+				}
+				let account_id = match Identity::from_hex(encoded_params[0].as_str()) {
+					Ok(identity) =>
+						if let Some(account_id) = identity.to_account_id() {
+							account_id
+						} else {
+							return Ok(json!(compute_hex_encoded_return_error("Invalid identity")))
+						},
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse identity"
+						))),
+				};
+				let authorize_data = twitter::get_authorize_data(
+					&data_provider_config.twitter_client_id,
+					&data_provider_config.twitter_auth_redirect_url,
+				);
+				debug!(">>> verifier code to save: {:?}", &authorize_data.authorize_url);
+				if let Err(_) =
+					twitter::CodeVerifierStore::save_code(account_id, authorize_data.code_verifier)
+				{
+					return Ok(json!(compute_hex_encoded_return_error(
+						"Could not save code verifier"
+					)))
+				}
+
+				Ok(json!(authorize_data.authorize_url))
+			},
+
+			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
+		}
+	});
 	let rpc_methods_string = get_all_rpc_methods_string(&io);
 	io.add_sync_method("rpc_methods", move |_: Params| {
 		debug!("worker_api_direct rpc was called: rpc_methods");
