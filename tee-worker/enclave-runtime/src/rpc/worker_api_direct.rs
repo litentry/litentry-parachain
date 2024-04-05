@@ -48,6 +48,7 @@ use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
+use lc_data_providers::DataProviderConfig;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_development;
 use litentry_primitives::{DecryptableRequest, Identity};
@@ -76,6 +77,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<State>>,
+	data_provider_config: Arc<DataProviderConfig>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
