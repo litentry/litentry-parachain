@@ -35,7 +35,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 
-mod web2;
+pub mod web2;
 
 mod error;
 use error::{Error, Result};
