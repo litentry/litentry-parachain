@@ -146,6 +146,7 @@ litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
 litentry-proc-macros = { path = "../../primitives/core/proc-macros", default-features = false }
+lc-identity-verification = { path = "../litentry/core/identity-verification", default-features = false, features = ["sgx"] }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

@@ -951,6 +951,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "lc-data-providers",
+ "lc-identity-verification",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
@@ -3064,17 +3065,22 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "base64 0.13.1",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
  "http",
  "http_req",
  "itp-sgx-crypto",
+ "lazy_static",
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
+ "parity-scale-codec",
+ "sgx_rand",
  "sgx_tstd",
+ "sp-core",
  "thiserror",
 ]
 
