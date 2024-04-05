@@ -8,6 +8,7 @@ use base64::{encode_config, URL_SAFE_NO_PAD};
 use sp_core::hashing::sha2_256;
 use std::{format, string::String};
 
+#[derive(Debug)]
 pub struct AuthorizeData {
 	pub authorize_url: String,
 	pub code_verifier: String,
