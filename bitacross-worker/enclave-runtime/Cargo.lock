@@ -294,7 +294,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bc-musig2-orchestrator"
+name = "bc-musig2-runner"
 version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
@@ -1016,7 +1016,7 @@ dependencies = [
  "array-bytes 6.1.0",
  "bc-enclave-registry",
  "bc-musig2-ceremony",
- "bc-musig2-orchestrator",
+ "bc-musig2-runner",
  "bc-relayer-registry",
  "bc-signer-registry",
  "bc-task-receiver",

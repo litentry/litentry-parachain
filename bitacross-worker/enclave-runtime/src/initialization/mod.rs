@@ -47,7 +47,7 @@ use crate::{
 use base58::ToBase58;
 use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
 use bc_musig2_ceremony::{CeremonyRegistry, MuSig2Ceremony};
-use bc_musig2_orchestrator::run_ceremony_orchestration;
+use bc_musig2_runner::init_ceremonies_thread;
 use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 use bc_signer_registry::{SignerRegistryUpdater, GLOBAL_SIGNER_REGISTRY};
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
@@ -255,7 +255,7 @@ pub(crate) fn init_enclave(
 	});
 
 	let client_factory = DirectRpcClientFactory {};
-	run_ceremony_orchestration(
+	init_ceremonies_thread(
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?,
 		Arc::new(client_factory),

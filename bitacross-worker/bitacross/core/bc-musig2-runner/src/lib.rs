@@ -60,7 +60,7 @@ use std::{
 };
 
 #[allow(clippy::too_many_arguments)]
-pub fn run_ceremony_orchestration<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
+pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	signing_key_access: Arc<SIGNINGAK>,
 	shielding_key_access: Arc<SHIELDAK>,
 	client_factory: Arc<ClientFactory>,

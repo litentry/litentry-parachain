@@ -64,7 +64,7 @@ members = [
     "bitacross/core/bc-relayer-registry",
     "bitacross/core/bc-signer-registry",
     "bitacross/core/bc-musig2-ceremony",
-    "bitacross/core/bc-musig2-orchestrator",
+    "bitacross/core/bc-musig2-runner",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

@@ -383,7 +383,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bc-musig2-orchestrator"
+name = "bc-musig2-runner"
 version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
