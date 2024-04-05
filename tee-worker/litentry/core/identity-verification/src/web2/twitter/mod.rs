@@ -17,7 +17,7 @@ pub struct AuthorizeData {
 pub fn get_authorize_data(client_id: &str, redirect_uri: &str) -> AuthorizeData {
 	let code_verifier = get_code_verifier();
 	let code_verifier_hash = sha2_256(code_verifier.as_bytes());
-	let code_challenge = encode_config(&code_verifier_hash, URL_SAFE_NO_PAD);
+	let code_challenge = encode_config(code_verifier_hash, URL_SAFE_NO_PAD);
 	let state = get_state_verifier();
 
 	let authorize_url = format!(
