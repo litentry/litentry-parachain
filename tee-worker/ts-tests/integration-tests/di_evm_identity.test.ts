@@ -25,6 +25,7 @@ import { aesKey } from './common/call';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
+import { count } from 'console';
 
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -116,7 +117,9 @@ describe('Test Identity (evm direct invocation)', function () {
             [[eveSubstrateIdentity, true]],
         ];
 
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -128,7 +131,11 @@ describe('Test Identity (evm direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: counter % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);

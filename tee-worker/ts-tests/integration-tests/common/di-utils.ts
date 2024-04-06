@@ -11,6 +11,9 @@ import type {
     CorePrimitivesIdentity,
     LitentryMultiSignature,
     TrustedGetterSigned,
+    TrustedCall,
+    StfError,
+    ErrorDetail,
 } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
@@ -52,6 +55,9 @@ async function sendRequest(
 
                 if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
                     console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                    const stfError = api.createType('StfError', res.value);
+                    const msg = stfErrorToString(stfError);
+                    console.log('TrustedOperationStatus error: ', msg);
                 }
                 // sending every response we receive from websocket
                 if (onMessageReceived) onMessageReceived(res);
@@ -73,6 +79,36 @@ async function sendRequest(
     return p;
 }
 
+function stfErrorToString(stfError: StfError): string {
+    if (stfError.isRequestVCFailed) {
+        const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
+    }
+
+    if (
+        stfError.isActivateIdentityFailed ||
+        stfError.isDeactivateIdentityFailed ||
+        stfError.isSetIdentityNetworksFailed ||
+        stfError.isLinkIdentityFailed ||
+        stfError.isMissingPrivileges ||
+        stfError.isRemoveIdentityFailed ||
+        stfError.isDispatch
+    ) {
+        const errorDetail = stfError.value as ErrorDetail;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
+    }
+
+    if (stfError.isInvalidNonce) {
+        const [nonce1, nonce2] = stfError.asInvalidNonce;
+
+        return `${stfError.type}: [${nonce1.toHuman()}, ${nonce2.toHuman()}]`;
+    }
+
+    return stfError.type;
+}
+
 // TrustedCalls are defined in:
 // https://github.com/litentry/litentry-parachain/blob/d4be11716fdb46021194bbe9fe791b15249a369e/tee-worker/app-libs/stf/src/trusted_call.rs#L61
 //
@@ -87,30 +123,37 @@ export const createSignedTrustedCall = async (
     mrenclave: string,
     nonce: Codec,
     params: any,
-    withWrappedBytes = false
+    withWrappedBytes = false,
+    withPrefix = false
 ): Promise<TrustedCallSigned> => {
     const [variant, argType] = trustedCall;
-    const call = parachainApi.createType('TrustedCall', {
+    const call: TrustedCall = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
     });
-    let payload = blake2AsU8a(
-        Uint8Array.from([
-            ...call.toU8a(),
-            ...nonce.toU8a(),
-            ...hexToU8a(mrenclave),
-            ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
-        ])
+    let payload: string = blake2AsHex(
+        u8aConcat(
+            call.toU8a(),
+            nonce.toU8a(),
+            hexToU8a(mrenclave),
+            hexToU8a(mrenclave) // should be shard, but it's the same as MRENCLAVE in our case
+        ),
+        256
     );
 
     if (withWrappedBytes) {
-        payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
+        payload = `<Bytes>${payload}</Bytes>`;
     }
 
-    const signature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: u8aToHex(
-            // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
-        ),
+    if (withPrefix) {
+        const prefix = getSignatureMessagePrefix(call);
+        const msg = prefix + payload;
+        payload = msg;
+        console.log('Signing message: ', payload);
+    }
+
+    const signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
     });
 
     return parachainApi.createType('TrustedCallSigned', {
@@ -119,6 +162,60 @@ export const createSignedTrustedCall = async (
         signature: signature,
     });
 };
+
+async function createLitentryMultiSignature(
+    api: ApiPromise,
+    args: { signer: Signer; payload: Uint8Array | string }
+): Promise<LitentryMultiSignature> {
+    const { signer, payload } = args;
+    const signerType = signer.type();
+
+    // Sign Bytes:
+    // For Bitcoin, sign as hex with no prefix; for other types, convert it to raw bytes
+    if (payload instanceof Uint8Array) {
+        const signature = await signer.sign(signerType === 'bitcoin' ? u8aToHex(payload).substring(2) : payload);
+
+        return api.createType('LitentryMultiSignature', {
+            [signerType]: signature,
+        });
+    }
+
+    // Sign hex:
+    // Remove the prefix for bitcoin signature, and use raw bytes for other types
+    if (payload.startsWith('0x')) {
+        const signature = await signer.sign(signerType === 'bitcoin' ? payload.substring(2) : hexToU8a(payload));
+
+        return api.createType('LitentryMultiSignature', {
+            [signerType]: signature,
+        });
+    }
+
+    // Sign string:
+    // For Bitcoin, pass it as it is, for other types, convert it to raw bytes
+    const signature = await signer.sign(signerType === 'bitcoin' ? payload : stringToU8a(payload));
+
+    return api.createType('LitentryMultiSignature', {
+        [signerType]: signature,
+    });
+}
+
+// See TrustedCall.signature_message_prefix
+function getSignatureMessagePrefix(call: TrustedCall): string {
+    if (call.isLinkIdentity) {
+        return "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ";
+    }
+
+    if (call.isRequestBatchVc) {
+        const [, , assertions] = call.asRequestBatchVc;
+        const length = assertions.length;
+
+        return `We are going to help you generate ${length} secure credential${
+            length > 1 ? 's' : ''
+        }. Please be assured, this process is safe and involves no transactions of your assets. Token: `;
+    }
+
+    return 'Token: ';
+}
 
 export const createSignedTrustedGetter = async (
     parachainApi: ApiPromise,
@@ -166,7 +263,8 @@ export async function createSignedTrustedCallLinkIdentity(
     validationData: string,
     web3networks: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return createSignedTrustedCall(
         parachainApi,
@@ -177,7 +275,9 @@ export async function createSignedTrustedCallLinkIdentity(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -213,7 +313,8 @@ export async function createSignedTrustedCallRequestVc(
     primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return await createSignedTrustedCall(
         parachainApi,
@@ -221,7 +322,9 @@ export async function createSignedTrustedCallRequestVc(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -233,7 +336,8 @@ export async function createSignedTrustedCallRequestBatchVc(
     primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return await createSignedTrustedCall(
         parachainApi,
@@ -244,7 +348,9 @@ export async function createSignedTrustedCallRequestBatchVc(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -346,8 +452,7 @@ export const sendRequestFromTrustedCall = async (
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
-    console.log('top: ', trustedOperation.toJSON());
-    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
+    console.log('trustedOperation: ', JSON.stringify(trustedOperation.toHuman(), null, 2));
     // create the request parameter
     const requestParam = await createAesRequest(
         context.api,
