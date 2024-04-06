@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
+import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
@@ -9,19 +9,16 @@ import type {
     TrustedCallSigned,
     Getter,
     CorePrimitivesIdentity,
-    LitentryMultiSignature,
     TrustedGetterSigned,
     TrustedCall,
-    StfError,
-    ErrorDetail,
 } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
+import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep, createLitentryMultiSignature } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex, base58Encode, blake2AsU8a } from '@polkadot/util-crypto';
-import { createJsonRpcRequest, nextRequestId } from './helpers';
+import { createJsonRpcRequest, nextRequestId, stfErrorToString } from './helpers';
 
 // Send the request to worker ws
 // we should perform different actions based on the returned status:
@@ -79,36 +76,6 @@ async function sendRequest(
     return p;
 }
 
-function stfErrorToString(stfError: StfError): string {
-    if (stfError.isRequestVCFailed) {
-        const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
-
-        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
-    }
-
-    if (
-        stfError.isActivateIdentityFailed ||
-        stfError.isDeactivateIdentityFailed ||
-        stfError.isSetIdentityNetworksFailed ||
-        stfError.isLinkIdentityFailed ||
-        stfError.isMissingPrivileges ||
-        stfError.isRemoveIdentityFailed ||
-        stfError.isDispatch
-    ) {
-        const errorDetail = stfError.value as ErrorDetail;
-
-        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
-    }
-
-    if (stfError.isInvalidNonce) {
-        const [nonce1, nonce2] = stfError.asInvalidNonce;
-
-        return `${stfError.type}: [${nonce1.toHuman()}, ${nonce2.toHuman()}]`;
-    }
-
-    return stfError.type;
-}
-
 // TrustedCalls are defined in:
 // https://github.com/litentry/litentry-parachain/blob/d4be11716fdb46021194bbe9fe791b15249a369e/tee-worker/app-libs/stf/src/trusted_call.rs#L61
 //
@@ -163,42 +130,6 @@ export const createSignedTrustedCall = async (
     });
 };
 
-async function createLitentryMultiSignature(
-    api: ApiPromise,
-    args: { signer: Signer; payload: Uint8Array | string }
-): Promise<LitentryMultiSignature> {
-    const { signer, payload } = args;
-    const signerType = signer.type();
-
-    // Sign Bytes:
-    // For Bitcoin, sign as hex with no prefix; for other types, convert it to raw bytes
-    if (payload instanceof Uint8Array) {
-        const signature = await signer.sign(signerType === 'bitcoin' ? u8aToHex(payload).substring(2) : payload);
-
-        return api.createType('LitentryMultiSignature', {
-            [signerType]: signature,
-        });
-    }
-
-    // Sign hex:
-    // Remove the prefix for bitcoin signature, and use raw bytes for other types
-    if (payload.startsWith('0x')) {
-        const signature = await signer.sign(signerType === 'bitcoin' ? payload.substring(2) : hexToU8a(payload));
-
-        return api.createType('LitentryMultiSignature', {
-            [signerType]: signature,
-        });
-    }
-
-    // Sign string:
-    // For Bitcoin, pass it as it is, for other types, convert it to raw bytes
-    const signature = await signer.sign(signerType === 'bitcoin' ? payload : stringToU8a(payload));
-
-    return api.createType('LitentryMultiSignature', {
-        [signerType]: signature,
-    });
-}
-
 // See TrustedCall.signature_message_prefix
 function getSignatureMessagePrefix(call: TrustedCall): string {
     if (call.isLinkIdentity) {
@@ -229,18 +160,14 @@ export const createSignedTrustedGetter = async (
     });
     const payload = blake2AsU8a(getter.toU8a(), 256);
 
-    const signature = await signer.sign(
-        // bitcoin signature expects a hex-encoded `string` without `0x` prefix
-        signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload
-    );
-
-    let litentryMultiSignature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: signature,
+    let signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
     });
 
     return parachainApi.createType('TrustedGetterSigned', {
-        getter: getter,
-        signature: litentryMultiSignature,
+        getter,
+        signature,
     });
 };
 
