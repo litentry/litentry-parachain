@@ -22,8 +22,8 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::parentchain::{
-	events::BalanceTransfer, AccountId, FilterEvents, HandleParentchainEvents, ParentchainError,
-	ParentchainId,
+	events::BalanceTransfer, AccountId, FilterEvents, HandleParentchainEvents,
+	ParentchainEventProcessingError, ParentchainId,
 };
 use litentry_hex_utils::hex_encode;
 use log::*;
@@ -79,7 +79,7 @@ where
 					info!("[TargetA] found transfer event to shard vault account: {} will shield to {}", event.amount, hex_encode(event.from.encode().as_ref()));
 					Self::shield_funds(executor, &event.from, event.amount)
 				})
-				.map_err(|_| ParentchainError::ShieldFundsFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::ShieldFundsFailure)?;
 		}
 		Ok(())
 	}

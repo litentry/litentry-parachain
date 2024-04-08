@@ -28,7 +28,8 @@ use itp_types::parentchain::{
 		ActivateIdentityRequested, BalanceTransfer, DeactivateIdentityRequested,
 		LinkIdentityRequested, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
 	},
-	AccountId, FilterEvents, HandleParentchainEvents, ParentchainError, ParentchainId,
+	AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+	ParentchainId,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_hex_utils::hex_encode;
@@ -217,7 +218,7 @@ where
 					Self::shield_funds(executor, &event.from, event.amount)
 					//Err(ParentchainError::FunctionalityDisabled)
 				})
-				.map_err(|_| ParentchainError::ShieldFundsFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::ShieldFundsFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<LinkIdentityRequested>() {
@@ -234,7 +235,7 @@ where
 						event.encrypted_web3networks.clone(),
 					)
 				})
-				.map_err(|_| ParentchainError::LinkIdentityFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::LinkIdentityFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<DeactivateIdentityRequested>() {
@@ -250,7 +251,7 @@ where
 						IdentityAction::Deactivate,
 					)
 				})
-				.map_err(|_| ParentchainError::DeactivateIdentityFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::DeactivateIdentityFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<ActivateIdentityRequested>() {
@@ -266,7 +267,7 @@ where
 						IdentityAction::Activate,
 					)
 				})
-				.map_err(|_| ParentchainError::ActivateIdentityFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::ActivateIdentityFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<VCRequested>() {
@@ -277,7 +278,7 @@ where
 					debug!("found VCRequested event: {}", event);
 					Self::request_vc(executor, &event.account, event.assertion.clone())
 				})
-				.map_err(|_| ParentchainError::VCRequestedFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<ScheduledEnclaveSet>() {
@@ -292,7 +293,7 @@ where
 						event.mrenclave,
 					)
 				})
-				.map_err(|_| ParentchainError::ScheduledEnclaveSetFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
 		}
 
 		if let Ok(events) = events.get_events::<ScheduledEnclaveRemoved>() {
@@ -303,7 +304,7 @@ where
 					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
 					Self::remove_scheduled_enclave(event.worker_type, event.sidechain_block_number)
 				})
-				.map_err(|_| ParentchainError::ScheduledEnclaveRemovedFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
 		}
 
 		Ok(())

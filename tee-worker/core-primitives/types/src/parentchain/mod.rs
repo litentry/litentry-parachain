@@ -90,7 +90,7 @@ pub trait IdentifyParentchain {
 }
 
 pub trait FilterEvents {
-	type Error: From<ParentchainError> + core::fmt::Debug;
+	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
 	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error>;
@@ -115,7 +115,7 @@ where
 }
 
 #[derive(Debug)]
-pub enum ParentchainError {
+pub enum ParentchainEventProcessingError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
 	LinkIdentityFailure,
@@ -126,28 +126,32 @@ pub enum ParentchainError {
 	ScheduledEnclaveRemovedFailure,
 }
 
-impl core::fmt::Display for ParentchainError {
+impl core::fmt::Display for ParentchainEventProcessingError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = match &self {
-			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
-			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
-			ParentchainError::LinkIdentityFailure => "Parentchain Error: LinkIdentityFailure",
-			ParentchainError::DeactivateIdentityFailure =>
-				"Parentchain Error: DeactivateIdentityFailure",
-			ParentchainError::ActivateIdentityFailure =>
-				"Parentchain Error: ActivateIdentityFailure",
-			ParentchainError::VCRequestedFailure => "Parentchain Error: VCRequestedFailure",
-			ParentchainError::ScheduledEnclaveSetFailure =>
-				"Parentchain Error: ScheduledEnclaveSetFailure",
-			ParentchainError::ScheduledEnclaveRemovedFailure =>
-				"Parentchain Error: ScheduledEnclaveRemovedFailure",
+			ParentchainEventProcessingError::ShieldFundsFailure =>
+				"Parentchain Event Processing Error: ShieldFundsFailure",
+			ParentchainEventProcessingError::FunctionalityDisabled =>
+				"Parentchain Event Processing Error: FunctionalityDisabled",
+			ParentchainEventProcessingError::LinkIdentityFailure =>
+				"Parentchain Event Processing Error: LinkIdentityFailure",
+			ParentchainEventProcessingError::DeactivateIdentityFailure =>
+				"Parentchain Event Processing Error: DeactivateIdentityFailure",
+			ParentchainEventProcessingError::ActivateIdentityFailure =>
+				"Parentchain Event Processing Error: ActivateIdentityFailure",
+			ParentchainEventProcessingError::VCRequestedFailure =>
+				"Parentchain Event Processing Error: VCRequestedFailure",
+			ParentchainEventProcessingError::ScheduledEnclaveSetFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
+			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
 		};
 		write!(f, "{}", message)
 	}
 }
 
-impl From<ParentchainError> for () {
-	fn from(_: ParentchainError) -> Self {}
+impl From<ParentchainEventProcessingError> for () {
+	fn from(_: ParentchainEventProcessingError) -> Self {}
 }
 
 /// a wrapper to target calls to specific parentchains
