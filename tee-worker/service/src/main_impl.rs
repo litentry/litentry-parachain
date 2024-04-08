@@ -536,8 +536,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				.unwrap()
 				.for_parentchain(ParentchainId::Litentry)
 				.is_none();
+			let we_are_primary_validateer = primary_account_id == tee_accountid;
 
-			if is_first_run && tee_accountid != primary_account_id {
+			if is_first_run && !we_are_primary_validateer {
 				// we are not primary worker
 				info!("my state doesn't know the creation header of the shard. will request provisioning");
 				// obtain provisioning from last active worker as this hasn't been done before
@@ -562,7 +563,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			register_enclave_xt_header =
 				get_registered_enclave_xt_header(&litentry_rpc_api, register_enclave_block_hash);
 
-			(primary_account_id == tee_accountid, is_first_run)
+			(we_are_primary_validateer, is_first_run)
 		},
 		None => {
 			println!("No primary enclave for shard was found");
