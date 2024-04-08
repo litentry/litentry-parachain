@@ -16,15 +16,7 @@
 */
 
 pub mod invoke;
-pub mod litentry;
 pub mod timestamp_set;
 
 pub use invoke::InvokeArgs;
-pub use litentry::{
-	activate_identity::ActivateIdentityArgs,
-	deactivate_identity::DeactivateIdentityArgs,
-	link_identity::LinkIdentityArgs,
-	request_vc::RequestVCArgs,
-	scheduled_enclave::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
-};
 pub use timestamp_set::TimestampSetArgs;

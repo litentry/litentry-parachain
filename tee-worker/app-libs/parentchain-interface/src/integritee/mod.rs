@@ -21,10 +21,7 @@ mod event_handler;
 use crate::{
 	decode_and_log_error,
 	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic},
-	indirect_calls::{
-		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs,
-	},
+	indirect_calls::InvokeArgs,
 };
 use codec::{Decode, Encode};
 pub use event_filter::FilterableEvents;
@@ -43,8 +40,7 @@ pub use itp_types::{
 	CallIndex, H256,
 };
 use log::*;
-use sp_core::crypto::AccountId32;
-use sp_runtime::{traits::BlakeTwo256, MultiAddress};
+use sp_runtime::traits::BlakeTwo256;
 use sp_std::vec::Vec;
 
 pub type BlockNumber = u32;
@@ -113,7 +109,7 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
 		} else if index == metadata.batch_all_call_indexes().ok()? {
-			parse_batch_all(call_args, metadata, xt.hashed_extrinsic)
+			parse_batch_all(call_args, metadata)
 		} else {
 			None
 		}
@@ -123,7 +119,6 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	call_args: &mut &[u8],
 	metadata: &NodeMetadata,
-	hash: H256,
 ) -> Option<IndirectCall> {
 	let call_count: Vec<()> = Decode::decode(call_args).ok()?;
 	let mut calls: Vec<IndirectCall> = Vec::new();
