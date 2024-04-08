@@ -28,7 +28,6 @@ use crate::{
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
-		unshield_funds::UnshieldFundsCommand,
 	},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::get_keystore_path,
@@ -59,9 +58,6 @@ pub enum TrustedBaseCommand {
 
 	/// query balance for incognito account in keystore
 	Balance(BalanceCommand),
-
-	/// Transfer funds from an incognito account to an parentchain account
-	UnshieldFunds(UnshieldFundsCommand),
 
 	/// gets the nonce of a given account, taking the pending trusted calls
 	/// in top pool in consideration
@@ -102,7 +98,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Transfer(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShard(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShardVault(cmd) => cmd.run(cli, trusted_cli),
