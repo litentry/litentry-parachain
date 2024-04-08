@@ -30,7 +30,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_sgx_io::SealedIO;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
-use lc_scheduled_enclave::{ScheduledEnclaveMap, ScheduledEnclaveSeal};
+use lc_scheduled_enclave::ScheduledEnclaveMap;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use std::{sync::Arc, vec::Vec};
