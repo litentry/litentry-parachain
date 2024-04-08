@@ -80,6 +80,13 @@
       ["CeremonyError", "()"]
     ]
   },
+  "SignEthereumError": {
+    "type": "enum",
+    "type_mapping": [
+      ["InvalidSigner", "()"],
+      ["SigningError", "()"]
+    ]
+  },
   "PrehashedEthereumMessage": "[u8; 32]",
   "RequestAesKey": "[u8; 32]",
   "AesRequest": {

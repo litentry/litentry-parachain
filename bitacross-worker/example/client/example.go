@@ -249,6 +249,19 @@ func prepareSignedDirectCall(directCall map[string]interface{}, signature []byte
 	}
 }
 
+func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byte, prehashedEthereumMessage []byte) map[string]interface{} {
+	signEthereumDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": utiles.BytesToHex(prehashedEthereumMessage),
+	}
+
+	return map[string]interface{}{
+		"SignEthereum": signEthereumDirectCall,
+	}
+
+}
+
 func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"TaprootSpendable": map[string]interface{}{
@@ -383,6 +396,22 @@ func decodeSignBitcoinError(encoded []byte) map[string]interface{} {
 	})
 	var output map[string]interface{}
 	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("SignBitcoinError").(interface{}), &output)
+
+	if err != nil {
+		fmt.Println("Unmarshall error!")
+		fmt.Println(err)
+	}
+	return output
+}
+
+func decodeSignEthereumError(encoded []byte) map[string]interface{} {
+	bytes := scaleBytes.ScaleBytes{Data: encoded}
+	m := types.ScaleDecoder{}
+	m.Init(bytes, &types.ScaleDecoderOption{
+		SubType: "string,string",
+	})
+	var output map[string]interface{}
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("SignEthereumError").(interface{}), &output)
 
 	if err != nil {
 		fmt.Println("Unmarshall error!")
