@@ -60,14 +60,14 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks)
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data.clone(), encrypted_web3networks.clone())
 	verify {
 		assert_last_event::<T>(Event::LinkIdentityRequested{
 			shard,
 			account: caller,
-			encrypted_identity: vec![1u8; 2048],
-			encrypted_validation_data: vec![1u8; 2048],
-			encrypted_web3networks: vec![1u8; 2048],
+			encrypted_identity: encrypted_did,
+			encrypted_validation_data,
+			encrypted_web3networks,
 		}.into());
 	}
 
