@@ -87,8 +87,12 @@ pub struct ScheduledEnclaveSet {
 impl core::fmt::Display for ScheduledEnclaveSet {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
-			"ScheduledEnclaveSet :: worker_type: {:?}, sidechain_block_number: {}, mrenclave: {:?}",
-			self.worker_type, self.sidechain_block_number, self.mrenclave
+			"[{}:{}] :: worker_type: {:?}, sidechain_block_number: {}, mrenclave: {:?}",
+			ScheduledEnclaveSet::PALLET,
+			ScheduledEnclaveSet::EVENT,
+			self.worker_type,
+			self.sidechain_block_number,
+			self.mrenclave
 		);
 		write!(f, "{}", message)
 	}
