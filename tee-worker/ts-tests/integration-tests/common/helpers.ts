@@ -80,7 +80,7 @@ export function stfErrorToString(stfError: StfError): string {
     if (stfError.isRequestVCFailed) {
         const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
 
-        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
     }
 
     if (
@@ -94,13 +94,13 @@ export function stfErrorToString(stfError: StfError): string {
     ) {
         const errorDetail = stfError.value as ErrorDetail;
 
-        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value.toHuman()}`;
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
     }
 
     if (stfError.isInvalidNonce) {
         const [nonce1, nonce2] = stfError.asInvalidNonce;
 
-        return `${stfError.type}: [${nonce1.toHuman()}, ${nonce2.toHuman()}]`;
+        return `${stfError.type}: [${nonce1?.toHuman()}, ${nonce2?.toHuman()}]`;
     }
 
     return stfError.type;
