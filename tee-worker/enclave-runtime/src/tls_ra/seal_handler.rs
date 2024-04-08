@@ -27,31 +27,59 @@ use itp_sgx_crypto::{
 	Aes,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_sgx_io::SealedIO;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
+use lc_scheduled_enclave::ScheduledEnclaveMap;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use std::{sync::Arc, vec::Vec};
 
 /// Handles the sealing and unsealing of the shielding key, state key and the state.
 #[derive(Default)]
-pub struct SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> {
+pub struct SealHandler<
+	ShieldingKeyRepository,
+	StateKeyRepository,
+	StateHandler,
+	LightClientSeal,
+	ScheduledEnclaveSeal,
+> {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	light_client_seal: Arc<LightClientSeal>,
+	scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-	SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	>
+	SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	>
 {
 	pub fn new(
 		state_handler: Arc<StateHandler>,
 		state_key_repository: Arc<StateKeyRepository>,
 		shielding_key_repository: Arc<ShieldingKeyRepository>,
 		light_client_seal: Arc<LightClientSeal>,
+		scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
 	) -> Self {
-		Self { state_handler, state_key_repository, shielding_key_repository, light_client_seal }
+		Self {
+			state_handler,
+			state_key_repository,
+			shielding_key_repository,
+			light_client_seal,
+			scheduled_enclave_seal,
+		}
 	}
 }
 
@@ -61,6 +89,7 @@ pub trait SealStateAndKeys {
 	fn seal_state(&self, bytes: &[u8], shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_new_empty_state(&self, shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_light_client_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
+	fn seal_scheduled_enclave_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
 }
 
 pub trait UnsealStateAndKeys {
@@ -68,16 +97,29 @@ pub trait UnsealStateAndKeys {
 	fn unseal_state_key(&self) -> EnclaveResult<Vec<u8>>;
 	fn unseal_state(&self, shard: &ShardIdentifier) -> EnclaveResult<Vec<u8>>;
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>>;
+	fn unseal_scheduled_enclave_state(&self) -> EnclaveResult<Vec<u8>>;
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> SealStateAndKeys
-	for SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-where
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	> SealStateAndKeys
+	for SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Decode,
+	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key: Rsa3072KeyPair = serde_json::from_slice(bytes).map_err(|e| {
@@ -112,6 +154,16 @@ where
 		Ok(())
 	}
 
+	fn seal_scheduled_enclave_state(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
+		let state: <ScheduledEnclaveSeal as SealedIO>::Unsealed = Decode::decode(&mut bytes)?;
+		self.scheduled_enclave_seal.seal(&state).map_err(|e| {
+			error!("    [Enclave] Failed to seal scheduled enclave: {:?}", e);
+			EnclaveError::Other(format!("{:?}", e).into())
+		})?;
+		info!("Successfully sealed scheduled enclave");
+		Ok(())
+	}
+
 	/// Seal an empty, newly initialized state.
 	///
 	/// Requires the shielding key to be sealed and updated before calling this.
@@ -126,14 +178,26 @@ where
 	}
 }
 
-impl<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal> UnsealStateAndKeys
-	for SealHandler<ShieldingKeyRepository, StateKeyRepository, StateHandler, LightClientSeal>
-where
+impl<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	> UnsealStateAndKeys
+	for SealHandler<
+		ShieldingKeyRepository,
+		StateKeyRepository,
+		StateHandler,
+		LightClientSeal,
+		ScheduledEnclaveSeal,
+	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Encode,
+	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
 {
 	fn unseal_shielding_key(&self) -> EnclaveResult<Vec<u8>> {
 		let shielding_key = self
@@ -157,6 +221,14 @@ where
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>> {
 		Ok(self.light_client_seal.unseal()?.encode())
 	}
+
+	fn unseal_scheduled_enclave_state(&self) -> EnclaveResult<Vec<u8>> {
+		let scheduled_enclave = self.scheduled_enclave_seal.unseal().map_err(|e| {
+			error!("    [Enclave] Failed to unseal scheduled enclave: {:?}", e);
+			EnclaveError::Other(format!("{:?}", e).into())
+		})?;
+		Ok(Encode::encode(&scheduled_enclave))
+	}
 }
 
 #[cfg(feature = "test")]
@@ -165,6 +237,7 @@ pub mod test {
 	use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
+	use lc_scheduled_enclave::mock::ScheduledEnclaveSealMock;
 
 	type StateKeyRepositoryMock = KeyRepositoryMock<Aes>;
 	type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
@@ -174,6 +247,7 @@ pub mod test {
 		StateKeyRepositoryMock,
 		HandleStateMock,
 		LightValidationStateSealMock,
+		ScheduledEnclaveSealMock,
 	>;
 
 	pub fn seal_shielding_key_works() {
