@@ -116,7 +116,8 @@ pub enum SignBitcoinPayload {
 	TaprootSpendable(SignaturePayload, [u8; 32]),
 }
 
-pub fn generate_aggregated_public_key(public_keys: Vec<PublicKey>) -> PublicKey {
+pub fn generate_aggregated_public_key(mut public_keys: Vec<PublicKey>) -> PublicKey {
+	public_keys.sort();
 	KeyAggContext::new(public_keys).unwrap().aggregated_pubkey()
 }
 
@@ -139,7 +140,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 	pub fn new(
 		me: SignerId,
 		aes_key: RequestAesKey,
-		signers: SignersWithKeys,
+		mut signers: SignersWithKeys,
 		payload: SignBitcoinPayload,
 		commands: Vec<CeremonyCommand>,
 		signing_key_access: Arc<AK>,
@@ -149,6 +150,8 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		if signers.len() < 3 {
 			return Err(format!("Not enough signers, minimum: {:?}, actual {:?}", 3, signers.len()))
 		}
+
+		signers.sort_by_key(|k| k.0);
 		// we are always the first key in the vector
 		let my_index = signers.iter().position(|r| r.0 == me).ok_or("Could not determine index")?;
 		let all_keys = signers.iter().map(|p| p.1).collect::<Vec<PublicKey>>();
