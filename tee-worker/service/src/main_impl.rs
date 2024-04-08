@@ -526,7 +526,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	let mut register_enclave_xt_header: Header;
 
-	let (we_are_primary_validateer, re_init_parentchain_needed) = match primary_enclave_id {
+	let (we_are_primary_validateer, is_first_run) = match primary_enclave_id {
 		Some(primary_account_id) => {
 			info!("Primary enclave for shard is: {:?}", primary_account_id);
 			let is_first_run = enclave
@@ -603,6 +603,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	debug!("getting shard creation: {:?}", enclave.get_shard_creation_info(shard));
 	initialization_handler.registered_on_parentchain();
+
+	let re_init_parentchain_needed =
+		!we_are_primary_validateer || we_are_primary_validateer && is_first_run;
 
 	let (integritee_parentchain_handler, integritee_last_synced_header_at_last_run) =
 		if re_init_parentchain_needed {
