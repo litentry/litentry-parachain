@@ -92,6 +92,7 @@ use its_sidechain::{
 };
 use lazy_static::lazy_static;
 use lc_data_providers::DataProviderConfig;
+use lc_scheduled_enclave::ScheduledEnclaveSeal as EnclaveScheduledEnclaveSeal;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
@@ -352,6 +353,7 @@ pub type EnclaveSealHandler = SealHandler<
 	EnclaveStateKeyRepository,
 	EnclaveStateHandler,
 	EnclaveLightClientSeal,
+	EnclaveScheduledEnclaveSeal,
 >;
 pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor::Executor<
 	ParentchainBlock,
