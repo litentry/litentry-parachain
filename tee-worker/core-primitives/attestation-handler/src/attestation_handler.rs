@@ -299,11 +299,7 @@ where
 					return Err(e.into())
 				},
 			};
-
-			// TODO:
-			// Here we do MAA servce.
-			let policy = MAAService.azure_attest(&qe_quote)?;
-			policy
+			qe_quote
 		} else {
 			Default::default()
 		};

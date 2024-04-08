@@ -32,8 +32,7 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{Error as EnclaveError, Result as EnclaveResult};
 use http_req::{
-	request::{Method, RequestBuilder},
-	tls,
+	request::{Method, Request},
 	uri::Uri,
 };
 use itp_settings::files::{AZURE_ATTEST_KEY_FILE, AZURE_ATTEST_URL_FILE};
@@ -42,7 +41,6 @@ use log::debug;
 use std::{
 	borrow::ToOwned,
 	env,
-	net::TcpStream,
 	string::{String, ToString},
 	vec::Vec,
 };
@@ -80,32 +78,25 @@ impl MAAHandler for MAAService {
 	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>> {
 		debug!("    [Enclave] Entering azure_attest.");
 
-		let req_body = serde_json::json!({ "quote": base64::encode(quote) }).to_string();
-
-		let endpoint = get_azure_attest_url()?;
-		let token = get_azure_attest_api_key()?;
-		let url = endpoint + "/attest/SgxEnclave?api-version=2020-10-01";
+		let quote = base64::encode(quote);
+		let req_body = serde_json::json!({ "quote": quote }).to_string();
+		let url = get_azure_attest_url()?;
 		let addr = Uri::try_from(&url[..])
 			.map_err(|e| EnclaveError::Other(format!("MAA parse url error: {:?}", e).into()))?;
-
 		let host = addr
 			.host()
 			.ok_or_else(|| EnclaveError::Other("MAA got host error".to_string().into()))?;
-		let sock = TcpStream::connect((host, addr.corr_port()))
-			.map_err(|e| EnclaveError::Other(format!("MAA connect error: {:?}", e).into()))?;
-		let mut stream = tls::Config::default()
-			.connect(addr.host().unwrap_or(""), sock)
-			.map_err(|e| EnclaveError::Other(format!("{:?}", e).into()))?;
 
 		let mut writer = Vec::new();
-		let response = RequestBuilder::new(&addr)
+		let response = Request::new(&addr)
 			.method(Method::POST)
-			.body(req_body.as_bytes())
-			.header("Content-Length", &req_body.len())
-			.header("Connection", "Close")
 			.header("Content-Type", "application/json")
-			.header("Authorization", &format!("Bearer {}", token))
-			.send(&mut stream, &mut writer)
+			.header("Content-Length", &req_body.len())
+			.header("Host", host)
+			.header("Connection", "Close")
+			.header("Authorization", &format!("Bearer {}", get_azure_attest_api_key()?))
+			.body(req_body.as_bytes())
+			.send(&mut writer)
 			.map_err(|e| EnclaveError::Other(format!("MAA request error: {:?}", e).into()))?;
 
 		let status_code = response.status_code();
