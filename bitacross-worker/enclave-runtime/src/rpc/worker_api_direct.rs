@@ -176,9 +176,11 @@ where
 		}))
 	});
 
-	io.add_sync_method("bitacross_getScheduledEnclaveList", move |_: Params| {
-		debug!("worker_api_direct rpc was called: bitacross_getScheduledEnclaveList");
-		Ok(json!(format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read())))
+	io.add_sync_method("state_getScheduledEnclaveList", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclaveList");
+		let value = format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read());
+		let json_value = RpcReturnValue::new(value.encode(), false, DirectRequestStatus::Ok);
+		Ok(json!(json_value.to_hex()))
 	});
 
 	let local_top_pool_author = top_pool_author.clone();

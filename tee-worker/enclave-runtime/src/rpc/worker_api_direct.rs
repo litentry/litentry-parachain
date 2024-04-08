@@ -435,6 +435,13 @@ where
 		});
 	});
 
+	io.add_sync_method("state_getScheduledEnclaveList", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclaveList");
+		let value = format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read());
+		let json_value = RpcReturnValue::new(value.encode(), false, DirectRequestStatus::Ok);
+		Ok(json!(json_value.to_hex()))
+	});
+
 	// system_health
 	io.add_sync_method("system_health", |_: Params| {
 		debug!("worker_api_direct rpc was called: system_health");
