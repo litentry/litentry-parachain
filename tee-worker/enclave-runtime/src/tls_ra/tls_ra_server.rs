@@ -128,7 +128,7 @@ where
 				self.write_state_key()?;
 				self.write_state(shard)?;
 				self.write_light_client_state()?;
-				self.write_schedule_enclave_state()?;
+				self.write_scheduled_enclave_state()?;
 			},
 			ProvisioningPayload::ShieldingKeyAndLightClient => {
 				self.write_shielding_key()?;
@@ -164,9 +164,9 @@ where
 		Ok(())
 	}
 
-	fn write_schedule_enclave_state(&mut self) -> EnclaveResult<()> {
-		let state = self.seal_handler.unseal_schedule_enclave_state()?;
-		self.write(Opcode::ScheduleEnclave, &state)?;
+	fn write_scheduled_enclave_state(&mut self) -> EnclaveResult<()> {
+		let state = self.seal_handler.unseal_scheduled_enclave_state()?;
+		self.write(Opcode::ScheduledEnclave, &state)?;
 		Ok(())
 	}
 
@@ -233,7 +233,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		},
 	};
 
-	let schedule_enclave_seal =
+	let scheduled_enclave_seal =
 		Arc::new(ScheduledEnclaveSeal::new(GLOBAL_SCHEDULED_ENCLAVE.seal_path.clone()));
 
 	let seal_handler = EnclaveSealHandler::new(
@@ -241,7 +241,7 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
-		schedule_enclave_seal,
+		scheduled_enclave_seal,
 	);
 
 	if let Err(e) = run_state_provisioning_server_internal::<_, WorkerModeProvider>(

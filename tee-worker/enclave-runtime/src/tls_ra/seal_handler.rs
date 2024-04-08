@@ -48,7 +48,7 @@ pub struct SealHandler<
 	state_key_repository: Arc<StateKeyRepository>,
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	light_client_seal: Arc<LightClientSeal>,
-	schedule_enclave_seal: Arc<ScheduleEnclaveSeal>,
+	scheduled_enclave_seal: Arc<ScheduleEnclaveSeal>,
 }
 
 impl<
@@ -71,14 +71,14 @@ impl<
 		state_key_repository: Arc<StateKeyRepository>,
 		shielding_key_repository: Arc<ShieldingKeyRepository>,
 		light_client_seal: Arc<LightClientSeal>,
-		schedule_enclave_seal: Arc<ScheduleEnclaveSeal>,
+		scheduled_enclave_seal: Arc<ScheduleEnclaveSeal>,
 	) -> Self {
 		Self {
 			state_handler,
 			state_key_repository,
 			shielding_key_repository,
 			light_client_seal,
-			schedule_enclave_seal,
+			scheduled_enclave_seal,
 		}
 	}
 }
@@ -89,7 +89,7 @@ pub trait SealStateAndKeys {
 	fn seal_state(&self, bytes: &[u8], shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_new_empty_state(&self, shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_light_client_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
-	fn seal_schedule_enclave_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
+	fn seal_scheduled_enclave_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
 }
 
 pub trait UnsealStateAndKeys {
@@ -97,7 +97,7 @@ pub trait UnsealStateAndKeys {
 	fn unseal_state_key(&self) -> EnclaveResult<Vec<u8>>;
 	fn unseal_state(&self, shard: &ShardIdentifier) -> EnclaveResult<Vec<u8>>;
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>>;
-	fn unseal_schedule_enclave_state(&self) -> EnclaveResult<Vec<u8>>;
+	fn unseal_scheduled_enclave_state(&self) -> EnclaveResult<Vec<u8>>;
 }
 
 impl<
@@ -154,9 +154,9 @@ impl<
 		Ok(())
 	}
 
-	fn seal_schedule_enclave_state(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
+	fn seal_scheduled_enclave_state(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
 		let state: <ScheduledEnclaveSeal as SealedIO>::Unsealed = Decode::decode(&mut bytes)?;
-		self.schedule_enclave_seal.seal(&state).map_err(|e| {
+		self.scheduled_enclave_seal.seal(&state).map_err(|e| {
 			error!("    [Enclave] Failed to seal scheduled enclave: {:?}", e);
 			EnclaveError::Other(format!("{:?}", e).into())
 		})?;
@@ -222,12 +222,12 @@ impl<
 		Ok(self.light_client_seal.unseal()?.encode())
 	}
 
-	fn unseal_schedule_enclave_state(&self) -> EnclaveResult<Vec<u8>> {
-		let schedule_enclave = self.schedule_enclave_seal.unseal().map_err(|e| {
+	fn unseal_scheduled_enclave_state(&self) -> EnclaveResult<Vec<u8>> {
+		let scheduled_enclave = self.scheduled_enclave_seal.unseal().map_err(|e| {
 			error!("    [Enclave] Failed to unseal scheduled enclave: {:?}", e);
 			EnclaveError::Other(format!("{:?}", e).into())
 		})?;
-		Ok(Encode::encode(&schedule_enclave))
+		Ok(Encode::encode(&scheduled_enclave))
 	}
 }
 
