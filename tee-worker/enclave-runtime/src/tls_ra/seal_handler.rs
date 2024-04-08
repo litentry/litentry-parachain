@@ -42,13 +42,13 @@ pub struct SealHandler<
 	StateKeyRepository,
 	StateHandler,
 	LightClientSeal,
-	ScheduleEnclaveSeal,
+	ScheduledEnclaveSeal,
 > {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	light_client_seal: Arc<LightClientSeal>,
-	scheduled_enclave_seal: Arc<ScheduleEnclaveSeal>,
+	scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
 }
 
 impl<
@@ -56,14 +56,14 @@ impl<
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	>
 	SealHandler<
 		ShieldingKeyRepository,
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	>
 {
 	pub fn new(
@@ -71,7 +71,7 @@ impl<
 		state_key_repository: Arc<StateKeyRepository>,
 		shielding_key_repository: Arc<ShieldingKeyRepository>,
 		light_client_seal: Arc<LightClientSeal>,
-		scheduled_enclave_seal: Arc<ScheduleEnclaveSeal>,
+		scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
 	) -> Self {
 		Self {
 			state_handler,
@@ -105,21 +105,21 @@ impl<
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	> SealStateAndKeys
 	for SealHandler<
 		ShieldingKeyRepository,
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Decode,
-	ScheduleEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
+	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key: Rsa3072KeyPair = serde_json::from_slice(bytes).map_err(|e| {
@@ -183,21 +183,21 @@ impl<
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	> UnsealStateAndKeys
 	for SealHandler<
 		ShieldingKeyRepository,
 		StateKeyRepository,
 		StateHandler,
 		LightClientSeal,
-		ScheduleEnclaveSeal,
+		ScheduledEnclaveSeal,
 	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
 	StateHandler: HandleState<StateT = StfState>,
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Encode,
-	ScheduleEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
+	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
 {
 	fn unseal_shielding_key(&self) -> EnclaveResult<Vec<u8>> {
 		let shielding_key = self
