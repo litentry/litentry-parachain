@@ -110,13 +110,11 @@ where
 	fn handle_events(
 		executor: &Executor,
 		events: impl FilterEvents,
-		vault_account: &AccountId,
 	) -> core::result::Result<(), Error>;
 }
 
 #[derive(Debug)]
 pub enum ParentchainEventProcessingError {
-	ShieldFundsFailure,
 	FunctionalityDisabled,
 	LinkIdentityFailure,
 	DeactivateIdentityFailure,
@@ -129,8 +127,6 @@ pub enum ParentchainEventProcessingError {
 impl core::fmt::Display for ParentchainEventProcessingError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = match &self {
-			ParentchainEventProcessingError::ShieldFundsFailure =>
-				"Parentchain Event Processing Error: ShieldFundsFailure",
 			ParentchainEventProcessingError::FunctionalityDisabled =>
 				"Parentchain Event Processing Error: FunctionalityDisabled",
 			ParentchainEventProcessingError::LinkIdentityFailure =>

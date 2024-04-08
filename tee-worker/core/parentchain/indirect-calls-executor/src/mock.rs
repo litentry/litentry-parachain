@@ -7,16 +7,16 @@ use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use litentry_primitives::DecryptableRequest;
 
+use itp_api_client_types::{ParentchainSignedExtra, StaticEvent};
 use itp_node_api::{
 	api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4},
 	metadata::NodeMetadataTrait,
 };
-use itp_sgx_runtime_primitives::types::{AccountId, Balance};
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
-use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
+use itp_test::mock::stf_mock::TrustedCallSignedMock;
 use itp_types::{
 	parentchain::{ExtrinsicStatus, FilterEvents, HandleParentchainEvents},
-	Address, RsaRequest, ShardIdentifier, H256,
+	Address, RsaRequest, H256,
 };
 use log::*;
 use std::vec::Vec;
@@ -45,19 +45,13 @@ where
 		let xt = match Self::ParseParentchainMetadata::parse(call_mut) {
 			Ok(xt) => xt,
 			Err(e) => {
-				log::error!(
-					"[ShieldFundsAndInvokeFilter] Could not parse parentchain extrinsic: {:?}",
-					e
-				);
+				log::error!("[InvokeFilter] Could not parse parentchain extrinsic: {:?}", e);
 				return None
 			},
 		};
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
-		log::trace!(
-			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
-			index
-		);
+		log::trace!("[AndInvokeFilter] attempting to execute indirect call with index {:?}", index);
 		if index == metadata.post_opaque_task_call_indexes().ok()? {
 			log::debug!("executing invoke call");
 			let args = InvokeArgs::decode(call_args).unwrap();
@@ -70,8 +64,6 @@ where
 pub struct ExtrinsicParser<SignedExtra> {
 	_phantom: PhantomData<SignedExtra>,
 }
-use itp_api_client_types::{ParentchainSignedExtra, StaticEvent};
-use itp_stf_primitives::types::TrustedOperation;
 
 /// Parses the extrinsics corresponding to the parentchain.
 pub type MockParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
@@ -126,7 +118,6 @@ where
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
-	ShieldFunds(ShieldFundsArgs),
 	Invoke(InvokeArgs),
 }
 
@@ -137,8 +128,6 @@ impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> ICResult<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::ShieldFunds(shieldfunds_args) =>
-				shieldfunds_args.dispatch(executor, args),
 			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, args),
 		}
 	}
@@ -181,42 +170,7 @@ where
 	fn handle_events(
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
-		_: &AccountId,
 	) -> core::result::Result<(), Error> {
-		Ok(())
-	}
-}
-
-/// Arguments of the Integritee-Parachain's shield fund dispatchable.
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct ShieldFundsArgs {
-	account_encrypted: Vec<u8>,
-	amount: Balance,
-	shard: ShardIdentifier,
-}
-
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for ShieldFundsArgs
-{
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {
-		info!("Found ShieldFunds extrinsic in block: \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
-        	self.account_encrypted, self.amount, bs58::encode(self.shard.encode()).into_string());
-
-		debug!("decrypt the account id");
-		let account_vec = executor.decrypt(&self.account_encrypted)?;
-		let _account = AccountId::decode(&mut account_vec.as_slice())?;
-
-		let enclave_account_id = executor.get_enclave_account()?;
-		let trusted_call = TrustedCallMock::noop(enclave_account_id.into());
-		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
-		let trusted_operation =
-			TrustedOperation::<TrustedCallSignedMock, GetterMock>::indirect_call(
-				signed_trusted_call,
-			);
-
-		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-		executor.submit_trusted_call(self.shard, encrypted_trusted_call);
 		Ok(())
 	}
 }

@@ -23,7 +23,7 @@ use crate::{
 	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic},
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs, ShieldFundsArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, SetScheduledEnclaveArgs,
 	},
 };
 use codec::{Decode, Encode};
@@ -57,8 +57,6 @@ pub type ParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
 /// The default indirect call (extrinsic-triggered) of Litentry parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
-	#[codec(index = 0)]
-	ShieldFunds(ShieldFundsArgs),
 	#[codec(index = 1)]
 	Invoke(InvokeArgs),
 	// Litentry
@@ -86,7 +84,6 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
 			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
 			// Litentry
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
