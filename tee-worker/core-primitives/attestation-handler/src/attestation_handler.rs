@@ -287,7 +287,7 @@ where
 		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
 		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
-		let qe_policy = if !skip_ra {
+		let qe_quote = if !skip_ra {
 			let qe_quote = match self.retrieve_qe_dcap_quote(
 				&chain_signer.public().0,
 				quoting_enclave_target_info.unwrap(),
@@ -304,11 +304,11 @@ where
 			Default::default()
 		};
 
-		let qe_policy_base_64 = base64::encode(&qe_policy[..]);
+		let qe_quote_base_64 = base64::encode(&qe_quote[..]);
 		// generate an ECC certificate
 		debug!("[Enclave] Generate ECC Certificate");
 		let (key_der, cert_der) =
-			match cert::gen_ecc_cert(&qe_policy_base_64, &prv_k, &pub_k, &ecc_handle) {
+			match cert::gen_ecc_cert(&qe_quote_base_64, &prv_k, &pub_k, &ecc_handle) {
 				Ok(r) => r,
 				Err(e) => {
 					error!("[Enclave] gen_ecc_cert failed: {:?}", e);
@@ -321,8 +321,8 @@ where
 		debug!("[Enclave] Generated ECC cert info:");
 		trace!("[Enclave] Generated ECC cert info: key_der={:?}", &key_der);
 		trace!("[Enclave] Generated ECC cert info: cert_der={:?}", &cert_der);
-		trace!("[Enclave] Generated ECC cert info: qe_policy={:?}", &qe_policy);
-		Ok((key_der, cert_der, qe_policy))
+		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
+		Ok((key_der, cert_der, qe_quote))
 	}
 }
 
