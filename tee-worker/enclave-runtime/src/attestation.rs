@@ -217,12 +217,12 @@ pub fn generate_dcap_ra_extrinsic_internal(
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 
 	if !skip_ra {
-		let (_priv_key_der, _cert_der, dcap_quote) = attestation_handler.generate_dcap_ra_cert(
+		let dcap_quote = attestation_handler.generate_dcap_quote_with_maa(
 			quoting_enclave_target_info,
 			quote_size,
 			skip_ra,
 		)?;
-
+  
 		generate_dcap_ra_extrinsic_from_quote_internal(url, &dcap_quote)
 	} else {
 		generate_dcap_skip_ra_extrinsic_from_mr_enclave(

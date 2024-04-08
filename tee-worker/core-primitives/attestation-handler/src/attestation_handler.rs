@@ -97,6 +97,14 @@ pub trait AttestationHandler {
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>, Vec<u8>)>;
 
+	/// Returns the raw DCAP quote with MAA policy
+	fn generate_dcap_quote_with_maa(
+		&self,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
+		skip_ra: bool,
+	) -> EnclaveResult<Vec<u8>>;
+
 	/// Get the measurement register value of the enclave
 	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]>;
 
@@ -323,6 +331,43 @@ where
 		trace!("[Enclave] Generated ECC cert info: cert_der={:?}", &cert_der);
 		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
 		Ok((key_der, cert_der, qe_quote))
+	}
+
+	fn generate_dcap_quote_with_maa(
+		&self,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
+		skip_ra: bool,
+	) -> EnclaveResult<Vec<u8>> {
+		if !skip_ra && quoting_enclave_target_info.is_none() && quote_size.is_none() {
+			error!("Enclave Attestation] remote attestation not skipped, but Quoting Enclave (QE) data is not available");
+			return Err(EnclaveError::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))
+		}
+		let chain_signer = self.signing_key_repo.retrieve_key()?;
+		info!("[Enclave Attestation] Ed25519 signer pub key: {:?}", chain_signer.public().0);
+
+		let qe_quote = if !skip_ra {
+			let qe_quote = match self.retrieve_qe_dcap_quote(
+				&chain_signer.public().0,
+				quoting_enclave_target_info.unwrap(),
+				*quote_size.unwrap(),
+			) {
+				Ok(quote) => quote,
+				Err(e) => {
+					error!("[Enclave] Error in create_dcap_attestation_report: {:?}", e);
+					return Err(e.into())
+				},
+			};
+			qe_quote
+		} else {
+			Default::default()
+		};
+
+		// TODO: make ra
+		let _policy = MAAService.azure_attest(&qe_quote)?;
+		
+		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
+		Ok(qe_quote)
 	}
 }
 
