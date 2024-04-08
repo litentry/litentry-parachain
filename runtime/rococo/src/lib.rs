@@ -1000,6 +1000,11 @@ impl pallet_bitacross::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrAllCouncil;
 }
 
+// Temporary for bitacross team to test
+impl pallet_bitacross_mimic::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
@@ -1218,6 +1223,8 @@ construct_runtime! {
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 		Bitacross: pallet_bitacross = 70,
+		// Temporary for bitacross team to test
+		BitacrossMimic: pallet_bitacross_mimic = 71,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
@@ -1316,7 +1323,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
-			RuntimeCall::Bitacross(_)
+			RuntimeCall::Bitacross(_) |
+			RuntimeCall::BitacrossMimic(_)
 		)
 	}
 }
