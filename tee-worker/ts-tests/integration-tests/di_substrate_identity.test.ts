@@ -176,9 +176,9 @@ describe('Test Identity (direct invocation)', function () {
             [[bitcoinIdentity, true]],
         ];
 
-        let count = 0;
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
-            count++;
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -213,8 +213,6 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.lengthOf(idGraphHashResults, 4);
     });
-
-    /**
 
     step('check user sidechain storage after linking', async function () {
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
@@ -825,6 +823,4 @@ describe('Test Identity (direct invocation)', function () {
         const aliceNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
         assert.equal(aliceNonce.toNumber(), aliceCurrentNonce);
     });
-
-    */
 });
