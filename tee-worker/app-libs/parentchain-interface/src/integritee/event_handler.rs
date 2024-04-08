@@ -171,7 +171,7 @@ impl ParentchainEventHandler {
 		mrenclave: MrEnclave,
 	) -> Result<(), Error> {
 		if worker_type != WorkerType::Identity {
-			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
+			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
 			return Ok(())
 		}
 		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
