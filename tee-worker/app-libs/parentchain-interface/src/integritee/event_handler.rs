@@ -212,7 +212,7 @@ where
 				.iter()
 				.filter(|&event| event.to == *vault_account)
 				.try_for_each(|event| {
-					info!("found transfer_event to vault account: {}", event);
+					debug!("found transfer_event to vault account: {}", event);
 					//debug!("shielding from Integritee suppressed");
 					Self::shield_funds(executor, &event.from, event.amount)
 					//Err(ParentchainError::FunctionalityDisabled)
@@ -225,7 +225,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found link_identity_event: {}", event);
+					debug!("found link_identity_event: {}", event);
 					Self::link_identity(
 						executor,
 						&event.account,
@@ -242,7 +242,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found deactivate_identity_event: {}", event);
+					debug!("found deactivate_identity_event: {}", event);
 					Self::call_identity_action(
 						executor,
 						&event.account,
@@ -258,7 +258,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found activate_identity_event: {}", event);
+					debug!("found activate_identity_event: {}", event);
 					Self::call_identity_action(
 						executor,
 						&event.account,
@@ -274,7 +274,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found VCRequested event: {}", event);
+					debug!("found VCRequested event: {}", event);
 					Self::request_vc(executor, &event.account, event.assertion.clone())
 				})
 				.map_err(|_| ParentchainError::VCRequestedFailure)?;
@@ -285,7 +285,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found ScheduledEnclaveSet event: {:?}", event);
+					debug!("found ScheduledEnclaveSet event: {:?}", event);
 					Self::set_scheduled_enclave(
 						event.worker_type,
 						event.sidechain_block_number,
@@ -300,7 +300,7 @@ where
 			events
 				.iter()
 				.try_for_each(|event| {
-					info!("found ScheduledEnclaveRemoved event: {:?}", event);
+					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
 					Self::remove_scheduled_enclave(event.worker_type, event.sidechain_block_number)
 				})
 				.map_err(|_| ParentchainError::ScheduledEnclaveRemovedFailure)?;
