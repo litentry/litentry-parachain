@@ -158,7 +158,6 @@ pub(crate) trait WebSocketConnection: Send + Sync {
 		match self.socket() {
 			Some(s) => {
 				poll.deregister(s)?;
-
 				Ok(())
 			},
 			None => Err(WebSocketError::ConnectionClosed),
