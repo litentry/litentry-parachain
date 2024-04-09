@@ -385,50 +385,60 @@ where
 	let start_time = Instant::now();
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
-		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
-			context
-				.state_handler
-				.execute_on_current(&shard, |state, _| {
-					let storage_key = storage_map_key(
-						"IdentityManagement",
-						"IDGraphs",
-						&who,
-						&StorageHasher::Blake2_128Concat,
-					);
+		let (
+			mut id_graph,
+			is_already_linked,
+			parachain_block_number,
+			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
+		) = context
+			.state_handler
+			.execute_on_current(&shard, |state, _| {
+				let storage_key = storage_map_key(
+					"IdentityManagement",
+					"IDGraphs",
+					&who,
+					&StorageHasher::Blake2_128Concat,
+				);
 
-					// `None` means empty IDGraph, thus `unwrap_or_default`
-					let mut id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
-						.iter_prefix::<Identity, IdentityContext<Runtime>>(&storage_key)
-						.unwrap_or_default();
+				// `None` means empty IDGraph, thus `unwrap_or_default`
+				let mut id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
+					.iter_prefix::<Identity, IdentityContext<Runtime>>(&storage_key)
+					.unwrap_or_default();
 
-					// Sorts the IDGraph in place
-					sort_id_graph::<Runtime>(&mut id_graph);
+				// Sorts the IDGraph in place
+				sort_id_graph::<Runtime>(&mut id_graph);
 
-					let storage_key = storage_map_key(
-						"IdentityManagement",
-						"LinkedIdentities",
-						&who,
-						&StorageHasher::Blake2_128Concat,
-					);
+				let storage_key = storage_map_key(
+					"IdentityManagement",
+					"LinkedIdentities",
+					&who,
+					&StorageHasher::Blake2_128Concat,
+				);
 
-					// should never be `None`, but use `unwrap_or_default` to not panic
-					let parachain_block_number = state
-						.get(&storage_value_key("Parentchain", "Number"))
-						.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
-						.unwrap_or_default();
-					let sidechain_block_number = state
-						.get(&storage_value_key("System", "Number"))
-						.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
-						.unwrap_or_default();
+				// should never be `None`, but use `unwrap_or_default` to not panic
+				let parachain_block_number = state
+					.get(&storage_value_key("Parentchain", "Number"))
+					.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap_or_default();
+				let sidechain_block_number = state
+					.get(&storage_value_key("System", "Number"))
+					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap_or_default();
+				let parachain_runtime_version = (|| todo!())();
+				let sidechain_runtime_version = (|| todo!())();
 
-					(
-						id_graph,
-						state.contains_key(&storage_key),
-						parachain_block_number,
-						sidechain_block_number,
-					)
-				})
-				.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+				(
+					id_graph,
+					state.contains_key(&storage_key),
+					parachain_block_number,
+					sidechain_block_number,
+					parachain_runtime_version,
+					sidechain_runtime_version,
+				)
+			})
+			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
 
 		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
@@ -496,6 +506,8 @@ where
 			top_hash: H256::zero(),
 			parachain_block_number,
 			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,

@@ -90,6 +90,8 @@ use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
+	parachain_runtime_version: String,
+	sidechain_runtime_version: String,
 	base_dir: PathBuf,
 ) -> EnclaveResult<()> {
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
@@ -171,6 +173,8 @@ pub(crate) fn init_enclave(
 		GLOBAL_PRIMITIVES_CACHE.as_ref(),
 		mu_ra_url,
 		untrusted_worker_url,
+		parachain_runtime_version,
+		sidechain_runtime_version,
 	)
 	.map_err(Error::PrimitivesAccess)?;
 

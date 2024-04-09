@@ -196,6 +196,8 @@ where
 	fn execute(
 		self,
 		_shard: &ShardIdentifier,
+		_parachain_runtime_version: &String,
+		_sidechain_runtime_version: &String,
 		_top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,

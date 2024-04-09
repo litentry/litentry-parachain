@@ -157,12 +157,23 @@ where
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: &String,
+		sidechain_runtime_version: &String,
 		call: TCS,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
+		state.execute_with(|| {
+			call.execute(
+				shard,
+				parachain_runtime_version,
+				sidechain_runtime_version,
+				top_hash,
+				calls,
+				node_metadata_repo,
+			)
+		})
 	}
 }
 

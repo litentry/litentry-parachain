@@ -67,6 +67,8 @@ pub fn shield_funds_increments_signer_account_nonce() {
 	StfState::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		shield_funds_call,
 		Default::default(),
 		&mut Vec::new(),

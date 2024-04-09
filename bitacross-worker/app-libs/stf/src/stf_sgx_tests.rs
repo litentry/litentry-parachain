@@ -62,11 +62,16 @@ pub fn shield_funds_increments_signer_account_nonce() {
 		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
 	);
 
+	let parachain_runtime_version = "6666".to_string();
+	let sidechain_runtime_version = "0010".to_string();
+
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let shard = ShardIdentifier::default();
 	StfState::execute_call(
 		&mut state,
 		&shard,
+		parachain_runtime_version,
+		sidechain_runtime_version,
 		shield_funds_call,
 		Default::default(),
 		&mut Vec::new(),

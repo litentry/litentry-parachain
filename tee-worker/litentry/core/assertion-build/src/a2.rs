@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
 };
@@ -67,7 +68,12 @@ pub fn build(
 		}
 	}
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version.clone(),
+		sidechain: req.sidechain_runtime_version.clone(),
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A2_SUBJECT_DESCRIPTION, VC_A2_SUBJECT_TYPE);
 
@@ -116,6 +122,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: String::default(),
+			sidechain_runtime_version: String::default(),
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

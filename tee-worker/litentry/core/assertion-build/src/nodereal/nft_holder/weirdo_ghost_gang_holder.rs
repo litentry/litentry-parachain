@@ -22,7 +22,10 @@ extern crate sgx_tstd as std;
 
 use core::result;
 
-use lc_credentials::nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate;
+use lc_credentials::{
+	nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate,
+	IssuerRuntimeVersion,
+};
 use lc_data_providers::nodereal_jsonrpc::{
 	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient,
 };
@@ -98,7 +101,12 @@ pub fn build(
 		))
 	}
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version.clone(),
+		sidechain: req.sidechain_runtime_version.clone(),
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_weirdo_ghost_gang_holder_assertion(has_nft);
 			Ok(credential_unsigned)
@@ -142,6 +150,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: String::default(),
+			sidechain_runtime_version: String::default(),
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

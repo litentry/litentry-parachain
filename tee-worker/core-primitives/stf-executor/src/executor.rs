@@ -96,6 +96,8 @@ where
 		trusted_operation: &TrustedOperation<TCS, G>,
 		_header: &PH,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: &String,
+		sidechain_runtime_version: &String,
 		post_processing: StatePostProcessing,
 	) -> Result<ExecutedOperation<TCS, G>>
 	where
@@ -127,6 +129,8 @@ where
 		return match Stf::execute_call(
 			state,
 			shard,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			trusted_call.clone(),
 			trusted_operation.hash(),
 			&mut extrinsic_call_backs,
@@ -355,6 +359,8 @@ where
 				&trusted_call_signed,
 				header,
 				shard,
+				parachain_runtime_version,
+				sidechain_runtime_version,
 				StatePostProcessing::None,
 			) {
 				Ok(executed_or_failed_call) => {

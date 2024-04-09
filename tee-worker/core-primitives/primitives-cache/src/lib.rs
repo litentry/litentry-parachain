@@ -65,11 +65,23 @@ pub mod primitives_cache;
 pub struct Primitives {
 	mu_ra_url: String,
 	untrusted_worker_url: String,
+	parachain_runtime_version: String,
+	sidechain_runtime_version: String,
 }
 
 impl Primitives {
-	pub fn new(mu_ra_url: String, untrusted_worker_url: String) -> Primitives {
-		Primitives { mu_ra_url, untrusted_worker_url }
+	pub fn new(
+		mu_ra_url: String,
+		untrusted_worker_url: String,
+		parachain_runtime_version: String,
+		sidechain_runtime_version: String,
+	) -> Primitives {
+		Primitives {
+			mu_ra_url,
+			untrusted_worker_url,
+			parachain_runtime_version,
+			sidechain_runtime_version,
+		}
 	}
 
 	pub fn mu_ra_url(&self) -> &str {
@@ -78,6 +90,14 @@ impl Primitives {
 
 	pub fn untrusted_worker_url(&self) -> &str {
 		&self.untrusted_worker_url
+	}
+
+	pub fn parachain_runtime_version(&self) -> &str {
+		&self.parachain_runtime_version
+	}
+
+	pub fn sidechain_runtime_version(&self) -> &str {
+		&self.sidechain_runtime_version
 	}
 }
 
@@ -97,6 +117,10 @@ pub trait GetPrimitives {
 	fn get_mu_ra_url(&self) -> Result<String>;
 
 	fn get_untrusted_worker_url(&self) -> Result<String>;
+
+	fn get_parachain_runtime_version(&self) -> Result<String>;
+
+	fn get_sidechain_runtime_version(&self) -> Result<String>;
 }
 
 // Helper function to set primitives of a given cache.
@@ -104,8 +128,15 @@ pub fn set_primitives<E: MutatePrimitives>(
 	cache: &E,
 	mu_ra_url: String,
 	untrusted_worker_url: String,
+	parachain_runtime_version: String,
+	sidechain_runtime_version: String,
 ) -> Result<()> {
-	let primitives = Primitives::new(mu_ra_url, untrusted_worker_url);
+	let primitives = Primitives::new(
+		mu_ra_url,
+		untrusted_worker_url,
+		parachain_runtime_version,
+		sidechain_runtime_version,
+	);
 	let mut rw_lock = cache.load_for_mutation()?;
 
 	*rw_lock = primitives;

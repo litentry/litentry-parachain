@@ -650,6 +650,8 @@ pub fn test_retrieve_events() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,
@@ -683,6 +685,8 @@ pub fn test_retrieve_event_count() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,
@@ -714,6 +718,8 @@ pub fn test_reset_events() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,

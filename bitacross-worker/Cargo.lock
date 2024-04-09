@@ -3501,6 +3501,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
+ "sgx_tstd",
 ]
 
 [[package]]

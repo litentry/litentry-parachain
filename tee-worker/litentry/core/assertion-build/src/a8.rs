@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	achainable::{AchainableAccountTotalTransactions, AchainableClient},
 	DataProviderConfig,
@@ -66,7 +67,13 @@ pub fn build(
 	};
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version.clone(),
+		sidechain: req.sidechain_runtime_version.clone(),
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(networks, min, max);

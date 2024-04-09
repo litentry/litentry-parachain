@@ -380,6 +380,8 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: &String,
+		sidechain_runtime_version: &String,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
@@ -872,6 +874,8 @@ where
 					req_ext_hash,
 					maybe_key,
 					shard,
+					parachain_runtime_version,
+					sidechain_runtime_version,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);

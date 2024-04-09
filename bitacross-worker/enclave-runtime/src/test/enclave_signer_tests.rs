@@ -154,6 +154,8 @@ pub fn nonce_is_computed_correctly() {
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call_1_signed,
 		Default::default(),
 		&mut Vec::new(),
@@ -164,6 +166,8 @@ pub fn nonce_is_computed_correctly() {
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call_2_signed,
 		Default::default(),
 		&mut Vec::new(),

@@ -18,7 +18,8 @@
 //! Provides a state interface.
 //! This allow to easily mock the stf and exchange it with another storage.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
 
 extern crate alloc;
 
@@ -32,6 +33,7 @@ use itp_types::{
 	parentchain::{AccountId, BlockHash, BlockNumber, ParentchainCall, ParentchainId},
 	ShardIdentifier, H256,
 };
+use std::string::String;
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -85,6 +87,8 @@ where
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: &String,
+		sidechain_runtime_version: &String,
 		call: TCS,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
@@ -114,6 +118,8 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: &String,
+		sidechain_runtime_version: &String,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
