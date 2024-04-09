@@ -1,8 +1,7 @@
 services:
   relaychain-alice:
     image: docker_relaychain-alice:latest
-    networks:
-      - litentry-test-network
+    network_mode: host
     ports:
       - 9946:9944
       - 9936:9933
@@ -32,8 +31,7 @@ services:
         hard: 65536
   relaychain-bob:
     image: docker_relaychain-bob:latest
-    networks:
-      - litentry-test-network
+    network_mode: host
     ports:
       - 9947:9944
       - 9937:9933
@@ -60,8 +58,7 @@ services:
   litentry-node:
     image: docker_litentry-node:latest
     container_name: litentry-node
-    networks:
-      - litentry-test-network
+    network_mode: host
     ports:
       # TODO: maybe not use 9912 as port
       - 9944:9912
@@ -74,7 +71,7 @@ services:
       dockerfile: parachain-2106.Dockerfile
     depends_on: ['relaychain-alice', 'relaychain-bob']
     healthcheck:
-      test: ["CMD", "nc", "-z", "litentry-node", "9912"]
+      test: ["CMD", "nc", "-z", "localhost", "9912"]
       interval: 30s
       timeout: 10s
       retries: 20
@@ -102,6 +99,7 @@ services:
   litentry-worker-1:
     image: litentry/litentry-worker:latest
     container_name: litentry-worker-1
+    network_mode: host
     build:
       context: ${PWD}/..
       dockerfile: build.Dockerfile
@@ -142,22 +140,17 @@ services:
       - CONTEST_PARTICIPANT_DISCORD_ROLE_ID=CONTEST_PARTICIPANT_DISCORD_ROLE_ID
       - LITENTRY_ARCHIVE_URL=http://localhost:19527
       - VIP3_URL=http://localhost:19527
-    networks:
-      - litentry-test-network
     healthcheck:
-      test: curl -s -f http://litentry-worker-1:4645/is_initialized || exit 1
+      test: curl -s -f http://localhost:4645/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20
     entrypoint:
-      "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-1 -T ws://litentry-worker-1
-      -u ws://litentry-node -U ws://litentry-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server
+      "/usr/local/bin/litentry-worker --clean-reset --ws-external -M localhost -T ws://localhost
+      -U ws://litentry-worker-1 -P 2011 -w 2101 -h 4645 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
 volumes:
   ? relaychain-alice
   ? relaychain-bob
   ? parachain-2106-0
-networks:
-  litentry-test-network:
-    driver: bridge
