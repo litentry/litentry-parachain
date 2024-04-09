@@ -2,10 +2,6 @@ services:
   relaychain-alice:
     image: docker_relaychain-alice:latest
     network_mode: host
-    ports:
-      - 9946:9944
-      - 9936:9933
-      - 30336:30333
     volumes:
       - relaychain-alice:/data
     build:
@@ -22,6 +18,9 @@ services:
       - --alice
       - --rpc-methods=unsafe
       - --execution=wasm
+      - --rpc-port=9946
+      - --ws-port=9936
+      - --port=30336
     environment:
       RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
     ulimits:
@@ -32,10 +31,6 @@ services:
   relaychain-bob:
     image: docker_relaychain-bob:latest
     network_mode: host
-    ports:
-      - 9947:9944
-      - 9937:9933
-      - 30337:30333
     volumes:
       - relaychain-bob:/data
     build:
@@ -52,6 +47,9 @@ services:
       - --bob
       - --rpc-methods=unsafe
       - --execution=wasm
+      - --rpc-port=9947
+      - --ws-port=9937
+      - --port=30337
     environment:
       RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
     ulimits: *a1
@@ -59,11 +57,6 @@ services:
     image: docker_litentry-node:latest
     container_name: litentry-node
     network_mode: host
-    ports:
-      # TODO: maybe not use 9912 as port
-      - 9944:9912
-      - 9933:9933
-      - 30333:30333
     volumes:
       - parachain-2106-0:/data
     build:
@@ -71,7 +64,7 @@ services:
       dockerfile: parachain-2106.Dockerfile
     depends_on: ['relaychain-alice', 'relaychain-bob']
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9912"]
+      test: ["CMD", "nc", "-z", "localhost", "9944"]
       interval: 30s
       timeout: 10s
       retries: 20
@@ -82,7 +75,6 @@ services:
       - --rpc-external
       - --rpc-cors=all
       - --name=parachain-2106-0
-      - --ws-port=9912
       - --collator
       - --rpc-methods=unsafe
       - --force-authoring
@@ -141,13 +133,13 @@ services:
       - LITENTRY_ARCHIVE_URL=http://localhost:19527
       - VIP3_URL=http://localhost:19527
     healthcheck:
-      test: curl -s -f http://localhost:4645/is_initialized || exit 1
+      test: curl -s -f http://litentry-worker-1:4645/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20
     entrypoint:
-      "/usr/local/bin/litentry-worker --clean-reset --ws-external -M localhost -T ws://localhost
-      -U ws://litentry-worker-1 -P 2011 -w 2101 -h 4645 --enable-mock-server
+      "/usr/local/bin/litentry-worker --clean-reset --ws-external -T ws://localhost
+       -P 2011 -w 2101 -h 4645 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
 volumes:
