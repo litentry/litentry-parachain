@@ -64,7 +64,7 @@ services:
       dockerfile: parachain-2106.Dockerfile
     depends_on: ['relaychain-alice', 'relaychain-bob']
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9944"]
+      test: ["CMD", "nc", "-z", "localhost", "9912"]
       interval: 30s
       timeout: 10s
       retries: 20
@@ -76,6 +76,7 @@ services:
       - --rpc-cors=all
       - --name=parachain-2106-0
       - --collator
+      - --ws-port=9912
       - --rpc-methods=unsafe
       - --force-authoring
       - --execution=wasm
@@ -139,7 +140,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -T ws://localhost
-       -P 2011 -w 2101 -h 4645 --enable-mock-server
+       -p 9912 -P 2011 -w 2101 -h 4645 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
   litentry-worker-2:
@@ -193,7 +194,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -T ws://localhost
-       -P 2012 -w 2102 -h 4646 --enable-mock-server
+       -p 9912 -P 2012 -w 2102 -h 4646 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
   litentry-worker-3:
@@ -247,7 +248,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -T ws://localhost
-       -P 2013 -w 2103 -h 4647 --enable-mock-server
+       -p 9912 -P 2013 -w 2103 -h 4647 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
 volumes:
