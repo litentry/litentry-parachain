@@ -171,6 +171,8 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					.map_err(|e| format!("Key context creation error: {:?}", e))?,
 		};
 
+		info!("Ceremony aggregated public key: {:?}", key_context.aggregated_pubkey::<PublicKey>().to_sec1_bytes().to_vec());
+
 		let nonce_seed = random_seed();
 		let first_round =
 			musig2::FirstRound::new(key_context, nonce_seed, my_index, SecNonceSpices::new())
