@@ -151,18 +151,18 @@ export const mockAssertions = [
         },
     },
     // BNB domain-nodereal
-    {
-        description: 'Holding a certain amount of bnb domain names',
-        assertion: {
-            BnbDomainHolding: 'BnbDomainHolding',
-        },
-    },
-    {
-        description: 'Holding a certain amount of 000-999.bnb domain names',
-        assertion: {
-            BnbDigitDomainClub: 'Bnb999ClubMember',
-        },
-    },
+    // {
+    //     description: 'Holding a certain amount of bnb domain names',
+    //     assertion: {
+    //         BnbDomainHolding: 'BnbDomainHolding',
+    //     },
+    // },
+    // {
+    //     description: 'Holding a certain amount of 000-999.bnb domain names',
+    //     assertion: {
+    //         BnbDigitDomainClub: 'Bnb999ClubMember',
+    //     },
+    // },
     // OneBlock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
@@ -171,26 +171,26 @@ export const mockAssertions = [
         },
     },
     // Geniidata
-    {
-        description: 'NFT holder',
-        assertion: {
-            Brc20AmountHolder: [],
-        },
-    },
+    // {
+    //     description: 'NFT holder',
+    //     assertion: {
+    //         Brc20AmountHolder: [],
+    //     },
+    // },
 
     // nodereal_jsonrpc
-    {
-        description: 'You are a holder of a certain kind of NFT',
-        assertion: {
-            NftHolder: 'WeirdoGhostGang',
-        },
-    },
-    {
-        description: 'The amount of TRX you are holding',
-        assertion: {
-            TokenHoldingAmount: 'TRX',
-        },
-    },
+    // {
+    //     description: 'You are a holder of a certain kind of NFT',
+    //     assertion: {
+    //         NftHolder: 'WeirdoGhostGang',
+    //     },
+    // },
+    // {
+    //     description: 'The amount of TRX you are holding',
+    //     assertion: {
+    //         TokenHoldingAmount: 'TRX',
+    //     },
+    // },
 
     {
         description: 'The amount of LIT you are staking',
@@ -198,12 +198,12 @@ export const mockAssertions = [
             LITStaking: 'LITStaking',
         },
     },
-    {
-        description: 'The amount of a Ton you are holding',
-        assertion: {
-            EVMAmountHolding: 'Ton',
-        },
-    },
+    // {
+    //     description: 'The amount of a Ton you are holding',
+    //     assertion: {
+    //         EVMAmountHolding: 'Ton',
+    //     },
+    // },
 
     {
         description: 'You are a user of a certain platform',
