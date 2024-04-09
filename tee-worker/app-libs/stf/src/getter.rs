@@ -169,35 +169,24 @@ impl TrustedGetterSigned {
 
 	pub fn verify_signature(&self) -> bool {
 		// The signature should be valid in either case:
-		// 1. payload
-		// 2. blake2_256(payload)
-		// 3. Signature Prefix + payload
-		// 4. Signature Prefix + blake2_256payload
-		//
-		// @TODO P-639: Remove 1 and 3.
+		// 1. blake2_256(payload)
+		// 2. Signature Prefix + blake2_256payload
 
 		let payload = self.getter.encode();
 		let hashed = blake2_256(&payload);
-
-		let prettified_msg_raw = self.getter.signature_message_prefix() + &hex_encode(&payload);
-		let prettified_msg_raw = prettified_msg_raw.as_bytes();
 
 		let prettified_msg_hash = self.getter.signature_message_prefix() + &hex_encode(&hashed);
 		let prettified_msg_hash = prettified_msg_hash.as_bytes();
 
 		// Most common signatures variants by clients are verified first (4 and 2).
 		let is_valid = self.signature.verify(prettified_msg_hash, self.getter.sender_identity())
-			|| self.signature.verify(&hashed, self.getter.sender_identity())
-			|| self.signature.verify(&payload, self.getter.sender_identity())
-			|| self.signature.verify(prettified_msg_raw, self.getter.sender_identity());
+			|| self.signature.verify(&hashed, self.getter.sender_identity());
 
 		// in non-prod, we accept signature from Alice too
 		if_development_or!(
 			{
 				is_valid
-					|| self.signature.verify(&payload, &ALICE_ACCOUNTID32.into())
 					|| self.signature.verify(&hashed, &ALICE_ACCOUNTID32.into())
-					|| self.signature.verify(prettified_msg_raw, &ALICE_ACCOUNTID32.into())
 					|| self.signature.verify(prettified_msg_hash, &ALICE_ACCOUNTID32.into())
 			},
 			{ is_valid }
