@@ -11,6 +11,8 @@ import * as ecc from 'tiny-secp256k1';
 import { ethers, Wallet } from 'ethers';
 import { EthersSigner, PolkadotSigner, BitcoinSigner } from './utils/crypto';
 import { Wallets } from './common-types';
+import type { ErrorDetail, StfError } from 'parachain-api';
+
 export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
     return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
 }
@@ -73,3 +75,33 @@ export const createWeb3Wallets = (): Wallets => {
 
     return wallets;
 };
+
+export function stfErrorToString(stfError: StfError): string {
+    if (stfError.isRequestVCFailed) {
+        const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (
+        stfError.isActivateIdentityFailed ||
+        stfError.isDeactivateIdentityFailed ||
+        stfError.isSetIdentityNetworksFailed ||
+        stfError.isLinkIdentityFailed ||
+        stfError.isMissingPrivileges ||
+        stfError.isRemoveIdentityFailed ||
+        stfError.isDispatch
+    ) {
+        const errorDetail = stfError.value as ErrorDetail;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (stfError.isInvalidNonce) {
+        const [nonce1, nonce2] = stfError.asInvalidNonce;
+
+        return `${stfError.type}: [${nonce1?.toHuman()}, ${nonce2?.toHuman()}]`;
+    }
+
+    return stfError.type;
+}
