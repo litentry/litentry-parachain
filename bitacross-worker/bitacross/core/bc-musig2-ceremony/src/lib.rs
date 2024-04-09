@@ -151,7 +151,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			return Err(format!("Not enough signers, minimum: {:?}, actual {:?}", 3, signers.len()))
 		}
 
-		signers.sort_by_key(|k| k.0);
+		signers.sort_by_key(|k| k.1);
 		// we are always the first key in the vector
 		let my_index = signers.iter().position(|r| r.0 == me).ok_or("Could not determine index")?;
 		let all_keys = signers.iter().map(|p| p.1).collect::<Vec<PublicKey>>();
