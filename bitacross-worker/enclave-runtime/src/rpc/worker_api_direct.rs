@@ -49,7 +49,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
 use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
