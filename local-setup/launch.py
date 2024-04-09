@@ -63,7 +63,7 @@ def setup_worker(work_dir: str, source_dir: str, worker_bin: str, std_err: Union
 
 def run_worker(id, worker_dir, worker_bin, flags, subcommand_flags, log_config_path):
     log = open(f"{log_dir}/worker-{id}.log", "w+")
-    
+
     w = setup_worker(f"tmp/w-{id}", worker_dir + "/bin", worker_bin, log, log_config_path)
 
     print(f"Starting worker {id} in background")
@@ -205,7 +205,7 @@ def get_flags(index, worker):
         "-r", ports['mura_port'],
         "-h", ports['untrusted_http_port'],
         "-p", ports['collator_ws_port'],
-        "--enable-mock-server" if worker == "identity" else "",
+        # "--enable-mock-server" if worker == "identity" else "",
         "--parentchain-start-block", "0",
         "--enable-metrics" if index == 0 else None
     ]))
@@ -262,7 +262,7 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         print()
         # Wait a bit for worker to start up.
         sleep(5)
-     
+
         idx = 0
         if "-h" in flags:
             idx = flags.index("-h") + 1
