@@ -50,11 +50,9 @@ use crate::tracing;
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
 
-#[reuse(evm, no_evm)]
-pub mod __ {
+pub mod evm {
 	use super::*;
 
-	#[evm]
 	#[derive(Clone)]
 	pub struct EvmTracingConfig {
 		pub tracing_requesters: tracing::RpcRequesters,
@@ -64,7 +62,6 @@ pub mod __ {
 
 	// TODO This is copied from frontier. It should be imported instead after
 	// https://github.com/paritytech/frontier/issues/333 is solved
-	#[evm]
 	pub fn open_frontier_backend<C>(
 		client: Arc<C>,
 		config: &sc_service::Configuration,
@@ -90,18 +87,6 @@ pub mod __ {
 		)?))
 	}
 
-	/// Full client dependencies
-	#[no_evm]
-	pub struct FullDeps<C, P> {
-		/// The client instance to use.
-		pub client: Arc<C>,
-		/// Transaction pool instance.
-		pub pool: Arc<P>,
-		/// Whether to deny unsafe calls
-		pub deny_unsafe: DenyUnsafe,
-	}
-
-	#[evm]
 	/// Full client dependencies
 	pub struct FullDeps<C, P, A: ChainApi> {
 		/// The client instance to use.
@@ -135,28 +120,6 @@ pub mod __ {
 	}
 
 	/// Instantiate all RPC extensions.
-	#[no_evm]
-	pub fn create_full<C, P>(
-		deps: FullDeps<C, P>,
-	) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>
-	where
-		C: ProvideRuntimeApi<Block>
-			+ HeaderBackend<Block>
-			+ AuxStore
-			+ HeaderMetadata<Block, Error = BlockChainError>
-			+ Send
-			+ Sync
-			+ 'static,
-		C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-		C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-		C::Api: BlockBuilder<Block>,
-		P: TransactionPool + Sync + Send + 'static,
-	{
-		__
-	}
-
-	/// Instantiate all RPC extensions.
-	#[evm]
 	pub fn create_full<C, P, BE, A>(
 		deps: FullDeps<C, P, A>,
 		subscription_task_executor: SubscriptionTaskExecutor,
@@ -196,9 +159,6 @@ pub mod __ {
 		use substrate_frame_rpc_system::{System, SystemApiServer};
 
 		let mut module = RpcExtension::new(());
-		#[no_evm]
-		let FullDeps { client, pool, deny_unsafe } = deps;
-		#[evm]
 		let FullDeps {
 			client,
 			pool,
@@ -216,12 +176,10 @@ pub mod __ {
 			enable_evm_rpc,
 		} = deps;
 
-		#[evm]
 		let cloned = (client.clone(), pool.clone());
 		module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 		module.merge(TransactionPayment::new(client).into_rpc())?;
 
-		#[evm]
 		{
 			let (client, pool) = cloned;
 			if !enable_evm_rpc {

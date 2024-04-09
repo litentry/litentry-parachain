@@ -72,25 +72,13 @@ type ParachainBackend = TFullBackend<Block>;
 
 type MaybeSelectChain = Option<LongestChain<ParachainBackend, Block>>;
 
-#[reuse(evm, no_evm)]
-pub mod __ {
+pub mod evm {
 	use super::*;
 
-	#[no_evm]
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type HostFunctions = sp_io::SubstrateHostFunctions;
-
-	#[no_evm]
-	#[cfg(feature = "runtime-benchmarks")]
-	type HostFunctions =
-		(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions);
-
-	#[evm]
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	type HostFunctions =
 		(sp_io::SubstrateHostFunctions, moonbeam_primitives_ext::moonbeam_ext::HostFunctions);
 
-	#[evm]
 	#[cfg(feature = "runtime-benchmarks")]
 	type HostFunctions = (
 		sp_io::SubstrateHostFunctions,
@@ -99,10 +87,8 @@ pub mod __ {
 	);
 
 	// Native executor instance.
-	#[evm]
 	pub struct LitentryParachainRuntimeExecutor;
 
-	#[evm]
 	impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 		type ExtendHostFunctions = HostFunctions;
 
@@ -115,11 +101,9 @@ pub mod __ {
 		}
 	}
 
-	#[evm]
 	// Native executor instance.
 	pub struct LitmusParachainRuntimeExecutor;
 
-	#[evm]
 	impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
 		type ExtendHostFunctions = HostFunctions;
 
@@ -133,10 +117,8 @@ pub mod __ {
 	}
 
 	// Native executor instance.
-	#[evm]
 	pub struct RococoParachainRuntimeExecutor;
 
-	#[evm]
 	impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
 		type ExtendHostFunctions = HostFunctions;
 
@@ -149,68 +131,12 @@ pub mod __ {
 		}
 	}
 
-	#[no_evm]
-	type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>;
-
-	#[evm]
 	type ParachainClient<RuntimeApi, Executor> =
 		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 
-	#[no_evm]
-	type ParachainBlockImport<RuntimeApi> =
-		TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
-
-	#[evm]
 	type ParachainBlockImport<RuntimeApi, Executor> =
 		TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi, Executor>>, ParachainBackend>;
 
-	#[no_evm]
-	/// Starts a `ServiceBuilder` for a full service.
-	///
-	/// Use this macro if you don't actually need the full service, but just the builder in order to
-	/// be able to perform chain operations.
-	pub fn new_partial<RuntimeApi, BIQ>(
-		config: &Configuration,
-		is_standalone: bool,
-		build_import_queue: BIQ,
-	) -> Result<
-		PartialComponents<
-			ParachainClient<RuntimeApi>,
-			ParachainBackend,
-			MaybeSelectChain,
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-			sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>,
-			(ParachainBlockImport<RuntimeApi>, Option<Telemetry>, Option<TelemetryWorkerHandle>),
-		>,
-		sc_service::Error,
-	>
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-			+ sp_api::Metadata<Block>
-			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
-			+ sp_block_builder::BlockBuilder<Block>,
-		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-		BIQ: FnOnce(
-			Arc<ParachainClient<RuntimeApi>>,
-			ParachainBlockImport<RuntimeApi>,
-			&Configuration,
-			Option<TelemetryHandle>,
-			&TaskManager,
-			bool,
-		) -> Result<
-			sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-			sc_service::Error,
-		>,
-	{
-		__
-	}
-
-	#[evm]
 	/// Starts a `ServiceBuilder` for a full service.
 	///
 	/// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -290,8 +216,8 @@ pub mod __ {
 			.with_runtime_cache_size(config.runtime_cache_size)
 			.build();
 
-		#[evm]
-		let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new_with_wasm_executor(executor);
+		let executor =
+			sc_executor::NativeElseWasmExecutor::<Executor>::new_with_wasm_executor(executor);
 
 		let (client, backend, keystore_container, task_manager) =
 			sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -319,7 +245,6 @@ pub mod __ {
 		let select_chain =
 			if is_standalone { Some(LongestChain::new(backend.clone())) } else { None };
 
-		#[evm]
 		let frontier_backend = rpc_evm::open_frontier_backend(client.clone(), config)?;
 
 		let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
@@ -341,9 +266,6 @@ pub mod __ {
 			task_manager,
 			transaction_pool,
 			select_chain,
-			#[no_evm]
-			other: (block_import, telemetry, telemetry_worker_handle),
-			#[evm]
 			other: (block_import, telemetry, telemetry_worker_handle, frontier_backend),
 		};
 
@@ -351,7 +273,6 @@ pub mod __ {
 	}
 
 	/// To add additional config to start_xyz_node functions
-	#[evm]
 	#[derive(Clone)]
 	pub struct AdditionalConfig {
 		/// EVM tracing configuration
@@ -370,68 +291,6 @@ pub mod __ {
 	/// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 	///
 	/// This is the actual implementation that is abstract over the executor and the runtime api.
-	#[no_evm]
-	#[sc_tracing::logging::prefix_logs_with("Parachain")]
-	async fn start_node_impl<RuntimeApi, RB, BIQ, BIC>(
-		parachain_config: Configuration,
-		polkadot_config: Configuration,
-		collator_options: CollatorOptions,
-		id: ParaId,
-		_rpc_ext_builder: RB,
-		build_import_queue: BIQ,
-		build_consensus: BIC,
-		hwbench: Option<sc_sysinfo::HwBench>,
-	) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient<RuntimeApi>>)>
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-			+ sp_api::Metadata<Block>
-			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
-			+ sp_block_builder::BlockBuilder<Block>
-			+ cumulus_primitives_core::CollectCollationInfo<Block>
-			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-		RB: Fn(
-				Arc<ParachainClient<RuntimeApi>>,
-			) -> Result<jsonrpsee::RpcModule<()>, sc_service::Error>
-			+ Send
-			+ 'static,
-		BIQ: FnOnce(
-				Arc<ParachainClient<RuntimeApi>>,
-				ParachainBlockImport<RuntimeApi>,
-				&Configuration,
-				Option<TelemetryHandle>,
-				&TaskManager,
-				bool,
-			) -> Result<
-				sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-				sc_service::Error,
-			> + 'static,
-		BIC: FnOnce(
-			Arc<ParachainClient<RuntimeApi>>,
-			ParachainBlockImport<RuntimeApi>,
-			Option<&Registry>,
-			Option<TelemetryHandle>,
-			&TaskManager,
-			Arc<dyn RelayChainInterface>,
-			Arc<sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>>,
-			Arc<SyncingService<Block>>,
-			KeystorePtr,
-			bool,
-		) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
-	{
-		__
-	}
-
-	/// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
-	///
-	/// This is the actual implementation that is abstract over the executor and the runtime api.
-	#[evm]
 	#[sc_tracing::logging::prefix_logs_with("Parachain")]
 	async fn start_node_impl<RuntimeApi, Executor, RB, BIQ, BIC>(
 		parachain_config: Configuration,
@@ -497,15 +356,8 @@ pub mod __ {
 	{
 		let parachain_config = prepare_node_config(parachain_config);
 
-		#[no_evm]
-		let params = new_partial::<RuntimeApi, BIQ>(&parachain_config, false, build_import_queue)?;
-		#[no_evm]
-		let (block_import, mut telemetry, telemetry_worker_handle) = params.other;
-
-		#[evm]
 		let params =
 			new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, false, build_import_queue)?;
-		#[evm]
 		let (block_import, mut telemetry, telemetry_worker_handle, frontier_backend) = params.other;
 
 		let client = params.client.clone();
@@ -553,14 +405,11 @@ pub mod __ {
 		// emits a notification to the subscriber on receiving a message through this channel. This
 		// way we avoid race conditions when using native substrate block import notification
 		// stream.
-		#[evm]
 		let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
 			fc_mapping_sync::EthereumBlockNotification<Block>,
 		> = Default::default();
-		#[evm]
 		let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-		#[evm]
 		let (
 			filter_pool,
 			fee_history_limit,
@@ -584,30 +433,15 @@ pub mod __ {
 			let client = client.clone();
 			let transaction_pool = transaction_pool.clone();
 
-			#[evm]
 			let network = network.clone();
-			#[evm]
 			let rpc_config = rpc_evm::EvmTracingConfig {
 				tracing_requesters,
 				trace_filter_max_count: additional_config.evm_tracing_config.ethapi_trace_max_count,
 				enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
 			};
-			#[evm]
 			let sync = sync_service.clone();
-			#[evm]
 			let pubsub_notification_sinks = pubsub_notification_sinks.clone();
 
-			#[no_evm]
-			let result = move |deny_unsafe, _| {
-				let deps = rpc::no_evm::FullDeps {
-					client: client.clone(),
-					pool: transaction_pool.clone(),
-					deny_unsafe,
-				};
-
-				crate::rpc::no_evm::create_full(deps).map_err(Into::into)
-			};
-			#[evm]
 			let result = move |deny_unsafe, subscription| {
 				let deps = rpc_evm::FullDeps {
 					client: client.clone(),
@@ -731,115 +565,6 @@ pub mod __ {
 	}
 
 	/// Start a litmus/litentry/rococo node.
-	#[no_evm]
-	pub async fn start_node<RuntimeApi>(
-		parachain_config: Configuration,
-		polkadot_config: Configuration,
-		collator_options: CollatorOptions,
-		id: ParaId,
-		hwbench: Option<sc_sysinfo::HwBench>,
-	) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient<RuntimeApi>>)>
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-			+ sp_api::Metadata<Block>
-			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
-			+ sp_block_builder::BlockBuilder<Block>
-			+ cumulus_primitives_core::CollectCollationInfo<Block>
-			+ sp_consensus_aura::AuraApi<Block, AuraId>
-			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-	{
-		start_node_impl::<RuntimeApi, _, _, _>(
-			parachain_config,
-			polkadot_config,
-			collator_options,
-			id,
-			|_| Ok(RpcModule::new(())),
-			build_import_queue::<RuntimeApi>,
-			|client,
-			 block_import,
-			 prometheus_registry,
-			 telemetry,
-			 task_manager,
-			 relay_chain_interface,
-			 transaction_pool,
-			 sync_oracle,
-			 keystore,
-			 force_authoring| {
-				let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
-				let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
-					task_manager.spawn_handle(),
-					client.clone(),
-					transaction_pool,
-					prometheus_registry,
-					telemetry.clone(),
-				);
-				Ok(AuraConsensus::build::<
-					sp_consensus_aura::sr25519::AuthorityPair,
-					_,
-					_,
-					_,
-					_,
-					_,
-					_,
-				>(BuildAuraConsensusParams {
-					proposer_factory,
-					create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-						let relay_chain_interface = relay_chain_interface.clone();
-
-						async move {
-							let parachain_inherent =
-							cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
-								relay_parent,
-								&relay_chain_interface,
-								&validation_data,
-								id,
-							).await;
-							let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-
-							let slot =
-							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-								*timestamp,
-								slot_duration,
-							);
-
-							let parachain_inherent = parachain_inherent.ok_or_else(|| {
-								Box::<dyn std::error::Error + Send + Sync>::from(
-									"Failed to create parachain inherent",
-								)
-							})?;
-
-							Ok((slot, timestamp, parachain_inherent))
-						}
-					},
-					block_import,
-					para_client: client,
-					backoff_authoring_blocks: Option::<()>::None,
-					sync_oracle,
-					keystore,
-					force_authoring,
-					slot_duration,
-					// We got around 500ms for proposing
-					block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
-					// And a maximum of 750ms if slots are skipped
-					max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
-					telemetry,
-				}))
-			},
-			hwbench,
-		)
-		.await
-	}
-
-	/// Start a litmus/litentry/rococo node.
-	#[evm]
 	pub async fn start_node<RuntimeApi, Executor>(
 		parachain_config: Configuration,
 		polkadot_config: Configuration,
@@ -956,40 +681,7 @@ pub mod __ {
 		.await
 	}
 
-	/// Build the import queue for the litmus/litentry/rococo runtime without evm.
-	#[no_evm]
-	pub fn build_import_queue<RuntimeApi>(
-		client: Arc<ParachainClient<RuntimeApi>>,
-		block_import: ParachainBlockImport<RuntimeApi>,
-		config: &Configuration,
-		telemetry: Option<TelemetryHandle>,
-		task_manager: &TaskManager,
-		is_standalone: bool,
-	) -> Result<
-		sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-		sc_service::Error,
-	>
-	where
-		RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
-		RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-			+ sp_api::Metadata<Block>
-			+ sp_session::SessionKeys<Block>
-			+ sp_api::ApiExt<
-				Block,
-				StateBackend = sc_client_api::StateBackendFor<ParachainBackend, Block>,
-			> + sp_offchain::OffchainWorkerApi<Block>
-			+ sp_block_builder::BlockBuilder<Block>
-			+ cumulus_primitives_core::CollectCollationInfo<Block>
-			+ sp_consensus_aura::AuraApi<Block, AuraId>
-			+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-			+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-		sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-	{
-		__
-	}
-
 	/// Build the import queue for the litmus/litentry/rococo runtime.
-	#[evm]
 	pub fn build_import_queue<RuntimeApi, Executor>(
 		client: Arc<ParachainClient<RuntimeApi, Executor>>,
 		block_import: ParachainBlockImport<RuntimeApi, Executor>,
@@ -1112,7 +804,6 @@ pub mod __ {
 	}
 
 	// start a standalone node which doesn't need to connect to relaychain
-	#[evm]
 	pub async fn start_standalone_node<RuntimeApi, Executor>(
 		config: Configuration,
 		evm_tracing_config: crate::evm_tracing_types::EvmTracingConfig,
@@ -1350,7 +1041,7 @@ pub mod __ {
 
 		Ok(task_manager)
 	}
-	#[evm]
+
 	pub fn start_node_evm_impl<RuntimeApi, Executor>(
 		client: Arc<ParachainClient<RuntimeApi, Executor>>,
 		backend: Arc<ParachainBackend>,
