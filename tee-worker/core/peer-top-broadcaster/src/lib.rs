@@ -105,6 +105,10 @@ where
 							TrustedOperationStatus::Submitted => {},
 							// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
 							TrustedOperationStatus::TopExecuted(ref value, force_wait) => {
+								error!(
+									"Top Executed, encoded_value len: {:?}",
+									value.clone().len()
+								);
 								match rpc_responder.update_connection_state(
 									hash,
 									value.clone(),

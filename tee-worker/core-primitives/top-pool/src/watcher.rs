@@ -130,6 +130,10 @@ where
 
 	// Litentry: set the new rpc response value and force_wait flag
 	pub fn update_connection_state(&mut self, encoded_value: Vec<u8>, force_wait: bool) {
+		error!(
+			"Received Update Connection State with encoded value len: {:?}",
+			encoded_value.len()
+		);
 		if let Err(e) = self.rpc_response_sender.update_connection_state(
 			*self.hash(),
 			encoded_value,

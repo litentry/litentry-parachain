@@ -166,6 +166,7 @@ where
 	io_handler.add_sync_method(
 		"author_submitAndWatchBroadcastedAesRequest",
 		move |params: Params| {
+			debug!("worker_api_direct rpc was called: author_submitAndWatchBroadcastedAesRequest");
 			let json_value =
 				match author_submit_aes_request_inner(watch_author.clone(), params, None) {
 					Ok(hash_value) => RpcReturnValue {
