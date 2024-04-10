@@ -19,8 +19,9 @@
 use cargo_toml::{Dependency, Manifest};
 use proc_macro::TokenStream;
 use quote::quote;
+use reuse::handle_reuse;
 use std::fs;
-
+use syn::{parse_macro_input, Error};
 mod reuse;
 
 /**
