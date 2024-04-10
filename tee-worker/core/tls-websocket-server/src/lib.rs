@@ -153,4 +153,14 @@ pub(crate) trait WebSocketConnection: Send + Sync {
 			None => Err(WebSocketError::ConnectionClosed),
 		}
 	}
+
+	fn deregister(&mut self, poll: &mio::Poll) -> WebSocketResult<()> {
+		match self.socket() {
+			Some(s) => {
+				poll.deregister(s)?;
+				Ok(())
+			},
+			None => Err(WebSocketError::ConnectionClosed),
+		}
+	}
 }
