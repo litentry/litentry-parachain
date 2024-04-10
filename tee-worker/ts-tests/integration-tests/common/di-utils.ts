@@ -1,17 +1,24 @@
 import { ApiPromise } from '@polkadot/api';
-import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
+import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { WorkerRpcReturnValue, TrustedCallSigned, Getter, CorePrimitivesIdentity } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
+import type {
+    WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
+    CorePrimitivesIdentity,
+    TrustedGetterSigned,
+    TrustedCall,
+} from 'parachain-api';
+import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep, createLitentryMultiSignature } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
-import { blake2AsHex, base58Encode } from '@polkadot/util-crypto';
-import { createJsonRpcRequest, nextRequestId } from './helpers';
+import { blake2AsHex, base58Encode, blake2AsU8a } from '@polkadot/util-crypto';
+import { createJsonRpcRequest, nextRequestId, stfErrorToString } from './helpers';
 
 // Send the request to worker ws
 // we should perform different actions based on the returned status:
@@ -37,7 +44,7 @@ async function sendRequest(
                 const result = parsed.result;
                 const res = api.createType('WorkerRpcReturnValue', result);
 
-                console.log('Got response: ' + JSON.stringify(res.toHuman()));
+                console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
 
                 if (res.status.isError) {
                     console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
@@ -45,6 +52,9 @@ async function sendRequest(
 
                 if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
                     console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                    const stfError = api.createType('StfError', res.value);
+                    const msg = stfErrorToString(stfError);
+                    console.log('TrustedOperationStatus error: ', msg);
                 }
                 // sending every response we receive from websocket
                 if (onMessageReceived) onMessageReceived(res);
@@ -80,27 +90,37 @@ export const createSignedTrustedCall = async (
     mrenclave: string,
     nonce: Codec,
     params: any,
-    withWrappedBytes = false
+    withWrappedBytes = false,
+    withPrefix = false
 ): Promise<TrustedCallSigned> => {
     const [variant, argType] = trustedCall;
-    const call = parachainApi.createType('TrustedCall', {
+    const call: TrustedCall = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
     });
-    let payload = Uint8Array.from([
-        ...call.toU8a(),
-        ...nonce.toU8a(),
-        ...hexToU8a(mrenclave),
-        ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
-    ]);
+    let payload: string = blake2AsHex(
+        u8aConcat(
+            call.toU8a(),
+            nonce.toU8a(),
+            hexToU8a(mrenclave),
+            hexToU8a(mrenclave) // should be shard, but it's the same as MRENCLAVE in our case
+        ),
+        256
+    );
+
     if (withWrappedBytes) {
-        payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
+        payload = `<Bytes>${payload}</Bytes>`;
     }
 
-    // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-    const signature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: u8aToHex(
-            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
-        ),
+    if (withPrefix) {
+        const prefix = getSignatureMessagePrefix(call);
+        const msg = prefix + payload;
+        payload = msg;
+        console.log('Signing message: ', payload);
+    }
+
+    const signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
     });
 
     return parachainApi.createType('TrustedCallSigned', {
@@ -110,34 +130,44 @@ export const createSignedTrustedCall = async (
     });
 };
 
+// See TrustedCall.signature_message_prefix
+function getSignatureMessagePrefix(call: TrustedCall): string {
+    if (call.isLinkIdentity) {
+        return "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ";
+    }
+
+    if (call.isRequestBatchVc) {
+        const [, , assertions] = call.asRequestBatchVc;
+        const length = assertions.length;
+
+        return `We are going to help you generate ${length} secure credential${
+            length > 1 ? 's' : ''
+        }. Please be assured, this process is safe and involves no transactions of your assets. Token: `;
+    }
+
+    return 'Token: ';
+}
+
 export const createSignedTrustedGetter = async (
     parachainApi: ApiPromise,
     trustedGetter: [string, string],
     signer: Signer,
     params: any
-) => {
+): Promise<TrustedGetterSigned> => {
     const [variant, argType] = trustedGetter;
     const getter = parachainApi.createType('TrustedGetter', {
         [variant]: parachainApi.createType(argType, params),
     });
-    const payload = getter.toU8a();
+    const payload = blake2AsU8a(getter.toU8a(), 256);
 
-    let signature;
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
-
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    let signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
+    });
 
     return parachainApi.createType('TrustedGetterSigned', {
-        getter: getter,
-        signature: signature,
+        getter,
+        signature,
     });
 };
 
@@ -160,7 +190,8 @@ export async function createSignedTrustedCallLinkIdentity(
     validationData: string,
     web3networks: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return createSignedTrustedCall(
         parachainApi,
@@ -171,7 +202,9 @@ export async function createSignedTrustedCallLinkIdentity(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -207,7 +240,8 @@ export async function createSignedTrustedCallRequestVc(
     primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return await createSignedTrustedCall(
         parachainApi,
@@ -215,7 +249,9 @@ export async function createSignedTrustedCallRequestVc(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -227,7 +263,8 @@ export async function createSignedTrustedCallRequestBatchVc(
     primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return await createSignedTrustedCall(
         parachainApi,
@@ -238,7 +275,9 @@ export async function createSignedTrustedCallRequestBatchVc(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -340,8 +379,7 @@ export const sendRequestFromTrustedCall = async (
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
-    console.log('top: ', trustedOperation.toJSON());
-    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
+    console.log('trustedOperation: ', JSON.stringify(trustedOperation.toHuman(), null, 2));
     // create the request parameter
     const requestParam = await createAesRequest(
         context.api,

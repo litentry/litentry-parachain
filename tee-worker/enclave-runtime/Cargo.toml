@@ -121,6 +121,7 @@ itp-rpc = { path = "../core-primitives/rpc", default-features = false, features 
 itp-settings = { path = "../core-primitives/settings" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto", default-features = false, features = ["sgx"] }
 itp-sgx-externalities = { path = "../core-primitives/substrate-sgx/externalities", default-features = false, features = ["sgx"] }
+itp-sgx-io = { path = "../core-primitives/sgx/io", default-features = false, features = ["sgx"] }
 itp-stf-executor = { path = "../core-primitives/stf-executor", default-features = false, features = ["sgx"] }
 itp-stf-interface = { path = "../core-primitives/stf-interface", default-features = false }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives", default-features = false }

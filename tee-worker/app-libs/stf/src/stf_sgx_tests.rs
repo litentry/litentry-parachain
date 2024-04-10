@@ -44,38 +44,6 @@ pub fn enclave_account_initialization_works() {
 	assert_eq!(1000, account_data.free);
 }
 
-pub fn shield_funds_increments_signer_account_nonce() {
-	let enclave_call_signer = Ed25519Pair::from_seed(b"14672678901234567890123456789012");
-	let enclave_signer_account_id: AccountId = enclave_call_signer.public().into();
-	let mut state = StfState::init_state(enclave_signer_account_id.clone());
-	let vault = AccountId::new([2u8; 32]);
-	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
-
-	let shield_funds_call = TrustedCallSigned::new(
-		TrustedCall::balance_shield(
-			enclave_call_signer.public().into(),
-			AccountId::new([1u8; 32]),
-			500u128,
-			ParentchainId::Litentry,
-		),
-		0,
-		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
-	);
-
-	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
-	let shard = ShardIdentifier::default();
-	StfState::execute_call(
-		&mut state,
-		&shard,
-		shield_funds_call,
-		Default::default(),
-		&mut Vec::new(),
-		repo,
-	)
-	.unwrap();
-	assert_eq!(1, StfState::get_account_nonce(&mut state, &enclave_signer_account_id));
-}
-
 pub fn test_root_account_exists_after_initialization() {
 	let enclave_account = AccountId::new([2u8; 32]);
 	let mut state = StfState::init_state(enclave_account);
