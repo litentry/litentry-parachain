@@ -13,10 +13,10 @@ import {
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity } from 'parachain-api';
+import type { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { Vec, Bytes } from '@polkadot/types';
 import { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
@@ -107,7 +107,9 @@ describe('Test Vc (direct invocation)', function () {
             networks: bitcoinNetworks,
         });
 
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -119,7 +121,11 @@ describe('Test Vc (direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: counter % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -127,7 +133,7 @@ describe('Test Vc (direct invocation)', function () {
         }
     });
 
-    mockAssertions.forEach(({ description, assertion }) => {
+    mockAssertions.forEach(({ description, assertion }, index) => {
         step(`request vc payload : ${JSON.stringify(assertion)} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
@@ -143,7 +149,11 @@ describe('Test Vc (direct invocation)', function () {
                 aliceSubstrateIdentity,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: index % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);

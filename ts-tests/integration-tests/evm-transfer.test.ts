@@ -5,7 +5,7 @@ import { signAndSend, describeLitentry, loadConfig, sudoWrapperTC } from '../com
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import { evmToAddress } from '@polkadot/util-crypto';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test EVM Module Transfer`);
