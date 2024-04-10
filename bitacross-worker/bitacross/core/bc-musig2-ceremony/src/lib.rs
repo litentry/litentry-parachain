@@ -29,7 +29,10 @@ use std::{format, string::String, sync::Arc};
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use k256::SecretKey;
-use musig2::{secp::Point, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature, SecNonceSpices, verify_single};
+use musig2::{
+	secp::Point, verify_single, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature,
+	SecNonceSpices,
+};
 use std::{vec, vec::Vec};
 
 use crate::CeremonyEvent::CeremonyEnded;
@@ -52,7 +55,7 @@ pub type SignerId = [u8; 32];
 pub type SignersWithKeys = Vec<(SignerId, PublicKey)>;
 
 pub struct PendingCeremonyCommand {
-	pub ticks_left: u8,
+	pub ticks_left: u32,
 	pub command: CeremonyCommand,
 }
 
@@ -130,7 +133,7 @@ pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	signing_key_access: Arc<AK>,
 	first_round: Option<musig2::FirstRound>,
 	second_round: Option<musig2::SecondRound<SignaturePayload>>,
-	ticks_left: u8,
+	ticks_left: u32,
 	agg_key: Option<PublicKey>,
 }
 
@@ -143,7 +146,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		payload: SignBitcoinPayload,
 		commands: Vec<CeremonyCommand>,
 		signing_key_access: Arc<AK>,
-		ttl: u8,
+		ttl: u32,
 	) -> Result<Self, String> {
 		info!("Creating new ceremony with peers: {:?} and events {:?}", signers, commands);
 		if signers.len() < 3 {
@@ -170,7 +173,10 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					.map_err(|e| format!("Key context creation error: {:?}", e))?,
 		};
 
-		info!("Ceremony aggregated public key: {:?}", key_context.aggregated_pubkey::<PublicKey>().to_sec1_bytes().to_vec());
+		info!(
+			"Ceremony aggregated public key: {:?}",
+			key_context.aggregated_pubkey::<PublicKey>().to_sec1_bytes().to_vec()
+		);
 		let agg_key_copy = key_context.aggregated_pubkey::<PublicKey>();
 		let nonce_seed = random_seed();
 		let first_round =
@@ -195,7 +201,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			first_round: Some(first_round),
 			second_round: None,
 			ticks_left: ttl,
-			agg_key: Some(agg_key_copy)
+			agg_key: Some(agg_key_copy),
 		})
 	}
 
@@ -350,7 +356,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					let message = match &self.payload {
 						SignBitcoinPayload::Derived(p) => p,
 						SignBitcoinPayload::TaprootUnspendable(p) => p,
-						SignBitcoinPayload::TaprootSpendable(p, _) => p
+						SignBitcoinPayload::TaprootSpendable(p, _) => p,
 					};
 
 					info!("Message {:?}", message);
@@ -358,7 +364,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					info!("Verification result: ");
 					match verify_single(self.agg_key.unwrap(), signature, message) {
 						Ok(_) => info!("OK!"),
-						Err(_) => info!("NOK!")
+						Err(_) => info!("NOK!"),
 					};
 					self.events.push(CeremonyEnded(signature.to_bytes()));
 				}
@@ -400,16 +406,20 @@ fn random_seed() -> [u8; 32] {
 
 #[cfg(test)]
 pub mod test {
-	use crate::{CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason, SignBitcoinPayload, SignaturePayload, SignerId, SignersWithKeys, generate_aggregated_public_key};
+	use crate::{
+		generate_aggregated_public_key, CeremonyCommand, CeremonyError, CeremonyEvent,
+		MuSig2Ceremony, NonceReceivingErrorReason, SignBitcoinPayload, SignaturePayload, SignerId,
+		SignersWithKeys,
+	};
 	use alloc::sync::Arc;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 	use k256::{
 		elliptic_curve::PublicKey,
 		schnorr::{signature::Keypair, SigningKey},
+		sha2::digest::Mac,
 	};
-	use k256::sha2::digest::Mac;
 	use litentry_primitives::RequestAesKey;
-	use musig2::{PubNonce, SecNonce, verify_single};
+	use musig2::{verify_single, PubNonce, SecNonce};
 	use signature::Verifier;
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
@@ -830,14 +840,15 @@ pub mod test {
 		assert_eq!(my_ceremony_final_signature, signer1_ceremony_final_signature);
 		assert_eq!(my_ceremony_final_signature, signer2_ceremony_final_signature);
 
-		let signature = k256::schnorr::Signature::try_from(signer1_ceremony_final_signature.as_slice()).unwrap();
-		let agg_key = generate_aggregated_public_key(signers_with_keys().iter().map(|sk| sk.1).collect());
+		let signature =
+			k256::schnorr::Signature::try_from(signer1_ceremony_final_signature.as_slice())
+				.unwrap();
+		let agg_key =
+			generate_aggregated_public_key(signers_with_keys().iter().map(|sk| sk.1).collect());
 		let ver_key = k256::schnorr::VerifyingKey::try_from(agg_key).unwrap();
-
 
 		// this pass
 		verify_single(agg_key, signer1_ceremony_final_signature, SAMPLE_SIGNATURE_PAYLOAD).unwrap();
-
 
 		// this not pass
 		// ver_key.verify(&SAMPLE_SIGNATURE_PAYLOAD, &signature).unwrap()

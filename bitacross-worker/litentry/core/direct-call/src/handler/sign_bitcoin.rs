@@ -51,7 +51,8 @@ pub fn handle<
 ) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
 		let mut registry = ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
-		let ceremony_tick_to_live = 30;
+		// ~30 minutes (1 tick ~ 1 s)
+		let ceremony_tick_to_live = 1800;
 
 		let signers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
@@ -62,6 +63,10 @@ pub fn handle<
 				Ok((*address.as_ref(), public_key))
 			})
 			.collect();
+
+		if registry.contains_key(&payload) {
+			return Err(SignBitcoinError::CeremonyError)
+		}
 
 		let pending_commands = ceremony_commands
 			.lock()
@@ -200,5 +205,47 @@ pub mod test {
 
 		//then
 		assert!(matches!(result, Err(SignBitcoinError::InvalidSigner)))
+	}
+
+	#[test]
+	pub fn it_should_return_err_for_existing_ceremony() {
+		// given
+		let relayer_registry = RelayerRegistry::default();
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let relayer_account = Identity::Substrate(alice_key_pair.public().into());
+		relayer_registry.update(relayer_account.clone()).unwrap();
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let signers_registry = Arc::new(SignersRegistryMock {});
+		let signer_access_key = Arc::new(SignerAccess {});
+
+		// when
+		handle(
+			relayer_account.clone(),
+			SignBitcoinPayload::Derived(vec![]),
+			[0u8; 32],
+			&relayer_registry,
+			ceremony_registry.clone(),
+			ceremony_commands_registry.clone(),
+			signers_registry.clone(),
+			&[0u8; 32],
+			signer_access_key.clone(),
+		)
+		.unwrap();
+
+		let result = handle(
+			relayer_account,
+			SignBitcoinPayload::Derived(vec![]),
+			[0u8; 32],
+			&relayer_registry,
+			ceremony_registry,
+			ceremony_commands_registry,
+			signers_registry,
+			&[0u8; 32],
+			signer_access_key,
+		);
+
+		// then
+		assert!(matches!(result, Err(SignBitcoinError::CeremonyError)))
 	}
 }
