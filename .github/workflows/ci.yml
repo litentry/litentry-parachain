@@ -755,7 +755,7 @@ jobs:
           retention-days: 3
 
   tee-multi-worker-test:
-    runs-on: ubuntu-latest
+    runs-on: tee-prod-builder
     continue-on-error: true
     needs:
       - set-condition
