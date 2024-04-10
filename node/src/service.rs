@@ -22,7 +22,6 @@
 
 use crate::{
 	evm_tracing_types::{EthApi as EthApiCmd, EvmTracingConfig},
-	rpc,
 	rpc::evm as rpc_evm,
 	standalone_block_import::StandaloneBlockImport,
 	tracing::{self, RpcRequesters},

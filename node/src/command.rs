@@ -276,11 +276,12 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litmus_parachain_runtime::RuntimeApi,
+					LitmusParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::evm::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
+					crate::service::evm::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -289,11 +290,12 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litentry_parachain_runtime::RuntimeApi,
+					LitentryParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::evm::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
+					crate::service::evm::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
