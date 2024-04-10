@@ -13,10 +13,10 @@ import {
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
+import type { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
 import { mockBatchAssertion } from './common/utils/vc-helper';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { Vec, Bytes } from '@polkadot/types';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;

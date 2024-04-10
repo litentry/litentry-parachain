@@ -122,6 +122,7 @@ where
 
 			if connection.is_closed() {
 				trace!("Connection {:?} is closed, removing", token);
+				connection.deregister(poll)?;
 				connections_lock.remove(&token);
 				trace!(
 					"Closed {:?}, {} active connections remaining",

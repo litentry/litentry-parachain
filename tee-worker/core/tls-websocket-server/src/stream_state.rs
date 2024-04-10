@@ -54,7 +54,7 @@ impl<S: Read + Write> MaybeServerTlsStream<S> {
 
 	pub fn wants_write(&self) -> bool {
 		match self {
-			MaybeServerTlsStream::Plain(_) => true,
+			MaybeServerTlsStream::Plain(_) => false, // do not monitor writable events for non-tls server
 			MaybeServerTlsStream::Rustls(s) => s.sess.wants_write(),
 		}
 	}

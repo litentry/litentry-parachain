@@ -22,8 +22,8 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Bytes, Vec } from '@polkadot/types';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
+import type { Bytes, Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
@@ -124,7 +124,9 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             [[bobBitcoinIdentity, true]],
         ];
 
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -136,7 +138,11 @@ describe('Test Identity (bitcoin direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: counter % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
