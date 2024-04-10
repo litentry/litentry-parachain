@@ -27,7 +27,7 @@ use crate::{
 	standalone_block_import::StandaloneBlockImport,
 	tracing::{self, RpcRequesters},
 };
-pub use core_primitives::{reuse, AccountId, Balance, Block, Hash, Header, Index as Nonce};
+pub use core_primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};

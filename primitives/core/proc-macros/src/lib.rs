@@ -19,9 +19,7 @@
 use cargo_toml::{Dependency, Manifest};
 use proc_macro::TokenStream;
 use quote::quote;
-use reuse::handle_reuse;
 use std::fs;
-use syn::{parse_macro_input, Error};
 
 mod reuse;
 
@@ -88,12 +86,12 @@ mod y {
 
 ```
 */
-// #[proc_macro_attribute]
-// pub fn reuse(args: TokenStream, input: TokenStream) -> TokenStream {
-// 	handle_reuse(parse_macro_input!(args), parse_macro_input!(input))
-// 		.unwrap_or_else(Error::into_compile_error)
-// 		.into()
-// }
+#[proc_macro_attribute]
+pub fn reuse(args: TokenStream, input: TokenStream) -> TokenStream {
+	handle_reuse(parse_macro_input!(args), parse_macro_input!(input))
+		.unwrap_or_else(Error::into_compile_error)
+		.into()
+}
 
 #[proc_macro]
 pub fn local_modules(_item: TokenStream) -> TokenStream {

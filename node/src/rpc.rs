@@ -18,8 +18,6 @@
 // This File should be safe to delete once All parachain matrix are EVM impl.
 #![warn(missing_docs)]
 
-use core_primitives::reuse;
-
 use std::sync::Arc;
 
 use core_primitives::{AccountId, Balance, Block, Hash, Index as Nonce};
