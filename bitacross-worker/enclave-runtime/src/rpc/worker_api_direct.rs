@@ -176,8 +176,8 @@ where
 		}))
 	});
 
-	io.add_sync_method("state_getScheduledEnclaveList", move |_: Params| {
-		debug!("worker_api_direct rpc was called: state_getScheduledEnclaveList");
+	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
 		let value = format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read());
 		let json_value = RpcReturnValue::new(value.encode(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
