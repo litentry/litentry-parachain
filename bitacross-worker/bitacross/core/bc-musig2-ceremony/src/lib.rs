@@ -29,9 +29,7 @@ use std::{format, string::String, sync::Arc};
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use k256::SecretKey;
-use musig2::{
-	secp::Point, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature, SecNonceSpices,
-};
+use musig2::{secp::Point, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature, SecNonceSpices, verify_single};
 use std::{vec, vec::Vec};
 
 use crate::CeremonyEvent::CeremonyEnded;
@@ -133,6 +131,7 @@ pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	first_round: Option<musig2::FirstRound>,
 	second_round: Option<musig2::SecondRound<SignaturePayload>>,
 	ticks_left: u8,
+	agg_key: Option<PublicKey>,
 }
 
 impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
@@ -172,7 +171,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		};
 
 		info!("Ceremony aggregated public key: {:?}", key_context.aggregated_pubkey::<PublicKey>().to_sec1_bytes().to_vec());
-
+		let agg_key_copy = key_context.aggregated_pubkey::<PublicKey>();
 		let nonce_seed = random_seed();
 		let first_round =
 			musig2::FirstRound::new(key_context, nonce_seed, my_index, SecNonceSpices::new())
@@ -196,6 +195,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			first_round: Some(first_round),
 			second_round: None,
 			ticks_left: ttl,
+			agg_key: Some(agg_key_copy)
 		})
 	}
 
@@ -342,6 +342,24 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 							)
 						})?
 						.compact();
+
+					info!("Ceremony {:?} has ended", self.get_id_ref());
+					info!("Aggregated public key {:?}", self.agg_key.unwrap().to_sec1_bytes());
+					info!("Signature {:?}", signature.to_bytes());
+
+					let message = match &self.payload {
+						SignBitcoinPayload::Derived(p) => p,
+						SignBitcoinPayload::TaprootUnspendable(p) => p,
+						SignBitcoinPayload::TaprootSpendable(p, _) => p
+					};
+
+					info!("Message {:?}", message);
+
+					info!("Verification result: ");
+					match verify_single(self.agg_key.unwrap(), signature, message) {
+						Ok(_) => info!("OK!"),
+						Err(_) => info!("NOK!")
+					};
 					self.events.push(CeremonyEnded(signature.to_bytes()));
 				}
 			}
@@ -392,6 +410,7 @@ pub mod test {
 	use k256::sha2::digest::Mac;
 	use litentry_primitives::RequestAesKey;
 	use musig2::{PubNonce, SecNonce, verify_single};
+	use signature::Verifier;
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
 
@@ -466,7 +485,7 @@ pub mod test {
 	}
 
 	pub const SAMPLE_REQUEST_AES_KEY: RequestAesKey = [0u8; 32];
-	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 64] = [0u8; 64];
+	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 32] = [0u8; 32];
 
 	struct MockedSigningKeyAccess {
 		signing_key: SigningKey,

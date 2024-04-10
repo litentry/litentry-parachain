@@ -380,6 +380,7 @@ dependencies = [
  "rand 0.8.5",
  "sgx_rand",
  "sgx_tstd",
+ "signature 2.1.0",
 ]
 
 [[package]]
