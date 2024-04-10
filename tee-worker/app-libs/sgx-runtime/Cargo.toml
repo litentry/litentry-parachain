@@ -33,7 +33,7 @@ pallet-evm = { default-features = false, optional = true, git = "https://github.
 
 # Litentry
 pallet-imt = { package = "pallet-identity-management-tee", path = "../../litentry/pallets/identity-management", default-features = false }
-pallet-parentchain = { package = "pallet-parentchain", path = "../../litentry/pallets/parentchain", default-features = false }
+pallet-parentchain = { package = "pallet-parentchain", path = "../../../worker-pallets/parentchain", default-features = false }
 
 [features]
 default = ["std"]
