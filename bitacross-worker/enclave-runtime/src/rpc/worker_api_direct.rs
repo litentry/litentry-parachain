@@ -182,7 +182,7 @@ where
 			Ok(registry) => {
 				let mut serialized_registry = vec![];
 				for (block_number, mrenclave) in registry.iter() {
-					serialized_registry.push((block_number, mrenclave.clone()));
+					serialized_registry.push((*block_number, *mrenclave));
 				}
 				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
 					.to_hex()
