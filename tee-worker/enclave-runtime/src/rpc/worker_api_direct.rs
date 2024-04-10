@@ -446,7 +446,7 @@ where
 				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
 					.to_hex()
 			},
-			Err(err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
 		};
 		Ok(json!(json_value))
 	});

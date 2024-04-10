@@ -178,9 +178,18 @@ where
 
 	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
 		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
-		let value = format!("{:?}", &GLOBAL_SCHEDULED_ENCLAVE.registry.read());
-		let json_value = RpcReturnValue::new(value.encode(), false, DirectRequestStatus::Ok);
-		Ok(json!(json_value.to_hex()))
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
+			Ok(registry) => {
+				let mut serialized_registry = vec![];
+				for (block_number, mrenclave) in registry.iter() {
+					serialized_registry.push((block_number, mrenclave.clone())); // Clone to avoid borrow issues
+				}
+				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
+					.to_hex()
+			},
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+		};
+		Ok(json!(json_value))
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
