@@ -382,18 +382,16 @@ fn random_seed() -> [u8; 32] {
 
 #[cfg(test)]
 pub mod test {
-	use crate::{
-		CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason,
-		SignBitcoinPayload, SignaturePayload, SignerId, SignersWithKeys,
-	};
+	use crate::{CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason, SignBitcoinPayload, SignaturePayload, SignerId, SignersWithKeys, generate_aggregated_public_key};
 	use alloc::sync::Arc;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 	use k256::{
 		elliptic_curve::PublicKey,
 		schnorr::{signature::Keypair, SigningKey},
 	};
+	use k256::sha2::digest::Mac;
 	use litentry_primitives::RequestAesKey;
-	use musig2::{PubNonce, SecNonce};
+	use musig2::{PubNonce, SecNonce, verify_single};
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
 
@@ -812,5 +810,17 @@ pub mod test {
 
 		assert_eq!(my_ceremony_final_signature, signer1_ceremony_final_signature);
 		assert_eq!(my_ceremony_final_signature, signer2_ceremony_final_signature);
+
+		let signature = k256::schnorr::Signature::try_from(signer1_ceremony_final_signature.as_slice()).unwrap();
+		let agg_key = generate_aggregated_public_key(signers_with_keys().iter().map(|sk| sk.1).collect());
+		let ver_key = k256::schnorr::VerifyingKey::try_from(agg_key).unwrap();
+
+
+		// this pass
+		verify_single(agg_key, signer1_ceremony_final_signature, SAMPLE_SIGNATURE_PAYLOAD).unwrap();
+
+
+		// this not pass
+		// ver_key.verify(&SAMPLE_SIGNATURE_PAYLOAD, &signature).unwrap()
 	}
 }
