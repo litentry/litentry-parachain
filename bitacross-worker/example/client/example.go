@@ -265,7 +265,7 @@ func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byt
 func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"TaprootSpendable": map[string]interface{}{
-			"col1": utiles.BytesToHex(bitcoinPayload),
+			"col1": string(bitcoinPayload),
 			"col2": utiles.BytesToHex(merkleRootHash[:]),
 		},
 	}
@@ -284,7 +284,7 @@ func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{
 
 func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
 	payload := map[string]interface{}{
-		"TaprootUnspendable": utiles.BytesToHex(bitcoinPayload),
+		"TaprootUnspendable": string(bitcoinPayload),
 	}
 
 	signBitcoinDirectCall := map[string]interface{}{
@@ -301,7 +301,7 @@ func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interfac
 
 func prepareSignBitcoinDerivedDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
 	payload := map[string]interface{}{
-		"Derived": utiles.BytesToHex(bitcoinPayload),
+		"Derived": string(bitcoinPayload),
 	}
 
 	signBitcoinDirectCall := map[string]interface{}{
