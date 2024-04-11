@@ -1,6 +1,6 @@
 use super::alloc::{format, vec::Vec};
 use crate::{
-	AccountId, Assertion, Balance, BlockNumber, Hash, MrEnclave, ShardIdentifier,
+	AccountId, Assertion, Balance, BlockNumber, Hash, MrEnclave, RsaRequest, ShardIdentifier,
 	SidechainBlockNumber, WorkerType,
 };
 use codec::{Decode, Encode};
@@ -226,4 +226,21 @@ impl core::fmt::Display for VCRequested {
 impl StaticEvent for VCRequested {
 	const PALLET: &'static str = "VCManagement";
 	const EVENT: &'static str = "VCRequested";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct OpaqueTaskPosted {
+	pub request: RsaRequest,
+}
+
+impl core::fmt::Display for OpaqueTaskPosted {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!("OpaqueTaskPosted :: request: {:?}", self.request);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for OpaqueTaskPosted {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "OpaqueTaskPosted";
 }
