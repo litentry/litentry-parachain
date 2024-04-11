@@ -101,7 +101,7 @@ fn collect_brc20_token_balance(response_items: &[ResponseItem]) -> Vec<Brc20Toke
 		.iter()
 		.filter(|&item| BRC20_TOKENS.contains(&item.tick.to_lowercase().as_str()))
 		.for_each(|item| {
-			let token = tick_to_brctoken(&item.tick.to_lowercase().as_str());
+			let token = tick_to_brctoken(item.tick.to_lowercase().as_str());
 			let balance: f64 = item.overall_balance.parse().unwrap_or(0.0);
 
 			pairs.push(Brc20TokenBalance { token, balance });
