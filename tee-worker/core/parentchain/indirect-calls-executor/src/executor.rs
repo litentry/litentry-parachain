@@ -21,10 +21,9 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	error::{Error, Result},
-	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
-	traits::{ExecuteIndirectCalls, IndirectDispatch},
+	filter_metadata::EventsFromMetadata,
+	traits::ExecuteIndirectCalls,
 };
-use alloc::format;
 use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
@@ -39,7 +38,7 @@ use itp_stf_primitives::{
 };
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::{ExtrinsicStatus, FilterEvents, HandleParentchainEvents, ParentchainId},
+	parentchain::{HandleParentchainEvents, ParentchainId},
 	OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
@@ -52,7 +51,6 @@ pub struct IndirectCallsExecutor<
 	StfEnclaveSigner,
 	TopPoolAuthor,
 	NodeMetadataProvider,
-	IndirectCallsFilter,
 	EventCreator,
 	ParentchainEventHandler,
 	TCS,
@@ -63,14 +61,13 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
-	_phantom: PhantomData<(IndirectCallsFilter, EventCreator, ParentchainEventHandler, TCS, G)>,
+	_phantom: PhantomData<(EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		IndirectCallsFilter,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -81,7 +78,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		IndirectCallsFilter,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -111,7 +107,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -122,7 +117,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -134,9 +128,7 @@ impl<
 	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
-	FilterIndirectCalls::Output: IndirectDispatch<Self, TCS, Args = ()> + Encode + Debug,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
 	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
@@ -153,9 +145,9 @@ impl<
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 
-		trace!("Scanning block {:?} for relevant xt", block_number);
-		let mut executed_calls = Vec::<H256>::new();
+		trace!("Scanning block {:?} for relevant events", block_number);
 
+		let events_count = events.len();
 		let events = self
 			.node_meta_data_provider
 			.get_from_metadata(|metadata| {
@@ -163,53 +155,23 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let xt_statuses = events.get_extrinsic_statuses().map_err(|e| {
-			Error::Other(format!("Error when shielding for privacy sidechain {:?}", e).into())
-		})?;
-		trace!("xt_statuses:: {:?}", xt_statuses);
-
 		ParentchainEventHandler::handle_events(self, events)?;
 
-		// This would be catastrophic but should never happen
-		if xt_statuses.len() != block.extrinsics().len() {
-			return Err(Error::Other("Extrinsic Status and Extrinsic count not equal".into()))
-		}
+		debug!("successfully processed {} indirect invocations", events_count);
 
-		for (xt_opaque, xt_status) in block.extrinsics().iter().zip(xt_statuses.iter()) {
-			let encoded_xt_opaque = xt_opaque.encode();
-
-			let maybe_call = self.node_meta_data_provider.get_from_metadata(|metadata| {
-				FilterIndirectCalls::filter_into_from_metadata(&encoded_xt_opaque, metadata)
-			})?;
-
-			let call = match maybe_call {
-				Some(c) => c,
-				None => continue,
-			};
-
-			if let ExtrinsicStatus::Failed = xt_status {
-				warn!("Parentchain Extrinsic Failed, {:?} wont be dispatched", call);
-				continue
-			}
-
-			if let Err(e) = call.dispatch(self, ()) {
-				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
-			} else {
-				executed_calls.push(hash_of(&call));
-			}
-		}
-		debug!("successfully processed {} indirect invocations", executed_calls.len());
-		if self.parentchain_id == ParentchainId::Litentry {
-			// Include a processed parentchain block confirmation for each block.
-			Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
-				block_hash,
-				executed_calls,
-				block_number,
-			)?))
-		} else {
-			// fixme: send other type of confirmation here:  https://github.com/integritee-network/worker/issues/1567
-			Ok(None)
-		}
+		// TODO: what to pass to create_processed_parentchain_block_call??
+		// if self.parentchain_id == ParentchainId::Litentry {
+		// Include a processed parentchain block confirmation for each block.
+		// Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
+		// 	block_hash,
+		// 	executed_calls,
+		// 	block_number,
+		// )?))
+		// } else {
+		// fixme: send other type of confirmation here:  https://github.com/integritee-network/worker/issues/1567
+		// Ok(None)
+		// }
+		Ok(None)
 	}
 
 	fn create_processed_parentchain_block_call<ParentchainBlock>(
@@ -237,7 +199,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventFilter,
 		PrivacySidechain,
 		TCS,
@@ -248,7 +209,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventFilter,
 		PrivacySidechain,
 		TCS,
