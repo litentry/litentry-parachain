@@ -25,7 +25,6 @@ use codec::{Decode, Encode};
 
 #[cfg(feature = "std")]
 pub mod event_subscriber;
-pub mod extrinsic_parser;
 pub mod indirect_calls;
 pub mod integritee;
 pub mod target_a;
