@@ -5,47 +5,14 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { ECPairFactory, ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-// format and setup
-const keyring = new Keyring({ type: 'sr25519' });
-export function getSubstrateSigner(): {
-    alice: KeyringPair;
-    bob: KeyringPair;
-    charlie: KeyringPair;
-    eve: KeyringPair;
-} {
-    const alice = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    const charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
-    const eve = keyring.addFromUri('//Eve', { name: 'Eve' });
-    const signers = {
-        alice,
-        bob,
-        charlie,
-        eve,
-    };
-    return signers;
-}
-export function getEvmSigner(): {
-    alice: string;
-    bob: string;
-    charlie: string;
-    dave: string;
-    eve: string;
-} {
-    const secp256k1PrivateKeyLength = 32;
-    const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
-    const keys = new Array<string>();
-    for (const name of names) {
-        const result = Buffer.alloc(secp256k1PrivateKeyLength);
-        result.fill(name, secp256k1PrivateKeyLength - Buffer.from(name, 'utf8').length);
-
-        keys.push(result.toString('hex'));
-    }
-    return { alice: keys[0], bob: keys[1], charlie: keys[2], dave: keys[3], eve: keys[4] };
-}
+import { ethers, Wallet } from 'ethers';
+import { Keypair } from '@solana/web3.js';
+import { EthersSigner, PolkadotSigner, BitcoinSigner, SolanaSigner } from './utils/crypto';
+import { Wallets } from './common-types';
+import type { ErrorDetail, StfError } from 'parachain-api';
 
 export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
     return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
@@ -74,6 +41,9 @@ export function nextRequestId(context: IntegrationTestContext): number {
     return nextId;
 }
 
+export function randomEvmWallet(): Wallet {
+    return ethers.Wallet.createRandom();
+}
 export function randomSubstrateWallet(): KeyringPair {
     const keyring = new Keyring({ type: 'sr25519' });
     return keyring.addFromSeed(randomBytes(32));
@@ -83,4 +53,65 @@ export function randomBitcoinWallet(): ECPairInterface {
     const ecPair = ECPairFactory(ecc);
     const keyPair = ecPair.makeRandom();
     return keyPair;
+}
+
+export function genesisSubstrateWallet(name: string): KeyringPair {
+    const keyring = new Keyring({ type: 'sr25519' });
+    const keyPair = keyring.addFromUri(`//${name}`, { name });
+    return keyPair;
+}
+
+export function genesisSolanaWallet(name: string): Keypair {
+    let seed = createHash('sha256').update(name).digest();
+    seed = seed.subarray(0, 32);
+    const keyPair = Keypair.fromSeed(seed);
+    return keyPair;
+}
+
+export const createWeb3Wallets = (): Wallets => {
+    const wallets: Wallets = {
+        evm: {},
+        substrate: {},
+        bitcoin: {},
+        solana: {},
+    };
+    const walletNames = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'];
+    for (const name of walletNames) {
+        wallets.evm[name] = new EthersSigner(randomEvmWallet());
+        wallets.substrate[name] = new PolkadotSigner(genesisSubstrateWallet(name));
+        wallets.bitcoin[name] = new BitcoinSigner(randomBitcoinWallet());
+        wallets.solana[name] = new SolanaSigner(genesisSolanaWallet(name));
+    }
+
+    return wallets;
+};
+
+export function stfErrorToString(stfError: StfError): string {
+    if (stfError.isRequestVCFailed) {
+        const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (
+        stfError.isActivateIdentityFailed ||
+        stfError.isDeactivateIdentityFailed ||
+        stfError.isSetIdentityNetworksFailed ||
+        stfError.isLinkIdentityFailed ||
+        stfError.isMissingPrivileges ||
+        stfError.isRemoveIdentityFailed ||
+        stfError.isDispatch
+    ) {
+        const errorDetail = stfError.value as ErrorDetail;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (stfError.isInvalidNonce) {
+        const [nonce1, nonce2] = stfError.asInvalidNonce;
+
+        return `${stfError.type}: [${nonce1?.toHuman()}, ${nonce2?.toHuman()}]`;
+    }
+
+    return stfError.type;
 }

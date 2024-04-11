@@ -16,9 +16,8 @@
 */
 
 pub mod invoke;
-mod litentry;
-pub mod shield_funds;
-pub mod transfer_to_alice_shields_funds;
+pub mod litentry;
+pub mod timestamp_set;
 
 pub use invoke::InvokeArgs;
 pub use litentry::{
@@ -28,5 +27,4 @@ pub use litentry::{
 	request_vc::RequestVCArgs,
 	scheduled_enclave::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
 };
-pub use shield_funds::ShieldFundsArgs;
-pub use transfer_to_alice_shields_funds::{TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID};
+pub use timestamp_set::TimestampSetArgs;

@@ -23,40 +23,38 @@ use std::vec::Vec;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
-	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash,
-	},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
 		SetIdentityNetworksResult, TrustedCallResult,
 	},
 	Getter,
 };
-use codec::{Compact, Decode, Encode};
+use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-pub use ita_sgx_runtime::{Balance, IDGraph, Index, Runtime, System};
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{
-	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_vcmp::VCMPCallIndexes,
+pub use ita_sgx_runtime::{
+	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
+	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System,
 };
-use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
-pub use itp_stf_primitives::{
-	error::{StfError, StfResult},
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
+use itp_stf_interface::ExecuteCall;
+use itp_stf_primitives::{
+	error::StfError,
 	traits::{TrustedCallSigning, TrustedCallVerification},
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{ParentchainCall, ProxyType},
-	Address,
+	parentchain::{ParentchainCall, ParentchainId},
+	Moment, OpaqueCall, H256,
 };
-pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
+use litentry_hex_utils::hex_encode;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
@@ -68,11 +66,13 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::MultiAddress;
+use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
+pub type MaxAssertionLength = ConstU32<128>;
+pub type VecAssertion = BoundedVec<Assertion, MaxAssertionLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -116,9 +116,11 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
+	#[codec(index = 6)]
+	request_batch_vc(Identity, Identity, VecAssertion, Option<RequestAesKey>, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
@@ -149,16 +151,14 @@ pub enum TrustedCall {
 	balance_set_balance(Identity, AccountId, Balance, Balance),
 	#[codec(index = 52)]
 	balance_transfer(Identity, AccountId, Balance),
-	#[codec(index = 53)]
-	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	#[codec(index = 54)]
-	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
-	#[cfg(feature = "evm")]
 	#[codec(index = 55)]
+	timestamp_set(Identity, Moment, ParentchainId),
+	#[cfg(feature = "evm")]
+	#[codec(index = 56)]
 	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 56)]
+	#[codec(index = 57)]
 	evm_call(
 		Identity,
 		H160,
@@ -173,7 +173,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 57)]
+	#[codec(index = 58)]
 	evm_create(
 		Identity,
 		H160,
@@ -187,7 +187,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
-	#[codec(index = 58)]
+	#[codec(index = 59)]
 	evm_create2(
 		Identity,
 		H160,
@@ -208,8 +208,7 @@ impl TrustedCall {
 			Self::noop(sender_identity) => sender_identity,
 			Self::balance_set_balance(sender_identity, ..) => sender_identity,
 			Self::balance_transfer(sender_identity, ..) => sender_identity,
-			Self::balance_unshield(sender_identity, ..) => sender_identity,
-			Self::balance_shield(sender_identity, ..) => sender_identity,
+			Self::timestamp_set(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
 			Self::evm_withdraw(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
@@ -230,8 +229,9 @@ impl TrustedCall {
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
-			#[cfg(not(feature = "production"))]
+			#[cfg(feature = "development")]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
+			Self::request_batch_vc(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -247,6 +247,17 @@ impl TrustedCall {
 			Self::activate_identity(..) => "activate_identity",
 			Self::maybe_create_id_graph(..) => "maybe_create_id_graph",
 			_ => "unsupported_trusted_call",
+		}
+	}
+
+	pub fn signature_message_prefix(&self) -> String {
+		match self {
+			Self::link_identity(..) => "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+			Self::request_batch_vc(_, _, assertions, ..) =>  match assertions.len() {
+				1 => "We are going to help you generate 1 secure credential. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+				n => format!("We are going to help you generate {n} secure credentials. Please be assured, this process is safe and involves no transactions of your assets. Token: "),
+			},
+			_ => "Token: ".to_string(),
 		}
 	}
 }
@@ -318,9 +329,18 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		// make it backwards compatible for now - will deprecate the old way later
-		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
-			|| self.signature.verify(&payload, self.call.sender_identity())
+		// The signature should be valid in either case:
+		// 1. blake2_256(payload)
+		// 2. Signature Prefix + blake2_256(payload)
+
+		let hashed = blake2_256(&payload);
+
+		let prettified_msg_hash = self.call.signature_message_prefix() + &hex_encode(&hashed);
+		let prettified_msg_hash = prettified_msg_hash.as_bytes();
+
+		// Most common signatures variants by clients are verified first (4 and 2).
+		self.signature.verify(prettified_msg_hash, self.call.sender_identity())
+			|| self.signature.verify(&hashed, self.call.sender_identity())
 	}
 
 	fn metric_name(&self) -> &'static str {
@@ -455,77 +475,15 @@ where
 				})?;
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::balance_unshield(account_incognito, beneficiary, value, shard) => {
-				std::println!(
-					"⣿STF⣿ 🛡👐 balance_unshield from ⣿⣿⣿ to {}, amount {}",
-					account_id_to_string(&beneficiary),
-					value
-				);
-				// endow fee to enclave (self)
-				let fee_recipient: AccountId = enclave_signer_account();
-				// fixme: apply fees through standard frame process and tune it. has to be at least two L1 transfer's fees
-				let fee = crate::STF_TX_FEE * 3;
-
-				info!(
-					"balance_unshield(from (L2): {}, to (L1): {}, amount {} (+fee: {}), shard {})",
-					account_id_to_string(&account_incognito),
-					account_id_to_string(&beneficiary),
-					value,
-					fee,
-					shard
-				);
-
-				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
-				);
-				ita_sgx_runtime::BalancesCall::<Runtime>::transfer {
-					dest: MultiAddress::Id(fee_recipient),
-					value: fee,
-				}
-				.dispatch_bypass_filter(origin)
-				.map_err(|e| {
-					Self::Error::Dispatch(format!("Balance Unshielding error: {:?}", e.error))
-				})?;
-				burn_funds(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
-					value,
-				)?;
-
-				let vault_pubkey: [u8; 32] = get_storage_by_key_hash(SHARD_VAULT_KEY.into())
-					.ok_or_else(|| {
-						StfError::Dispatch("shard vault key hasn't been set".to_string())
-					})?;
-				let vault_address = Address::from(AccountId::from(vault_pubkey));
-				let vault_transfer_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.transfer_keep_alive_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					Address::from(beneficiary),
-					Compact(value),
-				));
-				let proxy_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.proxy_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					vault_address,
-					None::<ProxyType>,
-					vault_transfer_call,
-				));
-				calls.push(ParentchainCall::TargetA(proxy_call));
-				Ok(TrustedCallResult::Empty)
-			},
-			TrustedCall::balance_shield(enclave_account, who, value) => {
+			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
-				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
-				shield_funds(who, value)?;
-
-				// Litentry: we don't have publish_hash call in teebag
+				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
+				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
 				Ok(TrustedCallResult::Empty)
 			},
+
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
@@ -701,7 +659,7 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
-			#[cfg(not(feature = "production"))]
+			#[cfg(feature = "development")]
 			TrustedCall::remove_identity(signer, who, identities) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 
@@ -852,6 +810,12 @@ where
 					e
 				})?;
 				Ok(TrustedCallResult::Streamed)
+			},
+			TrustedCall::request_batch_vc(..) => {
+				error!(
+					"TrustedCall::request_batch_vc is not supported here. Will be removed later."
+				);
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::request_vc_callback(
 				signer,
@@ -1012,48 +976,6 @@ where
 		debug!("No storage updates needed...");
 		Vec::new()
 	}
-}
-
-fn burn_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
-	let account_info = System::account(&account);
-	if account_info.data.free < amount {
-		return Err(StfError::MissingFunds)
-	}
-
-	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
-		who: MultiAddress::Id(account),
-		new_free: account_info.data.free - amount,
-	}
-	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-	.map_err(|e| StfError::Dispatch(format!("Burn funds error: {:?}", e.error)))?;
-	Ok(())
-}
-
-fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
-	//fixme: make fee configurable and send fee to vault account on L2
-	let fee = amount / 571; // approx 0.175%
-
-	// endow fee to enclave (self)
-	let fee_recipient: AccountId = enclave_signer_account();
-
-	let account_info = System::account(&fee_recipient);
-	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
-		who: MultiAddress::Id(fee_recipient),
-		new_free: account_info.data.free + fee,
-	}
-	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;
-
-	// endow shieding amount - fee to beneficiary
-	let account_info = System::account(&account);
-	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
-		who: MultiAddress::Id(account),
-		new_free: account_info.data.free + amount - fee,
-	}
-	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;
-
-	Ok(())
 }
 
 pub(crate) fn is_root<Runtime, AccountId>(account: &AccountId) -> bool

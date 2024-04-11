@@ -52,10 +52,13 @@ impl LinkIdentityCommand {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = direct_api.get_state_mrenclave().unwrap();
 		let shard = ShardIdentifier::decode(&mut &mrenclave[..]).unwrap();
-		let nonce = direct_api.get_next_nonce(&shard, &self.get_primary_account_id()).unwrap();
+		let nonce = direct_api
+			.get_next_nonce(&shard, &self.get_primary_account_id().into())
+			.unwrap();
 
 		let signer = self.get_signer();
-		chain_api.set_signer(signer.clone().into());
+		let who: sr25519_core::Pair = get_pair_from_str(&self.account).into();
+		chain_api.set_signer(signer.into());
 
 		let (identity, encrypted_identity) = self.encrypt_identity(cli);
 		let (encrypted_web3network, encrypted_validation_data) =
@@ -66,7 +69,7 @@ impl LinkIdentityCommand {
 			IMP,
 			"link_identity",
 			shard,
-			signer.public().0,
+			who.public().0,
 			encrypted_identity,
 			encrypted_validation_data,
 			encrypted_web3network
@@ -103,7 +106,7 @@ impl LinkIdentityCommand {
 	) -> (Vec<u8>, Vec<u8>) {
 		if identity.is_web3() {
 			let who_identity = Identity::from(self.get_signer().public());
-			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce + 1);
+			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce);
 			let web3network: Vec<Web3Network> = self
 				.networks
 				.iter()

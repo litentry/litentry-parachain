@@ -32,7 +32,6 @@ mod attesteer;
 mod base_cli;
 mod benchmark;
 mod command_utils;
-mod error;
 #[cfg(feature = "evm")]
 mod evm;
 mod trusted_base_cli;
@@ -72,7 +71,7 @@ pub struct Cli {
 	node_port: String,
 
 	/// worker url
-	#[clap(short = 'U', long, default_value_t = String::from("wss://127.0.0.1"))]
+	#[clap(short = 'U', long, default_value_t = String::from("ws://127.0.0.1"))]
 	worker_url: String,
 
 	/// worker direct invocation port
@@ -126,7 +125,7 @@ pub type CliResult = Result<CliResultOk, CliError>;
 /// This is used for the commands that directly call `perform_trusted_operation`
 /// which typically return `CliResultOk::None`
 ///
-/// eg: `SetBalanceCommand`,`TransferCommand`,`UnshieldFundsCommand`
+/// eg: `SetBalanceCommand`,`TransferCommand`
 impl From<trusted_operation::TrustedOperationError> for CliError {
 	fn from(value: trusted_operation::TrustedOperationError) -> Self {
 		CliError::TrustedOp { msg: value.to_string() }

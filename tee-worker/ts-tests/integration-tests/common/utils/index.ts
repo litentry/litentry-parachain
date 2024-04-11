@@ -5,7 +5,6 @@ import '../config';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 export * from './assertion';
-export * from './batch';
 export * from './common';
 export * from './context';
 export * from './crypto';
@@ -13,3 +12,4 @@ export * from './identity-helper';
 export * from './integration-setup';
 export * from './storage';
 export * from './vc-helper';
+export * from './type-creators';

@@ -32,7 +32,7 @@ mod sync_state;
 mod tests;
 mod utils;
 mod worker;
-mod worker_peers_registry;
+mod worker_peers_updater;
 
 #[cfg(feature = "link-binary")]
 pub mod main_impl;
@@ -44,5 +44,5 @@ fn main() {
 
 #[cfg(not(feature = "link-binary"))]
 fn main() {
-	panic!("tried to run the binary without linking. Make sure to pass `--feature link-binary`")
+	panic!("tried to run the binary without linking. Make sure to pass `--features link-binary`")
 }

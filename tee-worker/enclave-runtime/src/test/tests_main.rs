@@ -32,7 +32,7 @@ use crate::{
 	tls_ra,
 };
 use codec::Decode;
-use ita_sgx_runtime::Parentchain;
+use ita_sgx_runtime::ParentchainLitentry;
 use ita_stf::{
 	helpers::{account_key_hash, set_block_number},
 	stf_sgx_tests,
@@ -46,7 +46,7 @@ use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	StateCallInterface,
 };
@@ -57,7 +57,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Balance, Block, Header};
+use itp_types::{parentchain::ParentchainId, AccountId, Balance, Block, Header};
 use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
@@ -80,7 +80,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 	rsgx_unit_tests!(
 		itp_attestation_handler::attestation_handler::tests::decode_spid_works,
 		stf_sgx_tests::enclave_account_initialization_works,
-		stf_sgx_tests::shield_funds_increments_signer_account_nonce,
 		stf_sgx_tests::test_root_account_exists_after_initialization,
 		itp_stf_state_handler::test::sgx_tests::test_write_and_load_state_works,
 		itp_stf_state_handler::test::sgx_tests::test_sgx_state_decode_encode_works,
@@ -109,8 +108,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		test_call_set_update_parentchain_block,
 		test_invalid_nonce_call_is_not_executed,
 		test_signature_must_match_public_sender_in_call,
-		test_non_root_shielding_call_is_not_executed,
-		test_shielding_call_with_enclave_self_is_executed,
 		test_retrieve_events,
 		test_retrieve_event_count,
 		test_reset_events,
@@ -493,11 +490,11 @@ fn test_call_set_update_parentchain_block() {
 		Default::default(),
 	);
 
-	TestStf::update_parentchain_block(&mut state, header.clone()).unwrap();
+	TestStf::update_parentchain_litentry_block(&mut state, header.clone()).unwrap();
 
-	assert_eq!(header.hash(), state.execute_with(Parentchain::block_hash));
-	assert_eq!(parent_hash, state.execute_with(Parentchain::parent_hash));
-	assert_eq!(block_number, state.execute_with(Parentchain::block_number));
+	assert_eq!(header.hash(), state.execute_with(ParentchainLitentry::block_hash));
+	assert_eq!(parent_hash, state.execute_with(ParentchainLitentry::parent_hash));
+	assert_eq!(block_number, state.execute_with(ParentchainLitentry::block_number));
 }
 
 fn test_signature_must_match_public_sender_in_call() {
@@ -560,70 +557,6 @@ fn test_invalid_nonce_call_is_not_executed() {
 
 	// due to #1488, even invalid nonces will enter the pool ready state, so we can only verify that the call will fail
 	assert!(!executed_batch.executed_operations[0].is_success());
-}
-
-fn test_non_root_shielding_call_is_not_executed() {
-	// given
-	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
-
-	let sender = funded_pair();
-	let sender_acc: AccountId = sender.public().into();
-
-	let signed_call = TrustedCall::balance_shield(
-		Identity::Substrate(sender_acc.clone().into()),
-		sender_acc,
-		1000,
-	)
-	.sign(&sender.into(), 0, &mrenclave, &shard);
-
-	submit_operation_to_top_pool(
-		top_pool_author.as_ref(),
-		&direct_top(signed_call),
-		&shielding_key,
-		shard,
-		false,
-	)
-	.unwrap();
-
-	// when
-	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
-
-	// then
-	assert!(!executed_batch.executed_operations[0].is_success());
-}
-
-fn test_shielding_call_with_enclave_self_is_executed() {
-	let (top_pool_author, _state, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
-
-	let sender = funded_pair();
-	let sender_account: AccountId = sender.public().into();
-	let enclave_call_signer = enclave_call_signer(&shielding_key);
-
-	let signed_call = TrustedCall::balance_shield(
-		Identity::Substrate(enclave_call_signer.public().into()),
-		sender_account,
-		1000,
-	)
-	.sign(&enclave_call_signer.into(), 0, &mrenclave, &shard);
-	let trusted_operation =
-		TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_call);
-
-	submit_operation_to_top_pool(
-		top_pool_author.as_ref(),
-		&trusted_operation,
-		&shielding_key,
-		shard,
-		false,
-	)
-	.unwrap();
-
-	// when
-	let executed_batch =
-		execute_trusted_calls(&shard, stf_executor.as_ref(), top_pool_author.as_ref());
-
-	// then
-	assert_eq!(1, executed_batch.executed_operations.len());
-	assert!(executed_batch.executed_operations[0].is_success());
 }
 
 pub fn test_retrieve_events() {

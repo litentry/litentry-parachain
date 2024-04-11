@@ -18,10 +18,11 @@ use http_req::{request::Method, response::Response};
 use itc_rest_client::{
 	error::Error,
 	http_client::{EncodedBody, SendHttpRequest},
+	rest_client::Url,
 	Query, RestPath,
 };
+
 use serde_json::json;
-use url::Url;
 
 #[derive(Default)]
 pub struct MockedHttpClient {

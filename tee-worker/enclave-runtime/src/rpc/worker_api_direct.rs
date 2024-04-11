@@ -39,7 +39,6 @@ use itp_sgx_crypto::{
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
-use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
@@ -50,8 +49,8 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
-use litentry_primitives::DecryptableRequest;
+use litentry_macros::if_development;
+use litentry_primitives::{DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -143,6 +142,7 @@ where
 	let local_top_pool_author = top_pool_author.clone();
 	let local_state = state.clone();
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {
 			Some(s) => s,
 			None =>
@@ -152,7 +152,7 @@ where
 		};
 
 		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
+			Ok((shard_base58, identity_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(id) => id,
 					Err(msg) => {
@@ -161,8 +161,16 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
+
+				let account_id = match Identity::from_hex(identity_hex.as_str()) {
+					Ok(identity) =>
+						if let Some(account_id) = identity.to_account_id() {
+							account_id
+						} else {
+							return Ok(json!(compute_hex_encoded_return_error(
+								"Could not retrieve author_getNextNonce calls due to: invalid identity"
+							)))
+						},
 					Err(msg) => {
 						let error_msg: String = format!(
 							"Could not retrieve author_getNextNonce calls due to: {:?}",
@@ -175,11 +183,11 @@ where
 				match local_state.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
 						let trusted_calls =
-							local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
+							local_top_pool_author.get_pending_trusted_calls_for(shard, &account_id);
 						let pending_tx_count = trusted_calls.len();
 						#[allow(clippy::unwrap_used)]
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = state.execute_with(|| System::account_nonce(&account));
+						let nonce = state.execute_with(|| System::account_nonce(&account_id));
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce.saturating_add(pending_tx_count)).encode(),
@@ -337,7 +345,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if_not_production!({
+	if_development!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
@@ -396,7 +404,7 @@ where
 					let key_hash = match hex::decode(key_hash) {
 						Ok(key_hash) => key_hash,
 						Err(_) =>
-							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+							return Ok(json!(compute_hex_encoded_return_error("decode key error"))),
 					};
 
 					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
@@ -425,6 +433,22 @@ where
 				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
+	});
+
+	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
+			Ok(registry) => {
+				let mut serialized_registry = vec![];
+				for (block_number, mrenclave) in registry.iter() {
+					serialized_registry.push((*block_number, *mrenclave));
+				}
+				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
+					.to_hex()
+			},
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+		};
+		Ok(json!(json_value))
 	});
 
 	// system_health

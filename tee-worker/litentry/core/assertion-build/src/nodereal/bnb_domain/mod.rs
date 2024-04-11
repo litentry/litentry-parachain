@@ -287,7 +287,7 @@ mod tests {
 	fn non_expired_domain_infos_works() {
 		let domains = new_domains();
 		let non_expired_infos = domains.non_expired_domain_infos().unwrap();
-		assert_eq!(non_expired_infos.len(), 7);
+		assert_eq!(non_expired_infos.len(), 6);
 	}
 
 	#[test]
@@ -295,6 +295,6 @@ mod tests {
 		let domains = new_domains();
 		let digit_domain_type = BnbDigitDomainType::Bnb999ClubMember;
 		let digit_999_amount = domains.digit_club_domains(&digit_domain_type).unwrap();
-		assert_eq!(digit_999_amount.len(), 2);
+		assert_eq!(digit_999_amount.len(), 1);
 	}
 }

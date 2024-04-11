@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9174,
+	spec_version: 9175,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -624,11 +624,6 @@ impl pallet_identity::Config for Runtime {
 	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
 }
 
-impl pallet_sudo::Config for Runtime {
-	type RuntimeCall = RuntimeCall;
-	type RuntimeEvent = RuntimeEvent;
-}
-
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
 }
@@ -919,7 +914,6 @@ construct_runtime! {
 
 		// TMP
 		AccountFix: pallet_account_fix = 254,
-		Sudo: pallet_sudo = 255,
 	}
 }
 
@@ -928,8 +922,7 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::Sudo(_) |
-				RuntimeCall::System(_) |
+			RuntimeCall::System(_) |
 				RuntimeCall::Timestamp(_) |
 				RuntimeCall::ParachainSystem(_) |
 				RuntimeCall::ExtrinsicFilter(_) |

@@ -30,7 +30,6 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 # internal dependencies
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
-litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 pallet-teebag = { path = "../../../pallets/teebag", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 
@@ -39,8 +38,8 @@ base64 = { version = "0.13", features = ["alloc"] }
 
 [features]
 default = ["std"]
-production = [
-    "parentchain-primitives/production",
+development = [
+    "parentchain-primitives/development",
 ]
 sgx = [
     "sgx_tstd",

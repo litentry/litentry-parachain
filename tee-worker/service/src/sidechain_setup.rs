@@ -28,7 +28,7 @@ use itp_settings::{
 	files::{SIDECHAIN_PURGE_INTERVAL, SIDECHAIN_PURGE_LIMIT},
 	sidechain::SLOT_DURATION,
 };
-use itp_types::Header;
+use itp_types::{Header, ShardIdentifier};
 use its_consensus_slots::start_slot_worker;
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, start_sidechain_pruning_loop, BlockPruner};
@@ -46,45 +46,30 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 	SidechainStorage: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 {
 	let untrusted_url = config.untrusted_worker_url();
-	println!("[+] Untrusted RPC server listening on {}", &untrusted_url);
+	info!(
+		"starting untrusted RPC server listening to sidechain blocks from peers on {}",
+		&untrusted_url
+	);
+
+	let url = url::Url::parse(&untrusted_url).unwrap();
+
 	let _untrusted_rpc_join_handle = tokio_handle.spawn(async move {
-		itc_rpc_server::run_server(&untrusted_url, enclave, sidechain_storage)
+		itc_rpc_server::run_server(url.authority(), enclave, sidechain_storage)
 			.await
 			.unwrap();
 	});
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage, ParentchainHandler>(
+pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage>(
 	enclave: Arc<Enclave>,
-	register_enclave_xt_header: Header,
-	we_are_primary_validateer: bool,
-	parentchain_handler: Arc<ParentchainHandler>,
 	sidechain_storage: Arc<SidechainStorage>,
-	last_synced_header: &Header,
-	overriden_start_block: u32,
 	fail_mode: Option<String>,
 	fail_at: u64,
-) -> ServiceResult<Header>
+) -> ServiceResult<()>
 where
 	Enclave: EnclaveBase + Sidechain,
 	SidechainStorage: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
-	ParentchainHandler: HandleParentchain,
 {
-	// If we're the first validateer to register, also trigger parentchain block import.
-	let mut updated_header: Option<Header> = None;
-
-	if we_are_primary_validateer {
-		info!(
-			"We're the first validateer to be registered, syncing parentchain blocks until the one we have registered ourselves on."
-		);
-		updated_header = Some(parentchain_handler.sync_and_import_parentchain_until(
-			last_synced_header,
-			&register_enclave_xt_header,
-			overriden_start_block,
-		)?);
-	}
-
 	// ------------------------------------------------------------------------
 	// Initialize sidechain components (has to be AFTER init_parentchain_components()
 	enclave.init_enclave_sidechain_components(fail_mode, fail_at).unwrap();
@@ -118,7 +103,7 @@ where
 		})
 		.map_err(|e| Error::Custom(Box::new(e)))?;
 
-	Ok(updated_header.unwrap_or_else(|| last_synced_header.clone()))
+	Ok(())
 }
 
 /// Execute trusted operations in the enclave.

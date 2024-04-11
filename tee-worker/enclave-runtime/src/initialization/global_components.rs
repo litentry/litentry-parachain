@@ -92,6 +92,7 @@ use its_sidechain::{
 };
 use lazy_static::lazy_static;
 use lc_data_providers::DataProviderConfig;
+use lc_scheduled_enclave::ScheduledEnclaveSeal as EnclaveScheduledEnclaveSeal;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
@@ -175,7 +176,7 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
+	integritee::ExtrinsicFilter,
 	EventCreator<integritee::FilterableEvents>,
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -218,7 +219,7 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_a::TransferToAliceShieldsFundsFilter<target_a::ParentchainExtrinsicParser>,
+	target_a::ExtrinsicFilter,
 	EventCreator<target_a::FilterableEvents>,
 	target_a::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -261,7 +262,7 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_b::TargetBExtrinsicFilter<target_b::ParentchainExtrinsicParser>,
+	target_b::ExtrinsicFilter,
 	EventCreator<target_b::FilterableEvents>,
 	target_b::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -352,6 +353,7 @@ pub type EnclaveSealHandler = SealHandler<
 	EnclaveStateKeyRepository,
 	EnclaveStateHandler,
 	EnclaveLightClientSeal,
+	EnclaveScheduledEnclaveSeal,
 >;
 pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor::Executor<
 	ParentchainBlock,

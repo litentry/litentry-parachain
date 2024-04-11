@@ -6,7 +6,8 @@
         "check-format": "prettier --check .",
         "format": "prettier --write .",
         "pretest": "eslint .",
-        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm"
+        "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm",
+        "check-types": "tsc --noEmit"
     },
     "dependencies": {
         "@litentry/vc-schema-validator": "^0.0.1",
@@ -25,6 +26,7 @@
         "@polkadot/types-support": "^10.9.1",
         "@polkadot/util": "^12.5.1",
         "@polkadot/util-crypto": "^12.5.1",
+        "@solana/web3.js": "^1.91.4",
         "add": "^2.0.6",
         "bitcoinjs-lib": "^6.1.5",
         "bitcoinjs-message": "^2.2.0",
@@ -39,6 +41,7 @@
         "scale-ts": "^0.2.11",
         "sidechain-api": "file:../../client-api/sidechain-api",
         "tiny-secp256k1": "^2.2.3",
+        "tweetnacl": "^1.0.3",
         "websocket-as-promised": "^2.0.1",
         "ws": "^8.8.1",
         "zx": "^7.2.3"

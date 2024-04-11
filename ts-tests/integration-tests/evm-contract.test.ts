@@ -1,9 +1,9 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
-import Web3 from 'web3';
+import { Web3 } from 'web3';
 
 import { compiled } from '../common/utils/compile';
 
@@ -16,7 +16,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
             await signAndSend(extrinsic, context.alice);
         }
 
@@ -71,7 +71,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         );
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 
@@ -80,7 +80,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Normal' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Normal'));
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Normal'));
             await signAndSend(extrinsic, context.alice);
         }
 
@@ -102,7 +102,6 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         // Create deploy function
         const deploy = async (accountFrom: any) => {
             console.log(`Attempting to deploy from account ${accountFrom.address}`);
-
             // Create contract instance
             const hello = new web3.eth.Contract(abi);
 
@@ -117,6 +116,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                 {
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    gasPrice: await web3.eth.getGasPrice(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
                 },
                 accountFrom.privateKey
             );
@@ -134,13 +135,13 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         }
 
         // Test get message contract method
-        const sayMessage = async (contractAddress: string) => {
+        const sayMessage = async (contractAddress: string): Promise<string> => {
             // 4. Create contract instance
             const hello = new web3.eth.Contract(abi, contractAddress);
             console.log(`Making a call to contract at address: ${contractAddress}`);
 
             // 6. Call contract
-            const data = await hello.methods.sayMessage().call();
+            const data: string = await hello.methods.sayMessage().call();
 
             console.log(`The current message is: ${data}`);
 
@@ -166,6 +167,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
                     to: contractAddress,
                     data: helloTx.encodeABI(),
                     gas: await helloTx.estimateGas(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
+                    gasPrice: await web3.eth.getGasPrice(),
                 },
                 accountFrom.privateKey
             );
@@ -180,7 +183,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 });

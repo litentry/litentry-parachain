@@ -79,6 +79,7 @@ core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
 pallet-asset-manager = { workspace = true }
 pallet-bitacross = { workspace = true }
+pallet-bitacross-mimic = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
 pallet-drop3 = { workspace = true }
@@ -253,6 +254,7 @@ std = [
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
     "pallet-bitacross/std",
+    "pallet-bitacross-mimic/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -281,6 +283,7 @@ try-runtime = [
     "pallet-identity/try-runtime",
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
+    "pallet-group/try-runtime",
     "pallet-identity-management/try-runtime",
     "pallet-membership/try-runtime",
     "pallet-multisig/try-runtime",
@@ -302,4 +305,5 @@ try-runtime = [
     "parachain-info/try-runtime",
     "pallet-account-fix/try-runtime",
     "pallet-bitacross/try-runtime",
+    "pallet-bitacross-mimic/try-runtime",
 ]

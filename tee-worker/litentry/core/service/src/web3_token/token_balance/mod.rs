@@ -28,6 +28,7 @@ mod bnb_balance;
 mod common;
 mod eth_balance;
 mod lit_balance;
+mod sol_balance;
 
 pub fn get_token_balance(
 	token_type: Web3TokenType,
@@ -38,6 +39,7 @@ pub fn get_token_balance(
 		Web3TokenType::Bnb => bnb_balance::get_balance(addresses, data_provider_config),
 		Web3TokenType::Eth => eth_balance::get_balance(addresses, data_provider_config),
 		Web3TokenType::Lit => lit_balance::get_balance(addresses, data_provider_config),
+		Web3TokenType::Sol => sol_balance::get_balance(addresses, data_provider_config),
 		_ => common::get_balance_from_evm(addresses, token_type, data_provider_config),
 	}
 }

@@ -210,6 +210,9 @@ pub(crate) fn init_enclave(
 		getter_executor,
 		shielding_key_repository,
 		ocall_api.clone(),
+		signing_key_repository.clone(),
+		bitcoin_key_repository,
+		ethereum_key_repository,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -286,6 +289,10 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
 	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
 
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
+
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
@@ -305,14 +312,6 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		relayer_registry_lookup,
 	);
 	run_bit_across_handler_runner(Arc::new(stf_task_context));
-	Ok(())
-}
-
-pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
-	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 	Ok(())
 }
 

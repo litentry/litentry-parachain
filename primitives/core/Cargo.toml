@@ -40,6 +40,6 @@ std = [
     "pallet-evm/std",
     "litentry-hex-utils/std",
 ]
-production = [
-    "litentry-macros/production",
+development = [
+    "litentry-macros/development",
 ]
