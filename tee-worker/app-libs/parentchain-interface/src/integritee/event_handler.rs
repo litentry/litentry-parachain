@@ -20,12 +20,15 @@ pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
-use itp_types::parentchain::{
-	events::{
-		ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
-		ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+use itp_types::{
+	parentchain::{
+		events::{
+			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
+			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+		},
+		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
 	},
-	AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+	RsaRequest,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::{
@@ -181,6 +184,15 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		executor: &Executor,
+		request: &RsaRequest,
+	) -> Result<(), Error> {
+		executor.submit_trusted_call(request.shard, request.payload.to_vec());
+
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -271,6 +283,17 @@ where
 					Self::remove_scheduled_enclave(event.worker_type, event.sidechain_block_number)
 				})
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
+		}
+
+		if let Ok(events) = events.get_events::<OpaqueTaskPosted>() {
+			debug!("Handling OpaqueTaskPosted events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found OpaqueTaskPosted event: {:?}", event);
+					Self::post_opaque_task(executor, &event.request)
+				})
+				.map_err(|_| ParentchainEventProcessingError::OpaqueTaskPostedFailure)?;
 		}
 
 		Ok(())
