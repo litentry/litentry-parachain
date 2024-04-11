@@ -106,10 +106,9 @@ func main() {
 	//generate random aes key :)
 	aesKey := []byte("AES256Key-1234123412341234123412")
 	prehashedEthereumMessage := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
-	merkleRootHash := [32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
 
 	//** prepare signed direct call
-	directCall := prepareSignBitcoinTaprootSpendableDirectCall(identity, aesKey, prehashedEthereumMessage, merkleRootHash)
+	directCall := prepareSignEthereumDirectCall(identity, aesKey, prehashedEthereumMessage)
 	encodedDirectCall := types.Encode("DirectCall", directCall)
 
 	encodedMrEnclave := types.Encode("[u8; 32]", getStateMrEnclaveResult)
@@ -164,8 +163,8 @@ func main() {
 	fmt.Println(decryptedResult)
 
 	if _, ok := signStatus["Error"]; ok {
-		signBitcoinError := decodeSignBitcoinError(decryptedResult)
-		fmt.Println("Got SignBitcoinError")
+		signBitcoinError := decodeSignEthereumError(decryptedResult)
+		fmt.Println("Got SignEthereumError")
 		fmt.Println(signBitcoinError)
 	} else {
 		signature := decryptedResult
