@@ -27,7 +27,7 @@ const VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS: &str =
 const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount list";
 
 // Keep all name in lowercase here by purpose
-const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "MMSS", "long", "cats", "BTCs"];
+const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "mmss", "long", "cats", "btcs"];
 const ORDI_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0];
 const SATS_TOKEN_BALANCE_RANGE: [f64; 8] = [
 	0.0,
@@ -99,9 +99,9 @@ fn collect_brc20_token_balance(response_items: &[ResponseItem]) -> Vec<Brc20Toke
 
 	response_items
 		.iter()
-		.filter(|&item| BRC20_TOKENS.contains(&item.tick.as_str()))
+		.filter(|&item| BRC20_TOKENS.contains(&item.tick.to_lowercase().as_str()))
 		.for_each(|item| {
-			let token = tick_to_brctoken(&item.tick);
+			let token = tick_to_brctoken(&item.tick.to_lowercase().as_str());
 			let balance: f64 = item.overall_balance.parse().unwrap_or(0.0);
 
 			pairs.push(Brc20TokenBalance { token, balance });
@@ -160,15 +160,16 @@ fn update_assertion(token: &BRC20Token, balance: f64, credential: &mut Credentia
 	credential.credential_subject.assertions.push(assertion);
 }
 
+// Keep consistent with BRC20_TOKENS, all in lowercase letters.
 fn tick_to_brctoken(tick: &str) -> BRC20Token {
 	match tick {
 		"ordi" => BRC20Token::Ordi,
 		"sats" => BRC20Token::Sats,
 		"rats" => BRC20Token::Rats,
-		"MMSS" => BRC20Token::Mmss,
+		"mmss" => BRC20Token::Mmss,
 		"long" => BRC20Token::Long,
 		"cats" => BRC20Token::Cats,
-		"BTCs" => BRC20Token::Btcs,
+		"btcs" => BRC20Token::Btcs,
 		_ => BRC20Token::Unknown,
 	}
 }
@@ -249,15 +250,25 @@ mod tests {
 
 	#[test]
 	fn collect_brc20_token_balance_have_items_works() {
-		let response_items = vec![ResponseItem {
-			tick: "ordi".to_string(),
-			address: "0x01".to_string(),
-			overall_balance: "0.000000000000020000".to_string(),
-			transferable_balance: "0.000000000000000000".to_string(),
-			available_balance: "0.000000000000020000".to_string(),
-		}];
+		let response_items = vec![
+			ResponseItem {
+				tick: "ordi".to_string(),
+				address: "0x01".to_string(),
+				overall_balance: "0.000000000000020000".to_string(),
+				transferable_balance: "0.000000000000000000".to_string(),
+				available_balance: "0.000000000000020000".to_string(),
+			},
+			ResponseItem {
+				tick: "MMSS".to_string(),
+				address: "0x01".to_string(),
+				overall_balance: "0.000000000000020000".to_string(),
+				transferable_balance: "0.000000000000000000".to_string(),
+				available_balance: "0.000000000000020000".to_string(),
+			},
+		];
 		let pairs = collect_brc20_token_balance(&response_items);
-		assert_eq!(pairs.len(), 1);
+		assert_eq!(pairs.len(), 2);
 		assert_eq!(pairs[0].token, BRC20Token::Ordi);
+		assert_eq!(pairs[1].token, BRC20Token::Mmss);
 	}
 }
