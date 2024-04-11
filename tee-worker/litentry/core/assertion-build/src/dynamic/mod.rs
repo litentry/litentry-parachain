@@ -219,7 +219,9 @@ fn prepare_memory() -> MemoryVicinity {
 #[cfg(test)]
 pub mod tests {
 	use crate::dynamic::{
-		build, identity_with_networks_to_token, repository::InMemorySmartContractRepo, U256,
+		build, execute_smart_contract, identity_with_networks_to_token,
+		repository::{InMemorySmartContractRepo, SmartContractRepository},
+		U256,
 	};
 	use ethabi::Token;
 	use itp_types::Assertion;
@@ -283,7 +285,13 @@ pub mod tests {
 		// given
 		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
 
-		let substrate_identity = Identity::Substrate(AccountId32::new([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]).into());
+		let substrate_identity = Identity::Substrate(
+			AccountId32::new([
+				212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44,
+				133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
+			])
+			.into(),
+		);
 
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -307,7 +315,6 @@ pub mod tests {
 		// then
 		assert!(credential.credential_subject.values[0]);
 	}
-
 
 	#[test]
 	pub fn test_a1_true() {

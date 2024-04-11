@@ -20,18 +20,20 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::dynamic::precompiles::http_get::{http_get_bool, http_get_i64, http_get_string};
+use crate::dynamic::precompiles::{
+	http_get::{http_get_bool, http_get_i64, http_get_string},
+	to_hex::to_hex,
+};
 use evm::executor::stack::{
 	IsPrecompileResult, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileSet,
 };
 use itc_rest_client::http_client::HttpClient;
 use primitive_types::H160;
 use std::result::Result as StdResult;
-use crate::dynamic::precompiles::to_string::bytes_to_string;
 
 mod http_get;
-mod to_string;
 mod macros;
+mod to_hex;
 
 #[cfg(test)]
 mod mocks;
@@ -56,7 +58,7 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1000) => Some(http_get_i64(handle.input().to_vec(), client)),
 			a if a == hash(1001) => Some(http_get_bool(handle.input().to_vec(), client)),
 			a if a == hash(1002) => Some(http_get_string(handle.input().to_vec(), client)),
-			a if a == hash(1051) => Some(bytes_to_string(handle.input().to_vec())),
+			a if a == hash(1051) => Some(to_hex(handle.input().to_vec())),
 			_ => None,
 		}
 	}

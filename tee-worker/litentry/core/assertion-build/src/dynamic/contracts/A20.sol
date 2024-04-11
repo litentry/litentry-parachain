@@ -24,14 +24,14 @@ contract A20 is DynamicAssertion {
         );
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
         bool result = false;
-        string memory hex_encoded;
 
         for (uint256 i = 0; i < identities.length; i++) {
             if (is_web3(identities[i])) {
-                hex_encoded = toString(identities[i].value);
+                string memory res = toHex(identities[i].value);
+
                 string memory url = concatenateStrings(
                     "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
-                    hex_encoded
+                    res
                 );
                 string memory jsonPointer = "/hasJoined";
                 result = GetBool(url, jsonPointer);

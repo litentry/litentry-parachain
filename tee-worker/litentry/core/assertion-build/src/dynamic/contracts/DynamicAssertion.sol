@@ -117,11 +117,10 @@ abstract contract DynamicAssertion {
         return string(concatenatedBytes);
     }
 
-    function toString(bytes memory bytes_value)
+    function toHex(bytes memory bytes_value)
     internal
-    returns (string memory)
+    returns (string memory returnVal)
     {
-        string memory value;
         bytes memory encoded = abi.encode(bytes_value);
         uint256 encoded_len = encoded.length;
 
@@ -134,18 +133,14 @@ abstract contract DynamicAssertion {
                     0,
                     add(encoded, 0x20),
                     encoded_len,
-                    memPtr,
-                    0x20
+                    returnVal,
+                //130 bytes
+                    0x82
                 )
             ) {
                 revert(0, 0)
             }
-        // advance free memory pointer
-            mstore(0x40, add(memPtr, 0x20))
-            value := mload(memPtr)
         }
-
-        return (value);
     }
 
     function from(
