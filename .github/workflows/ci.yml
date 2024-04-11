@@ -827,14 +827,14 @@ jobs:
       - name: Collect docker logs if test fails
         continue-on-error: true
         uses: jwalton/gh-docker-logs@v2
-        if: failure()
+        # if: failure()
         with:
           tail: all
           dest: docker-logs
 
       - name: Upload docker logs if test fails
         uses: actions/upload-artifact@v4
-        if: failure()
+        # if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
           path: docker-logs
