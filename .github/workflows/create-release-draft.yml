@@ -286,7 +286,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   ## test again the built docker image ##
   run-ts-tests:
