@@ -776,6 +776,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - test_name: lit-di-bitcoin-identity-multiworker-test
           - test_name: lit-di-evm-identity-multiworker-test
           - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
