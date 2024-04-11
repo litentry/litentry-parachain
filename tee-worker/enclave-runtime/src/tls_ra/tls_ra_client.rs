@@ -26,7 +26,6 @@ use crate::{
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
-	shard_config::init_shard_config,
 	tls_ra::{seal_handler::SealStateAndKeys, ClientProvisioningRequest},
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -253,11 +252,6 @@ pub unsafe extern "C" fn request_state_provisioning(
 		return e.into()
 	};
 
-	// fixme: this needs only be called in sidechain mode. no harm though
-	if let Err(e) = init_shard_config(shard) {
-		error!("touch shard error: {:?}", e);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
-	}
 	sgx_status_t::SGX_SUCCESS
 }
 

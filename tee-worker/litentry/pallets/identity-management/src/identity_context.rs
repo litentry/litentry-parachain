@@ -94,7 +94,7 @@ pub fn get_eligible_identities<T: Config>(
 		.iter()
 		.filter_map(|item| {
 			if item.1.is_active() {
-				let mut networks = item.1.web3networks.to_vec();
+				let mut networks = item.0.default_web3networks();
 				// filter out identities whose web3networks are not supported by this specific `assertion`.
 				// We do it here before every request sending because:
 				// - it's a common step for all assertion buildings, for those assertions which only
