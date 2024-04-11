@@ -122,6 +122,7 @@ pub enum ParentchainEventProcessingError {
 	VCRequestedFailure,
 	ScheduledEnclaveSetFailure,
 	ScheduledEnclaveRemovedFailure,
+	OpaqueTaskPostedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -141,6 +142,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
 			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
 				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
+			ParentchainEventProcessingError::OpaqueTaskPostedFailure =>
+				"Parentchain Event Processing Error: OpaqueTaskPostedFailure",
 		};
 		write!(f, "{}", message)
 	}
