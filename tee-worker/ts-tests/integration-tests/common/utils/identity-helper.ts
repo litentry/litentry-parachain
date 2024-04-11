@@ -54,7 +54,7 @@ export async function buildValidations(
     signerIdentitity: CorePrimitivesIdentity,
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin',
+    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'solana',
     signer?: Signer
 ): Promise<LitentryValidationData> {
     const validationNonce = startingSidechainNonce++;
@@ -129,6 +129,25 @@ export async function buildValidations(
         };
 
         return context.api.createType('LitentryValidationData', twitterValidationData);
+    }
+
+    if (network === 'solana') {
+        const solanaValidationData = {
+            Web3Validation: {
+                Solana: {
+                    message: '' as HexString,
+                    signature: {
+                        Ed25519: '' as HexString,
+                    },
+                },
+            },
+        };
+        console.log('post verification msg to solana: ', msg);
+        solanaValidationData.Web3Validation.Solana.message = msg;
+        const solanaSignature = await signer!.sign(msg);
+        solanaValidationData!.Web3Validation.Solana.signature.Ed25519 = u8aToHex(solanaSignature);
+
+        return context.api.createType('LitentryValidationData', solanaValidationData);
     }
 
     throw new Error(`[buildValidation]: Unsupported network ${network}.`);
