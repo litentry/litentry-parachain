@@ -812,14 +812,14 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration multi worker test ${{ matrix.test_name }}
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        # if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop integration multi worker docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        # if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
