@@ -692,14 +692,19 @@ jobs:
         include:
           # Litentry
           - test_name: lit-di-substrate-identity-test
+            overridden_test_name: '[substrate] tee-single-worker-test(lit-di-identity)'
           - test_name: lit-di-evm-identity-test
+            overridden_test_name: '[evm] tee-single-worker-test(lit-di-identity)'
           - test_name: lit-di-bitcoin-identity-test
+            overridden_test_name: '[bitcoin] tee-single-worker-test(lit-di-identity)'
           - test_name: lit-di-solana-identity-test
+            overridden_test_name: '[solana] tee-single-worker-test(lit-di-identity)'
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
+    name: ${{ matrix.overridden_test_name || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -777,13 +782,18 @@ jobs:
       matrix:
         include:
           - test_name: lit-di-bitcoin-identity-multiworker-test
+            overridden_test_name: '[bitcoin] tee-multi-worker-test(lit-di-identity)'
           - test_name: lit-di-evm-identity-multiworker-test
+            overridden_test_name: '[evm] tee-multi-worker-test(lit-di-identity)'
           - test_name: lit-di-solana-identity-multiworker-test
+            overridden_test_name: '[solana] tee-multi-worker-test(lit-di-identity)'
           - test_name: lit-di-substrate-identity-multiworker-test
+            overridden_test_name: '[substrate] tee-multi-worker-test(lit-di-identity)'
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
+    name: ${{ matrix.overridden_test_name || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
