@@ -333,6 +333,9 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Clean up disk
@@ -355,6 +358,9 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
