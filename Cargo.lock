@@ -7712,7 +7712,7 @@ dependencies = [
 name = "pallet-parentchain"
 version = "0.9.0"
 dependencies = [
- "env_logger 0.10.2",
+ "env_logger 0.9.3",
  "frame-support",
  "frame-system",
  "pallet-balances",
