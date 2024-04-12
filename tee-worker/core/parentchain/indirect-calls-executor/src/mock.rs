@@ -15,123 +15,17 @@ use itp_node_api::{
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::TrustedCallSignedMock;
 use itp_types::{
-	parentchain::{ExtrinsicStatus, FilterEvents, HandleParentchainEvents},
+	parentchain::{
+		events::{
+			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
+			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+		},
+		ExtrinsicStatus, FilterEvents, HandleParentchainEvents,
+	},
 	Address, RsaRequest, H256,
 };
 use log::*;
 use std::vec::Vec;
-
-/// Default filter we use for the Integritee-Parachain.
-pub struct MockExtrinsicFilter<ExtrinsicParser> {
-	_phantom: PhantomData<ExtrinsicParser>,
-}
-
-impl<ExtrinsicParser, NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata>
-	for MockExtrinsicFilter<ExtrinsicParser>
-where
-	ExtrinsicParser: ParseExtrinsic,
-{
-	type Output = IndirectCall;
-	type ParseParentchainMetadata = ExtrinsicParser;
-
-	fn filter_into_from_metadata(
-		encoded_data: &[u8],
-		metadata: &NodeMetadata,
-	) -> Option<Self::Output> {
-		let call_mut = &mut &encoded_data[..];
-
-		// Todo: the filter should not need to parse, only filter. This should directly be configured
-		// in the indirect executor.
-		let xt = match Self::ParseParentchainMetadata::parse(call_mut) {
-			Ok(xt) => xt,
-			Err(e) => {
-				log::error!("[InvokeFilter] Could not parse parentchain extrinsic: {:?}", e);
-				return None
-			},
-		};
-		let index = xt.call_index;
-		let call_args = &mut &xt.call_args[..];
-		log::trace!("[AndInvokeFilter] attempting to execute indirect call with index {:?}", index);
-		if index == metadata.post_opaque_task_call_indexes().ok()? {
-			log::debug!("executing invoke call");
-			let args = InvokeArgs::decode(call_args).unwrap();
-			Some(IndirectCall::Invoke(args))
-		} else {
-			None
-		}
-	}
-}
-pub struct ExtrinsicParser<SignedExtra> {
-	_phantom: PhantomData<SignedExtra>,
-}
-
-/// Parses the extrinsics corresponding to the parentchain.
-pub type MockParentchainExtrinsicParser = ExtrinsicParser<ParentchainSignedExtra>;
-
-/// Partially interpreted extrinsic containing the `signature` and the `call_index` whereas
-/// the `call_args` remain in encoded form.
-///
-/// Intended for usage, where the actual `call_args` form is unknown.
-pub struct SemiOpaqueExtrinsic<'a> {
-	/// Signature of the Extrinsic.
-	pub signature: Signature,
-	/// Call index of the dispatchable.
-	pub call_index: CallIndex,
-	/// Encoded arguments of the dispatchable corresponding to the `call_index`.
-	pub call_args: &'a [u8],
-}
-
-/// Trait to extract signature and call indexes of an encoded [UncheckedExtrinsicV4].
-pub trait ParseExtrinsic {
-	/// Signed extra of the extrinsic.
-	type SignedExtra;
-
-	fn parse(encoded_call: &[u8]) -> Result<SemiOpaqueExtrinsic, codec::Error>;
-}
-
-impl<SignedExtra> ParseExtrinsic for ExtrinsicParser<SignedExtra>
-where
-	SignedExtra: Decode + Encode,
-{
-	type SignedExtra = SignedExtra;
-
-	/// Extract a call index of an encoded call.
-	fn parse(encoded_call: &[u8]) -> Result<SemiOpaqueExtrinsic, codec::Error> {
-		let call_mut = &mut &encoded_call[..];
-
-		// `()` is a trick to stop decoding after the call index. So the remaining bytes
-		//  of `call` after decoding only contain the parentchain's dispatchable's arguments.
-		let xt = UncheckedExtrinsicV4::<
-            Address,
-            (CallIndex, ()),
-            PairSignature,
-            Self::SignedExtra,
-        >::decode(call_mut)?;
-
-		Ok(SemiOpaqueExtrinsic {
-			signature: xt.signature.unwrap().1,
-			call_index: xt.function.0,
-			call_args: call_mut,
-		})
-	}
-}
-/// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub enum IndirectCall {
-	Invoke(InvokeArgs),
-}
-
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for IndirectCall
-{
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> ICResult<()> {
-		trace!("dispatching indirect call {:?}", self);
-		match self {
-			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, args),
-		}
-	}
-}
 
 pub struct TestEventCreator;
 
@@ -155,7 +49,52 @@ impl FilterEvents for MockEvents {
 		Ok(Vec::from([ExtrinsicStatus::Success]))
 	}
 
-	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error> {
+	fn get_opaque_task_posted_events(
+		&self,
+	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error> {
+		let opaque_task_posted_event =
+			OpaqueTaskPosted { request: RsaRequest::new(H256::default(), Vec::from([0u8; 32])) };
+		Ok(Vec::from([opaque_task_posted_event]))
+	}
+
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
+	{
+		Ok(Vec::new())
+	}
+
+	fn get_vc_requested_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> core::result::Result<Vec<DeactivateIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_activate_identity_events(
+		&self,
+	) -> core::result::Result<Vec<ActivateIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_set_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
+	{
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
+		Self::Error,
+	> {
 		Ok(Vec::new())
 	}
 }
@@ -171,22 +110,6 @@ where
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
 	) -> core::result::Result<Vec<H256>, Error> {
-		Ok(Vec::new())
-	}
-}
-
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct InvokeArgs {
-	request: RsaRequest,
-}
-
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for InvokeArgs
-{
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {
-		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
-		executor.submit_trusted_call(self.request.shard(), self.request.payload().to_vec());
-		Ok(())
+		Ok(Vec::from([H256::default()]))
 	}
 }
