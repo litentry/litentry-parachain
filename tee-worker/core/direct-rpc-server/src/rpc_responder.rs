@@ -75,7 +75,7 @@ where
 		hash: Hash,
 		status_update: TrustedOperationStatus,
 	) -> DirectRpcResult<()> {
-		debug!("updating status event, hash: {}, status: {:?}", hash.to_hex(), status_update);
+		info!("updating status event, hash: {}, status: {:?}", hash.to_hex(), status_update);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response, force_wait) = self
@@ -160,7 +160,9 @@ where
 	) -> DirectRpcResult<()> {
 		info!(
 			"updating connection state for hash {:?}: encoded_value {:?}, force_wait: {:?}",
-			hash, encoded_value, force_wait
+			hash,
+			encoded_value.to_hex(),
+			force_wait
 		);
 
 		// withdraw removes it from the registry
@@ -190,7 +192,9 @@ where
 	) -> DirectRpcResult<()> {
 		debug!(
 			"Send out new rpc response, hash: {:?}, encoded_value: {:?}, watch: {:?}",
-			hash, encoded_value, do_watch
+			hash,
+			encoded_value.to_hex(),
+			do_watch
 		);
 
 		// withdraw removes it from the registry
