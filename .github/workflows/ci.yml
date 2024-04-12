@@ -270,6 +270,9 @@ jobs:
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain,development -- -D warnings
           echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm,development -- -D warnings
+          echo "::endgroup::"          
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker,development -- -D warnings
