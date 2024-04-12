@@ -94,7 +94,6 @@ pub trait IdentifyParentchain {
 
 pub trait FilterEvents {
 	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
 	fn get_link_identity_events(
 		&self,

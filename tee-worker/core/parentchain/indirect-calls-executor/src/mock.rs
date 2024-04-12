@@ -45,9 +45,6 @@ pub struct MockEvents;
 
 impl FilterEvents for MockEvents {
 	type Error = ();
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(Vec::from([ExtrinsicStatus::Success]))
-	}
 
 	fn get_opaque_task_posted_events(
 		&self,

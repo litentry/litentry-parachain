@@ -51,28 +51,6 @@ impl From<Events<H256>> for FilterableEvents {
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
 
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.filter_map(|ev| {
-				ev.and_then(|ev| {
-					if (ev.as_event::<ExtrinsicSuccess>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Success))
-					}
-
-					if (ev.as_event::<ExtrinsicFailed>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Failed))
-					}
-
-					Ok(None)
-				})
-				.ok()
-				.flatten()
-			})
-			.collect())
-	}
-
 	fn get_link_identity_events(
 		&self,
 	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
