@@ -767,6 +767,7 @@ jobs:
       matrix:
         include:
           - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
