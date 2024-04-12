@@ -60,8 +60,8 @@ use itp_top_pool_author::{
 	traits::AuthorApi,
 };
 use itp_types::{
-	parentchain::{Address, ParentchainId},
-	Block, RsaRequest, ShardIdentifier, H256,
+	parentchain::{events::OpaqueTaskPosted, Address, ParentchainId},
+	AccountId, Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier, H256,
 };
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
@@ -70,6 +70,7 @@ use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
 use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 use std::{sync::Arc, vec::Vec};
+
 pub fn process_indirect_call_in_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 	info!("Setting up test.");
@@ -108,11 +109,8 @@ pub fn process_indirect_call_in_top_pool() {
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }
 
-/*
-
 // TODO: use our trusted call for testing - see P-494
-
-pub fn submit_shielding_call_to_top_pool() {
+pub fn submit_opaque_call_to_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
@@ -154,7 +152,6 @@ pub fn submit_shielding_call_to_top_pool() {
 		_,
 		_,
 		_,
-		integritee::ExtrinsicFilter,
 		TestEventCreator,
 		integritee::ParentchainEventHandler,
 		TrustedCallSigned,
@@ -167,10 +164,14 @@ pub fn submit_shielding_call_to_top_pool() {
 		ParentchainId::Litentry,
 	);
 
-	let block_with_shielding_call = create_opaque_call_extrinsic(shard_id, &shielding_key);
+	let block_with_shielding_call =
+		create_post_opaque_task_call_extrinsic(shard_id, &shielding_key);
+	let opaque_task_posted_event =
+		OpaqueTaskPosted { request: RsaRequest::new(H256::default(), vec![0u8; 32]) };
+	let events = vec![opaque_task_posted_event.encode()].encode();
 
 	let _ = indirect_calls_executor
-		.execute_indirect_calls_in_extrinsics(&block_with_shielding_call, &Vec::new())
+		.execute_indirect_calls_in_block(&block_with_shielding_call, events.as_slice())
 		.unwrap();
 
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
@@ -179,7 +180,6 @@ pub fn submit_shielding_call_to_top_pool() {
 	let trusted_call = trusted_operation.to_call().unwrap();
 	assert!(trusted_call.verify_signature(&mr_enclave.m, &shard_id));
 }
-*/
 
 fn encrypted_indirect_call<
 	AttestationApi: EnclaveAttestationOCallApi,
@@ -203,11 +203,12 @@ fn encrypted_indirect_call<
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
 }
 
-/*
-fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
-	_shard: ShardIdentifier,
-	_shielding_key: &ShieldingKey,
+fn create_post_opaque_task_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
+	shard: ShardIdentifier,
+	shielding_key: &ShieldingKey,
 ) -> Block {
+	let target_account = shielding_key.encrypt(&AccountId::new([2u8; 32]).encode()).unwrap();
+	let request = RsaRequest::new(shard, Vec::from([0u8; 32]));
 	let test_signer = ed25519::Pair::from_seed(b"33345678901234567890123456789012");
 	let signature = test_signer.sign(&[0u8]);
 
@@ -221,10 +222,10 @@ fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 
 	let dummy_node_metadata = NodeMetadataMock::new();
 
-	let call_index = dummy_node_metadata.post_opaque_task_call_indexes().unwrap();
+	let post_opaque_task_indexes = dummy_node_metadata.post_opaque_task_call_indexes().unwrap();
 	let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
-		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
-			(call_index, RsaRequest::default()),
+		ParentchainUncheckedExtrinsic::<PostOpaqueTaskFn>::new_signed(
+			(post_opaque_task_indexes, request),
 			Address::Address32([1u8; 32]),
 			MultiSignature::Ed25519(signature),
 			default_extra_for_test.signed_extra(),
@@ -238,5 +239,3 @@ fn create_opaque_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 		.with_extrinsics(vec![opaque_extrinsic])
 		.build()
 }
-
-*/
