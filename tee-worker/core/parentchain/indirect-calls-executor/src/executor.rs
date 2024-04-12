@@ -42,7 +42,6 @@ use itp_types::{
 	OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
-use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{fmt::Debug, sync::Arc, vec::Vec};
 
@@ -147,7 +146,6 @@ impl<
 
 		trace!("Scanning block {:?} for relevant events", block_number);
 
-		let events_count = events.len();
 		let events = self
 			.node_meta_data_provider
 			.get_from_metadata(|metadata| {
@@ -155,29 +153,27 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		ParentchainEventHandler::handle_events(self, events)?;
+		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
 
-		debug!("successfully processed {} indirect invocations", events_count);
+		debug!("successfully processed {} indirect invocations", processed_events.len());
 
-		// TODO: what to pass to create_processed_parentchain_block_call??
-		// if self.parentchain_id == ParentchainId::Litentry {
-		// Include a processed parentchain block confirmation for each block.
-		// Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
-		// 	block_hash,
-		// 	executed_calls,
-		// 	block_number,
-		// )?))
-		// } else {
-		// fixme: send other type of confirmation here:  https://github.com/integritee-network/worker/issues/1567
-		// Ok(None)
-		// }
-		Ok(None)
+		if self.parentchain_id == ParentchainId::Litentry {
+			// Include a processed parentchain block confirmation for each block.
+			Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
+				block_hash,
+				processed_events,
+				block_number,
+			)?))
+		} else {
+			// fixme: send other type of confirmation here:  https://github.com/integritee-network/worker/issues/1567
+			Ok(None)
+		}
 	}
 
 	fn create_processed_parentchain_block_call<ParentchainBlock>(
 		&self,
 		block_hash: H256,
-		extrinsics: Vec<H256>,
+		events: Vec<H256>,
 		block_number: <<ParentchainBlock as ParentchainBlockTrait>::Header as Header>::Number,
 	) -> Result<OpaqueCall>
 	where
@@ -186,7 +182,7 @@ impl<
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
 			meta_data.parentchain_block_processed_call_indexes()
 		})??;
-		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
+		let root: H256 = merkle_root::<Keccak256, _>(events);
 		trace!("prepared parentchain_block_processed() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
 		// Litentry: we don't include `shard` in the extrinsic parameter to be backwards compatible,
 		//           however, we should not forget it in case we need it later
@@ -255,10 +251,6 @@ impl<
 	) -> Result<TCS> {
 		Ok(self.stf_enclave_signer.sign_call_with_self(trusted_call, shard)?)
 	}
-}
-
-pub fn hash_of<T: Encode>(xt: &T) -> H256 {
-	blake2_256(&xt.encode()).into()
 }
 
 #[cfg(test)]
