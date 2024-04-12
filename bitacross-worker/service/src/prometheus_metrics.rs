@@ -50,9 +50,6 @@ lazy_static! {
 	static ref ENCLAVE_ACCOUNT_FREE_BALANCE: IntGauge =
 		register_int_gauge!("litentry_worker_enclave_account_free_balance", "Free balance of the enclave account")
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_HEIGHT: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_sidechain_block_height", "Enclave sidechain block height")
-			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
 		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
 			.unwrap();
@@ -70,21 +67,6 @@ lazy_static! {
 			.unwrap();
 	static ref ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME: Histogram =
 		register_histogram!("litentry_worker_enclave_parentchain_block_import_time", "Time taken to import parentchain block")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_block_import_time", "Time taken to import sidechain block")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_PREPARE_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_prepare_time", "Time taken to prepare sidechain extrinsics for execution")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_STF_EXECUTION_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_stf_execution_time", "Time taken to execute sidechain extrinsics")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_block_composition_time", "Time taken to compose sidechain block")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_block_broadcasting_time", "Time taken to broadcast sidechain block")
 			.unwrap();
 
 }
@@ -191,12 +173,6 @@ pub struct EnclaveMetricsReceiver;
 impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	fn receive_enclave_metric(&self, metric: EnclaveMetric) -> ServiceResult<()> {
 		match metric {
-			EnclaveMetric::SetSidechainBlockHeight(h) => {
-				ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.set(h as i64);
-			},
-			EnclaveMetric::TopPoolSizeSet(pool_size) => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.set(pool_size as i64);
-			},
 			EnclaveMetric::TopPoolSizeIncrement => {
 				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.inc();
 			},

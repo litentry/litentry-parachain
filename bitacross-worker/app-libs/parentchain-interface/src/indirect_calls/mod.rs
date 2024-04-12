@@ -19,10 +19,8 @@ pub mod invoke;
 pub mod litentry;
 pub mod shield_funds;
 pub mod timestamp_set;
-pub mod transfer_to_alice_shields_funds;
 
 pub use invoke::InvokeArgs;
 pub use litentry::scheduled_enclave::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs};
 pub use shield_funds::ShieldFundsArgs;
 pub use timestamp_set::TimestampSetArgs;
-pub use transfer_to_alice_shields_funds::{TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID};

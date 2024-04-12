@@ -21,7 +21,7 @@ use itc_parentchain::primitives::{
 	ParentchainId, ParentchainInitParams,
 	ParentchainInitParams::{Parachain, Solochain},
 };
-use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
+use itp_enclave_api::{enclave_base::EnclaveBase, EnclaveResult};
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_stf_interface::ShardCreationInfo;
@@ -129,22 +129,5 @@ impl EnclaveBase for EnclaveMock {
 
 	fn init_wallets(&self, _base_dir: &str) -> EnclaveResult<()> {
 		unimplemented!()
-	}
-}
-
-impl Sidechain for EnclaveMock {
-	fn sync_parentchain<ParentchainBlock: Encode>(
-		&self,
-		_blocks: &[sp_runtime::generic::SignedBlock<ParentchainBlock>],
-		_events: &[Vec<u8>],
-		_events_proofs: &[StorageProof],
-		_: &ParentchainId,
-		_: bool,
-	) -> EnclaveResult<()> {
-		Ok(())
-	}
-
-	fn ignore_parentchain_block_import_validation_until(&self, _until: u32) -> EnclaveResult<()> {
-		todo!()
 	}
 }

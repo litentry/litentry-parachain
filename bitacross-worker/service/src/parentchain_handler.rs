@@ -25,7 +25,7 @@ use itc_parentchain::{
 	primitives::{ParentchainId, ParentchainInitParams},
 };
 use itp_api_client_types::ParentchainApi;
-use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
+use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
 use itp_time_utils::duration_now;
@@ -150,7 +150,7 @@ where
 
 impl<EnclaveApi> HandleParentchain for ParentchainHandler<ParentchainApi, EnclaveApi>
 where
-	EnclaveApi: Sidechain + EnclaveBase,
+	EnclaveApi: EnclaveBase,
 {
 	fn init_parentchain_components(&self) -> ServiceResult<Header> {
 		Ok(self
@@ -194,14 +194,6 @@ where
 		let start_time = duration_now();
 		let mut until_synced_header = last_synced_header;
 		let mut start_block = until_synced_header.number + 1;
-		if overriden_start_block > start_block {
-			start_block = overriden_start_block;
-			// ask the enclave to ignore the parentchain block import validation until `overriden_start_block`
-			// TODO: maybe ignoring the next block import is enough, since the given `overriden_start_block`
-			//       should be the very first parentchain block to be imported
-			self.enclave_api
-				.ignore_parentchain_block_import_validation_until(overriden_start_block)?;
-		}
 
 		loop {
 			let block_chunk_to_sync = self.parentchain_api.get_blocks(
@@ -266,14 +258,6 @@ where
 					})
 					.collect::<Result<Vec<_>, _>>()?
 			};
-
-			self.enclave_api.sync_parentchain(
-				block_chunk_to_sync.as_slice(),
-				events_chunk_to_sync.as_slice(),
-				events_proofs_chunk_to_sync.as_slice(),
-				self.parentchain_id(),
-				immediate_import,
-			)?;
 
 			let api_client_until_synced_header = block_chunk_to_sync
 				.last()

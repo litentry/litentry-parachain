@@ -30,8 +30,6 @@ use std::string::String;
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
-	SetSidechainBlockHeight(u64),
-	TopPoolSizeSet(u64),
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
 	SuccessfulTrustedOperationIncrement(String),

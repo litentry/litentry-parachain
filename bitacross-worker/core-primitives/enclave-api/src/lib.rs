@@ -17,7 +17,6 @@ pub mod enclave_base;
 pub mod enclave_test;
 pub mod error;
 pub mod remote_attestation;
-pub mod sidechain;
 pub mod utils;
 
 #[cfg(feature = "implement-ffi")]

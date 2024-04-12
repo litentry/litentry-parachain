@@ -116,10 +116,6 @@ pub enum OCallBridgeError {
 	GetIasSocket(String),
 	#[error("UpdateMetric Error: {0}")]
 	UpdateMetric(String),
-	#[error("Propose sidechain block failed: {0}")]
-	ProposeSidechainBlock(String),
-	#[error("Failed to fetch sidechain blocks from peer: {0}")]
-	FetchSidechainBlocksFromPeer(String),
 	#[error("Sending extrinsics to parentchain failed: {0}")]
 	SendExtrinsicsToParentchain(String),
 	#[error("IPFS Error: {0}")]

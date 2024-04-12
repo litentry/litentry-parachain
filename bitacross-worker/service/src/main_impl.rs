@@ -29,7 +29,6 @@ use ita_parentchain_interface::integritee::{Hash, Header};
 use itp_enclave_api::{
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
-	sidechain::Sidechain,
 	Enclave,
 };
 use itp_node_api::{
@@ -299,7 +298,7 @@ fn start_worker<E, T, InitializationHandler>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+	E: EnclaveBase + RemoteAttestation + TlsRemoteAttestation + Clone,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 {
 	let run_config = config.run_config().clone().expect("Run config missing");
@@ -690,7 +689,7 @@ fn init_target_parentchain<E>(
 	is_development_mode: bool,
 ) -> ParentchainApi
 where
-	E: EnclaveBase + Sidechain,
+	E: EnclaveBase,
 {
 	println!("Initializing parentchain {:?} with url: {}", parentchain_id, url);
 	let node_api = NodeApiFactory::new(url, AccountKeyring::Alice.pair())
@@ -754,7 +753,7 @@ fn init_parentchain<E>(
 	shard: &ShardIdentifier,
 ) -> (Arc<ParentchainHandler<ParentchainApi, E>>, Header)
 where
-	E: EnclaveBase + Sidechain,
+	E: EnclaveBase,
 {
 	let parentchain_handler = Arc::new(
 		ParentchainHandler::new_with_automatic_light_client_allocation(
@@ -943,7 +942,7 @@ fn send_litentry_extrinsic(
 	}
 }
 
-fn start_parentchain_header_subscription_thread<E: EnclaveBase + Sidechain>(
+fn start_parentchain_header_subscription_thread<E: EnclaveBase>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	last_synced_header: Header,
 	shard: ShardIdentifier,
@@ -967,7 +966,7 @@ fn start_parentchain_header_subscription_thread<E: EnclaveBase + Sidechain>(
 
 /// Subscribe to the node API finalized heads stream and trigger a parent chain sync
 /// upon receiving a new header.
-fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
+fn subscribe_to_parentchain_new_headers<E: EnclaveBase>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
 	shard: ShardIdentifier,
@@ -984,7 +983,6 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	// see https://github.com/litentry/litentry-parachain/commit/b8059d0fad928e4bba99178451cd0d473791c437
 	// but I reverted it because:
 	// - no graceful shutdown, we could have many mpsc channel when it doesn't go right
-	// - we might have multiple `sync_parentchain` running concurrently, which causes chaos in enclave side
 	// - I still feel it's only a workaround, not a perfect solution
 	//
 	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
