@@ -29,6 +29,8 @@
 ######## Worker Feature Settings ########
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
+WORKER_DEV ?= 0
+
 
 Rust_Enclave_Name := libenclave.a
 Rust_Enclave_Files := $(wildcard src/*.rs) $(wildcard ../stf/src/*.rs)
@@ -42,10 +44,14 @@ else
 	CARGO_TARGET := --release
 endif
 
+ifeq ($(WORKER_DEV), 1)
+	ADDITIONAL_FEATURES := development
+endif
+
 ifeq ($(SGX_PRODUCTION), 1)
 	ENCLAVE_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 else
-	ENCLAVE_FEATURES = --features=test,development,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+	ENCLAVE_FEATURES = --features=test,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
 endif
 
 .PHONY: all
