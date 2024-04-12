@@ -52,12 +52,14 @@ macro_rules! http_get_precompile_fn {
 					"Error while performing http call: {:?}", e
 				))
 			})?;
+			std::println!("Response is: {:?}", resp);
 			let value: serde_json::Value = serde_json::from_slice(&resp.1).map_err(|e| {
 				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
 					"Could not parse json {:?}, reason: {:?}",
 					resp.1, e
 				))
 			})?;
+			std::println!("Values is: {:?}", value);
 			let result = match value.pointer(&pointer) {
 				Some(v) => v,
 				None =>
@@ -65,6 +67,8 @@ macro_rules! http_get_precompile_fn {
 						format!("No value under given pointer: :{:?}", pointer),
 					)),
 			};
+			std::println!("Result is: {:?}", result);
+
 			let encoded = match result.$parse_fn_name() {
 				Some(v) => ethabi::encode(&[ethabi::Token::$token(v.into())]),
 				None =>

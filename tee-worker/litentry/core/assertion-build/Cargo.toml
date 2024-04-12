@@ -98,3 +98,4 @@ std = [
     "lc-credentials/std",
     "lc-data-providers/std",
 ]
+development = []

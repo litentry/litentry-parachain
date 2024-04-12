@@ -38,7 +38,7 @@ pub fn build<SC: SmartContractRepository>(
 	smart_contract_id: H160,
 	repository: SC,
 ) -> Result<Credential> {
-	let input = prepare_execute_call_input(&req.identities);
+	let input = prepare_execute_call_input(&req.identities, &vec![]);
 
 	let smart_contract_byte_code = repository.get(&smart_contract_id).unwrap();
 	let (description, assertion_type, assertions, schema_url, result) =
@@ -135,13 +135,33 @@ fn decode_result(data: &[u8]) -> (String, String, Vec<String>, String, bool) {
 	)
 }
 
-fn prepare_execute_call_input(identities: &[IdentityNetworkTuple]) -> Vec<u8> {
-	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
+fn prepare_execute_call_input(identities: &[IdentityNetworkTuple], secrets: &[String]) -> Vec<u8> {
+	// let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
+	// let secrets: Vec<Token> = secrets.iter().map(|s| Token::String(s.to_owned())).collect();
+	// let encoded_identities = encode(&[Token::Array(identities)]);
+	// // let encoded_identities_as_bytes = encode(&[Token::Bytes(encoded_identities)]);
+	// // let encoded_secrets = encode(&[Token::Array(secrets)]);
+	// // let encoded_secrets_as_bytes = encode(&[Token::Bytes(encoded_secrets)]);
+	// let encoded_inputs = encode(&[Token::Tuple(vec![Token::Array(identities), Token::Array(secrets)])]);
+	// let encoded_input_as_bytes = encode(&[Token::Bytes(encoded_inputs)]);
 
-	let encoded_identities = encode(&[Token::Array(identities)]);
-	let encoded_identities_as_bytes = encode(&[Token::Bytes(encoded_identities)]);
+	let encoded_string = encode(&[Token::String("test".to_string())]);
+	let encoded_string_as_bytes = encode(&[Token::Bytes(encoded_string)]);
+
+	let encoded_str = encode(&[Token::String("test".to_string())]);
+	let encoded_str_as_bytes = encode(&[Token::Bytes(encoded_str)]);
+
+	let tuple = encode(&[Token::Array(vec![
+		Token::String("test".to_string()),
+		Token::String("test".to_string())
+	])]);
+
+
+	let encoded_tuple_as_bytes = encode(&[Token::Bytes(tuple)]);
+
+
 	let function_hash = "09c5eabe";
-	prepare_function_call_input(function_hash, encoded_identities_as_bytes)
+	prepare_function_call_input(function_hash, encoded_tuple_as_bytes)
 }
 
 pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token {
@@ -345,6 +365,40 @@ pub mod tests {
 		// then
 		assert!(credential.credential_subject.values[0]);
 	}
+
+	#[test]
+	pub fn test_a6_true() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		// given
+		let twitter_identity = Identity::Twitter(IdentityString::new("twitterdev".as_bytes().to_vec()));
+		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
+
+		let request = AssertionBuildRequest {
+			shard: Default::default(),
+			signer: AccountId32::new([0; 32]),
+			who: Identity::Twitter(IdentityString::new(vec![])),
+			assertion: Assertion::Dynamic(hash(2)),
+			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
+			top_hash: Default::default(),
+			parachain_block_number: Default::default(),
+			sidechain_block_number: Default::default(),
+			maybe_key: None,
+			req_ext_hash: Default::default(),
+			should_create_id_graph: Default::default(),
+		};
+
+		let repository = InMemorySmartContractRepo::new();
+
+		// when
+		let credential = build(&request, hash(2), repository).unwrap();
+
+		println!("Credential is: {:?}", credential);
+
+		// then
+		assert!(credential.credential_subject.values[1]);
+	}
+
+
 
 	#[test]
 	pub fn test_a1_false() {

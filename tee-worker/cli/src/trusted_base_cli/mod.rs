@@ -22,7 +22,7 @@ use crate::{
 		get_shard_vault::GetShardVaultCommand,
 		litentry::{
 			get_storage::GetStorageCommand, link_identity::LinkIdentityCommand,
-			remove_identity::RemoveIdentityCommand, request_vc::RequestVcCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
@@ -37,6 +37,8 @@ use log::*;
 use sp_core::crypto::Ss58Codec;
 use sp_keystore::Keystore;
 use substrate_client_keystore::LocalKeystore;
+#[cfg(feature = "development")]
+use crate::trusted_base_cli::commands::litentry::remove_identity;
 
 use self::commands::litentry::id_graph::IDGraphCommand;
 
