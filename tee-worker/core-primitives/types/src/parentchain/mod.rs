@@ -21,12 +21,15 @@ use crate::OpaqueCall;
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
+use events::{
+	ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
+	OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+};
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
-use substrate_api_client::ac_node_api::StaticEvent;
 
 pub type StorageProof = Vec<Vec<u8>>;
 
@@ -93,7 +96,31 @@ pub trait FilterEvents {
 	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 
-	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error>;
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error>;
+
+	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error>;
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> core::result::Result<Vec<DeactivateIdentityRequested>, Self::Error>;
+
+	fn get_activate_identity_events(
+		&self,
+	) -> core::result::Result<Vec<ActivateIdentityRequested>, Self::Error>;
+
+	fn get_scheduled_enclave_set_events(
+		&self,
+	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error>;
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
+
+	fn get_opaque_task_posted_events(
+		&self,
+	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error>;
 }
 
 #[derive(Debug)]

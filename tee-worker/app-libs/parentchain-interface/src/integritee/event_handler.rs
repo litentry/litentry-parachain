@@ -190,6 +190,7 @@ impl ParentchainEventHandler {
 		executor: &Executor,
 		request: &RsaRequest,
 	) -> Result<(), Error> {
+		debug!("post opaque task: {:?}", request);
 		executor.submit_trusted_call(request.shard, request.payload.to_vec());
 
 		Ok(())
@@ -203,7 +204,7 @@ where
 {
 	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
-		if let Ok(events) = events.get_events::<LinkIdentityRequested>() {
+		if let Ok(events) = events.get_link_identity_events() {
 			debug!("Handling link_identity events");
 			events
 				.iter()
@@ -223,7 +224,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::LinkIdentityFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<DeactivateIdentityRequested>() {
+		if let Ok(events) = events.get_deactivate_identity_events() {
 			debug!("Handling deactivate_identity events");
 			events
 				.iter()
@@ -241,7 +242,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::DeactivateIdentityFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<ActivateIdentityRequested>() {
+		if let Ok(events) = events.get_activate_identity_events() {
 			debug!("Handling activate_identity events");
 			events
 				.iter()
@@ -259,7 +260,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::ActivateIdentityFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<VCRequested>() {
+		if let Ok(events) = events.get_vc_requested_events() {
 			debug!("Handling VCRequested events");
 			events
 				.iter()
@@ -274,7 +275,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<ScheduledEnclaveSet>() {
+		if let Ok(events) = events.get_scheduled_enclave_set_events() {
 			debug!("Handling ScheduledEnclaveSet events");
 			events
 				.iter()
@@ -292,7 +293,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<ScheduledEnclaveRemoved>() {
+		if let Ok(events) = events.get_scheduled_enclave_removed_events() {
 			debug!("Handling ScheduledEnclaveRemoved events");
 			events
 				.iter()
@@ -309,7 +310,7 @@ where
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
 		}
 
-		if let Ok(events) = events.get_events::<OpaqueTaskPosted>() {
+		if let Ok(events) = events.get_opaque_task_posted_events() {
 			debug!("Handling OpaqueTaskPosted events");
 			events
 				.iter()

@@ -68,18 +68,56 @@ impl FilterEvents for FilterableEvents {
 			.collect())
 	}
 
-	fn get_events<T: StaticEvent>(&self) -> core::result::Result<Vec<T>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.flatten()
-			.filter_map(|ev| match ev.as_event::<T>() {
-				Ok(maybe_event) => maybe_event,
-				Err(e) => {
-					log::error!("Could not decode event: {:?}", e);
-					None
-				},
-			})
-			.collect())
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
+	{
+		Ok(Vec::new())
+	}
+
+	fn get_vc_requested_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::DeactivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_activate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ActivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_set_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
+	{
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_opaque_task_posted_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
