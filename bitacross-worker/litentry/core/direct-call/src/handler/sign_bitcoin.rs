@@ -51,8 +51,8 @@ pub fn handle<
 ) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
 		let mut registry = ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
-		// ~30 minutes (1 tick ~ 1 s)
-		let ceremony_tick_to_live = 1800;
+		// ~1 minute (1 tick ~ 1 s)
+		let ceremony_tick_to_live = 60;
 
 		let signers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
