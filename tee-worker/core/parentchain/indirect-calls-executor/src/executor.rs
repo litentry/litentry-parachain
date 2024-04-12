@@ -299,7 +299,6 @@ mod test {
 		TestStfEnclaveSigner,
 		TestTopPoolAuthor,
 		TestNodeMetadataRepository,
-		MockExtrinsicFilter<MockParentchainExtrinsicParser>,
 		TestEventCreator,
 		MockParentchainEventHandler,
 		TrustedCallSignedMock,
@@ -309,27 +308,6 @@ mod test {
 	type Seed = [u8; 32];
 
 	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
-
-	#[test]
-	fn indirect_call_can_be_added_to_pool_successfully() {
-		let _ = env_logger::builder().is_test(true).try_init();
-
-		let (indirect_calls_executor, top_pool_author, _) =
-			test_fixtures([0u8; 32], NodeMetadataMock::new());
-
-		let opaque_extrinsic =
-			OpaqueExtrinsic::from_bytes(invoke_unchecked_extrinsic().encode().as_slice()).unwrap();
-
-		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
-			.build();
-
-		indirect_calls_executor
-			.execute_indirect_calls_in_block(&parentchain_block, &Vec::new())
-			.unwrap();
-
-		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
-	}
 
 	#[test]
 	fn ensure_empty_extrinsic_vec_triggers_zero_filled_merkle_root() {
