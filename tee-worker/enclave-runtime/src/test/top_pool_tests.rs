@@ -54,7 +54,10 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
 use itp_stf_state_observer::mock::ObserveStateMock;
-use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
+use itp_test::mock::{
+	metrics_ocall_mock::MetricsOCallMock,
+	stf_mock::{mock_top_indirect_trusted_call_signed, GetterMock, TrustedCallSignedMock},
+};
 use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
@@ -208,7 +211,7 @@ fn create_post_opaque_task_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	shielding_key: &ShieldingKey,
 ) -> Block {
 	let target_account = shielding_key.encrypt(&AccountId::new([2u8; 32]).encode()).unwrap();
-	let request = RsaRequest::new(shard, Vec::from([0u8; 32]));
+	let request = RsaRequest::new(shard, mock_top_indirect_trusted_call_signed().encode());
 	let test_signer = ed25519::Pair::from_seed(b"33345678901234567890123456789012");
 	let signature = test_signer.sign(&[0u8]);
 
