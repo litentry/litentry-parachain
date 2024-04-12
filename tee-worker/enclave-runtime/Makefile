@@ -30,7 +30,7 @@
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
 WORKER_DEV ?= 0
-
+WORKER_ENV_DATA_PROVIDERS_CONFIG ?= 0
 
 Rust_Enclave_Name := libenclave.a
 Rust_Enclave_Files := $(wildcard src/*.rs) $(wildcard ../stf/src/*.rs)
@@ -46,6 +46,10 @@ endif
 
 ifeq ($(WORKER_DEV), 1)
 	ADDITIONAL_FEATURES := development
+endif
+
+ifeq ($(WORKER_ENV_DATA_PROVIDERS_CONFIG), 1)
+	ADDITIONAL_FEATURES := env-data-providers-config
 endif
 
 ifeq ($(SGX_PRODUCTION), 1)
