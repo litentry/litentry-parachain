@@ -37,7 +37,7 @@ use std::{
 	vec,
 	vec::Vec,
 };
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResponseItem {
 	pub tick: String,
 	pub address: String,
