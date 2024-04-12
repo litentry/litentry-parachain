@@ -67,7 +67,7 @@ RUN \
     make && sccache --show-stats; \
   fi
 
-RUN cargo test --release --features development
+RUN cargo test --release
 
 
 ### Base Runner Stage
