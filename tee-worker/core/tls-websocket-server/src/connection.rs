@@ -94,6 +94,7 @@ where
 				match tls_session.process_new_packets() {
 					Ok(_) => {
 						if tls_session.is_handshaking() {
+							trace!("TLS session is in handshake");
 							return ConnectionState::TlsHandshake
 						}
 						ConnectionState::Alive
