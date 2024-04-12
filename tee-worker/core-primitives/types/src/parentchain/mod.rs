@@ -24,7 +24,7 @@ use core::fmt::Debug;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::bounded::alloc;
+use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 use substrate_api_client::ac_node_api::StaticEvent;
 
@@ -110,7 +110,7 @@ where
 	fn handle_events(
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> core::result::Result<(), Error>;
+	) -> core::result::Result<Vec<H256>, Error>;
 }
 
 #[derive(Debug)]

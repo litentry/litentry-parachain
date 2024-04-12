@@ -28,13 +28,14 @@ use itp_types::{
 		},
 		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
 	},
-	RsaRequest,
+	RsaRequest, H256,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::{
 	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, Web3Network, WorkerType,
 };
 use log::*;
+use sp_core::blake2_256;
 use sp_std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
@@ -200,20 +201,24 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 {
-	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<(), Error> {
+	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
+		let mut handled_events: Vec<H256> = Vec::new();
 		if let Ok(events) = events.get_events::<LinkIdentityRequested>() {
 			debug!("Handling link_identity events");
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found link_identity_event: {}", event);
-					Self::link_identity(
+					let result = Self::link_identity(
 						executor,
 						&event.account,
 						event.encrypted_identity.clone(),
 						event.encrypted_validation_data.clone(),
 						event.encrypted_web3networks.clone(),
-					)
+					);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::LinkIdentityFailure)?;
 		}
@@ -224,11 +229,14 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found deactivate_identity_event: {}", event);
-					Self::deactivate_identity(
+					let result = Self::deactivate_identity(
 						executor,
 						&event.account,
 						event.encrypted_identity.clone(),
-					)
+					);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::DeactivateIdentityFailure)?;
 		}
@@ -239,11 +247,14 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found activate_identity_event: {}", event);
-					Self::activate_identity(
+					let result = Self::activate_identity(
 						executor,
 						&event.account,
 						event.encrypted_identity.clone(),
-					)
+					);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::ActivateIdentityFailure)?;
 		}
@@ -254,7 +265,11 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found VCRequested event: {}", event);
-					Self::request_vc(executor, &event.account, event.assertion.clone())
+					let result =
+						Self::request_vc(executor, &event.account, event.assertion.clone());
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
 		}
@@ -265,11 +280,14 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found ScheduledEnclaveSet event: {:?}", event);
-					Self::set_scheduled_enclave(
+					let result = Self::set_scheduled_enclave(
 						event.worker_type,
 						event.sidechain_block_number,
 						event.mrenclave,
-					)
+					);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
 		}
@@ -280,7 +298,13 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
-					Self::remove_scheduled_enclave(event.worker_type, event.sidechain_block_number)
+					let result = Self::remove_scheduled_enclave(
+						event.worker_type,
+						event.sidechain_block_number,
+					);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
 		}
@@ -291,11 +315,18 @@ where
 				.iter()
 				.try_for_each(|event| {
 					debug!("found OpaqueTaskPosted event: {:?}", event);
-					Self::post_opaque_task(executor, &event.request)
+					let result = Self::post_opaque_task(executor, &event.request);
+					handled_events.push(hash_of(&event));
+
+					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::OpaqueTaskPostedFailure)?;
 		}
 
-		Ok(())
+		Ok(handled_events)
 	}
+}
+
+fn hash_of<T: Encode>(ev: &T) -> H256 {
+	blake2_256(&ev.encode()).into()
 }

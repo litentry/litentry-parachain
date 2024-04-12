@@ -22,6 +22,8 @@ use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::parentchain::{FilterEvents, HandleParentchainEvents};
 use log::*;
+use sp_core::H256;
+use sp_std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
 
@@ -30,8 +32,8 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 {
-	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<(), Error> {
+	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target a");
-		Ok(())
+		Ok(Vec::new())
 	}
 }
