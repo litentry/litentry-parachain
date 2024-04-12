@@ -1,18 +1,5 @@
-use crate::{
-	error::{Error, Result as ICResult},
-	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
-	IndirectDispatch,
-};
-use codec::{Decode, Encode};
-use core::marker::PhantomData;
-use litentry_primitives::DecryptableRequest;
-
-use itp_api_client_types::{ParentchainSignedExtra, StaticEvent};
-use itp_node_api::{
-	api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4},
-	metadata::NodeMetadataTrait,
-};
-use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
+use crate::{error::Error, filter_metadata::EventsFromMetadata};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_test::mock::stf_mock::TrustedCallSignedMock;
 use itp_types::{
 	parentchain::{
@@ -20,11 +7,10 @@ use itp_types::{
 			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
 			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
 		},
-		ExtrinsicStatus, FilterEvents, HandleParentchainEvents,
+		FilterEvents, HandleParentchainEvents,
 	},
-	Address, RsaRequest, H256,
+	RsaRequest, H256,
 };
-use log::*;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -56,14 +42,11 @@ impl FilterEvents for MockEvents {
 
 	fn get_link_identity_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
-	{
+	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
-	fn get_vc_requested_events(
-		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
@@ -81,17 +64,13 @@ impl FilterEvents for MockEvents {
 
 	fn get_scheduled_enclave_set_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
-	{
+	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
-	) -> core::result::Result<
-		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
-		Self::Error,
-	> {
+	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
 		Ok(Vec::new())
 	}
 }

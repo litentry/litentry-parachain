@@ -22,10 +22,6 @@ use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
-		events::{
-			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
-			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
-		},
 		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
 	},
 	RsaRequest, H256,

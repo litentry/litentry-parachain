@@ -17,15 +17,9 @@
 //! Various way to filter Parentchain events
 
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
-use itp_api_client_types::{Events, StaticEvent};
+use itp_api_client_types::Events;
 
-use itp_types::{
-	parentchain::{
-		events::{ExtrinsicFailed, ExtrinsicSuccess},
-		ExtrinsicStatus, FilterEvents,
-	},
-	H256,
-};
+use itp_types::{parentchain::FilterEvents, H256};
 use std::vec::Vec;
 
 #[derive(Clone)]

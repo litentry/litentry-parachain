@@ -17,16 +17,15 @@
 //! Various way to filter Parentchain events
 
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
-use itp_api_client_types::{Events, StaticEvent};
+use itp_api_client_types::Events;
 
 use itp_types::{
 	parentchain::{
 		events::{
-			ActivateIdentityRequested, DeactivateIdentityRequested, ExtrinsicFailed,
-			ExtrinsicSuccess, LinkIdentityRequested, OpaqueTaskPosted, ScheduledEnclaveRemoved,
-			ScheduledEnclaveSet, VCRequested,
+			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
+			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
 		},
-		ExtrinsicStatus, FilterEvents,
+		FilterEvents,
 	},
 	H256,
 };
@@ -69,9 +68,7 @@ impl FilterEvents for FilterableEvents {
 			.collect())
 	}
 
-	fn get_vc_requested_events(
-		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
@@ -128,8 +125,7 @@ impl FilterEvents for FilterableEvents {
 
 	fn get_scheduled_enclave_set_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
-	{
+	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
@@ -146,10 +142,7 @@ impl FilterEvents for FilterableEvents {
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
-	) -> core::result::Result<
-		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
-		Self::Error,
-	> {
+	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
@@ -166,7 +159,7 @@ impl FilterEvents for FilterableEvents {
 
 	fn get_opaque_task_posted_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
+	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
