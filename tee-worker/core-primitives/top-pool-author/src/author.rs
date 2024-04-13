@@ -273,7 +273,7 @@ impl<
 
 		if let Some(trusted_call_signed) = trusted_operation.to_call() {
 			debug!(
-				"Submitting trusted call, hash {:?}, call: {:?}",
+				"Submitting trusted call, hash: {:?}, call: {:?}",
 				self.hash_of(&trusted_operation),
 				trusted_call_signed
 			);
