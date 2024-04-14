@@ -241,7 +241,7 @@ impl DataProviderConfig {
 		};
 
 		// we allow to override following config properties for non prod dev
-		#[cfg(any(all(feature = "env-data-providers-config", feature = "development"),))]
+		#[cfg(any(feature = "env-data-providers-config", feature = "development"))]
 		{
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;

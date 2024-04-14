@@ -193,18 +193,16 @@ pub(crate) fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			if_development_or!(
-				{
-					let mock_server_port = config
-						.try_parse_mock_server_port()
-						.expect("mock server port to be a valid port number");
-					thread::spawn(move || {
-						info!("*** Starting mock server");
-						let _ = lc_mock_server::run(mock_server_port);
-					});
-				},
-				warn!("Mock server not started. Node is running in production mode.")
-			)
+			#[cfg(any(feature = "mock-server", feature = "development"))]
+			{
+				let mock_server_port = config
+					.try_parse_mock_server_port()
+					.expect("mock server port to be a valid port number");
+				thread::spawn(move || {
+					info!("*** Starting mock server");
+					let _ = lc_mock_server::run(mock_server_port);
+				});
+			}
 		}
 
 		if clean_reset {

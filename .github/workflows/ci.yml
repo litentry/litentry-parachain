@@ -481,6 +481,7 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             WORKER_ENV_DATA_PROVIDERS_CONFIG=1
+            WORKER_MOCK_SERVER=1
             ADDITIONAL_FEATURES_ARG=
 
       - name: Copy caches from the built image

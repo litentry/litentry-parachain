@@ -29,6 +29,7 @@ SGX_PRODUCTION ?= 0
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
 WORKER_DEV ?= 0
+WORKER_MOCK_SERVER ?= 0
 
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk
@@ -75,6 +76,10 @@ SGX_COMMON_CFLAGS += -fstack-protector
 
 ifeq ($(WORKER_DEV), 1)
 	ADDITIONAL_FEATURES := development
+endif
+
+ifeq ($(WORKER_MOCK_SERVER), 1)
+	WORKER_FEATURES := $(WORKER_FEATURES),mock-server
 endif
 
 ifeq ($(SGX_PRODUCTION), 1)
@@ -266,6 +271,7 @@ mrsigner:
 
 .PHONY: identity
 identity: mrenclave mrsigner
+
 
 .PHONY: release-pkg
 release-pkg:
