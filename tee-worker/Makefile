@@ -75,7 +75,7 @@ endif
 SGX_COMMON_CFLAGS += -fstack-protector
 
 ifeq ($(WORKER_DEV), 1)
-	ADDITIONAL_FEATURES := development
+	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),development
 endif
 
 ifeq ($(WORKER_MOCK_SERVER), 1)

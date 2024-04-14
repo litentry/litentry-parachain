@@ -45,11 +45,11 @@ else
 endif
 
 ifeq ($(WORKER_DEV), 1)
-	ADDITIONAL_FEATURES := development
+	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),development
 endif
 
 ifeq ($(WORKER_ENV_DATA_PROVIDERS_CONFIG), 1)
-	ADDITIONAL_FEATURES := env-data-providers-config
+	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),env-data-providers-config
 endif
 
 ifeq ($(SGX_PRODUCTION), 1)
