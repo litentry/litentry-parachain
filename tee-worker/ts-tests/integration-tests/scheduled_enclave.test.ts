@@ -8,31 +8,7 @@ import { Keyring, type ApiPromise, type CorePrimitivesIdentity } from 'parachain
 import { assert } from 'chai';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
 import { hexToU8a } from '@polkadot/util';
-import { subscribeToEvents, waitForBlock } from './common/transactions';
-
-async function setScheduledEnclave(api: ApiPromise, block: number, mrenclave: string) {
-    const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Alice');
-
-    const tx = api.tx.teebag.setScheduledEnclave('Identity', block, hexToU8a(`0x${mrenclave}`));
-
-    console.log('Schedule Enclave Extrinsic sent');
-    return new Promise<{ block: string }>(async (resolve, reject) => {
-        await tx.signAndSend(alice, (result) => {
-            console.log(`Current status is ${result.status}`);
-            if (result.status.isInBlock) {
-                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-            } else if (result.status.isFinalized) {
-                console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
-                resolve({
-                    block: result.status.asFinalized.toString(),
-                });
-            } else if (result.status.isInvalid) {
-                reject(`Transaction is ${result.status}`);
-            }
-        });
-    });
-}
+import { setScheduledEnclave, signAndSend, subscribeToEvents, waitForBlock } from './common/transactions';
 
 describe('Scheduled Enclave', function () {
     let context: IntegrationTestContext = undefined as any;
