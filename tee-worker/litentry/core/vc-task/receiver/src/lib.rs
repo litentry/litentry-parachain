@@ -21,6 +21,12 @@ use std::sync::Mutex;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod test;
+
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPoolBuilder;
@@ -175,7 +181,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		}
 
 		// Until now, preparation work is done. If any error happens, error message would have been returned already.
-
 		if let TrustedCall::request_vc(..) = tcs.call {
 			req_registry.add_new_item(connection_hash, 1u8);
 
@@ -425,6 +430,7 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
+	println!("Processing VC Request");
 	let start_time = Instant::now();
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
@@ -549,8 +555,8 @@ where
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.map_err(|_| "Failed to get vc_issued_call_indexes".to_string())?
-			.map_err(|_| "Failed to get metadata".to_string())?;
+			.unwrap()
+			.unwrap();
 
 		let key = maybe_key.ok_or_else(|| "Invalid aes key".to_string())?;
 		let call = OpaqueCall::from_tuple(&(

@@ -60,6 +60,8 @@ use std::sync::Mutex;
 lazy_static! {
 	pub static ref GLOBAL_MOCK_AUTHOR_API: Arc<Mutex<Option<Sender<Vec<u8>>>>> =
 		Arc::new(Mutex::new(None));
+	pub static ref GLOBAL_MOCK_RPC_API: Arc<Mutex<Option<Sender<Vec<u8>>>>> =
+		Arc::new(Mutex::new(None));
 }
 
 #[derive(Default)]
@@ -264,7 +266,12 @@ where
 
 	fn update_connection_state(&self, _updates: Vec<(H256, (Vec<u8>, bool))>) {}
 
-	fn send_rpc_response(&self, _hash: H256, _encoded_value: Vec<u8>, _do_watch: bool) {}
+	fn send_rpc_response(&self, _hash: H256, encoded_value: Vec<u8>, _do_watch: bool) {
+		let sender_guard = GLOBAL_MOCK_RPC_API.lock().unwrap();
+		let sender = &*sender_guard;
+		sender.as_ref().expect("Not yet initialized").send(encoded_value).unwrap();
+		// Box::pin(ready(Ok([0u8; 32].into())))
+	}
 
 	fn swap_rpc_connection_hash(&self, _old_hash: H256, _new_hash: H256) {}
 }

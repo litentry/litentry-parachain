@@ -24,7 +24,7 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 pub struct ShieldingCryptoMock {
-	key: Rsa3072KeyPair,
+	pub key: Rsa3072KeyPair,
 }
 
 impl Default for ShieldingCryptoMock {
