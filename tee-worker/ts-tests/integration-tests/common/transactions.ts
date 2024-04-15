@@ -108,7 +108,7 @@ export async function waitForBlock(api: ApiPromise, blockNumber: number, blocksT
     });
 }
 
-async function setAliceAsAdmin(api: ApiPromise) {
+export async function setAliceAsAdmin(api: ApiPromise) {
     // Get keyring of Alice, who is also the sudo in dev chain spec
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
@@ -157,7 +157,6 @@ export async function setScheduledEnclave(api: ApiPromise, block: number, mrencl
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
 
-    await setAliceAsAdmin(api);
     const tx = api.tx.teebag.setScheduledEnclave('Identity', block, hexToU8a(`0x${mrenclave}`));
 
     console.log('Schedule Enclave Extrinsic sent');

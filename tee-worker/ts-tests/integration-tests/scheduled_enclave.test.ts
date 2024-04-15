@@ -4,16 +4,15 @@ import { initIntegrationTestContext } from './common/utils';
 import { getTeeShieldingKey } from './common/di-utils';
 import type { IntegrationTestContext, JsonRpcRequest } from './common/common-types';
 import { sendRequest } from './common/call';
-import { Keyring, type ApiPromise, type CorePrimitivesIdentity } from 'parachain-api';
+import { type CorePrimitivesIdentity } from 'parachain-api';
 import { assert } from 'chai';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
-import { hexToU8a } from '@polkadot/util';
-import { setScheduledEnclave, signAndSend, subscribeToEvents, waitForBlock } from './common/transactions';
+import { setAliceAsAdmin, setScheduledEnclave, waitForBlock } from './common/transactions';
 
 describe('Scheduled Enclave', function () {
-    let context: IntegrationTestContext = undefined as any;
-    let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
+    let context: IntegrationTestContext;
+    let teeShieldingKey: KeyObject;
+    let aliceSubstrateIdentity: CorePrimitivesIdentity;
 
     this.timeout(6000000);
 
@@ -24,6 +23,7 @@ describe('Scheduled Enclave', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
+        await setAliceAsAdmin(context.api);
     });
 
     step('state of scheduled enclave list', async function () {
