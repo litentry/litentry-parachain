@@ -40,9 +40,6 @@ use sp_core::crypto::Ss58Codec;
 use sp_keystore::Keystore;
 use substrate_client_keystore::LocalKeystore;
 
-#[cfg(feature = "development")]
-use crate::trusted_base_cli::commands::litentry::remove_identity::RemoveIdentityCommand;
-
 use self::commands::litentry::id_graph::IDGraphCommand;
 
 mod commands;

@@ -298,5 +298,8 @@ help:
 	@echo "    0 (default): Using SGX development environment"
 	@echo "    1: Using SGX production environment"
 	@echo "  WORKER_DEV"
-	@echo "    0 (default): Not activating worker development features"
-	@echo "    1: Activating worker development features
+	@echo "    0 (default): Not activating worker development feature"
+	@echo "    1: Activating worker development feature"
+	@echo "  WORKER_MOCK_SERVER"
+	@echo "    0 (default): Not activating worker mock-server feature"
+	@echo "    1: Activating worker mock-server feature"
