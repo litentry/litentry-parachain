@@ -704,7 +704,7 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
-    name: ${{ matrix.label && (matrix.label + matrix.test_name) || matrix.test_name }}
+    name: ${{ matrix.label && format('{0}{1}', matrix.label, matrix.test_name) || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -793,7 +793,7 @@ jobs:
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
-    name: ${{ matrix.label && (matrix.label + matrix.test_name) || matrix.test_name }}
+    name: ${{ matrix.label && format('{0}{1}', matrix.label, matrix.test_name) || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
