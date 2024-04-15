@@ -56,7 +56,7 @@ describe('Scheduled Enclave', function () {
 
         // set new mrenclave
         const lastBlock = await context.api.rpc.chain.getBlock();
-        const expectedBlockNumber = lastBlock.block.header.number.toNumber() + 2;
+        const expectedBlockNumber = lastBlock.block.header.number.toNumber() + 5;
         console.log(`expected mrenclave block number: ${expectedBlockNumber}`);
 
         const validMrEnclave = '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6';
