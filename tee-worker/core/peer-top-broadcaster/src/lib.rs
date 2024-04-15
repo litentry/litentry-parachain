@@ -42,6 +42,7 @@ use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
 use itp_utils::FromHexPrefixed;
 use litentry_primitives::BroadcastedRequest;
+use log::*;
 use std::{
 	collections::HashMap,
 	string::{String, ToString},
