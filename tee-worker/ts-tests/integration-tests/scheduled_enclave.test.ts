@@ -3,10 +3,36 @@ import { step } from 'mocha-steps';
 import { initIntegrationTestContext } from './common/utils';
 import { getTeeShieldingKey } from './common/di-utils';
 import type { IntegrationTestContext, JsonRpcRequest } from './common/common-types';
-import { decodeRpcBytesAsString, sendRequest } from './common/call';
-import type { CorePrimitivesIdentity } from 'parachain-api';
+import { sendRequest } from './common/call';
+import { Keyring, type ApiPromise, type CorePrimitivesIdentity } from 'parachain-api';
 import { assert } from 'chai';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
+import { hexToU8a } from '@polkadot/util';
+import { subscribeToEvents, waitForBlock } from './common/transactions';
+
+async function setScheduledEnclave(api: ApiPromise, block: number, mrenclave: string) {
+    const keyring = new Keyring({ type: 'sr25519' });
+    const alice = keyring.addFromUri('//Alice');
+
+    const tx = api.tx.teebag.setScheduledEnclave('Identity', block, hexToU8a(`0x${mrenclave}`));
+
+    console.log('Schedule Enclave Extrinsic sent');
+    return new Promise<{ block: string }>(async (resolve, reject) => {
+        await tx.signAndSend(alice, (result) => {
+            console.log(`Current status is ${result.status}`);
+            if (result.status.isInBlock) {
+                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+            } else if (result.status.isFinalized) {
+                console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
+                resolve({
+                    block: result.status.asFinalized.toString(),
+                });
+            } else if (result.status.isInvalid) {
+                reject(`Transaction is ${result.status}`);
+            }
+        });
+    });
+}
 
 describe('Scheduled Enclave', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -53,22 +79,18 @@ describe('Scheduled Enclave', function () {
         assert.equal(scheduledEnclaveList.length, 1);
 
         // set new mrenclave
-        let setEnclaveResponse = await callRPC(
-            buildRequest('state_setScheduledEnclave', [20, 'some invalid mrenclave'])
-        );
-        assert.include(decodeRpcBytesAsString(setEnclaveResponse.value), 'Failed to decode mrenclave');
+        const lastBlock = await context.api.rpc.chain.getBlock();
+        const expectedBlockNumber = lastBlock.block.header.number.toNumber() + 2;
+        console.log(`expected mrenclave block number: ${expectedBlockNumber}`);
 
-        setEnclaveResponse = await callRPC(buildRequest('state_setScheduledEnclave', [20, '48656c6c6f20776f726c6421']));
-        assert.include(
-            decodeRpcBytesAsString(setEnclaveResponse.value),
-            'mrenclave len mismatch, expected 32 bytes long'
-        );
+        const validMrEnclave = '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6';
 
-        // valid mutation
-        const validParams = [20, '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6'];
-        await callRPC(buildRequest('state_setScheduledEnclave', validParams));
+        await setScheduledEnclave(context.api, expectedBlockNumber, validMrEnclave);
+        const events = await subscribeToEvents('teebag', 'ScheduledEnclaveSet', context.api);
+        assert.equal(events.length, 1);
 
-        // checking mutated state
+        await waitForBlock(context.api, expectedBlockNumber);
+
         response = await callRPC(buildRequest('state_getScheduledEnclave'));
         scheduledEnclaveList = context.api.createType('Vec<(u64, [u8; 32])>', response.value).toJSON() as [
             number,
@@ -78,7 +100,7 @@ describe('Scheduled Enclave', function () {
         assert.equal(scheduledEnclaveList.length, 2);
 
         const [blockNumber, mrEnclave] = scheduledEnclaveList[1];
-        assert.equal(blockNumber, validParams[0]);
-        assert.equal(mrEnclave, `0x${validParams[1]}`);
+        assert.equal(blockNumber, expectedBlockNumber);
+        assert.equal(mrEnclave, `0x${validMrEnclave}`);
     });
 });

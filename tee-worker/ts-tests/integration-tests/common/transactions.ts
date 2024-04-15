@@ -1,6 +1,6 @@
 import type { IntegrationTestContext } from './common-types';
 
-import { FrameSystemEventRecord } from 'parachain-api';
+import { ApiPromise, FrameSystemEventRecord } from 'parachain-api';
 
 // for DI-test
 export const subscribeToEventsWithExtHash = async (
@@ -46,3 +46,56 @@ export const subscribeToEventsWithExtHash = async (
         });
     });
 };
+
+// for II-test
+export const subscribeToEvents = async (
+    section: string,
+    method: string,
+    api: ApiPromise
+): Promise<FrameSystemEventRecord[]> => {
+    return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
+        let blocksToScan = 15;
+        const unsubscribe = api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
+            const shiftedApi = await api.at(blockHeader.hash);
+
+            const allBlockEvents = await shiftedApi.query.system.events();
+            const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
+
+            const matchingEvent = allExtrinsicEvents.filter(({ event, phase }) => {
+                return event.section === section && event.method === method;
+            });
+
+            if (matchingEvent.length == 0) {
+                blocksToScan -= 1;
+                if (blocksToScan < 1) {
+                    reject(new Error(`timed out listening for event ${section}.${method}`));
+                    (await unsubscribe)();
+                }
+                return;
+            }
+
+            resolve(matchingEvent);
+            (await unsubscribe)();
+        });
+    });
+};
+
+export async function waitForBlock(api: ApiPromise, blockNumber: number, blocksToCheck = 5) {
+    let count = 0;
+
+    return new Promise<void>((resolve, reject) => {
+        const unsubscribe = api.rpc.chain.subscribeNewHeads(async (header) => {
+            console.log(`Chain is at block: #${header.number}`);
+
+            if (header.number.toNumber() === blockNumber) {
+                (await unsubscribe)();
+                resolve();
+            }
+
+            if (++count === blocksToCheck) {
+                (await unsubscribe)();
+                reject(new Error(`Timeout: Block #${blockNumber} not reached within ${blocksToCheck} blocks.`));
+            }
+        });
+    });
+}
