@@ -15,6 +15,8 @@
 
 */
 
+#[cfg(feature = "development")]
+use crate::trusted_base_cli::commands::litentry::remove_identity::RemoveIdentityCommand;
 use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
