@@ -3,15 +3,16 @@ import { step } from 'mocha-steps';
 import { initIntegrationTestContext } from './common/utils';
 import { getTeeShieldingKey } from './common/di-utils';
 import type { IntegrationTestContext, JsonRpcRequest } from './common/common-types';
-import { decodeRpcBytesAsString, sendRequest } from './common/call';
-import type { CorePrimitivesIdentity } from 'parachain-api';
+import { sendRequest } from './common/call';
+import { type CorePrimitivesIdentity } from 'parachain-api';
 import { assert } from 'chai';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
+import { setAliceAsAdmin, setScheduledEnclave, waitForBlock } from './common/transactions';
 
 describe('Scheduled Enclave', function () {
-    let context: IntegrationTestContext = undefined as any;
-    let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
+    let context: IntegrationTestContext;
+    let teeShieldingKey: KeyObject;
+    let aliceSubstrateIdentity: CorePrimitivesIdentity;
 
     this.timeout(6000000);
 
@@ -22,6 +23,7 @@ describe('Scheduled Enclave', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
+        await setAliceAsAdmin(context.api);
     });
 
     step('state of scheduled enclave list', async function () {
@@ -53,22 +55,15 @@ describe('Scheduled Enclave', function () {
         assert.equal(scheduledEnclaveList.length, 1);
 
         // set new mrenclave
-        let setEnclaveResponse = await callRPC(
-            buildRequest('state_setScheduledEnclave', [20, 'some invalid mrenclave'])
-        );
-        assert.include(decodeRpcBytesAsString(setEnclaveResponse.value), 'Failed to decode mrenclave');
+        const lastBlock = await context.api.rpc.chain.getBlock();
+        const expectedBlockNumber = lastBlock.block.header.number.toNumber() + 5;
+        console.log(`expected mrenclave block number: ${expectedBlockNumber}`);
 
-        setEnclaveResponse = await callRPC(buildRequest('state_setScheduledEnclave', [20, '48656c6c6f20776f726c6421']));
-        assert.include(
-            decodeRpcBytesAsString(setEnclaveResponse.value),
-            'mrenclave len mismatch, expected 32 bytes long'
-        );
+        const validMrEnclave = '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6';
 
-        // valid mutation
-        const validParams = [20, '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6'];
-        await callRPC(buildRequest('state_setScheduledEnclave', validParams));
+        await setScheduledEnclave(context.api, expectedBlockNumber, validMrEnclave);
+        await waitForBlock(context.api, expectedBlockNumber);
 
-        // checking mutated state
         response = await callRPC(buildRequest('state_getScheduledEnclave'));
         scheduledEnclaveList = context.api.createType('Vec<(u64, [u8; 32])>', response.value).toJSON() as [
             number,
@@ -78,7 +73,7 @@ describe('Scheduled Enclave', function () {
         assert.equal(scheduledEnclaveList.length, 2);
 
         const [blockNumber, mrEnclave] = scheduledEnclaveList[1];
-        assert.equal(blockNumber, validParams[0]);
-        assert.equal(mrEnclave, `0x${validParams[1]}`);
+        assert.equal(blockNumber, expectedBlockNumber);
+        assert.equal(mrEnclave, `0x${validMrEnclave}`);
     });
 });
