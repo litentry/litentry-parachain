@@ -100,11 +100,15 @@ where
 							Some(hash) => hash,
 							None => continue,
 						};
+						info!("Received top broadcast, hash = {:?}", hash);
 						match status {
 							// this will come from every peer so do not flood the client
-							TrustedOperationStatus::Submitted => {},
+							TrustedOperationStatus::Submitted => {
+								info!("Status: Submitted");
+							},
 							// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
 							TrustedOperationStatus::TopExecuted(ref value, force_wait) => {
+								info!("Status: TopExecuted");
 								match rpc_responder.update_connection_state(
 									hash,
 									value.clone(),
@@ -122,6 +126,7 @@ where
 								};
 							},
 							_ => {
+								info!("Unknown status: {:?}", status);
 								//as long as we are waiting let's ignore all status events.
 								if !rpc_responder.is_force_wait(hash) {
 									if let Err(_e) = rpc_responder.update_status_event(hash, status)

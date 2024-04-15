@@ -309,7 +309,7 @@ impl<
 			),
 
 			TopSubmissionMode::SubmitWatchAndBroadcast(s) => {
-				let id = self.hash_of(&trusted_operation).to_hex();
+				let hash = self.hash_of(&trusted_operation).to_hex();
 				let can_be_broadcasted = self.broadcasted_top_filter.filter(&trusted_operation);
 				let result = Box::pin(
 					self.top_pool
@@ -324,11 +324,13 @@ impl<
 				// broadcast only if filter allowed
 				if can_be_broadcasted {
 					if let Err(e) = self.request_sink.send(BroadcastedRequest {
-						id,
+						id: hash.clone(),
 						payload: request_to_broadcast,
 						rpc_method: s,
 					}) {
 						error!("Could not send broadcasted request, reason: {:?}", e);
+					} else {
+						info!("Broadcast request OK, hash = {}", hash);
 					}
 				}
 				result
