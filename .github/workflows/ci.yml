@@ -692,19 +692,19 @@ jobs:
         include:
           # Litentry
           - test_name: lit-di-substrate-identity-test
-            label: '[substrate] tee-single-worker-test(lit-di-identity)'
+            label: '[substrate]'
           - test_name: lit-di-evm-identity-test
-            label: '[evm] tee-single-worker-test(lit-di-identity)'
+            label: '[evm]'
           - test_name: lit-di-bitcoin-identity-test
-            label: '[bitcoin] tee-single-worker-test(lit-di-identity)'
+            label: '[bitcoin]'
           - test_name: lit-di-solana-identity-test
-            label: '[solana] tee-single-worker-test(lit-di-identity)'
+            label: '[solana]'
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
-    name: ${{ matrix.label || matrix.test_name }}
+    name: ${{ matrix.label && (matrix.label + matrix.test_name) || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -782,18 +782,18 @@ jobs:
       matrix:
         include:
           - test_name: lit-di-bitcoin-identity-multiworker-test
-            label: '[bitcoin] tee-multi-worker-test(lit-di-identity)'
+            label: '[bitcoin]'
           - test_name: lit-di-evm-identity-multiworker-test
-            label: '[evm] tee-multi-worker-test(lit-di-identity)'
+            label: '[evm]'
           - test_name: lit-di-solana-identity-multiworker-test
-            label: '[solana] tee-multi-worker-test(lit-di-identity)'
+            label: '[solana]'
           - test_name: lit-di-substrate-identity-multiworker-test
-            label: '[substrate] tee-multi-worker-test(lit-di-identity)'
+            label: '[substrate]'
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
-    name: ${{ matrix.label || matrix.test_name }}
+    name: ${{ matrix.label && (matrix.label + matrix.test_name) || matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
