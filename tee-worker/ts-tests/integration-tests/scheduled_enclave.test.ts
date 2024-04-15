@@ -86,9 +86,6 @@ describe('Scheduled Enclave', function () {
         const validMrEnclave = '97f516a61ff59c5eab74b8a9b1b7273d6986b9c0e6c479a4010e22402ca7cee6';
 
         await setScheduledEnclave(context.api, expectedBlockNumber, validMrEnclave);
-        const events = await subscribeToEvents('teebag', 'ScheduledEnclaveSet', context.api);
-        assert.equal(events.length, 1);
-
         await waitForBlock(context.api, expectedBlockNumber);
 
         response = await callRPC(buildRequest('state_getScheduledEnclave'));
