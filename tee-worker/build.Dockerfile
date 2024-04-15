@@ -102,28 +102,12 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 
 ### Deployed worker service
 ##################################################
-FROM runner AS deployed-worker
+FROM litentry/litentry-worker:base AS deployed-worker
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 WORKDIR /usr/local/bin
 
-COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/litentry-worker /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/enclave.signed.so /origin/enclave.signed.so
 
-RUN touch spid.txt key.txt
-RUN chmod +x /usr/local/bin/litentry-worker
-RUN ls -al /usr/local/bin
-
-# checks
-ENV SGX_SDK /opt/sgxsdk
-ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
-ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
-
-RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
-
-# TODO: use entrypoint and aesm service launch, see P-295 too
-ENTRYPOINT ["/usr/local/bin/litentry-worker"]
+RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version  
