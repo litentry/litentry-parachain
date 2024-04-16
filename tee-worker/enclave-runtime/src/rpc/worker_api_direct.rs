@@ -476,12 +476,9 @@ where
 	io.add_sync_method("identity_getTwitterAuthorizeUrl", move |params: Params| {
 		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
 
-		match params.parse::<Vec<String>>() {
-			Ok(encoded_params) => {
-				if encoded_params.len() != 1 {
-					return Ok(json!(compute_hex_encoded_return_error("Invalid number of params")))
-				}
-				let account_id = match Identity::from_hex(encoded_params[0].as_str()) {
+		match params.parse::<(String, String)>() {
+			Ok((encoded_identity, redirect_url)) => {
+				let account_id = match Identity::from_hex(encoded_identity.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_account_id() {
 							account_id
@@ -495,7 +492,7 @@ where
 				};
 				let authorize_data = twitter::get_authorize_data(
 					&data_provider_config.twitter_client_id,
-					&data_provider_config.twitter_auth_redirect_url,
+					&redirect_url,
 				);
 				debug!(">>> verifier code to save: {:?}", &authorize_data.authorize_url);
 				if let Err(_) =
