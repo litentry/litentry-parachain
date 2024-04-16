@@ -47,6 +47,7 @@ const CATS_TOKEN_BALANCE_RANGE: [f64; 7] =
 	[0.0, 10_000.0, 50_000.0, 100_000.0, 200_000.0, 500_000.0, 800_000.0];
 const BTCS_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0];
 
+#[derive(Debug, PartialEq)]
 enum BRC20Token {
 	Ordi,
 	Sats,
@@ -63,6 +64,12 @@ struct AssertionKeys {
 	holding_amount: &'static str,
 }
 
+#[derive(Debug)]
+struct Brc20TokenBalance {
+	pub token: BRC20Token,
+	pub balance: f64,
+}
+
 const ASSERTION_KEYS: AssertionKeys =
 	AssertionKeys { token: "$token", holding_amount: "$holding_amount" };
 
@@ -72,30 +79,60 @@ pub trait BRC20AmountHolderCredential {
 
 impl BRC20AmountHolderCredential for Credential {
 	fn update_brc20_amount_holder_credential(&mut self, response_items: &[ResponseItem]) {
-		for item in response_items {
-			if BRC20_TOKENS.contains(&item.tick.to_lowercase().as_str()) {
-				let token = tick_to_brctoken(&item.tick);
-				let balance: f64 = item.overall_balance.parse().unwrap_or(0.0);
-				update_assertion(token, balance, self);
-			}
-		}
+		let token_balance_pairs = collect_brc20_token_balance(response_items);
+		token_balance_pairs.iter().for_each(|pair| {
+			let token = &pair.token;
+			let balance = pair.balance;
+
+			update_assertion(token, balance, self);
+		});
 
 		self.add_subject_info(VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS, VC_BRC20_AMOUNT_HOLDER_TYPE);
 	}
 }
 
+// There may be empty cases
+// case 1 : response_items is empty.
+// case 2 : response_items is not empty, but have no interaction with BRC20_TOKENS
+fn collect_brc20_token_balance(response_items: &[ResponseItem]) -> Vec<Brc20TokenBalance> {
+	let mut pairs = vec![];
+
+	response_items
+		.iter()
+		.filter(|&item| BRC20_TOKENS.contains(&item.tick.to_lowercase().as_str()))
+		.for_each(|item| {
+			let token = tick_to_brctoken(item.tick.to_lowercase().as_str());
+			let balance: f64 = item.overall_balance.parse().unwrap_or(0.0);
+
+			pairs.push(Brc20TokenBalance { token, balance });
+		});
+
+	// If the pair is still empty at this point, it means that there is no suitable data.
+	// In that case, set the balance of all tokens to 0.0.
+	if pairs.is_empty() {
+		BRC20_TOKENS.iter().for_each(|tick| {
+			let token = tick_to_brctoken(tick);
+			let balance = 0.0_f64;
+
+			pairs.push(Brc20TokenBalance { token, balance });
+		})
+	}
+
+	pairs
+}
+
 // TODO: the following part is exactly the same structure from 'token_balance.rs'.
 // Anyway the refactor is planned later. So continue using the same mechanism.
-fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential) {
+fn update_assertion(token: &BRC20Token, balance: f64, credential: &mut Credential) {
 	let mut assertion = AssertionLogic::new_and();
 
 	assertion = assertion.add_item(AssertionLogic::new_item(
 		ASSERTION_KEYS.token,
 		Op::Equal,
-		brctoken_to_tick(&token),
+		brctoken_to_tick(token),
 	));
 
-	let range = get_balance_range(&token);
+	let range = get_balance_range(token);
 	let index = BalanceRange::index(&range, balance);
 	match index {
 		Some(index) => {
@@ -108,33 +145,31 @@ fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential
 
 			assertion = assertion.add_item(min_item);
 			assertion = assertion.add_item(max_item);
-
-			credential.credential_subject.values.push(index != 0);
 		},
 		None => {
 			let min_item = AssertionLogic::new_item(
 				ASSERTION_KEYS.holding_amount,
 				Op::GreaterEq,
-				&format!("{}", get_token_range_last(&token)),
+				&format!("{}", get_token_range_last(token)),
 			);
 			assertion = assertion.add_item(min_item);
-
-			credential.credential_subject.values.push(true);
 		},
 	}
 
+	credential.credential_subject.values.push(true);
 	credential.credential_subject.assertions.push(assertion);
 }
 
+// Keep consistent with BRC20_TOKENS, all in lowercase letters.
 fn tick_to_brctoken(tick: &str) -> BRC20Token {
 	match tick {
 		"ordi" => BRC20Token::Ordi,
 		"sats" => BRC20Token::Sats,
 		"rats" => BRC20Token::Rats,
-		"MMSS" => BRC20Token::Mmss,
+		"mmss" => BRC20Token::Mmss,
 		"long" => BRC20Token::Long,
 		"cats" => BRC20Token::Cats,
-		"BTCs" => BRC20Token::Btcs,
+		"btcs" => BRC20Token::Btcs,
 		_ => BRC20Token::Unknown,
 	}
 }
@@ -181,4 +216,59 @@ fn get_token_range_last(token: &BRC20Token) -> f64 {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+	use super::collect_brc20_token_balance;
+	use crate::brc20::amount_holder::BRC20Token;
+	use lc_data_providers::geniidata::ResponseItem;
+
+	#[test]
+	fn collect_brc20_token_balance_empty_items_works() {
+		let response_items = vec![];
+		let pairs = collect_brc20_token_balance(&response_items);
+		assert_eq!(pairs.len(), 7);
+		for pair in pairs {
+			assert_eq!(pair.balance, 0.0_f64);
+		}
+	}
+
+	#[test]
+	fn collect_brc20_token_balance_do_not_have_brc20_tokens_works() {
+		let response_items = vec![ResponseItem {
+			tick: "no-tick".to_string(),
+			address: "0x01".to_string(),
+			overall_balance: "0.000000000000020000".to_string(),
+			transferable_balance: "0.000000000000000000".to_string(),
+			available_balance: "0.000000000000020000".to_string(),
+		}];
+
+		let pairs = collect_brc20_token_balance(&response_items);
+		assert_eq!(pairs.len(), 7);
+		for pair in pairs {
+			assert_eq!(pair.balance, 0.0_f64);
+		}
+	}
+
+	#[test]
+	fn collect_brc20_token_balance_have_items_works() {
+		let response_items = vec![
+			ResponseItem {
+				tick: "ordi".to_string(),
+				address: "0x01".to_string(),
+				overall_balance: "0.000000000000020000".to_string(),
+				transferable_balance: "0.000000000000000000".to_string(),
+				available_balance: "0.000000000000020000".to_string(),
+			},
+			ResponseItem {
+				tick: "MMSS".to_string(),
+				address: "0x01".to_string(),
+				overall_balance: "0.000000000000020000".to_string(),
+				transferable_balance: "0.000000000000000000".to_string(),
+				available_balance: "0.000000000000020000".to_string(),
+			},
+		];
+		let pairs = collect_brc20_token_balance(&response_items);
+		assert_eq!(pairs.len(), 2);
+		assert_eq!(pairs[0].token, BRC20Token::Ordi);
+		assert_eq!(pairs[1].token, BRC20Token::Mmss);
+	}
+}
