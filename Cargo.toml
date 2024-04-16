@@ -13,7 +13,6 @@ members = [
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',
-    'pallets/parentchain',
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
@@ -27,6 +26,7 @@ members = [
     'runtime/litmus',
     'runtime/rococo',
     'runtime/common',
+    'worker-pallets/parentchain',
 ]
 
 [profile.release]
