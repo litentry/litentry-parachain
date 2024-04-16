@@ -125,7 +125,7 @@ pub type CliResult = Result<CliResultOk, CliError>;
 /// This is used for the commands that directly call `perform_trusted_operation`
 /// which typically return `CliResultOk::None`
 ///
-/// eg: `SetBalanceCommand`,`TransferCommand`,`UnshieldFundsCommand`
+/// eg: `SetBalanceCommand`,`TransferCommand`
 impl From<trusted_operation::TrustedOperationError> for CliError {
 	fn from(value: trusted_operation::TrustedOperationError) -> Self {
 		CliError::TrustedOp { msg: value.to_string() }

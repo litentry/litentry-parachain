@@ -200,7 +200,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   # sequentialise the workflow runs on `dev` branch
   # the if condition is applied in step level to make this job always `successful`
@@ -238,7 +238,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-clippy:
     runs-on: ubuntu-latest
@@ -270,6 +270,9 @@ jobs:
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain,development -- -D warnings
           echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm,development -- -D warnings
+          echo "::endgroup::"          
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker,development -- -D warnings
@@ -302,7 +305,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   bitacross-clippy:
     runs-on: ubuntu-latest
@@ -330,6 +333,9 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Clean up disk
@@ -352,11 +358,14 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-build-dev:
     runs-on: ubuntu-latest
@@ -403,7 +412,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-build:
     runs-on: ubuntu-latest
@@ -545,7 +554,7 @@ jobs:
           if-no-files-found: error
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-ts-test:
     runs-on: ubuntu-latest
@@ -606,7 +615,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-unit-test:
     runs-on: ubuntu-latest
@@ -633,7 +642,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-runtime-test:
     runs-on: ubuntu-latest
@@ -669,7 +678,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-single-worker-test:
     runs-on: ubuntu-latest
@@ -685,10 +694,12 @@ jobs:
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
+          - test_name: lit-di-solana-identity-test
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
+          - test_name: lit-scheduled-enclave-test
     steps:
       - uses: actions/checkout@v4
 
@@ -770,6 +781,7 @@ jobs:
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
+          - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
 

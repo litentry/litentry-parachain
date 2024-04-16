@@ -32,7 +32,7 @@ use itp_types::H256;
 use sp_core::{ed25519, Pair};
 use sp_runtime::app_crypto::sp_core::blake2_256;
 use std::{sync::Arc, time::Duration, vec};
-// FIXME: Create unit tests for update_states, execute_shield_funds, execute_trusted_call, execute_trusted_call_on_stf #554
+// FIXME: Create unit tests for update_states, execute_trusted_call, execute_trusted_call_on_stf #554
 
 pub fn propose_state_update_executes_all_calls_given_enough_time() {
 	// given
