@@ -37,13 +37,11 @@ pub fn build<SC: SmartContractRepository>(
 	req: &AssertionBuildRequest,
 	smart_contract_id: H160,
 	repository: SC,
-	secrets: Vec<String>,
 ) -> Result<Credential> {
-	let input = prepare_execute_call_input(&req.identities, secrets);
-
-	let smart_contract_byte_code = repository.get(&smart_contract_id).unwrap();
+	let smart_contract = repository.get(&smart_contract_id).unwrap();
+	let input = prepare_execute_call_input(&req.identities, smart_contract.1);
 	let (description, assertion_type, assertions, schema_url, result) =
-		execute_smart_contract(smart_contract_byte_code, input);
+		execute_smart_contract(smart_contract.0, input);
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let mut assertion_values: Vec<AssertionLogic> = vec![];
@@ -317,7 +315,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(1), repository, vec![]).unwrap();
+		let credential = build(&request, hash(1), repository).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -347,7 +345,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository, vec![]).unwrap();
+		let credential = build(&request, hash(0), repository).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -379,8 +377,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, hash(2), repository, vec!["twitter_api_key".to_string()]).unwrap();
+		let credential = build(&request, hash(2), repository).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -411,7 +408,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository, vec![]).unwrap();
+		let credential = build(&request, hash(0), repository).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);

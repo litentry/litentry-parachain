@@ -34,7 +34,7 @@ use litentry_primitives::{
 	VCMPError,
 };
 use log::*;
-use std::{format, string::ToString, sync::Arc, vec, vec::Vec};
+use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	ShieldingKeyRepository,
@@ -273,8 +273,7 @@ where
 
 		Assertion::Dynamic(smart_contract_id) => {
 			let repository = InMemorySmartContractRepo::new();
-			//todo: pass secrets
-			lc_assertion_build::dynamic::build(req, smart_contract_id, repository, vec![])
+			lc_assertion_build::dynamic::build(req, smart_contract_id, repository)
 		},
 	}?;
 
