@@ -60,6 +60,7 @@ pub trait SendHttpRequest {
 		url: Url,
 		method: Method,
 		maybe_body: Option<String>,
+		headers: Vec<(String, String)>
 	) -> Result<(Response, EncodedBody), Error>;
 }
 
@@ -271,6 +272,7 @@ where
 		url: Url,
 		method: Method,
 		maybe_body: Option<String>,
+		headers: Vec<(String, String)>
 	) -> Result<(Response, EncodedBody), Error> {
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 
@@ -280,6 +282,12 @@ where
 		request.method(method);
 
 		let mut request_headers = Headers::default_http(&uri);
+
+		headers.iter().for_each(|h| {
+			//todo: remove unwraps
+			let value = HeaderValue::from_str(&h.1).unwrap();
+			add_to_headers(&mut request_headers, HeaderName::from_str(&h.0).unwrap(), value)
+		});
 
 		if let Some(body) = maybe_body.as_ref() {
 			if self.send_null_body || body != "null" {

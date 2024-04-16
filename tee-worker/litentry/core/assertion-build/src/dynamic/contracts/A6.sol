@@ -2,13 +2,12 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity} from "./DynamicAssertion.sol";
+import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/utils/Strings.sol";
 
-
 contract A6 is DynamicAssertion {
-    function doExecute(Identity[] memory identities)
-    internal
+    function execute(Identity[] memory identities, string[] memory secrets)
+    public
     override
     returns (
         string memory,
@@ -34,11 +33,19 @@ contract A6 is DynamicAssertion {
                     string(identities[i].value)
                 );
                 string memory full_url = concatenateStrings(
-                    url, "?user.fields=public_metrics");
+                    url,
+                    "?user.fields=public_metrics"
+                );
 
-                string
-                memory jsonPointer = "/data/public_metrics/followers_count";
-                int64 followers_count = GetI64(full_url, jsonPointer);
+                HttpHeader[] memory headers = new HttpHeader[](1);
+                // we expect first secret to be twitter api key
+                headers[0] = HttpHeader("authorization", secrets[0]);
+
+                int64 followers_count = GetI64(
+                    full_url,
+                    "/data/public_metrics/followers_count",
+                    headers
+                );
 
                 sum += followers_count;
             }
@@ -68,15 +75,17 @@ contract A6 is DynamicAssertion {
         }
         result = true;
 
-
-        string memory assertion = concatenateStrings('{"and": [{ "src": "$total_followers", "op": ">", "dst": "', Strings.toString(min));
-        assertion = concatenateStrings(assertion, '" }, { "src": "$has_web3_account", "op": "<=", "dst": "');
+        string memory assertion = concatenateStrings(
+            '{"and": [{ "src": "$total_followers", "op": ">", "dst": "',
+            Strings.toString(min)
+        );
+        assertion = concatenateStrings(
+            assertion,
+            '" }, { "src": "$has_web3_account", "op": "<=", "dst": "'
+        );
         assertion = concatenateStrings(assertion, Strings.toString(max));
         assertion = concatenateStrings(assertion, '" } ] }');
-        assertions.push(
-            assertion
-        );
+        assertions.push(assertion);
         return (description, assertion_type, assertions, schema_url, result);
     }
 }
- 

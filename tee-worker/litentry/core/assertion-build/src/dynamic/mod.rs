@@ -28,6 +28,7 @@ use litentry_primitives::Identity;
 use log::{error, info};
 use precompiles::Precompiles;
 use primitive_types::{H160, U256};
+use serde_json::to_string;
 use std::{collections::BTreeMap, println};
 
 mod precompiles;
@@ -37,8 +38,9 @@ pub fn build<SC: SmartContractRepository>(
 	req: &AssertionBuildRequest,
 	smart_contract_id: H160,
 	repository: SC,
+	secrets: Vec<String>
 ) -> Result<Credential> {
-	let input = prepare_execute_call_input(&req.identities, &vec![]);
+	let input = prepare_execute_call_input(&req.identities, secrets);
 
 	let smart_contract_byte_code = repository.get(&smart_contract_id).unwrap();
 	let (description, assertion_type, assertions, schema_url, result) =
@@ -107,7 +109,7 @@ pub fn execute_smart_contract(
 	let call_reason =
 		executor.transact_call(caller, address, U256::zero(), input, u64::MAX, Vec::new());
 
-	info!("Contract execution result {:?}", &call_reason);
+	std::println!("Contract execution result {:?}", &call_reason);
 	decode_result(&call_reason.1)
 }
 
@@ -135,33 +137,15 @@ fn decode_result(data: &[u8]) -> (String, String, Vec<String>, String, bool) {
 	)
 }
 
-fn prepare_execute_call_input(identities: &[IdentityNetworkTuple], secrets: &[String]) -> Vec<u8> {
-	// let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
-	// let secrets: Vec<Token> = secrets.iter().map(|s| Token::String(s.to_owned())).collect();
-	// let encoded_identities = encode(&[Token::Array(identities)]);
-	// // let encoded_identities_as_bytes = encode(&[Token::Bytes(encoded_identities)]);
-	// // let encoded_secrets = encode(&[Token::Array(secrets)]);
-	// // let encoded_secrets_as_bytes = encode(&[Token::Bytes(encoded_secrets)]);
-	// let encoded_inputs = encode(&[Token::Tuple(vec![Token::Array(identities), Token::Array(secrets)])]);
-	// let encoded_input_as_bytes = encode(&[Token::Bytes(encoded_inputs)]);
-
-	let encoded_string = encode(&[Token::String("test".to_string())]);
-	let encoded_string_as_bytes = encode(&[Token::Bytes(encoded_string)]);
-
-	let encoded_str = encode(&[Token::String("test".to_string())]);
-	let encoded_str_as_bytes = encode(&[Token::Bytes(encoded_str)]);
-
-	let tuple = encode(&[Token::Array(vec![
-		Token::String("test".to_string()),
-		Token::String("test".to_string())
-	])]);
-
-
-	let encoded_tuple_as_bytes = encode(&[Token::Bytes(tuple)]);
-
-
-	let function_hash = "09c5eabe";
-	prepare_function_call_input(function_hash, encoded_tuple_as_bytes)
+fn prepare_execute_call_input(identities: &[IdentityNetworkTuple], secrets: Vec<String>) -> Vec<u8> {
+	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
+	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
+	let mut input = encode(&[
+		Token::Array(identities),
+		Token::Array(secrets)
+	]);
+	let function_hash = "e2561846";
+	prepare_function_call_input(function_hash, input)
 }
 
 pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token {
@@ -176,6 +160,10 @@ pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token
 	};
 	let networks: Vec<Token> = identity.1.iter().map(network_to_token).collect();
 	Token::Tuple(vec![Token::Uint(type_index.into()), Token::Bytes(value), Token::Array(networks)])
+}
+
+pub fn secret_to_token(secret: &String) -> Token {
+	Token::String(secret.to_owned())
 }
 
 pub fn network_to_token(network: &Web3Network) -> Token {
@@ -330,7 +318,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(1), repository).unwrap();
+		let credential = build(&request, hash(1), repository, vec![]).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -360,7 +348,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository).unwrap();
+		let credential = build(&request, hash(0), repository, vec![]).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -369,6 +357,7 @@ pub mod tests {
 	#[test]
 	pub fn test_a6_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
+		run(19527).unwrap();
 		// given
 		let twitter_identity = Identity::Twitter(IdentityString::new("twitterdev".as_bytes().to_vec()));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
@@ -390,12 +379,12 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(2), repository).unwrap();
+		let credential = build(&request, hash(2), repository, vec!["twitter_api_key".to_string()]).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
 		// then
-		assert!(credential.credential_subject.values[1]);
+		assert!(credential.credential_subject.values[0]);
 	}
 
 
@@ -423,7 +412,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository).unwrap();
+		let credential = build(&request, hash(0), repository, vec![]).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);

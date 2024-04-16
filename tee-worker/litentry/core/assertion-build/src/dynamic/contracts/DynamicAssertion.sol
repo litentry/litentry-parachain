@@ -8,26 +8,17 @@ pragma solidity ^0.8.8;
         uint32[] networks;
     }
 
+    struct HttpHeader {
+        string name;
+        string value;
+    }
+
 abstract contract DynamicAssertion {
     string[] assertions;
     string schema_url;
 
-    function execute(bytes memory input)
+    function execute(Identity[] memory identities, string[] memory secrets)
     public
-    returns (
-        string memory,
-        string memory,
-        string[] memory,
-        string memory,
-        bool
-    )
-    {
-        Identity[] memory identities = abi.decode(input, (Identity[]));
-        return doExecute(identities);
-    }
-
-    function doExecute(Identity[] memory identities)
-    internal
     virtual
     returns (
         string memory,
@@ -45,13 +36,14 @@ abstract contract DynamicAssertion {
         return abi.encode(url, jsonPointer);
     }
 
-    function GetI64(string memory url, string memory jsonPointer)
-    internal
-    returns (int64)
-    {
+    function GetI64(
+        string memory url,
+        string memory jsonPointer,
+        HttpHeader[] memory headers
+    ) internal returns (int64) {
         int64 value;
 
-        bytes memory encoded_params = abi.encode(url, jsonPointer);
+        bytes memory encoded_params = abi.encode(url, jsonPointer, headers);
         uint256 encoded_params_len = encoded_params.length;
         assembly {
             let memPtr := mload(0x40)
@@ -76,13 +68,14 @@ abstract contract DynamicAssertion {
         return (value);
     }
 
-    function GetBool(string memory url, string memory jsonPointer)
-    internal
-    returns (bool)
-    {
+    function GetBool(
+        string memory url,
+        string memory jsonPointer,
+        HttpHeader[] memory headers
+    ) internal returns (bool) {
         bool value;
 
-        bytes memory encoded_params = abi.encode(url, jsonPointer);
+        bytes memory encoded_params = abi.encode(url, jsonPointer, headers);
         uint256 encoded_params_len = encoded_params.length;
 
         assembly {

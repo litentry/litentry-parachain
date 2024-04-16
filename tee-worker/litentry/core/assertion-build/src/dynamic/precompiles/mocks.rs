@@ -67,6 +67,7 @@ impl SendHttpRequest for MockedHttpClient {
 		_url: Url,
 		_method: Method,
 		_maybe_body: Option<String>,
+		_headers: Vec<(String, String)>
 	) -> Result<(Response, EncodedBody), Error> {
 		if !self.http_err {
 			const HEAD: &[u8; 102] = b"HTTP/1.1 200 OK\r\n\

@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity} from "DynamicAssertion.sol";
+import {DynamicAssertion, Identity, HttpHeader} from "DynamicAssertion.sol";
 
 contract A20 is DynamicAssertion {
-    function doExecute(Identity[] memory identities)
-    internal
+    function execute(Identity[] memory identities, string[] memory secrets)
+    public
     override
     returns (
         string memory,
@@ -19,9 +19,7 @@ contract A20 is DynamicAssertion {
         string
         memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
-        assertions.push(
-            '{ "src": "$has_joined", "op": "==", "dst": "true" }'
-        );
+        assertions.push('{ "src": "$has_joined", "op": "==", "dst": "true" }');
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
         bool result = false;
 
@@ -34,7 +32,9 @@ contract A20 is DynamicAssertion {
                     res
                 );
                 string memory jsonPointer = "/hasJoined";
-                result = GetBool(url, jsonPointer);
+                HttpHeader[] memory headers = new HttpHeader[](0);
+
+                result = GetBool(url, jsonPointer, headers);
                 if (result) {
                     break;
                 }

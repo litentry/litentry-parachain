@@ -28,7 +28,7 @@ macro_rules! http_get_precompile_fn {
 			input: Vec<u8>,
 			client: T,
 		) -> $crate::dynamic::precompiles::PrecompileResult {
-			let decoded = ethabi::decode(&[ethabi::ParamType::String, ethabi::ParamType::String], &input).map_err(|e| {
+			let decoded = ethabi::decode(&[ethabi::ParamType::String, ethabi::ParamType::String, ethabi::ParamType::Array(ethabi::ParamType::Tuple(vec![ethabi::ParamType::String, ethabi::ParamType::String]).into())], &input).map_err(|e| {
 				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
 					"Could not decode bytes {:?}, reason: {:?}", input, e
 				))
@@ -45,8 +45,14 @@ macro_rules! http_get_precompile_fn {
 
 			// safe to unwrap
 			let pointer = decoded.get(1).unwrap().clone().into_string().unwrap();
+			let http_headers: Vec<(String, String)> = decoded.get(2).unwrap().clone().into_array().unwrap().iter().map(|v| {
+				let name = v.clone().into_tuple().unwrap().get(0).unwrap().clone().into_string().unwrap();
+				let value = v.clone().into_tuple().unwrap().get(1).unwrap().clone().into_string().unwrap();
+
+				(name, value)
+			}).collect();
 			let resp = client
-				.send_request_raw(url, itc_rest_client::rest_client::Method::GET, None)
+				.send_request_raw(url, itc_rest_client::rest_client::Method::GET, None, http_headers)
 				.map_err(|e| {
 				$crate::dynamic::precompiles::macros::prepare_custom_failure(format!(
 					"Error while performing http call: {:?}", e
@@ -59,7 +65,6 @@ macro_rules! http_get_precompile_fn {
 					resp.1, e
 				))
 			})?;
-			std::println!("Values is: {:?}", value);
 			let result = match value.pointer(&pointer) {
 				Some(v) => v,
 				None =>
@@ -67,7 +72,6 @@ macro_rules! http_get_precompile_fn {
 						format!("No value under given pointer: :{:?}", pointer),
 					)),
 			};
-			std::println!("Result is: {:?}", result);
 
 			let encoded = match result.$parse_fn_name() {
 				Some(v) => ethabi::encode(&[ethabi::Token::$token(v.into())]),
