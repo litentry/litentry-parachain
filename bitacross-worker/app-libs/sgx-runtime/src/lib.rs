@@ -62,7 +62,6 @@ pub use frame_support::{
 };
 use itp_sgx_runtime_primitives::types::Moment;
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_parentchain::Call as ParentchainPalletCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
