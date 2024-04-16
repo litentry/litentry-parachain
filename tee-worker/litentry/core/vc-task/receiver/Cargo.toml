@@ -52,6 +52,7 @@ pallet-identity-management-tee = { path = "../../../pallets/identity-management"
 [dev-dependencies]
 sgx_crypto_helper = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
 itp-test = { path = "../../../../core-primitives/test" }
+itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", features = ["mocks"] }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", features = ["mocks"] }
 itp-top-pool = { path = "../../../../core-primitives/top-pool", features = ["mocks"] }
 itp-stf-executor = { path = "../../../../core-primitives/stf-executor", features = ["mocks"] }
@@ -107,6 +108,7 @@ std = [
     "itp-node-api/std",
     "itp-storage/std",
     "lc-vc-task-sender/std",
+    "ita-stf/std",
 ]
 development = [
     "ita-stf/development",

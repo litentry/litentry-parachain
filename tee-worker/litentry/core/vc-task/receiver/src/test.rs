@@ -12,63 +12,37 @@ pub fn test_signle_vc_requests_with_empty_id_graph() {
 		let vc_request = create_vc_request(vec![Assertion::A1]);
 		sender.send(VCRequest { request: vc_request }).unwrap();
 
-		std::thread::sleep(Duration::from_secs(2));
-
-		top_calls_receiver.try_iter().for_each(|a| {
-			println!("Received Top Call");
-		});
-
-		rpc_calls_receiver.try_iter().for_each(|a| {
-			decrypt_aes_request(a);
-		});
-
-		loop {}
+		// This should have valid VC Response
+		let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
 	});
 }
 
 #[test]
 pub fn test_duplicate_assertions() {
-	init_vc_task();
-	let top_calls_receiver = init_global_mock_author_api().unwrap();
-	let rpc_calls_receiver = init_global_rpc_api().unwrap();
-	println!("Finished initialising VC Task handler");
-	let sender = VcRequestSender::default();
-	let vc_request = create_vc_request(vec![Assertion::A1, Assertion::A6, Assertion::A1]);
-	sender.send(VCRequest { request: vc_request }).unwrap();
+	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
+		let sender = VcRequestSender::default();
+		let vc_request = create_vc_request(vec![Assertion::A1, Assertion::A1]);
+		sender.send(VCRequest { request: vc_request }).unwrap();
 
-	std::thread::sleep(Duration::from_secs(2));
+		let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
+		assert!(assert_is_err(String::from("Duplicate assertion request"), response));
 
-	top_calls_receiver.try_iter().for_each(|a| {
-		// println!("Received RPC response");
-	});
-
-	rpc_calls_receiver.try_iter().for_each(|a| {
-		decrypt_aes_request(a);
+		// This should have the valid VC response
+		// TODO: Assert Valid VC response (Only being able to decode the string)
+		let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
 	});
 }
 
 #[test]
 pub fn test_no_eligible_identity() {
-	init_vc_task();
-	let top_calls_receiver = init_global_mock_author_api().unwrap();
-	let rpc_calls_receiver = init_global_rpc_api().unwrap();
-	println!("Finished initialising VC Task handler");
-	let sender = VcRequestSender::default();
-	let vc_request = create_vc_request(vec![Assertion::A6]);
-	sender.send(VCRequest { request: vc_request }).unwrap();
+	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
+		let sender = VcRequestSender::default();
+		let vc_request = create_vc_request(vec![Assertion::A6]);
+		sender.send(VCRequest { request: vc_request }).unwrap();
 
-	// Sleep to receive responses
-	std::thread::sleep(Duration::from_secs(10));
-
-	top_calls_receiver.try_iter().for_each(|a| {
-		// println!("Received RPC response");
+		let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
+		assert!(assert_is_err(String::from("No eligible identity"), response));
 	});
-
-	// We should receive one response only
-	let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
-	assert!(assert_is_err(String::from("No eligible identity"), response));
-
-	println!("This test ends");
 }
 
 pub fn test_invalid_mrenclave() {}
