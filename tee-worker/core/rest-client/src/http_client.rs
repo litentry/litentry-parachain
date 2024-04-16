@@ -60,7 +60,7 @@ pub trait SendHttpRequest {
 		url: Url,
 		method: Method,
 		maybe_body: Option<String>,
-		headers: Vec<(String, String)>
+		headers: Vec<(String, String)>,
 	) -> Result<(Response, EncodedBody), Error>;
 }
 
@@ -272,7 +272,7 @@ where
 		url: Url,
 		method: Method,
 		maybe_body: Option<String>,
-		headers: Vec<(String, String)>
+		headers: Vec<(String, String)>,
 	) -> Result<(Response, EncodedBody), Error> {
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 

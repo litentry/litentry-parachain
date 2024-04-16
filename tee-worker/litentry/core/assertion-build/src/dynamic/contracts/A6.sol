@@ -29,7 +29,7 @@ contract A6 is DynamicAssertion {
         for (uint256 i = 0; i < identities.length; i++) {
             if (is_twitter(identities[i])) {
                 string memory url = concatenateStrings(
-                    "http://localhost:19527/2/users/by/username/",
+                    "http://localhost:19528/2/users/by/username/",
                     string(identities[i].value)
                 );
                 string memory full_url = concatenateStrings(

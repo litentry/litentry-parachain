@@ -182,6 +182,7 @@ pub mod test {
 		ethabi::encode(&[
 			ethabi::Token::String(url.to_string()),
 			ethabi::Token::String(pointer.to_string()),
+			ethabi::Token::Array(vec![]),
 		])
 	}
 }

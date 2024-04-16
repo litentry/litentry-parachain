@@ -25,10 +25,9 @@ use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Identity;
-use log::{error, info};
+use log::error;
 use precompiles::Precompiles;
 use primitive_types::{H160, U256};
-use serde_json::to_string;
 use std::{collections::BTreeMap, println};
 
 mod precompiles;
@@ -38,7 +37,7 @@ pub fn build<SC: SmartContractRepository>(
 	req: &AssertionBuildRequest,
 	smart_contract_id: H160,
 	repository: SC,
-	secrets: Vec<String>
+	secrets: Vec<String>,
 ) -> Result<Credential> {
 	let input = prepare_execute_call_input(&req.identities, secrets);
 
@@ -137,13 +136,13 @@ fn decode_result(data: &[u8]) -> (String, String, Vec<String>, String, bool) {
 	)
 }
 
-fn prepare_execute_call_input(identities: &[IdentityNetworkTuple], secrets: Vec<String>) -> Vec<u8> {
+fn prepare_execute_call_input(
+	identities: &[IdentityNetworkTuple],
+	secrets: Vec<String>,
+) -> Vec<u8> {
 	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
-	let mut input = encode(&[
-		Token::Array(identities),
-		Token::Array(secrets)
-	]);
+	let input = encode(&[Token::Array(identities), Token::Array(secrets)]);
 	let function_hash = "e2561846";
 	prepare_function_call_input(function_hash, input)
 }
@@ -163,7 +162,7 @@ pub fn identity_with_networks_to_token(identity: &IdentityNetworkTuple) -> Token
 }
 
 pub fn secret_to_token(secret: &String) -> Token {
-	Token::String(secret.to_owned())
+	Token::String(secret.to_string())
 }
 
 pub fn network_to_token(network: &Web3Network) -> Token {
@@ -357,9 +356,10 @@ pub mod tests {
 	#[test]
 	pub fn test_a6_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run(19527).unwrap();
+		run(19528).unwrap();
 		// given
-		let twitter_identity = Identity::Twitter(IdentityString::new("twitterdev".as_bytes().to_vec()));
+		let twitter_identity =
+			Identity::Twitter(IdentityString::new("twitterdev".as_bytes().to_vec()));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
 		let request = AssertionBuildRequest {
@@ -379,15 +379,14 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(2), repository, vec!["twitter_api_key".to_string()]).unwrap();
+		let credential =
+			build(&request, hash(2), repository, vec!["twitter_api_key".to_string()]).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
 		// then
 		assert!(credential.credential_subject.values[0]);
 	}
-
-
 
 	#[test]
 	pub fn test_a1_false() {

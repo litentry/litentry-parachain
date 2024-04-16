@@ -97,6 +97,7 @@ impl SendHttpRequest for HttpClientMock {
 		url: Url,
 		method: Method,
 		maybe_body: Option<String>,
+		headers: Vec<(String, String)>,
 	) -> Result<(Response, EncodedBody), Error> {
 		todo!()
 	}
