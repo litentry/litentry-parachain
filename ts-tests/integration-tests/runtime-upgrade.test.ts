@@ -108,7 +108,9 @@ export async function observeEvent(
 /// preimage -> proposal -> vote -> democracy pass -> scheduler dispatch runtime update.
 const proposalAmount = bn1e12;
 async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
+    console.log('Starting runtime upgrade without sudo');
     const old_runtime_version = await getRuntimeVersion(api);
+    console.log(`Old runtime version = ${old_runtime_version}`);
     let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
@@ -196,9 +198,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
 describeLitentry('Runtime upgrade test', ``, (context) => {
     step('Running runtime ugprade test', async function () {
         const wasmPath = path.resolve('/tmp/runtime.wasm');
-        console.log(wasmPath.length);
         const wasm = fs.readFileSync(wasmPath).toString('hex');
-        console.log(wasm);
+        console.log('wasm', wasm, wasm.length);
         const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
