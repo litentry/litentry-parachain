@@ -68,7 +68,7 @@ esac
 cd "$TMPDIR"
 git clone "$FORK_OFF_SUBSTRATE_REPO"
 cd fork-off-substrate
-npm i
+pnpm install --no-frozen-lockfile
 
 mkdir data && cd data
 
