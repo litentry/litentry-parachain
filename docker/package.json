@@ -1,13 +1,14 @@
 {
-  "name": "litentry-parachain-launch",
-  "version": "1.0.0",
-  "main": "",
-  "license": "GPL-3.0",
-  "scripts": {
-    "build": "cd node_modules/@open-web3/parachain-launch && corepack yarn install && corepack yarn run build",
-    "start": "node_modules/.bin/parachain-launch"
-  },
-  "dependencies": {
-    "@open-web3/parachain-launch": "github:Kailai-Wang/parachain-launch#87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0"
-  }
+    "name": "litentry-parachain-launch",
+    "version": "1.0.0",
+    "main": "",
+    "license": "GPL-3.0",
+    "scripts": {
+        "build": "cd node_modules/@open-web3/parachain-launch && corepack yarn install && corepack yarn run build",
+        "start": "node_modules/.bin/parachain-launch"
+    },
+    "dependencies": {
+        "@open-web3/parachain-launch": "github:Kailai-Wang/parachain-launch#87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0"
+    },
+    "packageManager": "pnpm@8.7.6"
 }
