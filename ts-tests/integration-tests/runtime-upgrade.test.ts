@@ -198,8 +198,13 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
 describeLitentry('Runtime upgrade test', ``, (context) => {
     step('Running runtime ugprade test', async function () {
         const wasmPath = path.resolve('/tmp/runtime.wasm');
-        const wasm = fs.readFileSync(wasmPath).toString('hex');
-        console.log('wasm', wasm, wasm.length);
+        // const wasm = fs.readFileSync(wasmPath).toString('hex');
+        if (fs.existsSync(wasmPath)) {
+            const wasm = fs.readFileSync(wasmPath).toString('hex');
+            console.log('wasm', wasm, wasm.length);
+        } else {
+            console.log('File does not exist:', wasmPath);
+        }
         const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
