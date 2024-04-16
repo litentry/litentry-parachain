@@ -210,8 +210,6 @@ pub fn encrypt_trusted_operation(
 	AesRequest { shard, key: encrypted_key, payload: encrypted_top }
 }
 
-pub fn decrypt_aes_request(payload: Vec<u8>) {}
-
 pub fn assert_is_err(error: String, payload: Vec<u8>) -> bool {
 	let res = RequestVcResultOrError::decode(&mut payload.as_slice()).unwrap();
 
