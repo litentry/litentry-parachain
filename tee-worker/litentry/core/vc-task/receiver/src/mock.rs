@@ -130,11 +130,14 @@ pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 	request
 }
 
-pub fn create_vc_request(assertion: Vec<Assertion>) -> AesRequest {
+pub fn create_vc_request(
+	assertion: Vec<Assertion>,
+	mrenclave: [u8; 32],
+	shard: ShardIdentifier,
+) -> AesRequest {
 	let alice = sr25519::Pair::from_string("//Alice", None).unwrap();
 	let s: String = String::from("751h9re4VmXYTEyFtsVPDm7H8PHgbz9D3guUSd1vKyUf");
 	let s = s.from_base58().unwrap();
-	let shard: ShardIdentifier = H256::zero().into();
 
 	let seed = blake2_256(COMMON_SEED).to_vec();
 	let pair = sr25519::Pair::from_seed_slice(&seed)
@@ -149,8 +152,6 @@ pub fn create_vc_request(assertion: Vec<Assertion>) -> AesRequest {
 	)
 	.expect("decoding shielding_key failed");
 
-	let mrenclave = [0_u8; 32];
-
 	let tcs = TrustedCall::request_batch_vc(
 		alice.public().into(),
 		alice.public().into(),
@@ -159,6 +160,39 @@ pub fn create_vc_request(assertion: Vec<Assertion>) -> AesRequest {
 		Default::default(),
 	)
 	.sign(&KeyPair::Sr25519(Box::new(alice)), 0, &mrenclave, &shard);
+
+	let top = tcs.clone().into_trusted_operation(true);
+
+	encrypt_trusted_operation(H256::zero(), &top, shielding_key, key)
+}
+
+pub fn create_noop_trusted_call() -> AesRequest {
+	let alice = sr25519::Pair::from_string("//Alice", None).unwrap();
+	let s: String = String::from("751h9re4VmXYTEyFtsVPDm7H8PHgbz9D3guUSd1vKyUf");
+	let s = s.from_base58().unwrap();
+
+	let seed = blake2_256(COMMON_SEED).to_vec();
+	let pair = sr25519::Pair::from_seed_slice(&seed)
+		.expect("Failed to create a key pair from the provided seed");
+	let public_id = pair.public();
+
+	let mrenclave = [0_u8; 32];
+	let shard = H256::zero();
+
+	let shielding_key = SHIELDING_KEY.clone().key.pubkey().unwrap();
+	let mut key = RequestAesKey::default();
+	hex::decode_to_slice(
+		"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
+		&mut key,
+	)
+	.expect("decoding shielding_key failed");
+
+	let tcs = TrustedCall::noop(alice.public().into()).sign(
+		&KeyPair::Sr25519(Box::new(alice)),
+		0,
+		&mrenclave,
+		&shard,
+	);
 
 	let top = tcs.clone().into_trusted_operation(true);
 
