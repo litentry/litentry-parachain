@@ -23,13 +23,13 @@ http_get_precompile_fn!(http_get_string, String, as_str);
 
 #[cfg(test)]
 pub mod test {
-	use crate::dynamic::precompiles::{
+	use crate::precompiles::{
 		http_get::{http_get_bool, http_get_i64, http_get_string},
 		mocks::MockedHttpClient,
 		PrecompileResult,
 	};
+	use ethabi::ethereum_types::U256;
 	use evm::{executor::stack::PrecompileFailure, ExitError, ExitSucceed};
-	use primitive_types::U256;
 
 	#[test]
 	pub fn test_get_bool() {

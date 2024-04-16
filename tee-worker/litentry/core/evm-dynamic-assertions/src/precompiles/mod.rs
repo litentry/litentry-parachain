@@ -20,15 +20,15 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::dynamic::precompiles::{
+use crate::precompiles::{
 	http_get::{http_get_bool, http_get_i64, http_get_string},
 	to_hex::to_hex,
 };
+use ethabi::ethereum_types::H160;
 use evm::executor::stack::{
 	IsPrecompileResult, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileSet,
 };
 use itc_rest_client::http_client::HttpClient;
-use primitive_types::H160;
 use std::result::Result as StdResult;
 
 mod http_get;

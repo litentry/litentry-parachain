@@ -2996,14 +2996,10 @@ name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
  "blake2-rfc",
- "ethabi",
- "evm 0.41.1",
  "frame-support",
  "hex 0.4.0",
- "hex-literal",
  "http",
  "http_req",
- "itc-direct-rpc-client",
  "itc-rest-client",
  "itp-ocall-api",
  "itp-stf-primitives",
@@ -3011,6 +3007,8 @@ dependencies = [
  "itp-utils",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
@@ -3120,6 +3118,28 @@ dependencies = [
  "sgx_tstd",
  "thiserror",
  "url 2.5.0",
+]
+
+[[package]]
+name = "lc-dynamic-assertion"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "lc-evm-dynamic-assertions"
+version = "0.1.0"
+dependencies = [
+ "ethabi",
+ "evm 0.41.1",
+ "hex 0.4.0",
+ "http",
+ "itc-rest-client",
+ "lc-dynamic-assertion",
+ "serde_json 1.0.107",
+ "sgx_tstd",
 ]
 
 [[package]]

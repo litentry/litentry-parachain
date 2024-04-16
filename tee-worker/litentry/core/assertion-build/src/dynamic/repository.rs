@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate hex_sgx as hex;
 
+use lc_dynamic_assertion::AssertionLogicRepository;
 use primitive_types::H160;
 use std::{
 	collections::HashMap,
@@ -31,9 +32,7 @@ use std::{
 	vec::Vec,
 };
 
-pub trait SmartContractRepository {
-	fn get(&self, id: &H160) -> Option<(Vec<u8>, Vec<String>)>;
-}
+pub type SmartContractByteCode = Vec<u8>;
 
 pub struct InMemorySmartContractRepo {
 	map: HashMap<H160, (Vec<u8>, Vec<String>)>,
@@ -76,7 +75,7 @@ impl Default for InMemorySmartContractRepo {
 	}
 }
 
-impl SmartContractRepository for InMemorySmartContractRepo {
+impl AssertionLogicRepository<H160, SmartContractByteCode> for InMemorySmartContractRepo {
 	fn get(&self, id: &H160) -> Option<(Vec<u8>, Vec<String>)> {
 		self.map.get(id).cloned()
 	}

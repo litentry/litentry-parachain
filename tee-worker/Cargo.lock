@@ -4444,17 +4444,13 @@ version = "0.1.0"
 dependencies = [
  "blake2-rfc",
  "env_logger 0.10.0",
- "ethabi",
- "evm 0.41.1",
  "frame-support",
  "hex 0.4.0",
  "hex 0.4.3",
- "hex-literal",
  "http 0.2.1",
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
- "itc-direct-rpc-client",
  "itc-rest-client",
  "itp-ocall-api",
  "itp-stf-primitives",
@@ -4462,6 +4458,8 @@ dependencies = [
  "itp-utils",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-mock-server",
  "lc-stf-task-sender",
  "litentry-hex-utils",
@@ -4478,7 +4476,6 @@ dependencies = [
  "sp-core",
  "ss58-registry",
  "thiserror 1.0.9",
- "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4590,6 +4587,32 @@ dependencies = [
  "thiserror 1.0.44",
  "thiserror 1.0.9",
  "url 2.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
+]
+
+[[package]]
+name = "lc-dynamic-assertion"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "lc-evm-dynamic-assertions"
+version = "0.1.0"
+dependencies = [
+ "ethabi",
+ "evm 0.41.1",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.9",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "itc-rest-client",
+ "lc-dynamic-assertion",
+ "litentry-primitives",
+ "serde_json 1.0.103",
+ "sgx_tstd",
 ]
 
 [[package]]
