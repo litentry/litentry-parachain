@@ -205,7 +205,7 @@ def get_flags(index, worker):
         "-r", ports['mura_port'],
         "-h", ports['untrusted_http_port'],
         "-p", ports['collator_ws_port'],
-        # "--enable-mock-server" if worker == "identity" else "",
+        "--enable-mock-server" if worker == "identity" else "",
         "--parentchain-start-block", "0",
         "--enable-metrics" if index == 0 else None
     ]))
