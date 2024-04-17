@@ -73,7 +73,7 @@ export const subscribeToEvents = async (
 
             const matchingEvent = allExtrinsicEvents.filter(({ event, phase }) => {
                 console.log('subscribeToEvents------------', event.section, event.method);
-                console.log(event.toHuman());
+                console.log(JSON.stringify(event.toHuman(), null, 2));
                 return event.section === section && event.method === method;
             });
 
