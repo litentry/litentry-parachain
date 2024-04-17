@@ -10,6 +10,8 @@ import { setTimeout as sleep } from 'timers/promises';
 import { subscribeToEvents } from '../common/utils';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
 import { signAndSend } from '../common/utils';
+import { AccountId } from '@polkadot/types/interfaces';
+import { Vec } from '@polkadot/types';
 
 const BN = require('bn.js');
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
@@ -224,13 +226,63 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     });
 }
 
+const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
+    const members = (await api.query.generalCouncilMembership.members()) as Vec<AccountId>;
+    return Math.ceil(members.length / 2);
+};
+async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
+    const keyring = new Keyring({ type: 'sr25519' });
+    const alice = keyring.addFromUri('//Alice');
+    const old_runtime_version = await getRuntimeVersion(api);
+    console.log(`Old runtime version = ${old_runtime_version}`);
+    let currentBlock = (await api.rpc.chain.getHeader()).number.toNumber();
+    console.log(`Start doing runtime upgrade, current block = ${currentBlock}`);
+
+    const encoded = api.tx.parachainSystem.authorizeUpgrade(wasm).method.toHex();
+    const encodedHash = blake2AsHex(encoded);
+    const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
+      const tx = api.tx.utility.batchAll([
+          api.tx.preimage.notePreimage(encoded),
+          api.tx.generalCouncil.propose(await getCouncilThreshold(api), external, external.length),
+      ]);
+    
+    await signAndSend(tx,alice);
+    console.log("tx hex: ", tx.toHex());
+    
+    let timeoutBlock = currentBlock + 10;
+    let runtimeUpgraded = false;
+    return new Promise(async (resolve, reject) => {
+        const unsub = await api.rpc.chain.subscribeNewHeads(async (header) => {
+            console.log(`Polling .. block = ${header.number.toNumber()}`);
+            const runtime_version = await getRuntimeVersion(api);
+            if (!runtimeUpgraded) {
+                if (runtime_version > old_runtime_version) {
+                    runtimeUpgraded = true;
+                    console.log(
+                        `Runtime upgrade OK, new runtime version = ${runtime_version}, waiting for 2 more blocks ...`
+                    );
+                    timeoutBlock = header.number.toNumber() + 2;
+                }
+            }
+            if (header.number.toNumber() == timeoutBlock) {
+                unsub();
+                if (!runtimeUpgraded) {
+                    reject('Runtime upgrade failed with timeout');
+                } else {
+                    console.log('All good');
+                    resolve(runtime_version);
+                }
+            }
+        });
+    });
+}
 describeLitentry('Runtime upgrade test', ``, (context) => {
     step('Running runtime ugprade test', async function () {
         console.log('Running runtime upgrade test---------');
         const wasmPath = path.resolve('/tmp/runtime.wasm');
         console.log(`wasmPath: ${wasmPath}`);
         const wasm = fs.readFileSync(wasmPath).toString('hex');
-        const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
+        const runtimeVersion = await runtimeupgradeViaGovernance(context.api, `0x${wasm}`);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
     });
