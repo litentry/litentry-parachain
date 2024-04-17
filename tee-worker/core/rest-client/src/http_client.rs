@@ -38,7 +38,7 @@ use std::{
 	time::Duration,
 	vec::Vec,
 };
-use url::Url;
+use url::{form_urlencoded, Url};
 
 pub type EncodedBody = Vec<u8>;
 
@@ -201,7 +201,16 @@ where
 		let mut request_headers = Headers::default_http(&uri);
 
 		if let Some(body) = maybe_body.as_ref() {
-			if self.send_null_body || body != "null" {
+			if is_form_urlencoded(body) {
+				add_to_headers(
+					&mut request_headers,
+					CONTENT_TYPE,
+					HeaderValue::from_str("application/x-www-form-urlencoded")
+						.map_err(|_| Error::RequestError)?,
+				);
+				trace!("set request body: {}", body);
+				request.body(body.as_bytes()); // takes body non-owned (!)
+			} else if self.send_null_body || body != "null" {
 				let len = HeaderValue::from_str(&body.len().to_string())
 					.map_err(|_| Error::RequestError)?;
 
@@ -283,6 +292,10 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 			error!("Failed to add header to request: {:?}", e);
 		},
 	}
+}
+
+fn is_form_urlencoded(body: &str) -> bool {
+	form_urlencoded::parse(body.as_bytes()).all(|(key, value)| !key.is_empty() && !value.is_empty())
 }
 
 #[cfg(test)]
@@ -565,6 +578,18 @@ mod tests {
 		assert_matches!(result, Err(Error::HttpReqError(_)));
 		let msg = format!("error {:?}", result.err());
 		assert!(msg.contains("UnknownIssuer"));
+	}
+
+	#[test]
+	fn is_form_urlencoded_works() {
+		let body = "key1=value1&key2=value2";
+		assert!(is_form_urlencoded(body));
+
+		let json_body = r#"{"key1": "value1", "key2": "value2"}"#;
+		assert!(!is_form_urlencoded(json_body));
+
+		let some_string = "null";
+		assert!(!is_form_urlencoded(some_string));
 	}
 
 	fn headers_connection_close() -> Headers {
