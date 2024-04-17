@@ -189,7 +189,7 @@ impl TrustedGetterSigned {
 					|| self.signature.verify(&hashed, &ALICE_ACCOUNTID32.into())
 					|| self.signature.verify(prettified_msg_hash, &ALICE_ACCOUNTID32.into())
 			},
-			{ is_valid }
+			is_valid
 		)
 	}
 }

@@ -44,7 +44,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
-use litentry_macros::if_development;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
@@ -242,7 +241,8 @@ impl DataProviderConfig {
 		};
 
 		// we allow to override following config properties for non prod dev
-		if_development!({
+		#[cfg(any(feature = "env-data-providers-config", feature = "development"))]
+		{
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;
 			}
@@ -318,7 +318,7 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("MORALIS_API_RETRY_TIME") {
 				config.set_moralis_api_retry_times(v.parse::<u16>().unwrap());
 			}
-		});
+		};
 		// set secrets from env variables
 		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
 			config.set_twitter_auth_token_v2(v);
