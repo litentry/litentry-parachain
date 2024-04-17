@@ -776,12 +776,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - test_name: lit-di-bitcoin-identity-multiworker-test
           - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
-          - test_name: lit-scheduled-enclave-test
+          - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
 
