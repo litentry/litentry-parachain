@@ -355,4 +355,21 @@ mod tests {
 		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
+
+	#[test]
+	fn request_user_access_token_work() {
+		let data_provider_config = init();
+
+		let data = CreateTwitterUserAccessToken {
+			client_id: "client_id".to_string(),
+			code: "code".to_string(),
+			code_verifier: "code_verifier".to_string(),
+			redirect_uri: "redirect_uri".to_string(),
+		};
+		let mut client =
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "Basic token");
+		let result = client.request_user_access_token(data);
+
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
 }
