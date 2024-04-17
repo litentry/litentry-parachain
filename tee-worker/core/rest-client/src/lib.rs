@@ -43,7 +43,7 @@ pub mod rest_client;
 pub mod mocks;
 
 use crate::error::Error;
-use std::string::String;
+use std::{collections::HashMap, string::String};
 
 /// Type for URL query parameters.
 ///
@@ -115,6 +115,14 @@ pub trait RestPost {
 	where
 		T: serde::Serialize + RestPath<U>,
 		K: serde::de::DeserializeOwned;
+
+	fn post_form_urlencoded_capture<U, K>(
+		&mut self,
+		params: U,
+		data: HashMap<String, String>,
+	) -> Result<K, Error>
+	where
+		K: serde::de::DeserializeOwned + RestPath<U>;
 }
 
 /// REST HTTP PUT trait

@@ -19,7 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 
 pub use http_req::{request::Method, response::Headers};
-pub use url::Url;
+pub use url::{form_urlencoded, Url};
 
 use crate::{
 	error::Error, http_client::SendHttpRequest, Query, RestDelete, RestGet, RestPatch, RestPath,
@@ -27,7 +27,10 @@ use crate::{
 };
 
 use log::*;
-use std::string::{String, ToString};
+use std::{
+	collections::HashMap,
+	string::{String, ToString},
+};
 
 /// REST client to make HTTP GET and POST requests.
 pub struct RestClient<H> {
@@ -119,6 +122,22 @@ where
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
 		let body = self.make_request::<U, T>(method, params, Some(query), Some(data))?;
+		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
+	}
+
+	fn post_form_urlencoded_capture<U, K>(
+		&mut self,
+		path: U,
+		data: HashMap<String, String>,
+	) -> Result<K, Error>
+	where
+		K: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		let data: String = form_urlencoded::Serializer::new(String::new())
+			.extend_pairs(data.iter())
+			.finish();
+
+		let body = self.make_request::<U, K>(Method::POST, path, None, Some(data))?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -223,6 +242,18 @@ where
 		K: serde::de::DeserializeOwned,
 	{
 		self.post_or_put_capture_with(Method::POST, params, data, query)
+	}
+
+	/// Make a POST request with form urlencoded data and capture returned body.
+	fn post_form_urlencoded_capture<U, K>(
+		&mut self,
+		params: U,
+		data: HashMap<String, String>,
+	) -> Result<K, Error>
+	where
+		K: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.post_form_urlencoded_capture(params, data)
 	}
 }
 
