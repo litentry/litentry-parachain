@@ -21,7 +21,11 @@ use itp_api_client_types::Events;
 
 use itp_types::{
 	parentchain::{
-		BalanceTransfer, ExtrinsicFailed, ExtrinsicStatus, ExtrinsicSuccess, FilterEvents,
+		events::{
+			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
+			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+		},
+		FilterEvents,
 	},
 	H256,
 };
@@ -46,34 +50,121 @@ impl From<Events<H256>> for FilterableEvents {
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
 
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
+	{
 		Ok(self
 			.to_events()
 			.iter()
-			.filter_map(|ev| {
-				ev.and_then(|ev| {
-					if (ev.as_event::<ExtrinsicSuccess>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Success))
-					}
-
-					if (ev.as_event::<ExtrinsicFailed>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Failed))
-					}
-
-					Ok(None)
-				})
-				.ok()
-				.flatten()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<LinkIdentityRequested>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
 			})
 			.collect())
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
+	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
-			.flatten() // flatten filters out the nones
-			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<VCRequested>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::DeactivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<DeactivateIdentityRequested>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_activate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ActivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<ActivateIdentityRequested>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_scheduled_enclave_set_events(
+		&self,
+	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<ScheduledEnclaveSet>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<ScheduledEnclaveRemoved>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+
+	fn get_opaque_task_posted_events(
+		&self,
+	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<OpaqueTaskPosted>() {
 				Ok(maybe_event) => maybe_event,
 				Err(e) => {
 					log::error!("Could not decode event: {:?}", e);

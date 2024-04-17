@@ -19,12 +19,7 @@
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
 
-use itp_types::{
-	parentchain::{
-		BalanceTransfer, ExtrinsicFailed, ExtrinsicStatus, ExtrinsicSuccess, FilterEvents,
-	},
-	H256,
-};
+use itp_types::{parentchain::FilterEvents, H256};
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -45,40 +40,56 @@ impl From<Events<H256>> for FilterableEvents {
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
 
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.filter_map(|ev| {
-				ev.and_then(|ev| {
-					if (ev.as_event::<ExtrinsicSuccess>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Success))
-					}
-
-					if (ev.as_event::<ExtrinsicFailed>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Failed))
-					}
-
-					Ok(None)
-				})
-				.ok()
-				.flatten()
-			})
-			.collect())
+	fn get_link_identity_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
+	{
+		Ok(Vec::new())
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.flatten() // flatten filters out the nones
-			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
-				Ok(maybe_event) => maybe_event,
-				Err(e) => {
-					log::error!("Could not decode event: {:?}", e);
-					None
-				},
-			})
-			.collect())
+	fn get_vc_requested_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::DeactivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_activate_identity_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ActivateIdentityRequested>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_set_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
+	{
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> core::result::Result<
+		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
+		Self::Error,
+	> {
+		Ok(Vec::new())
+	}
+
+	fn get_opaque_task_posted_events(
+		&self,
+	) -> core::result::Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
