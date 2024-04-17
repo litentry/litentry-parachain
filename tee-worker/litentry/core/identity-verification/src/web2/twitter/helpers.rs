@@ -47,3 +47,22 @@ pub fn oauth2_authorization(client_id: &str, client_secret: &str) -> String {
 	format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_id, client_secret)))
 }
 
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_get_random_string() {
+		let random_string = get_random_string(128);
+		assert_eq!(random_string.len(), 128);
+	}
+
+	#[test]
+	fn test_oauth2_authorization() {
+		let client_id = "Z24wcG85SXVJUy1ldE1wdVl3MlA6MTpjaY";
+		let client_secret = "lYq3l-sMbGVk94iaze3j8G4ne1MBWAQ8pH4-L58yQ7y4mHOCgp";
+		let token = oauth2_authorization(client_id, client_secret);
+
+		assert_eq!(token, "Basic WjI0d2NHODVTWFZKVXkxbGRFMXdkVmwzTWxBNk1UcGphWTpsWXEzbC1zTWJHVms5NGlhemUzajhHNG5lMU1CV0FROHBINC1MNTh5UTd5NG1IT0NncA==".to_string());
+	}
+}
