@@ -114,7 +114,9 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
+    console.log('wasm.length', wasm.length);
     const setCodeCall = api.tx.system.setCode(wasm);
+    console.log('setCodeCall', setCodeCall);
     const preimage = setCodeCall.method.toHex();
     console.log('preimage', preimage);
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
