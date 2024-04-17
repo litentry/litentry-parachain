@@ -202,11 +202,13 @@ describeLitentry('Runtime upgrade test', ``, (context) => {
         if (fs.existsSync(wasmPath)) {
             const wasm = fs.readFileSync(wasmPath).toString('hex');
             console.log('wasm', wasm, wasm.length);
+            const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
+            console.log(`result: ${runtimeVersion}`);
+            expect(runtimeVersion === (await getRuntimeVersion(context.api)));
+
         } else {
             console.log('File does not exist:', wasmPath);
         }
-        const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
-        console.log(`result: ${runtimeVersion}`);
-        expect(runtimeVersion === (await getRuntimeVersion(context.api)));
+    
     });
 });
