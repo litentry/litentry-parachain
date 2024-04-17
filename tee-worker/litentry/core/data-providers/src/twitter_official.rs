@@ -23,11 +23,12 @@ use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
-	RestGet, RestPath,
+	RestGet, RestPath, RestPost,
 };
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
+	collections::HashMap,
 	format,
 	string::{String, ToString},
 	vec,
@@ -97,6 +98,22 @@ pub struct TargetTwitterUser {
 	pub screen_name: String,
 	pub following: bool,
 	pub followed_by: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CreateTwitterUserAccessToken {
+	pub client_id: String,
+	pub code: String,
+	pub code_verifier: String,
+	pub redirect_uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUserAccessToken {
+	pub access_token: String,
+	pub token_type: String,
+	pub expires_in: u32,
+	pub scope: String,
 }
 
 impl RestPath<String> for Tweet {
@@ -243,6 +260,35 @@ impl TwitterOfficialClient {
 
 		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
 		Ok(user)
+	}
+
+	pub fn request_user_access_token(
+		&mut self,
+		data: CreateTwitterUserAccessToken,
+	) -> Result<TwitterUserAccessToken, Error> {
+		debug!("Twitter create access token");
+
+		let path = String::from("/2/oauth2/token");
+
+		let mut body = HashMap::new();
+		body.insert("client_id".to_string(), data.client_id);
+		body.insert("code".to_string(), data.code);
+		body.insert("code_verifier".to_string(), data.code_verifier);
+		body.insert("redirect_uri".to_string(), data.redirect_uri);
+		body.insert("grant_type".to_string(), "authorization_code".to_string());
+
+		let resp = self
+			.client
+			.post_form_urlencoded_capture::<String, TwitterAPIV2Response<TwitterUserAccessToken>>(
+				path, body,
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let token = resp
+			.data
+			.ok_or(Error::RequestError("could not get token from twitter".to_string()))?;
+
+		Ok(token)
 	}
 }
 
