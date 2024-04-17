@@ -68,6 +68,7 @@ RUN \
   fi
 
 RUN cargo test --release --features development
+RUN cargo test -p lc-vc-task-receiver -- --ignored --test-threads 1 
 
 
 ### Base Runner Stage
