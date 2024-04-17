@@ -68,7 +68,17 @@ export default {
             },
         },
         TwitterValidationData: {
+            _enum: {
+                PublicTweet: "PublicTweet",
+                OAuth2: "OAuth2",
+            },
+        },
+        PublicTweet: {
             tweet_id: "Vec<u8>",
+        },
+        OAuth2: {
+            code: "Vec<u8>",
+            redirect_uri: "Vec<u8>",
         },
         DiscordValidationData: {
             channel_id: "Vec<u8>",

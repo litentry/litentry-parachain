@@ -123,7 +123,9 @@ export async function buildValidations(
         const twitterValidationData = {
             Web2Validation: {
                 Twitter: {
-                    tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                    PublicTweet: {
+                        tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                    },
                 },
             },
         };
