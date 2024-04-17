@@ -66,7 +66,8 @@ impl VcRequestSender {
 		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().unwrap();
 		let vc_task_sender = mutex_guard.clone().unwrap();
 		// Release mutex lock, so we don't block the lock longer than necessary.
-		drop(mutex_guard);
+		// drop(mutex_guard);
+		// println!("Drop Mutex Guard");
 
 		// Send the request to the receiver loop.
 		vc_task_sender.send(request)?;
