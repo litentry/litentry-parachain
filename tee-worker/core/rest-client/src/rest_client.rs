@@ -125,7 +125,7 @@ where
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
-	fn post_form_urlencoded_capture<U, K>(
+	pub fn post_form_urlencoded_capture<U, K>(
 		&mut self,
 		path: U,
 		data: HashMap<String, String>,
