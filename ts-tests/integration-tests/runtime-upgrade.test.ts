@@ -256,11 +256,6 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     
       await tx
           .signAndSend(alice, { nonce: await nextNonce(api, alice) })
-          .then(() => process.exit(0))
-          .catch((err) => {
-              console.error(err.message);
-              process.exit(1);
-          });  
     const votedEvent = (await eventsPromise).map(({ event }) => event);
     
     let timeoutBlock = currentBlock + 10;
