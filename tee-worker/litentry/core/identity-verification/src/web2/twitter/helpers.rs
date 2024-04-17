@@ -5,8 +5,9 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+use base64::engine::{general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use rand::{thread_rng, Rng};
-use std::{string::String, vec::Vec};
+use std::{format, string::String, vec::Vec};
 
 use crate::{Error, Result};
 use lc_data_providers::twitter_official::Tweet;
@@ -41,3 +42,8 @@ fn get_random_string(length: usize) -> String {
 
 	random_string
 }
+
+pub fn oauth2_authorization(client_id: &str, client_secret: &str) -> String {
+	format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_id, client_secret)))
+}
+
