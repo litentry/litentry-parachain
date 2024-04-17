@@ -227,7 +227,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
 }
 
 const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
-    const members = (await api.query.generalCouncilMembership.members()) as Vec<AccountId>;
+    const members = (await api.query.councilMembership.members()) as Vec<AccountId>;
+    console.log('members.length----', members.length);
     return Math.ceil(members.length / 2);
 };
 async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
@@ -244,7 +245,7 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
       const tx = api.tx.utility.batchAll([
           api.tx.preimage.notePreimage(encoded),
-          api.tx.generalCouncil.propose(await getCouncilThreshold(api), external, external.length),
+          api.tx.council.propose(await getCouncilThreshold(api), external, external.length),
       ]);
     
     await signAndSend(tx,alice);
