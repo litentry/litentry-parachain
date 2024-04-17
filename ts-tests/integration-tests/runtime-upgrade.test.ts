@@ -116,11 +116,11 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     const alice = keyring.addFromUri('//Alice');
     console.log('wasm.length', wasm.length);
     const setCodeCall = api.tx.system.setCode(wasm);
-    const preimage = setCodeCall.toHex();
-    console.log('preimage', preimage);
+    const preimage = setCodeCall.method.toHex();
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
     console.log(`Preimage hash: ${preimageHash}`);
     let preimageStatus = (await api.query.preimage.statusFor(preimageHash)) as any;
+    console.log('preimageStatus', preimageStatus);
     if (JSON.stringify(preimageStatus) !== 'null') {
         preimageStatus = JSON.parse(preimageStatus);
         if (!preimageStatus?.unrequested && !preimageStatus?.requested) {
