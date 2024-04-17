@@ -9,6 +9,8 @@ import { step } from 'mocha-steps';
 import { setTimeout as sleep } from 'timers/promises';
 import { subscribeToEvents } from '../common/utils';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
+import { signAndSend } from '../common/utils';
+
 const BN = require('bn.js');
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
 
@@ -114,11 +116,9 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
-    console.log('wasm.length', wasm.length);
     const setCodeCall = api.tx.system.setCode(wasm);
     const preimage = setCodeCall.method.toHex();
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
-    console.log(`Preimage hash: ${preimageHash}`);
     let preimageStatus = (await api.query.preimage.statusFor(preimageHash)) as any;
     eventsPromise = subscribeToEvents('preimage', 'Noted', api);
 
@@ -131,7 +131,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     if (preimageStatus?.unrequested?.len > 0 || preimageStatus?.requested?.len > 0) {
         console.log('Preimage already exists, skipping submission');
     } else {
-        await api.tx.preimage.notePreimage(preimage).signAndSend(alice, { nonce: -1 }),
+        const notePreimageTx = api.tx.preimage.notePreimage(preimage);
+        await signAndSend(notePreimageTx, alice);
         console.log(`Preimage submitted: ${preimageHash}`);
     }
     const preimageNotedEvent = (await eventsPromise).map(({ event }) => event);
@@ -142,7 +143,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     // Submit the proposal
     const observeDemocracyStarted = observeEvent('democracy:Started', api);
     eventsPromise = subscribeToEvents('democracy', 'Proposed', api);
-    await api.tx.democracy.propose({ Legacy: preimageHash }, proposalAmount).signAndSend(alice, { nonce: -1 });
+    const proposeTx = api.tx.democracy.propose({ Legacy: preimageHash }, proposalAmount);
+    await signAndSend(proposeTx, alice);
     const proposedEvent = (await eventsPromise).map(({ event }) => event);
     console.log('proposedEvent[0].toHuman()', proposedEvent[0].toHuman());
     expect(proposedEvent.length === 1);
@@ -159,7 +161,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     const observeCodeUpdated = observeEvent('system:CodeUpdated', api);
     const vote = { Standard: { vote: true, balance: proposalAmount } };
     eventsPromise = subscribeToEvents('democracy', 'Voted', api);
-    await api.tx.democracy.vote(api.createType('Compact<u32>', proposalIndex), vote).signAndSend(alice, { nonce: -1 });
+    const voteTx = api.tx.democracy.vote(api.createType('Compact<u32>', proposalIndex), vote);
+    await signAndSend(voteTx, alice);
     const votedEvent = (await eventsPromise).map(({ event }) => event);
     console.log('votedEvent[0].toHuman()', votedEvent[0].toHuman());
     expect(votedEvent.length === 1);
