@@ -29,12 +29,12 @@ use crate::{ensure, Error, Result};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
-	twitter_official::{Tweet, TwitterOfficialClient},
-	DataProviderConfig, UserInfo,
+	twitter_official::{CreateTwitterUserAccessToken, Tweet, TwitterOfficialClient},
+	vec_to_string, DataProviderConfig, UserInfo,
 };
 use litentry_primitives::{
-	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	Web2ValidationData,
+	DiscordValidationData, ErrorDetail, ErrorString, Identity, IntoErrorDetail,
+	TwitterValidationData, Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -58,7 +58,7 @@ pub fn verify(
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {:?}", who);
 
-	let (user_name, payload) = match validation_data {
+	let username = match validation_data {
 		Web2ValidationData::Twitter(data) => match data {
 			TwitterValidationData::PublicTweet { ref tweet_id } => {
 				let mut client = TwitterOfficialClient::v2(
@@ -75,14 +75,47 @@ pub fn verify(
 				let user = client
 					.query_user_by_id(user_id.into_bytes())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-				let user_name = user.username;
 
 				let payload = twitter::helpers::payload_from_tweet(&tweet)?;
+				ensure!(
+					payload.as_slice() == raw_msg,
+					Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+				);
 
-				Ok((user_name, payload))
+				Ok(user.username)
 			},
 			TwitterValidationData::OAuth2 { code, redirect_uri } => {
-				todo!("OAuth2 validation")
+				let authorization = twitter::helpers::oauth2_authorization(
+					&config.twitter_client_id,
+					&config.twitter_client_secret,
+				);
+				let mut oauth2_client =
+					TwitterOfficialClient::v2(&config.twitter_official_url, &authorization);
+				let redirect_uri = vec_to_string(redirect_uri.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let code = vec_to_string(code.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let data = CreateTwitterUserAccessToken {
+					client_id: config.twitter_client_id.clone(),
+					code,
+					code_verifier: "TODO".to_string(),
+					redirect_uri,
+				};
+				let user_token = oauth2_client.request_user_access_token(data).map_err(|e| {
+					Error::LinkIdentityFailed(ErrorDetail::OAuth2VerificationFailed(
+						ErrorString::truncate_from(e.to_string().into_bytes()),
+					))
+				})?;
+
+				let user_authorization = std::format!("Bearer {}", user_token.access_token);
+				let mut user_client =
+					TwitterOfficialClient::v2(&config.twitter_official_url, &user_authorization);
+
+				let user = user_client
+					.query_user_by_id("me".to_string().into_bytes())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+
+				Ok(user.username)
 			},
 		},
 		Web2ValidationData::Discord(DiscordValidationData {
@@ -99,14 +132,19 @@ pub fn verify(
 				.get_user_info(message.author.id.clone())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut user_name = message.author.username.clone();
+			let mut username = message.author.username.clone();
 			// if discord user's username is upgraded complete, the discriminator value from api will be "0".
 			if user.discriminator != "0" {
-				user_name.push_str(&'#'.to_string());
-				user_name.push_str(&user.discriminator);
+				username.push_str(&'#'.to_string());
+				username.push_str(&user.discriminator);
 			}
 			let payload = payload_from_discord(&message)?;
-			Ok((user_name, payload))
+			ensure!(
+				payload.as_slice() == raw_msg,
+				Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+			);
+
+			Ok(username)
 		},
 	}?;
 
@@ -118,22 +156,17 @@ pub fn verify(
 			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(
-				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
+				username.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
 				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
 			);
 		},
 		Identity::Discord(address) => {
 			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
-			ensure!(user_name.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
+			ensure!(username.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
 		},
 		_ => return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity)),
 	}
 
-	// the payload must match
-	ensure!(
-		payload.as_slice() == raw_msg,
-		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
-	);
 	Ok(())
 }
