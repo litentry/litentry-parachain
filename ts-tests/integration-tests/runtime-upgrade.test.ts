@@ -243,13 +243,15 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     const encoded = api.tx.parachainSystem.authorizeUpgrade(codeHash).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
+   const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
+
       const tx = api.tx.utility.batchAll([
           api.tx.preimage.notePreimage(encoded),
           api.tx.council.propose(await getCouncilThreshold(api), external, external.length),
       ]);
     
-    await signAndSend(tx,alice);
-    console.log("tx hex: ", tx.toHex());
+    await signAndSend(tx, alice);   
+    const votedEvent = (await eventsPromise).map(({ event }) => event);
     
     let timeoutBlock = currentBlock + 10;
     let runtimeUpgraded = false;
