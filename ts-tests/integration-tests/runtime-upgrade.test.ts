@@ -10,8 +10,9 @@ import { setTimeout as sleep } from 'timers/promises';
 import { subscribeToEvents } from '../common/utils';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
 import { signAndSend } from '../common/utils';
-import { AccountId } from '@polkadot/types/interfaces';
+import { AccountId, Index } from '@polkadot/types/interfaces';
 import { Vec } from '@polkadot/types';
+import { KeyringPair } from '@polkadot/keyring/types';
 
 const BN = require('bn.js');
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
@@ -231,6 +232,9 @@ const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
     console.log('members.length----', members.length);
     return Math.ceil(members.length / 2);
 };
+export const nextNonce = async (api: ApiPromise, signer: KeyringPair): Promise<Index> => {
+    return await api.rpc.system.accountNextIndex(signer.address);
+};
 async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
@@ -243,14 +247,20 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     const encoded = api.tx.parachainSystem.authorizeUpgrade(codeHash).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
-   const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
 
       const tx = api.tx.utility.batchAll([
           api.tx.preimage.notePreimage(encoded),
           api.tx.council.propose(await getCouncilThreshold(api), external, external.length),
       ]);
+    const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
     
-    await signAndSend(tx, alice);   
+      await tx
+          .signAndSend(alice, { nonce: await nextNonce(api, alice) })
+          .then(() => process.exit(0))
+          .catch((err) => {
+              console.error(err.message);
+              process.exit(1);
+          });  
     const votedEvent = (await eventsPromise).map(({ event }) => event);
     
     let timeoutBlock = currentBlock + 10;
