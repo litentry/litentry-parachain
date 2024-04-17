@@ -494,7 +494,6 @@ where
 					&data_provider_config.twitter_client_id,
 					&redirect_url,
 				);
-				debug!(">>> verifier code to save: {:?}", &authorize_data.authorize_url);
 				if let Err(_) =
 					twitter::CodeVerifierStore::save_code(account_id, authorize_data.code_verifier)
 				{
@@ -537,7 +536,6 @@ where
 					match twitter::CodeVerifierStore::get_code(&account_id) {
 						Ok(maybe_code) =>
 							if let Some(code) = maybe_code {
-								debug!(">>> stored verifier code: {:?}", code);
 								return Ok(Value::String(code))
 							} else {
 								return Ok(json!(compute_hex_encoded_return_error(
