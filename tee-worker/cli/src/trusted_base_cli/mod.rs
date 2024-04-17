@@ -15,6 +15,8 @@
 
 */
 
+#[cfg(feature = "development")]
+use crate::trusted_base_cli::commands::litentry::remove_identity::RemoveIdentityCommand;
 use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
@@ -22,7 +24,7 @@ use crate::{
 		get_shard_vault::GetShardVaultCommand,
 		litentry::{
 			get_storage::GetStorageCommand, link_identity::LinkIdentityCommand,
-			remove_identity::RemoveIdentityCommand, request_vc::RequestVcCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
