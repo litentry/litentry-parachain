@@ -235,16 +235,14 @@ const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
 export const nextNonce = async (api: ApiPromise, signer: KeyringPair): Promise<Index> => {
     return await api.rpc.system.accountNextIndex(signer.address);
 };
-async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
+async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const old_runtime_version = await getRuntimeVersion(api);
     console.log(`Old runtime version = ${old_runtime_version}`);
     let currentBlock = (await api.rpc.chain.getHeader()).number.toNumber();
     console.log(`Start doing runtime upgrade, current block = ${currentBlock}`);
-    const code = new Uint8Array(wasm);
-    const codeHash = blake2AsHex(code, 256);
-    const encoded = api.tx.parachainSystem.authorizeUpgrade(codeHash).method.toHex();
+    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm), true).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
 
@@ -252,11 +250,11 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
           api.tx.preimage.notePreimage(encoded),
           api.tx.council.propose(await getCouncilThreshold(api), external, external.length),
       ]);
-    const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
+    // const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
     
       await tx
-          .signAndSend(alice, { nonce: await nextNonce(api, alice) })
-    const votedEvent = (await eventsPromise).map(({ event }) => event);
+          .signAndSend(alice, { nonce: -1})
+    // const votedEvent = (await eventsPromise).map(({ event }) => event);
     
     let timeoutBlock = currentBlock + 10;
     let runtimeUpgraded = false;
@@ -290,8 +288,8 @@ describeLitentry('Runtime upgrade test', ``, (context) => {
         console.log('Running runtime upgrade test---------');
         const wasmPath = path.resolve('/tmp/runtime.wasm');
         console.log(`wasmPath: ${wasmPath}`);
-        const wasm = fs.readFileSync(wasmPath);
-        const runtimeVersion = await runtimeupgradeViaGovernance(context.api, wasm);
+        const wasm = fs.readFileSync(wasmPath).toString('hex');
+        const runtimeVersion = await runtimeupgradeViaGovernance(context.api, `0x${wasm}`);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
     });
