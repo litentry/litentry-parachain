@@ -22,13 +22,14 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub type MaxStringLength = ConstU32<64>;
+pub type MaxStringLength = ConstU32<128>;
 pub type ValidationString = BoundedVec<u8, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TwitterValidationData {
-	pub tweet_id: ValidationString,
+pub enum TwitterValidationData {
+	PublicTweet { tweet_id: ValidationString },
+	OAuth2 { code: ValidationString, redirect_uri: ValidationString },
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

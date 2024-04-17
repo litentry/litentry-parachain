@@ -53,32 +53,37 @@ pub fn verify(
 	who: &Identity,
 	identity: &Identity,
 	raw_msg: &[u8],
-	data: &Web2ValidationData,
+	validation_data: &Web2ValidationData,
 	config: &DataProviderConfig,
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {:?}", who);
 
-	let (user_name, payload) = match data {
-		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
-			let mut client = TwitterOfficialClient::v2(
-				config.twitter_official_url.as_str(),
-				config.twitter_auth_token_v2.as_str(),
-			);
-			let tweet: Tweet = client
-				.query_tweet(tweet_id.to_vec())
-				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+	let (user_name, payload) = match validation_data {
+		Web2ValidationData::Twitter(data) => match data {
+			TwitterValidationData::PublicTweet { ref tweet_id } => {
+				let mut client = TwitterOfficialClient::v2(
+					config.twitter_official_url.as_str(),
+					config.twitter_auth_token_v2.as_str(),
+				);
+				let tweet: Tweet = client
+					.query_tweet(tweet_id.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let user_id = tweet
-				.get_user_id()
-				.ok_or(Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
-			let user = client
-				.query_user_by_id(user_id.into_bytes())
-				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-			let user_name = user.username;
+				let user_id = tweet
+					.get_user_id()
+					.ok_or(Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
+				let user = client
+					.query_user_by_id(user_id.into_bytes())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let user_name = user.username;
 
-			let payload = twitter::helpers::payload_from_tweet(&tweet)?;
+				let payload = twitter::helpers::payload_from_tweet(&tweet)?;
 
-			Ok((user_name, payload))
+				Ok((user_name, payload))
+			},
+			TwitterValidationData::OAuth2 { code, redirect_uri } => {
+				todo!("OAuth2 validation")
+			},
 		},
 		Web2ValidationData::Discord(DiscordValidationData {
 			ref channel_id,
