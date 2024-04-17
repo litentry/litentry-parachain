@@ -286,7 +286,7 @@ impl TwitterOfficialClient {
 
 		let token = resp
 			.data
-			.ok_or(Error::RequestError("could not get token from twitter".to_string()))?;
+			.ok_or_else(|| Error::RequestError("could not get token from twitter".to_string()))?;
 
 		Ok(token)
 	}
