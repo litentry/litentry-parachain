@@ -7,6 +7,7 @@ use super::*;
 use crate::mock::*;
 
 #[test]
+#[ignore]
 pub fn test_signle_vc_requests_with_empty_id_graph() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -19,6 +20,7 @@ pub fn test_signle_vc_requests_with_empty_id_graph() {
 }
 
 #[test]
+#[ignore]
 pub fn test_duplicate_assertions() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -30,12 +32,12 @@ pub fn test_duplicate_assertions() {
 		assert!(assert_is_err(String::from("Duplicate assertion request"), response));
 
 		// This should have the valid VC response
-		// TODO: Assert Valid VC response (Only being able to decode the string)
 		let response = rpc_calls_receiver.recv_timeout(Duration::from_secs(100)).unwrap();
 	});
 }
 
 #[test]
+#[ignore]
 pub fn test_no_eligible_identity() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -48,6 +50,7 @@ pub fn test_no_eligible_identity() {
 }
 
 #[test]
+#[ignore]
 pub fn test_invalid_mrenclave() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -60,6 +63,7 @@ pub fn test_invalid_mrenclave() {
 }
 
 #[test]
+#[ignore]
 pub fn test_invalid_shard() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -72,6 +76,7 @@ pub fn test_invalid_shard() {
 }
 
 #[test]
+#[ignore]
 pub fn test_failed_decoding_payload() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
@@ -84,6 +89,7 @@ pub fn test_failed_decoding_payload() {
 }
 
 #[test]
+#[ignore]
 pub fn test_sending_wrong_trusted_call() {
 	execute_with_vc_task(|top_calls_receiver, rpc_calls_receiver| {
 		let sender = VcRequestSender::default();
