@@ -178,8 +178,7 @@ pub(crate) fn request_user_access_token(
 	warp::post()
 		.and(warp::path!("2" / "oauth2" / "token"))
 		.and(warp::body::form())
-		.and(warp::header("Content-Type"))
-		.map(|data: HashMap<String, String>, header: warp::http::header::HeaderValue| {
+		.map(|_: HashMap<String, String>| {
 			let user_access_token = TwitterUserAccessToken {
 				token_type: "bearer".to_string(),
 				expires_in: 7200,
