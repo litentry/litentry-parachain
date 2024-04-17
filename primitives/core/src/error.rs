@@ -69,6 +69,9 @@ pub enum ErrorDetail {
 	// error when trying to build vc but no eligible identity is found
 	#[codec(index = 11)]
 	NoEligibleIdentity,
+	// error when OAuth2 authorization fails
+	#[codec(index = 12)]
+	OAuth2VerificationFailed(ErrorString),
 }
 
 impl fmt::Debug for ErrorDetail {
@@ -91,6 +94,10 @@ impl fmt::Debug for ErrorDetail {
 			ErrorDetail::UnexpectedMessage => write!(f, "UnexpectedMessage"),
 			ErrorDetail::VerifyWeb3SignatureFailed => write!(f, "VerifyWeb3SignatureFailed"),
 			ErrorDetail::NoEligibleIdentity => write!(f, "NoEligibleIdentity"),
+			ErrorDetail::OAuth2VerificationFailed(error_string) => {
+				let text = String::from_utf8(error_string.to_vec()).map_err(|_| fmt::Error)?;
+				write!(f, "OAuth2Error({})", text)
+			},
 		}
 	}
 }
