@@ -121,6 +121,8 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     console.log(`Preimage hash: ${preimageHash}`);
     let preimageStatus = (await api.query.preimage.statusFor(preimageHash)) as any;
     console.log('preimageStatus', preimageStatus);
+    eventsPromise = subscribeToEvents('preimage', 'Noted', api);
+
     if (JSON.stringify(preimageStatus) !== 'null') {
         preimageStatus = JSON.parse(preimageStatus);
         if (!preimageStatus?.unrequested && !preimageStatus?.requested) {
@@ -133,14 +135,24 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
         await api.tx.preimage.notePreimage(preimage).signAndSend(alice, { nonce: -1 }),
             console.log(`Preimage submitted: ${preimageHash}`);
     }
+    const preimageNotedEvent = (await eventsPromise).map(({ event }) => event);
+    console.log('preimageNotedEvent[0].toHuman()', preimageNotedEvent[0].toHuman());
 
+    expect(preimageNotedEvent.length === 1);
+
+    // Submit the proposal
     const observeDemocracyStarted = observeEvent('democracy:Started', api);
+    eventsPromise = subscribeToEvents('democracy', 'Proposed', api);
+    await api.tx.democracy.propose({ Legacy: preimageHash }, proposalAmount).signAndSend(alice, { nonce: -1 });
+    const proposedEvent = (await eventsPromise).map(({ event }) => event);
+    console.log('proposedEvent[0].toHuman()', proposedEvent[0].toHuman());
+    expect(proposedEvent.length === 1);
+    const proposalIndex = proposedEvent[0].data[0];
 
-    console.log('observeDemocracyStarted', observeDemocracyStarted);
-    eventsPromise = subscribeToEvents('democracy', 'Voted', api);
-    const democracyStartedEvent = (await eventsPromise).map(({ event }) => event);
-    console.log('events[0].toHuman()', democracyStartedEvent[0].toHuman());
-
+    // Wait for the democracy started event
+    console.log('Waiting for voting to start...');
+    await observeDemocracyStarted;
+    
     // Vote for the proposal
     const observeDemocracyPassed = observeEvent('democracy:Passed', api);
     const observeDemocracyNotPassed = observeEvent('democracy:NotPassed', api);
@@ -148,10 +160,24 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     const observeCodeUpdated = observeEvent('system:CodeUpdated', api);
     const vote = { Standard: { vote: true, balance: proposalAmount } };
     eventsPromise = subscribeToEvents('democracy', 'Voted', api);
-    const proposalIndex = democracyStartedEvent[0].data[0];
-    console.log('proposalIndex.toHuman()', proposalIndex.toHuman());
     await api.tx.democracy.vote(api.createType('Compact<u32>', proposalIndex), vote).signAndSend(alice, { nonce: -1 });
+    const votedEvent = (await eventsPromise).map(({ event }) => event);
+    console.log('votedEvent[0].toHuman()', votedEvent[0].toHuman());
+    expect(votedEvent.length === 1);
+    console.log(`voted for proposal ${proposalIndex}`);
     console.log('Democracy manifest! waiting for a succulent scheduled runtime update...');
+
+    // Wait for it to pass
+    await Promise.race([observeDemocracyPassed, observeDemocracyNotPassed])
+        .then((event) => {
+            if (event.name.method !== 'Passed') {
+                throw new Error(`Democracy failed for runtime update. ${proposalIndex}`);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            process.exit(-1);
+        });
 
     // Wait for the runtime update to complete
     const schedulerDispatchedEvent = await observeSchedulerDispatched;
