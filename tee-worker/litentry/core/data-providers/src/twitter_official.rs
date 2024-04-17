@@ -23,7 +23,7 @@ use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
-	RestGet, RestPath, RestPost,
+	RestGet, RestPath,
 };
 use log::*;
 use serde::{Deserialize, Serialize};
