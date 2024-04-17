@@ -230,15 +230,16 @@ const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
     const members = (await api.query.generalCouncilMembership.members()) as Vec<AccountId>;
     return Math.ceil(members.length / 2);
 };
-async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
+async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: Buffer) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const old_runtime_version = await getRuntimeVersion(api);
     console.log(`Old runtime version = ${old_runtime_version}`);
     let currentBlock = (await api.rpc.chain.getHeader()).number.toNumber();
     console.log(`Start doing runtime upgrade, current block = ${currentBlock}`);
-
-    const encoded = api.tx.parachainSystem.authorizeUpgrade(wasm).method.toHex();
+    const code = new Uint8Array(wasm);
+    const codeHash = blake2AsHex(code, 256);
+    const encoded = api.tx.parachainSystem.authorizeUpgrade(codeHash).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
       const tx = api.tx.utility.batchAll([
@@ -281,8 +282,8 @@ describeLitentry('Runtime upgrade test', ``, (context) => {
         console.log('Running runtime upgrade test---------');
         const wasmPath = path.resolve('/tmp/runtime.wasm');
         console.log(`wasmPath: ${wasmPath}`);
-        const wasm = fs.readFileSync(wasmPath).toString('hex');
-        const runtimeVersion = await runtimeupgradeViaGovernance(context.api, `0x${wasm}`);
+        const wasm = fs.readFileSync(wasmPath);
+        const runtimeVersion = await runtimeupgradeViaGovernance(context.api, wasm);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
     });
