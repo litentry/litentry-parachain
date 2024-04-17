@@ -71,6 +71,8 @@ export const subscribeToEvents = async (
             const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
 
             const matchingEvent = allExtrinsicEvents.filter(({ event, phase }) => {
+                console.log('subscribeToEvents------------', event.section, event.method);
+                
                 return event.section === section && event.method === method;
             });
 

@@ -120,7 +120,6 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
     console.log(`Preimage hash: ${preimageHash}`);
     let preimageStatus = (await api.query.preimage.statusFor(preimageHash)) as any;
-    console.log('preimageStatus', preimageStatus);
     eventsPromise = subscribeToEvents('preimage', 'Noted', api);
 
     if (JSON.stringify(preimageStatus) !== 'null') {
@@ -133,7 +132,7 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
         console.log('Preimage already exists, skipping submission');
     } else {
         await api.tx.preimage.notePreimage(preimage).signAndSend(alice, { nonce: -1 }),
-            console.log(`Preimage submitted: ${preimageHash}`);
+        console.log(`Preimage submitted: ${preimageHash}`);
     }
     const preimageNotedEvent = (await eventsPromise).map(({ event }) => event);
     console.log('preimageNotedEvent[0].toHuman()', preimageNotedEvent[0].toHuman());
@@ -152,7 +151,7 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     // Wait for the democracy started event
     console.log('Waiting for voting to start...');
     await observeDemocracyStarted;
-    
+
     // Vote for the proposal
     const observeDemocracyPassed = observeEvent('democracy:Passed', api);
     const observeDemocracyNotPassed = observeEvent('democracy:NotPassed', api);
