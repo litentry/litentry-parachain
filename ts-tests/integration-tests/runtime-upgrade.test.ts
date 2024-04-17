@@ -109,14 +109,14 @@ export async function observeEvent(
 /// Pushes a polkadot runtime update using the democracy pallet.
 /// preimage -> proposal -> vote -> democracy pass -> scheduler dispatch runtime update.
 const proposalAmount = bn1e12;
-async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: Buffer) {
+async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     console.log('Starting runtime upgrade without sudo');
     const old_runtime_version = await getRuntimeVersion(api);
     console.log(`Old runtime version = ${old_runtime_version}`);
     let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
-    const setCodeCall = api.tx.system.setCode(Buffer.from(wasm));
+    const setCodeCall = api.tx.system.setCode(wasm);
     const preimage = setCodeCall.method.toHex();
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
     let preimageStatus = (await api.query.preimage.statusFor(preimageHash)) as any;
@@ -229,8 +229,8 @@ describeLitentry('Runtime upgrade test', ``, (context) => {
         console.log('Running runtime upgrade test---------');
         const wasmPath = path.resolve('/tmp/runtime.wasm');
         console.log(`wasmPath: ${wasmPath}`);
-        const wasm = fs.readFileSync(wasmPath);
-        const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, wasm);
+        const wasm = fs.readFileSync(wasmPath).toString('hex');
+        const runtimeVersion = await runtimeUpgradeWithoutSudo(context.api, `0x${wasm}`);
         console.log(`result: ${runtimeVersion}`);
         expect(runtimeVersion === (await getRuntimeVersion(context.api)));
     });

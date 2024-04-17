@@ -11,6 +11,7 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
     return new Promise<{ block: string }>(async (resolve, reject) => {
         await tx.signAndSend(account, (result) => {
             console.log(`Current status is ${result.status}`);
+            console.log(`Transaction result: ${result.toHuman()}`);
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
             } else if (result.status.isFinalized) {
