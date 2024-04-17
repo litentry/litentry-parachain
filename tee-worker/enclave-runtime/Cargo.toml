@@ -27,6 +27,9 @@ development = [
     "litentry-primitives/development",
     "litentry-macros/development",
 ]
+env-data-providers-config = [
+    "lc-data-providers/env-data-providers-config",
+]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
     "itp-settings/offchain-worker",
