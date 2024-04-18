@@ -9,6 +9,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
+    buildTwitterValidations,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -86,12 +87,12 @@ describe('Test Identity (direct invocation)', function () {
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        const twitterValidation = await buildValidations(
+        const twitterValidation = await buildTwitterValidations(
             context,
             aliceSubstrateIdentity,
             twitterIdentity,
-            twitterNonce,
-            'twitter'
+            'PublicTweet',
+            twitterNonce
         );
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
@@ -309,12 +310,12 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = aliceCurrentNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildValidations(
+        const twitterValidation = await buildTwitterValidations(
             context,
             aliceSubstrateIdentity,
             twitterIdentity,
-            twitterNonce,
-            'twitter'
+            'PublicTweet',
+            twitterNonce
         );
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
