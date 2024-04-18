@@ -520,8 +520,13 @@ where
 							"Invalid number of params"
 						)))
 					}
+					let Some(encoded_identity) = encoded_params.get(0) else {
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not get identity"
+						)))
+					};
 
-					let account_id = match Identity::from_hex(encoded_params[0].as_str()) {
+					let account_id = match Identity::from_hex(encoded_identity.as_str()) {
 						Ok(identity) =>
 							if let Some(account_id) = identity.to_account_id() {
 								account_id
@@ -538,16 +543,15 @@ where
 					match twitter::CodeVerifierStore::get_code(&account_id) {
 						Ok(maybe_code) =>
 							if let Some(code) = maybe_code {
-								return Ok(Value::String(code))
+								Ok(Value::String(code))
 							} else {
-								return Ok(json!(compute_hex_encoded_return_error(
+								Ok(json!(compute_hex_encoded_return_error(
 									"Could not get code verifier"
 								)))
 							},
-						Err(_) =>
-							return Ok(json!(compute_hex_encoded_return_error(
-								"Could not get code verifier"
-							))),
+						Err(_) => Ok(json!(compute_hex_encoded_return_error(
+							"Could not get code verifier"
+						))),
 					}
 				},
 
