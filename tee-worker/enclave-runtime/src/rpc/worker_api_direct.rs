@@ -51,7 +51,7 @@ use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::twitter;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_development;
+use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -143,7 +143,9 @@ where
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
-	let local_state = state.clone();
+
+	let local_state = if_development_or!(state.clone(), state);
+
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {

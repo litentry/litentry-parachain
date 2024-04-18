@@ -60,9 +60,15 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks)
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data.clone(), encrypted_web3networks.clone())
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::LinkIdentityRequested{
+			shard,
+			account: caller,
+			encrypted_identity: encrypted_did,
+			encrypted_validation_data,
+			encrypted_web3networks,
+		}.into());
 	}
 
 	// Benchmark `deactivate_identity`. There are no worst conditions. The benchmark showed that
@@ -74,9 +80,13 @@ benchmarks! {
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
 		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
-	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
+	}: _(RawOrigin::Signed(caller.clone()), shard, encrypted_did.clone())
 	verify {
-		assert_last_event::<T>(Event::DeactivateIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::DeactivateIdentityRequested{
+			shard,
+			account: caller,
+			encrypted_identity: encrypted_did,
+		}.into());
 	}
 
 	// Benchmark `activate_identity`. There are no worst conditions. The benchmark showed that
@@ -88,9 +98,13 @@ benchmarks! {
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
 		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
-	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
+	}: _(RawOrigin::Signed(caller.clone()), shard, encrypted_did.clone())
 	verify {
-		assert_last_event::<T>(Event::ActivateIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::ActivateIdentityRequested{
+			shard,
+			account: caller,
+			encrypted_identity: encrypted_did,
+		}.into());
 	}
 
 	// Benchmark `identity_linked`. There are no worst conditions. The benchmark showed that
