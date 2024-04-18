@@ -88,7 +88,7 @@ export async function buildValidations(
     signerIdentitity: CorePrimitivesIdentity,
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'solana',
+    network: 'ethereum' | 'substrate' | 'bitcoin' | 'solana',
     signer?: Signer
 ): Promise<LitentryValidationData> {
     const validationNonce = startingSidechainNonce++;
@@ -150,21 +150,6 @@ export async function buildValidations(
         bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
 
         return context.api.createType('LitentryValidationData', bitcoinValidationData);
-    }
-
-    if (network === 'twitter') {
-        console.log('post verification msg to twitter: ', msg);
-        const twitterValidationData = {
-            Web2Validation: {
-                Twitter: {
-                    PublicTweet: {
-                        tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
-                    },
-                },
-            },
-        };
-
-        return context.api.createType('LitentryValidationData', twitterValidationData);
     }
 
     if (network === 'solana') {
