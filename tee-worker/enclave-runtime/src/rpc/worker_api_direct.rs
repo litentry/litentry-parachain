@@ -496,8 +496,8 @@ where
 					&data_provider_config.twitter_client_id,
 					&redirect_url,
 				);
-				if let Err(_) =
-					twitter::CodeVerifierStore::save_code(account_id, authorize_data.code_verifier)
+				if twitter::CodeVerifierStore::save_code(account_id, authorize_data.code_verifier)
+					.is_err()
 				{
 					return Ok(json!(compute_hex_encoded_return_error(
 						"Could not save code verifier"
