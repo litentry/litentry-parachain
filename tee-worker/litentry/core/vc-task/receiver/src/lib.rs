@@ -554,8 +554,8 @@ where
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.unwrap()
-			.unwrap();
+			.map_err(|_| "Failed to get vc_issued_call_indexes".to_string())?
+			.map_err(|_| "Failed to get metadata".to_string())?;
 
 		let key = maybe_key.ok_or_else(|| "Invalid aes key".to_string())?;
 		let call = OpaqueCall::from_tuple(&(

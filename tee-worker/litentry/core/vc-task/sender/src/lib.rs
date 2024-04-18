@@ -65,9 +65,9 @@ impl VcRequestSender {
 		// Acquire lock on extrinsic sender
 		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().unwrap();
 		let vc_task_sender = mutex_guard.clone().unwrap();
+
 		// Release mutex lock, so we don't block the lock longer than necessary.
-		// drop(mutex_guard);
-		// println!("Drop Mutex Guard");
+		drop(mutex_guard);
 
 		// Send the request to the receiver loop.
 		vc_task_sender.send(request)?;
