@@ -119,6 +119,9 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
     let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
+    // get alice balance
+    const aliceBalance = await api.query.system.account(alice.address);
+    console.log(`Alice balance = ${aliceBalance.data.free}`);
     const setCodeCall = api.tx.system.setCode(wasm);
     const preimage = setCodeCall.method.toHex();
     const preimageHash = '0x' + Buffer.from(blake2AsU8a(preimage)).toString('hex');
@@ -229,7 +232,6 @@ async function runtimeUpgradeWithoutSudo(api: ApiPromise, wasm: string) {
 
 const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
     const members = (await api.query.councilMembership.members()) as Vec<AccountId>;
-    console.log('members.length----', members.length);
     return Math.ceil(members.length / 2);
 };
 export const nextNonce = async (api: ApiPromise, signer: KeyringPair): Promise<Index> => {
@@ -242,20 +244,20 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
     console.log(`Old runtime version = ${old_runtime_version}`);
     let currentBlock = (await api.rpc.chain.getHeader()).number.toNumber();
     console.log(`Start doing runtime upgrade, current block = ${currentBlock}`);
-    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm), true).method.toHex();
+    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm)).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
 
-      const tx = api.tx.utility.batchAll([
-          api.tx.preimage.notePreimage(encoded),
-          api.tx.council.propose(await getCouncilThreshold(api), external, external.length),
-      ]);
-    // const eventsPromise = subscribeToEvents('democracy', 'Voted', api);
+    let preimageStatus = (await api.query.preimage.statusFor(encodedHash)).toHuman();
     
-      await tx
-          .signAndSend(alice, { nonce: -1})
-    // const votedEvent = (await eventsPromise).map(({ event }) => event);
-    
+    if (!preimageStatus) {
+        const notePreimageTx = api.tx.preimage.notePreimage(encoded);
+        await notePreimageTx.signAndSend(alice, { nonce: -1 });
+    } 
+
+    const proposalTx = api.tx.council.propose(await getCouncilThreshold(api), external, external.length);
+    await proposalTx.signAndSend(alice, { nonce: -1 });
+
     let timeoutBlock = currentBlock + 10;
     let runtimeUpgraded = false;
     return new Promise(async (resolve, reject) => {
