@@ -25,13 +25,18 @@ use primitive_types::H160;
 
 pub mod repository;
 
-pub fn build<SC: AssertionLogicRepository<H160, SmartContractByteCode>>(
+pub fn build<SC: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>>(
 	req: &AssertionBuildRequest,
-	smart_contract_id: H160,
-	repository: SC,
+	smart_contract_id: SC::Id,
+	repository: Arc<SC>,
 ) -> Result<Credential> {
 	let executor = EvmAssertionExecutor { assertion_repository: repository };
-	let result = executor.execute(smart_contract_id, &req.identities);
+	let result = executor.execute(smart_contract_id, &req.identities).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Dynamic(smart_contract_id),
+			ErrorDetail::StfError(ErrorString::truncate_from(e.into())),
+		)
+	})?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let mut assertion_values: Vec<AssertionLogic> = vec![];
@@ -105,7 +110,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(1), repository).unwrap();
+		let credential = build(&request, hash(1), repository.into()).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -135,7 +140,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository).unwrap();
+		let credential = build(&request, hash(0), repository.into()).unwrap();
 
 		// then
 		assert!(credential.credential_subject.values[0]);
@@ -167,7 +172,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(2), repository).unwrap();
+		let credential = build(&request, hash(2), repository.into()).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -198,7 +203,7 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential = build(&request, hash(0), repository).unwrap();
+		let credential = build(&request, hash(0), repository.into()).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);

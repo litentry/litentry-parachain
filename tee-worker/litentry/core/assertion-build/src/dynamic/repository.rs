@@ -34,8 +34,15 @@ use std::{
 
 pub type SmartContractByteCode = Vec<u8>;
 
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+
+#[allow(clippy::type_complexity)]
 pub struct InMemorySmartContractRepo {
-	map: HashMap<H160, (Vec<u8>, Vec<String>)>,
+	map: Mutex<HashMap<H160, (Vec<u8>, Vec<String>)>>,
 }
 
 impl InMemorySmartContractRepo {
@@ -65,7 +72,7 @@ impl InMemorySmartContractRepo {
 				vec!["twitter_api_key".to_string()]
 				)
 		);
-		InMemorySmartContractRepo { map }
+		InMemorySmartContractRepo { map: map.into() }
 	}
 }
 
@@ -75,9 +82,17 @@ impl Default for InMemorySmartContractRepo {
 	}
 }
 
-impl AssertionLogicRepository<H160, SmartContractByteCode> for InMemorySmartContractRepo {
-	fn get(&self, id: &H160) -> Option<(Vec<u8>, Vec<String>)> {
-		self.map.get(id).cloned()
+impl AssertionLogicRepository for InMemorySmartContractRepo {
+	type Id = H160;
+	type Value = Vec<u8>;
+
+	fn get(&self, id: &H160) -> Result<Option<(Vec<u8>, Vec<String>)>, String> {
+		Ok(self.map.lock().unwrap().get(id).cloned())
+	}
+
+	fn save(&self, id: Self::Id, value: Self::Value, secrets: Vec<String>) -> Result<(), String> {
+		self.map.lock().unwrap().insert(id, (value, secrets));
+		Ok(())
 	}
 }
 

@@ -7,8 +7,10 @@ edition = "2021"
 
 [dependencies]
 # std dependecies
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 hex = { version = "0.4.3", optional = true }
 http = { version = "0.2", optional = true }
+lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 
 
 # sgx dependencies
@@ -25,7 +27,11 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # local
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
+itp-settings = { path = "../../../core-primitives/settings" }
+itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
 lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
+
 
 [dev-dependencies]
 http_req = { features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
@@ -37,6 +43,7 @@ default = ["std"]
 std = [
     "lc-dynamic-assertion/std",
     "itc-rest-client/std",
+    "itp-sgx-io/std",
     "serde_json/std",
     "hex",
     "http",
@@ -47,4 +54,5 @@ sgx = [
     "http-sgx",
     "lc-dynamic-assertion/sgx",
     "itc-rest-client/sgx",
+    "itp-sgx-io/sgx",
 ]

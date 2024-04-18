@@ -19,6 +19,7 @@
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -50,32 +51,38 @@ use lc_dynamic_assertion::{
 use std::{
 	collections::BTreeMap,
 	string::{String, ToString},
+	sync::Arc,
 	vec,
 	vec::Vec,
 };
 
 mod precompiles;
+pub mod repository;
+
+pub use itp_settings::files::ASSERTIONS_FILE;
 
 pub type AssertionId = H160;
 pub type SmartContractByteCode = Vec<u8>;
 
-pub struct EvmAssertionExecutor<A: AssertionLogicRepository<AssertionId, SmartContractByteCode>> {
-	pub assertion_repository: A,
+pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
+	pub assertion_repository: Arc<A>,
 }
 
-impl<A: AssertionLogicRepository<AssertionId, SmartContractByteCode>> AssertionExecutor<AssertionId>
-	for EvmAssertionExecutor<A>
+impl<A: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>>
+	AssertionExecutor<AssertionId> for EvmAssertionExecutor<A>
 {
 	fn execute(
 		&self,
-		assertion_id: AssertionId,
+		assertion_id: A::Id,
 		identities: &[IdentityNetworkTuple],
-	) -> AssertionResult {
-		// println!("Executing smart contract with input: {:?}", hex::encode(&input));
-
-		let (smart_contract_byte_code, secrets) =
-			self.assertion_repository.get(&assertion_id).unwrap();
-		let input = prepare_execute_call_input(identities, secrets);
+	) -> Result<AssertionResult, String> {
+		let (smart_contract_byte_code, secrets) = self
+			.assertion_repository
+			.get(&assertion_id)
+			.map_err(|_| "Could not access assertion repository")?
+			.ok_or("Assertion not found")?;
+		let input = prepare_execute_call_input(identities, secrets)
+			.map_err(|_| "Could not prepare evm execution input")?;
 
 		// prepare EVM runtime
 		let config = prepare_config();
@@ -104,11 +111,10 @@ impl<A: AssertionLogicRepository<AssertionId, SmartContractByteCode>> AssertionE
 		let call_reason =
 			executor.transact_call(caller, address, U256::zero(), input, u64::MAX, Vec::new());
 
-		// std::println!("Contract execution result {:?}", &call_reason);
 		let (description, assertion_type, assertions, schema_url, meet) =
-			decode_result(&call_reason.1);
+			decode_result(&call_reason.1).map_err(|_| "Could not decode evm execution result")?;
 
-		AssertionResult { description, assertion_type, assertions, schema_url, meet }
+		Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
 	}
 }
 
@@ -138,7 +144,7 @@ fn prepare_memory() -> MemoryVicinity {
 fn prepare_execute_call_input(
 	identities: &[IdentityNetworkTuple],
 	secrets: Vec<String>,
-) -> Vec<u8> {
+) -> Result<Vec<u8>, ()> {
 	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
 	let input = encode(&[Token::Array(identities), Token::Array(secrets)]);
@@ -189,13 +195,13 @@ pub fn network_to_token(network: &Web3Network) -> Token {
 	)
 }
 
-fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Vec<u8> {
-	let mut call_input = hex::decode(function_hash).unwrap();
+fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Result<Vec<u8>, ()> {
+	let mut call_input = hex::decode(function_hash).map_err(|_| ())?;
 	call_input.append(&mut input);
-	call_input
+	Ok(call_input)
 }
 
-fn decode_result(data: &[u8]) -> (String, String, Vec<String>, String, bool) {
+fn decode_result(data: &[u8]) -> Result<(String, String, Vec<String>, String, bool), ()> {
 	let types = vec![
 		ParamType::String,
 		ParamType::String,
@@ -203,20 +209,24 @@ fn decode_result(data: &[u8]) -> (String, String, Vec<String>, String, bool) {
 		ParamType::String,
 		ParamType::Bool,
 	];
-	let decoded = decode(&types, data).unwrap();
-	(
-		decoded[0].clone().into_string().unwrap(),
-		decoded[1].clone().into_string().unwrap(),
-		decoded[2]
-			.clone()
-			.into_array()
-			.unwrap()
-			.into_iter()
-			.map(|p| p.into_string().unwrap())
-			.collect(),
-		decoded[3].clone().into_string().unwrap(),
-		decoded[4].clone().into_bool().unwrap(),
-	)
+	let decoded = decode(&types, data).map_err(|_| ())?;
+	Ok((
+		decoded[0].clone().into_string().ok_or(())?,
+		decoded[1].clone().into_string().ok_or(())?,
+		{
+			let arr = decoded[2].clone().into_array().ok_or(())?;
+
+			let mut assertions: Vec<String> = Vec::with_capacity(arr.len());
+
+			for assertion in arr.into_iter() {
+				assertions.push(assertion.into_string().ok_or(())?);
+			}
+
+			assertions
+		},
+		decoded[3].clone().into_string().ok_or(())?,
+		decoded[4].clone().into_bool().ok_or(())?,
+	))
 }
 
 fn hash(a: u64) -> H160 {

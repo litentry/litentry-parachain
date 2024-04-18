@@ -50,6 +50,7 @@ use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall,
 	ShardIdentifier, H256,
 };
+use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
@@ -72,8 +73,8 @@ use std::{
 	vec::Vec,
 };
 
-pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 ) where
@@ -88,6 +89,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
+	AR: AssertionLogicRepository + Send + Sync + 'static,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
 	let n_workers = 960;
@@ -370,9 +372,9 @@ impl RequestRegistry {
 	}
 }
 
-fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
+fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	hash: H256,
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	response: Result<Vec<u8>, String>,
 	idx: u8,
 	len: u8,
@@ -386,6 +388,7 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	AR: AssertionLogicRepository,
 {
 	let vc_res: RequestVcResultOrError = match response.clone() {
 		Ok(payload) => RequestVcResultOrError { payload, is_error: false, idx, len },
@@ -404,9 +407,9 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	}
 }
 
-fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
+fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 	shard: H256,
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
@@ -424,6 +427,7 @@ where
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
+	AR: AssertionLogicRepository,
 {
 	let start_time = Instant::now();
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.

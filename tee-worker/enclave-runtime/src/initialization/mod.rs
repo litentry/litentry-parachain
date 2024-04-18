@@ -26,7 +26,7 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
 		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
@@ -86,6 +86,7 @@ use its_sidechain::{
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_data_providers::DataProviderConfig;
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
@@ -247,6 +248,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -265,6 +267,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
 
 	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
@@ -275,6 +278,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
@@ -293,6 +297,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
@@ -376,6 +381,9 @@ pub(crate) fn init_enclave_sidechain_components(
 	} else {
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
+
+	let evm_assertion_repository = EvmAssertionRepository::new("test/path")?;
+	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
 
 	std::thread::spawn(move || {
 		println!("running stf task handler");

@@ -60,6 +60,7 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
+	parentchain_event_handler: ParentchainEventHandler,
 	_phantom: PhantomData<(EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
@@ -89,6 +90,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
+		parentchain_event_handler: ParentchainEventHandler,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
@@ -96,6 +98,7 @@ impl<
 			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
+			parentchain_event_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -153,7 +156,7 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
+		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
 
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
@@ -258,6 +261,7 @@ mod test {
 	use super::*;
 	use crate::mock::*;
 	use codec::{Decode, Encode};
+	use ita_parentchain_interface::integritee::ParentchainEventHandler;
 	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
 		api_client::{
@@ -278,6 +282,7 @@ mod test {
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
+	use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -389,6 +394,7 @@ mod test {
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
+		let parentchain_event_handler = MockParentchainEventHandler {};
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
@@ -396,6 +402,7 @@ mod test {
 			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
+			parentchain_event_handler,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)

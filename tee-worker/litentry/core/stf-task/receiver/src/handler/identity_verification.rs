@@ -25,26 +25,29 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
 use std::sync::{mpsc::Sender, Arc};
+
 pub(crate) struct IdentityVerificationHandler<
 	ShieldingKeyRepository,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub(crate) req: Web2IdentityVerificationRequest,
-	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 }
 
-impl<ShieldingKeyRepository, A, S, H, O> TaskHandler
-	for IdentityVerificationHandler<ShieldingKeyRepository, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O, AR> TaskHandler
+	for IdentityVerificationHandler<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -53,6 +56,7 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository,
 {
 	type Error = IMPError;
 	type Result = ();

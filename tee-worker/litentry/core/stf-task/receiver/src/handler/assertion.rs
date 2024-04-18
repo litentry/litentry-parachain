@@ -28,6 +28,7 @@ use itp_types::ShardIdentifier;
 use lc_assertion_build::dynamic::repository::InMemorySmartContractRepo;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
+use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
@@ -42,16 +43,17 @@ pub(crate) struct AssertionHandler<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 }
 
-impl<ShieldingKeyRepository, A, S, H, O> TaskHandler
-	for AssertionHandler<ShieldingKeyRepository, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O, AR> TaskHandler
+	for AssertionHandler<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -60,6 +62,7 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository,
 {
 	type Error = VCMPError;
 	type Result = Vec<u8>; // vc_byte_array
@@ -134,9 +137,10 @@ pub fn create_credential_str<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository,
 >(
 	req: &AssertionBuildRequest,
-	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 ) -> Result<Vec<u8>, VCMPError>
 where
 	ShieldingKeyRepository: AccessKey,
@@ -273,7 +277,7 @@ where
 
 		Assertion::Dynamic(smart_contract_id) => {
 			let repository = InMemorySmartContractRepo::new();
-			lc_assertion_build::dynamic::build(req, smart_contract_id, repository)
+			lc_assertion_build::dynamic::build(req, smart_contract_id, repository.into())
 		},
 	}?;
 

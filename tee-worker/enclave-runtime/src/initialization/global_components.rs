@@ -92,6 +92,7 @@ use its_sidechain::{
 };
 use lazy_static::lazy_static;
 use lc_data_providers::DataProviderConfig;
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_scheduled_enclave::ScheduledEnclaveSeal as EnclaveScheduledEnclaveSeal;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
@@ -428,6 +429,10 @@ pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =
 	ComponentContainer::new("Attestation handler");
+
+/// evm assertions repository
+pub static GLOBAL_ASSERTION_REPOSITORY: ComponentContainer<EvmAssertionRepository> =
+	ComponentContainer::new("EVM Asseretion repository");
 
 // Parentchain component instances
 //-------------------------------------------------------------------------------------------------

@@ -26,8 +26,13 @@ pub use litentry_primitives::{Identity, IdentityNetworkTuple, Web3Network};
 use std::{string::String, vec::Vec};
 
 // Used to retrieve assertion logic and secrets
-pub trait AssertionLogicRepository<I, T> {
-	fn get(&self, id: &I) -> Option<(T, Vec<String>)>;
+pub trait AssertionLogicRepository {
+	type Id;
+	type Value;
+
+	#[allow(clippy::type_complexity)]
+	fn get(&self, id: &Self::Id) -> Result<Option<(Self::Value, Vec<String>)>, String>;
+	fn save(&self, id: Self::Id, value: Self::Value, secrets: Vec<String>) -> Result<(), String>;
 }
 
 pub struct AssertionResult {
@@ -39,5 +44,9 @@ pub struct AssertionResult {
 }
 
 pub trait AssertionExecutor<I> {
-	fn execute(&self, assertion_id: I, identities: &[IdentityNetworkTuple]) -> AssertionResult;
+	fn execute(
+		&self,
+		assertion_id: I,
+		identities: &[IdentityNetworkTuple],
+	) -> Result<AssertionResult, String>;
 }

@@ -50,7 +50,6 @@ macro_rules! http_get_precompile_fn {
 			})?;
 			// safe to unwrap
 			let url = decoded.get(0).unwrap().clone().into_string().unwrap();
-			std::println!("Url is : {:?}", url);
 			let url = itc_rest_client::rest_client::Url::parse(&url).map_err(|e| {
 				$crate::precompiles::macros::prepare_custom_failure(std::format!(
 					"Could not parse url {:?}, reason: {:?}",
@@ -103,7 +102,6 @@ macro_rules! http_get_precompile_fn {
 						e
 					))
 				})?;
-			std::println!("Response is: {:?}", resp);
 			let value: serde_json::Value = serde_json::from_slice(&resp.1).map_err(|e| {
 				$crate::precompiles::macros::prepare_custom_failure(std::format!(
 					"Could not parse json {:?}, reason: {:?}",

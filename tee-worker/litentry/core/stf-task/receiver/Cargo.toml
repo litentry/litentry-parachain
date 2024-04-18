@@ -41,6 +41,8 @@ lc-assertion-build = { path = "../../assertion-build", default-features = false 
 lc-assertion-build-v2 = { path = "../../assertion-build-v2", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
+lc-dynamic-assertion = { path = "../../dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../../evm-dynamic-assertions", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
@@ -77,6 +79,8 @@ sgx = [
     "lc-assertion-build-v2/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
+    "lc-evm-dynamic-assertions/sgx",
+    "lc-dynamic-assertion/sgx",
 ]
 std = [
     "futures",
@@ -99,4 +103,6 @@ std = [
     "frame-support/std",
     "lc-credentials/std",
     "lc-data-providers/std",
+    "lc-evm-dynamic-assertions/std",
+    "lc-dynamic-assertion/std",
 ]
