@@ -272,7 +272,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy evm"
           cargo clippy --release --features evm,development -- -D warnings
-          echo "::endgroup::"          
+          echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker,development -- -D warnings
@@ -700,6 +700,7 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
+          - test_name: lit-di-twitter-identity-test
     steps:
       - uses: actions/checkout@v4
 
@@ -782,6 +783,7 @@ jobs:
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
+          - test_name: lit-di-twitter-identity-multiworker-test
     steps:
       - uses: actions/checkout@v4
 
