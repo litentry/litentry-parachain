@@ -49,6 +49,40 @@ export function parseIdGraph(
     return idGraph;
 }
 
+export async function buildTwitterValidations(
+    context: IntegrationTestContext,
+    signerIdentitity: CorePrimitivesIdentity,
+    linkIdentity: CorePrimitivesIdentity,
+    verificationType: 'PublicTweet' | 'OAuth2',
+    validationNonce: number
+): Promise<LitentryValidationData> {
+    const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
+    console.log('post verification msg to twitter: ', msg);
+
+    const twitterValidationData = {
+        Web2Validation: {
+            Twitter: {},
+        },
+    };
+
+    if (verificationType === 'PublicTweet') {
+        twitterValidationData.Web2Validation.Twitter = {
+            PublicTweet: {
+                tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+            },
+        };
+    } else {
+        twitterValidationData.Web2Validation.Twitter = {
+            OAuth2: {
+                code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+            },
+        };
+    }
+
+    return context.api.createType('LitentryValidationData', twitterValidationData);
+}
+
 export async function buildValidations(
     context: IntegrationTestContext,
     signerIdentitity: CorePrimitivesIdentity,
