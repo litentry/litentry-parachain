@@ -10,6 +10,7 @@ members = [
     'pallets/drop3',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
+    #    'pallets/evm-assertions',
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',

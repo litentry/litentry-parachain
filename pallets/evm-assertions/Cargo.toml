@@ -6,13 +6,10 @@ homepage = 'https://litentry.com'
 name = 'pallet-evm-assertions'
 repository = 'https://github.com/litentry/litentry-parachain'
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
-frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 sp-core = { workspace = true }
@@ -22,7 +19,6 @@ sp-std = { workspace = true }
 [features]
 default = ["std"]
 runtime-benchmarks = [
-    "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
 ]
@@ -34,6 +30,5 @@ std = [
     "sp-core/std",
     "frame-support/std",
     "frame-system/std",
-    "frame-benchmarking?/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
