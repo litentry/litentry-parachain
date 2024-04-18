@@ -140,11 +140,13 @@ pub(crate) fn query_user_by_id(
 		.and(warp::path!("2" / "users" / String))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |id, p: HashMap<String, String>| {
-			let expected_user_ids = vec!["2244994945".to_string(), "mock_user_id".to_string()];
+			let expected_user_ids =
+				vec!["2244994945".to_string(), "mock_user_id".to_string(), "me".to_string()];
 
 			let mut user_names = HashMap::new();
 			user_names.insert("2244994945", "TwitterDev".to_string());
 			user_names.insert("mock_user_id", "mock_user".to_string());
+			user_names.insert("me", "mock_user_me".to_string());
 
 			let default = String::default();
 			let user_fields = p.get("user.fields").unwrap_or(&default);
