@@ -25,6 +25,7 @@ log = { version = "0.4", default-features = false }
 
 # internal dependencies
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }

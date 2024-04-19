@@ -3049,6 +3049,7 @@ dependencies = [
  "http",
  "http_req",
  "itp-sgx-crypto",
+ "itp-utils",
  "lazy_static",
  "lc-data-providers",
  "lc-stf-task-sender",
