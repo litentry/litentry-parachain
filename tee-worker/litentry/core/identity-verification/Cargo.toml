@@ -35,6 +35,9 @@ lc-data-providers = { path = "../data-providers", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
+[dev-dependencies]
+url = "2.5.0"
+
 [features]
 default = ["std"]
 sgx = [
