@@ -19,7 +19,8 @@ import {
     sendRequestFromTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import { sleep } from './common/utils';
-import { aesKey } from './common/call';
+import { aesKey, sendRequest } from './common/call';
+import { createJsonRpcRequest, nextRequestId } from './common/helpers';
 import type { IntegrationTestContext } from './common/common-types';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
@@ -152,6 +153,14 @@ describe('Test Twitter Identity (direct invocation)', function () {
     });
 
     step('linking twitter identity with oauth2 verification (bob)', async function () {
+        // Generate oauth code verifier on the enclave for the user
+        const request = createJsonRpcRequest(
+            'identity_getTwitterAuthorizeUrl',
+            [bobSubstrateIdentity.toHex(), 'http://127.0.0.1:3000/callback'],
+            nextRequestId(context)
+        );
+        await sendRequest(context.tee, request, context.api);
+
         const nonce = bobCurrentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user_me', 'Twitter', context);
         const twitterValidation = await buildTwitterValidations(
