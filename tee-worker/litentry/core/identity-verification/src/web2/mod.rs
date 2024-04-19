@@ -100,15 +100,17 @@ pub fn verify(
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
 				let code_verifier = match twitter::CodeVerifierStore::get_code(&account_id) {
-					Ok(maybe_code) => maybe_code.ok_or(Error::LinkIdentityFailed(
-						ErrorDetail::StfError(ErrorString::truncate_from(
-							std::format!(
-								"code verifier not found for {}",
-								account_id_to_string(&account_id)
-							)
-							.into(),
-						)),
-					))?,
+					Ok(maybe_code) => maybe_code.ok_or_else(|| {
+						Error::LinkIdentityFailed(ErrorDetail::StfError(
+							ErrorString::truncate_from(
+								std::format!(
+									"code verifier not found for {}",
+									account_id_to_string(&account_id)
+								)
+								.into(),
+							),
+						))
+					})?,
 					Err(e) =>
 						return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
 							ErrorString::truncate_from(
