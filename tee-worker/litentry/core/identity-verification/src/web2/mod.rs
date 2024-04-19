@@ -103,7 +103,7 @@ pub fn verify(
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
 				log::error!(">>> account_id: {}", account_id_to_string(&account_id));
-				let code_verifier = match twitter::CodeVerifierStore::get_code(&account_id) {
+				let code_verifier = match twitter::CodeVerifierStore::use_code(&account_id) {
 					Ok(maybe_code) => maybe_code.ok_or_else(|| {
 						Error::LinkIdentityFailed(ErrorDetail::StfError(
 							ErrorString::truncate_from(

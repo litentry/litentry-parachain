@@ -34,13 +34,11 @@ impl CodeVerifierStore {
 		Ok(())
 	}
 
-	pub fn get_code(account_id: &AccountId) -> Result<Option<String>, String> {
+	pub fn use_code(account_id: &AccountId) -> Result<Option<String>, String> {
 		let code = TWITTER_CODE_VERIFIER_STORE
-			.read()
+			.write()
 			.map_err(|_| String::from("Lock poisoning"))?
-			.get(hex::encode(account_id.encode()).as_str())
-			.cloned();
-
+			.remove(hex::encode(account_id.encode()).as_str());
 		Ok(code)
 	}
 }
