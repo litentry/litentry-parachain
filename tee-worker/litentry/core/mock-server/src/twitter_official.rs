@@ -185,7 +185,7 @@ pub(crate) fn request_user_access_token(
 				token_type: "bearer".to_string(),
 				expires_in: 7200,
 				access_token: "dGFxeU1MbWRlSVhxSUgxX3VUdUJrM1FTRUtaMmFPdFM0XzMzcVlFSi0xM1dyOjE3MTMzNDEwODQ5NTg6MToxOmF0OjE".to_string(),
-				scope: "users.read follows.read tweet.read follows.write".to_string(),
+				scope: "users.read tweet.read".to_string(),
 			};
 			let body = TwitterAPIV2Response {
 				data: Some(user_access_token),
