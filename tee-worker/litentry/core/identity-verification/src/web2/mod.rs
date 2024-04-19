@@ -27,6 +27,7 @@ pub mod twitter;
 
 use crate::{ensure, Error, Result};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
+use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{CreateTwitterUserAccessToken, Tweet, TwitterOfficialClient},
@@ -95,16 +96,36 @@ pub fn verify(
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 				let code = vec_to_string(code.to_vec())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let Some(account_id) = who.to_account_id() else {
+					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
+				};
+				let code_verifier = match twitter::CodeVerifierStore::get_code(&account_id) {
+					Ok(maybe_code) => maybe_code.ok_or(Error::LinkIdentityFailed(
+						ErrorDetail::StfError(ErrorString::truncate_from(
+							std::format!(
+								"code verifier not found for {}",
+								account_id_to_string(&account_id)
+							)
+							.into(),
+						)),
+					))?,
+					Err(e) =>
+						return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
+							ErrorString::truncate_from(
+								std::format!("failed to get code verifier: {}", e).into(),
+							),
+						))),
+				};
 				let data = CreateTwitterUserAccessToken {
 					client_id: config.twitter_client_id.clone(),
 					code,
-					code_verifier: "TODO".to_string(),
+					code_verifier,
 					redirect_uri,
 				};
 				let user_token = oauth2_client.request_user_access_token(data).map_err(|e| {
-					Error::LinkIdentityFailed(ErrorDetail::OAuth2VerificationFailed(
-						ErrorString::truncate_from(e.to_string().into_bytes()),
-					))
+					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+						e.to_string().into(),
+					)))
 				})?;
 
 				let user_authorization = std::format!("Bearer {}", user_token.access_token);
