@@ -6,7 +6,6 @@ pub(crate) mod helpers;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use sp_core::hashing::sha2_256;
 use std::{format, string::String};
-use url::Url;
 
 #[derive(Debug)]
 pub struct AuthorizeData {
