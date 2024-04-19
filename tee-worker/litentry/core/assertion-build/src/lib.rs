@@ -31,7 +31,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -113,6 +112,11 @@ pub fn transpose_identity(
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},
+				Identity::Solana(address) => {
+					let address = address.as_ref().to_base58();
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
 				_ => {},
 			};
 		});
@@ -191,6 +195,7 @@ mod tests {
 	use super::*;
 	use itp_utils::ToHexPrefixed;
 	use litentry_primitives::IdentityString;
+	use rust_base58::FromBase58;
 
 	#[test]
 	fn transpose_identity_works() {
@@ -207,21 +212,31 @@ mod tests {
 		]
 		.into();
 		let id4 = [4_u8; 20].into();
+		let id5 = Identity::Solana(
+			"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+				.from_base58()
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap(),
+		);
 
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
 		let network3 = vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Kusama];
 		let network4 = vec![Web3Network::Bsc];
+		let network5 = vec![Web3Network::Solana];
 
 		identities.push((id1, network1));
 		identities.push((id2, network2));
 		identities.push((id3, network3));
 		identities.push((id4, network4));
+		identities.push((id5, network5));
 
 		let mut result = transpose_identity(&identities);
 		result.sort();
 		debug!(">> {result:?}");
-		assert_eq!(result.len(), 5);
+		assert_eq!(result.len(), 6);
 		assert_eq!(
 			result.get(0).unwrap(),
 			&(
@@ -251,6 +266,10 @@ mod tests {
 			)
 		);
 		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
+		assert_eq!(
+			result.get(5).unwrap(),
+			&(Web3Network::Solana, vec!["EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6".into()])
+		);
 	}
 
 	#[test]

@@ -126,20 +126,23 @@ pub fn submit_shielding_call_to_top_pool() {
 		));
 	let node_meta_data_repository = Arc::new(NodeMetadataRepository::default());
 	node_meta_data_repository.set_metadata(NodeMetadataMock::new());
-	let indirect_calls_executor =
-		IndirectCallsExecutor::<
-			_,
-			_,
-			_,
-			_,
-			integritee::BitAcrossIndirectCallsFilter<integritee::ParentchainExtrinsicParser>,
-			TestEventCreator,
-			integritee::ParentchainEventHandler,
-			TrustedCallSigned,
-			Getter,
-		>::new(
-			shielding_key_repo, enclave_signer, top_pool_author.clone(), node_meta_data_repository
-		);
+	let indirect_calls_executor = IndirectCallsExecutor::<
+		_,
+		_,
+		_,
+		_,
+		integritee::ExtrinsicFilter,
+		TestEventCreator,
+		integritee::ParentchainEventHandler,
+		TrustedCallSigned,
+		Getter,
+	>::new(
+		shielding_key_repo,
+		enclave_signer,
+		top_pool_author.clone(),
+		node_meta_data_repository,
+		ParentchainId::Litentry,
+	);
 
 	let block_with_shielding_call = create_shielding_call_extrinsic(shard_id, &shielding_key);
 

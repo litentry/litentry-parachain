@@ -30,7 +30,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -45,7 +44,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
-use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
@@ -195,6 +193,7 @@ pub struct DataProviderConfig {
 	pub karat_dao_api_retry_times: u16,
 	pub karat_dao_api_url: String,
 	pub moralis_api_url: String,
+	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
 	pub moralis_api_retry_times: u16,
 	pub moralis_api_key: String,
@@ -238,10 +237,12 @@ impl DataProviderConfig {
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
 			moralis_api_url: "https://deep-index.moralis.io/api/v2.2/".to_string(),
+			moralis_solana_api_url: "https://solana-gateway.moralis.io/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
-		if_not_production!({
+		#[cfg(any(feature = "env-data-providers-config", feature = "development"))]
+		{
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;
 			}
@@ -308,13 +309,16 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("MORALIS_API_URL") {
 				config.set_moralis_api_url(v)?;
 			}
+			if let Ok(v) = env::var("MORALIS_SOLANA_API_URL") {
+				config.set_moralis_solana_api_url(v)?;
+			}
 			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
 				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
 			}
 			if let Ok(v) = env::var("MORALIS_API_RETRY_TIME") {
 				config.set_moralis_api_retry_times(v.parse::<u16>().unwrap());
 			}
-		});
+		};
 		// set secrets from env variables
 		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
 			config.set_twitter_auth_token_v2(v);
@@ -485,6 +489,12 @@ impl DataProviderConfig {
 		check_url(&v)?;
 		debug!("set_moralis_api_url: {:?}", v);
 		self.moralis_api_url = v;
+		Ok(())
+	}
+	pub fn set_moralis_solana_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_moralis_solana_api_url: {:?}", v);
+		self.moralis_solana_api_url = v;
 		Ok(())
 	}
 }

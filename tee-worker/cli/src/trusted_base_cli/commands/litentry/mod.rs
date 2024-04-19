@@ -16,9 +16,8 @@
 
 pub mod get_storage;
 pub mod id_graph;
-pub mod id_graph_stats;
 pub mod link_identity;
+#[cfg(feature = "development")]
 pub mod remove_identity;
-pub mod request_batch_vc;
 pub mod request_vc;
 pub mod send_erroneous_parentchain_call;

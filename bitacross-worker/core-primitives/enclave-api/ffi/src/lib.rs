@@ -30,11 +30,6 @@ extern "C" {
 		encoded_base_dir_size: u32,
 	) -> sgx_status_t;
 
-	pub fn init_enclave_sidechain_components(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-	) -> sgx_status_t;
-
 	pub fn init_direct_invocation_server(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -65,6 +60,28 @@ extern "C" {
 		shard_size: u32,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		funding_balance: *const u8,
+		funding_balance_size: u32,
+	) -> sgx_status_t;
+
+	pub fn init_shard_creation_parentchain_header(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		shard: *const u8,
+		shard_size: u32,
+		parentchain_id: *const u8,
+		parentchain_id_size: u32,
+		header: *const u8,
+		header_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_shard_creation_info(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		shard: *const u8,
+		shard_size: u32,
+		creation: *mut u8,
+		creation_size: u32,
 	) -> sgx_status_t;
 
 	pub fn sync_parentchain(
@@ -78,7 +95,7 @@ extern "C" {
 		events_proofs_size: usize,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
-		is_syncing: c_int,
+		immediate_import: c_int,
 	) -> sgx_status_t;
 
 	pub fn set_nonce(

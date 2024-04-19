@@ -17,14 +17,17 @@
 pub extern crate alloc;
 
 use crate::{
-	all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
-	all_substrate_web3networks, AccountId, Web3Network,
+	assertion::network::{
+		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
+		all_substrate_web3networks, Web3Network,
+	},
+	AccountId,
 };
 use alloc::{format, str, string::String};
 use base58::{FromBase58, ToBase58};
 use core::fmt::{Debug, Formatter};
 use litentry_hex_utils::{decode_hex, hex_encode};
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parity_scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
@@ -85,9 +88,9 @@ impl IdentityString {
 
 impl Debug for IdentityString {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_struct("IdentityString").finish(),
-			f.debug_struct("IdentityString").field("inner", &self.inner).finish()
+		if_development_or!(
+			f.debug_struct("IdentityString").field("inner", &self.inner).finish(),
+			f.debug_struct("IdentityString").finish()
 		)
 	}
 }
@@ -124,9 +127,9 @@ impl<'a> TryFrom<&'a [u8]> for Address20 {
 
 impl Debug for Address20 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address20").finish(),
-			f.debug_tuple("Address20").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address20").field(&self.0).finish(),
+			f.debug_tuple("Address20").finish()
 		)
 	}
 }
@@ -194,9 +197,9 @@ impl From<ed25519::Public> for Address32 {
 
 impl Debug for Address32 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address32").finish(),
-			f.debug_tuple("Address32").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address32").field(&self.0).finish(),
+			f.debug_tuple("Address32").finish()
 		)
 	}
 }
@@ -256,9 +259,9 @@ impl From<ecdsa::Public> for Address33 {
 
 impl Debug for Address33 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		if_production_or!(
-			f.debug_tuple("Address33").finish(),
-			f.debug_tuple("Address33").field(&self.0).finish()
+		if_development_or!(
+			f.debug_tuple("Address33").field(&self.0).finish(),
+			f.debug_tuple("Address33").finish()
 		)
 	}
 }

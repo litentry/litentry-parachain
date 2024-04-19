@@ -15,9 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::Encode;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::{Error, Result};
-use itp_stf_primitives::traits::IndirectExecutor;
+use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{ShardIdentifier, H256};
 use sp_core::crypto::AccountId32;
 use sp_runtime::MultiAddress;

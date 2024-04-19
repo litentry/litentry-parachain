@@ -22,9 +22,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
-use ita_stf::{
-	trusted_call_result::RequestVcResultOrError, Getter, TrustedCall, TrustedCallSigned,
-};
+use ita_stf::{trusted_call_result::RequestVcResultOrError, Getter, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ApiClientError, TEEBAG};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
@@ -34,7 +32,7 @@ use itp_stf_primitives::{
 	types::{ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{BlockHash, BlockNumber, Hash, ParentchainBlockProcessed},
+	parentchain::{events::ParentchainBlockProcessed, BlockHash, BlockNumber, Hash},
 	DirectRequestStatus, RsaRequest, TrustedOperationStatus,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -44,7 +42,7 @@ use sp_core::H256;
 use std::{
 	fmt::Debug,
 	result::Result as StdResult,
-	sync::mpsc::{channel, Receiver, Sender as MpscSender},
+	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
 use substrate_api_client::{
@@ -93,22 +91,6 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 		TrustedOperation::direct_call(_) => send_direct_request::<T>(cli, trusted_args, top),
 		TrustedOperation::get(getter) =>
 			execute_getter_from_cli_args::<T>(cli, trusted_args, getter),
-	}
-}
-
-pub(crate) fn perform_direct_operation<T: Decode + Debug>(
-	cli: &Cli,
-	trusted_args: &TrustedCli,
-	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	key: RequestAesKey,
-) -> TrustedOpResult<T> {
-	match top {
-		TrustedOperation::direct_call(call) => match call.call {
-			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
-			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
-		},
-		_ =>
-			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
 	}
 }
 
@@ -352,7 +334,7 @@ fn send_direct_request<T: Decode + Debug>(
 								})
 							}
 							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
-								println!("Trusted call {:?} is {:?}", value, status);
+								debug!("Trusted call {:?} is {:?}", value, status);
 							}
 							if !return_value.do_watch {
 								direct_api.close().unwrap();
@@ -382,72 +364,12 @@ fn send_direct_request<T: Decode + Debug>(
 	}
 }
 
-fn send_direct_vc_request<T: Decode + Debug>(
+pub(crate) fn send_direct_vc_request(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
-) -> TrustedOpResult<T> {
-	let encryption_key = get_shielding_key(cli).unwrap();
-	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
-
-	debug!("get direct api");
-	let direct_api = get_worker_api_direct(cli);
-
-	debug!("setup sender and receiver");
-	let (sender, receiver) = channel();
-	direct_api.watch(jsonrpc_call, sender);
-
-	debug!("waiting for rpc response");
-	loop {
-		match receiver.recv() {
-			Ok(response) => {
-				debug!("received response");
-				let response: RpcResponse = serde_json::from_str(&response).unwrap();
-				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
-					debug!("successfully decoded rpc response: {:?}", return_value);
-					match return_value.status {
-						DirectRequestStatus::Error => {
-							debug!("request status is error");
-							if let Ok(value) = String::decode(&mut return_value.value.as_slice()) {
-								error!("{}", value);
-							}
-							direct_api.close().unwrap();
-							return Err(TrustedOperationError::Default {
-								msg: "[Error] DirectRequestStatus::Error".to_string(),
-							})
-						},
-						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
-							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
-						},
-						DirectRequestStatus::Ok => {
-							debug!("request status is ignored");
-							direct_api.close().unwrap();
-							let value = decode_response_value(&mut return_value.value.as_slice())?;
-							return Ok(value)
-						},
-					}
-				};
-			},
-			Err(e) => {
-				error!("failed to receive rpc response: {:?}", e);
-				direct_api.close().unwrap();
-				return Err(TrustedOperationError::Default {
-					msg: "failed to receive rpc response".to_string(),
-				})
-			},
-		};
-	}
-}
-
-pub(crate) fn send_direct_batch_vc_request(
-	cli: &Cli,
-	trusted_args: &TrustedCli,
-	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	key: RequestAesKey,
-	resp_sender: MpscSender<Result<RequestVcResultOrError, String>>,
-) {
+) -> TrustedOpResult<Vec<RequestVcResultOrError>> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
 	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
@@ -461,14 +383,22 @@ pub(crate) fn send_direct_batch_vc_request(
 
 	debug!("waiting for rpc response");
 	let mut req_cnt = 0u8;
-	std::thread::spawn(move || loop {
+	let mut ignore_first = true;
+	let mut vec_result: Vec<RequestVcResultOrError> = vec![];
+	loop {
 		match receiver.recv() {
 			Ok(response) => {
-				req_cnt += 1;
-				debug!("received response");
+				debug!("received response: {:?}", req_cnt);
 				let response: RpcResponse = serde_json::from_str(&response).unwrap();
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					debug!("successfully decoded rpc response: {:?}", return_value);
+					if ignore_first {
+						// There will be one response coming back immediately from RPC callback to indicate
+						// the request is already submitted and will be processed later.
+						ignore_first = false;
+						continue
+					}
+					req_cnt += 1;
 					match return_value.status {
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
@@ -476,57 +406,43 @@ pub(crate) fn send_direct_batch_vc_request(
 								RequestVcResultOrError::decode(&mut return_value.value.as_slice())
 							{
 								let len = value.len;
-								resp_sender.send(Ok(value)).expect("failed to send back result");
+								debug!("received request result, len: {:?}", len);
+								vec_result.push(value);
 								if req_cnt >= len {
-									break
+									direct_api.close().unwrap();
+									return Ok(vec_result)
 								}
 							} else {
 								// Should never happen.
 								error!("failed to decode RequestVcResultOrError.");
 								direct_api.close().unwrap();
-								resp_sender
-									.send(Err(
-										"failed to decode RequestVcResultOrError. close channel"
-											.to_string(),
-									))
-									.expect("failed to send back result");
-								break
+								return Err(TrustedOperationError::Default {
+									msg: "[Error] failed to decode RequestVcResultOrError."
+										.to_string(),
+								})
 							}
 						},
 						_ => {
 							// Should never happen. RpcReturnValue should always have DirectRequestStatus::TrustedOperationStatus.
 							error!("Wrong RpcReturnValue. Should never happen.");
 							direct_api.close().unwrap();
-							resp_sender
-								.send(Err(
-									"Wrong RpcReturnValue. Should never happen. close channel"
-										.to_string(),
-								))
-								.expect("failed to send back result");
-							break
+							return Err(TrustedOperationError::Default {
+								msg: "[Error] Wrong RpcReturnValue. Should never happen."
+									.to_string(),
+							})
 						},
 					}
-				} else {
-					// Normally should not happen.
-					error!("failed to decode RpcReturnValue.");
-					direct_api.close().unwrap();
-					resp_sender
-						.send(Err("failed to decode RpcReturnValue. close channel".to_string()))
-						.expect("failed to send back result");
-					break
-				}
+				};
 			},
 			Err(e) => {
-				// Normally should not happen.
 				error!("failed to receive rpc response: {:?}", e);
 				direct_api.close().unwrap();
-				resp_sender
-					.send(Err("failed to receive rpc response. close channel".to_string()))
-					.expect("failed to send back result");
-				break
+				return Err(TrustedOperationError::Default {
+					msg: "failed to receive rpc response".to_string(),
+				})
 			},
 		};
-	});
+	}
 }
 
 pub(crate) fn get_vc_json_request(
@@ -600,7 +516,7 @@ pub(crate) fn wait_until(
 								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
 								{
-									println!("Trusted call {:?} is {:?}", value, status);
+									debug!("Trusted call {:?} is {:?}", value, status);
 									if until(status.clone()) {
 										return Some((top_hash, Instant::now()))
 									} else if status == TrustedOperationStatus::Invalid {

@@ -60,8 +60,8 @@ pub use frame_support::{
 	},
 	StorageValue,
 };
+use itp_sgx_runtime_primitives::types::Moment;
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_parentchain::Call as ParentchainPalletCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -202,7 +202,7 @@ parameter_types! {
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
@@ -250,7 +250,18 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-impl pallet_parentchain::Config for Runtime {
+pub type ParentchainInstanceLitentry = pallet_parentchain::Instance1;
+impl pallet_parentchain::Config<ParentchainInstanceLitentry> for Runtime {
+	type WeightInfo = ();
+}
+
+pub type ParentchainInstanceTargetA = pallet_parentchain::Instance2;
+impl pallet_parentchain::Config<crate::ParentchainInstanceTargetA> for Runtime {
+	type WeightInfo = ();
+}
+
+pub type ParentchainInstanceTargetB = pallet_parentchain::Instance3;
+impl pallet_parentchain::Config<crate::ParentchainInstanceTargetB> for Runtime {
 	type WeightInfo = ();
 }
 
@@ -260,12 +271,14 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Balances: pallet_balances,
+		TransactionPayment: pallet_transaction_payment,
+		Sudo: pallet_sudo,
+		ParentchainLitentry: pallet_parentchain::<Instance1>,
+		ParentchainTargetA: pallet_parentchain::<Instance2>,
+		ParentchainTargetB: pallet_parentchain::<Instance3>,
 	}
 );
 

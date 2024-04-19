@@ -24,26 +24,35 @@ pub type StfResult<T> = Result<T, StfError>;
 #[derive(Debug, Display, PartialEq, Eq, Encode, Decode, Clone)]
 pub enum StfError {
 	#[codec(index = 0)]
+	InvalidAccount,
+
+	#[codec(index = 20)]
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
 	MissingPrivileges(AccountId),
-	#[codec(index = 1)]
+	#[codec(index = 11)]
 	#[display(fmt = "Valid enclave signer account is required")]
 	RequireEnclaveSignerAccount,
-	#[codec(index = 2)]
+	#[codec(index = 22)]
 	#[display(fmt = "Error dispatching runtime call. {:?}", _0)]
 	Dispatch(String),
-	#[codec(index = 3)]
+	#[codec(index = 23)]
 	#[display(fmt = "Not enough funds to perform operation")]
 	MissingFunds,
-	#[codec(index = 4)]
+	#[codec(index = 24)]
 	#[display(fmt = "Invalid Nonce {:?} != {:?}", _0, _1)]
 	InvalidNonce(Nonce, Nonce),
-	#[codec(index = 5)]
+	#[codec(index = 25)]
 	StorageHashMismatch,
-	#[codec(index = 6)]
+	#[codec(index = 26)]
 	InvalidStorageDiff,
-	#[codec(index = 7)]
+	#[codec(index = 27)]
 	InvalidMetadata,
-	#[codec(index = 8)]
-	InvalidAccount,
+	#[codec(index = 28)]
+	ShardVaultOnMultipleParentchainsNotAllowed,
+	#[codec(index = 29)]
+	ChangingShardVaultAccountNotAllowed,
+	#[codec(index = 30)]
+	WrongParentchainIdForShardVault,
+	#[codec(index = 31)]
+	NoShardVaultAssigned,
 }

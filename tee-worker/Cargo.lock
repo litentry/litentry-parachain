@@ -1722,7 +1722,15 @@ version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
- "percent-encoding 2.3.1",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "form_urlencoded"
+version = "1.2.1"
+source = "git+https://github.com/domenukk/rust-url?branch=no_std#316c8683206f3cb741163779bb30963fa05b3612"
+dependencies = [
+ "percent-encoding 2.3.1 (git+https://github.com/domenukk/rust-url?branch=no_std)",
 ]
 
 [[package]]
@@ -2679,6 +2687,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "idna"
+version = "0.5.0"
+source = "git+https://github.com/domenukk/rust-url?branch=no_std#316c8683206f3cb741163779bb30963fa05b3612"
+dependencies = [
+ "unicode-bidi 0.3.13",
+ "unicode-normalization 0.1.22",
+]
+
+[[package]]
 name = "impl-codec"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2913,6 +2930,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
  "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
@@ -2946,8 +2964,7 @@ dependencies = [
  "sgx_tstd",
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
- "url 2.1.1",
- "url 2.5.0",
+ "url 2.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
 ]
@@ -3136,8 +3153,7 @@ dependencies = [
  "sgx_tstd",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.5.0",
+ "url 2.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
 ]
 
 [[package]]
@@ -3165,7 +3181,7 @@ dependencies = [
  "sgx_crypto_helper",
  "sp-core",
  "thiserror 1.0.44",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ws",
 ]
 
@@ -3210,7 +3226,7 @@ dependencies = [
  "thiserror 1.0.9",
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
  "yasna 0.3.1",
@@ -4174,7 +4190,7 @@ dependencies = [
  "serde 1.0.193",
  "serde_json 1.0.103",
  "thiserror 1.0.44",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4270,7 +4286,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tokio-util 0.6.10",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4377,13 +4393,13 @@ dependencies = [
  "sp-core",
  "ss58-registry",
  "thiserror 1.0.9",
- "url 2.1.1",
 ]
 
 [[package]]
 name = "lc-assertion-build-v2"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "env_logger 0.10.0",
  "itc-rest-client",
  "itp-ocall-api",
@@ -4487,8 +4503,7 @@ dependencies = [
  "sgx_tstd",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.5.0",
+ "url 2.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
 ]
 
 [[package]]
@@ -4508,7 +4523,6 @@ dependencies = [
  "log 0.4.20",
  "sgx_tstd",
  "thiserror 1.0.9",
- "url 2.1.1",
 ]
 
 [[package]]
@@ -4602,9 +4616,6 @@ dependencies = [
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "threadpool 1.8.0",
- "threadpool 1.8.1",
- "url 2.1.1",
 ]
 
 [[package]]
@@ -4622,8 +4633,6 @@ dependencies = [
  "sp-std 5.0.0",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.5.0",
 ]
 
 [[package]]
@@ -4901,7 +4910,6 @@ dependencies = [
  "hex 0.4.3",
  "itp-sgx-crypto",
  "itp-utils",
- "litentry-hex-utils",
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-teebag",
@@ -5001,7 +5009,7 @@ dependencies = [
  "substrate-api-client",
  "thiserror 1.0.44",
  "tokio",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "warp",
 ]
 
@@ -5401,6 +5409,12 @@ dependencies = [
  "libc",
  "winapi 0.3.9",
 ]
+
+[[package]]
+name = "no-std-net"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43794a0ace135be66a25d3ae77d41b91615fb68ae937f904090203e81f755b65"
 
 [[package]]
 name = "nodrop"
@@ -6032,11 +6046,11 @@ dependencies = [
  "byteorder 1.4.3",
  "data-encoding",
  "multihash",
- "percent-encoding 2.3.1",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.193",
  "static_assertions",
  "unsigned-varint 0.7.1",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -6221,6 +6235,11 @@ name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
+
+[[package]]
+name = "percent-encoding"
+version = "2.3.1"
+source = "git+https://github.com/domenukk/rust-url?branch=no_std#316c8683206f3cb741163779bb30963fa05b3612"
 
 [[package]]
 name = "pest"
@@ -6825,7 +6844,7 @@ dependencies = [
  "mime",
  "native-tls",
  "once_cell 1.18.0",
- "percent-encoding 2.3.1",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pin-project-lite",
  "serde 1.0.193",
  "serde_json 1.0.103",
@@ -6833,7 +6852,7 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tower-service",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -7279,9 +7298,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.10.0"
+version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
+checksum = "2ef2175c2907e7c8bc0a9c3f86aeb5ec1f3b275300ad58a44d0c3ae379a5e52e"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -7587,7 +7606,7 @@ version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd"
 dependencies = [
- "form_urlencoded",
+ "form_urlencoded 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itoa 1.0.9",
  "ryu",
  "serde 1.0.193",
@@ -8628,7 +8647,7 @@ dependencies = [
  "sp-runtime",
  "sp-runtime-interface",
  "tungstenite 0.18.0",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -8823,23 +8842,6 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell 1.18.0",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.0"
-source = "git+https://github.com/mesalock-linux/rust-threadpool-sgx?tag=sgx_1.1.3#098d98a85b7e2b02e2bb451a3dec0b027017ff4c"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "threadpool"
-version = "1.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
-dependencies = [
- "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -9219,7 +9221,7 @@ dependencies = [
  "rustls 0.19.1",
  "sha-1 0.9.8",
  "thiserror 1.0.44",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "utf-8 0.7.6",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki-roots 0.21.1",
@@ -9241,7 +9243,7 @@ dependencies = [
  "rand 0.8.5",
  "sha1 0.10.5",
  "thiserror 1.0.44",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "utf-8 0.7.6",
 ]
 
@@ -9410,9 +9412,20 @@ version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31e6302e3bb753d46e83516cae55ae196fc0c309407cf11ab35cc51a4c2a4633"
 dependencies = [
- "form_urlencoded",
- "idna 0.5.0",
- "percent-encoding 2.3.1",
+ "form_urlencoded 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "idna 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "url"
+version = "2.5.0"
+source = "git+https://github.com/domenukk/rust-url?branch=no_std#316c8683206f3cb741163779bb30963fa05b3612"
+dependencies = [
+ "form_urlencoded 1.2.1 (git+https://github.com/domenukk/rust-url?branch=no_std)",
+ "idna 0.5.0 (git+https://github.com/domenukk/rust-url?branch=no_std)",
+ "no-std-net",
+ "percent-encoding 2.3.1 (git+https://github.com/domenukk/rust-url?branch=no_std)",
 ]
 
 [[package]]
@@ -9494,7 +9507,7 @@ dependencies = [
  "mime",
  "mime_guess",
  "multer",
- "percent-encoding 2.3.1",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pin-project",
  "rustls-pemfile",
  "scoped-tls",
@@ -9633,7 +9646,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "64b20236ab624147dfbb62cf12a19aaf66af0e41b8398838b66e997d07d269d4"
 dependencies = [
  "indexmap 1.9.3",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -10069,7 +10082,7 @@ dependencies = [
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha-1 0.8.2",
  "slab 0.4.8",
- "url 2.5.0",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -12,3 +12,4 @@ export * from './identity-helper';
 export * from './integration-setup';
 export * from './storage';
 export * from './vc-helper';
+export * from './type-creators';

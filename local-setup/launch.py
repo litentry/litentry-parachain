@@ -63,7 +63,7 @@ def setup_worker(work_dir: str, source_dir: str, worker_bin: str, std_err: Union
 
 def run_worker(id, worker_dir, worker_bin, flags, subcommand_flags, log_config_path):
     log = open(f"{log_dir}/worker-{id}.log", "w+")
-    
+
     w = setup_worker(f"tmp/w-{id}", worker_dir + "/bin", worker_bin, log, log_config_path)
 
     print(f"Starting worker {id} in background")
@@ -199,6 +199,7 @@ def get_flags(index, worker):
 
     return list(filter(None, [
         "--clean-reset",
+        "-T", "ws://localhost",
         "-P", ports['trusted_worker_port'],
         "-w", ports['untrusted_worker_port'],
         "-r", ports['mura_port'],
@@ -212,8 +213,7 @@ def get_flags(index, worker):
 def get_subcommand_flags(index):
     return list(filter(None, [
         "--skip-ra",
-        "--dev",
-        "--request-state" if index > 0 else None
+        "--dev"
     ]))
 
 def main(processes, worker, workers_number, parachain_type, log_config_path, offset, parachain_dir):
@@ -232,7 +232,7 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         # TODO: use Popen and copy the stdout also to node.log
-        run(["./tee-worker/scripts/litentry/start_parachain.sh"], check=True)
+        run(["./local-setup/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary-standalone":
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
@@ -262,7 +262,7 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         print()
         # Wait a bit for worker to start up.
         sleep(5)
-     
+
         idx = 0
         if "-h" in flags:
             idx = flags.index("-h") + 1
