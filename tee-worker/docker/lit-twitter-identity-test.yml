@@ -10,6 +10,11 @@ services:
             context: ..
             dockerfile: build.Dockerfile
             target: deployed-client
+        environment:
+          - TWITTER_OFFICIAL_URL=http://localhost:19527
+          - TWITTER_AUTH_TOKEN_V2=
+          - TWITTER_CLIENT_ID=
+          - TWITTER_CLIENT_SECRET=
         depends_on:
             litentry-node:
                 condition: service_healthy
