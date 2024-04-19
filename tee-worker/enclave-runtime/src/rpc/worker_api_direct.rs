@@ -504,7 +504,13 @@ where
 					)))
 				}
 
-				Ok(json!(authorize_data.authorize_url))
+				let json_value = RpcReturnValue::new(
+					authorize_data.authorize_url.encode(),
+					false,
+					DirectRequestStatus::Ok,
+				);
+
+				Ok(json!(json_value.to_hex()))
 			},
 
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
