@@ -90,19 +90,15 @@ pub fn verify(
 					&config.twitter_client_id,
 					&config.twitter_client_secret,
 				);
-				log::error!(">>> authorization: {}", authorization);
 				let mut oauth2_client =
 					TwitterOfficialClient::v2(&config.twitter_official_url, &authorization);
 				let redirect_uri = vec_to_string(redirect_uri.to_vec())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-				log::error!(">>> redirect_uri: {}", redirect_uri);
 				let code = vec_to_string(code.to_vec())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-				log::error!(">>> code: {}", code);
 				let Some(account_id) = who.to_account_id() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
-				log::error!(">>> account_id: {}", account_id_to_string(&account_id));
 				let code_verifier = match twitter::CodeVerifierStore::use_code(&account_id) {
 					Ok(maybe_code) => maybe_code.ok_or_else(|| {
 						Error::LinkIdentityFailed(ErrorDetail::StfError(
@@ -122,7 +118,6 @@ pub fn verify(
 							),
 						))),
 				};
-				log::error!(">>> code_verifier: {}", code_verifier);
 				let data = CreateTwitterUserAccessToken {
 					client_id: config.twitter_client_id.clone(),
 					code,
@@ -135,8 +130,6 @@ pub fn verify(
 					)))
 				})?;
 
-				log::error!(">>> user_token: {:?}", user_token);
-
 				let user_authorization = std::format!("Bearer {}", user_token.access_token);
 				let mut user_client =
 					TwitterOfficialClient::v2(&config.twitter_official_url, &user_authorization);
@@ -144,7 +137,6 @@ pub fn verify(
 				let user = user_client
 					.query_user_by_id("me".to_string().into_bytes())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
-				log::error!(">>> user: {:?}", user.username);
 
 				Ok(user.username)
 			},
