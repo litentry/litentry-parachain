@@ -30,7 +30,7 @@ pub mod storage;
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{
 	Assertion, AttestationType, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave,
-	WorkerType,
+	SidechainBlockNumber, WorkerType,
 };
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
