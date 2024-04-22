@@ -308,8 +308,6 @@ mod tests {
 		let url = run(0).unwrap();
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 		data_provider_config.set_twitter_official_url(url).unwrap();
-		data_provider_config.set_twitter_client_id("test_client_id".to_string());
-		data_provider_config.set_twitter_client_secret("test_client_secret".to_string());
 		data_provider_config
 	}
 
