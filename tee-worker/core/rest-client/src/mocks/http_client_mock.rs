@@ -20,7 +20,10 @@ use crate::{
 	http_client::{EncodedBody, SendHttpRequest},
 	Query, RestPath,
 };
-use http_req::{request::Method, response::Response};
+use http_req::{
+	request::Method,
+	response::{Headers, Response},
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -64,6 +67,7 @@ impl SendHttpRequest for HttpClientMock {
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
+		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>,
@@ -130,6 +134,7 @@ mod tests {
 				base_url,
 				Method::GET,
 				"/api/v1/get".to_string(),
+				None,
 				None,
 				None,
 			)

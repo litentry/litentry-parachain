@@ -377,6 +377,7 @@ mod tests {
 				(),
 				Some(&query_parameters),
 				None,
+				None,
 			)
 			.unwrap();
 
@@ -414,7 +415,7 @@ mod tests {
 		let base_url = Url::parse("https://httpbin.org").unwrap();
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None)
+			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None, None)
 			.unwrap();
 
 		let response_body: HttpBinAnything =
@@ -458,6 +459,7 @@ mod tests {
 				(),
 				None,
 				Some(body_test.clone()),
+				None,
 			)
 			.unwrap();
 
@@ -491,7 +493,14 @@ mod tests {
 		let base_url = Url::parse("https://api.coingecko.com").unwrap();
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), Vec<CoinGeckoCoinsList>>(base_url, Method::GET, (), None, None)
+			.send_request::<(), Vec<CoinGeckoCoinsList>>(
+				base_url,
+				Method::GET,
+				(),
+				None,
+				None,
+				None,
+			)
 			.unwrap();
 
 		let coins_list: Vec<CoinGeckoCoinsList> =
@@ -527,7 +536,7 @@ mod tests {
 		);
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None)
+			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None, None)
 			.unwrap();
 
 		let response_body: HttpBinAnything =
@@ -567,8 +576,14 @@ mod tests {
 			None,
 		);
 
-		let result =
-			http_client.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None);
+		let result = http_client.send_request::<(), HttpBinAnything>(
+			base_url,
+			Method::GET,
+			(),
+			None,
+			None,
+			None,
+		);
 		assert_matches!(result, Err(Error::HttpReqError(_)));
 		let msg = format!("error {:?}", result.err());
 		assert!(msg.contains("UnknownIssuer"));
