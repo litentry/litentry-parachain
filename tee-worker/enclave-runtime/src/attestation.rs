@@ -222,7 +222,7 @@ pub fn generate_dcap_ra_extrinsic_internal(
 			quote_size,
 			skip_ra,
 		)?;
-  
+
 		generate_dcap_ra_extrinsic_from_quote_internal(url, &dcap_quote)
 	} else {
 		generate_dcap_skip_ra_extrinsic_from_mr_enclave(

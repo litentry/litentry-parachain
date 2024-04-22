@@ -80,13 +80,14 @@ impl MAAHandler for MAAService {
 		let ehd = base64::encode(ehd);
 		let quote = base64::encode(quote);
 
-		let req_body = serde_json::json!({ 
+		let req_body = serde_json::json!({
 			"quote": quote,
 			"runtimeData": {
 				"data": ehd,
 				"dataType": "Binary"
 			}
-		}).to_string();
+		})
+		.to_string();
 
 		let url = get_azure_attest_url()?;
 		let addr = Uri::try_from(&url[..])
