@@ -364,7 +364,7 @@ where
 		};
 
 		// TODO: make ra
-		let _policy = MAAService.azure_attest(&qe_quote)?;
+		let _policy = MAAService.azure_attest(&qe_quote, &chain_signer.public().0)?;
 		
 		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
 		Ok(qe_quote)

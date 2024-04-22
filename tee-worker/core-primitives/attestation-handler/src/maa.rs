@@ -48,9 +48,8 @@ use std::{
 /// Trait to do Microsoft Azure Attestation
 pub trait MAAHandler {
 	/// Verify DCAP quote from MAA
-	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>>;
+	fn azure_attest(&self, quote: &[u8], ehd: &[u8; 32]) -> EnclaveResult<Vec<u8>>;
 }
-
 pub struct MAAService;
 impl MAAService {
 	pub fn parse_maa_policy(writer: &[u8]) -> EnclaveResult<Vec<u8>> {
@@ -75,11 +74,20 @@ impl MAAService {
 }
 
 impl MAAHandler for MAAService {
-	fn azure_attest(&self, quote: &[u8]) -> EnclaveResult<Vec<u8>> {
+	fn azure_attest(&self, quote: &[u8], ehd: &[u8; 32]) -> EnclaveResult<Vec<u8>> {
 		debug!("    [Enclave] Entering azure_attest.");
 
+		let ehd = base64::encode(ehd);
 		let quote = base64::encode(quote);
-		let req_body = serde_json::json!({ "quote": quote }).to_string();
+
+		let req_body = serde_json::json!({ 
+			"quote": quote,
+			"runtimeData": {
+				"data": ehd,
+				"dataType": "Binary"
+			}
+		}).to_string();
+
 		let url = get_azure_attest_url()?;
 		let addr = Uri::try_from(&url[..])
 			.map_err(|e| EnclaveError::Other(format!("MAA parse url error: {:?}", e).into()))?;
