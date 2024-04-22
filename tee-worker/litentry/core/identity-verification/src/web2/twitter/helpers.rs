@@ -6,7 +6,7 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 
 use rand::{thread_rng, Rng};
-use std::{format, string::String, vec::Vec};
+use std::{string::String, vec::Vec};
 
 use crate::{Error, Result};
 use lc_data_providers::twitter_official::Tweet;
