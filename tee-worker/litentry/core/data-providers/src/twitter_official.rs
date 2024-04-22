@@ -375,13 +375,19 @@ mod tests {
 		let data_provider_config = init();
 
 		let data = CreateTwitterUserAccessToken {
-			client_id: "client_id".to_string(),
+			client_id: data_provider_config.twitter_client_id.clone(),
 			code: "code".to_string(),
 			code_verifier: "code_verifier".to_string(),
 			redirect_uri: "redirect_uri".to_string(),
 		};
-		let mut client =
-			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "Basic token");
+		let authorization = TwitterOfficialClient::oauth2_authorization(
+			&data_provider_config.twitter_client_id,
+			&data_provider_config.twitter_client_secret,
+		);
+		let mut client = TwitterOfficialClient::v2(
+			&data_provider_config.twitter_official_url,
+			authorization.as_str(),
+		);
 		let result = client.request_user_access_token(data);
 
 		assert!(result.is_ok(), "error: {:?}", result);
