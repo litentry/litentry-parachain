@@ -50,7 +50,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
+          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }} ${{ matrix.chain }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
