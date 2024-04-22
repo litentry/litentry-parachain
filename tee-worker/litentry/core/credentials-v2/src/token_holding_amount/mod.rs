@@ -95,7 +95,7 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 			assertion = assertion.add_item(min_item);
 			assertion = assertion.add_item(max_item);
 
-			credential.credential_subject.values.push(index != 0);
+			credential.credential_subject.values.push(index != 0 || balance > 0_f64);
 		},
 		None => {
 			let min_item = AssertionLogic::new_item(
