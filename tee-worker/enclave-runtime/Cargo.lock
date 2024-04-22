@@ -3043,6 +3043,7 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",

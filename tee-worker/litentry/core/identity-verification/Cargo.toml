@@ -6,6 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 hex = { version = "0.4.3", optional = true }
 rand = { version = "0.8", optional = true }
 
