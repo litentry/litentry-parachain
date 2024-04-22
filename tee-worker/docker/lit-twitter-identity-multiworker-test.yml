@@ -13,8 +13,8 @@ services:
         environment:
           - TWITTER_OFFICIAL_URL=http://localhost:19527
           - TWITTER_AUTH_TOKEN_V2=
-          - TWITTER_CLIENT_ID=
-          - TWITTER_CLIENT_SECRET=
+          - TWITTER_CLIENT_ID=client_id
+          - TWITTER_CLIENT_SECRET=client_secret
         depends_on:
             litentry-node:
                 condition: service_healthy
