@@ -91,7 +91,7 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
 
     if (!preimageStatus) {
         let eventsPromise: Promise<FrameSystemEventRecord[]>;
-        eventsPromise = subscribeToEvents('preimage', 'notePreimage', api);
+        eventsPromise = subscribeToEvents('preimage', 'Noted', api);
         const notePreimageTx = api.tx.preimage.notePreimage(encoded);
         await notePreimageTx.signAndSend(alice, { nonce: -1 });
         const notePreimageEvent = (await eventsPromise).map(({ event }) => event);
