@@ -208,23 +208,20 @@ where
 					HeaderValue::from_str("application/x-www-form-urlencoded")
 						.map_err(|_| Error::RequestError)?,
 				);
-				trace!("set request body: {}", body);
-				request.body(body.as_bytes()); // takes body non-owned (!)
 			} else if self.send_null_body || body != "null" {
-				let len = HeaderValue::from_str(&body.len().to_string())
-					.map_err(|_| Error::RequestError)?;
-
-				add_to_headers(&mut request_headers, CONTENT_LENGTH, len);
 				add_to_headers(
 					&mut request_headers,
 					CONTENT_TYPE,
 					HeaderValue::from_str("application/json")
 						.expect("Request Header: invalid characters"),
 				);
-
-				trace!("set request body: {}", body);
-				request.body(body.as_bytes()); // takes body non-owned (!)
 			}
+			let len =
+				HeaderValue::from_str(&body.len().to_string()).map_err(|_| Error::RequestError)?;
+			add_to_headers(&mut request_headers, CONTENT_LENGTH, len);
+
+			trace!("set request body: {}", body);
+			request.body(body.as_bytes()); // takes body non-owned (!)
 		} else {
 			debug!("no body to send");
 		}
