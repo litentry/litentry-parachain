@@ -139,7 +139,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			None => {
 				send_vc_response(
 					connection_hash,
-					context,
+					context.clone(),
 					Err("Failed to decode request payload".to_string()),
 					0u8,
 					0u8,
@@ -153,7 +153,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 			Err(_) => {
 				send_vc_response(
 					connection_hash,
-					context,
+					context.clone(),
 					Err("Failed to get mrenclave".to_string()),
 					0u8,
 					0u8,
@@ -165,7 +165,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 		if !tcs.verify_signature(&mrenclave, &request.shard) {
 			send_vc_response(
 				connection_hash,
-				context,
+				context.clone(),
 				Err("Failed to verify sig".to_string()),
 				0u8,
 				0u8,
