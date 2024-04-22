@@ -86,7 +86,7 @@ pub fn verify(
 				Ok(user.username)
 			},
 			TwitterValidationData::OAuth2 { code, redirect_uri } => {
-				let authorization = twitter::helpers::oauth2_authorization(
+				let authorization = TwitterOfficialClient::oauth2_authorization(
 					&config.twitter_client_id,
 					&config.twitter_client_secret,
 				);

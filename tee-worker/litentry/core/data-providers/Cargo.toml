@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4.19", features = ["alloc"], optional = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 http = { version = "0.2", optional = true }

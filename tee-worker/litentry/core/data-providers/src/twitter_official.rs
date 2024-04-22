@@ -18,6 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client_with_cert, vec_to_string, Error, HttpError, UserInfo};
+use base64::engine::{general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -181,6 +182,10 @@ impl TwitterOfficialClient {
 		TwitterOfficialClient { client }
 	}
 
+	pub fn oauth2_authorization(client_id: &str, client_secret: &str) -> String {
+		format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_id, client_secret)))
+	}
+
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
@@ -304,6 +309,15 @@ mod tests {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 		data_provider_config.set_twitter_official_url(url).unwrap();
 		data_provider_config
+	}
+
+	#[test]
+	fn test_oauth2_authorization() {
+		let client_id = "Z24wcG85SXVJUy1ldE1wdVl3MlA6MTpjaY";
+		let client_secret = "lYq3l-sMbGVk94iaze3j8G4ne1MBWAQ8pH4-L58yQ7y4mHOCgp";
+		let token = TwitterOfficialClient::oauth2_authorization(client_id, client_secret);
+
+		assert_eq!(token, "Basic WjI0d2NHODVTWFZKVXkxbGRFMXdkVmwzTWxBNk1UcGphWTpsWXEzbC1zTWJHVms5NGlhemUzajhHNG5lMU1CV0FROHBINC1MNTh5UTd5NG1IT0NncA==".to_string());
 	}
 
 	#[test]
