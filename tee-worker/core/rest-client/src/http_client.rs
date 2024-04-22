@@ -38,7 +38,7 @@ use std::{
 	time::Duration,
 	vec::Vec,
 };
-use url::{form_urlencoded, Url};
+use url::Url;
 
 pub type EncodedBody = Vec<u8>;
 
@@ -51,6 +51,7 @@ pub trait SendHttpRequest {
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
+		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>;
@@ -186,6 +187,7 @@ where
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
+		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>,
@@ -201,14 +203,7 @@ where
 		let mut request_headers = Headers::default_http(&uri);
 
 		if let Some(body) = maybe_body.as_ref() {
-			if is_form_urlencoded(body) {
-				add_to_headers(
-					&mut request_headers,
-					CONTENT_TYPE,
-					HeaderValue::from_str("application/x-www-form-urlencoded")
-						.map_err(|_| Error::RequestError)?,
-				);
-			} else if self.send_null_body || body != "null" {
+			if self.send_null_body || body != "null" {
 				add_to_headers(
 					&mut request_headers,
 					CONTENT_TYPE,
@@ -237,6 +232,12 @@ where
 		// add pre-set headers
 		for (key, value) in self.headers.iter() {
 			request_headers.insert(key, &value.clone());
+		}
+		// override headers with user provided headers
+		if let Some(headers) = headers {
+			for (key, value) in headers.iter() {
+				request_headers.insert(key, &value.clone());
+			}
 		}
 
 		// add user agent header
@@ -289,10 +290,6 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 			error!("Failed to add header to request: {:?}", e);
 		},
 	}
-}
-
-fn is_form_urlencoded(body: &str) -> bool {
-	form_urlencoded::parse(body.as_bytes()).all(|(key, value)| !key.is_empty() && !value.is_empty())
 }
 
 #[cfg(test)]
@@ -575,18 +572,6 @@ mod tests {
 		assert_matches!(result, Err(Error::HttpReqError(_)));
 		let msg = format!("error {:?}", result.err());
 		assert!(msg.contains("UnknownIssuer"));
-	}
-
-	#[test]
-	fn is_form_urlencoded_works() {
-		let body = "key1=value1&key2=value2";
-		assert!(is_form_urlencoded(body));
-
-		let json_body = r#"{"key1": "value1", "key2": "value2"}"#;
-		assert!(!is_form_urlencoded(json_body));
-
-		let some_string = "null";
-		assert!(!is_form_urlencoded(some_string));
 	}
 
 	fn headers_connection_close() -> Headers {

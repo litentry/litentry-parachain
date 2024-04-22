@@ -72,7 +72,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let _body = self.make_request::<U, T>(method, params, None, Some(data))?;
+		let _body = self.make_request::<U, T>(method, params, None, Some(data), None)?;
 		Ok(())
 	}
 
@@ -88,7 +88,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let _body = self.make_request::<U, T>(method, params, Some(query), Some(data))?;
+		let _body = self.make_request::<U, T>(method, params, Some(query), Some(data), None)?;
 		Ok(())
 	}
 
@@ -104,7 +104,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let body = self.make_request::<U, T>(method, params, None, Some(data))?;
+		let body = self.make_request::<U, T>(method, params, None, Some(data), None)?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -121,7 +121,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let body = self.make_request::<U, T>(method, params, Some(query), Some(data))?;
+		let body = self.make_request::<U, T>(method, params, Some(query), Some(data), None)?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -137,7 +137,10 @@ where
 			.extend_pairs(data.iter())
 			.finish();
 
-		let body = self.make_request::<U, K>(Method::POST, path, None, Some(data))?;
+		let mut headers = Headers::new();
+		headers.insert("Content-Type", "application/x-www-form-urlencoded");
+		let body =
+			self.make_request::<U, K>(Method::POST, path, None, Some(data), Some(headers))?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -147,6 +150,7 @@ where
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
+		headers: Option<Headers>,
 	) -> Result<String, Error>
 	where
 		T: RestPath<U>,
@@ -157,6 +161,7 @@ where
 			params,
 			query,
 			maybe_body,
+			headers,
 		)?;
 
 		self.response_headers = response.headers().clone();
@@ -185,7 +190,7 @@ where
 	where
 		T: serde::de::DeserializeOwned + RestPath<U>,
 	{
-		let body = self.make_request::<U, T>(Method::GET, params, None, None)?;
+		let body = self.make_request::<U, T>(Method::GET, params, None, None, None)?;
 
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
@@ -195,7 +200,7 @@ where
 	where
 		T: serde::de::DeserializeOwned + RestPath<U>,
 	{
-		let body = self.make_request::<U, T>(Method::GET, params, Some(query), None)?;
+		let body = self.make_request::<U, T>(Method::GET, params, Some(query), None, None)?;
 
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
@@ -331,7 +336,7 @@ where
 	where
 		T: RestPath<U>,
 	{
-		self.make_request::<U, T>(Method::DELETE, params, None, None)?;
+		self.make_request::<U, T>(Method::DELETE, params, None, None, None)?;
 		Ok(())
 	}
 
@@ -341,7 +346,7 @@ where
 		T: serde::Serialize + RestPath<U>,
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
-		self.make_request::<U, T>(Method::DELETE, params, Some(query), Some(data))?;
+		self.make_request::<U, T>(Method::DELETE, params, Some(query), Some(data), None)?;
 		Ok(())
 	}
 }
