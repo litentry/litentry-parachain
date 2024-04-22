@@ -44,5 +44,5 @@ fn main() {
 
 #[cfg(not(feature = "link-binary"))]
 fn main() {
-	panic!("tried to run the binary without linking. Make sure to pass `--feature link-binary`")
+	panic!("tried to run the binary without linking. Make sure to pass `--features link-binary`")
 }

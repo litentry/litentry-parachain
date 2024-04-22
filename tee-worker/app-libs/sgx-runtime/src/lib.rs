@@ -139,7 +139,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
 	impl_name: create_runtime_str!("node-template"),
 	authoring_version: 1,
-	spec_version: 105,
+	spec_version: 106,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -326,6 +326,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		ParentchainLitentry: pallet_parentchain::<Instance1>,
+		ParentchainTargetA: pallet_parentchain::<Instance2>,
+		ParentchainTargetB: pallet_parentchain::<Instance3>,
 		IdentityManagement: pallet_imt,
 		Evm: pallet_evm,
 	}

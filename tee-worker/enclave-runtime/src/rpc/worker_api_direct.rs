@@ -49,7 +49,7 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_development;
+use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -140,7 +140,9 @@ where
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
-	let local_state = state.clone();
+
+	let local_state = if_development_or!(state.clone(), state);
+
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {
@@ -404,7 +406,7 @@ where
 					let key_hash = match hex::decode(key_hash) {
 						Ok(key_hash) => key_hash,
 						Err(_) =>
-							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+							return Ok(json!(compute_hex_encoded_return_error("decode key error"))),
 					};
 
 					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
@@ -433,6 +435,22 @@ where
 				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
+	});
+
+	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
+			Ok(registry) => {
+				let mut serialized_registry = vec![];
+				for (block_number, mrenclave) in registry.iter() {
+					serialized_registry.push((*block_number, *mrenclave));
+				}
+				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
+					.to_hex()
+			},
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+		};
+		Ok(json!(json_value))
 	});
 
 	// system_health

@@ -5,12 +5,15 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { ECPairFactory, ECPairInterface } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { ethers, Wallet } from 'ethers';
-import { EthersSigner, PolkadotSigner, BitcoinSigner } from './utils/crypto';
+import { Keypair } from '@solana/web3.js';
+import { EthersSigner, PolkadotSigner, BitcoinSigner, SolanaSigner } from './utils/crypto';
 import { Wallets } from './common-types';
+import type { ErrorDetail, StfError } from 'parachain-api';
+
 export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
     return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
 }
@@ -58,18 +61,57 @@ export function genesisSubstrateWallet(name: string): KeyringPair {
     return keyPair;
 }
 
+export function genesisSolanaWallet(name: string): Keypair {
+    let seed = createHash('sha256').update(name).digest();
+    seed = seed.subarray(0, 32);
+    const keyPair = Keypair.fromSeed(seed);
+    return keyPair;
+}
+
 export const createWeb3Wallets = (): Wallets => {
     const wallets: Wallets = {
         evm: {},
         substrate: {},
         bitcoin: {},
+        solana: {},
     };
     const walletNames = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve'];
     for (const name of walletNames) {
         wallets.evm[name] = new EthersSigner(randomEvmWallet());
         wallets.substrate[name] = new PolkadotSigner(genesisSubstrateWallet(name));
         wallets.bitcoin[name] = new BitcoinSigner(randomBitcoinWallet());
+        wallets.solana[name] = new SolanaSigner(genesisSolanaWallet(name));
     }
 
     return wallets;
 };
+
+export function stfErrorToString(stfError: StfError): string {
+    if (stfError.isRequestVCFailed) {
+        const [_assertionIgnored, errorDetail] = stfError.asRequestVCFailed;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (
+        stfError.isActivateIdentityFailed ||
+        stfError.isDeactivateIdentityFailed ||
+        stfError.isSetIdentityNetworksFailed ||
+        stfError.isLinkIdentityFailed ||
+        stfError.isMissingPrivileges ||
+        stfError.isRemoveIdentityFailed ||
+        stfError.isDispatch
+    ) {
+        const errorDetail = stfError.value as ErrorDetail;
+
+        return `${stfError.type}: ${errorDetail.type}: ${errorDetail.value?.toHuman()}`;
+    }
+
+    if (stfError.isInvalidNonce) {
+        const [nonce1, nonce2] = stfError.asInvalidNonce;
+
+        return `${stfError.type}: [${nonce1?.toHuman()}, ${nonce2?.toHuman()}]`;
+    }
+
+    return stfError.type;
+}

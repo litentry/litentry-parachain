@@ -27,5 +27,13 @@ updates:
     schedule:
       interval: "weekly"
 
+  - package-ecosystem: github-actions
+    directory: '/'
+    labels: ["automated-pr"]
+    reviewers:
+      - "litentry/parachain"
+    schedule:
+      interval: "weekly"
+
     # handle ts-tests dependencies manually before we find a way to merge
     # the dependabot PRs
