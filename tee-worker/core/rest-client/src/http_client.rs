@@ -293,7 +293,7 @@ fn add_to_headers(headers: &mut Headers, key: HeaderName, value: HeaderValue) {
 
 fn is_form_urlencoded(body: &str) -> bool {
 	let parsed: String = form_urlencoded::parse(body.as_bytes())
-		.map(|(k, v)| format!("{}={}", k.to_string(), v.to_string()))
+		.map(|(k, v)| format!("{}={}", k, v))
 		.collect::<Vec<String>>()
 		.join("&");
 	parsed == body
