@@ -44,6 +44,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
+use litentry_macros::if_development;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
@@ -333,6 +334,15 @@ impl DataProviderConfig {
 		if let Ok(v) = env::var("TWITTER_CLIENT_SECRET") {
 			config.set_twitter_client_secret(v);
 		}
+		if_development!({
+			// set values for integration tests
+			if env::var("TWITTER_CLIENT_ID").is_err() {
+				config.set_twitter_client_id("twitter-client-id".to_string());
+			}
+			if env::var("TWITTER_CLIENT_SECRET").is_err() {
+				config.set_twitter_client_secret("twitter-client-secret".to_string());
+			}
+		});
 		if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
 			config.set_discord_auth_token(v);
 		}
