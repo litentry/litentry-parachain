@@ -124,7 +124,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 					0u8,
 					false,
 				);
-				return
+				continue
 			},
 		};
 		let tcs = match request
@@ -145,7 +145,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 					0u8,
 					false,
 				);
-				return
+				continue
 			},
 		};
 		let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
@@ -159,7 +159,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 					0u8,
 					false,
 				);
-				return
+				continue
 			},
 		};
 		if !tcs.verify_signature(&mrenclave, &request.shard) {
@@ -171,7 +171,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 				0u8,
 				false,
 			);
-			return
+			continue
 		}
 
 		// Until now, preparation work is done. If any error happens, error message would have been returned already.
