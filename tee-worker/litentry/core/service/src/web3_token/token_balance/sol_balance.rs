@@ -53,7 +53,7 @@ pub fn get_balance(
 					match network.create_nodereal_jsonrpc_client(data_provider_config) {
 						Some(mut client) => {
 							let param = GetTokenBalance20Param {
-								contract_address: Web3TokenType::Eth
+								contract_address: Web3TokenType::Sol
 									.get_token_address(network)
 									.unwrap_or_default()
 									.into(),
