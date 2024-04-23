@@ -1,23 +1,70 @@
 import { blake2AsHex, blake2AsU8a } from '@polkadot/util-crypto';
 import * as fs from 'fs';
-import { Keyring, ApiPromise, WsProvider } from '@polkadot/api';
+import { Keyring, ApiPromise } from '@polkadot/api';
 import { describeLitentry } from '../common/utils/integration-setup';
 import '@polkadot/wasm-crypto/initOnlyAsm';
 import * as path from 'path';
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 import { setTimeout as sleep } from 'timers/promises';
-import { subscribeToEvents } from '../common/utils';
+import { signAndSend, subscribeToEvents } from '../common/utils';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
-import { AccountId, Index } from '@polkadot/types/interfaces';
-import { Vec } from '@polkadot/types';
-import { KeyringPair } from '@polkadot/keyring/types';
-
 async function getRuntimeVersion(api: ApiPromise) {
     const runtime_version = await api.rpc.state.getRuntimeVersion();
     return +runtime_version['specVersion'];
 }
 
+type EventQuery = (data: any) => boolean;
+export type Event = { name: any; data: any; block: number; event_index: number };
+export async function observeEvent(
+    eventName: string,
+    api: ApiPromise,
+    eventQuery?: EventQuery,
+    stopObserveEvent?: () => boolean,
+    finalized = false,
+    maxWaitTime = 360 // Maximum wait time in seconds (6 minutes)
+): Promise<Event> {
+    let result: Event | undefined;
+    let eventFound = false;
+    let waitTime = 0;
+
+    const query = eventQuery ?? (() => true);
+    const stopObserve = stopObserveEvent ?? (() => false);
+
+    const [expectedSection, expectedMethod] = eventName.split(':');
+
+    const subscribeMethod = finalized ? api.rpc.chain.subscribeFinalizedHeads : api.rpc.chain.subscribeNewHeads;
+
+    const unsubscribe: any = await subscribeMethod(async (header) => {
+        const events: any[] = await api.query.system.events.at(header.hash);
+        events.forEach((record, index) => {
+            const { event } = record;
+            if (!eventFound && event.section.includes(expectedSection) && event.method.includes(expectedMethod)) {
+                const expectedEvent = {
+                    name: { section: event.section, method: event.method },
+                    data: event.toHuman().data,
+                    block: header.number.toNumber(),
+                    event_index: index,
+                };
+                if (query(expectedEvent)) {
+                    result = expectedEvent;
+                    eventFound = true;
+                    unsubscribe();
+                }
+            }
+        });
+    });
+
+    while (!eventFound && !stopObserve() && waitTime < maxWaitTime) {
+        await sleep(1000);
+        waitTime++;
+    }
+
+    if (!eventFound && waitTime >= maxWaitTime) {
+        throw new Error('Event not found within the specified time limit');
+    }
+    return result as Event;
+}
 async function waitForRuntimeUpgrade(api: ApiPromise, oldRuntimeVersion: number): Promise<number> {
     return new Promise(async (resolve, reject) => {
         let runtimeUpgraded = false;
@@ -72,35 +119,80 @@ async function runtimeUpgradeWithSudo(api: ApiPromise, wasm: string) {
     return newRuntimeVersion;
 }
 
-const getCouncilThreshold = async (api: ApiPromise): Promise<number> => {
-    const members = (await api.query.councilMembership.members()) as Vec<AccountId>;
-    return Math.ceil(members.length / 2);
-};
+/// Pushes a polkadot runtime update using the democracy pallet.
+/// preimage -> proposal -> vote -> democracy pass -> scheduler dispatch runtime update.
 async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
+    const launchPeriod = api.consts.democracy.launchPeriod.toNumber();
+    console.log(`Launch period = ${launchPeriod}`);
+
+    let eventsPromise: Promise<FrameSystemEventRecord[]>;
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const old_runtime_version = await getRuntimeVersion(api);
     console.log(`Old runtime version = ${old_runtime_version}`);
     let currentBlock = (await api.rpc.chain.getHeader()).number.toNumber();
+    const encoded = api.tx.system.setCode(blake2AsHex(wasm)).method.toHex();
+    const preimageHash = blake2AsHex(encoded);
+    console.log(`Preimage hash: ${preimageHash}`);
 
-    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm)).method.toHex();
-    const encodedHash = blake2AsHex(encoded);
-    const external = api.tx.democracy.externalProposeMajority({ Legacy: encodedHash });
-
-    let preimageStatus = (await api.query.preimage.statusFor(encodedHash)).toHuman();
-
+    // Submit the preimage (if it doesn't already exist)
+    let preimageStatus = (await api.query.preimage.statusFor(preimageHash)).toHuman();
     if (!preimageStatus) {
-        let eventsPromise: Promise<FrameSystemEventRecord[]>;
         eventsPromise = subscribeToEvents('preimage', 'Noted', api);
         const notePreimageTx = api.tx.preimage.notePreimage(encoded);
-        await notePreimageTx.signAndSend(alice, { nonce: -1 });
+        await signAndSend(notePreimageTx, alice);
         const notePreimageEvent = (await eventsPromise).map(({ event }) => event);
         expect(notePreimageEvent.length === 1);
         console.log('Preimage noted');
     }
 
-    const proposalTx = api.tx.council.propose(await getCouncilThreshold(api), external, external.length);
-    await proposalTx.signAndSend(alice, { nonce: -1 });
+    // Submit the proposal
+    const observeDemocracyStarted = observeEvent('democracy:Started', api);
+    eventsPromise = subscribeToEvents('democracy', 'Proposed', api);
+    const proposalTx = api.tx.democracy.propose({ Legacy: preimageHash }, 100000000000000);
+    await signAndSend(proposalTx, alice);
+    const democracyStartedEvent = (await eventsPromise).map(({ event }) => event);
+    expect(democracyStartedEvent.length === 1);
+    console.log('Democracy proposal started', democracyStartedEvent[0].data[0].toHuman());
+    const proposalIndex = api.createType('ProposalIndex', democracyStartedEvent[0].data[0].toHuman());
+
+    // Wait for the democracy started event
+    console.log('Waiting for voting to start...');
+    await observeDemocracyStarted;
+    const observeDemocracyPassed = observeEvent('democracy:Passed', api);
+    const observeDemocracyNotPassed = observeEvent('democracy:NotPassed', api);
+    const observeSchedulerDispatched = observeEvent('scheduler:Dispatched', api);
+    const observeCodeUpdated = observeEvent('system:CodeUpdated', api);
+
+    // Vote for the proposal
+    eventsPromise = subscribeToEvents('democracy', 'Voted', api);
+    const vote = { Standard: { vote: true, balance: 100000000000000 } };
+
+    // change proposalIndex to refrenum index
+    const voteTx = api.tx.democracy.vote(proposalIndex, vote);
+    await signAndSend(voteTx, alice);
+    const democracyVotedEvent = (await eventsPromise).map(({ event }) => event);
+    expect(democracyVotedEvent.length === 1);
+    console.log('Democracy proposal voted', democracyVotedEvent[0].data[0].toHuman());
+
+    // Wait for it to pass
+    await Promise.race([observeDemocracyPassed, observeDemocracyNotPassed])
+        .then((event) => {
+            if (event.name.method !== 'Passed') {
+                throw new Error(`Democracy failed for runtime update. ${proposalIndex}`);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            process.exit(-1);
+        });
+
+    console.log('Democracy manifest! waiting for a succulent scheduled runtime update...');
+
+    // Wait for the runtime update to complete
+    await observeSchedulerDispatched;
+    const CodeUpdated = await observeCodeUpdated;
+    console.log(`Code updated at block ${CodeUpdated.block}`);
 
     // wait for 10 blocks
     console.log('Wait for new runtime ...');
@@ -112,9 +204,7 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
 describeLitentry('Runtime upgrade test', ``, (context) => {
     const network = process.argv[7].slice(2);
     console.log('Running runtime upgrade test on network:', network);
-
     step('Running runtime ugprade test', async function () {
-        console.log('Running runtime upgrade test---------');
         let runtimeVersion: number;
         const wasmPath = path.resolve('/tmp/runtime.wasm');
         console.log(`wasmPath: ${wasmPath}`);
