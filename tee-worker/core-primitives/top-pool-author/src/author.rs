@@ -358,7 +358,7 @@ impl<
 			TrustedOperationOrHash::Operation(op) => Ok(self.top_pool.hash_of(&op)),
 		}?;
 
-		debug!("removing {:?} from top pool", hash);
+		info!("removing {:?} from top pool", hash);
 
 		// Update metric
 		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeDecrement) {
@@ -510,7 +510,7 @@ impl<
 			if let Err(e) = self.remove_top(executed_call.clone(), shard, inblock) {
 				// We don't want to return here before all calls have been iterated through,
 				// hence log message and collect failed calls in vec.
-				debug!("Error removing trusted call from top pool: {:?}", e);
+				warn!("Error removing trusted call from top pool: {:?}", e);
 				failed_to_remove.push(executed_call);
 			}
 		}
