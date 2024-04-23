@@ -298,15 +298,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	let vc_handler = std::thread::spawn(move || {
-		error!("*** testing vc task start");
-		run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
-		error!("*** testing vc task finish");
-	});
-	match vc_handler.join() {
-		Ok(v) => error!("Joined vc_handler OK: {:?}", v),
-		Err(e) => error!("Joined vc_handler Err: {:?}", e),
-	}
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 
 	Ok(())
 }
