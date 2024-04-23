@@ -29,8 +29,9 @@ const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount list";
 // Keep all name in lowercase here by purpose
 const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "mmss", "long", "cats", "btcs"];
 const ORDI_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0];
-const SATS_TOKEN_BALANCE_RANGE: [f64; 8] = [
+const SATS_TOKEN_BALANCE_RANGE: [f64; 9] = [
 	0.0,
+	1.0,
 	40_000_000.0,
 	200_000_000.0,
 	500_000_000.0,
@@ -39,13 +40,24 @@ const SATS_TOKEN_BALANCE_RANGE: [f64; 8] = [
 	4_000_000_000.0,
 	6_000_000_000.0,
 ];
-const RATS_TOKEN_BALANCE_RANGE: [f64; 8] =
-	[0.0, 40_000.0, 200_000.0, 1_000_000.0, 2_000_000.0, 4_000_000.0, 10_000_000.0, 20_000_000.0];
-const MMSS_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0];
-const LONG_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 20.0, 50.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0];
-const CATS_TOKEN_BALANCE_RANGE: [f64; 7] =
-	[0.0, 10_000.0, 50_000.0, 100_000.0, 200_000.0, 500_000.0, 800_000.0];
-const BTCS_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0];
+const RATS_TOKEN_BALANCE_RANGE: [f64; 9] = [
+	0.0,
+	1.0,
+	40_000.0,
+	200_000.0,
+	1_000_000.0,
+	2_000_000.0,
+	4_000_000.0,
+	10_000_000.0,
+	20_000_000.0,
+];
+const MMSS_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0];
+const LONG_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0];
+const CATS_TOKEN_BALANCE_RANGE: [f64; 8] =
+	[0.0, 1.0, 10_000.0, 50_000.0, 100_000.0, 200_000.0, 500_000.0, 800_000.0];
+const BTCS_TOKEN_BALANCE_RANGE: [f64; 9] = [0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0];
 
 #[derive(Debug, PartialEq)]
 enum BRC20Token {
@@ -145,6 +157,8 @@ fn update_assertion(token: &BRC20Token, balance: f64, credential: &mut Credentia
 
 			assertion = assertion.add_item(min_item);
 			assertion = assertion.add_item(max_item);
+
+			credential.credential_subject.values.push(index != 0 || balance > 0_f64);
 		},
 		None => {
 			let min_item = AssertionLogic::new_item(
@@ -153,10 +167,11 @@ fn update_assertion(token: &BRC20Token, balance: f64, credential: &mut Credentia
 				&format!("{}", get_token_range_last(token)),
 			);
 			assertion = assertion.add_item(min_item);
+
+			credential.credential_subject.values.push(true);
 		},
 	}
 
-	credential.credential_subject.values.push(true);
 	credential.credential_subject.assertions.push(assertion);
 }
 
