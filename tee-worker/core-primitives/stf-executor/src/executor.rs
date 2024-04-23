@@ -157,6 +157,7 @@ where
 					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
 				}
 				let force_connection_wait = result.force_connection_wait();
+				let maybe_old_hash = result.maybe_old_hash();
 				let rpc_response_value = result.get_encoded_result();
 				if let StatePostProcessing::Prune = post_processing {
 					state.prune_state_diff();
@@ -169,6 +170,7 @@ where
 				}
 				Ok(ExecutedOperation::success(
 					operation_hash,
+					maybe_old_hash,
 					top_or_hash,
 					extrinsic_call_backs,
 					rpc_response_value,

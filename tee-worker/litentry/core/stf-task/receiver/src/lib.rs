@@ -51,7 +51,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::TrustedOperation;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{RsaRequest, ShardIdentifier, H256};
+use itp_types::{RsaRequest, ShardIdentifier};
 use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
@@ -134,7 +134,6 @@ where
 	pub fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
-		maybe_old_top_hash: Option<H256>,
 		trusted_call: &TrustedCall,
 	) -> Result<(), Error> {
 		let signed_trusted_call = self
@@ -165,12 +164,6 @@ where
 			// skip the submission if some top with the same hash already exists, return Ok(())
 			warn!("Skip submit_trusted_call because top with the same hash exists");
 			return Ok(())
-		}
-
-		// swap the hash in the rpc connection registry to make sure furthre RPC responses go to
-		// the right channel
-		if let Some(old_hash) = maybe_old_top_hash {
-			self.author_api.swap_rpc_connection_hash(old_hash, top.hash());
 		}
 
 		let shielding_key = self
@@ -217,15 +210,15 @@ where
 	let n_workers = 4;
 	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 
-	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
+	let (sender, receiver) = channel::<(ShardIdentifier, TrustedCall)>();
 
 	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
 	// are submitting trusted calls simultaneously
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
-		if let Ok((shard, hash, call)) = receiver.recv() {
+		if let Ok((shard, call)) = receiver.recv() {
 			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}

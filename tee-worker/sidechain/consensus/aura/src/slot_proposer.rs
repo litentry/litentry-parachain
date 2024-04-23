@@ -151,6 +151,13 @@ impl<
 
 		// store the rpc response value to top pool
 		let rpc_responses_values = batch_execution_result.get_connection_updates();
+		// if there's old hash, we need to swap the connection now - see P-588
+		batch_execution_result
+			.get_swap_hash_pairs()
+			.iter()
+			.for_each(|(old_hash, new_hash)| {
+				self.top_pool_author.swap_rpc_connection_hash(*old_hash, *new_hash);
+			});
 		self.top_pool_author.update_connection_state(rpc_responses_values);
 
 		// Remove all not successfully executed operations from the top pool.
