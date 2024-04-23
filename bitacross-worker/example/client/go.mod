@@ -14,7 +14,7 @@ require (
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	golang.org/x/crypto v0.20.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )
