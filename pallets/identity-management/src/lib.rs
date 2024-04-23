@@ -81,12 +81,20 @@ pub mod pallet {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
 		LinkIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>,
+			encrypted_validation_data: Vec<u8>,
+			encrypted_web3networks: Vec<u8>,
 		},
 		DeactivateIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>,
 		},
 		ActivateIdentityRequested {
 			shard: ShardIdentifier,
+			account: T::AccountId,
+			encrypted_identity: Vec<u8>,
 		},
 		// event that should be triggered by TEECallOrigin
 		// we return the request-extrinsic-hash for better tracking
@@ -210,7 +218,13 @@ pub mod pallet {
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorizedUser
 			);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::LinkIdentityRequested {
+				shard,
+				account: user,
+				encrypted_identity,
+				encrypted_validation_data,
+				encrypted_web3networks,
+			});
 			Ok(().into())
 		}
 
@@ -222,8 +236,12 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::DeactivateIdentityRequested { shard });
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::DeactivateIdentityRequested {
+				shard,
+				account: who,
+				encrypted_identity,
+			});
 			Ok(().into())
 		}
 
@@ -235,8 +253,12 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::ActivateIdentityRequested { shard });
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::ActivateIdentityRequested {
+				shard,
+				account: who,
+				encrypted_identity,
+			});
 			Ok(().into())
 		}
 

@@ -33,13 +33,19 @@ fn link_identity_without_delegatee_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -53,13 +59,19 @@ fn link_identity_with_authorized_delegatee_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -90,12 +102,16 @@ fn deactivate_identity_works() {
 		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::deactivate_identity(
-			RuntimeOrigin::signed(alice),
+			RuntimeOrigin::signed(alice.clone()),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::DeactivateIdentityRequested { shard },
+			crate::Event::DeactivateIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -106,12 +122,16 @@ fn activate_identity_works() {
 		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::activate_identity(
-			RuntimeOrigin::signed(alice),
+			RuntimeOrigin::signed(alice.clone()),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::ActivateIdentityRequested { shard },
+			crate::Event::ActivateIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+			},
 		));
 	});
 }
@@ -156,13 +176,19 @@ fn extrinsic_whitelist_origin_works() {
 		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			alice,
+			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested {
+				shard,
+				account: alice,
+				encrypted_identity: vec![1u8; 2048],
+				encrypted_validation_data: vec![1u8; 2048],
+				encrypted_web3networks: vec![1u8; 2048],
+			},
 		));
 	});
 }
