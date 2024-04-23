@@ -272,13 +272,13 @@ impl<
 		}
 
 		if let Some(trusted_call_signed) = trusted_operation.to_call() {
-			debug!(
+			info!(
 				"Submitting trusted call, hash: {:?}, call: {:?}",
 				self.hash_of(&trusted_operation),
 				trusted_call_signed
 			);
 		} else if let StfTrustedOperation::<TCS, G>::get(ref getter) = trusted_operation {
-			debug!(
+			info!(
 				"Submitting trusted getter, hash {:?}, call: {:?}",
 				self.hash_of(&trusted_operation),
 				getter,
