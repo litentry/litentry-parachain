@@ -64,46 +64,54 @@ pub type RpcResponseValue = Vec<u8>;
 /// Litentry:
 /// we have made a few changes:
 /// - we add the encoded rpc response that will be passed back to the requester
+/// - for successful top, we record a `maybe_old_top_hash` to swap the connection if this top is a successor of a streamed old one
 /// - for failed top, we apply the parachain effects too
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExecutionStatus {
-	Success(H256, Vec<ParentchainCall>, RpcResponseValue, bool),
+	Success(H256, Option<H256>, Vec<ParentchainCall>, RpcResponseValue, bool),
 	Failure(H256, Vec<ParentchainCall>, RpcResponseValue),
 }
 
 impl ExecutionStatus {
 	pub fn get_extrinsic_callbacks(&self) -> Vec<ParentchainCall> {
 		match self {
-			ExecutionStatus::Success(_, opaque_calls, _, _) => opaque_calls.clone(),
+			ExecutionStatus::Success(_, _, opaque_calls, _, _) => opaque_calls.clone(),
 			ExecutionStatus::Failure(_, opaque_calls, _) => opaque_calls.clone(),
 		}
 	}
 
 	pub fn get_executed_operation_hash(&self) -> Option<H256> {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _, _) => Some(*operation_hash),
+			ExecutionStatus::Success(operation_hash, ..) => Some(*operation_hash),
 			_ => None,
 		}
 	}
 
 	pub fn get_operation_hash(&self) -> H256 {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _, _) => *operation_hash,
-			ExecutionStatus::Failure(operation_hash, _, _) => *operation_hash,
+			ExecutionStatus::Success(operation_hash, ..) => *operation_hash,
+			ExecutionStatus::Failure(operation_hash, ..) => *operation_hash,
 		}
 	}
 
 	pub fn get_rpc_response_value(&self) -> RpcResponseValue {
 		match self {
-			ExecutionStatus::Success(_, _, res, _) => res.clone(),
+			ExecutionStatus::Success(_, _, _, res, _) => res.clone(),
 			ExecutionStatus::Failure(_, _, res) => res.clone(),
 		}
 	}
 
 	pub fn get_force_wait(&self) -> bool {
 		match self {
-			ExecutionStatus::Success(_, _, _, wait) => *wait,
+			ExecutionStatus::Success(_, _, _, _, wait) => *wait,
 			_ => false,
+		}
+	}
+
+	pub fn get_swap_hash_pair(&self) -> Option<(H256, H256)> {
+		match self {
+			ExecutionStatus::Success(new_hash, Some(old_hash), ..) => Some((*old_hash, *new_hash)),
+			_ => None,
 		}
 	}
 }
@@ -129,6 +137,7 @@ where
 	/// Constructor for a successfully executed trusted operation.
 	pub fn success(
 		operation_hash: H256,
+		maybe_old_hash: Option<H256>,
 		trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
 		extrinsic_call_backs: Vec<ParentchainCall>,
 		rpc_response_value: RpcResponseValue,
@@ -137,6 +146,7 @@ where
 		ExecutedOperation {
 			status: ExecutionStatus::Success(
 				operation_hash,
+				maybe_old_hash,
 				extrinsic_call_backs,
 				rpc_response_value,
 				force_connection_wait,
@@ -220,6 +230,14 @@ where
 			})
 			.collect()
 	}
+
+	// Litentry: return all (old_hash, new_hash) tuples
+	pub fn get_swap_hash_pairs(&self) -> Vec<(H256, H256)> {
+		self.executed_operations
+			.iter()
+			.filter_map(|ec| ec.status.get_swap_hash_pair())
+			.collect()
+	}
 }
 
 #[cfg(test)]
@@ -295,6 +313,7 @@ mod tests {
 			vec![ParentchainCall::Litentry(OpaqueCall(vec![int; 10]))];
 		let operation = ExecutedOperation::success(
 			hash,
+			None,
 			TrustedOperationOrHash::Hash(hash),
 			opaque_call,
 			vec![],

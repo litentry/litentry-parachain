@@ -18,19 +18,19 @@ pub mod assertion;
 pub mod identity_verification;
 
 use ita_stf::TrustedCall;
-use itp_types::{ShardIdentifier, H256};
+use itp_types::ShardIdentifier;
 use std::sync::mpsc::Sender;
 
 pub trait TaskHandler {
 	type Error;
 	type Result;
-	fn start(&self, sender: Sender<(ShardIdentifier, H256, TrustedCall)>) {
+	fn start(&self, sender: Sender<(ShardIdentifier, TrustedCall)>) {
 		match self.on_process() {
 			Ok(r) => self.on_success(r, sender),
 			Err(e) => self.on_failure(e, sender),
 		}
 	}
 	fn on_process(&self) -> Result<Self::Result, Self::Error>;
-	fn on_success(&self, r: Self::Result, sender: Sender<(ShardIdentifier, H256, TrustedCall)>);
-	fn on_failure(&self, e: Self::Error, sender: Sender<(ShardIdentifier, H256, TrustedCall)>);
+	fn on_success(&self, r: Self::Result, sender: Sender<(ShardIdentifier, TrustedCall)>);
+	fn on_failure(&self, e: Self::Error, sender: Sender<(ShardIdentifier, TrustedCall)>);
 }

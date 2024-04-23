@@ -279,6 +279,7 @@ impl TrustedCallSigned {
 		web3networks: Vec<Web3Network>,
 		maybe_key: Option<RequestAesKey>,
 		req_ext_hash: H256,
+		maybe_old_hash: Option<H256>,
 	) -> StfResult<TrustedCallResult>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
@@ -324,10 +325,13 @@ impl TrustedCallSigned {
 		mutated_id_graph.retain(|i| !old_id_graph.contains(i));
 
 		if let Some(key) = maybe_key {
-			return Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
-				mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-				id_graph_hash,
-			}))
+			return Ok(TrustedCallResult::LinkIdentity(
+				LinkIdentityResult {
+					mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+					id_graph_hash,
+				},
+				maybe_old_hash,
+			))
 		}
 
 		Ok(TrustedCallResult::Empty)

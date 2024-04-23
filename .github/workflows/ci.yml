@@ -800,12 +800,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - test_name: lit-di-evm-identity-multiworker-test
-          # - test_name: lit-di-substrate-identity-multiworker-test
-          - test_name: lit-di-vc-multiworker-test
-          # - test_name: lit-dr-vc-multiworker-test
-          # - test_name: lit-resume-worker
-          # - test_name: lit-scheduled-enclave-test
+          - test_name: di-vc-0
+          - test_name: di-vc-1
+          - test_name: di-vc-2
+          - test_name: di-vc-3
+          - test_name: di-vc-4
+          - test_name: di-vc-5
+          - test_name: di-vc-6
+          - test_name: di-vc-7
+          - test_name: di-vc-8
     steps:
       - uses: actions/checkout@v4
 
@@ -846,13 +849,13 @@ jobs:
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
-          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
+          docker compose -f multiworker-docker-compose.yml -f lit-di-vc-multiworker-test.yml up --no-build --exit-code-from lit-di-vc-multiworker-test lit-di-vc-multiworker-test
 
       - name: Stop integration multi worker docker containers
         # if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
-          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+          docker compose -f multiworker-docker-compose.yml -f lit-di-vc-multiworker-test.yml stop
 
       - name: Collect docker logs if test fails
         continue-on-error: true
