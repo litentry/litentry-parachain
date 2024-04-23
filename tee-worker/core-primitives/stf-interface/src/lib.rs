@@ -134,7 +134,6 @@ pub trait ExecuteGetter {
 pub trait StfExecutionResult {
 	fn get_encoded_result(self) -> Vec<u8>;
 	fn force_connection_wait(&self) -> bool;
-	fn maybe_old_hash(&self) -> Option<H256>;
 }
 
 impl StfExecutionResult for () {
@@ -143,9 +142,6 @@ impl StfExecutionResult for () {
 	}
 	fn force_connection_wait(&self) -> bool {
 		false
-	}
-	fn maybe_old_hash(&self) -> Option<H256> {
-		None
 	}
 }
 

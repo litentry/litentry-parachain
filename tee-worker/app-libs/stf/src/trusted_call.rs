@@ -132,19 +132,9 @@ pub enum TrustedCall {
 		Vec<Web3Network>,
 		Option<RequestAesKey>,
 		H256,
-		Option<H256>,
 	),
 	#[codec(index = 21)]
-	request_vc_callback(
-		Identity,
-		Identity,
-		Assertion,
-		Vec<u8>,
-		Option<RequestAesKey>,
-		bool,
-		H256,
-		Option<H256>,
-	),
+	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, bool, H256),
 	#[codec(index = 22)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	#[codec(index = 23)]
@@ -664,7 +654,6 @@ where
 						web3networks,
 						maybe_key,
 						req_ext_hash,
-						None,
 					)
 				} else {
 					Ok(TrustedCallResult::Streamed)
@@ -783,7 +772,6 @@ where
 				web3networks,
 				maybe_key,
 				req_ext_hash,
-				maybe_old_hash,
 			) => Self::handle_link_identity_callback(
 				calls,
 				node_metadata_repo,
@@ -793,7 +781,6 @@ where
 				web3networks,
 				maybe_key,
 				req_ext_hash,
-				maybe_old_hash,
 			),
 			TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) => {
 				debug!(
@@ -838,7 +825,6 @@ where
 				maybe_key,
 				should_create_id_graph,
 				req_ext_hash,
-				maybe_old_hash,
 			) => {
 				debug!(
 					"request_vc_callback, who: {}, should_create_id_graph: {}, assertion: {:?}",
@@ -883,17 +869,11 @@ where
 				))));
 
 				if let Some(key) = maybe_key {
-					Ok(TrustedCallResult::RequestVC(
-						RequestVCResult {
-							vc_payload: aes_encrypt_default(&key, &vc_payload),
-							pre_mutated_id_graph: aes_encrypt_default(
-								&key,
-								&mutated_id_graph.encode(),
-							),
-							pre_id_graph_hash: id_graph_hash,
-						},
-						maybe_old_hash,
-					))
+					Ok(TrustedCallResult::RequestVC(RequestVCResult {
+						vc_payload: aes_encrypt_default(&key, &vc_payload),
+						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						pre_id_graph_hash: id_graph_hash,
+					}))
 				} else {
 					Ok(TrustedCallResult::Empty)
 				}

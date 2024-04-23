@@ -16,7 +16,7 @@
 
 #![allow(clippy::result_large_err)]
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
+use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
@@ -72,7 +72,7 @@ where
 	fn on_success(
 		&self,
 		result: Self::Result,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, TrustedCall)>,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
@@ -87,9 +87,8 @@ where
 				self.req.maybe_key,
 				self.req.should_create_id_graph,
 				self.req.req_ext_hash,
-				Some(self.req.top_hash),
 			);
-			if let Err(e) = sender.send((self.req.shard, c)) {
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
@@ -100,7 +99,7 @@ where
 	fn on_failure(
 		&self,
 		error: Self::Error,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, TrustedCall)>,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
@@ -110,7 +109,7 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard, c)) {
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
 				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {

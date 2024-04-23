@@ -101,7 +101,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	thread::spawn(move || loop {
 		if let Ok((shard, call)) = tc_receiver.recv() {
 			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_cloned.submit_trusted_call(&shard, &call) {
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, None, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}
