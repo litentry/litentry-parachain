@@ -19,26 +19,26 @@ use std::{collections::HashMap, string::String, sync::Arc};
 use litentry_primitives::ParentchainAccountId as AccountId;
 
 lazy_static! {
-	static ref TWITTER_CODE_VERIFIER_STORE: Arc<RwLock<HashMap<String, String>>> =
+	static ref TWITTER_CODE_VERIFIER_STORE: Arc<RwLock<HashMap<String, (String, String)>>> =
 		Arc::new(RwLock::new(HashMap::new()));
 }
 
-pub struct CodeVerifierStore;
+pub struct OAuthStore;
 
-impl CodeVerifierStore {
-	pub fn save_code(account_id: AccountId, code: String) -> Result<(), String> {
+impl OAuthStore {
+	pub fn save_data(account_id: AccountId, code: String, state: String) -> Result<(), String> {
 		TWITTER_CODE_VERIFIER_STORE
 			.write()
 			.map_err(|_| String::from("Lock poisoning"))?
-			.insert(hex::encode(account_id.encode()), code);
+			.insert(hex::encode(account_id.encode()), (code, state));
 		Ok(())
 	}
 
-	pub fn use_code(account_id: &AccountId) -> Result<Option<String>, String> {
-		let code = TWITTER_CODE_VERIFIER_STORE
+	pub fn get_data(account_id: &AccountId) -> Result<Option<(String, String)>, String> {
+		let data = TWITTER_CODE_VERIFIER_STORE
 			.write()
 			.map_err(|_| String::from("Lock poisoning"))?
 			.remove(hex::encode(account_id.encode()).as_str());
-		Ok(code)
+		Ok(data)
 	}
 }

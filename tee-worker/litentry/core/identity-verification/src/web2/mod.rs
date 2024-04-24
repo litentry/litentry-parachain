@@ -85,7 +85,7 @@ pub fn verify(
 
 				Ok(user.username)
 			},
-			TwitterValidationData::OAuth2 { code, redirect_uri } => {
+			TwitterValidationData::OAuth2 { code, state, redirect_uri } => {
 				let authorization = TwitterOfficialClient::oauth2_authorization(
 					&config.twitter_client_id,
 					&config.twitter_client_secret,
@@ -96,28 +96,39 @@ pub fn verify(
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 				let code = vec_to_string(code.to_vec())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let state = vec_to_string(state.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 				let Some(account_id) = who.to_account_id() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
-				let code_verifier = match twitter::CodeVerifierStore::use_code(&account_id) {
-					Ok(maybe_code) => maybe_code.ok_or_else(|| {
-						Error::LinkIdentityFailed(ErrorDetail::StfError(
-							ErrorString::truncate_from(
-								std::format!(
-									"code verifier not found for {}",
-									account_id_to_string(&account_id)
-								)
-								.into(),
-							),
-						))
-					})?,
-					Err(e) =>
-						return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
-							ErrorString::truncate_from(
-								std::format!("failed to get code verifier: {}", e).into(),
-							),
-						))),
-				};
+				let (code_verifier, state_verifier) =
+					match twitter::OAuthStore::get_data(&account_id) {
+						Ok(data) => data.ok_or_else(|| {
+							Error::LinkIdentityFailed(ErrorDetail::StfError(
+								ErrorString::truncate_from(
+									std::format!(
+										"no oauth data found for {}",
+										account_id_to_string(&account_id)
+									)
+									.into(),
+								),
+							))
+						})?,
+						Err(e) =>
+							return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
+								ErrorString::truncate_from(
+									std::format!("failed to get oauth data: {}", e).into(),
+								),
+							))),
+					};
+
+				ensure!(
+					state == state_verifier,
+					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+						"stored state mismatch".into()
+					)))
+				);
+
 				let data = CreateTwitterUserAccessToken {
 					client_id: config.twitter_client_id.clone(),
 					code,

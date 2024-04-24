@@ -1,5 +1,5 @@
-mod code_verifier_store;
-pub use code_verifier_store::*;
+mod oauth_store;
+pub use oauth_store::*;
 
 pub(crate) mod helpers;
 
@@ -11,6 +11,7 @@ use std::{format, string::String};
 pub struct AuthorizeData {
 	pub authorize_url: String,
 	pub code_verifier: String,
+	pub state: String,
 }
 
 const BASE_URL: &str = "https://twitter.com/i/oauth2/authorize";
@@ -32,7 +33,7 @@ pub fn get_authorize_data(client_id: &str, redirect_uri: &str) -> AuthorizeData 
 		code_challenge
 	);
 
-	AuthorizeData { authorize_url, code_verifier }
+	AuthorizeData { authorize_url, code_verifier, state }
 }
 
 #[cfg(test)]
@@ -73,5 +74,6 @@ mod tests {
 			"S256"
 		);
 		assert_eq!(authorize_data.code_verifier.len(), 128);
+		assert_eq!(authorize_data.state.len(), 32);
 	}
 }

@@ -75,6 +75,7 @@ export async function buildTwitterValidations(
         twitterValidationData.Web2Validation.Twitter = {
             OAuth2: {
                 code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                state: `0x${Buffer.from('test-oauth-state', 'utf8').toString('hex')}`,
                 redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
             },
         };

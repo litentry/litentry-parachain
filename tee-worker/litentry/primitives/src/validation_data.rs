@@ -29,7 +29,7 @@ pub type ValidationString = BoundedVec<u8, MaxStringLength>;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum TwitterValidationData {
 	PublicTweet { tweet_id: ValidationString },
-	OAuth2 { code: ValidationString, redirect_uri: ValidationString },
+	OAuth2 { code: ValidationString, state: ValidationString, redirect_uri: ValidationString },
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

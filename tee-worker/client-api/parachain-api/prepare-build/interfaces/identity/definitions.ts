@@ -78,6 +78,7 @@ export default {
         },
         OAuth2: {
             code: "Vec<u8>",
+            state: "Vec<u8>",
             redirect_uri: "Vec<u8>",
         },
         DiscordValidationData: {
