@@ -63,8 +63,8 @@ impl VcRequestSender {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
-		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().unwrap();
-		let vc_task_sender = mutex_guard.clone().unwrap();
+		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().map_err(|_| "Could not access Mutex")?;
+		let vc_task_sender = mutex_guard.clone().ok_or("Daemon sender was not initialized")?;
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
