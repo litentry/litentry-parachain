@@ -45,7 +45,7 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack pnpm install
+corepack enable pnpm
 pnpm run wait-finalized-block 2>&1
 
 print_divider
