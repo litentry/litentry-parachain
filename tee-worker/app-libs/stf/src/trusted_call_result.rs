@@ -31,9 +31,9 @@ pub enum TrustedCallResult {
 	#[codec(index = 1)]
 	Streamed,
 	#[codec(index = 2)]
-	LinkIdentity(LinkIdentityResult, Option<H256>),
+	LinkIdentity(LinkIdentityResult),
 	#[codec(index = 3)]
-	RequestVC(RequestVCResult, Option<H256>),
+	RequestVC(RequestVCResult),
 	#[codec(index = 4)]
 	DeactivateIdentity(DeactivateIdentityResult),
 	#[codec(index = 5)]
@@ -47,8 +47,8 @@ impl StfExecutionResult for TrustedCallResult {
 		match self {
 			Self::Empty => Vec::default(),
 			Self::Streamed => Vec::default(),
-			Self::LinkIdentity(result, _) => result.encode(),
-			Self::RequestVC(result, _) => result.encode(),
+			Self::LinkIdentity(result) => result.encode(),
+			Self::RequestVC(result) => result.encode(),
 			Self::DeactivateIdentity(result) => result.encode(),
 			Self::ActivateIdentity(result) => result.encode(),
 			Self::SetIdentityNetworks(result) => result.encode(),
@@ -57,14 +57,6 @@ impl StfExecutionResult for TrustedCallResult {
 
 	fn force_connection_wait(&self) -> bool {
 		matches!(self, Self::Streamed)
-	}
-
-	fn maybe_old_hash(&self) -> Option<H256> {
-		match self {
-			Self::LinkIdentity(_, maybe_hash) => *maybe_hash,
-			Self::RequestVC(_, maybe_hash) => *maybe_hash,
-			_ => None,
-		}
 	}
 }
 

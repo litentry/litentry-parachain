@@ -93,7 +93,6 @@ where
 				let top_or_hash = TrustedOperationOrHash::<TCS, G>::from_top(c.clone());
 				ExecutedOperation::success(
 					operation_hash,
-					None,
 					top_or_hash,
 					Vec::new(),
 					Vec::new(),

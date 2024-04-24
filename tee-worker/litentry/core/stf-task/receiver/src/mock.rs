@@ -2,7 +2,6 @@ use super::*;
 use base58::FromBase58;
 use codec::Decode;
 use itp_top_pool_author::{error::Result, mocks::GLOBAL_MOCK_AUTHOR_API};
-use itp_types::H256;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, RequestAesKey};
 use sp_core::{blake2_256, sr25519, Pair};

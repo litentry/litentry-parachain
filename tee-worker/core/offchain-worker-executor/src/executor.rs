@@ -148,7 +148,6 @@ impl<
 				.map(|h| {
 					ExecutedOperation::success(
 						h,
-						None,
 						TrustedOperationOrHash::Hash(h),
 						Vec::new(),
 						Vec::new(),

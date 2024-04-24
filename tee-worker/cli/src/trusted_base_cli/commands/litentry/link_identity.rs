@@ -72,7 +72,6 @@ impl LinkIdentityCommand {
 			networks,
 			None,
 			Default::default(),
-			None,
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
