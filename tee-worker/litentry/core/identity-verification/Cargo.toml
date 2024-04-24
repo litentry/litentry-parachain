@@ -8,6 +8,7 @@ version = "0.1.0"
 # std dependencies
 base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 hex = { version = "0.4.3", optional = true }
+lru = "0.12.3"
 rand = { version = "0.8", optional = true }
 
 # sgx dependencies
