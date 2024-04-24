@@ -22,7 +22,9 @@ use itp_storage::StorageProof;
 use itp_types::parentchain::ParentchainId;
 use sp_runtime::generic::SignedBlock;
 
-/// trait for handling blocks on the side chain
+/// originally this trait is responsible for handling blocks on the side chain for tee worker, 
+/// but in current context we use it for Offchain processes, though the filename might be confusing
+/// we want to keep it for easy applying further upstream changes 
 pub trait Sidechain: Send + Sync + 'static {
 	/// Sync parentchain blocks and events. Execute pending tops
 	/// and events proof in the enclave.
