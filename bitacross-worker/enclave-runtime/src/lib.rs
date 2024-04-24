@@ -44,9 +44,12 @@ extern crate sgx_tstd as std;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-		GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT,
+		GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_B_SOLOCHAIN_HANDLER_COMPONENT,
 	},
 	utils::{
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
@@ -56,23 +59,30 @@ use crate::{
 	},
 };
 use codec::Decode;
+use core::ffi::c_int;
 #[cfg(feature = "development")]
 use initialization::global_components::{
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 };
-use itc_parentchain::primitives::ParentchainId;
+use itc_parentchain::{
+	block_import_dispatcher::DispatchBlockImport,
+	light_client::{concurrent_access::ValidatorAccess, Validator},
+	primitives::ParentchainId,
+};
 use itp_component_container::ComponentGetter;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
 #[cfg(feature = "development")]
 use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_crypto::key_repository::AccessPubkey;
-use itp_types::ShardIdentifier;
+use itp_storage::{StorageProof, StorageProofChecker};
+use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
 use litentry_macros::if_development_or;
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
+use sp_runtime::traits::BlakeTwo256;
 use std::{
 	path::PathBuf,
 	slice,
@@ -513,6 +523,203 @@ pub unsafe extern "C" fn migrate_shard(
 	}
 
 	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sync_parentchain(
+	blocks_to_sync: *const u8,
+	blocks_to_sync_size: usize,
+	events_to_sync: *const u8,
+	events_to_sync_size: usize,
+	events_proofs_to_sync: *const u8,
+	events_proofs_to_sync_size: usize,
+	parentchain_id: *const u8,
+	parentchain_id_size: u32,
+	immediate_import: c_int,
+) -> sgx_status_t {
+	if let Err(e) = sync_parentchain_internal(
+		blocks_to_sync,
+		blocks_to_sync_size,
+		events_to_sync,
+		events_to_sync_size,
+		events_proofs_to_sync,
+		events_proofs_to_sync_size,
+		parentchain_id,
+		parentchain_id_size,
+		immediate_import == 1,
+	) {
+		error!("Error synching parentchain: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[allow(clippy::too_many_arguments)]
+unsafe fn sync_parentchain_internal(
+	blocks_to_sync: *const u8,
+	blocks_to_sync_size: usize,
+	events_to_sync: *const u8,
+	events_to_sync_size: usize,
+	events_proofs_to_sync: *const u8,
+	events_proofs_to_sync_size: usize,
+	parentchain_id: *const u8,
+	parentchain_id_size: u32,
+	immediate_import: bool,
+) -> Result<()> {
+	let blocks_to_sync = Vec::<SignedBlock>::decode_raw(blocks_to_sync, blocks_to_sync_size)?;
+	let events_to_sync = Vec::<Vec<u8>>::decode_raw(events_to_sync, events_to_sync_size)?;
+	let events_proofs_to_sync =
+		Vec::<StorageProof>::decode_raw(events_proofs_to_sync, events_proofs_to_sync_size)?;
+	let parentchain_id = ParentchainId::decode_raw(parentchain_id, parentchain_id_size as usize)?;
+
+	if !events_proofs_to_sync.is_empty() {
+		let blocks_to_sync_merkle_roots: Vec<sp_core::H256> =
+			blocks_to_sync.iter().map(|block| block.block.header.state_root).collect();
+		// fixme: vulnerability! https://github.com/integritee-network/worker/issues/1518
+		// until fixed properly, we deactivate the panic upon error altogether in the scope of #1547
+		if let Err(e) = validate_events(&events_proofs_to_sync, &blocks_to_sync_merkle_roots) {
+			warn!("ignoring event validation error {:?}", e);
+			//	return e.into()
+		}
+	}
+	dispatch_parentchain_blocks_for_import(
+		blocks_to_sync,
+		events_to_sync,
+		&parentchain_id,
+		immediate_import,
+	)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
+	until: *const u32,
+) -> sgx_status_t {
+	let va = match get_validator_accessor_from_integritee_solo_or_parachain() {
+		Ok(r) => r,
+		Err(e) => {
+			error!("Can't get validator accessor: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let _ = va.execute_mut_on_validator(|v| v.set_ignore_validation_until(*until));
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+/// Dispatch the parentchain blocks for import.
+/// Depending on the worker mode, a different dispatcher is used:
+///
+/// * An immediate dispatcher will immediately import any parentchain blocks and execute
+///   the corresponding extrinsics (offchain-worker executor).
+/// * The sidechain uses a triggered dispatcher, where the import of a parentchain block is
+///   synchronized and triggered by the sidechain block production cycle.
+///
+fn dispatch_parentchain_blocks_for_import(
+	blocks_to_sync: Vec<SignedBlock>,
+	events_to_sync: Vec<Vec<u8>>,
+	id: &ParentchainId,
+	immediate_import: bool,
+) -> Result<()> {
+	trace!(
+		"[{:?}] Dispatching Import of {} blocks and {} events",
+		id,
+		blocks_to_sync.len(),
+		events_to_sync.len()
+	);
+	match id {
+		ParentchainId::Litentry => {
+			if let Ok(handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else if let Ok(handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else {
+				return Err(Error::NoLitentryParentchainAssigned)
+			};
+		},
+		ParentchainId::TargetA => {
+			if let Ok(handler) = GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else if let Ok(handler) = GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else {
+				return Err(Error::NoTargetAParentchainAssigned)
+			};
+		},
+		ParentchainId::TargetB => {
+			if let Ok(handler) = GLOBAL_TARGET_B_SOLOCHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else if let Ok(handler) = GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT.get() {
+				handler.import_dispatcher.dispatch_import(
+					blocks_to_sync,
+					events_to_sync,
+					immediate_import,
+				)?;
+			} else {
+				return Err(Error::NoTargetBParentchainAssigned)
+			};
+		},
+	}
+
+	Ok(())
+}
+
+/// Validates the events coming from the parentchain
+fn validate_events(
+	events_proofs: &Vec<StorageProof>,
+	blocks_merkle_roots: &Vec<sp_core::H256>,
+) -> Result<()> {
+	debug!(
+		"Validating events, events_proofs_length: {:?}, blocks_merkle_roots_lengths: {:?}",
+		events_proofs.len(),
+		blocks_merkle_roots.len()
+	);
+
+	if events_proofs.len() != blocks_merkle_roots.len() {
+		return Err(Error::ParentChainSync)
+	}
+
+	let events_key = itp_storage::storage_value_key("System", "Events");
+
+	let validated_events: Result<Vec<Vec<u8>>> = events_proofs
+		.iter()
+		.zip(blocks_merkle_roots.iter())
+		.map(|(proof, root)| {
+			StorageProofChecker::<BlakeTwo256>::check_proof(
+				*root,
+				events_key.as_slice(),
+				proof.clone(),
+			)
+			.ok()
+			.flatten()
+			.ok_or_else(|| Error::ParentChainValidation(itp_storage::Error::WrongValue))
+		})
+		.collect();
+
+	let _ = validated_events?;
+
+	Ok(())
 }
 
 // This is required, because `ring` / `ring-xous` would not compile without it non-release (debug) mode.

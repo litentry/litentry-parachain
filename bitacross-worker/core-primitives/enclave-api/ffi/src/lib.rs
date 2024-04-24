@@ -84,6 +84,20 @@ extern "C" {
 		creation_size: u32,
 	) -> sgx_status_t;
 
+	pub fn sync_parentchain(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		blocks: *const u8,
+		blocks_size: usize,
+		events: *const u8,
+		events_size: usize,
+		events_proofs: *const u8,
+		events_proofs_size: usize,
+		parentchain_id: *const u8,
+		parentchain_id_size: u32,
+		immediate_import: c_int,
+	) -> sgx_status_t;
+
 	pub fn set_nonce(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -246,6 +260,12 @@ extern "C" {
 		old_shard: *const u8,
 		new_shard: *const u8,
 		shard_size: u32,
+	) -> sgx_status_t;
+
+	pub fn ignore_parentchain_block_import_validation_until(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		until: *const u32,
 	) -> sgx_status_t;
 
 	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
