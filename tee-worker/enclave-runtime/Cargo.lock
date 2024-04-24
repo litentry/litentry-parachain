@@ -3145,9 +3145,11 @@ dependencies = [
  "itp-sgx-io",
  "lazy_static",
  "lc-dynamic-assertion",
+ "log",
  "parity-scale-codec",
  "serde_json 1.0.107",
  "sgx_tstd",
+ "thiserror",
 ]
 
 [[package]]

@@ -20,7 +20,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{AssertionId, SmartContractByteCode};
+use crate::{
+	sealing::io::{seal_state, unseal_state},
+	AssertionId, SmartContractByteCode,
+};
 use codec::{Decode, Encode};
 use lc_dynamic_assertion::AssertionLogicRepository;
 use std::{
@@ -36,6 +39,8 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
+pub type AssertionsMap = HashMap<AssertionId, (SmartContractByteCode, Vec<String>)>;
+
 // Assertion repository backed by sealed file. Contains only latest state from parachain storage.
 #[allow(clippy::type_complexity)]
 pub struct EvmAssertionRepository {
@@ -46,7 +51,7 @@ pub struct EvmAssertionRepository {
 impl EvmAssertionRepository {
 	pub fn new(path: &str) -> Result<Self, String> {
 		let mut state = HashMap::new();
-		let unsealed = io::unseal(path);
+		let unsealed = unseal_state(path);
 
 		if !unsealed.is_empty() {
 			let decoded: Vec<(AssertionId, (SmartContractByteCode, Vec<String>))> =
@@ -90,32 +95,7 @@ impl AssertionLogicRepository for EvmAssertionRepository {
 			.map(|(key, val)| (*key, val.clone()))
 			.collect();
 		let encoded = to_encode.encode();
-		io::seal(&self.path, encoded);
+		seal_state(&self.path, encoded);
 		Ok(())
-	}
-}
-
-#[cfg(feature = "std")]
-pub mod io {
-	use std::{vec, vec::Vec};
-
-	pub fn seal(_path: &str, _state: Vec<u8>) {}
-
-	pub fn unseal(_path: &str) -> Vec<u8> {
-		vec![]
-	}
-}
-
-#[cfg(feature = "sgx")]
-pub mod io {
-	use itp_sgx_io::{seal as io_seal, unseal as io_unseal};
-	use std::{vec, vec::Vec};
-
-	pub fn seal(path: &str, state: Vec<u8>) {
-		io_seal(&state, path).unwrap()
-	}
-
-	pub fn unseal(path: &str) -> Vec<u8> {
-		io_unseal(path).unwrap()
 	}
 }

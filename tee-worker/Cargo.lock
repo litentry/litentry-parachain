@@ -4619,9 +4619,12 @@ dependencies = [
  "lazy_static",
  "lc-dynamic-assertion",
  "litentry-primitives",
+ "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
  "sgx_tstd",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
 ]
 
 [[package]]

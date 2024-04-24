@@ -58,6 +58,10 @@ use std::{
 
 mod precompiles;
 pub mod repository;
+pub mod sealing;
+
+// feature guard ?
+pub mod mock;
 
 pub use itp_settings::files::ASSERTIONS_FILE;
 

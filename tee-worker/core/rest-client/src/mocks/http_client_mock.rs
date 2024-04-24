@@ -94,10 +94,10 @@ impl SendHttpRequest for HttpClientMock {
 
 	fn send_request_raw(
 		&self,
-		url: Url,
-		method: Method,
-		maybe_body: Option<String>,
-		headers: Vec<(String, String)>,
+		_url: Url,
+		_method: Method,
+		_maybe_body: Option<String>,
+		_headers: Vec<(String, String)>,
 	) -> Result<(Response, EncodedBody), Error> {
 		todo!()
 	}
