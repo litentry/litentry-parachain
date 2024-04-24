@@ -228,73 +228,73 @@ describe('Test Twitter Identity (direct invocation)', function () {
         assert.lengthOf(idGraphHashResults, 1);
     });
 
-    // step('check users sidechain storage after linking (alice)', async function () {
-    //     const idGraphGetter = await createSignedTrustedGetterIdGraph(
-    //         context.api,
-    //         context.web3Wallets.substrate.Alice,
-    //         aliceSubstrateIdentity
-    //     );
-    //     const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-    //     const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-    //
-    //     for (const { identity } of aliceLinkIdentityRequestParams) {
-    //         const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-    //         console.debug(`checking identity: ${identityDump}`);
-    //         const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-    //         assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-    //         const [, idGraphNodeContext] = idGraphNode!;
-    //
-    //         const web3networks = idGraphNode![1].web3networks.toHuman();
-    //         assert.deepEqual(web3networks, []);
-    //
-    //         assert.equal(
-    //             idGraphNodeContext.status.toString(),
-    //             'Active',
-    //             `status should be active for identity: ${identityDump}`
-    //         );
-    //         console.debug('active ✅');
-    //     }
-    //
-    //     await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
-    // });
-    //
-    // step('check users sidechain storage after linking (bob)', async function () {
-    //     const idGraphGetter = await createSignedTrustedGetterIdGraph(
-    //         context.api,
-    //         context.web3Wallets.substrate.Bob,
-    //         bobSubstrateIdentity
-    //     );
-    //     const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-    //     const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-    //
-    //     for (const { identity } of bobLinkIdentityRequestParams) {
-    //         const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-    //         console.debug(`checking identity: ${identityDump}`);
-    //         const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-    //         assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-    //         const [, idGraphNodeContext] = idGraphNode!;
-    //
-    //         const web3networks = idGraphNode![1].web3networks.toHuman();
-    //         assert.deepEqual(web3networks, []);
-    //
-    //         assert.equal(
-    //             idGraphNodeContext.status.toString(),
-    //             'Active',
-    //             `status should be active for identity: ${identityDump}`
-    //         );
-    //         console.debug('active ✅');
-    //     }
-    //
-    //     await assertIdGraphHash(context, teeShieldingKey, bobSubstrateIdentity, idGraph);
-    // });
-    //
-    // step('check sidechain nonce', async function () {
-    //     await sleep(20);
-    //
-    //     const aliceNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
-    //     assert.equal(aliceNonce.toNumber(), aliceCurrentNonce);
-    //
-    //     const bobNonce = await getSidechainNonce(context, bobSubstrateIdentity);
-    //     assert.equal(bobNonce.toNumber(), bobCurrentNonce);
-    // });
+    step('check users sidechain storage after linking (alice)', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            context.web3Wallets.substrate.Alice,
+            aliceSubstrateIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        for (const { identity } of aliceLinkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
+
+            const web3networks = idGraphNode![1].web3networks.toHuman();
+            assert.deepEqual(web3networks, []);
+
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Active',
+                `status should be active for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
+        }
+
+        await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
+    });
+
+    step('check users sidechain storage after linking (bob)', async function () {
+        const idGraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            context.web3Wallets.substrate.Bob,
+            bobSubstrateIdentity
+        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        for (const { identity } of bobLinkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
+
+            const web3networks = idGraphNode![1].web3networks.toHuman();
+            assert.deepEqual(web3networks, []);
+
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Active',
+                `status should be active for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
+        }
+
+        await assertIdGraphHash(context, teeShieldingKey, bobSubstrateIdentity, idGraph);
+    });
+
+    step('check sidechain nonce', async function () {
+        await sleep(20);
+
+        const aliceNonce = await getSidechainNonce(context, aliceSubstrateIdentity);
+        assert.equal(aliceNonce.toNumber(), aliceCurrentNonce);
+
+        const bobNonce = await getSidechainNonce(context, bobSubstrateIdentity);
+        assert.equal(bobNonce.toNumber(), bobCurrentNonce);
+    });
 });
