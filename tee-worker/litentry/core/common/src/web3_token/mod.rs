@@ -20,6 +20,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use std::{vec, vec::Vec};
+
 use litentry_primitives::Web3TokenType;
 
 use crate::Web3Network;
@@ -55,6 +57,7 @@ impl TokenName for Web3TokenType {
 			Self::Trx => "TRX",
 			Self::Nfp => "NFP",
 			Self::Sol => "SOL",
+			Self::Mcrt => "MCRT",
 		}
 	}
 }
@@ -146,6 +149,12 @@ impl TokenAddress for Web3TokenType {
 			(Self::Sol, Web3Network::Bsc) => Some("0x570a5d26f7765ecb712c0924e4de545b89fd43df"),
 			(Self::Sol, Web3Network::Ethereum) =>
 				Some("0x5288738df1aeb0894713de903e1d0c001eeb7644"),
+			// Mcrt
+			(Self::Mcrt, Web3Network::Bsc) => Some("0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f"),
+			(Self::Mcrt, Web3Network::Ethereum) =>
+				Some("0xde16ce60804a881e9f8c4ebb3824646edecd478d"),
+			(Self::Mcrt, Web3Network::Solana) =>
+				Some("FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"),
 			_ => None,
 		}
 	}
@@ -199,9 +208,13 @@ impl TokenDecimals for Web3TokenType {
 			// Sol
 			(Self::Sol, Web3Network::Bsc) | (Self::Sol, Web3Network::Ethereum) => 18,
 			// Ton
-			(Self::Ton, Web3Network::Bsc) | (Self::Ton, Web3Network::Ethereum) => 9,
+			(Self::Ton, Web3Network::Bsc) | (Self::Ton, Web3Network::Ethereum) |
+			// Mcrt
+			(Self::Mcrt, Web3Network::Bsc) | (Self::Mcrt, Web3Network::Ethereum) => 9,
 			// Wbtc
-			(Self::Wbtc, Web3Network::Bsc) | (Self::Wbtc, Web3Network::Ethereum) => 8,
+			(Self::Wbtc, Web3Network::Bsc) | (Self::Wbtc, Web3Network::Ethereum) |
+			// Mcrt
+			(Self::Mcrt, Web3Network::Solana) => 8,
 			// Usdc
 			(Self::Usdc, Web3Network::Ethereum) |
 			// Usdt
@@ -214,5 +227,18 @@ impl TokenDecimals for Web3TokenType {
 		};
 
 		10_u64.pow(decimals)
+	}
+}
+
+pub trait TokenHoldingAmountRange {
+	fn get_token_holding_amount_range(&self) -> Vec<f64>;
+}
+
+impl TokenHoldingAmountRange for Web3TokenType {
+	fn get_token_holding_amount_range(&self) -> Vec<f64> {
+		match self {
+			Self::Mcrt => vec![0.0, 2000.0, 10000.0, 50000.0, 150000.0, 500000.0],
+			_ => vec![0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0],
+		}
 	}
 }

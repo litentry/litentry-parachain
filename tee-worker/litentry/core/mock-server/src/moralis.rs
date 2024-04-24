@@ -18,7 +18,8 @@
 use std::collections::HashMap;
 
 use lc_data_providers::moralis::{
-	GetNftsByWalletResult, GetSolanaNativeBalanceBalanceByWalletResponse, MoralisPageResponse,
+	GetNftsByWalletResult, GetSolanaNativeBalanceByWalletResponse,
+	GetSolanaTokenBalanceByWalletResponse, MoralisPageResponse,
 };
 
 use warp::{http::Response, Filter};
@@ -59,20 +60,39 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 pub(crate) fn query_solana(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
-		.and(warp::path!("moralis_solana" / "account" / "mainnet" / String / "balance"))
-		.map(move |address| {
-			if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
-				let body = GetSolanaNativeBalanceBalanceByWalletResponse {
-					lamports: "5903457912".into(),
-					solana: "5.903457912".into(),
-				};
-				Response::builder().body(serde_json::to_string(&body).unwrap())
-			} else {
-				let body = GetSolanaNativeBalanceBalanceByWalletResponse {
-					lamports: "0".into(),
-					solana: "0".into(),
-				};
-				Response::builder().body(serde_json::to_string(&body).unwrap())
-			}
+		.and(warp::path!("moralis_solana" / "account" / "mainnet" / String / String))
+		.map(move |address: String, api: String| match api.as_str() {
+			"balance" =>
+				if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
+					let body = GetSolanaNativeBalanceByWalletResponse {
+						lamports: "5903457912".into(),
+						solana: "5.903457912".into(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				} else {
+					let body = GetSolanaNativeBalanceByWalletResponse {
+						lamports: "0".into(),
+						solana: "0".into(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+			"tokens" =>
+				if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
+					let body = vec![
+						GetSolanaTokenBalanceByWalletResponse {
+							mint: "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq".into(),
+							amount: "405219.979008".into(),
+						},
+						GetSolanaTokenBalanceByWalletResponse {
+							mint: "BNrgKeLwMUwWQYovZpANYQNCC7Aw8FgvFL3GQut1gL6B".into(),
+							amount: "31".into(),
+						},
+					];
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				} else {
+					let body: Vec<GetSolanaTokenBalanceByWalletResponse> = vec![];
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+			_ => Response::builder().status(404).body(String::from("Error query")),
 		})
 }
