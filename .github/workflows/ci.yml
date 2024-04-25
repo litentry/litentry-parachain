@@ -715,14 +715,14 @@ jobs:
       matrix:
         include:
           # Litentry
-          # - test_name: lit-di-substrate-identity-test
-          # - test_name: lit-di-evm-identity-test
-          # - test_name: lit-di-bitcoin-identity-test
-          # - test_name: lit-di-solana-identity-test
-          # - test_name: lit-di-vc-test
-          # - test_name: lit-dr-vc-test
-          # - test_name: lit-parentchain-nonce
-          # - test_name: lit-test-failed-parentchain-extrinsic
+          - test_name: lit-di-substrate-identity-test
+          - test_name: lit-di-evm-identity-test
+          - test_name: lit-di-bitcoin-identity-test
+          - test_name: lit-di-solana-identity-test
+          - test_name: lit-di-vc-test
+          - test_name: lit-dr-vc-test
+          - test_name: lit-parentchain-nonce
+          - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
     steps:
       - uses: actions/checkout@v4
@@ -800,15 +800,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - test_name: di-vc-0
-          - test_name: di-vc-1
-          - test_name: di-vc-2
-          - test_name: di-vc-3
-          - test_name: di-vc-4
-          - test_name: di-vc-5
-          - test_name: di-vc-6
-          - test_name: di-vc-7
-          - test_name: di-vc-8
+          - test_name: lit-di-bitcoin-identity-multiworker-test
+          - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
+          - test_name: lit-di-substrate-identity-multiworker-test
+          - test_name: lit-di-vc-multiworker-test
+          - test_name: lit-dr-vc-multiworker-test
+          - test_name: lit-resume-worker
+          - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
 
@@ -845,29 +844,29 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration multi worker test ${{ matrix.test_name }}
-        # if: needs.set-condition.outputs.run_tee_test == 'true'
-        timeout-minutes: 20
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        timeout-minutes: 40
         run: |
           cd tee-worker/docker
-          docker compose -f multiworker-docker-compose.yml -f lit-di-vc-multiworker-test.yml up --no-build --exit-code-from lit-di-vc-multiworker-test lit-di-vc-multiworker-test
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop integration multi worker docker containers
-        # if: needs.set-condition.outputs.run_tee_test == 'true'
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
-          docker compose -f multiworker-docker-compose.yml -f lit-di-vc-multiworker-test.yml stop
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails
         continue-on-error: true
         uses: jwalton/gh-docker-logs@v2
-        if: always()
+        if: failure()
         with:
           tail: all
           dest: docker-logs
 
       - name: Upload docker logs if test fails
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
           path: docker-logs
