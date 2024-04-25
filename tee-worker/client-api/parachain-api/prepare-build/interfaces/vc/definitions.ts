@@ -183,6 +183,7 @@ export default {
                 "Trx",
                 "Nfp",
                 "Sol",
+                "Mcrt",
             ],
         },
         // PlatformUserType
