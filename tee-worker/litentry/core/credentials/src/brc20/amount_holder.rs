@@ -158,7 +158,7 @@ fn update_assertion(token: &BRC20Token, balance: f64, credential: &mut Credentia
 			assertion = assertion.add_item(min_item);
 			assertion = assertion.add_item(max_item);
 
-			credential.credential_subject.values.push(index != 0);
+			credential.credential_subject.values.push(index != 0 || balance > 0_f64);
 		},
 		None => {
 			let min_item = AssertionLogic::new_item(
