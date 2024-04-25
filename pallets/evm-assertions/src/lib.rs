@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 use frame_system::ensure_signed;
 pub use pallet::*;
 use sp_std::vec::Vec;
@@ -55,14 +61,13 @@ pub mod pallet {
 	/// Map for storing assertion smart contract bytecode alongside with additional secrets
 	/// Secrets are encrypted with worker's shielding key
 	#[pallet::storage]
-	#[pallet::getter(fn reward_pools)]
+	#[pallet::getter(fn assertions)]
 	pub type Assertions<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssertionId, Assertion, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// AddressMapping added
 		AssertionCreated { id: T::AssertionId, byte_code: Vec<u8>, secrets: Vec<Vec<u8>> },
 	}
 
