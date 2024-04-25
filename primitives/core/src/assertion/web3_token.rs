@@ -72,6 +72,8 @@ pub enum Web3TokenType {
 	Sol,
 	#[codec(index = 24)]
 	Mcrt,
+	#[codec(index = 25)]
+	Btc,
 }
 
 impl Web3TokenType {
@@ -88,6 +90,13 @@ impl Web3TokenType {
 			Self::Nfp => vec![Web3Network::Bsc],
 			Self::Sol | Self::Mcrt =>
 				vec![Web3Network::Bsc, Web3Network::Ethereum, Web3Network::Solana],
+			Self::Btc => vec![
+				Web3Network::BitcoinP2tr,
+				Web3Network::BitcoinP2pkh,
+				Web3Network::BitcoinP2sh,
+				Web3Network::BitcoinP2wpkh,
+				Web3Network::BitcoinP2wsh,
+			],
 			_ => vec![Web3Network::Ethereum],
 		}
 	}
