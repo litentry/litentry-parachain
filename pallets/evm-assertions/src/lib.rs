@@ -79,7 +79,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((1 * T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
 		pub fn create_assertion(
 			origin: OriginFor<T>,
 			id: T::AssertionId,
