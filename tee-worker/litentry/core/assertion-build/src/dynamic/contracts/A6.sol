@@ -34,7 +34,7 @@ contract A6 is DynamicAssertion {
         string
         memory description = "The range of the user's Twitter follower count";
         string memory assertion_type = "Twitter Follower Amount";
-        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/1-basic-identity-verification/1-0-0.json";
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/6-twitter-follower-amount/1-0-0.json";
 
         bool result;
 
