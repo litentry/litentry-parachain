@@ -179,7 +179,7 @@ where
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&mut self, old_hash: TxHash, new_hash: TxHash) {
-		debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
+		info!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
 		// It's possible that the old top (hash) is already removed from the pool when we
 		// request to swap hashes, in this case we just create one to facilitate the swap
 		if let Some(w) = self.watchers.get(&old_hash) {
