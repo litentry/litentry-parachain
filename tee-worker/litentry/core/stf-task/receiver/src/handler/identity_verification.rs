@@ -26,9 +26,11 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
 use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::SmartContractByteCode;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
+use sp_core::H160;
 use std::sync::{mpsc::Sender, Arc};
 
 pub(crate) struct IdentityVerificationHandler<
@@ -37,7 +39,7 @@ pub(crate) struct IdentityVerificationHandler<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -56,7 +58,7 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 {
 	type Error = IMPError;
 	type Result = ();

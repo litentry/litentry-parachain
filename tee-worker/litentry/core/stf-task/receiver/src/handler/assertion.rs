@@ -25,16 +25,17 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
-use lc_assertion_build::dynamic::repository::InMemorySmartContractRepo;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::SmartContractByteCode;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
 };
 use log::*;
+use sp_core::H160;
 use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
@@ -43,7 +44,7 @@ pub(crate) struct AssertionHandler<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -62,7 +63,7 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 {
 	type Error = VCMPError;
 	type Result = Vec<u8>; // vc_byte_array
@@ -137,7 +138,7 @@ pub fn create_credential_str<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 >(
 	req: &AssertionBuildRequest,
 	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
@@ -275,10 +276,11 @@ where
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 
-		Assertion::Dynamic(smart_contract_id) => {
-			let repository = InMemorySmartContractRepo::new();
-			lc_assertion_build::dynamic::build(req, smart_contract_id, repository.into())
-		},
+		Assertion::Dynamic(smart_contract_id) => lc_assertion_build::dynamic::build(
+			req,
+			smart_contract_id,
+			context.assertion_repository.clone(),
+		),
 	}?;
 
 	// post-process the credential

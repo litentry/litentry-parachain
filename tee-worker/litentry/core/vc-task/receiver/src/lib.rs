@@ -50,6 +50,7 @@ use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall,
 	ShardIdentifier, H256,
 };
+use lc_assertion_build::dynamic::repository::SmartContractByteCode;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -58,7 +59,7 @@ use litentry_macros::if_development_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
-use sp_core::blake2_256;
+use sp_core::{blake2_256, H160};
 use std::{
 	boxed::Box,
 	collections::{HashMap, HashSet},
@@ -89,7 +90,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
-	AR: AssertionLogicRepository + Send + Sync + 'static,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode> + Send + Sync + 'static,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
 	let n_workers = 960;
@@ -388,7 +389,7 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 {
 	let vc_res: RequestVcResultOrError = match response.clone() {
 		Ok(payload) => RequestVcResultOrError { payload, is_error: false, idx, len },
@@ -427,7 +428,7 @@ where
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
-	AR: AssertionLogicRepository,
+	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
 {
 	let start_time = Instant::now();
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.

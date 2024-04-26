@@ -260,9 +260,7 @@ impl<
 mod test {
 	use super::*;
 	use crate::mock::*;
-	use codec::{Decode, Encode};
-	use ita_parentchain_interface::integritee::ParentchainEventHandler;
-	use itc_parentchain_test::ParentchainBlockBuilder;
+	use codec::Encode;
 	use itp_node_api::{
 		api_client::{
 			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
@@ -272,20 +270,14 @@ mod test {
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
-	use itp_stf_primitives::{
-		traits::TrustedCallVerification,
-		types::{AccountId, TrustedOperation},
-	};
 	use itp_test::mock::{
 		shielding_crypto_mock::ShieldingCryptoMock,
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
-	use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
-	use std::assert_matches::assert_matches;
+	use sp_runtime::{MultiAddress, MultiSignature};
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;

@@ -75,7 +75,7 @@ pub mod tests {
 	use itp_types::Assertion;
 	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
-	use litentry_primitives::{Address32, Identity, IdentityString, Web3Network};
+	use litentry_primitives::{Identity, IdentityString};
 	use sp_core::{crypto::AccountId32, H160};
 
 	#[test]
