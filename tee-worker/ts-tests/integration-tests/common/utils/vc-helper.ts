@@ -210,5 +210,5 @@ export const mockAssertions = [
         assertion: {
             PlatformUser: 'KaratDaoUser',
         },
-    }
+    },
 ];
