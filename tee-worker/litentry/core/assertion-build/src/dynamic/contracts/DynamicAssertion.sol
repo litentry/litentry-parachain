@@ -74,8 +74,6 @@ abstract contract DynamicAssertion {
             ) {
                 revert(0, 0)
             }
-        // advance free memory pointer
-            mstore(0x40, add(memPtr, 0x20))
             value := mload(memPtr)
         }
 
@@ -107,8 +105,6 @@ abstract contract DynamicAssertion {
             ) {
                 revert(0, 0)
             }
-        // advance free memory pointer
-            mstore(0x40, add(memPtr, 0x20))
             value := mload(memPtr)
         }
 
@@ -141,7 +137,6 @@ abstract contract DynamicAssertion {
                     add(encoded, 0x20),
                     encoded_len,
                     returnVal,
-                //130 bytes
                     0x82
                 )
             ) {
