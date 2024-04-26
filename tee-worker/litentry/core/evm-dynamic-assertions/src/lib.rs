@@ -99,11 +99,11 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 		let precompiles = Precompiles {};
 		let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
-		// caller
-		let caller = hash(5); //0x04
+		// caller, just an unused account
+		let caller = hash(5); //0x05
 
-		// deploy smart contract
-		let address = executor.create_address(evm::CreateScheme::Legacy { caller: hash(5) });
+		// deploy assertion smart contract
+		let address = executor.create_address(evm::CreateScheme::Legacy { caller });
 		let _create_result = executor.transact_create(
 			caller,
 			U256::zero(),
@@ -112,12 +112,13 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 			Vec::new(),
 		);
 
-		// call function
-		let call_reason =
+		// call assertion smart contract
+		let call_result =
 			executor.transact_call(caller, address, U256::zero(), input, u64::MAX, Vec::new());
 
 		let (description, assertion_type, assertions, schema_url, meet) =
-			decode_result(&call_reason.1).map_err(|_| "Could not decode evm execution result")?;
+			decode_result(&call_result.1)
+				.map_err(|_| "Could not decode evm assertion execution result")?;
 
 		Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
 	}
@@ -153,6 +154,8 @@ fn prepare_execute_call_input(
 	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
 	let input = encode(&[Token::Array(identities), Token::Array(secrets)]);
+	// hash of function to be called, all assertions contracts must have a function with this hash, signature:
+	// function execute(Identity[] memory identities, string[] memory secrets)
 	let function_hash = "e2561846";
 	prepare_function_call_input(function_hash, input)
 }
