@@ -41,7 +41,7 @@ pub fn get_balance(
 	loop_with_abort_strategy(
 		addresses,
 		|(network, address)| {
-			let decimals = Web3TokenType::Btc.get_decimals(network.clone());
+			let decimals = Web3TokenType::Btc.get_decimals(*network);
 			let mut client = BlockChainInfoClient::new(data_provider_config);
 
 			match client.get_single_address(address.clone(), false) {
