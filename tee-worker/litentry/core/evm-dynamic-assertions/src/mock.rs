@@ -16,12 +16,10 @@ impl SealedIO for AssertionsSealMock {
 	type Unsealed = UnsealedAssertions;
 
 	fn unseal(&self) -> Result<Self::Unsealed, Self::Error> {
-		std::println!("Unsealing mock called");
 		Ok(UnsealedAssertions::default())
 	}
 
 	fn seal(&self, _unsealed: &Self::Unsealed) -> Result<(), Self::Error> {
-		std::println!("Sealing mock called");
 		Ok(())
 	}
 }
