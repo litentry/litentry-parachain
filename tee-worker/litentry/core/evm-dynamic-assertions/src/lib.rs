@@ -67,12 +67,13 @@ pub use itp_settings::files::ASSERTIONS_FILE;
 
 pub type AssertionId = H160;
 pub type SmartContractByteCode = Vec<u8>;
+pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
 pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
 }
 
-impl<A: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>>
+impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 	AssertionExecutor<AssertionId> for EvmAssertionExecutor<A>
 {
 	fn execute(

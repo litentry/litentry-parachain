@@ -226,7 +226,7 @@ impl ParentchainEventHandler {
 			decrypted_secrets.push(secret);
 		}
 		self.assertion_repository
-			.save(id, byte_code, decrypted_secrets)
+			.save(id, (byte_code, decrypted_secrets))
 			.map_err(Error::AssertionCreatedHandling)?;
 		Ok(())
 	}

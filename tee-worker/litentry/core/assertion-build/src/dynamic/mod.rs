@@ -25,7 +25,9 @@ use primitive_types::H160;
 
 pub mod repository;
 
-pub fn build<SC: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>>(
+pub fn build<
+	SC: AssertionLogicRepository<Id = H160, Item = (SmartContractByteCode, Vec<String>)>,
+>(
 	req: &AssertionBuildRequest,
 	smart_contract_id: SC::Id,
 	repository: Arc<SC>,

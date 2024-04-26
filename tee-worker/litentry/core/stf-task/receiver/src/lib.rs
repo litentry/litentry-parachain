@@ -54,7 +54,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
-use lc_evm_dynamic_assertions::SmartContractByteCode;
+use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
 use sp_core::H160;
@@ -92,7 +92,7 @@ pub struct StfTaskContext<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -112,7 +112,7 @@ impl<
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-		AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode>,
+		AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 	> StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
@@ -219,7 +219,7 @@ where
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
-	AR: AssertionLogicRepository<Id = H160, Value = SmartContractByteCode> + Send + Sync + 'static,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem> + Send + Sync + 'static,
 {
 	let stf_task_receiver = init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;

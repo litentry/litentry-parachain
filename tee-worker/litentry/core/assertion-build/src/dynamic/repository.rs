@@ -84,14 +84,14 @@ impl Default for InMemorySmartContractRepo {
 
 impl AssertionLogicRepository for InMemorySmartContractRepo {
 	type Id = H160;
-	type Value = Vec<u8>;
+	type Item = (Vec<u8>, Vec<String>);
 
-	fn get(&self, id: &H160) -> Result<Option<(Vec<u8>, Vec<String>)>, String> {
+	fn get(&self, id: &H160) -> Result<Option<Self::Item>, String> {
 		Ok(self.map.lock().unwrap().get(id).cloned())
 	}
 
-	fn save(&self, id: Self::Id, value: Self::Value, secrets: Vec<String>) -> Result<(), String> {
-		self.map.lock().unwrap().insert(id, (value, secrets));
+	fn save(&self, id: Self::Id, item: Self::Item) -> Result<(), String> {
+		self.map.lock().unwrap().insert(id, item);
 		Ok(())
 	}
 }

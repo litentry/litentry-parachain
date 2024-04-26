@@ -28,11 +28,11 @@ use std::{string::String, vec::Vec};
 // Used to retrieve assertion logic and secrets
 pub trait AssertionLogicRepository {
 	type Id;
-	type Value;
+	type Item;
 
 	#[allow(clippy::type_complexity)]
-	fn get(&self, id: &Self::Id) -> Result<Option<(Self::Value, Vec<String>)>, String>;
-	fn save(&self, id: Self::Id, value: Self::Value, secrets: Vec<String>) -> Result<(), String>;
+	fn get(&self, id: &Self::Id) -> Result<Option<Self::Item>, String>;
+	fn save(&self, id: Self::Id, item: Self::Item) -> Result<(), String>;
 }
 
 pub struct AssertionResult {

@@ -3290,6 +3290,7 @@ dependencies = [
  "lc-credentials",
  "lc-data-providers",
  "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",

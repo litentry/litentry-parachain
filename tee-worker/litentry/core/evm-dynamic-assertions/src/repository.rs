@@ -41,10 +41,9 @@ use std::sync::Mutex;
 pub type AssertionsMap = HashMap<AssertionId, (SmartContractByteCode, Vec<String>)>;
 
 // Assertion repository backed by sealed file. Contains only latest state from parachain storage.
-#[allow(clippy::type_complexity)]
 pub struct EvmAssertionRepository {
 	path: String,
-	state: Mutex<HashMap<AssertionId, (SmartContractByteCode, Vec<String>)>>,
+	state: Mutex<AssertionsMap>,
 }
 
 impl EvmAssertionRepository {
@@ -62,9 +61,9 @@ impl EvmAssertionRepository {
 
 impl AssertionLogicRepository for EvmAssertionRepository {
 	type Id = AssertionId;
-	type Value = SmartContractByteCode;
+	type Item = (SmartContractByteCode, Vec<String>);
 
-	fn get(&self, id: &Self::Id) -> Result<Option<(Self::Value, Vec<String>)>, String> {
+	fn get(&self, id: &Self::Id) -> Result<Option<Self::Item>, String> {
 		Ok(self
 			.state
 			.lock()
@@ -73,14 +72,13 @@ impl AssertionLogicRepository for EvmAssertionRepository {
 			.cloned())
 	}
 
-	fn save(&self, id: Self::Id, value: Self::Value, secrets: Vec<String>) -> Result<(), String> {
-		std::println!("Saving assertion id: {:?} with code: {:?}", id, value);
+	fn save(&self, id: Self::Id, item: Self::Item) -> Result<(), String> {
 		self.state
 			.lock()
 			.map_err(|e| format!("Could not acquire lock on inner state: {:?}", e))?
-			.insert(id, (value, secrets));
+			.insert(id, item);
 		// prepare data for encoding
-		let unsealed_state: Vec<(AssertionId, (SmartContractByteCode, Vec<String>))> = self
+		let unsealed_state: Vec<(AssertionId, Self::Item)> = self
 			.state
 			.lock()
 			.map_err(|e| format!("Could not acquire lock on inner state: {:?}", e))?
