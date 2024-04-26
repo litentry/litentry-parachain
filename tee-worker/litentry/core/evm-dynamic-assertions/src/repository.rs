@@ -97,3 +97,33 @@ impl AssertionLogicRepository for EvmAssertionRepository {
 		Ok(())
 	}
 }
+
+#[cfg(feature = "sgx-test")]
+pub mod sgx_tests {
+	use crate::{repository::EvmAssertionRepository, sealing::io::seal_state};
+	use ethabi::ethereum_types::H160;
+	use itp_sgx_temp_dir::TempDir;
+	use lc_dynamic_assertion::AssertionLogicRepository;
+	use sgx_tstd::{path::Path, string::ToString, vec, vec::Vec};
+
+	pub fn restores_state_from_seal() {
+		let seal_file_name = "test_sealed_assertion.bin";
+		let temp_dir = TempDir::with_prefix("evm_assertion_seal_tests").unwrap();
+		let seal_path = temp_dir.path().join(seal_file_name);
+
+		let assertion_id = H160::default();
+		let byte_code: Vec<u8> = [1; 67].to_vec();
+		let secrets = vec!["secret_1".to_string()];
+
+		seal_state(
+			seal_path.to_str().unwrap(),
+			vec![(assertion_id.clone(), (byte_code.clone(), secrets.clone()))],
+		)
+		.unwrap();
+
+		let repository = EvmAssertionRepository::new(seal_path.to_str().unwrap()).unwrap();
+		let assertion = repository.get(&assertion_id).unwrap().unwrap();
+		assert_eq!(assertion.0, byte_code);
+		assert_eq!(assertion.1, secrets);
+	}
+}

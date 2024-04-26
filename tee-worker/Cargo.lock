@@ -4615,6 +4615,7 @@ dependencies = [
  "itc-rest-client",
  "itp-settings",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "lc-dynamic-assertion",
  "litentry-primitives",
  "log 0.4.20",

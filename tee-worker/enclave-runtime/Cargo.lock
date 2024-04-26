@@ -3136,6 +3136,7 @@ dependencies = [
  "itc-rest-client",
  "itp-settings",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "lc-dynamic-assertion",
  "log",
  "parity-scale-codec",

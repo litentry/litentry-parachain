@@ -52,6 +52,8 @@ test = [
     "itp-top-pool-author/mocks",
     # substrate
     "frame-system",
+    #litentry
+    "lc-evm-dynamic-assertions/sgx-test",
 ]
 dcap = []
 
