@@ -433,7 +433,7 @@ pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttes
 
 /// evm assertions repository
 pub static GLOBAL_ASSERTION_REPOSITORY: ComponentContainer<EvmAssertionRepository> =
-	ComponentContainer::new("EVM Asseretion repository");
+	ComponentContainer::new("EVM Assertion repository");
 
 // Parentchain component instances
 //-------------------------------------------------------------------------------------------------

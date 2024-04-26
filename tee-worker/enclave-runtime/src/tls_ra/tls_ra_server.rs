@@ -174,7 +174,7 @@ where
 
 	fn write_assertions_state(&mut self) -> EnclaveResult<()> {
 		let state = self.seal_handler.unseal_assertions_state()?;
-		self.write(Opcode::ScheduledEnclave, &state)?;
+		self.write(Opcode::Assertions, &state)?;
 		Ok(())
 	}
 

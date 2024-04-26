@@ -32,29 +32,32 @@ impl From<codec::Error> for SealingError {
 
 #[cfg(feature = "std")]
 pub mod io {
-	use std::{vec, vec::Vec};
+	use crate::sealing::{SealingError, UnsealedAssertions};
+	use std::vec;
 
-	pub fn seal_state(_path: &str, _state: Vec<u8>) {}
+	pub fn seal_state(_path: &str, _state: UnsealedAssertions) -> Result<(), SealingError> {
+		Ok(())
+	}
 
-	pub fn unseal_state(_path: &str) -> Vec<u8> {
-		vec![]
+	pub fn unseal_state(_path: &str) -> Result<UnsealedAssertions, SealingError> {
+		Ok(vec![])
 	}
 }
 
 #[cfg(feature = "sgx")]
 pub mod io {
-	use crate::{sealing::SealingError, AssertionId, SmartContractByteCode};
+	use crate::sealing::{SealingError, UnsealedAssertions};
 	pub use codec::{Decode, Encode};
-	use itp_sgx_io::{seal as io_seal, seal, unseal as io_unseal, unseal, SealedIO};
-	use log::info;
-	use std::{path::PathBuf, string::String, vec::Vec};
+	use itp_sgx_io::{seal as io_seal, unseal as io_unseal, SealedIO};
+	use log::{debug, info};
+	use std::{path::PathBuf, sgxfs::SgxFile, vec};
 
-	pub fn seal_state(path: &str, state: Vec<u8>) {
-		io_seal(&state, path).unwrap()
+	pub fn seal_state(path: &str, state: UnsealedAssertions) -> Result<(), SealingError> {
+		AssertionsSeal::new(path.into()).seal(&state)
 	}
 
-	pub fn unseal_state(path: &str) -> Vec<u8> {
-		io_unseal(path).unwrap()
+	pub fn unseal_state(path: &str) -> Result<UnsealedAssertions, SealingError> {
+		AssertionsSeal::new(path.into()).unseal()
 	}
 
 	#[derive(Clone, Debug)]
@@ -70,15 +73,20 @@ pub mod io {
 
 	impl SealedIO for AssertionsSeal {
 		type Error = SealingError;
-		type Unsealed = Vec<(AssertionId, (SmartContractByteCode, Vec<String>))>;
+		type Unsealed = UnsealedAssertions;
 
 		fn unseal(&self) -> Result<Self::Unsealed, Self::Error> {
-			Ok(unseal(self.base_path.clone()).map(|b| Decode::decode(&mut b.as_slice()))??)
+			if SgxFile::open(self.base_path.clone()).is_err() {
+				info!("Assertions seal file not found, creating new! {:?}", self.base_path);
+				self.seal(&vec![])?;
+			}
+
+			Ok(io_unseal(self.base_path.clone()).map(|b| Decode::decode(&mut b.as_slice()))??)
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<(), Self::Error> {
-			info!("Seal assertions to file: {:?}", unsealed);
-			Ok(unsealed.using_encoded(|bytes| seal(bytes, self.base_path.clone()))?)
+			debug!("Seal assertions to file: {:?}", unsealed);
+			Ok(unsealed.using_encoded(|bytes| io_seal(bytes, self.base_path.clone()))?)
 		}
 	}
 }

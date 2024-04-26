@@ -67,7 +67,7 @@ use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
-	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
+	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
@@ -225,6 +225,9 @@ pub(crate) fn init_enclave(
 		return Err(Error::Other("data provider initialize error".into()))
 	}
 
+	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
+	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
+
 	Ok(())
 }
 
@@ -381,9 +384,6 @@ pub(crate) fn init_enclave_sidechain_components(
 	} else {
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
-
-	let evm_assertion_repository = EvmAssertionRepository::new("test/path")?;
-	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
 
 	std::thread::spawn(move || {
 		println!("running stf task handler");

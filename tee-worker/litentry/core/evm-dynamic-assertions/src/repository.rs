@@ -24,7 +24,6 @@ use crate::{
 	sealing::io::{seal_state, unseal_state},
 	AssertionId, SmartContractByteCode,
 };
-use codec::{Decode, Encode};
 use lc_dynamic_assertion::AssertionLogicRepository;
 use std::{
 	collections::HashMap,
@@ -51,17 +50,11 @@ pub struct EvmAssertionRepository {
 impl EvmAssertionRepository {
 	pub fn new(path: &str) -> Result<Self, String> {
 		let mut state = HashMap::new();
-		let unsealed = unseal_state(path);
-
-		if !unsealed.is_empty() {
-			let decoded: Vec<(AssertionId, (SmartContractByteCode, Vec<String>))> =
-				Decode::decode(&mut unsealed.as_slice())
-					.map_err(|e| format!("Could not decode assertions state, reason: {:?}", e))?;
-
-			decoded.into_iter().for_each(|(id, byte_code)| {
-				state.insert(id, byte_code);
-			});
-		}
+		let unsealed = unseal_state(path)
+			.map_err(|e| format!("Could not unseal assertions state: {:?}", e))?;
+		unsealed.into_iter().for_each(|(id, byte_code)| {
+			state.insert(id, byte_code);
+		});
 
 		Ok(EvmAssertionRepository { state: state.into(), path: path.to_string() })
 	}
@@ -87,15 +80,22 @@ impl AssertionLogicRepository for EvmAssertionRepository {
 			.map_err(|e| format!("Could not acquire lock on inner state: {:?}", e))?
 			.insert(id, (value, secrets));
 		// prepare data for encoding
-		let to_encode: Vec<(AssertionId, (SmartContractByteCode, Vec<String>))> = self
+		let unsealed_state: Vec<(AssertionId, (SmartContractByteCode, Vec<String>))> = self
 			.state
 			.lock()
 			.map_err(|e| format!("Could not acquire lock on inner state: {:?}", e))?
 			.iter()
 			.map(|(key, val)| (*key, val.clone()))
 			.collect();
-		let encoded = to_encode.encode();
-		seal_state(&self.path, encoded);
+
+		if let Err(e) = seal_state(&self.path, unsealed_state) {
+			//clean up memory state
+			self.state
+				.lock()
+				.map_err(|e| format!("Could not acquire lock on inner state: {:?}", e))?
+				.remove(&id);
+			return Err(format!("Could not seal assertions state: {:?}", e))
+		}
 		Ok(())
 	}
 }
