@@ -450,9 +450,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.79"
+version = "0.1.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507401cad91ec6a857ed5513a2073c82a9b9048762b885bb98655b306964681"
+checksum = "c6fa2087f2753a7da8cc1c0dbfcf89579dd57458e36769de5ac750b4671737ca"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -967,9 +967,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.37"
+version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a0d04d43504c61aa6c7531f1871dd0d418d91130162063b789da00fd7057a5e"
+checksum = "a21f936df1771bf62b77f047b726c4625ff2e8aa607c01ec06e5a05bd8463401"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -5480,6 +5480,8 @@ dependencies = [
  "cumulus-primitives-parachain-inherent",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "fp-rpc",
+ "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -5489,6 +5491,9 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal 0.4.1",
  "log",
+ "moonbeam-evm-tracer",
+ "moonbeam-rpc-primitives-debug",
+ "moonbeam-rpc-primitives-txpool",
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
@@ -5503,6 +5508,8 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-drop3",
+ "pallet-ethereum",
+ "pallet-evm",
  "pallet-extrinsic-filter",
  "pallet-identity",
  "pallet-membership",
@@ -5571,6 +5578,8 @@ dependencies = [
  "cumulus-primitives-parachain-inherent",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "fp-rpc",
+ "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -5580,6 +5589,9 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal 0.4.1",
  "log",
+ "moonbeam-evm-tracer",
+ "moonbeam-rpc-primitives-debug",
+ "moonbeam-rpc-primitives-txpool",
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
@@ -5594,6 +5606,8 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-drop3",
+ "pallet-ethereum",
+ "pallet-evm",
  "pallet-extrinsic-filter",
  "pallet-group",
  "pallet-identity",
@@ -12354,18 +12368,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.197"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fb1c873e1b9b056a4dc4c0c198b24c3ffa059243875552b2bd0933b1aee4ce2"
+checksum = "9846a40c979031340571da2545a4e5b7c4163bdae79b301d5f86d03979451fcc"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.197"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
+checksum = "e88edab869b01783ba905e7d0153f9fc1a6505a96e4ad3018011eedb838566d9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12374,9 +12388,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.115"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12dc5c46daa8e9fdf4f5e71b6cf9a53f2487da0e86e55808e2d35539666497dd"
+checksum = "3e17db7126d17feb94eb3fad46bf1a96b034e8aacbc2e775fe81505f8b0b2813"
 dependencies = [
  "itoa",
  "ryu",

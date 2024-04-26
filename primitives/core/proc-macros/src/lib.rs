@@ -22,7 +22,6 @@ use quote::quote;
 use reuse::handle_reuse;
 use std::fs;
 use syn::{parse_macro_input, Error};
-
 mod reuse;
 
 /**
