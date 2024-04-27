@@ -1,5 +1,6 @@
 [package]
 name = "bc-musig2-ceremony"
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
 
@@ -7,31 +8,30 @@ edition = "2021"
 
 [dependencies]
 # std dependencies
+musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+rand = { version = "0.8.5", optional = true }
 
 # sgx dependencies
+musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
+# no-std dependencies
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr", "alloc"] }
+log = { version = "0.4", default-features = false }
 
+# local
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
 itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
 itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr", "alloc"] }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
-musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
-musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
-
-log = { version = "0.4", default-features = false }
-rand = { version = "0.8.5", optional = true }
-sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 rand = { version = "0.8.5" }
 signature = "2.1.0"
-
 
 [features]
 default = ["std"]

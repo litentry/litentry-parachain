@@ -75,7 +75,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 					debug!("Commands found, appending...");
 					events.push(command);
 				} else {
-					debug!("Events not found, creating...");
+					debug!("Commands not found, creating...");
 					commands.insert(ceremony_id, vec![command]);
 				}
 			}

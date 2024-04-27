@@ -44,7 +44,6 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	ceremony_registry: Arc<Mutex<HashMap<CeremonyId, MuSig2Ceremony<AK>>>>,
 	enclave_registry: Arc<ER>,
 ) -> Result<(), PartialSignatureShareError> {
-	log::info!("Partial signature share call for ceremony {:?}", ceremony_id);
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,

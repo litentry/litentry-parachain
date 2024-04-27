@@ -244,14 +244,14 @@ impl SignerRegistryLookup for SignerRegistry {
 
 	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: &Address32) -> bool {
-		// Using unwrap becaused poisoned locks are unrecoverable errors
+		// Using unwrap because poisoned locks are unrecoverable errors
 		let registry = GLOBAL_SIGNER_REGISTRY.registry.read().unwrap();
 		registry.contains_key(account)
 	}
 
 	#[cfg(feature = "sgx")]
 	fn get_all(&self) -> Vec<(Address32, PubKey)> {
-		// Using unwrap becaused poisoned locks are unrecoverable errors
+		// Using unwrap because poisoned locks are unrecoverable errors
 		let registry = GLOBAL_SIGNER_REGISTRY.registry.read().unwrap();
 		registry.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
 	}

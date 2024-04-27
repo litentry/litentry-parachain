@@ -52,7 +52,6 @@ impl RequestDirectCallSignBitcoinCommand {
 
 		let mut aes_output: AesOutput =
 			send_direct_request_and_watch(cli, trusted_cli, dc, key).unwrap();
-		// let mut aes_output: AesOutput = AesOutput::decode(&mut signature_encrypted.as_slice()).unwrap();
 		let signature = aes_decrypt(&key, &mut aes_output).unwrap();
 		println!("Got signature: {:?}", signature);
 

@@ -44,7 +44,6 @@ use log::{debug, error, info};
 pub use musig2::{PartialSignature, PubNonce};
 use std::collections::HashMap;
 
-//TODO: this should be a hash of message
 pub type CeremonyId = SignBitcoinPayload;
 pub type SignaturePayload = Vec<u8>;
 pub type Signers = Vec<SignerId>;
@@ -100,7 +99,7 @@ pub enum CeremonyCommand {
 	SavePartialSignature(SignerId, PartialSignature),
 }
 
-// commands are created by ceremony and executed by orchestrator
+// commands are created by ceremony and executed by runner
 #[derive(Debug, Eq, PartialEq)]
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
@@ -124,7 +123,7 @@ pub fn generate_aggregated_public_key(mut public_keys: Vec<PublicKey>) -> Public
 
 pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	payload: SignBitcoinPayload,
-	//todo: move to layer above, ceremony should be communication agnostic
+	// P-713: move to layer above, ceremony should be communication agnostic
 	aes_key: RequestAesKey,
 	me: SignerId,
 	signers: SignersWithKeys,

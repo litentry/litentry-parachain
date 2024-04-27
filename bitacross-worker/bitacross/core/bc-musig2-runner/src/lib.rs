@@ -82,11 +82,10 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 	std::thread::spawn(move || {
 		let mut peers_map = HashMap::new();
 
-		//todo: simplify below
 		let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
-		let identity =
-			Identity::Substrate(signing_key_access.retrieve_key().unwrap().public().0.into());
+		let identity = Identity::Substrate(my_identity);
 		loop {
+			//  make sure connections to all peers are established
 			enclave_registry.get_all().iter().for_each(|(identity, address)| {
 				if my_identity != *identity && !peers_map.contains_key(identity.as_ref()) {
 					info!("creating new connection to peer: {:?}", address);
@@ -104,7 +103,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 				let mut ceremonies_to_remove = vec![];
 				ceremony_registry.values_mut().for_each(|v| {
 					let events = v.tick();
-					// should be retrieved once, but cannot be at startup becuase it's not yet initialized so it panics ...
+					// should be retrieved once, but cannot be at startup because it's not yet initialized so it panics ...
 					let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap().m;
 					for event in events {
 						debug!(
@@ -198,7 +197,6 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 							},
 							CeremonyEvent::CeremonyError(error) => {
 								debug!("Ceremony {:?} error {:?}", v.get_id_ref(), error);
-								//todo: stop the ceremony and ping other peers
 								let hash = blake2_256(&v.get_id_ref().encode());
 								let result = SignBitcoinError::CeremonyError;
 								let encrypted_result =
@@ -279,10 +277,12 @@ where
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	SHIELDAK: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 {
+	// this should never panic, if pub key is poisoned the state is corrupted
 	let aes_key_encrypted =
 		shielding_key_access.retrieve_pubkey().unwrap().encrypt(&aes_key).unwrap();
 
 	let shard = ShardIdentifier::from_slice(&mr_enclave);
+	// same as above
 	let dc_signed =
 		direct_call.sign(&signing_key_access.retrieve_key().unwrap().into(), &mr_enclave, &shard);
 	let encrypted_dc = aes_encrypt_default(&aes_key, &dc_signed.encode());

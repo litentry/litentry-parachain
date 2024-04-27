@@ -20,7 +20,7 @@ mod event_handler;
 
 use crate::{
 	decode_and_log_error,
-	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic},
+	extrinsic_parser::{ExtrinsicParser, ParseExtrinsic, SemiOpaqueExtrinsic},
 	indirect_calls::{RemoveScheduledEnclaveArgs, SetScheduledEnclaveArgs},
 };
 use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
@@ -237,37 +237,19 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 			Some(IndirectCall::RemoveRelayer(args))
 		} else if index == metadata.register_enclave_call_indexes().ok()? {
 			info!("Got register enclave call");
-			let sender = xt.signature.unwrap().0;
-			let address = match sender {
-				MultiAddress::Address32(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Raw(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Id(account_id) => account_id.into(),
-				_ => panic!("Wrong address..."),
-			};
+			let address = get_xt_sender(xt).ok()?;
 			let call_args = decode_and_log_error::<TeebagRegisterEnclaveCall>(call_args)?;
 			let args =
 				RegisterEnclaveArgs { account_id: address, worker_url: call_args.worker_url };
 			Some(IndirectCall::AddEnclave(args))
 		} else if index == metadata.unregister_enclave_call_indexes().ok()? {
 			info!("Got unregister enclave call");
-			let sender = xt.signature.unwrap().0;
-			let address = match sender {
-				MultiAddress::Address32(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Raw(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Id(account_id) => account_id.into(),
-				_ => panic!("Wrong address..."),
-			};
+			let address = get_xt_sender(xt).ok()?;
 			let args = UnregisterEnclaveArgs { account_id: address };
 			Some(IndirectCall::RemoveEnclave(args))
 		} else if index == metadata.btc_wallet_generated_indexes().ok()? {
 			info!("Got btc wallet generated call");
-			let sender = xt.signature.unwrap().0;
-			let address = match sender {
-				MultiAddress::Address32(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Raw(bytes) => Address32::try_from(bytes.as_slice()).unwrap(),
-				MultiAddress::Id(account_id) => account_id.into(),
-				_ => panic!("Wrong address..."),
-			};
+			let address = get_xt_sender(xt).ok()?;
 			let call_args = decode_and_log_error::<BtcWalletGeneratedCall>(call_args)?;
 			let args = SaveSignerArgs { account_id: address, pub_key: call_args.pub_key };
 			Some(IndirectCall::SaveSigner(args))
@@ -275,4 +257,17 @@ impl<NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata> for Extri
 			None
 		}
 	}
+}
+
+fn get_xt_sender(
+	xt: SemiOpaqueExtrinsic<ParentchainSignedExtra>,
+) -> std::result::Result<Address32, ()> {
+	let sender = xt.signature.ok_or(())?.0;
+	let address = match sender {
+		MultiAddress::Address32(bytes) => Address32::try_from(bytes.as_slice())?,
+		MultiAddress::Raw(bytes) => Address32::try_from(bytes.as_slice())?,
+		MultiAddress::Id(account_id) => account_id.into(),
+		_ => return Err(()),
+	};
+	Ok(address)
 }
