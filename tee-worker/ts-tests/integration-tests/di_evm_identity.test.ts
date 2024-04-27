@@ -6,6 +6,7 @@ import {
     initIntegrationTestContext,
     assertIdGraphMutationResult,
     assertIdGraphHash,
+    sleep,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -21,15 +22,17 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
+import { count } from 'console';
 
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceEvmIdentity: CorePrimitivesIdentity = undefined as any;
     let bobEvmIdentity: CorePrimitivesIdentity;
+    let currentNonce = 0;
 
     // Alice links:
     // - a `mock_user` twitter
@@ -52,6 +55,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
         bobEvmIdentity = await context.web3Wallets.evm.Bob.getIdentity(context);
+        currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
@@ -68,10 +72,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('linking identities (alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const bobEvmNonce = getNextNonce();
+        const bobEvmNonce = currentNonce++;
         const bobEvmValidation = await buildValidations(
             context,
             aliceEvmIdentity,
@@ -88,7 +89,7 @@ describe('Test Identity (evm direct invocation)', function () {
             networks: bobEvmNetworks,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = currentNonce++;
 
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
         const eveSubstrateValidation = await buildValidations(
@@ -116,7 +117,9 @@ describe('Test Identity (evm direct invocation)', function () {
             [[eveSubstrateIdentity, true]],
         ];
 
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -128,7 +131,11 @@ describe('Test Identity (evm direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: counter % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -188,22 +195,19 @@ describe('Test Identity (evm direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('deactivating identity(alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const deactivateIdentityRequestParams: {
             nonce: number;
             identity: CorePrimitivesIdentity;
         }[] = [];
 
-        const bobEvmNonce = getNextNonce();
+        const bobEvmNonce = currentNonce++;
 
         deactivateIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = currentNonce++;
 
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
         deactivateIdentityRequestParams.push({
@@ -274,22 +278,19 @@ describe('Test Identity (evm direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('activating identity(alice evm account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceEvmIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
         const activateIdentityRequestParams: {
             nonce: number;
             identity: CorePrimitivesIdentity;
         }[] = [];
 
-        const bobEvmNonce = getNextNonce();
+        const bobEvmNonce = currentNonce++;
 
         activateIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
         });
 
-        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateNonce = currentNonce++;
 
         const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
 
@@ -360,5 +361,10 @@ describe('Test Identity (evm direct invocation)', function () {
         }
 
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
+    });
+    step('check sidechain nonce', async function () {
+        await sleep(20);
+        const nonce = await getSidechainNonce(context, aliceEvmIdentity);
+        assert.equal(nonce.toNumber(), currentNonce);
     });
 });

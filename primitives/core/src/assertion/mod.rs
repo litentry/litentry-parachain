@@ -151,8 +151,7 @@ impl Assertion {
 		match self {
 			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
 			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
-			// DOT holder
-			Self::A7(..) => vec![Web3Network::Polkadot],
+			Self::A7(..) | Self::A14 => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
 			Self::A10(..) |
 			Self::A11(..) |
@@ -160,8 +159,6 @@ impl Assertion {
 			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
-			// polkadot paticipation
-			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(arg) => arg.chains(),
 			// OneBlock Assertion

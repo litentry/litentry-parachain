@@ -30,6 +30,8 @@ use std::path::PathBuf;
 pub mod error;
 use error::Result;
 pub mod io;
+#[cfg(feature = "sgx")]
+pub use io::sgx::ScheduledEnclaveSeal;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
@@ -38,6 +40,8 @@ use std::sync::SgxRwLock as RwLock;
 
 use lazy_static::lazy_static;
 use std::sync::Arc;
+
+pub mod mock;
 
 lazy_static! {
 	/// Global instance of a ScheduledEnclave

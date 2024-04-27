@@ -31,7 +31,7 @@ use log::*;
 use sp_core::blake2_256;
 use std::prelude::v1::*;
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 pub use non_prod::*;
 
 pub fn get_storage_value<V: Decode>(
@@ -206,7 +206,7 @@ pub fn shard_creation_info() -> ShardCreationInfo {
 	}
 }
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 mod non_prod {
 	use super::*;
 	use hex_literal::hex;

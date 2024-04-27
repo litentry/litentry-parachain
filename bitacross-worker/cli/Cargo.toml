@@ -56,6 +56,6 @@ litentry-primitives = { path = "../litentry/primitives" }
 [features]
 default = []
 offchain-worker = []
-production = []
+development = []
 # dcap feature flag is not used in this crate, but for easier build purposes only it present here as well
 dcap = []

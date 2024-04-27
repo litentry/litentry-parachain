@@ -119,7 +119,7 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rebuild-bitacross-docker }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
             rebuild_bitacross=true
-          fi          
+          fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
@@ -133,7 +133,7 @@ jobs:
           fi
           if [ "${{ steps.filter.outputs.bitacross_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_bitacross" = "true" ]; then
             run_bitacross_test=true
-          fi          
+          fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
           echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
@@ -153,7 +153,7 @@ jobs:
       - name: Install pre-built taplo
         run: |
           mkdir -p $HOME/.local/bin
-          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz                    
+          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz
           gzip -d taplo-linux-x86_64.gz
           cp taplo-linux-x86_64 $HOME/.local/bin/taplo
           chmod a+x $HOME/.local/bin/taplo
@@ -200,7 +200,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   # sequentialise the workflow runs on `dev` branch
   # the if condition is applied in step level to make this job always `successful`
@@ -238,7 +238,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-clippy:
     runs-on: ubuntu-latest
@@ -264,16 +264,30 @@ jobs:
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
-          echo "::group::cargo clippy all"
+          echo "::group::cargo clippy no features"
           cargo clippy --release -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
           echo "::endgroup::"
+          echo "::group::cargo clippy development"
+          cargo clippy --release --features development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain development"
+          cargo clippy --release --features sidechain,development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm development"
+          cargo clippy --release --features evm,development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker develpment"
+          cargo clippy --release --features offchain-worker,development -- -D warnings
+          echo "::endgroup::"                                        
 
       - name: Clean up disk
         working-directory: ./tee-worker
@@ -289,20 +303,31 @@ jobs:
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
-          echo "::group::cargo clippy all"
+          echo "::group::cargo clippy no features"
           cargo clippy --release -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
           echo "::endgroup::"
+          echo "::group::cargo clippy development"
+          cargo clippy --release --features development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain development"
+          cargo clippy --release --features sidechain,development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm development"
+          cargo clippy --release --features evm,development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker develpment"
+          cargo clippy --release --features offchain-worker,development -- -D warnings
+          echo "::endgroup::"                                        
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   bitacross-clippy:
     runs-on: ubuntu-latest
@@ -330,6 +355,9 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Clean up disk
@@ -352,11 +380,14 @@ jobs:
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy offchain-worker,development"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker,development -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-build-dev:
     runs-on: ubuntu-latest
@@ -403,7 +434,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-build:
     runs-on: ubuntu-latest
@@ -477,6 +508,8 @@ jobs:
           target: builder
           build-args: |
             WORKER_MODE_ARG=sidechain
+            WORKER_ENV_DATA_PROVIDERS_CONFIG=1
+            WORKER_MOCK_SERVER=1
             ADDITIONAL_FEATURES_ARG=
 
       - name: Copy caches from the built image
@@ -545,7 +578,7 @@ jobs:
           if-no-files-found: error
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-ts-test:
     runs-on: ubuntu-latest
@@ -606,7 +639,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-unit-test:
     runs-on: ubuntu-latest
@@ -633,7 +666,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   parachain-runtime-test:
     runs-on: ubuntu-latest
@@ -669,7 +702,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   tee-single-worker-test:
     runs-on: ubuntu-latest
@@ -685,10 +718,12 @@ jobs:
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
+          - test_name: lit-di-solana-identity-test
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
+          - test_name: lit-scheduled-enclave-test
     steps:
       - uses: actions/checkout@v4
 
@@ -765,11 +800,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - test_name: lit-di-bitcoin-identity-multiworker-test
           - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
+          - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
 

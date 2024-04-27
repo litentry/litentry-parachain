@@ -221,7 +221,6 @@ pub mod pallet {
 			})
 		}
 
-		#[cfg(not(feature = "production"))]
 		#[pallet::call_index(5)]
 		#[pallet::weight({15_000_000})]
 		pub fn remove_identity(

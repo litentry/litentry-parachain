@@ -16,23 +16,23 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_export]
-macro_rules! if_production_or {
-	($prod_variant:expr, $non_prod_variant:expr) => {{
-		#[cfg(not(feature = "production"))]
+macro_rules! if_development_or {
+	($dev_variant:expr, $non_dev_variant:expr) => {{
+		#[cfg(not(feature = "development"))]
 		{
-			$non_prod_variant
+			$non_dev_variant
 		}
-		#[cfg(feature = "production")]
+		#[cfg(feature = "development")]
 		{
-			$prod_variant
+			$dev_variant
 		}
 	}};
 }
 
 #[macro_export]
-macro_rules! if_not_production {
+macro_rules! if_development {
 	($expression:expr) => {
-		#[cfg(not(feature = "production"))]
+		#[cfg(feature = "development")]
 		{
 			$expression
 		}

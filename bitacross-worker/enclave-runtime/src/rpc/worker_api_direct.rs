@@ -51,8 +51,10 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+#[cfg(feature = "development")]
+use lc_scheduled_enclave::ScheduledEnclaveUpdater;
+use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
+use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -202,6 +204,22 @@ where
 		}))
 	});
 
+	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
+			Ok(registry) => {
+				let mut serialized_registry = vec![];
+				for (block_number, mrenclave) in registry.iter() {
+					serialized_registry.push((*block_number, *mrenclave));
+				}
+				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
+					.to_hex()
+			},
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+		};
+		Ok(json!(json_value))
+	});
+
 	let local_top_pool_author = top_pool_author.clone();
 	io.add_sync_method("author_getShardVault", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShardVault");
@@ -337,7 +355,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if_not_production!({
+	if_development!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {

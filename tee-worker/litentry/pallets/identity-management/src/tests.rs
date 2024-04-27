@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	get_eligible_identities, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
-	Web3Network,
+	all_evm_web3networks, get_eligible_identities, mock::*, Error, IDGraph, Identity,
+	IdentityContext, IdentityStatus, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use sp_runtime::AccountId32;
@@ -32,18 +32,25 @@ fn get_eligible_identities_works() {
 		IdentityContext::new(1u64, vec![Web3Network::Litentry, Web3Network::Khala]),
 	));
 	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
-	let desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
+	let mut desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
 	let mut identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone());
 	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
+	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);
 
 	// `alice_evm_identity` should be filtered out
-	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![Web3Network::Bsc])));
+	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![])));
 	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
 	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
+	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);
+
+	// `alice_substrate_identity` should be filtered out
+	desired_web3networks = all_evm_web3networks();
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
+	assert_eq!(identities.len(), 2);
+	assert_eq!(identities[0].1, vec![]);
+	assert_eq!(identities[1].1, all_evm_web3networks());
 }
 
 #[test]

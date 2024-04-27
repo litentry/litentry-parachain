@@ -83,5 +83,4 @@ std = [
     "itp-stf-state-handler/std",
     "thiserror",
 ]
-production = [
-]
+development = []
