@@ -27,13 +27,13 @@ use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall};
 use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
-	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
-	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
-	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType, EVMTokenType,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
-	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
-	REQUEST_AES_KEY_LEN,
+	aes_decrypt, all_web3networks, AchainableAmount, AchainableAmountHolding,
+	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
+	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
+	AchainableParams, AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network,
+	ContestType, EVMTokenType, GenericDiscordRoleType, Identity, OneBlockCourseType,
+	ParameterString, PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
+	Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::{Pair, H160};
 
@@ -79,8 +79,12 @@ where
 pub fn to_chains<T, U>(networks: U) -> BoundedWeb3Network
 where
 	T: AsRef<str>,
-	U: IntoIterator<Item = T>,
+	U: IntoIterator<Item = T> + Copy + std::fmt::Debug,
 {
+	dbg!(networks);
+	if networks.into_iter().count() == 0 {
+		return all_web3networks().try_into().unwrap()
+	}
 	let networks: Vec<Web3Network> =
 		networks.into_iter().map(|n| n.as_ref().try_into().unwrap()).collect();
 
@@ -299,11 +303,9 @@ macro_rules! AchainableCommandArgs {
 		#[derive(Args, Debug)]
 		pub struct $type_name {
 			pub name: String,
-			#[clap(
-				short, long,
-				num_args = 1..,
-				required = true,
-				value_delimiter = ',',
+			#[clap(short, long,
+				num_args = 0..,
+				value_delimiter = ','
 			)]
 			pub chain: Vec<String>,
 			$( pub $field_name: $field_type ),*
