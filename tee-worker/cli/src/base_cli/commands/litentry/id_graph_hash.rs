@@ -36,8 +36,14 @@ impl IDGraphHashCommand {
 		let mrenclave = direct_api.get_state_mrenclave().unwrap();
 		let shard = ShardIdentifier::decode(&mut &mrenclave[..]).unwrap();
 		let identity = Identity::from_did(self.did.as_str()).unwrap();
-		let id_graph_hash = direct_api.get_id_graph_hash(&shard, &identity).unwrap();
-		println!("{:?}", id_graph_hash);
+		match direct_api.get_id_graph_hash(&shard, &identity) {
+			Ok(id_graph_hash) => {
+				println!("{:?}", id_graph_hash);
+			},
+			Err(e) => {
+				println!("{:?}", e);
+			},
+		}
 
 		Ok(CliResultOk::None)
 	}
