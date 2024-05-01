@@ -22,10 +22,7 @@ extern crate sgx_tstd as std;
 
 use core::result::Result;
 
-use lc_common::{
-	abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls},
-	web3_token::TokenDecimals,
-};
+use lc_common::web3_token::TokenDecimals;
 use lc_data_providers::blockchain_info::{BlockChainInfoClient, BlockChainInfoDataApi};
 
 use crate::*;
@@ -36,25 +33,13 @@ pub fn get_balance(
 	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<f64, Error> {
-	let mut total_balance = 0_f64;
-
-	loop_with_abort_strategy(
-		addresses,
-		|(network, address)| {
-			let decimals = Web3TokenType::Btc.get_decimals(*network);
-			let mut client = BlockChainInfoClient::new(data_provider_config);
-
-			match client.get_single_address(address.clone(), false) {
-				Ok(response) => {
-					total_balance +=
-						calculate_balance_with_decimals(response.final_balance, decimals);
-					Ok(LoopControls::Continue)
-				},
-				Err(err) => Err(err.into_error_detail()),
-			}
-		},
-		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	let decimals = Web3TokenType::Btc.get_decimals(addresses[0].0);
+	let mut client = BlockChainInfoClient::new(data_provider_config);
+	let address_vec: Vec<String> = addresses.into_iter().map(|(_, address)| address).collect();
+	let response = client
+		.get_multi_addresses(address_vec, false)
+		.map_err(|err| err.into_error_detail())?;
+	let total_balance = calculate_balance_with_decimals(response.wallet.final_balance, decimals);
 
 	Ok(total_balance)
 }

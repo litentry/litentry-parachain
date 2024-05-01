@@ -98,12 +98,35 @@ impl<'a> RestPath<ReqPath<'a>> for GetSingleAddressResponse {
 	}
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetMultiAddressesResponse {
+	pub wallet: GetMultiAddressesResponseWallet,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetMultiAddressesResponseWallet {
+	pub final_balance: u128,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for GetMultiAddressesResponse {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
+// https://www.blockchain.com/explorer/api/blockchain_api
 pub trait BlockChainInfoDataApi {
 	fn get_single_address(
 		&mut self,
 		address: String,
 		fail_fast: bool,
 	) -> Result<GetSingleAddressResponse, Error>;
+
+	fn get_multi_addresses(
+		&mut self,
+		addresses: Vec<String>,
+		fail_fast: bool,
+	) -> Result<GetMultiAddressesResponse, Error>;
 }
 
 impl BlockChainInfoDataApi for BlockChainInfoClient {
@@ -126,6 +149,30 @@ impl BlockChainInfoDataApi for BlockChainInfoClient {
 			},
 			Err(e) => {
 				debug!("get_single_address, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	fn get_multi_addresses(
+		&mut self,
+		addresses: Vec<String>,
+		fail_fast: bool,
+	) -> Result<GetMultiAddressesResponse, Error> {
+		let query: Vec<(String, String)> =
+			vec![("active".to_string(), addresses.join("|")), ("n".to_string(), "0".into())];
+
+		let params = BlockChainInfoRequest { path: "multiaddr".into(), query: Some(query) };
+
+		debug!("get_multi_addresses, params: {:?}", params);
+
+		match self.get::<GetMultiAddressesResponse>(params, fail_fast) {
+			Ok(resp) => {
+				debug!("get_multi_addresses, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_multi_addresses, error: {:?}", e);
 				Err(e)
 			},
 		}
@@ -162,5 +209,21 @@ mod tests {
 			.get_single_address("bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj".into(), false)
 			.unwrap();
 		assert_eq!(response.final_balance, 0);
+	}
+
+	#[test]
+	fn does_get_multi_addresses_works() {
+		let config = init();
+		let mut client = BlockChainInfoClient::new(&config);
+		let response = client
+			.get_multi_addresses(
+				vec![
+					"bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0".into(),
+					"bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj".into(),
+				],
+				true,
+			)
+			.unwrap();
+		assert_eq!(response.wallet.final_balance, 185123167511);
 	}
 }

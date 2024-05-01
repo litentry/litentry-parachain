@@ -17,11 +17,14 @@
 
 use std::collections::HashMap;
 
-use lc_data_providers::blockchain_info::GetSingleAddressResponse;
+use lc_data_providers::blockchain_info::{
+	GetMultiAddressesResponse, GetMultiAddressesResponseWallet, GetSingleAddressResponse,
+};
 
 use warp::{http::Response, Filter};
 
-pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub(crate) fn query_rawaddr(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
 		.and(warp::path!("blockchain_info" / "rawaddr" / String))
 		.and(warp::query::<HashMap<String, String>>())
@@ -33,5 +36,18 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				let body = GetSingleAddressResponse { final_balance: 0 };
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
+		})
+}
+
+pub(crate) fn query_multiaddr(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("blockchain_info" / "multiaddr"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |_| {
+			let body = GetMultiAddressesResponse {
+				wallet: GetMultiAddressesResponseWallet { final_balance: 185123167511 },
+			};
+			Response::builder().body(serde_json::to_string(&body).unwrap())
 		})
 }
