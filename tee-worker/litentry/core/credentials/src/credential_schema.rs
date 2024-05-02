@@ -94,8 +94,7 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 
 		Assertion::LITStaking => format!("{BASE_URL}/17-token-holding-amount/1-1-0.json"),
 
-		Assertion::TokenHoldingAmount(_) | Assertion::EVMAmountHolding(_) =>
-			format!("{BASE_URL}/21-evm-holding-amount/1-1-0.json"),
+		Assertion::EVMAmountHolding(_) => format!("{BASE_URL}/21-evm-holding-amount/1-1-0.json"),
 
 		Assertion::BRC20AmountHolder =>
 			format!("{BASE_URL}/20-token-holding-amount-list/1-1-0.json"),
@@ -103,6 +102,9 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 		Assertion::CryptoSummary => format!("{BASE_URL}/23-crypto-summary/1-1-0.json"),
 
 		Assertion::PlatformUser(_) => format!("{BASE_URL}/24-platform-user/1-1-0.json"),
+
+		Assertion::TokenHoldingAmount(_) =>
+			format!("{BASE_URL}/25-token-holding-amount/1-1-0.json"),
 
 		Assertion::NftHolder(_) => format!("{BASE_URL}/26-nft-holder/1-1-0.json"),
 	}
