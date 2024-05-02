@@ -49,5 +49,5 @@ pub mod event_filter;
 pub mod filter_metadata;
 
 pub use error::{Error, Result};
-pub use executor::{hash_of, IndirectCallsExecutor};
+pub use executor::IndirectCallsExecutor;
 pub use traits::{ExecuteIndirectCalls, IndirectDispatch};

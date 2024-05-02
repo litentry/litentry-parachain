@@ -105,7 +105,7 @@ impl LinkIdentityCommand {
 	) -> (Vec<u8>, Vec<u8>) {
 		if identity.is_web3() {
 			let who_identity = Identity::from(self.get_signer().public());
-			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce + 1);
+			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce);
 			let web3network: Vec<Web3Network> = self
 				.networks
 				.iter()

@@ -13,7 +13,6 @@ members = [
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',
-    'pallets/parentchain',
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
@@ -27,6 +26,7 @@ members = [
     'runtime/litmus',
     'runtime/rococo',
     'runtime/common',
+    'worker-pallets/parentchain',
 ]
 
 [profile.release]
@@ -48,7 +48,7 @@ strip = "symbols"
 incremental = false
 
 [workspace.dependencies]
-async-trait = { version = "0.1.79" }
+async-trait = { version = "0.1.80" }
 assert_matches = { version = "1.3.0" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 base58 = { version = "0.2", default-features = false }

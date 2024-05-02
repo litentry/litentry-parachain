@@ -16,7 +16,6 @@
 use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{EnclaveStf, GLOBAL_STATE_HANDLER_COMPONENT},
-	shard_config,
 	std::string::ToString,
 	utils::DecodeRaw,
 };
@@ -104,7 +103,6 @@ fn init_shard_creation_parentchain_header_internal(
 		.map_err(|e| Error::Stf(e.to_string()))?;
 	state_handler.write_after_mutation(state, state_lock, &shard)?;
 
-	shard_config::init_shard_config(shard)?;
 	Ok(())
 }
 

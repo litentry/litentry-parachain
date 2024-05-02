@@ -27,6 +27,9 @@ development = [
     "litentry-primitives/development",
     "litentry-macros/development",
 ]
+env-data-providers-config = [
+    "lc-data-providers/env-data-providers-config",
+]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
     "itp-settings/offchain-worker",
@@ -86,7 +89,6 @@ webpki = { git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_
 base58 = { rev = "sgx_1.1.3", package = "rust-base58", default-features = false, features = ["mesalock_sgx"], git = "https://github.com/mesalock-linux/rust-base58-sgx" }
 
 cid = { default-features = false, git = "https://github.com/whalelephant/rust-cid", branch = "nstd" }
-enclave-bridge-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.12.11-polkadot-v0.9.42" }
 multibase = { default-features = false, git = "https://github.com/whalelephant/rust-multibase", branch = "nstd" }
 
 # local deps
@@ -116,6 +118,7 @@ itp-rpc = { path = "../core-primitives/rpc", default-features = false, features 
 itp-settings = { path = "../core-primitives/settings" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto", default-features = false, features = ["sgx"] }
 itp-sgx-externalities = { path = "../core-primitives/substrate-sgx/externalities", default-features = false, features = ["sgx"] }
+itp-sgx-io = { path = "../core-primitives/sgx/io", default-features = false, features = ["sgx"] }
 itp-stf-executor = { path = "../core-primitives/stf-executor", default-features = false, features = ["sgx"] }
 itp-stf-interface = { path = "../core-primitives/stf-interface", default-features = false }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives", default-features = false }

@@ -24,7 +24,7 @@ use crate::{
 };
 
 #[cfg(feature = "sgx")]
-mod sgx {
+pub mod sgx {
 	use crate::{
 		error::{Error, Result},
 		ScheduledEnclaveMap,

@@ -109,6 +109,7 @@ attesteer = ["dcap"]
 link-binary = [
     "itp-enclave-api/implement-ffi",
 ]
+mock-server = []
 
 [dev-dependencies]
 # crates.io

@@ -90,7 +90,7 @@ pub mod pallet {
 			who: T::AccountId,
 		},
 		OpaqueTaskPosted {
-			shard: ShardIdentifier,
+			request: RsaRequest,
 		},
 		ParentchainBlockProcessed {
 			who: T::AccountId,
@@ -527,7 +527,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::OpaqueTaskPosted { shard: request.shard });
+			Self::deposit_event(Event::OpaqueTaskPosted { request });
 			Ok(())
 		}
 

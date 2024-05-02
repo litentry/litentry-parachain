@@ -94,7 +94,6 @@ mod empty_impls;
 mod initialization;
 mod ipfs;
 mod ocall;
-mod shard_config;
 mod shard_creation_info;
 mod shard_vault;
 mod stf_task_handler;

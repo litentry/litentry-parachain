@@ -83,6 +83,15 @@ pallet-extrinsic-filter = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 runtime-common = { workspace = true }
 
+fp-rpc = { workspace = true }
+fp-self-contained = { workspace = true }
+pallet-ethereum = { workspace = true }
+pallet-evm = { workspace = true }
+
+moonbeam-evm-tracer = { workspace = true }
+moonbeam-rpc-primitives-debug = { workspace = true }
+moonbeam-rpc-primitives-txpool = { workspace = true }
+
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 polkadot-primitives = { workspace = true, features = ["std"] }
@@ -107,6 +116,8 @@ runtime-benchmarks = [
     "pallet-bounties/runtime-benchmarks",
     "pallet-collective/runtime-benchmarks",
     "pallet-democracy/runtime-benchmarks",
+    "pallet-ethereum/runtime-benchmarks",
+    "pallet-evm/runtime-benchmarks",
     "pallet-identity/runtime-benchmarks",
     "pallet-membership/runtime-benchmarks",
     "pallet-multisig/runtime-benchmarks",
@@ -160,6 +171,8 @@ std = [
     "pallet-bounties/std",
     "pallet-collective/std",
     "pallet-democracy/std",
+    "pallet-ethereum/std",
+    "pallet-evm/std",
     "pallet-identity/std",
     "pallet-membership/std",
     "pallet-multisig/std",
@@ -189,6 +202,8 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "fp-rpc/std",
+    "fp-self-contained/std",
     "frame-benchmarking?/std",
     "frame-system-benchmarking?/std",
     'runtime-common/std',
@@ -196,6 +211,9 @@ std = [
     "pallet-bridge-transfer/std",
     "pallet-drop3/std",
     "pallet-extrinsic-filter/std",
+    "moonbeam-evm-tracer/std",
+    "moonbeam-rpc-primitives-debug/std",
+    "moonbeam-rpc-primitives-txpool/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -207,6 +225,7 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
+    "fp-self-contained/try-runtime",
     "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-account-fix/try-runtime",
@@ -219,6 +238,8 @@ try-runtime = [
     "pallet-bridge-transfer/try-runtime",
     "pallet-collective/try-runtime",
     "pallet-democracy/try-runtime",
+    "pallet-ethereum/try-runtime",
+    "pallet-evm/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",

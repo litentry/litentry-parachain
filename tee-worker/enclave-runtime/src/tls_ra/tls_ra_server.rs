@@ -36,6 +36,7 @@ use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_types::ShardIdentifier;
+use lc_scheduled_enclave::{ScheduledEnclaveSeal, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
 use rustls::{ServerConfig, ServerSession, StreamOwned};
 use sgx_types::{error::*, types::*};
@@ -128,6 +129,7 @@ where
 				self.write_state_key()?;
 				self.write_state(shard)?;
 				self.write_light_client_state()?;
+				self.write_scheduled_enclave_state()?;
 			},
 			ProvisioningPayload::ShieldingKeyAndLightClient => {
 				self.write_shielding_key()?;
@@ -160,6 +162,12 @@ where
 	fn write_light_client_state(&mut self) -> EnclaveResult<()> {
 		let state = self.seal_handler.unseal_light_client_state()?;
 		self.write(Opcode::LightClient, &state)?;
+		Ok(())
+	}
+
+	fn write_scheduled_enclave_state(&mut self) -> EnclaveResult<()> {
+		let state = self.seal_handler.unseal_scheduled_enclave_state()?;
+		self.write(Opcode::ScheduledEnclave, &state)?;
 		Ok(())
 	}
 
@@ -226,11 +234,15 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		},
 	};
 
+	let scheduled_enclave_seal =
+		Arc::new(ScheduledEnclaveSeal::new(GLOBAL_SCHEDULED_ENCLAVE.seal_path.clone()));
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
+		scheduled_enclave_seal,
 	);
 
 	if let Err(e) = run_state_provisioning_server_internal::<_, WorkerModeProvider>(

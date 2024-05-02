@@ -183,6 +183,8 @@ export default {
                 "Trx",
                 "Nfp",
                 "Sol",
+                "Mcrt",
+                "Btc",
             ],
         },
         // PlatformUserType
