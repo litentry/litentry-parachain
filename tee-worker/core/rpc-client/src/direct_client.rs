@@ -173,7 +173,8 @@ impl DirectApi for DirectClient {
 
 		let shielding_pubkey_string = decode_from_rpc_response::<String>(&response_str)?;
 		let shielding_pubkey: Rsa3072PublicKey =
-			sgx_serialize::json::decode(&shielding_pubkey_string).unwrap();
+			sgx_serialize::json::decode(&shielding_pubkey_string)
+				.map_err(|e| Error::Custom(format!("{:?}", e).into()))?;
 
 		info!("[+] Got RSA public key of enclave");
 		Ok(shielding_pubkey)

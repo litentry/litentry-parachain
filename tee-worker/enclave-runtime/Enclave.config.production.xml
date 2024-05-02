@@ -13,7 +13,7 @@
   <TCSNum>1024</TCSNum>
   <TCSMinPool>64</TCSMinPool>
   <TCSPolicy>0</TCSPolicy>
-  <DisableDebug>0</DisableDebug>
+  <DisableDebug>1</DisableDebug>
   <MiscSelect>0</MiscSelect>
   <MiscMask>0xFFFFFFFF</MiscMask>
 </EnclaveConfiguration>

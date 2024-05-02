@@ -17,7 +17,6 @@
 
 use codec::{Decode, Encode};
 
-pub use ita_sgx_runtime::Balance;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
