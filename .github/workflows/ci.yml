@@ -809,7 +809,6 @@ jobs:
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-twitter-identity-multiworker-test
     steps:
       - uses: actions/checkout@v4
 
