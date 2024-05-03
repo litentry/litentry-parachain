@@ -51,10 +51,13 @@ pub trait SendHttpRequest {
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
-		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>;
+}
+
+pub trait SetHttpHeader {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error>;
 }
 
 /// Send trait used by the http client to send HTTP request, based on `http_req`.
@@ -158,21 +161,23 @@ where
 		self.authorization = Some(format!("Basic {}", base64::encode(&s)));
 	}
 
+	/// Clear all previously set headers
+	pub fn clear_headers(&mut self) {
+		self.headers = Headers::new();
+	}
+}
+
+impl<SendType> SetHttpHeader for HttpClient<SendType> {
 	/// Set HTTP header from string name and value.
 	///
 	/// The header is added to all subsequent GET and POST requests
 	/// unless the headers are cleared with `clear_headers()` call.
-	pub fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
 		let header_name = HeaderName::from_str(name).map_err(|_| Error::InvalidValue)?;
 		let value = HeaderValue::from_str(value).map_err(|_| Error::InvalidValue)?;
 
 		add_to_headers(&mut self.headers, header_name, value);
 		Ok(())
-	}
-
-	/// Clear all previously set headers
-	pub fn clear_headers(&mut self) {
-		self.headers = Headers::new();
 	}
 }
 
@@ -187,7 +192,6 @@ where
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
-		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>,
@@ -232,12 +236,6 @@ where
 		// add pre-set headers
 		for (key, value) in self.headers.iter() {
 			request_headers.insert(key, &value.clone());
-		}
-		// override headers with user provided headers
-		if let Some(headers) = headers {
-			for (key, value) in headers.iter() {
-				request_headers.insert(key, &value.clone());
-			}
 		}
 
 		// add user agent header
@@ -377,7 +375,6 @@ mod tests {
 				(),
 				Some(&query_parameters),
 				None,
-				None,
 			)
 			.unwrap();
 
@@ -415,7 +412,7 @@ mod tests {
 		let base_url = Url::parse("https://httpbin.org").unwrap();
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None, None)
+			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None)
 			.unwrap();
 
 		let response_body: HttpBinAnything =
@@ -459,7 +456,6 @@ mod tests {
 				(),
 				None,
 				Some(body_test.clone()),
-				None,
 			)
 			.unwrap();
 
@@ -493,14 +489,7 @@ mod tests {
 		let base_url = Url::parse("https://api.coingecko.com").unwrap();
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), Vec<CoinGeckoCoinsList>>(
-				base_url,
-				Method::GET,
-				(),
-				None,
-				None,
-				None,
-			)
+			.send_request::<(), Vec<CoinGeckoCoinsList>>(base_url, Method::GET, (), None, None)
 			.unwrap();
 
 		let coins_list: Vec<CoinGeckoCoinsList> =
@@ -536,7 +525,7 @@ mod tests {
 		);
 
 		let (response, encoded_body) = http_client
-			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None, None)
+			.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None)
 			.unwrap();
 
 		let response_body: HttpBinAnything =
@@ -576,14 +565,8 @@ mod tests {
 			None,
 		);
 
-		let result = http_client.send_request::<(), HttpBinAnything>(
-			base_url,
-			Method::GET,
-			(),
-			None,
-			None,
-			None,
-		);
+		let result =
+			http_client.send_request::<(), HttpBinAnything>(base_url, Method::GET, (), None, None);
 		assert_matches!(result, Err(Error::HttpReqError(_)));
 		let msg = format!("error {:?}", result.err());
 		assert!(msg.contains("UnknownIssuer"));

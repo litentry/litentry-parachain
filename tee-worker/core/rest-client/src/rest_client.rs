@@ -22,8 +22,9 @@ pub use http_req::{request::Method, response::Headers};
 pub use url::{form_urlencoded, Url};
 
 use crate::{
-	error::Error, http_client::SendHttpRequest, Query, RestDelete, RestGet, RestPatch, RestPath,
-	RestPost, RestPut,
+	error::Error,
+	http_client::{SendHttpRequest, SetHttpHeader},
+	Query, RestDelete, RestGet, RestPatch, RestPath, RestPost, RestPut,
 };
 
 use log::*;
@@ -42,7 +43,7 @@ pub struct RestClient<H> {
 
 impl<H> RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Construct new client with default configuration to make HTTP requests.
 	///
@@ -72,7 +73,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let _body = self.make_request::<U, T>(method, params, None, Some(data), None)?;
+		let _body = self.make_request::<U, T>(method, params, None, Some(data))?;
 		Ok(())
 	}
 
@@ -88,7 +89,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let _body = self.make_request::<U, T>(method, params, Some(query), Some(data), None)?;
+		let _body = self.make_request::<U, T>(method, params, Some(query), Some(data))?;
 		Ok(())
 	}
 
@@ -104,7 +105,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let body = self.make_request::<U, T>(method, params, None, Some(data), None)?;
+		let body = self.make_request::<U, T>(method, params, None, Some(data))?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -121,7 +122,7 @@ where
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
 
-		let body = self.make_request::<U, T>(method, params, Some(query), Some(data), None)?;
+		let body = self.make_request::<U, T>(method, params, Some(query), Some(data))?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -137,10 +138,9 @@ where
 			.extend_pairs(data.iter())
 			.finish();
 
-		let mut headers = Headers::new();
-		headers.insert("Content-Type", "application/x-www-form-urlencoded");
-		let body =
-			self.make_request::<U, K>(Method::POST, path, None, Some(data), Some(headers))?;
+		self.http_client
+			.set_header("Content-Type", "application/x-www-form-urlencoded")?;
+		let body = self.make_request::<U, K>(Method::POST, path, None, Some(data))?;
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
@@ -150,7 +150,6 @@ where
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
-		headers: Option<Headers>,
 	) -> Result<String, Error>
 	where
 		T: RestPath<U>,
@@ -161,7 +160,6 @@ where
 			params,
 			query,
 			maybe_body,
-			headers,
 		)?;
 
 		self.response_headers = response.headers().clone();
@@ -183,14 +181,14 @@ where
 
 impl<H> RestGet for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a GET request.
 	fn get<U, T>(&mut self, params: U) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + RestPath<U>,
 	{
-		let body = self.make_request::<U, T>(Method::GET, params, None, None, None)?;
+		let body = self.make_request::<U, T>(Method::GET, params, None, None)?;
 
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
@@ -200,7 +198,7 @@ where
 	where
 		T: serde::de::DeserializeOwned + RestPath<U>,
 	{
-		let body = self.make_request::<U, T>(Method::GET, params, Some(query), None, None)?;
+		let body = self.make_request::<U, T>(Method::GET, params, Some(query), None)?;
 
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
@@ -208,7 +206,7 @@ where
 
 impl<H> RestPost for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a POST request.
 	fn post<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -264,7 +262,7 @@ where
 
 impl<H> RestPut for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a PUT request.
 	fn put<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -308,7 +306,7 @@ where
 
 impl<H> RestPatch for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a PATCH request.
 	fn patch<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -329,14 +327,14 @@ where
 
 impl<H> RestDelete for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a DELETE request.
 	fn delete<U, T>(&mut self, params: U) -> Result<(), Error>
 	where
 		T: RestPath<U>,
 	{
-		self.make_request::<U, T>(Method::DELETE, params, None, None, None)?;
+		self.make_request::<U, T>(Method::DELETE, params, None, None)?;
 		Ok(())
 	}
 
@@ -346,7 +344,7 @@ where
 		T: serde::Serialize + RestPath<U>,
 	{
 		let data = serde_json::to_string(data).map_err(Error::SerializeParseError)?;
-		self.make_request::<U, T>(Method::DELETE, params, Some(query), Some(data), None)?;
+		self.make_request::<U, T>(Method::DELETE, params, Some(query), Some(data))?;
 		Ok(())
 	}
 }
