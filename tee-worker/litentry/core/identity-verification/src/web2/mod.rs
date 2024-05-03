@@ -110,14 +110,17 @@ pub fn verify(
 										"no oauth data found for {}",
 										account_id_to_string(&account_id)
 									)
-									.into(),
+									.as_bytes()
+									.to_vec(),
 								),
 							))
 						})?,
 						Err(e) =>
 							return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
 								ErrorString::truncate_from(
-									std::format!("failed to get oauth data: {}", e).into(),
+									std::format!("failed to get oauth data: {}", e)
+										.as_bytes()
+										.to_vec(),
 								),
 							))),
 					};
@@ -125,7 +128,7 @@ pub fn verify(
 				ensure!(
 					state == state_verifier,
 					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
-						"stored state mismatch".into()
+						"stored state mismatch".as_bytes().to_vec()
 					)))
 				);
 
@@ -137,7 +140,7 @@ pub fn verify(
 				};
 				let user_token = oauth2_client.request_user_access_token(data).map_err(|e| {
 					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
-						e.to_string().into(),
+						e.to_string().as_bytes().to_vec(),
 					)))
 				})?;
 
