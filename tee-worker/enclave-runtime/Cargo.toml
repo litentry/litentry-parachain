@@ -56,16 +56,16 @@ test = [
 dcap = []
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_dcap_tvl = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview", features = ["capi"] }
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_serialize_derive = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tse = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tseal = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview", features = ["untrusted_fs", "net", "backtrace"] }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_unit_test = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_crypto = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_dcap_tvl = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21", features = ["capi"] }
+sgx_rand = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize_derive = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tse = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tseal = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tstd = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21", features = ["untrusted_fs", "net", "backtrace"] }
+sgx_types = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_unit_test = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
 
 [dependencies]
 array-bytes = { version = "6.0.0" }
@@ -169,20 +169,28 @@ net2 = { git = "https://github.com/Kailai-Wang/net2-rs-sgx", branch = "sgx-sdk-2
 rustls = { git = "https://github.com/Kailai-Wang/rustls-sgx", branch = "sgx-sdk-2.0.0" }
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
-sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_libc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_rand = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_serialize = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_serialize_derive = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tse = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tseal = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_tstd = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_alloc = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_crypto = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_libc = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_rand = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize_derive = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_trts = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tse = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tseal = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tstd = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_types = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
 
-# overriding as we've got c compilation error on ubuntu 22.04 (maybe due to a newer gcc version)
 [patch."https://github.com/apache/incubator-teaclave-sgx-sdk"]
-sgx_crypto_sys = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
-
-[patch."https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk"]
-sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
+sgx_alloc = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_crypto = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_libc = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_rand = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_serialize_derive = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tprotected_fs = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_trts = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tse = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tseal = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_tstd = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
+sgx_types = { git = "https://github.com/Kailai-Wang/incubator-teaclave-sgx-sdk", branch = "v2.0.0-sdk-2.21" }
