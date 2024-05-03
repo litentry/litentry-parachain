@@ -1,17 +1,11 @@
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
-
-#[cfg(feature = "std")]
-use hex;
-#[cfg(feature = "sgx")]
-use hex_sgx as hex;
-
 use codec::Encode;
 use core::result::Result;
 use lazy_static::lazy_static;
 use lru::LruCache;
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
 use std::{num::NonZeroUsize, string::String};
 
 use litentry_primitives::ParentchainAccountId as AccountId;
