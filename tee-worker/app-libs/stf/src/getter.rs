@@ -238,7 +238,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 				if let Some(account_id) = who.to_account_id() {
 					let evm_account = get_evm_account(&account_id);
 					let evm_account = HashedAddressMapping::into_account_id(evm_account);
-					let nonce = System::account_nonce(&evm_account);
+					let nonce = System::account_nonce(evm_account);
 					debug!("TrustedGetter evm_nonce");
 					debug!("Account nonce is {}", nonce);
 					Some(nonce.encode())
