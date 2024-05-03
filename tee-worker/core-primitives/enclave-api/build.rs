@@ -24,7 +24,11 @@ fn main() {
 	println!("cargo:rustc-link-lib=dylib=sgx_dcap_quoteverify");
 	println!("cargo:rustc-link-lib=dylib=dcap_quoteprov");
 
+	let sdk_dir = env::var("SGX_SDK").unwrap_or_else(|_| "/opt/intel/sgxsdk".to_string());
 	let is_sim = env::var("SGX_MODE").unwrap_or_else(|_| "HW".to_string());
+
+	println!("cargo:rustc-link-search=native={}/lib64", sdk_dir);
+
 	match is_sim.as_ref() {
 		"SW" => {
 			println!("cargo:rustc-link-lib=dylib=sgx_epid_sim");

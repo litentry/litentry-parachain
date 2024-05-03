@@ -254,9 +254,7 @@ trait GetSgxReport {
 impl<T: EnclaveAttestationOCallApi> GetSgxReport for T {
 	fn get_report_of_self(&self) -> SgxResult<ReportBody> {
 		// (1) get ti + eg
-		let init_quote_result = self.sgx_init_quote()?;
-
-		let target_info = init_quote_result.0;
+		let target_info = self.sgx_init_quote()?.0;
 		let report_data: ReportData = ReportData::default();
 
 		Report::for_target(&target_info, &report_data).map(|r| r.body)
