@@ -102,7 +102,7 @@ pub struct TargetTwitterUser {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CreateTwitterUserAccessToken {
+pub struct TwitterUserAccessTokenData {
 	pub client_id: String,
 	pub code: String,
 	pub code_verifier: String,
@@ -269,7 +269,7 @@ impl TwitterOfficialClient {
 
 	pub fn request_user_access_token(
 		&mut self,
-		data: CreateTwitterUserAccessToken,
+		data: TwitterUserAccessTokenData,
 	) -> Result<TwitterUserAccessToken, Error> {
 		debug!("Twitter create access token");
 
@@ -374,7 +374,7 @@ mod tests {
 	fn request_user_access_token_work() {
 		let data_provider_config = init();
 
-		let data = CreateTwitterUserAccessToken {
+		let data = TwitterUserAccessTokenData {
 			client_id: data_provider_config.twitter_client_id.clone(),
 			code: "code".to_string(),
 			code_verifier: "code_verifier".to_string(),

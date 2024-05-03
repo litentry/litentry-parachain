@@ -30,7 +30,7 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
-	twitter_official::{CreateTwitterUserAccessToken, Tweet, TwitterOfficialClient},
+	twitter_official::{Tweet, TwitterOfficialClient, TwitterUserAccessTokenData},
 	vec_to_string, DataProviderConfig, UserInfo,
 };
 use litentry_primitives::{
@@ -129,7 +129,7 @@ pub fn verify(
 					)))
 				);
 
-				let data = CreateTwitterUserAccessToken {
+				let data = TwitterUserAccessTokenData {
 					client_id: config.twitter_client_id.clone(),
 					code,
 					code_verifier,
