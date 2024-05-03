@@ -928,6 +928,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "lc-data-providers",
+ "lc-identity-verification",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
@@ -1655,6 +1656,10 @@ name = "hashbrown"
 version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+dependencies = [
+ "ahash 0.8.11",
+ "allocator-api2",
+]
 
 [[package]]
 name = "hashbrown_tstd"
@@ -2978,6 +2983,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "chrono 0.4.11",
  "hex 0.4.0",
  "http",
@@ -3000,17 +3006,24 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex 0.4.3",
  "http",
  "http_req",
  "itp-sgx-crypto",
+ "itp-utils",
+ "lazy_static",
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
+ "lru",
+ "parity-scale-codec",
+ "sgx_rand",
  "sgx_tstd",
+ "sp-core",
  "thiserror",
 ]
 
@@ -3274,6 +3287,15 @@ source = "git+https://github.com/Kailai-Wang/log-sgx?branch=sgx-sdk-2.0.0#64e1bc
 dependencies = [
  "cfg-if 1.0.0",
  "sgx_tstd",
+]
+
+[[package]]
+name = "lru"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
+dependencies = [
+ "hashbrown 0.14.3",
 ]
 
 [[package]]

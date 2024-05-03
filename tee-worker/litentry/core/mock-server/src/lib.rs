@@ -62,6 +62,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
+					.or(twitter_official::request_user_access_token())
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
