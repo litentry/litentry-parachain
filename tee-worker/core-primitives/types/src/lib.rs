@@ -132,6 +132,9 @@ pub enum TrustedOperationStatus {
 	/// TrustedOperation has been executed.
 	#[codec(index = 11)]
 	TopExecuted(Vec<u8>, bool),
+	/// TrustedOperation whose successor top has been executed, but the top itself not
+	#[codec(index = 12)]
+	SuccessorExecuted,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]

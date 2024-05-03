@@ -151,6 +151,9 @@ mod tests {
 		data_provider_config
 			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
 			.unwrap();
+		data_provider_config
+			.set_blockchain_info_api_url(url.clone() + "/blockchain_info/")
+			.unwrap();
 		data_provider_config.set_achainable_url(url.clone()).unwrap();
 		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
 		data_provider_config
@@ -563,5 +566,97 @@ mod tests {
 				panic!("build nfp TokenHoldingAmount failed with error {:?}", e);
 			},
 		};
+	}
+
+	#[test]
+	fn build_mcrt_holding_amount_works() {
+		let data_provider_config = init();
+		let address = "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+			.from_base58()
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Solana(address), vec![Web3Network::Solana])];
+
+		let req = crate_assertion_build_request(Web3TokenType::Mcrt, identities);
+
+		match build(&req, Web3TokenType::Mcrt, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build mcrt TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Mcrt),
+							create_network_address_assertion_logics(Web3TokenType::Mcrt),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "150000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "500000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build mcrt TokenHoldingAmount failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_btc_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		// bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0
+		let address = decode_hex(
+			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed"
+				.as_bytes()
+				.to_vec(),
+		)
+		.unwrap()
+		.as_slice()
+		.try_into()
+		.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Bitcoin(address), vec![Web3Network::BitcoinP2tr])];
+
+		let req = crate_assertion_build_request(Web3TokenType::Btc, identities);
+
+		match build(&req, Web3TokenType::Btc, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build btc TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Btc),
+							create_network_address_assertion_logics(Web3TokenType::Btc),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "1600".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "3000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build btc TokenHoldingAmount failed with error {:?}", e);
+			},
+		}
 	}
 }
