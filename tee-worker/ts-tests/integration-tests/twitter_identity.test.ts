@@ -154,9 +154,10 @@ describe('Test Twitter Identity (direct invocation)', function () {
 
     step('linking twitter identity with oauth2 verification (bob)', async function () {
         // Generate oauth code verifier on the enclave for the user
+        const did = 'did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48';
         const request = createJsonRpcRequest(
             'identity_getTwitterAuthorizeUrl',
-            [bobSubstrateIdentity.toHex(), 'http://127.0.0.1:3000/callback'],
+            [did, 'http://127.0.0.1:3000/callback'],
             nextRequestId(context)
         );
         const response = await sendRequest(context.tee, request, context.api);

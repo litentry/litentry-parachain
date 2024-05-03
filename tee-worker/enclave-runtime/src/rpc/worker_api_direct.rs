@@ -479,8 +479,8 @@ where
 		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
 
 		match params.parse::<(String, String)>() {
-			Ok((encoded_identity, redirect_url)) => {
-				let account_id = match Identity::from_hex(encoded_identity.as_str()) {
+			Ok((encoded_did, redirect_url)) => {
+				let account_id = match Identity::from_did(encoded_did.as_str()) {
 					Ok(identity) =>
 						if let Some(account_id) = identity.to_account_id() {
 							account_id
