@@ -17,13 +17,10 @@
 
 use crate::{
 	error::Error,
-	http_client::{EncodedBody, SendHttpRequest},
+	http_client::{EncodedBody, SendHttpRequest, SetHttpHeader},
 	Query, RestPath,
 };
-use http_req::{
-	request::Method,
-	response::{Headers, Response},
-};
+use http_req::{request::Method, response::Response};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -67,7 +64,6 @@ impl SendHttpRequest for HttpClientMock {
 		params: U,
 		query: Option<&Query<'_>>,
 		maybe_body: Option<String>,
-		headers: Option<Headers>,
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>,
@@ -94,6 +90,12 @@ impl SendHttpRequest for HttpClientMock {
 		let encoded_response_body = serde_json::to_vec(&response_body).unwrap();
 
 		Ok((response, encoded_response_body))
+	}
+}
+
+impl SetHttpHeader for HttpClientMock {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
+		Ok(())
 	}
 }
 
@@ -134,7 +136,6 @@ mod tests {
 				base_url,
 				Method::GET,
 				"/api/v1/get".to_string(),
-				None,
 				None,
 				None,
 			)
