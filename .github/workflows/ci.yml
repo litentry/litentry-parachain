@@ -800,37 +800,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - test_name: lit-di-bitcoin-identity-multiworker-test
-          # - test_name: lit-di-evm-identity-multiworker-test
-          # - test_name: lit-di-solana-identity-multiworker-test
-          # - test_name: lit-di-substrate-identity-multiworker-test
-          # - test_name: lit-di-vc-multiworker-test
-          # - test_name: lit-dr-vc-multiworker-test
-          # - test_name: lit-resume-worker
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
-          - test_name: lit-scheduled-enclave-multiworker-test
+          - test_name: lit-di-bitcoin-identity-multiworker-test
+          - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
+          - test_name: lit-di-substrate-identity-multiworker-test
+          - test_name: lit-di-vc-multiworker-test
+          - test_name: lit-dr-vc-multiworker-test
+          - test_name: lit-resume-worker
           - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
@@ -868,7 +844,7 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration multi worker test ${{ matrix.test_name }}
-        # if: needs.set-condition.outputs.run_tee_test == 'true'
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
