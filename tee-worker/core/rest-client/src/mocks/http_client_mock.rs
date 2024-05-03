@@ -17,7 +17,7 @@
 
 use crate::{
 	error::Error,
-	http_client::{EncodedBody, SendHttpRequest},
+	http_client::{EncodedBody, SendHttpRequest, SetHttpHeader},
 	Query, RestPath,
 };
 use http_req::{request::Method, response::Response};
@@ -90,6 +90,12 @@ impl SendHttpRequest for HttpClientMock {
 		let encoded_response_body = serde_json::to_vec(&response_body).unwrap();
 
 		Ok((response, encoded_response_body))
+	}
+}
+
+impl SetHttpHeader for HttpClientMock {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
+		Ok(())
 	}
 }
 

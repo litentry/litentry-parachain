@@ -724,6 +724,7 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
+          - test_name: lit-twitter-identity-test
     steps:
       - uses: actions/checkout@v4
 

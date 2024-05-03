@@ -140,11 +140,13 @@ pub(crate) fn query_user_by_id(
 		.and(warp::path!("2" / "users" / String))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |id, p: HashMap<String, String>| {
-			let expected_user_ids = vec!["2244994945".to_string(), "mock_user_id".to_string()];
+			let expected_user_ids =
+				vec!["2244994945".to_string(), "mock_user_id".to_string(), "me".to_string()];
 
 			let mut user_names = HashMap::new();
 			user_names.insert("2244994945", "TwitterDev".to_string());
 			user_names.insert("mock_user_id", "mock_user".to_string());
+			user_names.insert("me", "mock_user_me".to_string());
 
 			let default = String::default();
 			let user_fields = p.get("user.fields").unwrap_or(&default);
@@ -170,5 +172,29 @@ pub(crate) fn query_user_by_id(
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
+		})
+}
+
+pub(crate) fn request_user_access_token(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("2" / "oauth2" / "token"))
+		.and(warp::body::form())
+		.map(|_: HashMap<String, String>| {
+			let user_access_token = TwitterUserAccessToken {
+				token_type: "bearer".to_string(),
+				expires_in: 7200,
+				access_token: "dGFxeU1MbWRlSVhxSUgxX3VUdUJrM1FTRUtaMmFPdFM0XzMzcVlFSi0xM1dyOjE3MTMzNDEwODQ5NTg6MToxOmF0OjE".to_string(),
+				scope: "users.read tweet.read".to_string(),
+			};
+			let body = TwitterAPIV2Response {
+				data: Some(user_access_token),
+				meta: None,
+				includes: None,
+			};
+
+			Response::builder()
+				.header("Content-Type", "application/json")
+				.body(serde_json::to_string(&body).unwrap())
 		})
 }
