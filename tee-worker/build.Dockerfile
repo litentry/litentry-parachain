@@ -18,7 +18,7 @@
 
 ### Builder Stage
 ##################################################
-FROM litentry/litentry-tee-dev:intel-sgx-sdk-2.17 AS builder
+FROM litentry/litentry-tee-dev:intel-sgx-sdk-2.21 AS builder
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
