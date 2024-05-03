@@ -551,7 +551,7 @@ where
 					value
 				);
 				let nonce_evm_account =
-					System::account_nonce(&HashedAddressMapping::into_account_id(source));
+					System::account_nonce(HashedAddressMapping::into_account_id(source));
 				ita_sgx_runtime::EvmCall::<Runtime>::create {
 					source,
 					init,
