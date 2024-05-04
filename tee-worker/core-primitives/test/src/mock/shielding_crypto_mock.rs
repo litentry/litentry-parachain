@@ -22,17 +22,9 @@ use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::ed25519::Pair as Ed25519Pair;
 use std::{vec::Vec};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ShieldingCryptoMock {
 	key: Rsa3072KeyPair,
-}
-
-impl Default for ShieldingCryptoMock {
-	fn default() -> Self {
-		ShieldingCryptoMock {
-			key: Rsa3072KeyPair::default(),
-		}
-	}
 }
 
 impl ShieldingCryptoEncrypt for ShieldingCryptoMock {
