@@ -20,7 +20,7 @@ use itp_sgx_crypto::{
 };
 use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::ed25519::Pair as Ed25519Pair;
-use std::{vec::Vec};
+use std::vec::Vec;
 
 #[derive(Clone, Default)]
 pub struct ShieldingCryptoMock {
@@ -31,7 +31,7 @@ impl ShieldingCryptoEncrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	// Commented out temporarily due to sgx_crypto issue under `ucrypto` feature,
-	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456 
+	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
 		Ok(data.to_vec())
 		// self.key
@@ -44,7 +44,7 @@ impl ShieldingCryptoDecrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
 	// Commented out temporarily due to sgx_crypto issue under `ucrypto` feature,
-	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456 
+	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456
 	fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
 		Ok(data.to_vec())
 		// self.key
