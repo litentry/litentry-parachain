@@ -185,6 +185,7 @@ export default {
                 "Nfp",
                 "Sol",
                 "Mcrt",
+                "Btc",
             ],
         },
         // PlatformUserType

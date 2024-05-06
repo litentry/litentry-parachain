@@ -58,6 +58,7 @@ impl TokenName for Web3TokenType {
 			Self::Nfp => "NFP",
 			Self::Sol => "SOL",
 			Self::Mcrt => "MCRT",
+			Self::Btc => "BTC",
 		}
 	}
 }
@@ -214,7 +215,11 @@ impl TokenDecimals for Web3TokenType {
 			// Wbtc
 			(Self::Wbtc, Web3Network::Bsc) | (Self::Wbtc, Web3Network::Ethereum) |
 			// Mcrt
-			(Self::Mcrt, Web3Network::Solana) => 8,
+			(Self::Mcrt, Web3Network::Solana) |
+			// Btc
+			(Self::Btc, Web3Network::BitcoinP2tr) | (Self::Btc, Web3Network::BitcoinP2pkh) |
+			 (Self::Btc, Web3Network::BitcoinP2sh) | (Self::Btc, Web3Network::BitcoinP2wpkh) |
+			  (Self::Btc, Web3Network::BitcoinP2wsh) => 8,
 			// Usdc
 			(Self::Usdc, Web3Network::Ethereum) |
 			// Usdt

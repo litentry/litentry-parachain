@@ -99,7 +99,7 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 
 		Assertion::LITStaking => Some(format!("{BASE_URL}/17-token-holding-amount/1-1-0.json")),
 
-		Assertion::TokenHoldingAmount(_) | Assertion::EVMAmountHolding(_) =>
+		Assertion::EVMAmountHolding(_) =>
 			Some(format!("{BASE_URL}/21-evm-holding-amount/1-1-0.json")),
 
 		Assertion::BRC20AmountHolder =>
@@ -110,6 +110,9 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 		Assertion::PlatformUser(_) => Some(format!("{BASE_URL}/24-platform-user/1-1-0.json")),
 
 		Assertion::NftHolder(_) => Some(format!("{BASE_URL}/26-nft-holder/1-1-0.json")),
+
+		Assertion::TokenHoldingAmount(_) =>
+			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-0.json")),
 
 		Assertion::Dynamic(_) => None,
 	}

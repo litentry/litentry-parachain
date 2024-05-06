@@ -159,6 +159,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -347,6 +353,12 @@ name = "base64"
 version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
+
+[[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
 
 [[package]]
 name = "base64ct"
@@ -2425,6 +2437,10 @@ name = "hashbrown"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+dependencies = [
+ "ahash 0.8.3",
+ "allocator-api2",
+]
 
 [[package]]
 name = "hashbrown_tstd"
@@ -4568,6 +4584,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "chrono 0.4.11",
  "chrono 0.4.26",
  "env_logger 0.10.0",
@@ -4630,19 +4647,27 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
  "hex 0.4.3",
  "http 0.2.1",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "itp-sgx-crypto",
+ "itp-utils",
+ "lazy_static",
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.20",
+ "lru",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "sgx_rand",
  "sgx_tstd",
+ "sp-core",
  "thiserror 1.0.9",
+ "url 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -5170,6 +5195,15 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
+name = "lru"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
+dependencies = [
+ "hashbrown 0.14.0",
+]
 
 [[package]]
 name = "mach"

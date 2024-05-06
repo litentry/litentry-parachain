@@ -140,6 +140,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
+
+[[package]]
 name = "array-bytes"
 version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -262,6 +268,12 @@ name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
+
+[[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
 
 [[package]]
 name = "bech32"
@@ -923,6 +935,7 @@ dependencies = [
  "lazy_static",
  "lc-data-providers",
  "lc-evm-dynamic-assertions",
+ "lc-identity-verification",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
@@ -1750,6 +1763,10 @@ name = "hashbrown"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+dependencies = [
+ "ahash 0.8.3",
+ "allocator-api2",
+]
 
 [[package]]
 name = "hashbrown_tstd"
@@ -3099,6 +3116,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "chrono 0.4.11",
  "hex 0.4.0",
  "http",
@@ -3149,17 +3167,24 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.0",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex 0.4.3",
  "http",
  "http_req",
  "itp-sgx-crypto",
+ "itp-utils",
+ "lazy_static",
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
+ "lru",
+ "parity-scale-codec",
+ "sgx_rand",
  "sgx_tstd",
+ "sp-core",
  "thiserror",
 ]
 
@@ -3426,6 +3451,15 @@ source = "git+https://github.com/integritee-network/log-sgx#483383a9be3e2e900042
 dependencies = [
  "cfg-if 1.0.0",
  "sgx_tstd",
+]
+
+[[package]]
+name = "lru"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
+dependencies = [
+ "hashbrown 0.14.0",
 ]
 
 [[package]]

@@ -202,12 +202,20 @@ pub(crate) fn init_enclave(
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
+
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
+		data_provider_config,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -218,12 +226,6 @@ pub(crate) fn init_enclave(
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
-
-	if let Ok(data_provider_config) = DataProviderConfig::new() {
-		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
-	} else {
-		return Err(Error::Other("data provider initialize error".into()))
-	}
 
 	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
 	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
