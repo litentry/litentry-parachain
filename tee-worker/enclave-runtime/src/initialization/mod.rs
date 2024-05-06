@@ -200,12 +200,20 @@ pub(crate) fn init_enclave(
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
+
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
+		data_provider_config,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -216,12 +224,6 @@ pub(crate) fn init_enclave(
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
-
-	if let Ok(data_provider_config) = DataProviderConfig::new() {
-		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
-	} else {
-		return Err(Error::Other("data provider initialize error".into()))
-	}
 
 	Ok(())
 }
@@ -296,15 +298,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	let vc_handler = std::thread::spawn(move || {
-		error!("*** testing vc task start");
-		run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
-		error!("*** testing vc task finish");
-	});
-	match vc_handler.join() {
-		Ok(v) => error!("Joined vc_handler OK: {:?}", v),
-		Err(e) => error!("Joined vc_handler Err: {:?}", e),
-	}
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 
 	Ok(())
 }
