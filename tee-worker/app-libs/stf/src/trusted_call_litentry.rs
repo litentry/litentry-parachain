@@ -46,9 +46,7 @@ use lc_stf_task_sender::{
 	Web2IdentityVerificationRequest,
 };
 use litentry_macros::if_development_or;
-use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
-};
+use litentry_primitives::{Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData};
 use log::*;
 
 #[cfg(feature = "development")]
@@ -62,7 +60,6 @@ impl TrustedCallSigned {
 		who: Identity,
 		identity: Identity,
 		validation_data: ValidationData,
-		web3networks: Vec<Web3Network>,
 		top_hash: H256,
 		maybe_key: Option<RequestAesKey>,
 		req_ext_hash: H256,
@@ -92,7 +89,6 @@ impl TrustedCallSigned {
 					identity,
 					raw_msg,
 					validation_data: data,
-					web3networks,
 					top_hash,
 					maybe_key,
 					req_ext_hash,
@@ -187,10 +183,7 @@ impl TrustedCallSigned {
 			// to be updated, they can't get the latest IDGraph hash either
 			//
 			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
-			id_graph.push((
-				who.clone(),
-				IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
-			));
+			id_graph.push((who.clone(), IdentityContext::new(BlockNumber::one())));
 			should_create_id_graph = true;
 		}
 		let assertion_networks = assertion.get_supported_web3networks();
@@ -235,7 +228,6 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: Identity,
 		identity: Identity,
-		web3networks: Vec<Web3Network>,
 	) -> StfResult<()> {
 		if_development_or!(
 			{
@@ -251,7 +243,7 @@ impl TrustedCallSigned {
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 			}
 		);
-		IMTCall::link_identity { who, identity, web3networks }
+		IMTCall::link_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
 
@@ -285,7 +277,6 @@ impl TrustedCallSigned {
 		signer: Identity,
 		who: Identity,
 		identity: Identity,
-		web3networks: Vec<Web3Network>,
 		maybe_key: Option<RequestAesKey>,
 		req_ext_hash: H256,
 	) -> StfResult<TrustedCallResult>
@@ -302,7 +293,6 @@ impl TrustedCallSigned {
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
 			identity,
-			web3networks,
 		)
 		.map_err(|e| {
 			debug!("pushing error event ... error: {}", e);

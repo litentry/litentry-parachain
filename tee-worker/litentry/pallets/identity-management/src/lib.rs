@@ -97,8 +97,6 @@ pub mod pallet {
 		LinkPrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
-		/// identity doesn't match the network types
-		WrongWeb3NetworkTypes,
 		/// identity cannot be used to build prime identity
 		NotSupportedIdentity,
 	}
@@ -131,7 +129,6 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: Identity,
 			identity: Identity,
-			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
@@ -141,15 +138,9 @@ pub mod pallet {
 			);
 			ensure!(identity != who, Error::<T>::LinkPrimeIdentityDisallowed);
 
-			ensure!(
-				identity.matches_web3networks(web3networks.as_ref()),
-				Error::<T>::WrongWeb3NetworkTypes
-			);
-
 			Self::maybe_create_id_graph(&who)?;
 
-			let context =
-				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
+			let context = <IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number());
 			Self::insert_identity_with_limit(&who, &identity, context)?;
 			Self::deposit_event(Event::IdentityLinked { who, identity });
 			Ok(())
@@ -197,29 +188,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
-		#[pallet::weight({15_000_000})]
-		pub fn set_identity_networks(
-			origin: OriginFor<T>,
-			who: Identity,
-			identity: Identity,
-			web3networks: Vec<Web3Network>,
-		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
-			Self::maybe_create_id_graph(&who)?;
-			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-
-			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
-				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-				ensure!(
-					identity.matches_web3networks(web3networks.as_ref()),
-					Error::<T>::WrongWeb3NetworkTypes
-				);
-				c.set_web3networks(web3networks);
-				*context = Some(c);
-				Ok(())
-			})
-		}
+		// #[pallet::call_index(4)] TODO: What should happen with index???
+		// #[pallet::weight({15_000_000})]
 
 		#[pallet::call_index(5)]
 		#[pallet::weight({15_000_000})]
@@ -259,7 +229,6 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		// try to create an IDGraph if there's none - `who` will be the prime identity
-		// please note the web3networks for the prime identity will be all avaiable networks
 		pub fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
 			if IDGraphs::<T>::get(who, who).is_none() {
 				ensure!(
@@ -267,10 +236,8 @@ pub mod pallet {
 					Error::<T>::IdentityAlreadyLinked
 				);
 
-				let context = <IdentityContext<T>>::new(
-					<T as frame_system::Config>::BlockNumber::one(),
-					who.default_web3networks(),
-				);
+				let context =
+					<IdentityContext<T>>::new(<T as frame_system::Config>::BlockNumber::one());
 
 				Self::insert_identity_with_limit(who, who, context)?;
 			}

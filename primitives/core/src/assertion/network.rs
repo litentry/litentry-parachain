@@ -70,8 +70,6 @@ pub enum Web3Network {
 	LitentryRococo,
 	#[codec(index = 5)]
 	Khala,
-	#[codec(index = 6)]
-	SubstrateTestnet,
 
 	// evm
 	#[codec(index = 7)]
@@ -121,7 +119,7 @@ impl Web3Network {
 			Self::Polkadot |
 				Self::Kusama | Self::Litentry |
 				Self::Litmus | Self::LitentryRococo |
-				Self::Khala | Self::SubstrateTestnet
+				Self::Khala
 		)
 	}
 
@@ -187,7 +185,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
 					Web3Network::BitcoinP2tr => false,
@@ -216,7 +213,6 @@ mod tests {
 					Web3Network::Litmus => true,
 					Web3Network::LitentryRococo => true,
 					Web3Network::Khala => true,
-					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => false,
@@ -245,7 +241,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => true,
@@ -274,7 +269,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => false,

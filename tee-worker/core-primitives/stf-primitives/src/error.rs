@@ -39,9 +39,6 @@ pub enum StfError {
 	RequestVCFailed(Assertion, ErrorDetail),
 	#[codec(index = 4)]
 	SetScheduledMrEnclaveFailed,
-	#[codec(index = 5)]
-	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
-	SetIdentityNetworksFailed(ErrorDetail),
 	#[codec(index = 6)]
 	InvalidAccount,
 	#[codec(index = 7)]

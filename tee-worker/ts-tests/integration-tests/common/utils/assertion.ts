@@ -70,7 +70,6 @@ export async function assertIdGraphMutationResult(
         | 'LinkIdentityResult'
         | 'DeactivateIdentityResult'
         | 'ActivateIdentityResult'
-        | 'SetIdentityNetworksResult',
     expectedIdGraph: [CorePrimitivesIdentity, boolean][]
 ): Promise<HexString> {
     const decodedResult = context.api.createType(resultType, returnValue.value);

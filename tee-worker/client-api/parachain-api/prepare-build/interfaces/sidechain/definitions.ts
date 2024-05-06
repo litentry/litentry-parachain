@@ -48,7 +48,7 @@ export default {
                 ActivateIdentityFailed: "(ErrorDetail)",
                 RequestVCFailed: "(Assertion, ErrorDetail)",
                 SetScheduledMrEnclaveFailed: "Null",
-                SetIdentityNetworksFailed: "(ErrorDetail)",
+                __Unused5: "Null",
                 InvalidAccount: "Null",
                 UnclassifiedError: "Null",
                 RemoveIdentityFailed: "(ErrorDetail)",

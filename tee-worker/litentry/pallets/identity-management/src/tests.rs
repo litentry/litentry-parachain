@@ -15,10 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	all_evm_web3networks, get_eligible_identities, mock::*, Error, IDGraph, Identity,
-	IdentityContext, IdentityStatus, Web3Network,
+	get_eligible_identities, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
+use litentry_primitives::{all_evm_web3networks, all_substrate_web3networks, Web3Network};
 use sp_runtime::AccountId32;
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
@@ -27,46 +27,30 @@ pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
 #[test]
 fn get_eligible_identities_works() {
 	let mut id_graph = IDGraph::<Test>::default();
-	id_graph.push((
-		alice_substrate_identity(),
-		IdentityContext::new(1u64, vec![Web3Network::Litentry, Web3Network::Khala]),
-	));
-	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
-	let mut desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
-	let mut identities =
-		get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone(), true);
-	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
-	assert_eq!(identities[1].1, vec![]);
+	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64)));
+	id_graph.push((alice_substrate_identity(), IdentityContext::new(1u64)));
+	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64)));
 
-	// `alice_evm_identity` should be filtered out
-	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![])));
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
-	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
-	assert_eq!(identities[1].1, vec![]);
+	let identities = get_eligible_identities(id_graph.as_ref(), vec![], true);
 
-	// `alice_substrate_identity` should be filtered out
-	desired_web3networks = all_evm_web3networks();
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
-	assert_eq!(identities.len(), 2);
+	assert_eq!(identities.len(), 3);
 	assert_eq!(identities[0].1, vec![]);
-	assert_eq!(identities[1].1, all_evm_web3networks());
+	assert_eq!(identities[1].1, all_substrate_web3networks());
+	assert_eq!(identities[2].1, all_evm_web3networks());
+}
 
-	// only twitter identity is left
-	desired_web3networks = vec![];
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
-	assert_eq!(identities.len(), 1);
+#[test]
+fn get_eligible_identities_scoped_works() {
+	let mut id_graph = IDGraph::<Test>::default();
+	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64)));
+	id_graph.push((alice_substrate_identity(), IdentityContext::new(1u64)));
+	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64)));
+
+	let desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polygon];
+	let identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
 	assert_eq!(identities[0].1, vec![]);
-	assert_eq!(identities[0].0, alice_twitter_identity(1));
-
-	desired_web3networks = vec![Web3Network::Arbitrum];
-
-	// only `alice_evm_identity` is left
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
-	assert_eq!(identities.len(), 1);
-	assert_eq!(identities[0].1, vec![Web3Network::Arbitrum]);
-	assert_eq!(identities[0].0, alice_evm_identity());
+	assert_eq!(identities[1].1, vec![Web3Network::Litentry]);
+	assert_eq!(identities[2].1, vec![Web3Network::Polygon]);
 }
 
 #[test]
@@ -78,11 +62,10 @@ fn link_twitter_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_twitter_identity(1),
-			vec![],
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_twitter_identity(1)).unwrap(),
-			IdentityContext { link_block: 1, web3networks: vec![], status: IdentityStatus::Active }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -91,17 +74,15 @@ fn link_twitter_identity_works() {
 #[test]
 fn link_substrate_identity_works() {
 	new_test_ext().execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
 		let who: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_substrate_identity(),
-			web3networks.clone(),
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -110,36 +91,17 @@ fn link_substrate_identity_works() {
 #[test]
 fn link_evm_identity_works() {
 	new_test_ext().execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Ethereum, Web3Network::Bsc];
 		let who: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_evm_identity(),
-			web3networks.clone(),
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
-			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
-	});
-}
-
-#[test]
-fn link_identity_with_wrong_network_fails() {
-	new_test_ext().execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Bsc];
-		let who: Identity = BOB.into();
-		assert_noop!(
-			IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				who,
-				alice_substrate_identity(),
-				web3networks,
-			),
-			Error::<Test>::WrongWeb3NetworkTypes
-		);
 	});
 }
 
@@ -147,34 +109,19 @@ fn link_identity_with_wrong_network_fails() {
 fn link_identity_fails_for_linked_identity() {
 	new_test_ext().execute_with(|| {
 		// bob -> alice OK
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
 		let alice: Identity = ALICE.into();
 		let bob: Identity = BOB.into();
 		let charlie: Identity = CHARLIE.into();
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			bob.clone(),
-			alice.clone(),
-			web3networks.clone(),
-		));
+		assert_ok!(IMT::link_identity(RuntimeOrigin::signed(ALICE), bob.clone(), alice.clone(),));
 		assert_eq!(
 			IMT::id_graphs(bob.clone(), alice.clone()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: web3networks.clone(),
-				status: IdentityStatus::Active
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&bob), 2);
 
 		// charlie -> alice NOK, as alice is already in bob's IDGraph
 		assert_err!(
-			IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				charlie.clone(),
-				alice.clone(),
-				web3networks.clone(),
-			),
+			IMT::link_identity(RuntimeOrigin::signed(ALICE), charlie.clone(), alice.clone(),),
 			Error::<Test>::IdentityAlreadyLinked
 		);
 
@@ -182,12 +129,7 @@ fn link_identity_fails_for_linked_identity() {
 
 		// alice -> charlie NOK, as alice is already in bob's IDGraph
 		assert_err!(
-			IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				alice.clone(),
-				charlie.clone(),
-				web3networks,
-			),
+			IMT::link_identity(RuntimeOrigin::signed(ALICE), alice.clone(), charlie.clone(),),
 			Error::<Test>::IdentityAlreadyLinked
 		);
 
@@ -198,21 +140,15 @@ fn link_identity_fails_for_linked_identity() {
 #[test]
 fn cannot_link_identity_again() {
 	new_test_ext().execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Polkadot];
 		let who_bob: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who_bob.clone(),
 			alice_substrate_identity(),
-			web3networks.clone()
 		));
 		assert_eq!(
 			IMT::id_graphs(who_bob.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				status: IdentityStatus::Active,
-				web3networks: web3networks.clone()
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who_bob), 2);
 
@@ -223,7 +159,6 @@ fn cannot_link_identity_again() {
 				RuntimeOrigin::signed(ALICE),
 				who_alice.clone(),
 				alice_substrate_identity(),
-				web3networks
 			),
 			Error::<Test>::IdentityAlreadyLinked
 		);
@@ -243,7 +178,6 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(i),
-				vec![],
 			));
 		}
 		assert_err!(
@@ -251,7 +185,6 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(65),
-				vec![],
 			),
 			Error::<Test>::IDGraphLenLimitReached
 		);
@@ -275,15 +208,10 @@ fn deactivate_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Active
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone());
@@ -297,11 +225,7 @@ fn deactivate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Inactive
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive, web3networks: None }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone())
@@ -331,15 +255,10 @@ fn activate_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Active
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
 		);
 		let id_graph = IMT::id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
@@ -352,11 +271,7 @@ fn activate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Inactive
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive, web3networks: None }
 		);
 		let id_graph = IMT::id_graph(&who.clone())
 			.into_iter()
@@ -380,73 +295,6 @@ fn activate_identity_works() {
 }
 
 #[test]
-fn set_identity_networks_works() {
-	new_test_ext().execute_with(|| {
-		let who: Identity = BOB.into();
-
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
-		));
-		assert_eq!(
-			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Active
-			}
-		);
-
-		let new_networks: _ = vec![Web3Network::Kusama, Web3Network::Khala];
-		assert_ok!(IMT::set_identity_networks(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_substrate_identity(),
-			new_networks.clone(),
-		));
-		assert_eq!(
-			IMT::id_graphs(who, alice_substrate_identity()).unwrap().web3networks.to_vec(),
-			new_networks
-		);
-	})
-}
-
-#[test]
-fn set_identity_networks_with_wrong_network_fails() {
-	new_test_ext().execute_with(|| {
-		let who: Identity = BOB.into();
-
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
-		));
-		assert_eq!(
-			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
-				status: IdentityStatus::Active
-			}
-		);
-
-		let new_networks: _ = vec![Web3Network::Bsc, Web3Network::Khala];
-		assert_noop!(
-			IMT::set_identity_networks(
-				RuntimeOrigin::signed(ALICE),
-				who,
-				alice_substrate_identity(),
-				new_networks,
-			),
-			Error::<Test>::WrongWeb3NetworkTypes
-		);
-	})
-}
-
-#[test]
 fn get_id_graph_works() {
 	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
@@ -459,7 +307,6 @@ fn get_id_graph_works() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(i.try_into().unwrap()),
-				vec![],
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
@@ -480,19 +327,14 @@ fn get_id_graph_identities_within_same_block() {
 		System::set_block_number(1);
 
 		let identities = vec![
-			(alice_twitter_identity(1), vec![]),
-			(alice_substrate_identity(), vec![Web3Network::LitentryRococo]),
-			(alice_evm_identity(), vec![Web3Network::Ethereum]),
-			(bob_substrate_identity(), vec![Web3Network::Litentry]),
+			alice_twitter_identity(1),
+			alice_substrate_identity(),
+			alice_evm_identity(),
+			bob_substrate_identity(),
 		];
 
-		for (identity, networks) in identities {
-			assert_ok!(IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				identity,
-				networks,
-			));
+		for identity in identities {
+			assert_ok!(IMT::link_identity(RuntimeOrigin::signed(ALICE), who.clone(), identity,));
 		}
 
 		let id_graph = IMT::id_graph(&who);
@@ -513,19 +355,14 @@ fn get_id_graph_identities_within_same_block() {
 
 		// change order of the identites
 		let identities = vec![
-			(bob_substrate_identity(), vec![Web3Network::Litentry]),
-			(alice_substrate_identity(), vec![Web3Network::LitentryRococo]),
-			(alice_twitter_identity(1), vec![]),
-			(alice_evm_identity(), vec![Web3Network::Ethereum]),
+			bob_substrate_identity(),
+			alice_twitter_identity(1),
+			alice_substrate_identity(),
+			alice_evm_identity(),
 		];
 
-		for (identity, networks) in identities {
-			assert_ok!(IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				identity,
-				networks,
-			));
+		for identity in identities {
+			assert_ok!(IMT::link_identity(RuntimeOrigin::signed(ALICE), who.clone(), identity,));
 		}
 
 		let id_graph = IMT::id_graph(&who);
@@ -544,13 +381,11 @@ fn id_graph_stats_works() {
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			bob_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			alice_twitter_identity(1),
-			vec![],
 		));
 
 		let stats = IMT::id_graph_stats().unwrap();
@@ -569,13 +404,11 @@ fn remove_one_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			bob_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			alice_twitter_identity(1),
-			vec![],
 		));
 
 		// alice's IDGraph should have 3 entries:
@@ -600,13 +433,11 @@ fn remove_whole_identity_graph_works() {
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			bob_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			alice_twitter_identity(1),
-			vec![],
 		));
 
 		// alice's IDGraph should have 3 entries:
@@ -629,13 +460,11 @@ fn remove_identity_graph_of_other_account_fails() {
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			bob_substrate_identity(),
-			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			alice_twitter_identity(1),
-			vec![],
 		));
 
 		assert_noop!(

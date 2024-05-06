@@ -221,30 +221,6 @@ export async function createSignedTrustedCallLinkIdentity(
     );
 }
 
-export async function createSignedTrustedCallSetIdentityNetworks(
-    parachainApi: ApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Signer,
-    primeIdentity: CorePrimitivesIdentity,
-    identity: string,
-    web3networks: string,
-    aesKey: string,
-    hash: string
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        [
-            'set_identity_networks',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)',
-        ],
-        signer,
-        mrenclave,
-        nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, web3networks, aesKey, hash]
-    );
-}
-
 export async function createSignedTrustedCallRequestVc(
     parachainApi: ApiPromise,
     mrenclave: string,

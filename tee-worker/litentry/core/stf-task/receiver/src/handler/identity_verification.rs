@@ -77,7 +77,6 @@ where
 				enclave_signer.into(),
 				self.req.who.clone(),
 				self.req.identity.clone(),
-				self.req.web3networks.clone(),
 				self.req.maybe_key,
 				self.req.req_ext_hash,
 			);

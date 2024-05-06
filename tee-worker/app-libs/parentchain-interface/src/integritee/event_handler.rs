@@ -33,7 +33,7 @@ use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use litentry_primitives::{
-	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, Web3Network, WorkerType,
+	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, WorkerType,
 };
 use log::*;
 use sp_core::{blake2_256, H160};
@@ -50,7 +50,6 @@ impl ParentchainEventHandler {
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
 		encrypted_validation_data: Vec<u8>,
-		encrypted_web3networks: Vec<u8>,
 	) -> Result<(), Error> {
 		let shard = executor.get_default_shard();
 		let enclave_account_id = executor.get_enclave_account().expect("no enclave account");
@@ -59,15 +58,12 @@ impl ParentchainEventHandler {
 			Identity::decode(&mut executor.decrypt(&encrypted_identity)?.as_slice())?;
 		let validation_data =
 			ValidationData::decode(&mut executor.decrypt(&encrypted_validation_data)?.as_slice())?;
-		let web3networks: Vec<Web3Network> =
-			Decode::decode(&mut executor.decrypt(&encrypted_web3networks)?.as_slice())?;
 
 		let trusted_call = TrustedCall::link_identity(
 			enclave_account_id.into(),
 			account.clone().into(),
 			identity,
 			validation_data,
-			web3networks,
 			None,
 			Default::default(),
 		);
@@ -256,7 +252,6 @@ where
 						&event.account,
 						event.encrypted_identity.clone(),
 						event.encrypted_validation_data.clone(),
-						event.encrypted_web3networks.clone(),
 					);
 					handled_events.push(hash_of(&event));
 

@@ -38,8 +38,6 @@ pub enum TrustedCallResult {
 	DeactivateIdentity(DeactivateIdentityResult),
 	#[codec(index = 5)]
 	ActivateIdentity(ActivateIdentityResult),
-	#[codec(index = 6)]
-	SetIdentityNetworks(SetIdentityNetworksResult),
 }
 
 impl StfExecutionResult for TrustedCallResult {
@@ -51,7 +49,6 @@ impl StfExecutionResult for TrustedCallResult {
 			Self::RequestVC(result) => result.encode(),
 			Self::DeactivateIdentity(result) => result.encode(),
 			Self::ActivateIdentity(result) => result.encode(),
-			Self::SetIdentityNetworks(result) => result.encode(),
 		}
 	}
 
@@ -83,12 +80,6 @@ pub struct DeactivateIdentityResult {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct ActivateIdentityResult {
-	pub mutated_id_graph: AesOutput,
-	pub id_graph_hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetIdentityNetworksResult {
 	pub mutated_id_graph: AesOutput,
 	pub id_graph_hash: H256,
 }

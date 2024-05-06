@@ -38,18 +38,14 @@ pub struct IdentityContext<T: Config> {
 	// the sidechain block number at which the identity is linked
 	pub link_block: BlockNumberOf<T>,
 	// a list of web3 networks on which the identity should be used
-	pub web3networks: Vec<Web3Network>,
+	pub web3networks: Option<Vec<Web3Network>>,
 	// the identity status
 	pub status: IdentityStatus,
 }
 
 impl<T: Config> IdentityContext<T> {
-	pub fn new(link_block: BlockNumberOf<T>, web3networks: Vec<Web3Network>) -> Self {
-		Self { link_block, web3networks: Self::dedup(web3networks), status: IdentityStatus::Active }
-	}
-
-	pub fn set_web3networks(&mut self, web3networks: Vec<Web3Network>) {
-		self.web3networks = Self::dedup(web3networks);
+	pub fn new(link_block: BlockNumberOf<T>) -> Self {
+		Self { link_block, status: IdentityStatus::Active, web3networks: None }
 	}
 
 	pub fn deactivate(&mut self) {
@@ -62,13 +58,6 @@ impl<T: Config> IdentityContext<T> {
 
 	pub fn is_active(&self) -> bool {
 		self.status == IdentityStatus::Active
-	}
-
-	// a small helper fn to apply mutable changes
-	fn dedup(mut web3networks: Vec<Web3Network>) -> Vec<Web3Network> {
-		web3networks.sort();
-		web3networks.dedup();
-		web3networks
 	}
 }
 
@@ -97,6 +86,12 @@ pub fn get_eligible_identities<T: Config>(
 		.filter_map(|item| {
 			if item.1.is_active() {
 				let mut networks = item.0.default_web3networks();
+
+				// in case there are no networks provided, we consider all default networks
+				if desired_web3networks.is_empty() {
+					return Some((item.0.clone(), networks))
+				}
+
 				// filter out identities whose web3networks are not supported by this specific `assertion`.
 				// We do it here before every request sending because:
 				// - it's a common step for all assertion buildings, for those assertions which only

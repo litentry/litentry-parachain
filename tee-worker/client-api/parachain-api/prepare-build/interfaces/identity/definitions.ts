@@ -15,10 +15,6 @@ export default {
             mutated_id_graph: "AesOutput",
             id_graph_hash: "H256",
         },
-        SetIdentityNetworksResult: {
-            mutated_id_graph: "AesOutput",
-            id_graph_hash: "H256",
-        },
         LitentryIdentity: {
             _enum: {
                 Twitter: "IdentityString",
@@ -42,7 +38,7 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
-                "SubstrateTestnet",
+                "__Null",
                 "Ethereum",
                 "Bsc",
                 "BitcoinP2tr",

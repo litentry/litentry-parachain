@@ -96,7 +96,6 @@ export function stfErrorToString(stfError: StfError): string {
     if (
         stfError.isActivateIdentityFailed ||
         stfError.isDeactivateIdentityFailed ||
-        stfError.isSetIdentityNetworksFailed ||
         stfError.isLinkIdentityFailed ||
         stfError.isMissingPrivileges ||
         stfError.isRemoveIdentityFailed ||

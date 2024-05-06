@@ -24,10 +24,9 @@ use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_addre
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
 	format,
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account},
 	trusted_call_result::{
-		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
-		SetIdentityNetworksResult, TrustedCallResult,
+		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult, TrustedCallResult,
 	},
 	Arc, Getter, String, ToString, Vec,
 };
@@ -91,30 +90,13 @@ pub enum TrustedCall {
 	/// - for multi-worker setup, the worker that processes the request can be differnet from the worker that receives the request, so
 	///   we can't maintain something like a global mapping between trusted call and aes-key, which only resides in the memory of one worker.
 	#[codec(index = 0)]
-	link_identity(
-		Identity,
-		Identity,
-		Identity,
-		ValidationData,
-		Vec<Web3Network>,
-		Option<RequestAesKey>,
-		H256,
-	),
+	link_identity(Identity, Identity, Identity, ValidationData, Option<RequestAesKey>, H256),
 	#[codec(index = 1)]
 	deactivate_identity(Identity, Identity, Identity, Option<RequestAesKey>, H256),
 	#[codec(index = 2)]
 	activate_identity(Identity, Identity, Identity, Option<RequestAesKey>, H256),
 	#[codec(index = 3)]
 	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
-	#[codec(index = 4)]
-	set_identity_networks(
-		Identity,
-		Identity,
-		Identity,
-		Vec<Web3Network>,
-		Option<RequestAesKey>,
-		H256,
-	),
 	#[cfg(feature = "development")]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
@@ -124,14 +106,7 @@ pub enum TrustedCall {
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
 	#[codec(index = 20)]
-	link_identity_callback(
-		Identity,
-		Identity,
-		Identity,
-		Vec<Web3Network>,
-		Option<RequestAesKey>,
-		H256,
-	),
+	link_identity_callback(Identity, Identity, Identity, Option<RequestAesKey>, H256),
 	#[codec(index = 21)]
 	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, bool, H256),
 	#[codec(index = 22)]
@@ -221,7 +196,6 @@ impl TrustedCall {
 			Self::deactivate_identity(sender_identity, ..) => sender_identity,
 			Self::activate_identity(sender_identity, ..) => sender_identity,
 			Self::request_vc(sender_identity, ..) => sender_identity,
-			Self::set_identity_networks(sender_identity, ..) => sender_identity,
 			Self::link_identity_callback(sender_identity, ..) => sender_identity,
 			Self::request_vc_callback(sender_identity, ..) => sender_identity,
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
@@ -616,7 +590,6 @@ where
 				who,
 				identity,
 				validation_data,
-				web3networks,
 				maybe_key,
 				req_ext_hash,
 			) => {
@@ -627,7 +600,6 @@ where
 					who.clone(),
 					identity.clone(),
 					validation_data,
-					web3networks.clone(),
 					top_hash,
 					maybe_key,
 					req_ext_hash,
@@ -650,7 +622,6 @@ where
 						enclave_signer_account::<AccountId>().into(),
 						who,
 						identity,
-						web3networks,
 						maybe_key,
 						req_ext_hash,
 					)
@@ -764,23 +735,16 @@ where
 
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::link_identity_callback(
-				signer,
-				who,
-				identity,
-				web3networks,
-				maybe_key,
-				req_ext_hash,
-			) => Self::handle_link_identity_callback(
-				calls,
-				node_metadata_repo,
-				signer,
-				who,
-				identity,
-				web3networks,
-				maybe_key,
-				req_ext_hash,
-			),
+			TrustedCall::link_identity_callback(signer, who, identity, maybe_key, req_ext_hash) =>
+				Self::handle_link_identity_callback(
+					calls,
+					node_metadata_repo,
+					signer,
+					who,
+					identity,
+					maybe_key,
+					req_ext_hash,
+				),
 			TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
@@ -882,50 +846,6 @@ where
 				} else {
 					Ok(TrustedCallResult::Empty)
 				}
-			},
-			TrustedCall::set_identity_networks(
-				signer,
-				who,
-				identity,
-				web3networks,
-				maybe_key,
-				req_ext_hash,
-			) => {
-				debug!("set_identity_networks, networks: {:?}", web3networks);
-				// only support DI requests from the signer but we leave the room for changes
-				ensure!(
-					ensure_self(&signer, &who),
-					Self::Error::Dispatch("Unauthorized signer".to_string())
-				);
-				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_networks_set_call_indexes())??;
-				let old_id_graph = IMT::id_graph(&who);
-
-				IMTCall::set_identity_networks { who: who.clone(), identity, web3networks }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
-
-				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
-
-				debug!("pushing identity_networks_set event ...");
-				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-					call_index,
-					who.clone(),
-					id_graph_hash,
-					req_ext_hash,
-				))));
-
-				let mut mutated_id_graph = IMT::id_graph(&who);
-				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
-
-				if let Some(key) = maybe_key {
-					return Ok(TrustedCallResult::SetIdentityNetworks(SetIdentityNetworksResult {
-						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-						id_graph_hash,
-					}))
-				}
-
-				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::handle_imp_error(_enclave_account, identity, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can

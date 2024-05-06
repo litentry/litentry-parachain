@@ -24,7 +24,7 @@ use crate::{
 use clap::Parser;
 use ita_stf::{Index, TrustedCall};
 use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
-use litentry_primitives::{Identity, Web3Network};
+use litentry_primitives::Identity;
 use sp_core::Pair;
 
 // usage exmaple:
@@ -46,9 +46,6 @@ pub struct LinkIdentityCommand {
 	src_did: String,
 	/// The to-be-linked identity in did format
 	dst_did: String,
-	/// The Web3Network vec, separated by `,`
-	#[clap(num_args = 0.., value_delimiter = ',')]
-	networks: Vec<String>,
 }
 
 impl LinkIdentityCommand {
@@ -56,11 +53,6 @@ impl LinkIdentityCommand {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
 		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
-		let networks: Vec<Web3Network> = self
-			.networks
-			.iter()
-			.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
-			.collect();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
@@ -69,7 +61,6 @@ impl LinkIdentityCommand {
 			alice.public().into(),
 			src_id,
 			dst_id,
-			networks,
 			None,
 			Default::default(),
 		)

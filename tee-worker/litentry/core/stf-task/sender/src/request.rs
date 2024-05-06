@@ -19,7 +19,7 @@ use codec::{Decode, Encode};
 use itp_types::{AccountId, BlockNumber as SidechainBlockNumber, H256};
 use litentry_primitives::{
 	Assertion, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
-	ShardIdentifier, Web2ValidationData, Web3Network,
+	ShardIdentifier, Web2ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -55,7 +55,6 @@ pub struct Web2IdentityVerificationRequest {
 	pub identity: Identity,
 	pub raw_msg: Vec<u8>,
 	pub validation_data: Web2ValidationData,
-	pub web3networks: Vec<Web3Network>,
 	pub top_hash: H256,
 	pub maybe_key: Option<RequestAesKey>,
 	pub req_ext_hash: H256,

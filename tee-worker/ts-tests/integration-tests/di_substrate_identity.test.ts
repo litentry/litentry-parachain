@@ -22,7 +22,6 @@ import {
     getTeeShieldingKey,
     sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
-    createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
@@ -577,44 +576,6 @@ describe('Test Identity (direct invocation)', function () {
         assert.equal(web3networks.indexOf('Litentry') !== -1, true);
     });
 
-    step('setting identity network(alice)', async function () {
-        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const nonce = aliceCurrentNonce++;
-
-        const idGraphHashResults: HexString[] = [];
-        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
-
-        // we set the network to ['Litentry', 'Kusama']
-        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', nonce),
-            context.web3Wallets.substrate.Alice,
-            aliceSubstrateIdentity,
-            eveSubstrateIdentity.toHex(),
-            context.api.createType('Vec<Web3Network>', ['Litentry', 'Kusama']).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setIdentityNetworksCall);
-        idGraphHashResults.push(
-            await assertIdGraphMutationResult(
-                context,
-                teeShieldingKey,
-                aliceSubstrateIdentity,
-                res,
-                'ActivateIdentityResult',
-                expectedIdGraphs[0]
-            )
-        );
-        expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-        await assertIsInSidechainBlock('setIdentityNetworksCall', res);
-
-        assert.lengthOf(idGraphHashResults, 1);
-    });
-
     step('check idgraph from sidechain storage after setting identity network', async function () {
         const expectedWeb3Networks = ['Kusama', 'Litentry'];
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
@@ -632,39 +593,6 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
-    });
-
-    step('setting incompatible identity network(alice)', async function () {
-        const eveSubstrateIdentity = await context.web3Wallets.substrate.Eve.getIdentity(context);
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const nonce = aliceCurrentNonce++;
-
-        // alice address is not compatible with ethereum network
-        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', nonce),
-            context.web3Wallets.substrate.Alice,
-            aliceSubstrateIdentity,
-            eveSubstrateIdentity.toHex(),
-            context.api.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setIdentityNetworksCall);
-        assertWorkerError(
-            context,
-            (v) => {
-                assert.isTrue(v.isDispatch, `expected Dispatch, received ${v.type} instead`);
-                assert.equal(
-                    v.asDispatch.toString(),
-                    ' error: Module(ModuleError { index: 8, error: [4, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
-                );
-            },
-            res
-        );
-        console.log('setIdentityNetworks call returned', res.toHuman());
-        assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
     });
 
     step('check idgraph from sidechain storage after setting incompatible identity network', async function () {
@@ -728,41 +656,6 @@ describe('Test Identity (direct invocation)', function () {
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
         }
-        assert.lengthOf(idGraphHashResults, 1);
-    });
-
-    step('setting identity networks for prime identity)', async function () {
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-
-        const idGraphHashResults: HexString[] = [];
-        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
-
-        // we set the network to ['Litentry', 'Kusama']
-        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', charlieCurrentNonce++),
-            context.web3Wallets.substrate.Charlie,
-            charlieSubstrateIdentity,
-            charlieSubstrateIdentity.toHex(),
-            context.api.createType('Vec<Web3Network>', ['Litentry', 'Kusama']).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setIdentityNetworksCall);
-        idGraphHashResults.push(
-            await assertIdGraphMutationResult(
-                context,
-                teeShieldingKey,
-                charlieSubstrateIdentity,
-                res,
-                'ActivateIdentityResult',
-                expectedIdGraphs[0]
-            )
-        );
-        expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
-        await assertIsInSidechainBlock('setIdentityNetworksCall', res);
         assert.lengthOf(idGraphHashResults, 1);
     });
 
