@@ -18,8 +18,9 @@
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
 use crate::{
+	format,
 	helpers::{enclave_signer_account, get_shard_vaults, shard_creation_info, shard_vault},
-	Stf, ENCLAVE_ACCOUNT_KEY,
+	vec, Arc, Box, Debug, From, Stf, Vec, ENCLAVE_ACCOUNT_KEY,
 };
 use codec::{Decode, Encode};
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
@@ -47,15 +48,13 @@ use itp_types::{
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
-use std::{fmt::Debug, format, prelude::v1::*, sync::Arc, vec};
 
 impl<TCS, G, State, Runtime, AccountId> InitState<State, AccountId> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait + Debug,
 	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
 	Runtime: frame_system::Config<AccountId = AccountId> + pallet_balances::Config,
-	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source:
-		std::convert::From<AccountId>,
+	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
 	AccountId: Encode,
 {
 	fn init_state(enclave_account: AccountId) -> State {
