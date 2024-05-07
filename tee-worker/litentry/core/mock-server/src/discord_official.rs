@@ -15,7 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use lc_data_providers::discord_official::{DiscordMessage, DiscordMessageAuthor};
+use lc_data_providers::discord_official::{
+	DiscordMessage, DiscordMessageAuthor, DiscordUser, DiscordUserAccessToken,
+};
+use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
 pub(crate) fn query_message(
@@ -40,5 +43,47 @@ pub(crate) fn query_message(
 			} else {
 				Response::builder().status(400).body(String::from("Error query"))
 			}
+		})
+}
+
+pub(crate) fn get_user_info(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get().and(warp::path!("api" / "users" / String)).map(|user_id| {
+		let current_user = "@me".to_string();
+		if current_user == user_id {
+			let body = DiscordUser {
+				id: "1".to_string(),
+				username: "bob".to_string(),
+				discriminator: "0".to_string(),
+			};
+			Response::builder().body(serde_json::to_string(&body).unwrap())
+		} else {
+			let body = DiscordUser {
+				id: user_id,
+				username: "alice".to_string(),
+				discriminator: "2".to_string(),
+			};
+			Response::builder().body(serde_json::to_string(&body).unwrap())
+		}
+	})
+}
+
+pub(crate) fn request_user_access_token(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("api" / "oauth2" / "token"))
+		.and(warp::body::form())
+		.map(|_: HashMap<String, String>| {
+			let body = DiscordUserAccessToken {
+				token_type: "bearer".to_string(),
+				expires_in: 7200,
+				access_token: "dGFxeU1MbWRlSVhxSUgxX3VUdUJrM1FTRUtaMmFPdFM0XzMzcVlFSi0xM1dyOjE3MTMzNDEwODQ5NTg6MToxOmF0OjE".to_string(),
+				refresh_token: "dGFxeU1MbWRlSVhxSUgxX3VUdUJrM1FTRUtaMmFPdFM0XzMzcVlFSi0xM1dyOjE3MTMzNDEwODQ5NTg6MToxOmF0OjE".to_string(),
+				scope: "identify".to_string(),
+			};
+
+			Response::builder()
+				.header("Content-Type", "application/json")
+				.body(serde_json::to_string(&body).unwrap())
 		})
 }

@@ -209,4 +209,36 @@ mod tests {
 		assert_eq!(message.content, "Hello, litentry.");
 		assert_eq!(message.channel_id, channel_id)
 	}
+
+	#[test]
+	fn get_user_info_work() {
+		let data_provider_config = init();
+
+		let user_id = "@me";
+
+		let mut client = DiscordOfficialClient::new(&data_provider_config);
+		let result = client.get_user_info(user_id.to_string());
+		assert!(result.is_ok(), "query discord error: {:?}", result);
+
+		let user = result.unwrap();
+		assert_eq!(user.id, "1".to_string());
+		assert_eq!(user.username, "bob");
+		assert_eq!(user.discriminator, "0");
+	}
+
+	#[test]
+	fn request_user_access_token_work() {
+		let data_provider_config = init();
+
+		let data = DiscordUserAccessTokenData {
+			client_id: "test-client-id".to_string(),
+			client_secret: "test-client-secret".to_string(),
+			code: "test-code".to_string(),
+			redirect_uri: "http://localhost:3000/redirect".to_string(),
+		};
+		let mut client = DiscordOfficialClient::new(&data_provider_config);
+
+		let result = client.request_user_access_token(data);
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
 }
