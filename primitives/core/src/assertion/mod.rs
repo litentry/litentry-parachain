@@ -147,7 +147,7 @@ impl Assertion {
 	//
 	// The final networks used for assertion building are the common set of:
 	// - "assertion supported networks" which are defined here, and
-	// - "identity networks" which are defined by the user and stored in `IdentityContext`
+	// - "identity networks" which are defined by the user and applied within RequestVc params
 	//
 	// returns a vector of `Web3Network` guarantees it's a subnet of
 	// the broader `Web3Network` (see network.rs)

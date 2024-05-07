@@ -182,7 +182,7 @@ impl TrustedCallSigned {
 			// building fails (e.g. due to data provider error), the client won't expect the IDGraph
 			// to be updated, they can't get the latest IDGraph hash either
 			//
-			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+			// we are safe to use `Active` as IDGraph would be non-empty otherwise
 			id_graph.push((who.clone(), IdentityContext::new(BlockNumber::one())));
 			should_create_id_graph = true;
 		}
