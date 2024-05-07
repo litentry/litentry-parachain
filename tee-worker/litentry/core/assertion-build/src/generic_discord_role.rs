@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::{generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential};
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, DataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -37,28 +38,42 @@ pub fn build(
 			Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype.clone()), error_detail)
 		})?;
 
+	let identities = req
+		.identities
+		.iter()
+		.map(|(identity, _)| identity.clone())
+		.collect::<Vec<Identity>>();
+
 	let mut has_role_value = false;
 	let mut client =
 		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
-	for identity in &req.identities {
-		if let Identity::Discord(address) = &identity.0 {
-			let resp =
-				client.has_role(role_id.clone(), address.inner_ref().to_vec()).map_err(|e| {
-					Error::RequestVCFailed(
+
+	loop_with_abort_strategy(
+		identities,
+		|identity| {
+			if let Identity::Discord(address) = &identity {
+				match client.has_role(role_id.clone(), address.inner_ref().to_vec()) {
+					Ok(resp) => {
+						debug!("Litentry & Discord user has role response: {:?}", resp);
+						// data is true if the user has the specified role, otherwise, it is false.
+						if resp.data {
+							has_role_value = true;
+							Ok(LoopControls::Break)
+						} else {
+							Ok(LoopControls::Continue)
+						}
+					},
+					Err(err) => Err(Error::RequestVCFailed(
 						Assertion::GenericDiscordRole(rtype.clone()),
-						e.into_error_detail(),
-					)
-				})?;
-
-			debug!("Litentry & Discord user has role response: {:?}", resp);
-
-			// data is true if the user has the specified role, otherwise, it is false.
-			if resp.data {
-				has_role_value = true;
-				break
+						err.into_error_detail(),
+					)),
+				}
+			} else {
+				Ok(LoopControls::Continue)
 			}
-		}
-	}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

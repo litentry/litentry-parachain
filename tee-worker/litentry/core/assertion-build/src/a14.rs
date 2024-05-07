@@ -32,6 +32,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
@@ -115,24 +116,30 @@ pub fn build(
 	let mut value = false;
 	let mut client = A14Client::new(data_provider_config);
 
-	for address in polkadot_addresses {
-		let data = A14Data {
-			params: A14DataParams { address },
-			include_metadata: false,
-			include_widgets: false,
-		};
-		let response = client.send_request(&data)?;
+	loop_with_abort_strategy(
+		polkadot_addresses,
+		|address| {
+			let data = A14Data {
+				params: A14DataParams { address: address.clone() },
+				include_metadata: false,
+				include_widgets: false,
+			};
+			let response = client.send_request(&data)?;
 
-		let result = response
-			.data
-			.get("result")
-			.and_then(|r| r.as_bool())
-			.ok_or(Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
-		if result {
-			value = result;
-			break
-		}
-	}
+			let result = response
+				.data
+				.get("result")
+				.and_then(|r| r.as_bool())
+				.ok_or(Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
+			if result {
+				value = result;
+				Ok(LoopControls::Break)
+			} else {
+				Ok(LoopControls::Continue)
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

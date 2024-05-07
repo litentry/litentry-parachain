@@ -33,7 +33,7 @@ pub fn get_schema_url(assertion: &Assertion) -> String {
 
 		Assertion::A4(_) => format!("{BASE_URL}/4-token-holding-time/1-1-0.json"),
 
-		Assertion::A6 => format!("{BASE_URL}/6-twitter-follower-amount/1-1-0.json"),
+		Assertion::A6 => format!("{BASE_URL}/6-twitter-follower-amount/1-1-1.json"),
 
 		Assertion::A7(_) => format!("{BASE_URL}/4-token-holding-time/1-1-0.json"),
 

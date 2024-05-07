@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{
 	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
 };
@@ -46,26 +47,42 @@ pub fn build(
 
 	let mut client =
 		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
-	for identity in &req.identities {
-		if let Identity::Discord(address) = &identity.0 {
-			discord_cnt += 1;
-			let resp = client.check_join(guild_id.to_vec(), address.inner_ref().to_vec()).map_err(
-				|e| Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail()),
-			)?;
-			if resp.data {
-				has_joined = true;
+	let identities = req
+		.identities
+		.iter()
+		.map(|(identity, _)| identity.clone())
+		.collect::<Vec<Identity>>();
 
-				//Assign role "ID-Hubber" to each discord account
-				if let Ok(response) =
-					client.assign_id_hubber(guild_id.to_vec(), address.inner_ref().to_vec())
-				{
-					if !response.data {
-						error!("assign_id_hubber {} {}", response.message, response.msg_code);
+	loop_with_abort_strategy(
+		identities,
+		|identity| {
+			if let Identity::Discord(address) = identity {
+				discord_cnt += 1;
+				let resp = client
+					.check_join(guild_id.to_vec(), address.inner_ref().to_vec())
+					.map_err(|e| {
+						Error::RequestVCFailed(
+							Assertion::A2(guild_id.clone()),
+							e.into_error_detail(),
+						)
+					})?;
+				if resp.data {
+					has_joined = true;
+
+					//Assign role "ID-Hubber" to each discord account
+					if let Ok(response) =
+						client.assign_id_hubber(guild_id.to_vec(), address.inner_ref().to_vec())
+					{
+						if !response.data {
+							error!("assign_id_hubber {} {}", response.message, response.msg_code);
+						}
 					}
 				}
 			}
-		}
-	}
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
