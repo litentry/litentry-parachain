@@ -77,6 +77,8 @@ std = [
     # litentry
     "litentry-primitives/std",
     "itp-utils/std",
+    "parachain-core-primitives/std",
+    "sp-std/std",
     "lc-scheduled-enclave/std",
 ]
 sgx = [
