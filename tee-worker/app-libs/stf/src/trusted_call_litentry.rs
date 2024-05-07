@@ -24,6 +24,7 @@ use crate::{
 		verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
+	Arc, Vec,
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
@@ -49,7 +50,6 @@ use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
-use std::{sync::Arc, vec::Vec};
 
 #[cfg(feature = "development")]
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};

@@ -19,19 +19,17 @@
 use sp_core::{H160, U256};
 
 #[cfg(feature = "evm")]
-use std::vec::Vec;
-
-#[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 #[cfg(feature = "development")]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
+	format,
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
 		SetIdentityNetworksResult, TrustedCallResult,
 	},
-	Getter,
+	Arc, Getter, String, ToString, Vec,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -67,7 +65,6 @@ use sp_core::{
 };
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
-use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
