@@ -29,7 +29,13 @@ use itc_rest_client::{
 };
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{format, string::String, vec, vec::Vec};
+use std::{
+	collections::HashMap,
+	format,
+	string::{String, ToString},
+	vec,
+	vec::Vec,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
@@ -52,6 +58,23 @@ pub struct DiscordUser {
 	pub discriminator: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DiscordUserAccessTokenData {
+	pub client_id: String,
+	pub client_secret: String,
+	pub code: String,
+	pub redirect_uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DiscordUserAccessToken {
+	pub access_token: String,
+	pub refresh_token: String,
+	pub token_type: String,
+	pub expires_in: u32,
+	pub scope: String,
+}
+
 impl RestPath<String> for DiscordUser {
 	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
@@ -59,6 +82,12 @@ impl RestPath<String> for DiscordUser {
 }
 
 impl RestPath<String> for DiscordMessage {
+	fn get_path(path: String) -> Result<String, HttpError> {
+		Ok(path)
+	}
+}
+
+impl RestPath<String> for DiscordUserAccessToken {
 	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
@@ -89,6 +118,14 @@ impl DiscordOfficialClient {
 		DiscordOfficialClient { client }
 	}
 
+	pub fn with_access_token(url: &str, token_type: &str, access_token: &str) -> Self {
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+		headers.insert(AUTHORIZATION.as_str(), format!("{} {}", token_type, access_token).as_str());
+		let client = build_client_with_cert(url, headers);
+		DiscordOfficialClient { client }
+	}
+
 	pub fn query_message(
 		&mut self,
 		channel_id: Vec<u8>,
@@ -113,6 +150,29 @@ impl DiscordOfficialClient {
 		self.client
 			.get_with::<String, DiscordUser>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+
+	pub fn request_user_access_token(
+		&mut self,
+		data: DiscordUserAccessTokenData,
+	) -> Result<DiscordUserAccessToken, Error> {
+		debug!("Discord create access token");
+
+		let path = "/api/oauth2/token".to_string();
+
+		let mut body = HashMap::new();
+		body.insert("client_id".to_string(), data.client_id);
+		body.insert("client_secret".to_string(), data.client_secret);
+		body.insert("grant_type".to_string(), "authorization_code".to_string());
+		body.insert("code".to_string(), data.code);
+		body.insert("redirect_uri".to_string(), data.redirect_uri);
+
+		let user_token = self
+			.client
+			.post_form_urlencoded_capture::<String, DiscordUserAccessToken>(path, body)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		Ok(user_token)
 	}
 }
 
