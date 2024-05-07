@@ -153,11 +153,11 @@ mod tests {
 		let mut response = client
 			.user_verification("0xa466bf7586766938ab71c0788af62962a65fa966".into(), true)
 			.unwrap();
-		assert_eq!(response.result.is_valid, true);
+		assert_eq!(response.user, true);
 
 		response = client
 			.user_verification("0x9401518f4ebba857baa879d9f76e1cc8b31ed197".into(), false)
 			.unwrap();
-		assert_eq!(response.result.is_valid, false);
+		assert_eq!(response.user, false);
 	}
 }
