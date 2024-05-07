@@ -55,8 +55,8 @@ pub fn build(
 	match result {
 		Ok(has_nft) => {
 			let runtime_version = IssuerRuntimeVersion {
-				parachain: req.parachain_runtime_version.clone(),
-				sidechain: req.sidechain_runtime_version.clone(),
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
 			};
 
 			match Credential::new(&req.who, &req.shard, &runtime_version) {
@@ -101,8 +101,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
-			parachain_runtime_version: String::default(),
-			sidechain_runtime_version: String::default(),
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

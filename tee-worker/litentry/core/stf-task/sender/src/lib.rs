@@ -42,7 +42,6 @@ use litentry_primitives::{
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
-use std::string::String;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -94,8 +93,8 @@ pub struct AssertionBuildRequest {
 	pub top_hash: H256,
 	pub parachain_block_number: ParentchainBlockNumber,
 	pub sidechain_block_number: SidechainBlockNumber,
-	pub parachain_runtime_version: String,
-	pub sidechain_runtime_version: String,
+	pub parachain_runtime_version: u32,
+	pub sidechain_runtime_version: u32,
 	pub maybe_key: Option<RequestAesKey>,
 	pub should_create_id_graph: bool,
 	pub req_ext_hash: H256,

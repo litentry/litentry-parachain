@@ -38,8 +38,8 @@ pub fn build(
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 
 	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version.clone(),
-		sidechain: req.sidechain_runtime_version.clone(),
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
 	};
 
 	let mut credential_unsigned =

@@ -96,8 +96,8 @@ where
 		trusted_operation: &TrustedOperation<TCS, G>,
 		_header: &PH,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: &String,
-		sidechain_runtime_version: &String,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 		post_processing: StatePostProcessing,
 	) -> Result<ExecutedOperation<TCS, G>>
 	where

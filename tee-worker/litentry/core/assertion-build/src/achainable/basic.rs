@@ -46,8 +46,8 @@ pub fn build_basic(
 	let achainable_param = AchainableParams::Basic(param.clone());
 
 	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version.clone(),
-		sidechain: req.sidechain_runtime_version.clone(),
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
 	};
 
 	let mut credential = Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {

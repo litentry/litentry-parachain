@@ -72,8 +72,8 @@ impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRep
 	fn execute_call(
 		state: &mut SgxExternalities,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: &String,
-		sidechain_runtime_version: &String,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 		call: TrustedCallSignedMock,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
@@ -188,8 +188,8 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 	fn execute(
 		self,
 		_shard: &ShardIdentifier,
-		_parachain_runtime_version: &String,
-		_sidechain_runtime_version: &String,
+		_parachain_runtime_version: u32,
+		_sidechain_runtime_version: u32,
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,

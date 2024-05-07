@@ -20,6 +20,7 @@ use crate::{
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	NodeMetadataTrait,
 };
 use codec::{Decode, Encode};
 
@@ -280,5 +281,11 @@ impl BalancesCallIndexes for NodeMetadataMock {
 impl TimestampCallIndexes for NodeMetadataMock {
 	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.timestamp_module, self.timestamp_set])
+	}
+}
+
+impl NodeMetadataTrait for NodeMetadataMock {
+	fn get_runtime_version(&self) -> u32 {
+		self.runtime_spec_version
 	}
 }

@@ -118,8 +118,8 @@ pub struct DataSource {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct IssuerRuntimeVersion {
-	pub parachain: String,
-	pub sidechain: String,
+	pub parachain: u32,
+	pub sidechain: u32,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]

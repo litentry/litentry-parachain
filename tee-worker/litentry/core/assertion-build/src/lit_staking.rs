@@ -187,8 +187,8 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut client = LitentryStakingClient::new();
 	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
 	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version.clone(),
-		sidechain: req.sidechain_runtime_version.clone(),
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
 	};
 
 	match Credential::new(&req.who, &req.shard, &runtime_version) {

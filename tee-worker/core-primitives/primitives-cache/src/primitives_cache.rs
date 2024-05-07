@@ -70,16 +70,6 @@ impl GetPrimitives for PrimitivesCache {
 		let primitives_lock = self.primitives_lock.read().map_err(|_| Error::LockPoisoning)?;
 		Ok(primitives_lock.untrusted_worker_url().to_string())
 	}
-
-	fn get_parachain_runtime_version(&self) -> Result<String> {
-		let primitives_lock = self.primitives_lock.read().map_err(|_| Error::LockPoisoning)?;
-		Ok(primitives_lock.parachain_runtime_version().to_string())
-	}
-
-	fn get_sidechain_runtime_version(&self) -> Result<String> {
-		let primitives_lock = self.primitives_lock.read().map_err(|_| Error::LockPoisoning)?;
-		Ok(primitives_lock.sidechain_runtime_version().to_string())
-	}
 }
 
 #[cfg(test)]
@@ -93,14 +83,8 @@ pub mod tests {
 		let mut lock = cache.load_for_mutation().unwrap();
 		let mu_ra_url = "hello".to_string();
 		let untrusted_url = "world".to_string();
-		let parachain_runtime_version = "6666".to_string();
-		let sidechain_runtime_version = "0019".to_string();
-		let primitives = Primitives::new(
-			mu_ra_url,
-			untrusted_url,
-			parachain_runtime_version,
-			sidechain_runtime_version,
-		);
+
+		let primitives = Primitives::new(mu_ra_url, untrusted_url);
 		*lock = primitives.clone();
 		std::mem::drop(lock);
 		assert_eq!(primitives, *cache.get_primitives().unwrap());
@@ -111,14 +95,7 @@ pub mod tests {
 		let cache = Arc::new(PrimitivesCache::default());
 		let mu_ra_url = "hello".to_string();
 		let untrusted_url = "world".to_string();
-		let parachain_runtime_version = "6666".to_string();
-		let sidechain_runtime_version = "0019".to_string();
-		let primitives = Primitives::new(
-			mu_ra_url,
-			untrusted_url,
-			parachain_runtime_version,
-			sidechain_runtime_version,
-		);
+		let primitives = Primitives::new(mu_ra_url, untrusted_url);
 
 		let mut write_lock = cache.load_for_mutation().unwrap();
 

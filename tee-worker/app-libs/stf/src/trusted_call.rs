@@ -380,8 +380,8 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: &String,
-		sidechain_runtime_version: &String,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,

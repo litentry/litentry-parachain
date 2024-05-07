@@ -49,7 +49,7 @@ use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
-use std::{string::String, sync::Arc, vec::Vec};
+use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
@@ -156,8 +156,8 @@ impl TrustedCallSigned {
 		req_ext_hash: H256,
 		maybe_key: Option<RequestAesKey>,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: &String,
-		sidechain_runtime_version: &String,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 	) -> StfResult<()> {
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
@@ -212,8 +212,8 @@ impl TrustedCallSigned {
 			top_hash,
 			parachain_block_number,
 			sidechain_block_number,
-			parachain_runtime_version: parachain_runtime_version.clone(),
-			sidechain_runtime_version: sidechain_runtime_version.clone(),
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,

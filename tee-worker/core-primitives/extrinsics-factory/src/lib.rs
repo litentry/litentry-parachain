@@ -35,7 +35,7 @@ use itp_node_api::{
 	api_client::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams, SignExtrinsic,
 	},
-	metadata::{provider::AccessNodeMetadata, NodeMetadata},
+	metadata::{provider::AccessNodeMetadata, NodeMetadata, NodeMetadataTrait},
 };
 use itp_nonce_cache::{MutateNonce, Nonce};
 use itp_types::{parentchain::AccountId, OpaqueCall};

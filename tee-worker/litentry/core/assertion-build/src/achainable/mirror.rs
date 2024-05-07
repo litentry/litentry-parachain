@@ -67,8 +67,8 @@ pub fn build_on_mirror(
 	let value = request_achainable(addresses, achainable_param.clone(), data_provider_config)?;
 
 	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version.clone(),
-		sidechain: req.sidechain_runtime_version.clone(),
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
 	};
 
 	match Credential::new(&req.who, &req.shard, &runtime_version) {

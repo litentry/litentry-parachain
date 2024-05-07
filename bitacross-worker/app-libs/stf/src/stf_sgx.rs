@@ -157,8 +157,8 @@ where
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: &String,
-		sidechain_runtime_version: &String,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 		call: TCS,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
