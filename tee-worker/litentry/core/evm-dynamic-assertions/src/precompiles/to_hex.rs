@@ -17,9 +17,6 @@
 use crate::precompiles::{macros::prepare_custom_failure, PrecompileResult};
 use std::{format, vec::Vec};
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate hex_sgx as hex;
-
 pub fn to_hex(input: Vec<u8>) -> PrecompileResult {
 	let decoded = ethabi::decode(&[ethabi::ParamType::Bytes], &input).map_err(|e| {
 		prepare_custom_failure(format!("Could not decode bytes {:?}, reason: {:?}", input, e))

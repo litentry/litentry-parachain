@@ -3149,7 +3149,7 @@ version = "0.1.0"
 dependencies = [
  "ethabi",
  "evm 0.41.1",
- "hex 0.4.0",
+ "hex 0.4.3",
  "http",
  "itc-rest-client",
  "itp-settings",

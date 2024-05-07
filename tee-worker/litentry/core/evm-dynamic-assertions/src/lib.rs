@@ -26,7 +26,6 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
-	pub use hex_sgx as hex;
 	pub use http_sgx as http;
 }
 
