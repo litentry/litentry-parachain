@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use std::boxed::Box;
+use crate::{Box, StdError};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -29,5 +29,5 @@ pub enum Error {
 	#[error("Could not access Mutex")]
 	MutexAccess,
 	#[error(transparent)]
-	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+	Other(#[from] Box<dyn StdError + Sync + Send + 'static>),
 }

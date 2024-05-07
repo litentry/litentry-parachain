@@ -15,6 +15,7 @@
 
 */
 
+use crate::{println, vec, String, ToString, Vec};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{IdentityManagement, System};
 use itp_stf_interface::ExecuteGetter;
@@ -25,8 +26,6 @@ use litentry_macros::if_development_or;
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::blake2_256;
-use sp_std::vec;
-use std::prelude::v1::*;
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
@@ -218,7 +217,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter free_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-					std::println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
+					println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
 					Some(info.data.free.encode())
 				} else {
 					None

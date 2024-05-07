@@ -51,6 +51,7 @@ itp-test = { path = "../../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", features = ["mocks"] }
 itp-top-pool = { path = "../../../../core-primitives/top-pool", features = ["mocks"] }
 itp-stf-executor = { path = "../../../../core-primitives/stf-executor", features = ["mocks"] }
+itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", features = ["mocks"] }
 base58 = "0.2"
 jsonrpc-core = { version = "18" }
 lazy_static = { version = "1.1.0" }
@@ -82,6 +83,7 @@ std = [
     "futures",
     "log/std",
     "thiserror",
+    "ita-stf/std",
     "itc-peer-top-broadcaster/std",
     "itp-types/std",
     "itp-top-pool-author/std",
