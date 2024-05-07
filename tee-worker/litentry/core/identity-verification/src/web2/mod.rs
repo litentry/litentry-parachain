@@ -20,13 +20,14 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+mod discord;
 pub mod twitter;
 
 use crate::{ensure, Error, Result};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
-	discord_official::{DiscordMessage, DiscordOfficialClient},
+	discord_official::{DiscordMessage, DiscordOfficialClient, DiscordUserAccessTokenData},
 	twitter_official::{Tweet, TwitterOfficialClient, TwitterUserAccessTokenData},
 	vec_to_string, DataProviderConfig, UserInfo,
 };
@@ -39,12 +40,6 @@ use std::{string::ToString, vec::Vec};
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>>;
-}
-
-fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
-	let data = &discord.content;
-	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str()))
-		.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))
 }
 
 pub fn verify(
@@ -152,33 +147,58 @@ pub fn verify(
 				Ok(user.username)
 			},
 		},
-		Web2ValidationData::Discord(DiscordValidationData {
-			ref channel_id,
-			ref message_id,
-			..
-		}) => {
-			let mut client = DiscordOfficialClient::new(config);
-			let message: DiscordMessage = client
-				.query_message(channel_id.to_vec(), message_id.to_vec())
-				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+		Web2ValidationData::Discord(data) => match data {
+			DiscordValidationData::PublicMessage { ref channel_id, ref message_id, .. } => {
+				let mut client = DiscordOfficialClient::new(config);
+				let message: DiscordMessage = client
+					.query_message(channel_id.to_vec(), message_id.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let user = client
-				.get_user_info(message.author.id.clone())
-				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let user = client
+					.get_user_info(message.author.id.clone())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut username = message.author.username.clone();
-			// if discord user's username is upgraded complete, the discriminator value from api will be "0".
-			if user.discriminator != "0" {
-				username.push_str(&'#'.to_string());
-				username.push_str(&user.discriminator);
-			}
-			let payload = payload_from_discord(&message)?;
-			ensure!(
-				payload.as_slice() == raw_msg,
-				Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
-			);
+				let mut username = message.author.username.clone();
+				// if discord user's username is upgraded complete, the discriminator value from api will be "0".
+				if user.discriminator != "0" {
+					username.push_str(&'#'.to_string());
+					username.push_str(&user.discriminator);
+				}
+				let payload = discord::payload_from_discord(&message)?;
+				ensure!(
+					payload.as_slice() == raw_msg,
+					Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+				);
 
-			Ok(username)
+				Ok(username)
+			},
+			DiscordValidationData::OAuth2 { code, redirect_uri } => {
+				let mut client = DiscordOfficialClient::new(config);
+
+				let redirect_uri = vec_to_string(redirect_uri.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let code = vec_to_string(code.to_vec())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let data = DiscordUserAccessTokenData {
+					client_id: config.discord_client_id.clone(),
+					client_secret: config.discord_client_secret.clone(),
+					code,
+					redirect_uri,
+				};
+				let user_token = client
+					.request_user_access_token(data)
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+				let mut user_client = DiscordOfficialClient::with_access_token(
+					&config.discord_official_url,
+					&user_token.token_type,
+					&user_token.access_token,
+				);
+				let user = user_client
+					.get_user_info("@me".to_string())
+					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+
+				Ok(user.username)
+			},
 		},
 	}?;
 
