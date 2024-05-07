@@ -258,7 +258,6 @@ mod test {
 	use super::*;
 	use crate::mock::*;
 	use codec::Encode;
-	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
 		api_client::{
 			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
@@ -275,7 +274,7 @@ mod test {
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
+	use sp_runtime::{MultiAddress, MultiSignature};
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
