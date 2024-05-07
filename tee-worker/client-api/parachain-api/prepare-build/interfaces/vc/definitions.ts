@@ -189,7 +189,10 @@ export default {
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: ["KaratDaoUser"],
+            _enum: [
+                "KaratDaoUser",
+                "MagicCraftStakingUser",
+            ],
         },
         // Web3NftType
         Web3NftType: {

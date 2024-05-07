@@ -271,6 +271,7 @@ pub enum TokenHoldingAmountCommand {
 #[derive(Subcommand, Debug)]
 pub enum PlatformUserCommand {
 	KaratDaoUser,
+	MagicCraftStakingUser,
 }
 
 #[derive(Subcommand, Debug)]
@@ -611,6 +612,8 @@ impl Command {
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser => PlatformUser(PlatformUserType::KaratDaoUser),
+				PlatformUserCommand::MagicCraftStakingUser =>
+					PlatformUser(PlatformUserType::MagicCraftStakingUser),
 			},
 			Command::NftHolder(arg) => match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),

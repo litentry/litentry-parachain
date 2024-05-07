@@ -69,6 +69,7 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
 pub mod karat_dao;
+pub mod magic_craft;
 pub mod moralis;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
@@ -195,6 +196,9 @@ pub struct DataProviderConfig {
 	pub karat_dao_api_retry_delay: u64,
 	pub karat_dao_api_retry_times: u16,
 	pub karat_dao_api_url: String,
+	pub magic_craft_api_retry_delay: u64,
+	pub magic_craft_api_retry_times: u16,
+	pub magic_craft_api_url: String,
 	pub moralis_api_url: String,
 	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
@@ -241,6 +245,9 @@ impl DataProviderConfig {
 			karat_dao_api_retry_delay: 5000,
 			karat_dao_api_retry_times: 2,
 			karat_dao_api_url: "https://api.karatdao.com/".to_string(),
+			magic_craft_api_retry_delay: 5000,
+			magic_craft_api_retry_times: 2,
+			magic_craft_api_url: "https://lobby-api-prod.magiccraft.io/".to_string(),
 			moralis_api_key: "".to_string(),
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
@@ -316,6 +323,15 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("KARAT_DAO_API_URL") {
 				config.set_karat_dao_api_url(v)?;
+			}
+			if let Ok(v) = env::var("MAGIC_CRAFT_API_RETRY_DELAY") {
+				config.set_magic_craft_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("MAGIC_CRAFT_API_RETRY_TIMES") {
+				config.set_magic_craft_api_retry_times(v.parse::<u16>().unwrap());
+			}
+			if let Ok(v) = env::var("MAGIC_CRAFT_API_URL") {
+				config.set_magic_craft_api_url(v)?;
 			}
 			if let Ok(v) = env::var("MORALIS_API_URL") {
 				config.set_moralis_api_url(v)?;
@@ -505,6 +521,20 @@ impl DataProviderConfig {
 		check_url(&v)?;
 		debug!("set_karat_dao_api_url: {:?}", v);
 		self.karat_dao_api_url = v;
+		Ok(())
+	}
+	pub fn set_magic_craft_api_retry_delay(&mut self, v: u64) {
+		debug!("set_magic_craft_api_retry_delay: {:?}", v);
+		self.magic_craft_api_retry_delay = v;
+	}
+	pub fn set_magic_craft_api_retry_times(&mut self, v: u16) {
+		debug!("set_magic_craft_api_retry_times: {:?}", v);
+		self.magic_craft_api_retry_times = v;
+	}
+	pub fn set_magic_craft_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_magic_craft_api_url: {:?}", v);
+		self.magic_craft_api_url = v;
 		Ok(())
 	}
 	pub fn set_moralis_api_key(&mut self, v: String) {
