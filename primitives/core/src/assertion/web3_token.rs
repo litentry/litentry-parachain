@@ -74,6 +74,32 @@ pub enum Web3TokenType {
 	Mcrt,
 	#[codec(index = 25)]
 	Btc,
+	#[codec(index = 26)]
+	Ada,
+	#[codec(index = 27)]
+	Doge,
+	#[codec(index = 28)]
+	Shib,
+	#[codec(index = 29)]
+	Uni,
+	#[codec(index = 30)]
+	Bch,
+	#[codec(index = 31)]
+	Etc,
+	#[codec(index = 32)]
+	Atom,
+	#[codec(index = 33)]
+	Dai,
+	#[codec(index = 34)]
+	Leo,
+	#[codec(index = 35)]
+	Fil,
+	#[codec(index = 36)]
+	Imx,
+	#[codec(index = 37)]
+	Cro,
+	#[codec(index = 38)]
+	Inj
 }
 
 impl Web3TokenType {
