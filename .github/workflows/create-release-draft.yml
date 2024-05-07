@@ -89,7 +89,7 @@ jobs:
 
       - name: Build with srtool
         id: srtool_build
-        uses: chevdor/srtool-actions@v0.8.0
+        uses: chevdor/srtool-actions@v0.9.2
         env:
           # optional: will override the parachain pallet ID and authorize_upgrade call ID,
           #           which will result in a different parachain_authorize_upgrade_hash
@@ -286,7 +286,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.4
 
   ## test again the built docker image ##
   run-ts-tests:
@@ -432,7 +432,7 @@ jobs:
 
       - name: Create release draft
         id: create-release-draft
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Litentry-parachain ${{ env.RELEASE_TAG }}

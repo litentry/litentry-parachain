@@ -22,6 +22,7 @@ use tokio::{
 use warp::Filter;
 
 pub mod achainable;
+pub mod blockchain_info;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
@@ -61,6 +62,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
+					.or(twitter_official::request_user_access_token())
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
@@ -69,6 +71,8 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(karat_dao::query())
 					.or(moralis::query())
 					.or(moralis::query_solana())
+					.or(blockchain_info::query_rawaddr())
+					.or(blockchain_info::query_multiaddr())
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())

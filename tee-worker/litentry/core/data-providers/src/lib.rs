@@ -30,7 +30,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -45,7 +44,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	Query, RestGet, RestPath, RestPost,
 };
-use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{thread, vec};
@@ -66,6 +64,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 pub mod achainable;
 pub mod achainable_names;
+pub mod blockchain_info;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
@@ -169,6 +168,8 @@ impl TokenFromString for ETokenAddress {
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_auth_token_v2: String,
+	pub twitter_client_id: String,
+	pub twitter_client_secret: String,
 	pub discord_official_url: String,
 	pub litentry_discord_microservice_url: String,
 	pub discord_auth_token: String,
@@ -199,6 +200,9 @@ pub struct DataProviderConfig {
 	pub moralis_api_retry_delay: u64,
 	pub moralis_api_retry_times: u16,
 	pub moralis_api_key: String,
+	pub blockchain_info_api_retry_delay: u64,
+	pub blockchain_info_api_retry_times: u16,
+	pub blockchain_info_api_url: String,
 }
 
 impl DataProviderConfig {
@@ -209,6 +213,8 @@ impl DataProviderConfig {
 		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_auth_token_v2: "".to_string(),
+			twitter_client_id: "".to_string(),
+			twitter_client_secret: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
 			litentry_discord_microservice_url: "https://tee-microservice.litentry.io:9528"
 				.to_string(),
@@ -240,10 +246,14 @@ impl DataProviderConfig {
 			moralis_api_retry_times: 2,
 			moralis_api_url: "https://deep-index.moralis.io/api/v2.2/".to_string(),
 			moralis_solana_api_url: "https://solana-gateway.moralis.io/".to_string(),
+			blockchain_info_api_retry_delay: 5000,
+			blockchain_info_api_retry_times: 2,
+			blockchain_info_api_url: "https://blockchain.info/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
-		if_not_production!({
+		#[cfg(any(feature = "env-data-providers-config", feature = "development"))]
+		{
 			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 				config.set_twitter_official_url(v)?;
 			}
@@ -274,7 +284,7 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("NODEREAL_API_RETRY_DELAY") {
 				config.set_nodereal_api_retry_delay(v.parse::<u64>().unwrap());
 			}
-			if let Ok(v) = env::var("NODEREAL_API_RETRY_TIME") {
+			if let Ok(v) = env::var("NODEREAL_API_RETRY_TIMES") {
 				config.set_nodereal_api_retry_times(v.parse::<u16>().unwrap());
 			}
 			if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
@@ -301,7 +311,7 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("KARAT_DAO_API_RETRY_DELAY") {
 				config.set_karat_dao_api_retry_delay(v.parse::<u64>().unwrap());
 			}
-			if let Ok(v) = env::var("KARAT_DAO_API_RETRY_TIME") {
+			if let Ok(v) = env::var("KARAT_DAO_API_RETRY_TIMES") {
 				config.set_karat_dao_api_retry_times(v.parse::<u16>().unwrap());
 			}
 			if let Ok(v) = env::var("KARAT_DAO_API_URL") {
@@ -316,13 +326,28 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("MORALIS_API_RETRY_DELAY") {
 				config.set_moralis_api_retry_delay(v.parse::<u64>().unwrap());
 			}
-			if let Ok(v) = env::var("MORALIS_API_RETRY_TIME") {
+			if let Ok(v) = env::var("MORALIS_API_RETRY_TIMES") {
 				config.set_moralis_api_retry_times(v.parse::<u16>().unwrap());
 			}
-		});
+			if let Ok(v) = env::var("BLOCKCHAIN_INFO_API_URL") {
+				config.set_blockchain_info_api_url(v)?;
+			}
+			if let Ok(v) = env::var("BLOCKCHAIN_INFO_API_RETRY_DELAY") {
+				config.set_blockchain_info_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("BLOCKCHAIN_INFO_API_RETRY_TIMES") {
+				config.set_blockchain_info_api_retry_times(v.parse::<u16>().unwrap());
+			}
+		};
 		// set secrets from env variables
 		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
 			config.set_twitter_auth_token_v2(v);
+		}
+		if let Ok(v) = env::var("TWITTER_CLIENT_ID") {
+			config.set_twitter_client_id(v);
+		}
+		if let Ok(v) = env::var("TWITTER_CLIENT_SECRET") {
+			config.set_twitter_client_secret(v);
 		}
 		if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
 			config.set_discord_auth_token(v);
@@ -353,6 +378,14 @@ impl DataProviderConfig {
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
+	}
+	pub fn set_twitter_client_id(&mut self, v: String) {
+		debug!("set_twitter_client_id: {:?}", v);
+		self.twitter_client_id = v;
+	}
+	pub fn set_twitter_client_secret(&mut self, v: String) {
+		debug!("set_twitter_client_secret: {:?}", v);
+		self.twitter_client_secret = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) -> Result<(), Error> {
 		check_url(&v)?;
@@ -496,6 +529,20 @@ impl DataProviderConfig {
 		check_url(&v)?;
 		debug!("set_moralis_solana_api_url: {:?}", v);
 		self.moralis_solana_api_url = v;
+		Ok(())
+	}
+	pub fn set_blockchain_info_api_retry_delay(&mut self, v: u64) {
+		debug!("set_blockchain_info_api_retry_delay: {:?}", v);
+		self.blockchain_info_api_retry_delay = v;
+	}
+	pub fn set_blockchain_info_api_retry_times(&mut self, v: u16) {
+		debug!("set_blockchain_info_api_retry_times: {:?}", v);
+		self.blockchain_info_api_retry_times = v;
+	}
+	pub fn set_blockchain_info_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_blockchain_info_api_url: {:?}", v);
+		self.blockchain_info_api_url = v;
 		Ok(())
 	}
 }

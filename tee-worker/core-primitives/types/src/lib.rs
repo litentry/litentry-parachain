@@ -30,7 +30,7 @@ pub mod storage;
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{
 	Assertion, AttestationType, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave,
-	WorkerType,
+	SidechainBlockNumber, WorkerType,
 };
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
@@ -132,6 +132,9 @@ pub enum TrustedOperationStatus {
 	/// TrustedOperation has been executed.
 	#[codec(index = 11)]
 	TopExecuted(Vec<u8>, bool),
+	/// TrustedOperation whose successor top has been executed, but the top itself not
+	#[codec(index = 12)]
+	SuccessorExecuted,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]

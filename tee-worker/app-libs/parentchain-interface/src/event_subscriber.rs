@@ -16,7 +16,7 @@
 */
 
 use itp_api_client_types::ParentchainApi;
-use itp_types::parentchain::{BalanceTransfer, ParentchainId};
+use itp_types::parentchain::{events::BalanceTransfer, ParentchainId};
 use substrate_api_client::SubscribeEvents;
 
 pub fn subscribe_to_parentchain_events(api: &ParentchainApi, parentchain_id: ParentchainId) {

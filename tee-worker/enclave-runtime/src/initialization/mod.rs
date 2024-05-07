@@ -59,7 +59,8 @@ use itc_direct_rpc_server::{
 };
 use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ed25519_self_signed_certificate,
+	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
@@ -199,12 +200,20 @@ pub(crate) fn init_enclave(
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
+
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
+		data_provider_config,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -215,12 +224,6 @@ pub(crate) fn init_enclave(
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
-
-	if let Ok(data_provider_config) = DataProviderConfig::new() {
-		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
-	} else {
-		return Err(Error::Other("data provider initialize error".into()))
-	}
 
 	Ok(())
 }
@@ -294,7 +297,9 @@ fn run_vc_issuance() -> Result<(), Error> {
 	);
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+
 	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+
 	Ok(())
 }
 
@@ -381,19 +386,30 @@ pub(crate) fn init_enclave_sidechain_components(
 }
 
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
+	info!("Initialize direct invocation server on {}", &server_addr);
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	let cert =
-		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	let url = url::Url::parse(&server_addr).map_err(|e| Error::Other(format!("{}", e).into()))?;
+	let maybe_config_provider = if url.scheme() == "wss" {
+		let cert = ed25519_self_signed_certificate(signer, "Enclave")
+			.map_err(|e| Error::Other(e.into()))?;
 
-	// Serialize certificate(s) and private key to PEM.
-	// PEM format is needed as a certificate chain can only be serialized into PEM.
-	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
-	let private_key = cert.serialize_private_key_pem();
+		// Serialize certificate(s) and private key to PEM.
+		// PEM format is needed as a certificate chain can only be serialized into PEM.
+		let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
+		let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
+	} else {
+		None
+	};
+
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 

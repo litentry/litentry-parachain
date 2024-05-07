@@ -41,7 +41,6 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_hex_utils::hex_encode;
 use log::error;
 pub use pallet_teebag::{
 	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
@@ -90,8 +89,6 @@ use std::string::{String, ToString};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-pub const LITENTRY_PRETTIFIED_MESSAGE_PREFIX: &str = "Litentry authorization token: ";
-
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
@@ -107,15 +104,9 @@ pub enum LitentryMultiSignature {
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 4)]
-	EthereumPrettified(EthereumSignature),
 	/// Bitcoin signed message, a hex-encoded string of original &[u8] message, without `0x` prefix
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	Bitcoin(BitcoinSignature),
-	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
-	#[codec(index = 6)]
-	BitcoinPrettified(BitcoinSignature),
 }
 
 impl LitentryMultiSignature {
@@ -126,6 +117,7 @@ impl LitentryMultiSignature {
 					|| self.verify_substrate(msg, address),
 			Identity::Evm(address) => self.verify_evm(msg, address),
 			Identity::Bitcoin(address) => self.verify_bitcoin(msg, address),
+			Identity::Solana(address) => self.verify_solana(msg, address),
 			_ => false,
 		}
 	}
@@ -157,13 +149,6 @@ impl LitentryMultiSignature {
 			Self::Ethereum(ref sig) =>
 				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
 					|| verify_evm_signature(msg, sig, signer),
-			Self::EthereumPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				let msg = prettified_msg.as_bytes();
-				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
-					|| verify_evm_signature(msg, sig, signer)
-			},
 			_ => false,
 		}
 	}
@@ -171,11 +156,21 @@ impl LitentryMultiSignature {
 	fn verify_bitcoin(&self, msg: &[u8], signer: &Address33) -> bool {
 		match self {
 			Self::Bitcoin(ref sig) =>
-				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer),
-			Self::BitcoinPrettified(ref sig) => {
-				let prettified_msg =
-					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
-				verify_bitcoin_signature(prettified_msg.as_str(), sig, signer)
+				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer)
+					|| match std::str::from_utf8(msg) {
+						Err(_) => false,
+						Ok(prettified) => verify_bitcoin_signature(prettified, sig, signer),
+					},
+			_ => false,
+		}
+	}
+
+	// https://github.com/solana-labs/solana/blob/master/docs/src/proposals/off-chain-message-signing.md
+	fn verify_solana(&self, msg: &[u8], signer: &Address32) -> bool {
+		match (self, signer) {
+			(Self::Ed25519(ref sig), who) => match ed25519::Public::from_slice(who.as_ref()) {
+				Ok(signer) => sig.verify(msg, &signer),
+				Err(()) => false,
 			},
 			_ => false,
 		}
@@ -296,5 +291,21 @@ mod tests {
 			&sig_ref.try_into().unwrap(),
 			&pubkey_ref.try_into().unwrap()
 		));
+	}
+
+	#[test]
+	fn verify_solana_signature_works() {
+		let signer =
+			Identity::from_did("did:litentry:solana:E9SegbpSr21FPLbUhoTNH6C2ja7KDkptybqSaT84wMH6")
+				.unwrap();
+		let signature: [u8; 64] = [
+			62, 25, 148, 186, 53, 137, 248, 174, 149, 187, 225, 24, 186, 48, 24, 109, 100, 27, 149,
+			196, 66, 5, 222, 140, 22, 16, 136, 239, 154, 22, 133, 96, 79, 2, 180, 106, 150, 112,
+			116, 11, 6, 35, 32, 4, 145, 240, 54, 130, 206, 193, 200, 57, 241, 112, 35, 122, 226,
+			97, 174, 231, 221, 13, 98, 2,
+		];
+		let result = LitentryMultiSignature::Ed25519(ed25519::Signature::from_raw(signature))
+			.verify(b"test message", &signer);
+		assert_eq!(result, true);
 	}
 }

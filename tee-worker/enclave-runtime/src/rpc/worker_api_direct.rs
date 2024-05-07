@@ -48,8 +48,10 @@ use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
+use lc_data_providers::DataProviderConfig;
+use lc_identity_verification::web2::twitter;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -76,6 +78,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<State>>,
+	data_provider_config: Arc<DataProviderConfig>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -140,7 +143,9 @@ where
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
-	let local_state = state.clone();
+
+	let local_state = if_development_or!(state.clone(), state);
+
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {
@@ -345,7 +350,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if_not_production!({
+	if_development!({
 		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
@@ -404,7 +409,7 @@ where
 					let key_hash = match hex::decode(key_hash) {
 						Ok(key_hash) => key_hash,
 						Err(_) =>
-							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+							return Ok(json!(compute_hex_encoded_return_error("decode key error"))),
 					};
 
 					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
@@ -435,6 +440,22 @@ where
 		});
 	});
 
+	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
+		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
+			Ok(registry) => {
+				let mut serialized_registry = vec![];
+				for (block_number, mrenclave) in registry.iter() {
+					serialized_registry.push((*block_number, *mrenclave));
+				}
+				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
+					.to_hex()
+			},
+			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
+		};
+		Ok(json!(json_value))
+	});
+
 	// system_health
 	io.add_sync_method("system_health", |_: Params| {
 		debug!("worker_api_direct rpc was called: system_health");
@@ -452,6 +473,49 @@ where
 		debug!("worker_api_direct rpc was called: system_version");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
+	});
+
+	io.add_sync_method("identity_getTwitterAuthorizeUrl", move |params: Params| {
+		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
+
+		match params.parse::<(String, String)>() {
+			Ok((encoded_did, redirect_url)) => {
+				let account_id = match Identity::from_did(encoded_did.as_str()) {
+					Ok(identity) =>
+						if let Some(account_id) = identity.to_account_id() {
+							account_id
+						} else {
+							return Ok(json!(compute_hex_encoded_return_error("Invalid identity")))
+						},
+					Err(_) =>
+						return Ok(json!(compute_hex_encoded_return_error(
+							"Could not parse identity"
+						))),
+				};
+				let authorize_data = twitter::get_authorize_data(
+					&data_provider_config.twitter_client_id,
+					&redirect_url,
+				);
+				match twitter::OAuthStore::save_data(
+					account_id,
+					authorize_data.code_verifier,
+					authorize_data.state,
+				) {
+					Ok(_) => {
+						let json_value = RpcReturnValue::new(
+							authorize_data.authorize_url.encode(),
+							false,
+							DirectRequestStatus::Ok,
+						);
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(_) =>
+						Ok(json!(compute_hex_encoded_return_error("Could not save code verifier"))),
+				}
+			},
+
+			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
+		}
 	});
 
 	let rpc_methods_string = get_all_rpc_methods_string(&io);

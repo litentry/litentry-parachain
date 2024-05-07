@@ -88,12 +88,12 @@ default = []
 evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
-production = [
-    "ita-stf/production",
-    "itp-settings/production",
-    "lc-data-providers/production",
-    "litentry-macros/production",
-    "litentry-primitives/production",
+development = [
+    "ita-stf/development",
+    "itp-settings/development",
+    "lc-data-providers/development",
+    "litentry-macros/development",
+    "litentry-primitives/development",
 ]
 dcap = []
 attesteer = ["dcap"]
@@ -108,6 +108,7 @@ attesteer = ["dcap"]
 link-binary = [
     "itp-enclave-api/implement-ffi",
 ]
+mock-server = []
 
 [dev-dependencies]
 # crates.io

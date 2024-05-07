@@ -33,7 +33,6 @@ use itp_top_pool::{
 };
 use itp_types::BlockHash as SidechainBlockHash;
 use jsonrpc_core::futures::future::{ready, Future, Ready};
-use log::*;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, Block as BlockT, Hash as HashT},
@@ -112,7 +111,6 @@ where
 	}
 
 	fn hash_and_length<TOP: Encode + Debug>(&self, ex: &TOP) -> (TxHash, usize) {
-		debug!("[Pool] creating hash of {:?}", ex);
 		ex.using_encoded(|x| (BlakeTwo256::hash(x), x.len()))
 	}
 

@@ -15,6 +15,8 @@
 
 */
 
+#[cfg(feature = "development")]
+use crate::trusted_base_cli::commands::litentry::remove_identity::RemoveIdentityCommand;
 use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
@@ -22,14 +24,12 @@ use crate::{
 		get_shard_vault::GetShardVaultCommand,
 		litentry::{
 			get_storage::GetStorageCommand, link_identity::LinkIdentityCommand,
-			remove_identity::RemoveIdentityCommand, request_batch_vc::RequestBatchVcCommand,
 			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
-		unshield_funds::UnshieldFundsCommand,
 	},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::get_keystore_path,
@@ -61,9 +61,6 @@ pub enum TrustedBaseCommand {
 	/// query balance for incognito account in keystore
 	Balance(BalanceCommand),
 
-	/// Transfer funds from an incognito account to an parentchain account
-	UnshieldFunds(UnshieldFundsCommand),
-
 	/// gets the nonce of a given account, taking the pending trusted calls
 	/// in top pool in consideration
 	Nonce(NonceCommand),
@@ -90,10 +87,8 @@ pub enum TrustedBaseCommand {
 	/// Request VC
 	RequestVc(RequestVcCommand),
 
-	/// Request Batch VC
-	RequestBatchVc(RequestBatchVcCommand),
-
 	/// Remove Identity from the prime identity
+	#[cfg(feature = "development")]
 	RemoveIdentity(RemoveIdentityCommand),
 }
 
@@ -105,7 +100,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Transfer(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShard(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShardVault(cmd) => cmd.run(cli, trusted_cli),
@@ -115,7 +109,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::RequestBatchVc(cmd) => cmd.run(cli, trusted_cli),
+			#[cfg(feature = "development")]
 			TrustedBaseCommand::RemoveIdentity(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}

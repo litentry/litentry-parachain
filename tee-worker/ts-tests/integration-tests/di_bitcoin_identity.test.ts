@@ -6,6 +6,7 @@ import {
     initIntegrationTestContext,
     assertIdGraphMutationResult,
     assertIdGraphHash,
+    sleep,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -21,8 +22,8 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Bytes, Vec } from '@polkadot/types';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
+import type { Bytes, Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
@@ -31,6 +32,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     let aliceBitcoinIdentity: CorePrimitivesIdentity = undefined as any;
     let aliceEvmIdentity: CorePrimitivesIdentity;
     let bobBitcoinIdentity: CorePrimitivesIdentity;
+    let currentNonce = 0;
 
     // Alice links:
     // - alice's evm identity
@@ -63,6 +65,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         aliceBitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
         aliceEvmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
         bobBitcoinIdentity = await context.web3Wallets.bitcoin.Bob.getIdentity(context);
+        currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
@@ -77,10 +80,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('linking identities (alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const aliceEvmNonce = getNextNonce();
+        const aliceEvmNonce = currentNonce++;
         const aliceEvmValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
@@ -97,14 +97,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             networks: aliceEvmNetworks,
         });
 
-        // link another bitcoin account with prettified signature
-        const bobBitcoinNonce = getNextNonce();
+        // link another bitcoin account
+        const bobBitcoinNonce = currentNonce++;
         const bobBitcoinValidation = await buildValidations(
             context,
             aliceBitcoinIdentity,
             bobBitcoinIdentity,
             bobBitcoinNonce,
-            'bitcoinPrettified',
+            'bitcoin',
             context.web3Wallets.bitcoin.Bob
         );
         const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
@@ -124,7 +124,9 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             [[bobBitcoinIdentity, true]],
         ];
 
+        let counter = 0;
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+            counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -136,7 +138,11 @@ describe('Test Identity (bitcoin direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
+                requestIdentifier,
+                {
+                    withWrappedBytes: false,
+                    withPrefix: counter % 2 === 0, // alternate per entry
+                }
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -194,10 +200,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('deactivating identity(alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const aliceEvmNonce = getNextNonce();
+        const aliceEvmNonce = currentNonce++;
 
         deactivateIdentityRequestParams.push({
             nonce: aliceEvmNonce,
@@ -265,10 +268,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     });
 
     step('activating identity(alice bitcoin account)', async function () {
-        let currentNonce = (await getSidechainNonce(context, aliceBitcoinIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const aliceEvmNonce = getNextNonce();
+        const aliceEvmNonce = currentNonce++;
 
         activateIdentityRequestParams.push({
             nonce: aliceEvmNonce,
@@ -313,7 +313,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const idGraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             context.web3Wallets.bitcoin.Alice,
-
             aliceBitcoinIdentity
         );
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
@@ -335,5 +334,10 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         }
 
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
+    });
+    step('check sidechain nonce', async function () {
+        await sleep(20);
+        const nonce = await getSidechainNonce(context, aliceBitcoinIdentity);
+        assert.equal(nonce.toNumber(), currentNonce);
     });
 });

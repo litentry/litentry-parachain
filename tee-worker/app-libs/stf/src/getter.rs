@@ -15,17 +15,17 @@
 
 */
 
+use crate::{println, vec, String, ToString, Vec};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{IdentityManagement, System};
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::{traits::GetterAuthorization, types::KeyPair};
 use itp_utils::stringify::account_id_to_string;
-use litentry_macros::if_production_or;
+use litentry_hex_utils::hex_encode;
+use litentry_macros::if_development_or;
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::blake2_256;
-use sp_std::vec;
-use std::prelude::v1::*;
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
@@ -40,7 +40,7 @@ use sp_runtime::transaction_validity::{
 	TransactionValidityError, UnknownTransaction, ValidTransaction,
 };
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::ALICE_ACCOUNTID32;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -146,6 +146,13 @@ impl TrustedGetter {
 		let signature = pair.sign(&blake2_256(self.encode().as_slice()));
 		TrustedGetterSigned { getter: self.clone(), signature }
 	}
+
+	pub fn signature_message_prefix(&self) -> String {
+		match self {
+			Self::id_graph(..) => "Our team is ready to support you in retrieving your on-chain identity securely. Please be assured, this process is safe and involves no transactions of your assets. Token: ".to_string(),
+			_ => "Token: ".to_string(),
+		}
+	}
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -160,19 +167,28 @@ impl TrustedGetterSigned {
 	}
 
 	pub fn verify_signature(&self) -> bool {
+		// The signature should be valid in either case:
+		// 1. blake2_256(payload)
+		// 2. Signature Prefix + blake2_256payload
+
 		let payload = self.getter.encode();
+		let hashed = blake2_256(&payload);
+
+		let prettified_msg_hash = self.getter.signature_message_prefix() + &hex_encode(&hashed);
+		let prettified_msg_hash = prettified_msg_hash.as_bytes();
+
+		// Most common signatures variants by clients are verified first (4 and 2).
+		let is_valid = self.signature.verify(prettified_msg_hash, self.getter.sender_identity())
+			|| self.signature.verify(&hashed, self.getter.sender_identity());
+
 		// in non-prod, we accept signature from Alice too
-		if_production_or!(
+		if_development_or!(
 			{
-				self.signature.verify(&payload, self.getter.sender_identity())
-					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
+				is_valid
+					|| self.signature.verify(&hashed, &ALICE_ACCOUNTID32.into())
+					|| self.signature.verify(prettified_msg_hash, &ALICE_ACCOUNTID32.into())
 			},
-			{
-				self.signature.verify(&payload, self.getter.sender_identity())
-					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
-					|| self.signature.verify(&payload, &ALICE_ACCOUNTID32.into())
-					|| self.signature.verify(&blake2_256(&payload), &ALICE_ACCOUNTID32.into())
-			}
+			is_valid
 		)
 	}
 }
@@ -201,7 +217,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter free_balance");
 					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-					std::println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
+					println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
 					Some(info.data.free.encode())
 				} else {
 					None

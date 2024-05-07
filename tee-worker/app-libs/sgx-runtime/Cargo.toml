@@ -33,12 +33,15 @@ pallet-evm = { default-features = false, optional = true, git = "https://github.
 
 # Litentry
 pallet-imt = { package = "pallet-identity-management-tee", path = "../../litentry/pallets/identity-management", default-features = false }
-pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
+pallet-parentchain = { package = "pallet-parentchain", path = "../../../worker-pallets/parentchain", default-features = false }
 
 [features]
 default = ["std"]
 # Compile the sgx-runtime with evm support.
 evm = ["pallet-evm"]
+development = [
+    "pallet-imt/development",
+]
 std = [
     "codec/std",
     "scale-info/std",

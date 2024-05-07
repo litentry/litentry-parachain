@@ -78,7 +78,7 @@ use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -95,7 +95,6 @@ mod empty_impls;
 mod initialization;
 mod ipfs;
 mod ocall;
-mod shard_config;
 mod shard_creation_info;
 mod shard_vault;
 mod stf_task_handler;
@@ -134,7 +133,10 @@ pub unsafe extern "C" fn init(
 	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
-	if_production_or!(
+	if_development_or!(
+		env_logger::builder()
+			.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
+			.init(),
 		{
 			let module_names = litentry_proc_macros::local_modules!();
 			println!(
@@ -148,10 +150,7 @@ pub unsafe extern "C" fn init(
 				builder.filter(Some(module), LevelFilter::Info);
 			});
 			builder.init();
-		},
-		env_logger::builder()
-			.format_timestamp(Some(env_logger::TimestampPrecision::Micros))
-			.init()
+		}
 	);
 
 	let mu_ra_url =
