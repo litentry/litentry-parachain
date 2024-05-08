@@ -29,7 +29,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			let default = String::default();
 			let address = p.get("wallet_address").unwrap_or(&default);
 
-			if address == "0xa466bf7586766938ab71c0788af62962a65fa966" {
+			if address == "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee" {
 				let body = UserVerificationResponse { user: true };
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			} else {

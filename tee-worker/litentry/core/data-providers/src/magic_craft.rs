@@ -151,7 +151,7 @@ mod tests {
 		let config = init();
 		let mut client = MagicCraftClient::new(&config);
 		let mut response = client
-			.user_verification("0xa466bf7586766938ab71c0788af62962a65fa966".into(), true)
+			.user_verification("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".into(), true)
 			.unwrap();
 		assert_eq!(response.user, true);
 
