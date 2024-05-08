@@ -42,6 +42,8 @@ lc-assertion-build = { path = "../../assertion-build", default-features = false 
 lc-assertion-build-v2 = { path = "../../assertion-build-v2", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
+lc-dynamic-assertion = { path = "../../dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../../evm-dynamic-assertions", default-features = false }
 lc-stf-task-receiver = { path = "../../stf-task/receiver", default-features = false }
 lc-stf-task-sender = { path = "../../stf-task/sender", default-features = false }
 lc-vc-task-sender = { path = "../sender", default-features = false }
@@ -72,6 +74,8 @@ sgx = [
     "itp-node-api/sgx",
     "itp-storage/sgx",
     "lc-vc-task-sender/sgx",
+    "lc-dynamic-assertion/sgx",
+    "lc-evm-dynamic-assertions/sgx",
 ]
 std = [
     "futures",
@@ -96,6 +100,8 @@ std = [
     "itp-node-api/std",
     "itp-storage/std",
     "lc-vc-task-sender/std",
+    "lc-dynamic-assertion/std",
+    "lc-evm-dynamic-assertions/std",
 ]
 development = [
     "ita-stf/development",

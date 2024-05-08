@@ -29,6 +29,8 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+primitive-types = { version = "0.12.1", default-features = false }
+
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
@@ -36,14 +38,16 @@ itp-stf-primitives = { default-features = false, path = "../../../core-primitive
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
+
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
-hex-literal = { version = "0.4" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
 lc-credentials = { path = "../credentials", default-features = false }
 lc-data-providers = { path = "../data-providers", default-features = false }
+lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../evm-dynamic-assertions", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 pallet-parachain-staking = { path = "../../../../pallets/parachain-staking", default-features = false }
@@ -67,6 +71,10 @@ sgx = [
     "lc-stf-task-sender/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
+    "lc-dynamic-assertion/sgx",
+    "lc-evm-dynamic-assertions/sgx",
+    "primitive-types/codec",
+    "primitive-types/serde_no_std",
 ]
 std = [
     "hex",
@@ -84,4 +92,7 @@ std = [
     "lc-stf-task-sender/std",
     "lc-credentials/std",
     "lc-data-providers/std",
+    "lc-dynamic-assertion/std",
+    "lc-evm-dynamic-assertions/std",
 ]
+development = []

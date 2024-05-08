@@ -55,6 +55,7 @@ use crate::{AccountId, ParameterString};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_core::H160;
 use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
@@ -135,6 +136,9 @@ pub enum Assertion {
 
 	#[codec(index = 26)]
 	NftHolder(Web3NftType),
+
+	#[codec(index = 27)]
+	Dynamic(H160) // smart contract code identifier
 }
 
 impl Assertion {
@@ -182,6 +186,7 @@ impl Assertion {
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
 			Self::NftHolder(t_type) => t_type.get_supported_networks(),
+			Self::Dynamic(_) => all_web3networks(),
 		}
 	}
 }
