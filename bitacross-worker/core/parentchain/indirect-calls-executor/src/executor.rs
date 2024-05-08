@@ -327,6 +327,7 @@ mod test {
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
+	use std::assert_matches::assert_matches;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;

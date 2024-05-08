@@ -42,8 +42,8 @@ use itp_types::{
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	collections::BTreeMap, fmt::Debug, marker::PhantomData, string::String, sync::Arc,
-	time::Duration, vec, vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec,
+	vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
@@ -95,8 +95,6 @@ where
 		trusted_operation: &TrustedOperation<TCS, G>,
 		_header: &PH,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: u32,
-		sidechain_runtime_version: u32,
 		post_processing: StatePostProcessing,
 	) -> Result<ExecutedOperation<TCS, G>>
 	where
@@ -128,8 +126,6 @@ where
 		return match Stf::execute_call(
 			state,
 			shard,
-			parachain_runtime_version,
-			sidechain_runtime_version,
 			trusted_call.clone(),
 			trusted_operation.hash(),
 			&mut extrinsic_call_backs,
@@ -345,8 +341,6 @@ where
 				&trusted_call_signed,
 				header,
 				shard,
-				parachain_runtime_version,
-				sidechain_runtime_version,
 				StatePostProcessing::None,
 			) {
 				Ok(executed_or_failed_call) => {

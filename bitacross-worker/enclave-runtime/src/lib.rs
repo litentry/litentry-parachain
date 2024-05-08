@@ -128,10 +128,6 @@ pub unsafe extern "C" fn init(
 	mu_ra_addr_size: u32,
 	untrusted_worker_addr: *const u8,
 	untrusted_worker_addr_size: u32,
-	parachain_runtime_version: *const u8,
-	parachain_runtime_version_size: u32,
-	sidechain_runtime_version: *const u8,
-	sidechain_runtime_version_size: u32,
 	encoded_base_dir_str: *const u8,
 	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
@@ -174,26 +170,6 @@ pub unsafe extern "C" fn init(
 		Err(e) => return e.into(),
 	};
 
-	let parachain_runtime_version = match String::decode(&mut slice::from_raw_parts(
-		parachain_runtime_version,
-		parachain_runtime_version_size as usize,
-	))
-	.map_err(Error::Codec)
-	{
-		Ok(addr) => addr,
-		Err(e) => return e.into(),
-	};
-
-	let sidechain_runtime_version = match String::decode(&mut slice::from_raw_parts(
-		sidechain_runtime_version,
-		sidechain_runtime_version_size as usize,
-	))
-	.map_err(Error::Codec)
-	{
-		Ok(addr) => addr,
-		Err(e) => return e.into(),
-	};
-
 	let base_dir = match String::decode(&mut slice::from_raw_parts(
 		encoded_base_dir_str,
 		encoded_base_dir_size as usize,
@@ -209,13 +185,7 @@ pub unsafe extern "C" fn init(
 	// Litentry: the default value here is only for clippy checking
 	BASE_PATH.set(path.clone()).unwrap_or(());
 
-	match initialization::init_enclave(
-		mu_ra_url,
-		untrusted_worker_url,
-		parachain_runtime_version,
-		sidechain_runtime_version,
-		path,
-	) {
+	match initialization::init_enclave(mu_ra_url, untrusted_worker_url, path) {
 		Err(e) => e.into(),
 		Ok(()) => sgx_status_t::SGX_SUCCESS,
 	}
