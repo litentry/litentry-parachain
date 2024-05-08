@@ -23,149 +23,10 @@ extern crate sgx_tstd as std;
 use std::vec::Vec;
 
 use litentry_primitives::Web3TokenType;
-
 use crate::Web3Network;
 
-const ETH_AMOUNT_RNAGE: [f64; 10] = [
-	0.0,
-	0.01,
-	0.05,
-	0.2,
-	0.6,
-	1.2,
-	3.0,
-	8.0,
-	20.0,
-	50.0,
-];
-const USDC_AMOUNT_RANGE: [f64; 9] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-	1_000.0,
-	2_000.0,
-	5_000.0,
-];
-const ADA_AMOUNT_RANGE: [f64; 7] = [
-	0.0,
-	1_000.0,
-	5_000.0,
-	20_000.0,
-	50_000.0,
-	100_000.0,
-	300_000.0,
-];
-const DOGE_AMOUNT_RANGE: [f64; 7] = [
-	0.0,
-	1_000.0,
-	5_000.0,
-	20_000.0,
-	50_000.0,
-	100_000.0,
-	300_000.0,
-];
-const SHIB_AMOUNT_RANGE: [f64; 8] = [
-	0.0,
-	400_000.0,
-	2_000_000.0,
-	10_000_000.0,
-	20_000_000.0,
-	40_000_000.0,
-	100_000_000.0,
-	200_000_000.0,
-];
-const UNI_AMOUNT_RANGE: [f64; 9] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-	1_000.0,
-	2_000.0,
-	5_000.0,
-];
-const BCH_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	0.1,
-	0.5,
-	2.0,
-	6.0,
-	12.0,
-];
-const ETC_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	1.0,
-	5.0,
-	20.0,
-	50.0,
-	80.0,
-];
-const ATOM_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	1.0,
-	5.0,
-	20.0,
-	50.0,
-	80.0,
-];
-const DAI_AMOUNT_RANGE: [f64; 9] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-	1_000.0,
-	2_000.0,
-	5_000.0,
-];
-const LEO_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-];
-const FIL_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-];
-const IMX_AMOUNT_RANGE: [f64; 8] = [
-	0.0,
-	10.0,
-	30.0,
-	80.0,
-	200.0,
-	500.0,
-	1_000.0,
-	2_000.0,
-];
-const CRO_AMOUNT_RANGE: [f64; 7] = [
-	0.0,
-	1_000.0,
-	5_000.0,
-	20_000.0,
-	50_000.0,
-	100_000.0,
-	300_000.0,
-];
-const INJ_AMOUNT_RANGE: [f64; 6] = [
-	0.0,
-	1.0,
-	5.0,
-	20.0,
-	50.0,
-	80.0,
-];
+mod token_amount_range;
+use token_amount_range::*;
 
 pub trait TokenName {
 	fn get_token_name(&self) -> &'static str;
@@ -514,8 +375,8 @@ pub trait TokenHoldingAmountRange {
 impl TokenHoldingAmountRange for Web3TokenType {
 	fn get_token_holding_amount_range(&self) -> Vec<f64> {
 		match self {
-			Self::Mcrt => vec![0.0, 2000.0, 10000.0, 50000.0, 150000.0, 500000.0],
-
+			Self::Mcrt => MRCT_AMOUNT_RANGE.to_vec(),
+			
 			// Eth
 			Self::Eth => ETH_AMOUNT_RNAGE.to_vec(),
 
