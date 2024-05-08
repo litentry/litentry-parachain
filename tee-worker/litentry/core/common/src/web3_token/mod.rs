@@ -417,11 +417,48 @@ impl TokenDecimals for Web3TokenType {
 			// Nfp
 			(Self::Nfp, Web3Network::Bsc) |
 			// Sol
-			(Self::Sol, Web3Network::Bsc) | (Self::Sol, Web3Network::Ethereum) => 18,
+			(Self::Sol, Web3Network::Bsc) | (Self::Sol, Web3Network::Ethereum) |
+			
+			// Ada
+			(Self::Ada, Web3Network::Bsc) |
+
+			// Shib
+			(Self::Shib, Web3Network::Ethereum) |
+
+			// Uni
+			(Self::Uni, Web3Network::Ethereum) | (Self::Uni, Web3Network::Bsc) | (Self::Uni, Web3Network::Arbitrum) | (Self::Uni, Web3Network::Polygon) |
+
+			// Bch
+			(Self::Bch, Web3Network::Bsc) |
+
+			// Etc
+			(Self::Etc, Web3Network::Bsc) |
+
+			// Atom
+			(Self::Atom, Web3Network::Bsc) |
+
+			// Dai
+			(Self::Dai, Web3Network::Ethereum) | (Self::Dai, Web3Network::Bsc) | (Self::Dai, Web3Network::Polygon) | (Self::Dai, Web3Network::Arbitrum) |
+
+			// Leo
+			(Self::Leo, Web3Network::Ethereum) |
+
+			// Fil
+			(Self::Fil, Web3Network::Bsc) |
+
+			// Imx
+			(Self::Imx, Web3Network::Ethereum) |
+
+			// Inj
+			(Self::Inj, Web3Network::Ethereum) | (Self::Inj, Web3Network::Bsc)
+
+			=> 18,
+
 			// Ton
 			(Self::Ton, Web3Network::Bsc) | (Self::Ton, Web3Network::Ethereum) |
 			// Mcrt
 			(Self::Mcrt, Web3Network::Bsc) | (Self::Mcrt, Web3Network::Ethereum) => 9,
+
 			// Wbtc
 			(Self::Wbtc, Web3Network::Bsc) | (Self::Wbtc, Web3Network::Ethereum) |
 			// Mcrt
@@ -429,13 +466,38 @@ impl TokenDecimals for Web3TokenType {
 			// Btc
 			(Self::Btc, Web3Network::BitcoinP2tr) | (Self::Btc, Web3Network::BitcoinP2pkh) |
 			 (Self::Btc, Web3Network::BitcoinP2sh) | (Self::Btc, Web3Network::BitcoinP2wpkh) |
-			  (Self::Btc, Web3Network::BitcoinP2wsh) => 8,
+			  (Self::Btc, Web3Network::BitcoinP2wsh) |
+			
+			// Doge
+			(Self::Doge, Web3Network::Bsc) |
+
+			// Uni
+			(Self::Uni, Web3Network::Solana) |
+
+			// Dai
+			(Self::Dai, Web3Network::Solana) |
+
+			// Cro
+			(Self::Cro, Web3Network::Ethereum) | (Self::Cro, Web3Network::Solana)
+			
+			=> 8,
+
 			// Usdc
+			(Self::Usdc, Web3Network::Solana) |
+			(Self::Usdc, Web3Network::Arbitrum) |
+			(Self::Usdc, Web3Network::Polygon) |
 			(Self::Usdc, Web3Network::Ethereum) |
 			// Usdt
 			(Self::Usdt, Web3Network::Ethereum) |
 			// Trx
-			(Self::Trx, Web3Network::Bsc) | (Self::Trx, Web3Network::Ethereum) => 6,
+			(Self::Trx, Web3Network::Bsc) | (Self::Trx, Web3Network::Ethereum) |
+			
+			// Atom
+			(Self::Atom, Web3Network::Ethereum) | (Self::Atom, Web3Network::Polygon)
+
+			=> 6,
+
+
 			// Gusd
 			(Self::Gusd, Web3Network::Ethereum) => 2,
 			_ => 1,
