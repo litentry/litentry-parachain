@@ -28,7 +28,11 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use std::{string::String, vec, vec::Vec};
+use std::{
+	string::{String, ToString},
+	vec,
+	vec::Vec,
+};
 
 use litentry_primitives::{
 	ErrorDetail as Error, IntoErrorDetail, Web3Network, Web3NftType, Web3TokenType,
