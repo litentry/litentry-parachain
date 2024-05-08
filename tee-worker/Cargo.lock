@@ -1415,6 +1415,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethabi"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7413c5f74cc903ea37386a8965a936cbeb334bd270862fdece542c1b2dcbc898"
+dependencies = [
+ "ethereum-types",
+ "hex",
+ "sha3",
+]
+
+[[package]]
 name = "ethbloom"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1448,6 +1459,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e04d24d20b8ff2235cffbf242d5092de3aa45f77c5270ddbfadd2778ca13fea"
+dependencies = [
+ "bytes 1.4.0",
+ "ethereum-types",
+ "hash-db 0.16.0",
+ "hash256-std-hasher",
+ "parity-scale-codec",
+ "rlp",
+ "scale-info",
+ "sha3",
+ "trie-root",
+]
+
+[[package]]
 name = "ethereum-types"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1471,7 +1499,7 @@ checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
 dependencies = [
  "auto_impl",
  "environmental 1.1.4",
- "ethereum",
+ "ethereum 0.14.0",
  "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-gasometer 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1491,7 +1519,7 @@ source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa
 dependencies = [
  "auto_impl",
  "environmental 1.1.4",
- "ethereum",
+ "ethereum 0.14.0",
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-gasometer 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
@@ -1501,6 +1529,25 @@ dependencies = [
  "rlp",
  "scale-info",
  "serde 1.0.193",
+ "sha3",
+]
+
+[[package]]
+name = "evm"
+version = "0.41.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "767f43e9630cc36cf8ff2777cbb0121b055f0d1fd6eaaa13b46a1808f0d0e7e9"
+dependencies = [
+ "auto_impl",
+ "ethereum 0.15.0",
+ "evm-core 0.41.0",
+ "evm-gasometer 0.41.0",
+ "evm-runtime 0.41.0",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "scale-info",
  "sha3",
 ]
 
@@ -1528,6 +1575,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-core"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1da6cedc5cedb4208e59467106db0d1f50db01b920920589f8e672c02fdc04f"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+]
+
+[[package]]
 name = "evm-gasometer"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1547,6 +1605,17 @@ dependencies = [
  "environmental 1.1.4",
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dc0eb591abc5cd7b05bef6a036c2bb6c66ab6c5e0c5ce94bfe377ab670b1fd7"
+dependencies = [
+ "evm-core 0.41.0",
+ "evm-runtime 0.41.0",
  "primitive-types",
 ]
 
@@ -1571,6 +1640,18 @@ dependencies = [
  "auto_impl",
  "environmental 1.1.4",
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "primitive-types",
+ "sha3",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84bbe09b64ae13a29514048c1bb6fda6374ac0b4f6a1f15a443348ab88ef42cd"
+dependencies = [
+ "auto_impl",
+ "evm-core 0.41.0",
  "primitive-types",
  "sha3",
 ]
@@ -2880,6 +2961,8 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
@@ -3077,6 +3160,7 @@ dependencies = [
  "env_logger 0.9.3",
  "futures 0.3.28",
  "futures 0.3.8",
+ "ita-parentchain-interface",
  "itc-parentchain-test",
  "itp-api-client-types",
  "itp-node-api",
@@ -3088,6 +3172,7 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
+ "lc-evm-dynamic-assertions",
  "lc-scheduled-enclave",
  "litentry-primitives",
  "log 0.4.20",
@@ -4373,7 +4458,6 @@ dependencies = [
  "env_logger 0.10.0",
  "frame-support",
  "hex",
- "hex-literal",
  "http 0.2.1",
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
@@ -4385,6 +4469,8 @@ dependencies = [
  "itp-utils",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-mock-server",
  "lc-stf-task-sender",
  "litentry-hex-utils",
@@ -4392,6 +4478,7 @@ dependencies = [
  "log 0.4.20",
  "pallet-parachain-staking",
  "parity-scale-codec",
+ "primitive-types",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.193",
@@ -4514,6 +4601,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-dynamic-assertion"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "lc-evm-dynamic-assertions"
+version = "0.1.0"
+dependencies = [
+ "ethabi",
+ "evm 0.41.1",
+ "hex",
+ "http 0.2.1",
+ "http 0.2.9",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "itc-rest-client",
+ "itp-settings",
+ "itp-sgx-io",
+ "itp-sgx-temp-dir",
+ "lc-dynamic-assertion",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "serde_json 1.0.103",
+ "sgx_tstd",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
@@ -4620,6 +4739,8 @@ dependencies = [
  "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-identity-verification",
  "lc-stf-task-sender",
  "litentry-primitives",
@@ -4685,6 +4806,8 @@ dependencies = [
  "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",

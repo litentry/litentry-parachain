@@ -16,9 +16,9 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+hex = { version = "0.4.3", default-features = false }
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-hex = { version = "0.4.3", default-features = false }
 
 # internal dependencies
 ita-stf = { path = "../../../../app-libs/stf", default-features = false }
@@ -41,6 +41,8 @@ lc-assertion-build = { path = "../../assertion-build", default-features = false 
 lc-assertion-build-v2 = { path = "../../assertion-build-v2", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
+lc-dynamic-assertion = { path = "../../dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../../evm-dynamic-assertions", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
@@ -77,6 +79,8 @@ sgx = [
     "lc-assertion-build-v2/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
+    "lc-evm-dynamic-assertions/sgx",
+    "lc-dynamic-assertion/sgx",
 ]
 std = [
     "futures",
@@ -100,4 +104,6 @@ std = [
     "frame-support/std",
     "lc-credentials/std",
     "lc-data-providers/std",
+    "lc-evm-dynamic-assertions/std",
+    "lc-dynamic-assertion/std",
 ]

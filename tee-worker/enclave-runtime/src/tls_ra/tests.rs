@@ -34,6 +34,7 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_types::ShardIdentifier;
+use lc_evm_dynamic_assertions::mock::AssertionsSealMock;
 use lc_scheduled_enclave::mock::ScheduledEnclaveSealMock;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sgx_types::{sgx_quote_sign_type_t, sgx_target_info_t};
@@ -82,6 +83,7 @@ pub fn test_tls_ra_server_client_networking() {
 		4, 0, 0, 0, 0, 0, 0, 0, 0, 51, 162, 48, 234, 94, 231, 35, 92, 167, 183, 221, 185, 208, 147,
 		215, 100, 27, 7, 66, 47, 78, 248, 110, 91, 83, 225, 121, 14, 125, 180, 231, 175,
 	];
+	let assertions_state_encoded = vec![];
 
 	let server_seal_handler = SealHandlerMock::new(
 		Arc::new(RwLock::new(shielding_key_encoded.clone())),
@@ -89,6 +91,7 @@ pub fn test_tls_ra_server_client_networking() {
 		Arc::new(RwLock::new(state_encoded.clone())),
 		Arc::new(RwLock::new(light_client_state_encoded.clone())),
 		Arc::new(RwLock::new(scheduled_enclave_state_encoded.clone())),
+		Arc::new(RwLock::new(assertions_state_encoded.clone())),
 	);
 	let initial_client_state = vec![0, 0, 1];
 	let initial_client_state_key = vec![0, 0, 2];
@@ -98,6 +101,7 @@ pub fn test_tls_ra_server_client_networking() {
 	let client_state = Arc::new(RwLock::new(initial_client_state.clone()));
 	let client_light_client_state = Arc::new(RwLock::new(initial_client_light_client_state));
 	let scheduled_enclave_state = Arc::new(RwLock::new(Vec::new()));
+	let assertions_state = Arc::new(RwLock::new(Vec::new()));
 
 	let client_seal_handler = SealHandlerMock::new(
 		client_shielding_key.clone(),
@@ -105,6 +109,7 @@ pub fn test_tls_ra_server_client_networking() {
 		client_state.clone(),
 		client_light_client_state.clone(),
 		scheduled_enclave_state.clone(),
+		assertions_state.clone(),
 	);
 
 	let port: u16 = 3149;
@@ -139,6 +144,7 @@ pub fn test_tls_ra_server_client_networking() {
 	// Sidechain or OffchainWorker
 	assert_eq!(*client_state.read().unwrap(), state_encoded);
 	assert_eq!(*client_state_key.read().unwrap(), state_key_encoded);
+	assert_eq!(*assertions_state.read().unwrap(), assertions_state_encoded);
 }
 
 // Test state and key provisioning with 'real' data structures.
@@ -195,6 +201,7 @@ fn create_seal_handler(
 	state_handler.reset(state, shard).unwrap();
 	let seal = Arc::new(LightValidationStateSealMock::new());
 	let scheduled_enclave_seal = Arc::new(ScheduledEnclaveSealMock::new());
+	let assertions_seal = Arc::new(AssertionsSealMock::new());
 
 	SealHandler::new(
 		state_handler,
@@ -202,5 +209,6 @@ fn create_seal_handler(
 		shielding_key_repository,
 		seal,
 		scheduled_enclave_seal,
+		assertions_seal,
 	)
 }
