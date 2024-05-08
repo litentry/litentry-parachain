@@ -260,6 +260,8 @@ jobs:
         working-directory: ./tee-worker
         run: |
           cargo test --release -p pallet-* --lib
+          cargo test --release -p lc-* --lib
+          cargo test --release -p litentry-primitives --lib
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker

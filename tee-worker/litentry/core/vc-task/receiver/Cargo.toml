@@ -80,6 +80,7 @@ sgx = [
 std = [
     "futures",
     "log/std",
+    "ita-stf/std",
     "itp-types/std",
     "itp-top-pool-author/std",
     "itp-stf-executor/std",
