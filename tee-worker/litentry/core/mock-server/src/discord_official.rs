@@ -15,9 +15,12 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
+use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::discord_official::{
 	DiscordMessage, DiscordMessageAuthor, DiscordUser, DiscordUserAccessToken,
 };
+use litentry_primitives::{Identity, IdentityString};
+use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
@@ -30,13 +33,20 @@ pub(crate) fn query_message(
 			let expected_message_id = "1".to_string();
 
 			if expected_channel_id == channel_id && expected_message_id == message_id {
+				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
+				let discord_identity = Identity::Discord(IdentityString::new(b"alice".to_vec()));
+				let payload = hex::encode(get_expected_raw_message(
+					&alice.public().into(),
+					&discord_identity,
+					0,
+				));
 				let body = DiscordMessage {
 					id: message_id,
 					channel_id,
-					content: "Hello, litentry.".into(),
+					content: payload,
 					author: DiscordMessageAuthor {
-						id: "001".to_string(),
-						username: "elon".to_string(),
+						id: "002".to_string(),
+						username: "alice".to_string(),
 					},
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
@@ -50,20 +60,22 @@ pub(crate) fn get_user_info(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get().and(warp::path!("api" / "users" / String)).map(|user_id| {
 		let current_user = "@me".to_string();
-		if current_user == user_id {
+		if current_user == user_id || user_id == "001" {
 			let body = DiscordUser {
-				id: "1".to_string(),
+				id: "001".to_string(),
 				username: "bob".to_string(),
 				discriminator: "0".to_string(),
 			};
 			Response::builder().body(serde_json::to_string(&body).unwrap())
-		} else {
+		} else if user_id == "002" {
 			let body = DiscordUser {
 				id: user_id,
 				username: "alice".to_string(),
-				discriminator: "2".to_string(),
+				discriminator: "0".to_string(),
 			};
 			Response::builder().body(serde_json::to_string(&body).unwrap())
+		} else {
+			Response::builder().status(400).body(String::from("Error query"))
 		}
 	})
 }

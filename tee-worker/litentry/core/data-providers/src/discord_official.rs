@@ -204,9 +204,12 @@ mod tests {
 
 		let message = result.unwrap();
 		assert_eq!(message.id, message_id);
-		assert_eq!(message.author.id, "001");
-		assert_eq!(message.author.username, "elon");
-		assert_eq!(message.content, "Hello, litentry.");
+		assert_eq!(message.author.id, "002");
+		assert_eq!(message.author.username, "alice");
+		assert_eq!(
+			message.content,
+			"63e9a4e993c5dad5f8a19a22057d6c6a86172cf5380711467675061c7ed11bf8"
+		);
 		assert_eq!(message.channel_id, channel_id)
 	}
 
@@ -221,7 +224,7 @@ mod tests {
 		assert!(result.is_ok(), "query discord error: {:?}", result);
 
 		let user = result.unwrap();
-		assert_eq!(user.id, "1".to_string());
+		assert_eq!(user.id, "001".to_string());
 		assert_eq!(user.username, "bob");
 		assert_eq!(user.discriminator, "0");
 	}
