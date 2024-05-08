@@ -123,6 +123,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
@@ -183,6 +185,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
@@ -243,6 +247,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
