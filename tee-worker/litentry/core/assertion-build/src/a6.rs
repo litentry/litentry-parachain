@@ -92,10 +92,9 @@ pub fn build(
 		},
 	}
 
-	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version,
-		sidechain: req.sidechain_runtime_version,
-	};
+	let runtime_version =
+		IssuerRuntimeVersion::new(req.parachain_runtime_version, req.sidechain_runtime_version);
+
 	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A6_SUBJECT_DESCRIPTION, VC_A6_SUBJECT_TYPE);

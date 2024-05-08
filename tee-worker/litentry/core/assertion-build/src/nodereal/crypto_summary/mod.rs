@@ -37,10 +37,8 @@ pub fn build(
 		.logic(&identities)
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 
-	let runtime_version = IssuerRuntimeVersion {
-		parachain: req.parachain_runtime_version,
-		sidechain: req.sidechain_runtime_version,
-	};
+	let runtime_version =
+		IssuerRuntimeVersion::new(req.parachain_runtime_version, req.sidechain_runtime_version);
 
 	let mut credential_unsigned =
 		Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
