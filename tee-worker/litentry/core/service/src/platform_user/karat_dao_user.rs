@@ -30,6 +30,7 @@ use lc_data_providers::{
 };
 
 use crate::*;
+use std::string::ToString;
 
 pub fn is_user(
 	addresses: Vec<String>,
