@@ -28,7 +28,7 @@ use ita_sgx_runtime::{
 	pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime, VERSION as SIDECHAIN_VERSION,
 };
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
 	aes_encrypt_default,

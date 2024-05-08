@@ -3603,6 +3603,7 @@ name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
  "hex 0.4.3",
+ "ita-sgx-runtime",
  "itc-parentchain-test",
  "itp-enclave-metrics",
  "itp-node-api",

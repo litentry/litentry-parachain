@@ -18,11 +18,12 @@
 //! Provides a state interface.
 //! This allow to easily mock the stf and exchange it with another storage.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-#[macro_use]
 extern crate sgx_tstd as std;
 
 extern crate alloc;
