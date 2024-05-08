@@ -45,27 +45,27 @@ const USDC_AMOUNT_RANGE: [f64; 9] = [
 	80.0,
 	200.0,
 	500.0,
-	1000.0,
-	2000.0,
-	5000.0,
+	1_000.0,
+	2_000.0,
+	5_000.0,
 ];
 const ADA_AMOUNT_RANGE: [f64; 7] = [
 	0.0,
-	1000.0,
-	5000.0,
-	20000.0,
-	50000.0,
-	100000.0,
-	300000.0,
+	1_000.0,
+	5_000.0,
+	20_000.0,
+	50_000.0,
+	100_000.0,
+	300_000.0,
 ];
 const DOGE_AMOUNT_RANGE: [f64; 7] = [
 	0.0,
-	1000.0,
-	5000.0,
-	20000.0,
-	50000.0,
-	100000.0,
-	300000.0,
+	1_000.0,
+	5_000.0,
+	20_000.0,
+	50_000.0,
+	100_000.0,
+	300_000.0,
 ];
 const SHIB_AMOUNT_RANGE: [f64; 8] = [
 	0.0,
@@ -244,6 +244,7 @@ impl TokenAddress for Web3TokenType {
 				Some("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
 			(Self::Usdc, Web3Network::Solana) => Some("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
 			(Self::Usdc, Web3Network::Arbitrum) => Some("0xaf88d065e77c8cC2239327C5EDb3A432268e5831"),
+			(Self::Usdc, Web3Network::Polygon) => Some("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"),
 
 			// Usdt
 			(Self::Usdt, Web3Network::Bsc) => Some("0x55d398326f99059ff775485246999027b3197955"),
@@ -318,10 +319,10 @@ impl TokenAddress for Web3TokenType {
 			(Self::Ada, Web3Network::Bsc) => Some("0xaf88d065e77c8cC2239327C5EDb3A432268e5831"),
 
 			// Doge
-			(Self::Doge, Web3Network::Ethereum) => Some("0xba2ae424d960c26247dd6c32edc70b295c744c43"),
+			(Self::Doge, Web3Network::Bsc) => Some("0xba2ae424d960c26247dd6c32edc70b295c744c43"),
 
 			// Shib
-			(Self::Shib, Web3Network::Ethereum) => Some("0xba2ae424d960c26247dd6c32edc70b295c744c43"),
+			(Self::Shib, Web3Network::Ethereum) => Some("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"),
 
 			// Uni
 			(Self::Uni, Web3Network::Ethereum) => Some("0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"),
@@ -337,8 +338,9 @@ impl TokenAddress for Web3TokenType {
 			(Self::Etc, Web3Network::Bsc) => Some("0x3d6545b08693dae087e957cb1180ee38b9e3c25e"),
 
 			// Atom
-			(Self::Atom, Web3Network::Ethereum) => Some("0x3d6545b08693dae087e957cb1180ee38b9e3c25e"),
+			(Self::Atom, Web3Network::Ethereum) => Some("0x8D983cb9388EaC77af0474fA441C4815500Cb7BB"),
 			(Self::Atom, Web3Network::Bsc) => Some("0x0eb3a705fc54725037cc9e008bdede697f62f335"),
+			(Self::Atom, Web3Network::Polygon) => Some("0xac51C4c48Dc3116487eD4BC16542e27B5694Da1b"),
 
 			// Dai
 			(Self::Dai, Web3Network::Ethereum) => Some("0x6b175474e89094c44da98b954eedeac495271d0f"),
