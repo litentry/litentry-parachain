@@ -103,6 +103,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 				let mut ceremonies_to_remove = vec![];
 				ceremony_registry.values_mut().for_each(|v| {
 					let events = v.tick();
+					debug!("Got ceremony {:?} events {:?}", v.get_id_ref(), events);
 					// should be retrieved once, but cannot be at startup because it's not yet initialized so it panics ...
 					let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap().m;
 					for event in events {

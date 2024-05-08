@@ -224,9 +224,16 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		let mut i = 0;
 		let mut commands_to_execute = vec![];
 		while i < self.commands.len() {
-			if true {
+			if match self.commands.get(i).unwrap() {
+				CeremonyCommand::SaveNonce(_, _) => self.first_round.is_some(),
+				CeremonyCommand::SavePartialSignature(_, _) => self.second_round.is_some(),
+			} {
 				commands_to_execute.push(self.commands.remove(i));
 			} else {
+				debug!(
+					"Skipping ceremony command {:?} processing due to incorrect round",
+					self.commands.get(i).unwrap()
+				);
 				i += 1;
 			}
 		}
@@ -418,7 +425,7 @@ pub mod test {
 		sha2::digest::Mac,
 	};
 	use litentry_primitives::RequestAesKey;
-	use musig2::{verify_single, PubNonce, SecNonce};
+	use musig2::{secp::MaybeScalar, verify_single, PubNonce, SecNonce};
 	use signature::Verifier;
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
@@ -484,6 +491,10 @@ pub mod test {
 			SIGNER_2_ID,
 			SecNonce::from_bytes(&SIGNER_2_SEC_NONCE).unwrap().public_nonce(),
 		)
+	}
+
+	fn save_signer1_partial_sign_cmd() -> CeremonyCommand {
+		CeremonyCommand::SavePartialSignature(SIGNER_1_ID, MaybeScalar::Zero)
 	}
 
 	fn unknown_signer_nonce_cmd() -> CeremonyCommand {
@@ -639,7 +650,11 @@ pub mod test {
 			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			ceremony_id.clone(),
-			vec![save_signer1_nonce_cmd(), save_signer2_nonce_cmd()],
+			vec![
+				save_signer1_partial_sign_cmd(),
+				save_signer1_nonce_cmd(),
+				save_signer2_nonce_cmd(),
+			],
 			Arc::new(signing_key_access),
 			10,
 		)
