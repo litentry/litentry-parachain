@@ -54,9 +54,6 @@ use std::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rust_base58_sgx as rust_base58;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate hex_sgx as hex;
-
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;

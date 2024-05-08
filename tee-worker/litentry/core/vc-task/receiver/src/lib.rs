@@ -7,7 +7,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
-	pub use hex_sgx as hex;
 }
 
 #[cfg(all(feature = "std", feature = "sgx"))]
