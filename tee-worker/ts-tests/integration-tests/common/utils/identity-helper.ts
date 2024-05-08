@@ -49,8 +49,25 @@ export function parseIdGraph(
     return idGraph;
 }
 
-type TwitterValidationConfig =
+type Web2ValidationConfig =
     | {
+          identityType: 'Discord';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'PublicMessage';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Discord';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'OAuth2';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Twitter';
           context: IntegrationTestContext;
           signerIdentitity: CorePrimitivesIdentity;
           linkIdentity: CorePrimitivesIdentity;
@@ -58,6 +75,7 @@ type TwitterValidationConfig =
           validationNonce: number;
       }
     | {
+          identityType: 'Twitter';
           context: IntegrationTestContext;
           signerIdentitity: CorePrimitivesIdentity;
           linkIdentity: CorePrimitivesIdentity;
@@ -66,34 +84,61 @@ type TwitterValidationConfig =
           oauthState: string;
       };
 
-export async function buildTwitterValidation(config: TwitterValidationConfig): Promise<LitentryValidationData> {
+export async function buildWeb2Validation(config: Web2ValidationConfig): Promise<LitentryValidationData> {
     const { context, signerIdentitity, linkIdentity, validationNonce } = config;
     const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
-    console.log('post verification msg to twitter: ', msg);
+    console.log(`post verification msg to ${config.identityType}:`, msg);
 
-    const twitterValidationData = {
-        Web2Validation: {
-            Twitter: {},
-        },
-    };
-
-    if (config.verificationType === 'PublicTweet') {
-        twitterValidationData.Web2Validation.Twitter = {
-            PublicTweet: {
-                tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+    if (config.identityType === 'Discord') {
+        const discordValidationData = {
+            Web2Validation: {
+                Discord: {},
             },
         };
+
+        if (config.verificationType === 'PublicMessage') {
+            discordValidationData.Web2Validation.Discord = {
+                PublicMessage: {
+                    channel_id: `0x${Buffer.from('919848392035794945', 'utf8').toString('hex')}`,
+                    message_id: `0x${Buffer.from('1', 'utf8').toString('hex')}`,
+                    guild_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            discordValidationData.Web2Validation.Discord = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', discordValidationData);
     } else {
-        twitterValidationData.Web2Validation.Twitter = {
-            OAuth2: {
-                code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
-                state: config.oauthState,
-                redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+        const twitterValidationData = {
+            Web2Validation: {
+                Twitter: {},
             },
         };
-    }
 
-    return context.api.createType('LitentryValidationData', twitterValidationData);
+        if (config.verificationType === 'PublicTweet') {
+            twitterValidationData.Web2Validation.Twitter = {
+                PublicTweet: {
+                    tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            twitterValidationData.Web2Validation.Twitter = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    state: config.oauthState,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', twitterValidationData);
+    }
 }
 
 export async function buildValidations(
