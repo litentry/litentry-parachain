@@ -40,8 +40,13 @@ use crate::{
 			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 			GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		},
-		EnclaveStfEnclaveSigner,
+		EnclaveStfEnclaveSigner, GLOBAL_ASSERTION_REPOSITORY,
 	},
+};
+use ita_parentchain_interface::{
+	integritee::ParentchainEventHandler as LitentryParentchainEventHandler,
+	target_a::ParentchainEventHandler as TargetAParentchainEventHandler,
+	target_b::ParentchainEventHandler as TargetBParentchainEventHandler,
 };
 use itp_component_container::ComponentGetter;
 use itp_nonce_cache::NonceCache;
@@ -63,6 +68,10 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
+
+	let parentchain_event_handler =
+		LitentryParentchainEventHandler { assertion_repository: repository };
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -76,6 +85,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::Litentry,
+		parentchain_event_handler,
 	));
 	Ok(IntegriteeParentchainBlockImporter::new(
 		validator_access,
@@ -99,6 +109,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let parentchain_event_handler = TargetAParentchainEventHandler {};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -112,6 +123,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::TargetA,
+		parentchain_event_handler,
 	));
 	Ok(TargetAParentchainBlockImporter::new(
 		validator_access,
@@ -135,6 +147,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let parentchain_event_handler = TargetBParentchainEventHandler {};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -148,6 +161,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::TargetB,
+		parentchain_event_handler,
 	));
 	Ok(TargetBParentchainBlockImporter::new(
 		validator_access,

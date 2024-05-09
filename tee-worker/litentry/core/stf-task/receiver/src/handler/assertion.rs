@@ -27,12 +27,15 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
+use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
 };
 use log::*;
+use sp_core::H160;
 use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
@@ -41,16 +44,17 @@ pub(crate) struct AssertionHandler<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 }
 
-impl<ShieldingKeyRepository, A, S, H, O> TaskHandler
-	for AssertionHandler<ShieldingKeyRepository, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O, AR> TaskHandler
+	for AssertionHandler<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -59,6 +63,7 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	type Error = VCMPError;
 	type Result = Vec<u8>; // vc_byte_array
@@ -133,9 +138,10 @@ pub fn create_credential_str<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 >(
 	req: &AssertionBuildRequest,
-	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 ) -> Result<Vec<u8>, VCMPError>
 where
 	ShieldingKeyRepository: AccessKey,
@@ -269,6 +275,12 @@ where
 
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
+
+		Assertion::Dynamic(smart_contract_id) => lc_assertion_build::dynamic::build(
+			req,
+			smart_contract_id,
+			context.assertion_repository.clone(),
+		),
 	}?;
 
 	// post-process the credential
@@ -288,7 +300,9 @@ where
 
 	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
 
-	credential.credential_schema.id = credential_schema::get_schema_url(&req.assertion);
+	if let Some(schema) = credential_schema::get_schema_url(&req.assertion) {
+		credential.credential_schema.id = schema;
+	}
 
 	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 		VCMPError::RequestVCFailed(

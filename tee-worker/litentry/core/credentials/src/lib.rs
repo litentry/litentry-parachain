@@ -81,6 +81,7 @@ pub mod litentry_profile;
 pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
+
 pub mod brc20;
 pub mod credential_schema;
 pub mod generic_discord_role;
@@ -515,6 +516,21 @@ impl Credential {
 
 		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(ret);
+	}
+
+	pub fn update_dynamic(
+		&mut self,
+		description: String,
+		assertion_type: String,
+		assertions: Vec<AssertionLogic>,
+		schema_url: String,
+		result: bool,
+	) {
+		self.credential_subject.description = description;
+		self.credential_subject.types = assertion_type;
+		self.credential_subject.assertions = assertions;
+		self.credential_subject.values = vec![result];
+		self.credential_schema.id = schema_url;
 	}
 }
 

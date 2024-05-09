@@ -4,8 +4,9 @@ use itp_test::mock::stf_mock::TrustedCallSignedMock;
 use itp_types::{
 	parentchain::{
 		events::{
-			ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
-			OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
+			LinkIdentityRequested, OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+			VCRequested,
 		},
 		FilterEvents, HandleParentchainEvents,
 	},
@@ -32,45 +33,41 @@ pub struct MockEvents;
 impl FilterEvents for MockEvents {
 	type Error = ();
 
-	fn get_opaque_task_posted_events(
-		&self,
-	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error> {
+	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error> {
 		let opaque_task_posted_event =
 			OpaqueTaskPosted { request: RsaRequest::new(H256::default(), Vec::from([0u8; 32])) };
 		Ok(Vec::from([opaque_task_posted_event]))
 	}
 
-	fn get_link_identity_events(
-		&self,
-	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error> {
+	fn get_link_identity_events(&self) -> Result<Vec<LinkIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
-	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error> {
+	fn get_vc_requested_events(&self) -> Result<Vec<VCRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_deactivate_identity_events(
 		&self,
-	) -> core::result::Result<Vec<DeactivateIdentityRequested>, Self::Error> {
+	) -> Result<Vec<DeactivateIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
-	fn get_activate_identity_events(
-		&self,
-	) -> core::result::Result<Vec<ActivateIdentityRequested>, Self::Error> {
+	fn get_activate_identity_events(&self) -> Result<Vec<ActivateIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
-	fn get_scheduled_enclave_set_events(
-		&self,
-	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
-	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
 		Ok(Vec::new())
 	}
 }
@@ -82,10 +79,7 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
 {
-	fn handle_events(
-		_: &Executor,
-		_: impl itp_types::parentchain::FilterEvents,
-	) -> core::result::Result<Vec<H256>, Error> {
+	fn handle_events(&self, _: &Executor, _: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		Ok(Vec::from([H256::default()]))
 	}
 }
