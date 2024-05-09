@@ -19,7 +19,10 @@
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
 
-use itp_types::{parentchain::FilterEvents, H256};
+use itp_types::{
+	parentchain::{events::AssertionCreated, FilterEvents},
+	H256,
+};
 use std::vec::Vec;
 
 #[derive(Clone)]
@@ -42,54 +45,47 @@ impl FilterEvents for FilterableEvents {
 
 	fn get_link_identity_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error>
-	{
+	) -> Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_vc_requested_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
+	) -> Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_deactivate_identity_events(
 		&self,
-	) -> core::result::Result<
-		Vec<itp_types::parentchain::events::DeactivateIdentityRequested>,
-		Self::Error,
-	> {
+	) -> Result<Vec<itp_types::parentchain::events::DeactivateIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_activate_identity_events(
 		&self,
-	) -> core::result::Result<
-		Vec<itp_types::parentchain::events::ActivateIdentityRequested>,
-		Self::Error,
-	> {
+	) -> Result<Vec<itp_types::parentchain::events::ActivateIdentityRequested>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_scheduled_enclave_set_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error>
-	{
+	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
-	) -> core::result::Result<
-		Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>,
-		Self::Error,
-	> {
+	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>, Self::Error> {
 		Ok(Vec::new())
 	}
 
 	fn get_opaque_task_posted_events(
 		&self,
-	) -> core::result::Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
+	) -> Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
 		Ok(Vec::new())
 	}
 }

@@ -191,6 +191,12 @@ export const mockAssertions = [
             TokenHoldingAmount: 'TRX',
         },
     },
+    {
+        description: 'The amount of BTC you are holding',
+        assertion: {
+            TokenHoldingAmount: 'BTC',
+        },
+    },
 
     {
         description: 'The amount of LIT you are staking',

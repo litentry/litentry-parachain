@@ -1,0 +1,57 @@
+[package]
+name = "lc-evm-dynamic-assertions"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# std dependecies
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+http = { version = "0.2", optional = true }
+thiserror = { version = "1.0.26", optional = true }
+
+# sgx dependencies
+http-sgx = { package = "http", git = "https://github.com/integritee-network/http-sgx.git", branch = "sgx-experimental", optional = true }
+itp-sgx-temp-dir = { version = "0.1", default-features = false, path = "../../../core-primitives/sgx/temp-dir", optional = true }
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3", optional = true }
+
+# no std
+ethabi = { version = "18.0.0", default-features = false }
+evm = { version = "0.41.1", default-features = false, features = ["with-codec"] }
+hex = { version = "0.4.3", default-features = false }
+log = { version = "0.4", default-features = false }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+# local
+itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itp-settings = { path = "../../../core-primitives/settings" }
+itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
+lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
+
+
+[dev-dependencies]
+http_req = { features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
+litentry-primitives = { path = "../../primitives" }
+
+[features]
+default = ["std"]
+std = [
+    "lc-dynamic-assertion/std",
+    "itc-rest-client/std",
+    "itp-sgx-io/std",
+    "serde_json/std",
+    "http",
+    "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "http-sgx",
+    "lc-dynamic-assertion/sgx",
+    "itc-rest-client/sgx",
+    "itp-sgx-io/sgx",
+    "thiserror-sgx",
+]
+sgx-test = ["itp-sgx-temp-dir/sgx"]

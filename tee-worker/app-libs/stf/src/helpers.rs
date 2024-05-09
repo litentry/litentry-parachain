@@ -14,7 +14,7 @@
 	limitations under the License.
 
 */
-use crate::ENCLAVE_ACCOUNT_KEY;
+use crate::{Vec, ENCLAVE_ACCOUNT_KEY};
 use codec::{Decode, Encode};
 use frame_support::ensure;
 use ita_sgx_runtime::{ParentchainLitentry, ParentchainTargetA, ParentchainTargetB};
@@ -29,7 +29,6 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;
-use std::prelude::v1::*;
 
 #[cfg(feature = "development")]
 pub use non_prod::*;

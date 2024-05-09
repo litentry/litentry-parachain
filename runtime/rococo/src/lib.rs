@@ -1000,6 +1000,11 @@ impl pallet_bitacross::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrAllCouncil;
 }
 
+impl pallet_evm_assertions::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AssertionId = H160;
+}
+
 // Temporary for bitacross team to test
 impl pallet_bitacross_mimic::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -1225,6 +1230,7 @@ construct_runtime! {
 		Bitacross: pallet_bitacross = 70,
 		// Temporary for bitacross team to test
 		BitacrossMimic: pallet_bitacross_mimic = 71,
+		EvmAssertions: pallet_evm_assertions = 72,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
@@ -1324,7 +1330,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
 			RuntimeCall::Bitacross(_) |
-			RuntimeCall::BitacrossMimic(_)
+			RuntimeCall::BitacrossMimic(_) |
+			RuntimeCall::EvmAssertions(_)
 		)
 	}
 }

@@ -17,7 +17,7 @@
 
 pub mod events;
 
-use crate::OpaqueCall;
+use crate::{parentchain::events::AssertionCreated, OpaqueCall};
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -93,33 +93,27 @@ pub trait IdentifyParentchain {
 }
 
 pub trait FilterEvents {
-	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
+	type Error: From<ParentchainEventProcessingError> + Debug;
 
-	fn get_link_identity_events(
-		&self,
-	) -> core::result::Result<Vec<LinkIdentityRequested>, Self::Error>;
+	fn get_link_identity_events(&self) -> Result<Vec<LinkIdentityRequested>, Self::Error>;
 
-	fn get_vc_requested_events(&self) -> core::result::Result<Vec<VCRequested>, Self::Error>;
+	fn get_vc_requested_events(&self) -> Result<Vec<VCRequested>, Self::Error>;
 
 	fn get_deactivate_identity_events(
 		&self,
-	) -> core::result::Result<Vec<DeactivateIdentityRequested>, Self::Error>;
+	) -> Result<Vec<DeactivateIdentityRequested>, Self::Error>;
 
-	fn get_activate_identity_events(
-		&self,
-	) -> core::result::Result<Vec<ActivateIdentityRequested>, Self::Error>;
+	fn get_activate_identity_events(&self) -> Result<Vec<ActivateIdentityRequested>, Self::Error>;
 
-	fn get_scheduled_enclave_set_events(
-		&self,
-	) -> core::result::Result<Vec<ScheduledEnclaveSet>, Self::Error>;
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error>;
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
-	) -> core::result::Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
 
-	fn get_opaque_task_posted_events(
-		&self,
-	) -> core::result::Result<Vec<OpaqueTaskPosted>, Self::Error>;
+	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error>;
+
+	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -134,9 +128,10 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
 	fn handle_events(
+		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> core::result::Result<Vec<H256>, Error>;
+	) -> Result<Vec<H256>, Error>;
 }
 
 #[derive(Debug)]
@@ -149,6 +144,7 @@ pub enum ParentchainEventProcessingError {
 	ScheduledEnclaveSetFailure,
 	ScheduledEnclaveRemovedFailure,
 	OpaqueTaskPostedFailure,
+	AssertionCreatedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -170,6 +166,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
 			ParentchainEventProcessingError::OpaqueTaskPostedFailure =>
 				"Parentchain Event Processing Error: OpaqueTaskPostedFailure",
+			ParentchainEventProcessingError::AssertionCreatedFailure =>
+				"Parentchain Event Processing Error: AssertionCreatedFailure",
 		};
 		write!(f, "{}", message)
 	}

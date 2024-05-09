@@ -52,6 +52,8 @@ test = [
     "itp-top-pool-author/mocks",
     # substrate
     "frame-system",
+    #litentry
+    "lc-evm-dynamic-assertions/sgx-test",
 ]
 dcap = []
 
@@ -142,6 +144,8 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
+lc-evm-dynamic-assertions = { path = "../litentry/core/evm-dynamic-assertions", default-features = false, features = ["sgx"] }
+lc-identity-verification = { path = "../litentry/core/identity-verification", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-vc-task-receiver = { path = "../litentry/core/vc-task/receiver", default-features = false, features = ["sgx"] }

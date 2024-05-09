@@ -30,6 +30,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_sgx_io::SealedIO;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::ShardIdentifier;
+use lc_evm_dynamic_assertions::sealing::UnsealedAssertions;
 use lc_scheduled_enclave::ScheduledEnclaveMap;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
@@ -43,12 +44,14 @@ pub struct SealHandler<
 	StateHandler,
 	LightClientSeal,
 	ScheduledEnclaveSeal,
+	AssertionsSeal,
 > {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	light_client_seal: Arc<LightClientSeal>,
 	scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
+	assertions_seal: Arc<AssertionsSeal>,
 }
 
 impl<
@@ -57,6 +60,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	>
 	SealHandler<
 		ShieldingKeyRepository,
@@ -64,6 +68,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	>
 {
 	pub fn new(
@@ -72,6 +77,7 @@ impl<
 		shielding_key_repository: Arc<ShieldingKeyRepository>,
 		light_client_seal: Arc<LightClientSeal>,
 		scheduled_enclave_seal: Arc<ScheduledEnclaveSeal>,
+		assertions_seal: Arc<AssertionsSeal>,
 	) -> Self {
 		Self {
 			state_handler,
@@ -79,6 +85,7 @@ impl<
 			shielding_key_repository,
 			light_client_seal,
 			scheduled_enclave_seal,
+			assertions_seal,
 		}
 	}
 }
@@ -90,6 +97,7 @@ pub trait SealStateAndKeys {
 	fn seal_new_empty_state(&self, shard: &ShardIdentifier) -> EnclaveResult<()>;
 	fn seal_light_client_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
 	fn seal_scheduled_enclave_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
+	fn seal_assertions_state(&self, bytes: &[u8]) -> EnclaveResult<()>;
 }
 
 pub trait UnsealStateAndKeys {
@@ -98,6 +106,7 @@ pub trait UnsealStateAndKeys {
 	fn unseal_state(&self, shard: &ShardIdentifier) -> EnclaveResult<Vec<u8>>;
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>>;
 	fn unseal_scheduled_enclave_state(&self) -> EnclaveResult<Vec<u8>>;
+	fn unseal_assertions_state(&self) -> EnclaveResult<Vec<u8>>;
 }
 
 impl<
@@ -106,6 +115,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	> SealStateAndKeys
 	for SealHandler<
 		ShieldingKeyRepository,
@@ -113,6 +123,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
@@ -120,6 +131,7 @@ impl<
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Decode,
 	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
+	AssertionsSeal: SealedIO<Unsealed = UnsealedAssertions>,
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key: Rsa3072KeyPair = serde_json::from_slice(bytes).map_err(|e| {
@@ -164,6 +176,16 @@ impl<
 		Ok(())
 	}
 
+	fn seal_assertions_state(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
+		let state: <AssertionsSeal as SealedIO>::Unsealed = Decode::decode(&mut bytes)?;
+		self.assertions_seal.seal(&state).map_err(|e| {
+			error!("    [Enclave] Failed to seal assertions: {:?}", e);
+			EnclaveError::Other(format!("{:?}", e).into())
+		})?;
+		info!("Successfully sealed assertions");
+		Ok(())
+	}
+
 	/// Seal an empty, newly initialized state.
 	///
 	/// Requires the shielding key to be sealed and updated before calling this.
@@ -184,6 +206,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	> UnsealStateAndKeys
 	for SealHandler<
 		ShieldingKeyRepository,
@@ -191,6 +214,7 @@ impl<
 		StateHandler,
 		LightClientSeal,
 		ScheduledEnclaveSeal,
+		AssertionsSeal,
 	> where
 	ShieldingKeyRepository: AccessKey<KeyType = Rsa3072KeyPair> + MutateKey<Rsa3072KeyPair>,
 	StateKeyRepository: AccessKey<KeyType = Aes> + MutateKey<Aes>,
@@ -198,6 +222,7 @@ impl<
 	LightClientSeal: LightClientSealing,
 	LightClientSeal::LightClientState: Encode,
 	ScheduledEnclaveSeal: SealedIO<Unsealed = ScheduledEnclaveMap>,
+	AssertionsSeal: SealedIO<Unsealed = UnsealedAssertions>,
 {
 	fn unseal_shielding_key(&self) -> EnclaveResult<Vec<u8>> {
 		let shielding_key = self
@@ -229,6 +254,15 @@ impl<
 		})?;
 		Ok(Encode::encode(&scheduled_enclave))
 	}
+
+	fn unseal_assertions_state(&self) -> EnclaveResult<Vec<u8>> {
+		let assertions = self.assertions_seal.unseal().map_err(|e| {
+			error!("    [Enclave] Failed to unseal assertions: {:?}", e);
+			EnclaveError::Other(format!("{:?}", e).into())
+		})?;
+
+		Ok(Encode::encode(&assertions))
+	}
 }
 
 #[cfg(feature = "test")]
@@ -237,6 +271,7 @@ pub mod test {
 	use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
+	use lc_evm_dynamic_assertions::mock::AssertionsSealMock;
 	use lc_scheduled_enclave::mock::ScheduledEnclaveSealMock;
 
 	type StateKeyRepositoryMock = KeyRepositoryMock<Aes>;
@@ -248,6 +283,7 @@ pub mod test {
 		HandleStateMock,
 		LightValidationStateSealMock,
 		ScheduledEnclaveSealMock,
+		AssertionsSealMock,
 	>;
 
 	pub fn seal_shielding_key_works() {

@@ -34,6 +34,7 @@ export default {
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
+                Dynamic: "([u8;20])",
             },
         },
         AssertionSupportedNetwork: {
@@ -184,6 +185,7 @@ export default {
                 "Nfp",
                 "Sol",
                 "Mcrt",
+                "Btc",
             ],
         },
         // PlatformUserType
