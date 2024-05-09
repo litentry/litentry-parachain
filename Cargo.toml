@@ -10,6 +10,7 @@ members = [
     'pallets/drop3',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
+    'pallets/evm-assertions',
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',
@@ -258,6 +259,7 @@ pallet-vc-management = { path = "pallets/vc-management", default-features = fals
 precompile-utils = { path = "precompiles/utils", default-features = false }
 pallet-evm-precompile-bridge-transfer = { path = "precompiles/bridge-transfer", default-features = false }
 pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-staking", default-features = false }
+pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }

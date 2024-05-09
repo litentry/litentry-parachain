@@ -80,6 +80,8 @@ members = [
     "litentry/core/mock-server",
     "litentry/core/vc-task/sender",
     "litentry/core/vc-task/receiver",
+    "litentry/core/dynamic-assertion",
+    "litentry/core/evm-dynamic-assertions",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

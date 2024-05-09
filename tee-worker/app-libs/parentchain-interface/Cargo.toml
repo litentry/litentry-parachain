@@ -32,9 +32,12 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
+lc-dynamic-assertion = { path = "../../litentry/core/dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../../litentry/core/evm-dynamic-assertions", default-features = false }
 lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [dev-dependencies]
@@ -71,6 +74,8 @@ std = [
     "substrate-api-client",
     "litentry-primitives/std",
     "lc-scheduled-enclave/std",
+    "lc-dynamic-assertion/std",
+    "lc-evm-dynamic-assertions/std",
     "sp-std/std",
 ]
 sgx = [
@@ -83,4 +88,6 @@ sgx = [
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
+    "lc-dynamic-assertion/sgx",
+    "lc-evm-dynamic-assertions/sgx",
 ]
