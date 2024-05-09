@@ -101,23 +101,25 @@ pub fn get_balance(
 						client.get_evm_tokens_balance_by_wallet(address.1.clone(), &network, false);
 
 					match result {
-						Ok(items) =>match items.iter().find(|&item| item.token_address == token_address) {
-							Some(item) => match item.balance.parse::<u128>() {
+						Ok(items) =>
+							match items.iter().find(|&item| item.token_address == token_address) {
+								Some(item) => match item.balance.parse::<u128>() {
 									Ok(balance) => {
-										total_balance += calculate_balance_with_decimals(balance, decimals);
+										total_balance +=
+											calculate_balance_with_decimals(balance, decimals);
 
-										return Ok(LoopControls::Continue);
+										Ok(LoopControls::Continue)
 									},
 									Err(err) => {
 										error!("Failed to parse {} to f64: {}", item.balance, err);
-										return Err(Error::ParseError);
+										Err(Error::ParseError)
 									},
 								},
-							None => Ok(LoopControls::Continue),
+								None => Ok(LoopControls::Continue),
 							},
 						Err(err) => Err(err.into_error_detail()),
 					}
-				}
+				},
 				_ => Ok(LoopControls::Continue),
 			}
 		},

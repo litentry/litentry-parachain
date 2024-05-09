@@ -99,7 +99,7 @@ pub enum Web3TokenType {
 	#[codec(index = 37)]
 	Cro,
 	#[codec(index = 38)]
-	Inj
+	Inj,
 }
 
 impl Web3TokenType {
