@@ -20,9 +20,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate hex_sgx as hex;
-
 use lc_dynamic_assertion::AssertionLogicRepository;
 use primitive_types::H160;
 use std::{
