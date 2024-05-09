@@ -26,7 +26,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use chrono_sgx as chrono;
-	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;

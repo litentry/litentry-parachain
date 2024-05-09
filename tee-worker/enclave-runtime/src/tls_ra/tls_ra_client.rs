@@ -39,6 +39,7 @@ use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
+use lc_evm_dynamic_assertions::{sealing::io::AssertionsSeal, ASSERTIONS_FILE};
 
 use log::*;
 use rustls::{ClientConfig, ClientSession, Stream};
@@ -140,6 +141,7 @@ where
 			Opcode::State => self.seal_handler.seal_state(&bytes, &self.shard)?,
 			Opcode::LightClient => self.seal_handler.seal_light_client_state(&bytes)?,
 			Opcode::ScheduledEnclave => self.seal_handler.seal_scheduled_enclave_state(&bytes)?,
+			Opcode::Assertions => self.seal_handler.seal_assertions_state(&bytes)?,
 		};
 		Ok(Some(header.opcode))
 	}
@@ -217,12 +219,15 @@ pub unsafe extern "C" fn request_state_provisioning(
 	let scheduled_enclave_seal =
 		Arc::new(ScheduledEnclaveSeal::new(GLOBAL_SCHEDULED_ENCLAVE.seal_path.clone()));
 
+	let assertions_seal = Arc::new(AssertionsSeal::new(ASSERTIONS_FILE.into()));
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
 		scheduled_enclave_seal,
+		assertions_seal,
 	);
 
 	let signing_key_repository = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {

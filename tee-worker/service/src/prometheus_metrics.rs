@@ -303,6 +303,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
 			Assertion::PlatformUser(_) => "PlatformUser",
 			Assertion::NftHolder(_) => "NftHolder",
+			Assertion::Dynamic(_) => "Dynamic",
 		},
 	};
 	inc_stf_calls(category, label);
