@@ -228,6 +228,14 @@ pub(crate) fn init_enclave(
 	Ok(())
 }
 
+pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
+
+	Ok(())
+}
+
 pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
@@ -288,10 +296,6 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
 	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
-
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
