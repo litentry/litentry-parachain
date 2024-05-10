@@ -398,6 +398,16 @@ pub unsafe extern "C" fn publish_wallets() -> sgx_status_t {
 	sgx_status_t::SGX_SUCCESS
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn finish_enclave_init() -> sgx_status_t {
+	if let Err(e) = initialization::finish_enclave_init() {
+		error!("Failed to finish enclave init: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
 /// Call this once at worker startup to initialize the TOP pool and direct invocation RPC server.
 ///
 /// This function will run the RPC server on the same thread as it is called and will loop there.
