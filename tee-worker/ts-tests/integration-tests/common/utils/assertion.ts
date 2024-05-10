@@ -156,7 +156,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // check runtime version is present
     assert.deepEqual(
         vcPayloadJson.issuer.runtimeVersion,
-        { parachain: '9176', sidechain: '0104' },
+        { parachain: '9176', sidechain: '0106' },
         'Check VC runtime version: it should equal the current defined versions'
     );
 
