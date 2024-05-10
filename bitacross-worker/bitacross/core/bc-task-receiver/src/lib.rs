@@ -70,7 +70,9 @@ use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use ita_stf::TrustedCallSigned;
 use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, schnorr::Pair as SchnorrPair};
-use lc_direct_call::handler::{nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum};
+use lc_direct_call::handler::{
+	kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum,
+};
 use litentry_primitives::DecryptableRequest;
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -289,5 +291,19 @@ where
 			.map(|r| {
 				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
 			}),
+		DirectCall::KillCeremony(signer, aes_key, message) => kill_ceremony::handle(
+			signer,
+			message,
+			context.musig2_ceremony_registry.clone(),
+			context.musig2_ceremony_pending_commands.clone(),
+			context.enclave_registry_lookup.clone(),
+		)
+		.map_err(|e| {
+			error!("KillCeremony error: {:?}", e);
+			aes_encrypt_default(&aes_key, &e.encode()).encode()
+		})
+		.map(|r| {
+			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
+		}),
 	}
 }

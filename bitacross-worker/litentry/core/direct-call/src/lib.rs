@@ -53,6 +53,7 @@ pub enum DirectCall {
 	SignEthereum(Identity, RequestAesKey, PrehashedEthereumMessage),
 	NonceShare(Identity, RequestAesKey, SignBitcoinPayload, [u8; 66]),
 	PartialSignatureShare(Identity, RequestAesKey, SignBitcoinPayload, [u8; 32]),
+	KillCeremony(Identity, RequestAesKey, SignBitcoinPayload),
 }
 
 impl DirectCall {
@@ -62,6 +63,7 @@ impl DirectCall {
 			Self::SignEthereum(signer, ..) => signer,
 			Self::NonceShare(signer, ..) => signer,
 			Self::PartialSignatureShare(signer, ..) => signer,
+			Self::KillCeremony(signer, ..) => signer,
 		}
 	}
 

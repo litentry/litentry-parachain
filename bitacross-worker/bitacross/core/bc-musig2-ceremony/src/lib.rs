@@ -104,9 +104,9 @@ pub enum CeremonyCommand {
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
-	CeremonyError(CeremonyError),
+	CeremonyError(Signers, CeremonyError),
 	CeremonyEnded([u8; 64]),
-	CeremonyTimedOut,
+	CeremonyTimedOut(Signers),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]
@@ -210,7 +210,9 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		self.ticks_left -= 1;
 
 		if self.ticks_left == 0 {
-			self.events.push(CeremonyEvent::CeremonyTimedOut);
+			self.events.push(CeremonyEvent::CeremonyTimedOut(
+				self.signers.iter().filter(|e| e.0 != self.me).map(|s| s.0).collect(),
+			));
 		}
 
 		self.events.drain(0..).collect()
@@ -248,7 +250,10 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 				CeremonyCommand::SavePartialSignature(signer, partial_signature) =>
 					self.receive_partial_sign(signer, partial_signature),
 			} {
-				self.events.push(CeremonyEvent::CeremonyError(e));
+				self.events.push(CeremonyEvent::CeremonyError(
+					self.signers.iter().filter(|e| e.0 != self.me).map(|s| s.0).collect(),
+					e,
+				));
 			}
 		}
 	}
@@ -583,7 +588,7 @@ pub mod test {
 		let events = ceremony.tick();
 
 		// then
-		assert!(matches!(events.get(0), Some(CeremonyEvent::CeremonyTimedOut)));
+		assert!(matches!(events.get(0), Some(CeremonyEvent::CeremonyTimedOut(_))));
 		assert_eq!(events.len(), 1)
 	}
 
@@ -697,9 +702,10 @@ pub mod test {
 		);
 		assert!(matches!(
 			events.get(1),
-			Some(CeremonyEvent::CeremonyError(CeremonyError::NonceReceivingError(
-				NonceReceivingErrorReason::SignerNotFound
-			)))
+			Some(CeremonyEvent::CeremonyError(
+				_,
+				CeremonyError::NonceReceivingError(NonceReceivingErrorReason::SignerNotFound)
+			))
 		));
 		assert_eq!(events.len(), 2)
 	}

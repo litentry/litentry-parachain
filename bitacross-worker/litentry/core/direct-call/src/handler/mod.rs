@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod kill_ceremony;
 pub mod nonce_share;
 pub mod partial_signature_share;
 pub mod sign_bitcoin;

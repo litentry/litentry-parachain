@@ -196,7 +196,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 								}
 								ceremonies_to_remove.push(v.get_id_ref().clone());
 							},
-							CeremonyEvent::CeremonyError(error) => {
+							CeremonyEvent::CeremonyError(signers, error) => {
 								debug!("Ceremony {:?} error {:?}", v.get_id_ref(), error);
 								let hash = blake2_256(&v.get_id_ref().encode());
 								let result = SignBitcoinError::CeremonyError;
@@ -213,8 +213,33 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									);
 								}
 								ceremonies_to_remove.push(v.get_id_ref().clone());
+
+								//kill ceremonies on other workers
+								signers.iter().for_each(|signer_id| {
+									let aes_key = random_aes_key();
+									let direct_call = DirectCall::KillCeremony(
+										identity.clone(),
+										aes_key,
+										v.get_id_ref().clone(),
+									);
+
+									debug!(
+										"Requesting ceremony kill on signer: {:?} for ceremony: {:?}",
+										signer_id,
+										v.get_id_ref()
+									);
+
+									let request = prepare_request(
+										aes_key,
+										shielding_key_access.as_ref(),
+										signing_key_access.as_ref(),
+										mr_enclave,
+										direct_call,
+									);
+									peers_map.get_mut(signer_id).unwrap().send(&request).unwrap();
+								});
 							},
-							CeremonyEvent::CeremonyTimedOut => {
+							CeremonyEvent::CeremonyTimedOut(signers) => {
 								debug!("Ceremony {:?} timed out", v.get_id_ref());
 								let hash = blake2_256(&v.get_id_ref().encode());
 								let result = SignBitcoinError::CeremonyError;
@@ -231,6 +256,31 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									);
 								}
 								ceremonies_to_remove.push(v.get_id_ref().clone());
+
+								//kill ceremonies on other workers
+								signers.iter().for_each(|signer_id| {
+									let aes_key = random_aes_key();
+									let direct_call = DirectCall::KillCeremony(
+										identity.clone(),
+										aes_key,
+										v.get_id_ref().clone(),
+									);
+
+									debug!(
+										"Requesting ceremony kill on signer: {:?} for ceremony: {:?}",
+										signer_id,
+										v.get_id_ref()
+									);
+
+									let request = prepare_request(
+										aes_key,
+										shielding_key_access.as_ref(),
+										signing_key_access.as_ref(),
+										mr_enclave,
+										direct_call,
+									);
+									peers_map.get_mut(signer_id).unwrap().send(&request).unwrap();
+								});
 							},
 						}
 					}
