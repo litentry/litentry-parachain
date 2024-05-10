@@ -137,6 +137,7 @@ services:
       - MORALIS_API_URL=http://localhost:19527/moralis/
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
+      - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -199,6 +200,7 @@ services:
       - MORALIS_API_URL=http://localhost:19527/moralis/
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
+      - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -261,6 +263,7 @@ services:
       - MORALIS_API_URL=http://localhost:19527/moralis/
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
+      - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
