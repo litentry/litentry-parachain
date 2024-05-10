@@ -148,7 +148,9 @@ pub fn verify(
 			},
 		},
 		Web2ValidationData::Discord(data) => match data {
-			DiscordValidationData::PublicMessage { ref channel_id, ref message_id, .. } => {
+			DiscordValidationData::DiscordPublicMessage {
+				ref channel_id, ref message_id, ..
+			} => {
 				let mut client = DiscordOfficialClient::new(config);
 				let message: DiscordMessage = client
 					.query_message(channel_id.to_vec(), message_id.to_vec())

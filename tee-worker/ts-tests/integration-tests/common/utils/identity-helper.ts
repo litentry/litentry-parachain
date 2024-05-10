@@ -55,15 +55,7 @@ type Web2ValidationConfig =
           context: IntegrationTestContext;
           signerIdentitity: CorePrimitivesIdentity;
           linkIdentity: CorePrimitivesIdentity;
-          verificationType: 'PublicMessage';
-          validationNonce: number;
-      }
-    | {
-          identityType: 'Discord';
-          context: IntegrationTestContext;
-          signerIdentitity: CorePrimitivesIdentity;
-          linkIdentity: CorePrimitivesIdentity;
-          verificationType: 'OAuth2';
+          verificationType: 'DiscordPublicMessage' | 'OAuth2';
           validationNonce: number;
       }
     | {
@@ -96,9 +88,9 @@ export async function buildWeb2Validation(config: Web2ValidationConfig): Promise
             },
         };
 
-        if (config.verificationType === 'PublicMessage') {
+        if (config.verificationType === 'DiscordPublicMessage') {
             discordValidationData.Web2Validation.Discord = {
-                PublicMessage: {
+                DiscordPublicMessage: {
                     channel_id: `0x${Buffer.from('919848392035794945', 'utf8').toString('hex')}`,
                     message_id: `0x${Buffer.from('1', 'utf8').toString('hex')}`,
                     guild_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,

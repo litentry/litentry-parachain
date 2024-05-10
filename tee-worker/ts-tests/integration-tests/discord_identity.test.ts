@@ -95,7 +95,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: discordIdentity,
-            verificationType: 'PublicMessage',
+            verificationType: 'DiscordPublicMessage',
             validationNonce: nonce,
         });
         const networks = context.api.createType('Vec<Web3Network>', []);

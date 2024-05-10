@@ -83,11 +83,11 @@ export default {
         },
         DiscordValidationData: {
             _enum: {
-                PublicMessage: "PublicMessage",
+                DiscordPublicMessage: "DiscordPublicMessage",
                 OAuth2: "DiscordOAuth2",
             },
         },
-        PublicMessage: {
+        DiscordPublicMessage: {
             channel_id: "Vec<u8>",
             message_id: "Vec<u8>",
             guild_id: "Vec<u8>",
