@@ -11,8 +11,8 @@ importers:
   integration-tests:
     dependencies:
       '@litentry/vc-schema-validator':
-        specifier: ^0.0.1
-        version: 0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2)
+        specifier: ^0.0.3
+        version: 0.0.3(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2)
       '@noble/ed25519':
         specifier: ^1.7.3
         version: 1.7.3
@@ -798,8 +798,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@litentry/vc-schema-validator@0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2):
-    resolution: {integrity: sha512-Utnu2m/IPcGbqpopNsEdB1AvRimoL300dGpk/9g/8P16OemCHYxHE8j+n2JrHS+BUvH9upDiNMy5sbZPmDAAfQ==}
+  /@litentry/vc-schema-validator@0.0.3(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2):
+    resolution: {integrity: sha512-ob//NAq1/pMy/wBCZF3oTRfG9/Kt0sa0TjmXLSItENeRFMeSRGFFU6lJnSFPYPFj/66KGx1/QKrzrQblh0Pkug==}
     peerDependencies:
       ajv: ^8.12.0
       ajv-formats: ^2.1.1
