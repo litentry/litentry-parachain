@@ -40,22 +40,22 @@ use std::{
 	vec::Vec,
 };
 
-pub struct KaratDaoClient {
+pub struct MagicCraftClient {
 	retry_option: RetryOption,
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 #[derive(Debug)]
-pub struct KaratDaoRequest {
+pub struct MagicCraftRequest {
 	path: String,
 	query: Option<Vec<(String, String)>>,
 }
 
-impl KaratDaoClient {
+impl MagicCraftClient {
 	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
-		let api_retry_delay = data_provider_config.karat_dao_api_retry_delay;
-		let api_retry_times = data_provider_config.karat_dao_api_retry_times;
-		let api_url = data_provider_config.karat_dao_api_url.clone();
+		let api_retry_delay = data_provider_config.magic_craft_api_retry_delay;
+		let api_retry_times = data_provider_config.magic_craft_api_retry_times;
+		let api_url = data_provider_config.magic_craft_api_url.clone();
 		let retry_option =
 			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
 
@@ -63,10 +63,10 @@ impl KaratDaoClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		let client = build_client_with_cert(api_url.as_str(), headers);
 
-		KaratDaoClient { retry_option, client }
+		MagicCraftClient { retry_option, client }
 	}
 
-	fn get<T>(&mut self, params: KaratDaoRequest, fast_fail: bool) -> Result<T, Error>
+	fn get<T>(&mut self, params: MagicCraftRequest, fast_fail: bool) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
 	{
@@ -90,7 +90,7 @@ impl KaratDaoClient {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UserVerificationResponse {
-	pub result: UserVerificationResult,
+	pub user: bool,
 }
 
 impl<'a> RestPath<ReqPath<'a>> for UserVerificationResponse {
@@ -99,13 +99,7 @@ impl<'a> RestPath<ReqPath<'a>> for UserVerificationResponse {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct UserVerificationResult {
-	pub is_valid: bool,
-}
-
-pub trait KaratDaoApi {
+pub trait MagicCraftApi {
 	fn user_verification(
 		&mut self,
 		address: String,
@@ -113,15 +107,15 @@ pub trait KaratDaoApi {
 	) -> Result<UserVerificationResponse, Error>;
 }
 
-impl KaratDaoApi for KaratDaoClient {
+impl MagicCraftApi for MagicCraftClient {
 	fn user_verification(
 		&mut self,
 		address: String,
 		fail_fast: bool,
 	) -> Result<UserVerificationResponse, Error> {
-		let query: Vec<(String, String)> = vec![("address".to_string(), address)];
+		let query: Vec<(String, String)> = vec![("wallet_address".to_string(), address)];
 
-		let params = KaratDaoRequest { path: "user/verification".into(), query: Some(query) };
+		let params = MagicCraftRequest { path: "litentry/user".into(), query: Some(query) };
 
 		debug!("user_verification, params: {:?}", params);
 
@@ -145,25 +139,25 @@ mod tests {
 
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/karat_dao/";
+		let url = run(0).unwrap() + "/magic_craft/";
 
 		let mut config = DataProviderConfig::new().unwrap();
-		config.set_karat_dao_api_url(url).unwrap();
+		config.set_magic_craft_api_url(url).unwrap();
 		config
 	}
 
 	#[test]
 	fn does_user_verification_works() {
 		let config = init();
-		let mut client = KaratDaoClient::new(&config);
+		let mut client = MagicCraftClient::new(&config);
 		let mut response = client
 			.user_verification("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".into(), true)
 			.unwrap();
-		assert_eq!(response.result.is_valid, true);
+		assert_eq!(response.user, true);
 
 		response = client
 			.user_verification("0x9401518f4ebba857baa879d9f76e1cc8b31ed197".into(), false)
 			.unwrap();
-		assert_eq!(response.result.is_valid, false);
+		assert_eq!(response.user, false);
 	}
 }

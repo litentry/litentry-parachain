@@ -28,6 +28,7 @@ pub mod discord_official;
 pub mod geniidata;
 pub mod karat_dao;
 pub mod litentry_archive;
+pub mod magic_craft;
 pub mod moralis;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
@@ -69,6 +70,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(discord_litentry::has_role())
 					.or(nodereal_jsonrpc::query())
 					.or(karat_dao::query())
+					.or(magic_craft::query())
 					.or(moralis::query())
 					.or(moralis::query_solana())
 					.or(blockchain_info::query_rawaddr())

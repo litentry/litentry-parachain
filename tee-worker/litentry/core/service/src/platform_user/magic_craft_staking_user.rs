@@ -20,17 +20,31 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use litentry_primitives::PlatformUserType;
+use core::result::Result;
 
-pub trait PlatformName {
-	fn get_platform_name(&self) -> &'static str;
-}
+use lc_data_providers::{
+	magic_craft::{MagicCraftApi, MagicCraftClient},
+	DataProviderConfig,
+};
 
-impl PlatformName for PlatformUserType {
-	fn get_platform_name(&self) -> &'static str {
-		match self {
-			Self::KaratDaoUser => "KaratDao",
-			Self::MagicCraftStakingUser => "MagicCraft",
+use crate::*;
+
+pub fn is_user(
+	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	let mut is_user = false;
+	let mut client = MagicCraftClient::new(data_provider_config);
+	for address in addresses {
+		match client.user_verification(address, true) {
+			Ok(response) => {
+				is_user = response.user;
+				if is_user {
+					break
+				}
+			},
+			Err(err) => return Err(err.into_error_detail()),
 		}
 	}
+	Ok(is_user)
 }
