@@ -270,4 +270,6 @@ extern "C" {
 
 	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
+	pub fn finish_enclave_init(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
 }
