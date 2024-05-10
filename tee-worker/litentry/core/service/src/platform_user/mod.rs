@@ -28,6 +28,7 @@ use litentry_primitives::PlatformUserType;
 use crate::*;
 
 mod karat_dao_user;
+mod magic_craft_staking_user;
 
 pub fn is_user(
 	platform_user_type: PlatformUserType,
@@ -36,5 +37,7 @@ pub fn is_user(
 ) -> Result<bool, Error> {
 	match platform_user_type {
 		PlatformUserType::KaratDaoUser => karat_dao_user::is_user(addresses, data_provider_config),
+		PlatformUserType::MagicCraftStakingUser =>
+			magic_craft_staking_user::is_user(addresses, data_provider_config),
 	}
 }
