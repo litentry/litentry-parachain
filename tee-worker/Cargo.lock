@@ -3549,6 +3549,7 @@ dependencies = [
  "itp-stf-primitives",
  "parity-scale-codec",
  "sp-core",
+ "sp-version",
 ]
 
 [[package]]
@@ -3680,6 +3681,7 @@ name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
  "hex",
+ "ita-sgx-runtime",
  "itc-parentchain-test",
  "itp-enclave-metrics",
  "itp-node-api",
@@ -3715,6 +3717,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
+ "sgx_tstd",
 ]
 
 [[package]]

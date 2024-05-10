@@ -13,6 +13,7 @@ limitations under the License.
 use crate::{error::Result, Error, NodeMetadata};
 use codec::Decode;
 use sp_core::storage::StorageKey;
+use sp_version::RuntimeVersion;
 
 /// Pallet' name:
 const SYSTEM: &str = "System";
@@ -34,11 +35,12 @@ impl SystemStorageIndexes for NodeMetadata {
 }
 
 // litentry
-pub trait SystemSs58Prefix {
+pub trait SystemConstants {
 	fn system_ss58_prefix(&self) -> Result<u16>;
+	fn system_version(&self) -> Result<RuntimeVersion>;
 }
 
-impl SystemSs58Prefix for NodeMetadata {
+impl SystemConstants for NodeMetadata {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		match &self.node_metadata {
 			None => Err(Error::MetadataNotSet),
@@ -46,6 +48,16 @@ impl SystemSs58Prefix for NodeMetadata {
 				let pallet = meta_data.pallet_by_name(SYSTEM).ok_or(Error::MetadataNotSet)?;
 				let mut raw = pallet.constant_by_name("SS58Prefix").unwrap().value.as_slice();
 				u16::decode(&mut raw).map_err(|_| Error::InvalidMetadata)
+			},
+		}
+	}
+	fn system_version(&self) -> Result<RuntimeVersion> {
+		match &self.node_metadata {
+			None => Err(Error::MetadataNotSet),
+			Some(meta_data) => {
+				let pallet = meta_data.pallet_by_name(SYSTEM).ok_or(Error::MetadataNotSet)?;
+				let mut raw = pallet.constant_by_name("Version").unwrap().value.as_slice();
+				RuntimeVersion::decode(&mut raw).map_err(|_| Error::InvalidMetadata)
 			},
 		}
 	}

@@ -23,7 +23,10 @@ use std::sync::SgxMutex as Mutex;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPoolBuilder;
-use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
+use ita_sgx_runtime::{
+	pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime, VERSION as SIDECHAIN_VERSION,
+};
+
 #[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
@@ -35,7 +38,8 @@ use ita_stf::{
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
-	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_system::SystemConstants, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	NodeMetadataTrait,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -430,6 +434,15 @@ where
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	let start_time = Instant::now();
+	let parachain_runtime_version = node_metadata_repo
+		.get_from_metadata(|m| {
+			m.system_version()
+				.map_err(|_| "Failed to get version from system pallet".to_string())
+		})
+		.map_err(|_| "Failed to get metadata".to_string())??
+		.spec_version;
+	let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
+
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
@@ -543,6 +556,8 @@ where
 			top_hash: H256::zero(),
 			parachain_block_number,
 			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,

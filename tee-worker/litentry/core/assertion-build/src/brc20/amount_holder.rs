@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::brc20::amount_holder::BRC20AmountHolderCredential;
+use lc_credentials::{brc20::amount_holder::BRC20AmountHolderCredential, IssuerRuntimeVersion};
 use lc_data_providers::{geniidata::GeniidataClient, DataProviderConfig};
 
 pub fn build(
@@ -45,11 +45,21 @@ pub fn build(
 		)
 	})?;
 
-	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
-		error!("Generate unsigned credential failed {:?}", e);
-		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
-	})?;
-	credential_unsigned.update_brc20_amount_holder_credential(&response);
+	if response.is_empty() {
+		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
+	} else {
+		let runtime_version = IssuerRuntimeVersion {
+			parachain: req.parachain_runtime_version,
+			sidechain: req.sidechain_runtime_version,
+		};
 
-	Ok(credential_unsigned)
+		let mut credential_unsigned = Credential::new(&req.who, &req.shard, &runtime_version)
+			.map_err(|e| {
+				error!("Generate unsigned credential failed {:?}", e);
+				Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+			})?;
+		credential_unsigned.update_brc20_amount_holder_credential(&response);
+
+		Ok(credential_unsigned)
+	}
 }

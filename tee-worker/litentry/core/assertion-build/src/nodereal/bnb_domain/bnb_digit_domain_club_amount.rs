@@ -22,7 +22,10 @@ extern crate sgx_tstd as std;
 
 use super::{BnbDomainInfo, BnbDomainInfoInterface};
 use crate::*;
-use lc_credentials::nodereal::bnb_domain::bnb_digit_domain_club_amount::UpdateDigitDomainClubAmountCredential;
+use lc_credentials::{
+	nodereal::bnb_domain::bnb_digit_domain_club_amount::UpdateDigitDomainClubAmountCredential,
+	IssuerRuntimeVersion,
+};
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::BnbDigitDomainType;
 
@@ -44,7 +47,13 @@ pub fn build(
 		&digit_domain_type,
 		data_provider_config,
 	)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_digit_domain_club_amount(&digit_domain_type, amount);
 			Ok(credential_unsigned)
