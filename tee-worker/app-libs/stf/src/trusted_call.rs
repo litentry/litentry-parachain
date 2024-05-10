@@ -40,7 +40,7 @@ pub use ita_sgx_runtime::{
 	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
 use itp_node_api::metadata::{
-	pallet_system::SystemSs58Prefix, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_system::SystemConstants, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;

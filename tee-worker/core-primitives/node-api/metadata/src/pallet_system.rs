@@ -35,12 +35,12 @@ impl SystemStorageIndexes for NodeMetadata {
 }
 
 // litentry
-pub trait SystemSs58Prefix {
+pub trait SystemConstants {
 	fn system_ss58_prefix(&self) -> Result<u16>;
 	fn system_version(&self) -> Result<RuntimeVersion>;
 }
 
-impl SystemSs58Prefix for NodeMetadata {
+impl SystemConstants for NodeMetadata {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		match &self.node_metadata {
 			None => Err(Error::MetadataNotSet),

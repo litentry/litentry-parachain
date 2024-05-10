@@ -38,7 +38,7 @@ use ita_stf::{
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
-	pallet_system::SystemSs58Prefix, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	pallet_system::SystemConstants, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 	NodeMetadataTrait,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
