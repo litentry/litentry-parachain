@@ -116,17 +116,8 @@ pub struct DataSource {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct IssuerRuntimeVersion {
-	pub parachain: String,
-	pub sidechain: String,
-}
-
-impl IssuerRuntimeVersion {
-	pub fn new(parachain_runtime_version: u32, sidechain_runtime_version: u32) -> Self {
-		Self {
-			parachain: format!("{:04}", parachain_runtime_version),
-			sidechain: format!("{:04}", sidechain_runtime_version),
-		}
-	}
+	pub parachain: u32,
+	pub sidechain: u32,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
@@ -589,7 +580,7 @@ mod tests {
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 		let runtime_version: IssuerRuntimeVersion =
-			IssuerRuntimeVersion { parachain: "6666".to_string(), sidechain: "0010".to_string() };
+			IssuerRuntimeVersion { parachain: 6666, sidechain: 101 };
 
 		let vc = Credential::from_template(data, &identity, &shard, &runtime_version).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
@@ -602,8 +593,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let identity = who.into();
 		let shard = ShardIdentifier::default();
-		let runtime_version =
-			IssuerRuntimeVersion { parachain: String::default(), sidechain: String::default() };
+		let runtime_version = IssuerRuntimeVersion { parachain: 0u32, sidechain: 0u32 };
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
 
@@ -673,8 +663,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let identity = who.into();
 		let shard = ShardIdentifier::default();
-		let runtime_version =
-			IssuerRuntimeVersion { parachain: String::default(), sidechain: String::default() };
+		let runtime_version = IssuerRuntimeVersion { parachain: 0u32, sidechain: 0u32 };
 		let networks = vec![Web3Network::Ethereum];
 
 		{

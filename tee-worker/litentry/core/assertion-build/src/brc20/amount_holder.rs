@@ -48,8 +48,10 @@ pub fn build(
 	if response.is_empty() {
 		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
 	} else {
-		let runtime_version =
-			IssuerRuntimeVersion::new(req.parachain_runtime_version, req.sidechain_runtime_version);
+		let runtime_version = IssuerRuntimeVersion {
+			parachain: req.parachain_runtime_version,
+			sidechain: req.sidechain_runtime_version,
+		};
 
 		let mut credential_unsigned = Credential::new(&req.who, &req.shard, &runtime_version)
 			.map_err(|e| {

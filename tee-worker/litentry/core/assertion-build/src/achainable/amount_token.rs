@@ -60,8 +60,10 @@ pub fn build_amount_token(
 	let identities = transpose_identity(&req.identities);
 	let achainable_param = AchainableParams::AmountToken(param.clone());
 
-	let runtime_version =
-		IssuerRuntimeVersion::new(req.parachain_runtime_version, req.sidechain_runtime_version);
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
 
 	let mut credential = Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
 		Error::RequestVCFailed(

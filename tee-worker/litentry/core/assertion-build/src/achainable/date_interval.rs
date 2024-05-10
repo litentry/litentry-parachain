@@ -40,8 +40,10 @@ pub fn build_date_interval(
 	let achainable_param = AchainableParams::DateInterval(param.clone());
 	let _flag = request_achainable(addresses, achainable_param, data_provider_config)?;
 
-	let runtime_version =
-		IssuerRuntimeVersion::new(req.parachain_runtime_version, req.sidechain_runtime_version);
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
 
 	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
