@@ -20,11 +20,11 @@ use crate::{
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
-	NodeMetadataTrait,
 };
 use codec::{Decode, Encode};
 
 use itp_api_client_types::Metadata;
+use sp_version::RuntimeVersion;
 
 impl TryFrom<NodeMetadataMock> for Metadata {
 	type Error = ();
@@ -252,6 +252,14 @@ impl SystemSs58Prefix for NodeMetadataMock {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		Ok(131)
 	}
+
+	fn system_version(&self) -> Result<RuntimeVersion> {
+		Ok(RuntimeVersion {
+			spec_version: self.runtime_spec_version,
+			transaction_version: self.runtime_transaction_version,
+			..Default::default()
+		})
+	}
 }
 
 impl ProxyCallIndexes for NodeMetadataMock {
@@ -281,11 +289,5 @@ impl BalancesCallIndexes for NodeMetadataMock {
 impl TimestampCallIndexes for NodeMetadataMock {
 	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.timestamp_module, self.timestamp_set])
-	}
-}
-
-impl NodeMetadataTrait for NodeMetadataMock {
-	fn get_runtime_version(&self) -> u32 {
-		self.runtime_spec_version
 	}
 }

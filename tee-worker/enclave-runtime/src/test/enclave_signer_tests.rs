@@ -98,8 +98,6 @@ pub fn nonce_is_computed_correctly() {
 	let state_observer: Arc<ObserveStateMock<SgxExternalities>> =
 		Arc::new(ObserveStateMock::new(state.clone()));
 	let shard = ShardIdentifier::default();
-	let parachain_runtime_version = 0u32;
-	let sidechain_runtime_version = 0u32;
 	let enclave_signer = StfEnclaveSigner::<_, _, _, TestStf, _, TrustedCallSigned, Getter>::new(
 		state_observer,
 		ocall_api,
@@ -141,8 +139,6 @@ pub fn nonce_is_computed_correctly() {
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
-		parachain_runtime_version,
-		sidechain_runtime_version,
 		trusted_call_1_signed,
 		Default::default(),
 		&mut Vec::new(),
@@ -153,8 +149,6 @@ pub fn nonce_is_computed_correctly() {
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
-		parachain_runtime_version,
-		sidechain_runtime_version,
 		trusted_call_2_signed,
 		Default::default(),
 		&mut Vec::new(),

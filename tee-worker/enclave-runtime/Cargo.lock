@@ -2333,6 +2333,7 @@ dependencies = [
  "itp-stf-primitives",
  "parity-scale-codec",
  "sp-core",
+ "sp-version",
 ]
 
 [[package]]

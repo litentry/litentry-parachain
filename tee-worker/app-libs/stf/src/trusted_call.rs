@@ -37,9 +37,11 @@ use frame_support::{ensure, traits::UnfilteredDispatchable};
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 pub use ita_sgx_runtime::{
 	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
-	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System,
+	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{
+	pallet_system::SystemSs58Prefix, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
@@ -389,8 +391,6 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: u32,
-		sidechain_runtime_version: u32,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
@@ -787,6 +787,10 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
+
+				let parachain_runtime_version =
+					node_metadata_repo.get_from_metadata(|m| m.system_version())??.spec_version;
+				let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
 
 				Self::request_vc_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,

@@ -148,6 +148,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	pub fn request_vc_internal(
 		signer: AccountId,
 		who: Identity,

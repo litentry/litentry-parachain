@@ -67,8 +67,6 @@ where
 	fn execute_call(
 		_state: &mut State,
 		_shard: &ShardIdentifier,
-		_parachain_runtime_version: u32,
-		_sidechain_runtime_version: u32,
 		_call: TCS,
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
@@ -109,8 +107,6 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 	fn execute(
 		self,
 		_shard: &ShardIdentifier,
-		_parachain_runtime_version: u32,
-		_sidechain_runtime_version: u32,
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,

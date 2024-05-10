@@ -39,7 +39,8 @@ use ita_stf::{
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
-	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_system::SystemSs58Prefix, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	NodeMetadataTrait,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -430,8 +431,12 @@ where
 {
 	let start_time = Instant::now();
 	let parachain_runtime_version = node_metadata_repo
-		.get_from_metadata(|m| m.get_runtime_version())
-		.map_err(|_| "Failed to get metadata".to_string())?;
+		.get_from_metadata(|m| {
+			m.system_version()
+				.map_err(|_| "Failed to get version from system pallet".to_string())
+		})
+		.map_err(|_| "Failed to get metadata".to_string())??
+		.spec_version;
 	let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.

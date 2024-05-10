@@ -56,21 +56,20 @@ pub trait NodeMetadataTrait:
 	+ BalancesCallIndexes
 	+ TimestampCallIndexes
 {
-	fn get_runtime_version(&self) -> u32;
 }
 
-// impl<
-// 		T: TeebagCallIndexes
-// 			+ IMPCallIndexes
-// 			+ VCMPCallIndexes
-// 			+ SystemSs58Prefix
-// 			+ UtilityCallIndexes
-// 			+ ProxyCallIndexes
-// 			+ BalancesCallIndexes
-// 			+ TimestampCallIndexes,
-// 	> NodeMetadataTrait for T
-// {
-// }
+impl<
+		T: TeebagCallIndexes
+			+ IMPCallIndexes
+			+ VCMPCallIndexes
+			+ SystemSs58Prefix
+			+ UtilityCallIndexes
+			+ ProxyCallIndexes
+			+ BalancesCallIndexes
+			+ TimestampCallIndexes,
+	> NodeMetadataTrait for T
+{
+}
 
 impl TryFrom<NodeMetadata> for Metadata {
 	type Error = crate::error::Error;
@@ -98,6 +97,11 @@ impl NodeMetadata {
 			runtime_spec_version,
 			runtime_transaction_version,
 		}
+	}
+
+	/// Return the substrate chain runtime version.
+	pub fn get_runtime_version(&self) -> u32 {
+		self.runtime_spec_version
 	}
 
 	/// Return the substrate chain runtime transaction version.
@@ -167,12 +171,5 @@ impl NodeMetadata {
 				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
-	}
-}
-
-impl NodeMetadataTrait for NodeMetadata {
-	/// Return the substrate chain runtime version.
-	fn get_runtime_version(&self) -> u32 {
-		self.runtime_spec_version
 	}
 }

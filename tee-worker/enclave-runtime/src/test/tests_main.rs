@@ -578,13 +578,9 @@ pub fn test_retrieve_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let parachain_runtime_version = 0u32;
-	let sidechain_runtime_version = 0u32;
 	TestStf::execute_call(
 		&mut state,
 		&shard,
-		parachain_runtime_version,
-		sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,
@@ -615,13 +611,9 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let parachain_runtime_version = 0u32;
-	let sidechain_runtime_version = 0u32;
 	TestStf::execute_call(
 		&mut state,
 		&shard,
-		parachain_runtime_version,
-		sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,
@@ -650,13 +642,9 @@ pub fn test_reset_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	let parachain_runtime_version = 0u32;
-	let sidechain_runtime_version = 0u32;
 	TestStf::execute_call(
 		&mut state,
 		&shard,
-		parachain_runtime_version,
-		sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut opaque_vec,

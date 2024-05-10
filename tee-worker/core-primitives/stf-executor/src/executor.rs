@@ -21,7 +21,6 @@ use crate::{
 	BatchExecutionResult, ExecutedOperation,
 };
 use codec::{Decode, Encode};
-use ita_sgx_runtime::VERSION as SIDECHAIN_VERSION;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
@@ -125,16 +124,10 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce());
 
-		let parachain_runtime_version =
-			self.node_metadata_repo.get_from_metadata(|m| m.get_runtime_version())?;
-		let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
-
 		let mut extrinsic_call_backs: Vec<ParentchainCall> = Vec::new();
 		return match Stf::execute_call(
 			state,
 			shard,
-			parachain_runtime_version,
-			sidechain_runtime_version,
 			trusted_call.clone(),
 			trusted_operation.hash(),
 			&mut extrinsic_call_backs,

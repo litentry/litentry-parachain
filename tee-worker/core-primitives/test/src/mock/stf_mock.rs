@@ -72,23 +72,12 @@ impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRep
 	fn execute_call(
 		state: &mut SgxExternalities,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: u32,
-		sidechain_runtime_version: u32,
 		call: TrustedCallSignedMock,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 	) -> Result<(), Self::Error> {
-		state.execute_with(|| {
-			call.execute(
-				shard,
-				parachain_runtime_version,
-				sidechain_runtime_version,
-				top_hash,
-				calls,
-				node_metadata_repo,
-			)
-		})
+		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
 	}
 }
 
@@ -188,8 +177,6 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 	fn execute(
 		self,
 		_shard: &ShardIdentifier,
-		_parachain_runtime_version: u32,
-		_sidechain_runtime_version: u32,
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,

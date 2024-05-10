@@ -20,12 +20,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
 extern crate alloc;
 
 use alloc::{sync::Arc, vec::Vec};
@@ -91,8 +85,6 @@ where
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: u32,
-		sidechain_runtime_version: u32,
 		call: TCS,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
@@ -122,8 +114,6 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
-		parachain_runtime_version: u32,
-		sidechain_runtime_version: u32,
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
