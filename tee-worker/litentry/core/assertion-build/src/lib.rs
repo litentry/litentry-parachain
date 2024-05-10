@@ -26,7 +26,6 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
-	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
@@ -46,6 +45,7 @@ pub mod a6;
 pub mod a8;
 pub mod achainable;
 pub mod brc20;
+pub mod dynamic;
 pub mod generic_discord_role;
 pub mod holding_time;
 pub mod lit_staking;

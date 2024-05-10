@@ -32,7 +32,7 @@ dependencies = [
  "derive_more",
  "either",
  "frame-metadata",
- "hex 0.4.3",
+ "hex",
  "log",
  "parity-scale-codec",
  "scale-bits",
@@ -846,7 +846,7 @@ checksum = "7c24f403d068ad0b359e577a77f92392118be3f3c927538f2bb544a5ecd828c6"
 dependencies = [
  "curve25519-dalek 3.2.0",
  "hashbrown 0.12.3",
- "hex 0.4.3",
+ "hex",
  "rand_core 0.6.4",
  "sha2 0.9.9",
  "zeroize",
@@ -886,7 +886,7 @@ dependencies = [
  "env_logger",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "ipfs-unixfs",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
@@ -934,6 +934,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "lc-data-providers",
+ "lc-evm-dynamic-assertions",
  "lc-identity-verification",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
@@ -999,6 +1000,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
+name = "ethabi"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7413c5f74cc903ea37386a8965a936cbeb334bd270862fdece542c1b2dcbc898"
+dependencies = [
+ "ethereum-types",
+ "hex",
+ "sha3 0.10.8",
+]
+
+[[package]]
 name = "ethbloom"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1030,6 +1042,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e04d24d20b8ff2235cffbf242d5092de3aa45f77c5270ddbfadd2778ca13fea"
+dependencies = [
+ "bytes 1.5.0",
+ "ethereum-types",
+ "hash-db 0.16.0",
+ "hash256-std-hasher",
+ "parity-scale-codec",
+ "rlp",
+ "scale-info",
+ "sha3 0.10.8",
+ "trie-root",
+]
+
+[[package]]
 name = "ethereum-types"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1051,7 +1080,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
 dependencies = [
  "auto_impl",
- "ethereum",
+ "ethereum 0.14.0",
  "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-gasometer 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1069,10 +1098,29 @@ version = "0.39.1"
 source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
 dependencies = [
  "auto_impl",
- "ethereum",
+ "ethereum 0.14.0",
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-gasometer 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "log",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "scale-info",
+ "sha3 0.10.8",
+]
+
+[[package]]
+name = "evm"
+version = "0.41.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "767f43e9630cc36cf8ff2777cbb0121b055f0d1fd6eaaa13b46a1808f0d0e7e9"
+dependencies = [
+ "auto_impl",
+ "ethereum 0.15.0",
+ "evm-core 0.41.0",
+ "evm-gasometer 0.41.0",
+ "evm-runtime 0.41.0",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -1103,6 +1151,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-core"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1da6cedc5cedb4208e59467106db0d1f50db01b920920589f8e672c02fdc04f"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+]
+
+[[package]]
 name = "evm-gasometer"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1120,6 +1179,17 @@ source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa
 dependencies = [
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dc0eb591abc5cd7b05bef6a036c2bb6c66ab6c5e0c5ce94bfe377ab670b1fd7"
+dependencies = [
+ "evm-core 0.41.0",
+ "evm-runtime 0.41.0",
  "primitive-types",
 ]
 
@@ -1142,6 +1212,18 @@ source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa
 dependencies = [
  "auto_impl",
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "primitive-types",
+ "sha3 0.10.8",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84bbe09b64ae13a29514048c1bb6fda6374ac0b4f6a1f15a443348ab88ef42cd"
+dependencies = [
+ "auto_impl",
+ "evm-core 0.41.0",
  "primitive-types",
  "sha3 0.10.8",
 ]
@@ -1232,7 +1314,7 @@ name = "fp-account"
 version = "1.0.0-dev"
 source = "git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "libsecp256k1",
  "log",
  "parity-scale-codec",
@@ -1248,7 +1330,7 @@ name = "fp-account"
 version = "1.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "libsecp256k1",
  "log",
  "parity-scale-codec",
@@ -1699,14 +1781,6 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hex"
-version = "0.4.0"
-source = "git+https://github.com/mesalock-linux/rust-hex-sgx?tag=sgx_1.1.3#ee3266cd29b9f9c2eb69af9487f55c4f09c38f2b"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
@@ -1909,6 +1983,8 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
@@ -1950,7 +2026,7 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
@@ -2239,7 +2315,7 @@ dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "bit-vec",
  "chrono 0.4.11",
- "hex 0.4.3",
+ "hex",
  "httparse",
  "itertools 0.10.5",
  "itp-ocall-api",
@@ -2458,7 +2534,7 @@ dependencies = [
 name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "ita-sgx-runtime",
  "itc-parentchain-test",
  "itp-enclave-metrics",
@@ -2563,7 +2639,7 @@ dependencies = [
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itp-node-api",
  "itp-node-api-metadata-provider",
  "itp-ocall-api",
@@ -2663,7 +2739,7 @@ dependencies = [
 name = "itp-utils"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "litentry-hex-utils",
  "parity-scale-codec",
 ]
@@ -2777,7 +2853,7 @@ name = "its-consensus-slots"
 version = "0.9.0"
 dependencies = [
  "derive_more",
- "hex 0.4.3",
+ "hex",
  "itp-settings",
  "itp-sgx-externalities",
  "itp-stf-state-handler",
@@ -2929,8 +3005,7 @@ version = "0.1.0"
 dependencies = [
  "blake2-rfc",
  "frame-support",
- "hex 0.4.0",
- "hex-literal",
+ "hex",
  "http",
  "http_req",
  "itc-rest-client",
@@ -2940,11 +3015,14 @@ dependencies = [
  "itp-utils",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
  "pallet-parachain-staking",
  "parity-scale-codec",
+ "primitive-types",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.193",
  "serde_json 1.0.107",
@@ -2991,7 +3069,7 @@ version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.31",
- "hex 0.4.0",
+ "hex",
  "itp-stf-primitives",
  "itp-time-utils",
  "itp-types",
@@ -3034,7 +3112,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.0",
  "chrono 0.4.11",
- "hex 0.4.0",
+ "hex",
  "http",
  "http_req",
  "itc-rest-client",
@@ -3052,13 +3130,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-dynamic-assertion"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "lc-evm-dynamic-assertions"
+version = "0.1.0"
+dependencies = [
+ "ethabi",
+ "evm 0.41.1",
+ "hex",
+ "http",
+ "itc-rest-client",
+ "itp-settings",
+ "itp-sgx-io",
+ "itp-sgx-temp-dir",
+ "lc-dynamic-assertion",
+ "log",
+ "parity-scale-codec",
+ "serde_json 1.0.107",
+ "sgx_tstd",
+ "thiserror",
+]
+
+[[package]]
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.0",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.3",
+ "hex",
  "http",
  "http_req",
  "itp-sgx-crypto",
@@ -3114,7 +3220,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex",
  "ita-sgx-runtime",
  "ita-stf",
  "itc-peer-top-broadcaster",
@@ -3132,6 +3238,8 @@ dependencies = [
  "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-identity-verification",
  "lc-stf-task-sender",
  "litentry-primitives",
@@ -3173,7 +3281,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex",
  "ita-sgx-runtime",
  "ita-stf",
  "itp-enclave-metrics",
@@ -3193,6 +3301,8 @@ dependencies = [
  "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
+ "lc-dynamic-assertion",
+ "lc-evm-dynamic-assertions",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
@@ -3284,7 +3394,7 @@ dependencies = [
 name = "litentry-hex-utils"
 version = "0.9.12"
 dependencies = [
- "hex 0.4.3",
+ "hex",
 ]
 
 [[package]]
@@ -3297,7 +3407,7 @@ version = "0.1.0"
 dependencies = [
  "bitcoin",
  "core-primitives",
- "hex 0.4.3",
+ "hex",
  "itp-sgx-crypto",
  "itp-utils",
  "log",
@@ -3657,7 +3767,7 @@ dependencies = [
  "fp-evm 3.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
@@ -3680,7 +3790,7 @@ dependencies = [
  "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "impl-trait-for-tuples",
  "log",
@@ -3699,7 +3809,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3785,7 +3895,7 @@ dependencies = [
  "der 0.6.1",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "log",
  "pallet-timestamp",
@@ -5377,7 +5487,7 @@ dependencies = [
  "async-trait",
  "derive_more",
  "frame-metadata",
- "hex 0.4.3",
+ "hex",
  "log",
  "maybe-async",
  "parity-scale-codec",
@@ -5687,7 +5797,7 @@ checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
 dependencies = [
  "byteorder 1.4.3",
  "crunchy",
- "hex 0.4.3",
+ "hex",
  "static_assertions",
 ]
 

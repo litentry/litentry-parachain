@@ -35,7 +35,7 @@ use litentry_primitives::{
 	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
 	REQUEST_AES_KEY_LEN,
 };
-use sp_core::Pair;
+use sp_core::{Pair, H160};
 
 // usage example below
 //
@@ -146,11 +146,18 @@ pub enum Command {
 	PlatformUser(PlatformUserCommand),
 	#[clap(subcommand)]
 	NftHolder(NftHolderCommand),
+	Dynamic(DynamicArg),
 }
 
 #[derive(Args, Debug)]
 pub struct A2Arg {
 	pub guild_id: String,
+}
+
+#[derive(Args, Debug)]
+pub struct DynamicArg {
+	//hex encoded smart contract id
+	pub smart_contract_id: String,
 }
 
 #[derive(Args, Debug)]
@@ -271,6 +278,7 @@ pub enum TokenHoldingAmountCommand {
 #[derive(Subcommand, Debug)]
 pub enum PlatformUserCommand {
 	KaratDaoUser,
+	MagicCraftStakingUser,
 }
 
 #[derive(Subcommand, Debug)]
@@ -611,10 +619,17 @@ impl Command {
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser => PlatformUser(PlatformUserType::KaratDaoUser),
+				PlatformUserCommand::MagicCraftStakingUser =>
+					PlatformUser(PlatformUserType::MagicCraftStakingUser),
 			},
 			Command::NftHolder(arg) => match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
+			},
+			Command::Dynamic(arg) => {
+				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();
+				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
+				Assertion::Dynamic(H160::from(id_bytes))
 			},
 		}
 	}

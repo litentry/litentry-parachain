@@ -34,6 +34,7 @@ export default {
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
+                Dynamic: "([u8;20])",
             },
         },
         AssertionSupportedNetwork: {
@@ -189,7 +190,10 @@ export default {
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: ["KaratDaoUser"],
+            _enum: [
+                "KaratDaoUser",
+                "MagicCraftStakingUser",
+            ],
         },
         // Web3NftType
         Web3NftType: {

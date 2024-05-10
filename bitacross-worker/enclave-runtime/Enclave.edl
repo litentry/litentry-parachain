@@ -45,6 +45,8 @@ enclave {
 
 		public sgx_status_t publish_wallets();
 
+		public sgx_status_t finish_enclave_init();		
+
 		public sgx_status_t init_direct_invocation_server(
 			[in, size=server_addr_size] uint8_t* server_addr, uint32_t server_addr_size
 		);

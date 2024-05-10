@@ -27,14 +27,20 @@ use itp_types::{
 	RsaRequest, H256,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+
+use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use litentry_primitives::{
 	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, Web3Network, WorkerType,
 };
 use log::*;
-use sp_core::blake2_256;
+use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
+use std::{format, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler {}
+pub struct ParentchainEventHandler {
+	pub assertion_repository: Arc<EvmAssertionRepository>,
+}
 
 impl ParentchainEventHandler {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
@@ -191,6 +197,39 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn store_assertion<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		&self,
+		executor: &Executor,
+		id: H160,
+		byte_code: Vec<u8>,
+		secrets: Vec<Vec<u8>>,
+	) -> Result<(), Error> {
+		debug!("store assertion byte_code: {:?}, secrets: {:?}", byte_code, secrets);
+		let mut decrypted_secrets = Vec::with_capacity(secrets.len());
+
+		for secret in secrets.iter() {
+			let secret = String::decode(
+				&mut executor
+					.decrypt(secret)
+					.map_err(|e| {
+						Error::AssertionCreatedHandling(format!(
+							"Could not decrypt secret, reason: {:?}",
+							e
+						))
+					})?
+					.as_slice(),
+			)
+			.map_err(|e| {
+				Error::AssertionCreatedHandling(format!("Could not decode secret, reason: {:?}", e))
+			})?;
+			decrypted_secrets.push(secret);
+		}
+		self.assertion_repository
+			.save(id, (byte_code, decrypted_secrets))
+			.map_err(Error::AssertionCreatedHandling)?;
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -198,7 +237,11 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 {
-	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
+	fn handle_events(
+		&self,
+		executor: &Executor,
+		events: impl FilterEvents,
+	) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 		if let Ok(events) = events.get_link_identity_events() {
 			debug!("Handling link_identity events");
@@ -318,6 +361,21 @@ where
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::OpaqueTaskPostedFailure)?;
+		}
+
+		if let Ok(events) = events.get_assertion_created_events() {
+			debug!("Handling AssertionCreated events");
+			events
+				.into_iter()
+				.try_for_each(|event| {
+					debug!("found AssertionCreated event: {:?}", event);
+					let event_hash = hash_of(&event);
+					let result =
+						self.store_assertion(executor, event.id, event.byte_code, event.secrets);
+					handled_events.push(event_hash);
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::AssertionCreatedFailure)?;
 		}
 
 		Ok(handled_events)
