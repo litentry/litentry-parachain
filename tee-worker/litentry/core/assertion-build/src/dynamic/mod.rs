@@ -16,7 +16,7 @@
 
 use crate::{dynamic::repository::SmartContractByteCode, *};
 use itp_types::Assertion;
-use lc_credentials::{assertion_logic::AssertionLogic, Credential};
+use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
 use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
 use lc_evm_dynamic_assertions::EvmAssertionExecutor;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -39,7 +39,13 @@ pub fn build<
 			ErrorDetail::StfError(ErrorString::truncate_from(e.into())),
 		)
 	})?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			let mut assertion_values: Vec<AssertionLogic> = vec![];
 			for assertion in result.assertions {
@@ -104,6 +110,8 @@ pub mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
 			sidechain_block_number: Default::default(),
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 			should_create_id_graph: Default::default(),
@@ -134,6 +142,8 @@ pub mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
 			sidechain_block_number: Default::default(),
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 			should_create_id_graph: Default::default(),
@@ -166,6 +176,8 @@ pub mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
 			sidechain_block_number: Default::default(),
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 			should_create_id_graph: Default::default(),
@@ -197,6 +209,8 @@ pub mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
 			sidechain_block_number: Default::default(),
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 			should_create_id_graph: Default::default(),

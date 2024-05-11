@@ -34,7 +34,7 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 // TODO migration to v2 in the future
-pub use lc_credentials::{assertion_logic, Credential};
+pub use lc_credentials::{assertion_logic, Credential, IssuerRuntimeVersion};
 
 pub mod nft_holder;
 pub mod platform_user;

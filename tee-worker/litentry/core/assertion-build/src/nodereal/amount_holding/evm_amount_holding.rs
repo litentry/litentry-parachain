@@ -27,7 +27,7 @@ use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
 		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
 	},
-	Credential,
+	Credential, IssuerRuntimeVersion,
 };
 use lc_data_providers::{
 	nodereal_jsonrpc::{
@@ -102,18 +102,25 @@ pub fn build(
 		});
 
 	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::EVMAmountHolding(token_type),
-					e.into_error_detail(),
-				))
-			},
+		Ok(value) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::EVMAmountHolding(token_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -193,6 +200,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -248,6 +257,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -303,6 +314,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

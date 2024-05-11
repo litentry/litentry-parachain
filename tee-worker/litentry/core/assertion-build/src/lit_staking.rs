@@ -26,7 +26,9 @@ use itc_rest_client::{
 };
 use itp_stf_primitives::types::AccountId;
 use itp_utils::hex_display::AsBytesRef;
-use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
+use lc_credentials::{
+	litentry_profile::lit_staking::UpdateLITStakingAmountCredential, IssuerRuntimeVersion,
+};
 use lc_data_providers::build_client_with_cert;
 use litentry_primitives::ParentchainBalance;
 use pallet_parachain_staking::types::Delegator;
@@ -184,7 +186,12 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	let mut client = LitentryStakingClient::new();
 	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_lit_staking_amount(staking_amount);
 			Ok(credential_unsigned)
