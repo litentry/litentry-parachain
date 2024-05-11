@@ -22,7 +22,8 @@ use crate::{
 		listen::ListenCommand,
 		litentry::{
 			activate_identity::ActivateIdentityCommand,
-			deactivate_identity::DeactivateIdentityCommand, id_graph_hash::IDGraphHashCommand,
+			deactivate_identity::DeactivateIdentityCommand,
+			get_shielded_string::GetShieldedStringCommand, id_graph_hash::IDGraphHashCommand,
 			link_identity::LinkIdentityCommand,
 		},
 		register_tcb_info::RegisterTcbInfoCommand,
@@ -96,6 +97,9 @@ pub enum BaseCommand {
 
 	/// Activate identity
 	ActivateIdentity(ActivateIdentityCommand),
+
+	/// Get shielded string
+	GetShieldedString(GetShieldedStringCommand),
 }
 
 impl BaseCommand {
@@ -117,6 +121,7 @@ impl BaseCommand {
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 			BaseCommand::DeactivateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::ActivateIdentity(cmd) => cmd.run(cli),
+			BaseCommand::GetShieldedString(cmd) => cmd.run(cli),
 		}
 	}
 }
