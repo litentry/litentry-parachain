@@ -25,6 +25,8 @@ use std::{vec, vec::Vec};
 use litentry_primitives::Web3TokenType;
 
 use crate::Web3Network;
+pub mod token_decimals_filter;
+use token_decimals_filter::TokenDecimalsFilter;
 
 pub trait TokenName {
 	fn get_token_name(&self) -> &'static str;
@@ -167,70 +169,7 @@ pub trait TokenDecimals {
 
 impl TokenDecimals for Web3TokenType {
 	fn get_decimals(&self, network: Web3Network) -> u64 {
-		let decimals = match (self, network) {
-			// Bnb
-			(Self::Bnb, Web3Network::Bsc) | (Self::Bnb, Web3Network::Ethereum) |
-			// Eth
-			(Self::Eth, Web3Network::Bsc) | (Self::Eth, Web3Network::Ethereum) |
-			// SpaceId
-			(Self::SpaceId, Web3Network::Bsc) | (Self::SpaceId, Web3Network::Ethereum) |
-			// Lit
-			(Self::Lit, Web3Network::Bsc) | (Self::Lit, Web3Network::Ethereum) |
-			// Usdc
-			(Self::Usdc, Web3Network::Bsc) |
-			// Usdt
-			(Self::Usdt, Web3Network::Bsc) |
-			// Crv
-			(Self::Crv, Web3Network::Ethereum) |
-			// Matic
-			(Self::Matic, Web3Network::Bsc) | (Self::Matic, Web3Network::Ethereum) |
-			// Dydx
-			(Self::Dydx, Web3Network::Ethereum) |
-			// Amp
-			(Self::Amp, Web3Network::Ethereum) |
-			// Cvx
-			(Self::Cvx, Web3Network::Ethereum) |
-			// Tusd
-			(Self::Tusd, Web3Network::Bsc) | (Self::Tusd, Web3Network::Ethereum) |
-			// Usdd
-			(Self::Usdd, Web3Network::Bsc) | (Self::Usdd, Web3Network::Ethereum) |
-			// Link
-			(Self::Link, Web3Network::Bsc) | (Self::Link, Web3Network::Ethereum) |
-			// Grt
-			(Self::Grt, Web3Network::Bsc) | (Self::Grt, Web3Network::Ethereum) |
-			// Comp
-			(Self::Comp, Web3Network::Ethereum) |
-			// People
-			(Self::People, Web3Network::Ethereum) |
-			// Gtc
-			(Self::Gtc, Web3Network::Ethereum) |
-			// Nfp
-			(Self::Nfp, Web3Network::Bsc) |
-			// Sol
-			(Self::Sol, Web3Network::Bsc) | (Self::Sol, Web3Network::Ethereum) => 18,
-			// Ton
-			(Self::Ton, Web3Network::Bsc) | (Self::Ton, Web3Network::Ethereum) |
-			// Mcrt
-			(Self::Mcrt, Web3Network::Bsc) | (Self::Mcrt, Web3Network::Ethereum) => 9,
-			// Wbtc
-			(Self::Wbtc, Web3Network::Bsc) | (Self::Wbtc, Web3Network::Ethereum) |
-			// Mcrt
-			(Self::Mcrt, Web3Network::Solana) |
-			// Btc
-			(Self::Btc, Web3Network::BitcoinP2tr) | (Self::Btc, Web3Network::BitcoinP2pkh) |
-			 (Self::Btc, Web3Network::BitcoinP2sh) | (Self::Btc, Web3Network::BitcoinP2wpkh) |
-			  (Self::Btc, Web3Network::BitcoinP2wsh) => 8,
-			// Usdc
-			(Self::Usdc, Web3Network::Ethereum) |
-			// Usdt
-			(Self::Usdt, Web3Network::Ethereum) |
-			// Trx
-			(Self::Trx, Web3Network::Bsc) | (Self::Trx, Web3Network::Ethereum) => 6,
-			// Gusd
-			(Self::Gusd, Web3Network::Ethereum) => 2,
-			_ => 1,
-		};
-
+		let decimals = TokenDecimalsFilter::filter(self.clone(), network);
 		10_u64.pow(decimals)
 	}
 }
