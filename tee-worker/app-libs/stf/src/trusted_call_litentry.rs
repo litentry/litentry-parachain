@@ -148,6 +148,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	pub fn request_vc_internal(
 		signer: AccountId,
 		who: Identity,
@@ -156,6 +157,8 @@ impl TrustedCallSigned {
 		req_ext_hash: H256,
 		maybe_key: Option<RequestAesKey>,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 	) -> StfResult<()> {
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
@@ -210,6 +213,8 @@ impl TrustedCallSigned {
 			top_hash,
 			parachain_block_number,
 			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,

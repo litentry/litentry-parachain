@@ -478,7 +478,6 @@ pub mod tests {
 		primitives::from_low_u64_to_be_h256,
 	};
 	use codec::{Decode, Encode};
-	use itp_stf_primitives::types::Nonce;
 	use itp_test::mock::stf_mock::{
 		mock_top_direct_trusted_call_signed, mock_trusted_call_signed, TrustedOperationMock,
 	};
@@ -541,7 +540,6 @@ pub mod tests {
 	/// Test RPC responder
 	pub type TestRpcResponder = RpcResponderMock<H256>;
 
-	const INVALID_NONCE: Nonce = 254;
 	const SOURCE: TrustedOperationSource = TrustedOperationSource::External;
 
 	#[derive(Clone, Debug, Default)]
