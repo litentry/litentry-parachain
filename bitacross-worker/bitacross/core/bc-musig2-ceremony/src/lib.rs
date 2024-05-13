@@ -104,9 +104,9 @@ pub enum CeremonyCommand {
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
-	CeremonyError(Signers, CeremonyError),
-	CeremonyEnded([u8; 64]),
-	CeremonyTimedOut(Signers),
+	CeremonyError(Signers, CeremonyError, RequestAesKey),
+	CeremonyEnded([u8; 64], RequestAesKey),
+	CeremonyTimedOut(Signers, RequestAesKey),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]
@@ -212,6 +212,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		if self.ticks_left == 0 {
 			self.events.push(CeremonyEvent::CeremonyTimedOut(
 				self.signers.iter().filter(|e| e.0 != self.me).map(|s| s.0).collect(),
+				self.aes_key,
 			));
 		}
 
@@ -253,6 +254,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 				self.events.push(CeremonyEvent::CeremonyError(
 					self.signers.iter().filter(|e| e.0 != self.me).map(|s| s.0).collect(),
 					e,
+					self.aes_key,
 				));
 			}
 		}
@@ -377,7 +379,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						Ok(_) => info!("OK!"),
 						Err(_) => info!("NOK!"),
 					};
-					self.events.push(CeremonyEnded(signature.to_bytes()));
+					self.events.push(CeremonyEnded(signature.to_bytes(), self.aes_key));
 				}
 			}
 			Ok(())
@@ -588,7 +590,7 @@ pub mod test {
 		let events = ceremony.tick();
 
 		// then
-		assert!(matches!(events.get(0), Some(CeremonyEvent::CeremonyTimedOut(_))));
+		assert!(matches!(events.get(0), Some(CeremonyEvent::CeremonyTimedOut(_, _))));
 		assert_eq!(events.len(), 1)
 	}
 
@@ -704,7 +706,8 @@ pub mod test {
 			events.get(1),
 			Some(CeremonyEvent::CeremonyError(
 				_,
-				CeremonyError::NonceReceivingError(NonceReceivingErrorReason::SignerNotFound)
+				CeremonyError::NonceReceivingError(NonceReceivingErrorReason::SignerNotFound),
+				_
 			))
 		));
 		assert_eq!(events.len(), 2)
@@ -837,21 +840,21 @@ pub mod test {
 		let signer2_ceremony_ceremony_ended_ev = signer2_ceremony_events.get(0).unwrap();
 
 		let my_ceremony_final_signature = match my_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},
 		};
 
 		let signer1_ceremony_final_signature = match signer1_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},
 		};
 
 		let signer2_ceremony_final_signature = match signer2_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},

@@ -26,7 +26,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use bc_enclave_registry::EnclaveRegistryLookup;
 use codec::Encode;
 use core::time::Duration;
-use itc_direct_rpc_client::{RpcClient, RpcClientFactory};
+use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
@@ -37,13 +37,14 @@ use itp_utils::hex::ToHexPrefixed;
 use log::{debug, error, info, trace};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
-use std::collections::HashMap;
+use std::{collections::HashMap, vec::Vec};
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
 use bc_musig2_ceremony::{
-	CeremonyCommandsRegistry, CeremonyEvent, CeremonyRegistry, SignBitcoinError,
+	CeremonyCommandsRegistry, CeremonyEvent, CeremonyId, CeremonyRegistry, SignBitcoinError,
+	SignerId,
 };
 
 use itp_rpc::{Id, RpcRequest};
@@ -55,7 +56,10 @@ use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, 
 use std::sync::SgxMutex as Mutex;
 use std::{
 	string::ToString,
-	sync::{mpsc::sync_channel, Arc},
+	sync::{
+		mpsc::{sync_channel, SyncSender},
+		Arc,
+	},
 	vec,
 };
 
@@ -99,18 +103,27 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 			});
 
 			{
-				let mut ceremony_registry = ceremony_registry.lock().unwrap();
 				let mut ceremonies_to_remove = vec![];
-				ceremony_registry.values_mut().for_each(|v| {
-					let events = v.tick();
-					trace!("Got ceremony {:?} events {:?}", v.get_id_ref(), events);
+
+				// do not hold lock for too long
+				let ceremonies_to_process: Vec<CeremonyId> =
+					ceremony_registry.lock().unwrap().keys().cloned().collect();
+
+				for ceremony_id_to_process in ceremonies_to_process {
+					// do not hold lock for too long as logic below includes I/O
+					let events = ceremony_registry
+						.lock()
+						.unwrap()
+						.get_mut(&ceremony_id_to_process)
+						.unwrap()
+						.tick();
+					trace!("Got ceremony {:?} events {:?}", ceremony_id_to_process, events);
 					// should be retrieved once, but cannot be at startup because it's not yet initialized so it panics ...
 					let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap().m;
 					for event in events {
 						debug!(
 							"Processing ceremony event: {:?} for ceremony: {:?}",
-							event,
-							v.get_id_ref()
+							event, ceremony_id_to_process
 						);
 						match event {
 							CeremonyEvent::FirstRoundStarted(signers, message, nonce) => {
@@ -125,8 +138,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 
 									debug!(
 										"Sharing nonce with signer: {:?} for ceremony: {:?}",
-										signer_id,
-										v.get_id_ref()
+										signer_id, ceremony_id_to_process
 									);
 
 									let request = prepare_request(
@@ -136,16 +148,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									if let Some(peer) = peers_map.get_mut(signer_id) {
-										if let Err(e) = peer.send(&request) {
-											error!(
-											"Could not send request to signer: {:?}, reason: {:?}",
-											signer_id, e
-										)
-										}
-									} else {
-										error!("Connection not found for signer: {:?}", signer_id)
-									}
+									send_to_all_signers(
+										&client_factory,
+										&enclave_registry,
+										&responses_sender,
+										signer_id,
+										&request,
+									);
 								});
 							},
 							CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -161,7 +170,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									debug!(
 										"Sharing partial signature with signer: {:?} for ceremony: {:?}",
 										signer_id,
-										v.get_id_ref()
+										ceremony_id_to_process
 									);
 
 									let request = prepare_request(
@@ -171,19 +180,25 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									peers_map.get_mut(signer_id).unwrap().send(&request).unwrap();
+									send_to_all_signers(
+										&client_factory,
+										&enclave_registry,
+										&responses_sender,
+										signer_id,
+										&request,
+									);
 								});
 							},
-							CeremonyEvent::CeremonyEnded(signature) => {
+							CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
 								debug!(
 									"Ceremony {:?} ended, signature {:?}",
-									v.get_id_ref(),
-									signature
+									ceremony_id_to_process, signature
 								);
-								let hash = blake2_256(&v.get_id_ref().encode());
+								let hash = blake2_256(&ceremony_id_to_process.encode());
 								let result = signature;
 								let encrypted_result =
-									aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
+									aes_encrypt_default(&request_aes_key, &result.encode())
+										.encode();
 								if let Err(e) = responder.send_state_with_status(
 									Hash::from_slice(&hash),
 									encrypted_result,
@@ -194,14 +209,15 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										&hash, e
 									);
 								}
-								ceremonies_to_remove.push(v.get_id_ref().clone());
+								ceremonies_to_remove.push(ceremony_id_to_process.clone());
 							},
-							CeremonyEvent::CeremonyError(signers, error) => {
-								debug!("Ceremony {:?} error {:?}", v.get_id_ref(), error);
-								let hash = blake2_256(&v.get_id_ref().encode());
+							CeremonyEvent::CeremonyError(signers, error, request_aes_key) => {
+								debug!("Ceremony {:?} error {:?}", ceremony_id_to_process, error);
+								let hash = blake2_256(&ceremony_id_to_process.encode());
 								let result = SignBitcoinError::CeremonyError;
 								let encrypted_result =
-									aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
+									aes_encrypt_default(&request_aes_key, &result.encode())
+										.encode();
 								if let Err(e) = responder.send_state_with_status(
 									Hash::from_slice(&hash),
 									encrypted_result,
@@ -212,7 +228,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										&hash, e
 									);
 								}
-								ceremonies_to_remove.push(v.get_id_ref().clone());
+								ceremonies_to_remove.push(ceremony_id_to_process.clone());
 
 								//kill ceremonies on other workers
 								signers.iter().for_each(|signer_id| {
@@ -220,13 +236,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									let direct_call = DirectCall::KillCeremony(
 										identity.clone(),
 										aes_key,
-										v.get_id_ref().clone(),
+										ceremony_id_to_process.clone(),
 									);
 
 									debug!(
 										"Requesting ceremony kill on signer: {:?} for ceremony: {:?}",
 										signer_id,
-										v.get_id_ref()
+										ceremony_id_to_process
 									);
 
 									let request = prepare_request(
@@ -236,15 +252,22 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									peers_map.get_mut(signer_id).unwrap().send(&request).unwrap();
+									send_to_all_signers(
+										&client_factory,
+										&enclave_registry,
+										&responses_sender,
+										signer_id,
+										&request,
+									);
 								});
 							},
-							CeremonyEvent::CeremonyTimedOut(signers) => {
-								debug!("Ceremony {:?} timed out", v.get_id_ref());
-								let hash = blake2_256(&v.get_id_ref().encode());
+							CeremonyEvent::CeremonyTimedOut(signers, request_aes_key) => {
+								debug!("Ceremony {:?} timed out", ceremony_id_to_process);
+								let hash = blake2_256(&ceremony_id_to_process.encode());
 								let result = SignBitcoinError::CeremonyError;
 								let encrypted_result =
-									aes_encrypt_default(v.get_aes_key(), &result.encode()).encode();
+									aes_encrypt_default(&request_aes_key, &result.encode())
+										.encode();
 								if let Err(e) = responder.send_state_with_status(
 									Hash::from_slice(&hash),
 									encrypted_result,
@@ -255,7 +278,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										&hash, e
 									);
 								}
-								ceremonies_to_remove.push(v.get_id_ref().clone());
+								ceremonies_to_remove.push(ceremony_id_to_process.clone());
 
 								//kill ceremonies on other workers
 								signers.iter().for_each(|signer_id| {
@@ -263,13 +286,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									let direct_call = DirectCall::KillCeremony(
 										identity.clone(),
 										aes_key,
-										v.get_id_ref().clone(),
+										ceremony_id_to_process.clone(),
 									);
 
 									debug!(
 										"Requesting ceremony kill on signer: {:?} for ceremony: {:?}",
 										signer_id,
-										v.get_id_ref()
+										ceremony_id_to_process
 									);
 
 									let request = prepare_request(
@@ -279,14 +302,21 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									peers_map.get_mut(signer_id).unwrap().send(&request).unwrap();
+									send_to_all_signers(
+										&client_factory,
+										&enclave_registry,
+										&responses_sender,
+										signer_id,
+										&request,
+									);
 								});
 							},
 						}
 					}
-				});
-				let mut ceremony_commands = ceremony_commands.lock().unwrap();
+				}
 
+				let mut ceremony_commands = ceremony_commands.try_lock().unwrap();
+				let mut ceremony_registry = ceremony_registry.lock().unwrap();
 				ceremony_commands.retain(|_, ceremony_pending_commands| {
 					ceremony_pending_commands.retain_mut(|c| {
 						c.tick();
@@ -312,6 +342,30 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 			info!("Got RPC return value: {:?}", rpc_return_value);
 			if rpc_return_value.status == DirectRequestStatus::Error {
 				error!("Got unexpected direct request status: {:?}", rpc_return_value.status);
+			}
+		}
+	});
+}
+
+fn send_to_all_signers<ClientFactory, ER>(
+	client_factory: &Arc<ClientFactory>,
+	enclave_registry: &Arc<ER>,
+	responses_sender: &SyncSender<Response>,
+	signer_id: &SignerId,
+	request: &RpcRequest,
+) where
+	ClientFactory: RpcClientFactory + Send + Sync + 'static,
+	ER: EnclaveRegistryLookup + Send + Sync + 'static,
+{
+	enclave_registry.get_all().iter().for_each(|(identity, address)| {
+		if signer_id == identity.as_ref() {
+			trace!("creating new connection to peer: {:?}", address);
+			match client_factory.create(address, responses_sender.clone()) {
+				Ok(mut client) =>
+					if let Err(e) = client.send(address, request) {
+						error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
+					},
+				Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
 			}
 		}
 	});

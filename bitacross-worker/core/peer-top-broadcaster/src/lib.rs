@@ -32,12 +32,12 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClient, RpcClientFactory};
+use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClientFactory};
 use itc_direct_rpc_server::{
 	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
 	SendRpcResponse,
 };
-use itp_rpc::{Id, RpcRequest};
+use itp_rpc::Id;
 use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
 use itp_utils::FromHexPrefixed;
@@ -155,20 +155,8 @@ where
 		HashMap::new()
 	}
 
-	pub fn broadcast(&self, request: BroadcastedRequest) {
-		if let Ok(mut peers) = self.peers.lock() {
-			let request = RpcRequest {
-				jsonrpc: "2.0".to_string(),
-				method: request.rpc_method.clone(),
-				params: vec![request.payload.clone()],
-				id: Id::Text(request.id),
-			};
-			peers.values_mut().for_each(|peer| {
-				if let Err(e) = peer.send(&request) {
-					log::warn!("Could not send top to peer reason: {:?}", e);
-				}
-			});
-		}
+	pub fn broadcast(&self, _: BroadcastedRequest) {
+		// todo: remove broadcaster as there is no sidechain functionality in bitacross worker
 	}
 
 	fn connect_to(&self, url: &str, peer_list: &mut HashMap<String, ClientFactory::Client>) {
@@ -247,130 +235,5 @@ where
 		if let Ok(mut peers) = self.peers.lock() {
 			*peers = new_peers_list;
 		}
-	}
-}
-
-#[cfg(test)]
-pub mod tests {
-	use crate::{DirectRpcBroadcaster, PeerUpdater};
-	use alloc::sync::Arc;
-	use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
-	use itc_direct_rpc_server::{
-		mocks::response_channel_mock::ResponseChannelMock,
-		rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
-	};
-	use itp_rpc::{Id, RpcRequest, RpcReturnValue};
-	use itp_stf_primitives::types::Hash;
-	use itp_types::H256;
-	use itp_utils::ToHexPrefixed;
-	use litentry_primitives::BroadcastedRequest;
-	use std::{error::Error, sync::mpsc::SyncSender};
-
-	type TestConnectionToken = u64;
-	type TestResponseChannel = ResponseChannelMock<TestConnectionToken>;
-	type TestConnectionRegistry = ConnectionRegistry<H256, TestConnectionToken>;
-
-	#[derive(Default)]
-	pub struct MockedRpcClient {
-		pub sent_requests: u64,
-		pub response: Option<(Id, RpcReturnValue)>,
-	}
-
-	impl RpcClient for MockedRpcClient {
-		fn send(&mut self, _request: &RpcRequest) -> Result<(), Box<dyn Error>> {
-			self.sent_requests = self.sent_requests + 1;
-			Ok(())
-		}
-	}
-
-	impl MockedRpcClient {
-		pub fn set_response(&mut self, response: (Id, RpcReturnValue)) {
-			self.response = Some(response)
-		}
-	}
-
-	pub struct MockedRpcClientFactory {}
-
-	impl RpcClientFactory for MockedRpcClientFactory {
-		type Client = MockedRpcClient;
-
-		fn create(
-			&self,
-			_url: &str,
-			_response_sink: SyncSender<Response>,
-		) -> Result<Self::Client, Box<dyn Error>> {
-			Ok(MockedRpcClient::default())
-		}
-	}
-
-	#[test]
-	pub fn creates_initial_peers() {
-		//given
-		let factory = MockedRpcClientFactory {};
-		let connection_registry = Arc::new(TestConnectionRegistry::new());
-		let websocket_responder = Arc::new(TestResponseChannel::default());
-		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
-
-		//when
-		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost"], factory, rpc_responder);
-
-		//then
-		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
-	}
-
-	#[test]
-	pub fn broadcast_sends_to_all_peers() {
-		//given
-		let factory = MockedRpcClientFactory {};
-		let connection_registry = Arc::new(TestConnectionRegistry::new());
-		let websocket_responder = Arc::new(TestResponseChannel::default());
-		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
-
-		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost", "localhost2"], factory, rpc_responder);
-
-		//when
-		broadcaster.broadcast(BroadcastedRequest {
-			id: Hash::random().to_hex(),
-			payload: Hash::random().to_hex(),
-			rpc_method: "submit_and_broadcast".to_string(),
-		});
-		broadcaster.broadcast(BroadcastedRequest {
-			id: Hash::random().to_hex(),
-			payload: Hash::random().to_hex(),
-			rpc_method: "submit_and_broadcast".to_string(),
-		});
-
-		//then
-		let peers = broadcaster.peers.lock().unwrap();
-		for peer in peers.iter() {
-			assert_eq!(peer.1.sent_requests, 2u64)
-		}
-	}
-
-	#[test]
-	pub fn updates_list_correctly() {
-		//given
-		let retained_peer = "localhost";
-		let added_peer = "localhost3";
-		let removed_peer = "localhost2";
-
-		let factory = MockedRpcClientFactory {};
-		let connection_registry = Arc::new(TestConnectionRegistry::new());
-		let websocket_responder = Arc::new(TestResponseChannel::default());
-		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
-
-		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec![retained_peer, removed_peer], factory, rpc_responder);
-
-		//when
-		broadcaster.update(vec![retained_peer.to_string(), added_peer.to_string()]);
-
-		//then
-		let peers = broadcaster.peers.lock().unwrap();
-		assert!(peers.get(retained_peer).is_some());
-		assert!(peers.get(added_peer).is_some());
-		assert!(peers.get(removed_peer).is_none());
 	}
 }
