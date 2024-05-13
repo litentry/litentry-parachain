@@ -20,7 +20,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use litentry_primitives::ErrorDetail as Error;
 use std::vec::Vec;
 
 pub enum AbortStrategy<F> {
@@ -37,14 +36,14 @@ pub enum LoopControls {
 	Continue,
 }
 
-pub fn loop_with_abort_strategy<F, T>(
+pub fn loop_with_abort_strategy<F, T, E>(
 	// List of items to iterate over
 	items: Vec<T>,
 	// Closure to perform action, returns a LoopControls value indicating whether to exit the loop
-	mut action: impl FnMut(&T) -> Result<LoopControls, Error>,
+	mut action: impl FnMut(&T) -> Result<LoopControls, E>,
 	// Control when to abort the loop
 	abort_strategy: AbortStrategy<F>,
-) -> Result<(), Error>
+) -> Result<(), E>
 where
 	F: Fn(&T) -> bool, // Type of the predicate function, takes a parameter of type T and returns a boolean
 {
@@ -77,7 +76,7 @@ where
 
 #[cfg(test)]
 mod tests {
-	use litentry_primitives::ErrorString;
+	use litentry_primitives::{ErrorDetail as Error, ErrorString};
 
 	use super::*;
 
@@ -86,7 +85,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result = loop_with_abort_strategy(
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -108,7 +107,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result = loop_with_abort_strategy(
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -132,7 +131,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result = loop_with_abort_strategy(
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -153,7 +152,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result = loop_with_abort_strategy(
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -177,7 +176,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result = loop_with_abort_strategy(
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;

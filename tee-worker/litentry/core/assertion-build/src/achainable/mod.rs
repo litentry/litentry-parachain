@@ -27,6 +27,7 @@ use self::{
 	date_percent::build_date_percent, mirror::build_on_mirror, token::build_token,
 };
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{
 	achainable::{
 		AchainableClient, AchainableTagDeFi, HoldingAmount, Params, ParamsBasicTypeWithAmountToken,
@@ -87,17 +88,26 @@ pub fn request_achainable(
 
 	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
-	for address in &addresses {
-		let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
-			error!("Request achainable failed {:?}", e);
+	let mut result = false;
 
-			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})?;
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
+				error!("Request achainable failed {:?}", e);
 
-		if ret {
-			return Ok(true)
-		}
-	}
+				Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+			})?;
+
+			if ret {
+				result = true;
+				Ok(LoopControls::Break)
+			} else {
+				Ok(LoopControls::Continue)
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	Ok(false)
 }
@@ -113,15 +123,36 @@ pub fn request_uniswap_v2_or_v3_user(
 
 	let mut v2_user = false;
 	let mut v3_user = false;
-	for address in &addresses {
-		v2_user |= client.uniswap_v2_user(address).map_err(|e| {
-			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})?;
 
-		v3_user |= client.uniswap_v3_user(address).map_err(|e| {
-			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})?
-	}
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			if !v2_user {
+				v2_user |= client.uniswap_v2_user(address).map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(param.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+			}
+
+			if !v3_user {
+				v3_user |= client.uniswap_v3_user(address).map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(param.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+			}
+
+			if v2_user && v3_user {
+				Ok(LoopControls::Break)
+			} else {
+				Ok(LoopControls::Continue)
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	Ok((v2_user, v3_user))
 }
@@ -136,20 +167,27 @@ pub fn request_achainable_classofyear(
 	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
 	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
-	for address in &addresses {
-		let year = client.query_class_of_year(address, request_param.clone()).map_err(|e| {
-			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})?;
 
-		// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
-		if year.parse::<u32>().is_err() {
-			continue
-		}
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			let year = client.query_class_of_year(address, request_param.clone()).map_err(|e| {
+				Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+			})?;
 
-		if year < longest_created_year {
-			longest_created_year = year;
-		}
-	}
+			// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
+			if year.parse::<u32>().is_err() {
+				return Ok(LoopControls::Continue)
+			}
+
+			if year < longest_created_year {
+				longest_created_year = year;
+			}
+
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
 }
@@ -170,56 +208,65 @@ pub fn request_achainable_balance(
 
 pub fn query_lit_holding_amount(
 	aparam: &AchainableParams,
-	identities: &Vec<(Web3Network, Vec<String>)>,
+	identities: Vec<(Web3Network, Vec<String>)>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<usize> {
 	let mut total_lit_balance = 0_f64;
 	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
-	for (network, addresses) in identities {
-		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
-			(
-				AchainableNameAmountToken::ERC20BalanceOverAmount,
-				Web3Network::Ethereum,
-				Some(LIT_TOKEN_ADDRESS.to_string()),
-			)
-		} else if *network == Web3Network::Bsc {
-			(
-				AchainableNameAmountToken::BEP20BalanceOverAmount,
-				Web3Network::Bsc,
-				Some(LIT_TOKEN_ADDRESS.to_string()),
-			)
-		} else if *network == Web3Network::Litentry {
-			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
-		} else if *network == Web3Network::Litmus {
-			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
-		} else {
-			continue
-		};
-
-		let q_param = ParamsBasicTypeWithAmountToken::new(
-			q_name.name().to_string(),
-			&q_network,
-			"0".to_string(),
-			q_token,
-		);
-
-		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
-		let balance = client
-			.holding_amount(addresses.clone(), params)
-			.map_err(|e| {
-				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
-			})?
-			.parse::<f64>()
-			.map_err(|_| {
-				Error::RequestVCFailed(
-					Assertion::Achainable(aparam.clone()),
-					ErrorDetail::ParseError,
+	loop_with_abort_strategy(
+		identities,
+		|(network, addresses)| {
+			let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
+				(
+					AchainableNameAmountToken::ERC20BalanceOverAmount,
+					Web3Network::Ethereum,
+					Some(LIT_TOKEN_ADDRESS.to_string()),
 				)
-			})?;
+			} else if *network == Web3Network::Bsc {
+				(
+					AchainableNameAmountToken::BEP20BalanceOverAmount,
+					Web3Network::Bsc,
+					Some(LIT_TOKEN_ADDRESS.to_string()),
+				)
+			} else if *network == Web3Network::Litentry {
+				(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
+			} else if *network == Web3Network::Litmus {
+				(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
+			} else {
+				return Ok(LoopControls::Continue)
+			};
 
-		total_lit_balance += balance;
-	}
+			let q_param = ParamsBasicTypeWithAmountToken::new(
+				q_name.name().to_string(),
+				&q_network,
+				"0".to_string(),
+				q_token,
+			);
+
+			let params = Params::ParamsBasicTypeWithAmountToken(q_param);
+			let balance = client
+				.holding_amount(addresses.clone(), params)
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(aparam.clone()),
+						e.into_error_detail(),
+					)
+				})?
+				.parse::<f64>()
+				.map_err(|_| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(aparam.clone()),
+						ErrorDetail::ParseError,
+					)
+				})?;
+
+			total_lit_balance += balance;
+
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)?;
 
 	Ok(total_lit_balance as usize)
 }

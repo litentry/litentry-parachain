@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
@@ -62,28 +63,39 @@ pub fn build(
 
 	let mut client =
 		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
-	for identity in &req.identities {
-		if let Identity::Discord(address) = &identity.0 {
-			let resp = client
-				.check_id_hubber(
-					guild_id.to_vec(),
-					channel_id.to_vec(),
-					role_id.to_vec(),
-					address.inner_ref().to_vec(),
-				)
-				.map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
-						e.into_error_detail(),
-					)
-				})?;
+	let identities = req
+		.identities
+		.iter()
+		.map(|(identity, _)| identity.clone())
+		.collect::<Vec<Identity>>();
 
-			if resp.data {
-				has_commented = true;
-				break
+	loop_with_abort_strategy(
+		identities,
+		|identity| {
+			if let Identity::Discord(address) = identity {
+				let resp = client
+					.check_id_hubber(
+						guild_id.to_vec(),
+						channel_id.to_vec(),
+						role_id.to_vec(),
+						address.inner_ref().to_vec(),
+					)
+					.map_err(|e| {
+						Error::RequestVCFailed(
+							Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+							e.into_error_detail(),
+						)
+					})?;
+
+				if resp.data {
+					has_commented = true;
+					return Ok(LoopControls::Break)
+				}
 			}
-		}
-	}
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)?;
 
 	let runtime_version = IssuerRuntimeVersion {
 		parachain: req.parachain_runtime_version,

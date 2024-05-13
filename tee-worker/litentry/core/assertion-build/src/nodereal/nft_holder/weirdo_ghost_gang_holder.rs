@@ -22,6 +22,7 @@ extern crate sgx_tstd as std;
 
 use core::result;
 
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::{
 	nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate,
 	IssuerRuntimeVersion,
@@ -74,17 +75,24 @@ pub fn build(
 		.collect::<Vec<String>>();
 
 	let mut errors: Vec<DataProviderError> = Vec::new();
-	for address in addresses {
-		match check_has_nft(&mut client, address.as_str()) {
-			Ok(res) => {
-				has_nft = res;
-				break
-			},
+
+	loop_with_abort_strategy(
+		addresses,
+		|address| match check_has_nft(&mut client, address.as_str()) {
+			Ok(res) =>
+				if res {
+					has_nft = true;
+					Ok(LoopControls::Break)
+				} else {
+					Ok(LoopControls::Continue)
+				},
 			Err(err) => {
 				errors.push(err);
+				Ok(LoopControls::Continue)
 			},
-		}
-	}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)?;
 
 	if !has_nft && !errors.is_empty() {
 		return Err(Error::RequestVCFailed(
