@@ -35,7 +35,7 @@ pub enum TwitterValidationData {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum DiscordValidationData {
-	DiscordPublicMessage {
+	PublicMessage {
 		channel_id: ValidationString,
 		message_id: ValidationString,
 		guild_id: ValidationString,
