@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { buildTwitterValidation, initIntegrationTestContext } from './common/utils';
-import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
+import { buildWeb2Validation, initIntegrationTestContext } from './common/utils';
+import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
     createSignedTrustedCallLinkIdentity,
@@ -53,7 +53,8 @@ describe('Test Vc (direct invocation)', function () {
 
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,

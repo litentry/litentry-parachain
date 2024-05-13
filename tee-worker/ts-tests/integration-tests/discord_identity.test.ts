@@ -19,14 +19,13 @@ import {
     sendRequestFromTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import { sleep } from './common/utils';
-import { aesKey, sendRequest, decodeRpcBytesAsString } from './common/call';
-import { createJsonRpcRequest, nextRequestId } from './common/helpers';
+import { aesKey } from './common/call';
 import type { IntegrationTestContext } from './common/common-types';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 
-describe('Test Twitter Identity (direct invocation)', function () {
+describe('Test Discord Identity (direct invocation)', function () {
     let context: IntegrationTestContext;
     let teeShieldingKey: KeyObject;
     let aliceSubstrateIdentity: CorePrimitivesIdentity;
@@ -88,31 +87,31 @@ describe('Test Twitter Identity (direct invocation)', function () {
         assert.lengthOf(idGraph, 0);
     });
 
-    step('linking twitter identity with public tweet verification (alice)', async function () {
+    step('linking discord identity with public message verification (alice)', async function () {
         const nonce = aliceCurrentNonce++;
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildWeb2Validation({
-            identityType: 'Twitter',
+        const discordIdentity = await buildIdentityHelper('alice', 'Discord', context);
+        const discordValidation = await buildWeb2Validation({
+            identityType: 'Discord',
             context,
             signerIdentitity: aliceSubstrateIdentity,
-            linkIdentity: twitterIdentity,
-            verificationType: 'PublicTweet',
+            linkIdentity: discordIdentity,
+            verificationType: 'PublicMessage',
             validationNonce: nonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        const networks = context.api.createType('Vec<Web3Network>', []);
 
         aliceLinkIdentityRequestParams.push({
             nonce,
-            identity: twitterIdentity,
-            validation: twitterValidation,
-            networks: twitterNetworks,
+            identity: discordIdentity,
+            validation: discordValidation,
+            networks,
         });
 
         const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubstrateIdentity, true],
-                [twitterIdentity, true],
+                [discordIdentity, true],
             ],
         ];
 
@@ -153,43 +152,31 @@ describe('Test Twitter Identity (direct invocation)', function () {
         assert.lengthOf(idGraphHashResults, 1);
     });
 
-    step('linking twitter identity with oauth2 verification (bob)', async function () {
-        // Generate oauth code verifier on the enclave for the user
-        const did = 'did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48';
-        const request = createJsonRpcRequest(
-            'identity_getTwitterAuthorizeUrl',
-            [did, 'http://127.0.0.1:3000/callback'],
-            nextRequestId(context)
-        );
-        const response = await sendRequest(context.tee, request, context.api);
-        const authorizeUrl = decodeRpcBytesAsString(response.value);
-        const state = authorizeUrl.split('state=')[1].split('&')[0];
-
+    step('linking discord identity with oauth2 verification (bob)', async function () {
         const nonce = bobCurrentNonce++;
-        const twitterIdentity = await buildIdentityHelper('mock_user_me', 'Twitter', context);
-        const twitterValidation = await buildWeb2Validation({
-            identityType: 'Twitter',
+        const discordIdentity = await buildIdentityHelper('bob', 'Discord', context);
+        const discordValidation = await buildWeb2Validation({
+            identityType: 'Discord',
             context,
             signerIdentitity: bobSubstrateIdentity,
-            linkIdentity: twitterIdentity,
+            linkIdentity: discordIdentity,
             validationNonce: nonce,
             verificationType: 'OAuth2',
-            oauthState: state,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        const networks = context.api.createType('Vec<Web3Network>', []);
 
         bobLinkIdentityRequestParams.push({
             nonce,
-            identity: twitterIdentity,
-            validation: twitterValidation,
-            networks: twitterNetworks,
+            identity: discordIdentity,
+            validation: discordValidation,
+            networks,
         });
 
         const idGraphHashResults: HexString[] = [];
         let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [
                 [bobSubstrateIdentity, true],
-                [twitterIdentity, true],
+                [discordIdentity, true],
             ],
         ];
 
