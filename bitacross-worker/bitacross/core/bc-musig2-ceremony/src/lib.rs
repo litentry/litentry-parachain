@@ -40,7 +40,7 @@ use codec::{Decode, Encode};
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 pub use k256::{elliptic_curve::sec1::FromEncodedPoint, PublicKey};
 use litentry_primitives::RequestAesKey;
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 pub use musig2::{PartialSignature, PubNonce};
 use std::collections::HashMap;
 
@@ -205,7 +205,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 	}
 
 	pub fn tick(&mut self) -> Vec<CeremonyEvent> {
-		debug!("Ceremony {:?} tick", self.get_id_ref());
+		trace!("Ceremony {:?} tick", self.get_id_ref());
 		self.process_commands();
 		self.ticks_left -= 1;
 

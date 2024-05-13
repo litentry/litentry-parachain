@@ -152,11 +152,13 @@ impl DirectRpcClient {
 		std::thread::spawn(move || loop {
 			// let's flush all pending requests first
 			while let Ok(request) = request_receiver.try_recv() {
+				log::trace!("Sending request: {:?}", request);
 				socket.write_message(Message::Text(request)).unwrap()
 			}
 
 			if let Ok(message) = socket.read_message() {
 				if let Ok(Some(response)) = Self::handle_ws_message(message) {
+					log::trace!("Receiving response: {:?}", response);
 					if let Err(e) = response_sink.send(response) {
 						log::error!("Could not forward response, reason: {:?}", e)
 					};

@@ -46,6 +46,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	enclave_registry: Arc<ER>,
 ) -> Result<(), NonceShareError> {
+	debug!("Received nonce share from: {:?} for ceremony {:?}", signer, ceremony_id);
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,

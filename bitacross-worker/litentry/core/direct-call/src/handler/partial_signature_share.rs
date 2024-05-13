@@ -16,6 +16,7 @@
 
 use bc_enclave_registry::EnclaveRegistryLookup;
 use codec::Encode;
+use log::debug;
 use parentchain_primitives::Identity;
 use std::{collections::HashMap, sync::Arc};
 
@@ -44,6 +45,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	ceremony_registry: Arc<Mutex<HashMap<CeremonyId, MuSig2Ceremony<AK>>>>,
 	enclave_registry: Arc<ER>,
 ) -> Result<(), PartialSignatureShareError> {
+	debug!("Received partial signature share from: {:?} for ceremony {:?}", signer, ceremony_id);
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,
