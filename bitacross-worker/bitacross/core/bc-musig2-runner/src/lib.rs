@@ -34,7 +34,7 @@ use itp_sgx_crypto::{
 	ShieldingCryptoEncrypt,
 };
 use itp_utils::hex::ToHexPrefixed;
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
 use std::{collections::HashMap, vec::Vec};
@@ -105,18 +105,23 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 			{
 				let mut ceremonies_to_remove = vec![];
 
+
+
 				// do not hold lock for too long
 				let ceremonies_to_process: Vec<CeremonyId> =
 					ceremony_registry.lock().unwrap().keys().cloned().collect();
 
 				for ceremony_id_to_process in ceremonies_to_process {
 					// do not hold lock for too long as logic below includes I/O
-					let events = ceremony_registry
-						.lock()
+					let events = if let Some(ceremony) = ceremony_registry.lock()
 						.unwrap()
-						.get_mut(&ceremony_id_to_process)
-						.unwrap()
-						.tick();
+						.get_mut(&ceremony_id_to_process) {
+						ceremony.tick()
+					} else {
+						warn!("Could not find ceremony with id: {:?}", ceremony_id_to_process);
+						continue;
+					};
+
 					trace!("Got ceremony {:?} events {:?}", ceremony_id_to_process, events);
 					// should be retrieved once, but cannot be at startup because it's not yet initialized so it panics ...
 					let mr_enclave = ocall_api.get_mrenclave_of_self().unwrap().m;
@@ -315,7 +320,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 					}
 				}
 
-				let mut ceremony_commands = ceremony_commands.try_lock().unwrap();
+				let mut ceremony_commands = ceremony_commands.lock().unwrap();
 				let mut ceremony_registry = ceremony_registry.lock().unwrap();
 				ceremony_commands.retain(|_, ceremony_pending_commands| {
 					ceremony_pending_commands.retain_mut(|c| {
