@@ -37,7 +37,7 @@ use itp_utils::hex::ToHexPrefixed;
 use log::{debug, error, info, trace, warn};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
-use std::{collections::HashMap, vec::Vec};
+use std::vec::Vec;
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -84,24 +84,9 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 {
 	let (responses_sender, responses_receiver) = sync_channel(1000);
 	std::thread::spawn(move || {
-		let mut peers_map = HashMap::new();
-
 		let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
 		let identity = Identity::Substrate(my_identity);
 		loop {
-			//  make sure connections to all peers are established
-			enclave_registry.get_all().iter().for_each(|(identity, address)| {
-				if my_identity != *identity && !peers_map.contains_key(identity.as_ref()) {
-					info!("creating new connection to peer: {:?}", address);
-					match client_factory.create(address, responses_sender.clone()) {
-						Ok(client) => {
-							peers_map.insert(*identity.as_ref(), client);
-						},
-						Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
-					}
-				}
-			});
-
 			{
 				let mut ceremonies_to_remove = vec![];
 
