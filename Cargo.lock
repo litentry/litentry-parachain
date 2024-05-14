@@ -1744,7 +1744,7 @@ name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.42#f603a61ff370fc33740c9373833c3c6ba1486846"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -2920,7 +2920,7 @@ checksum = "f5aa1e3ae159e592ad222dc90c5acbad632b527779ba88486abe92782ab268bd"
 dependencies = [
  "expander 0.0.4",
  "indexmap 1.9.3",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -3386,7 +3386,7 @@ name = "frame-election-provider-solution-type"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -3513,7 +3513,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "frame-support-procedural-tools-derive",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -4537,7 +4537,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44e8ab85614a08792b9bff6c8feee23be78c98d0182d4c622c05256ab553892a"
 dependencies = [
  "heck",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -6241,7 +6241,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc076939022111618a5026d3be019fd8b366e76314538ff9a1b59ffbcbf98bcd"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro-error",
  "proc-macro2",
  "quote",
@@ -6548,7 +6548,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -6660,7 +6660,7 @@ dependencies = [
  "expander 0.0.6",
  "itertools",
  "petgraph",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -7933,7 +7933,7 @@ name = "pallet-staking-reward-curve"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -8275,7 +8275,7 @@ version = "3.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a296c3079b5fefbc499e1de58dc26c09b1b9a5952d26694ee89f04a43ebbb3e"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -9880,6 +9880,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-crate"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d37c51ca738a55da99dc0c4a34860fd675453b8b36209178c2249bb13651284"
+dependencies = [
+ "toml_edit 0.21.1",
+]
+
+[[package]]
 name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11118,7 +11127,7 @@ name = "sc-chain-spec-derive"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -12094,7 +12103,7 @@ name = "sc-tracing-proc-macro"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -12158,9 +12167,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.11.2"
+version = "2.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c453e59a955f81fb62ee5d596b450383d699f152d350e9d23a0db2adb78e4c0"
+checksum = "eca070c12893629e2cc820a9761bedf6ce1dcddc9852984d1dc734b8bd9bd024"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -12172,11 +12181,11 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.11.2"
+version = "2.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18cf6c6447f813ef19eb450e985bcce6705f9ce7660db221b59093d15c79c4b7"
+checksum = "2d35494501194174bda522a32605929eefc9ecf7e0a326c26db1fdd85881eb62"
 dependencies = [
- "proc-macro-crate",
+ "proc-macro-crate 3.1.0",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -12689,7 +12698,7 @@ dependencies = [
  "Inflector",
  "blake2",
  "expander 1.0.0",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -13161,7 +13170,7 @@ version = "6.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "Inflector",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
@@ -14059,9 +14068,9 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.3"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cda73e2f1397b1262d6dfdcef8aafae14d1de7748d66822d3bfeeb6d03e5e4b"
+checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
 dependencies = [
  "serde",
 ]
@@ -14088,6 +14097,17 @@ dependencies = [
  "indexmap 2.0.0",
  "serde",
  "serde_spanned",
+ "toml_datetime",
+ "winnow",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
+dependencies = [
+ "indexmap 2.0.0",
  "toml_datetime",
  "winnow",
 ]
@@ -14194,7 +14214,7 @@ version = "0.9.42"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.42#6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd"
 dependencies = [
  "expander 2.0.0",
- "proc-macro-crate",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 2.0.61",
