@@ -236,12 +236,12 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "1".into()
+								dst: "0.6".into()
 							}),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "50".into()
+								dst: "1.2".into()
 							})
 						]
 					}

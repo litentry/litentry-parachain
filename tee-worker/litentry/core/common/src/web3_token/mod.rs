@@ -20,11 +20,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use std::{vec, vec::Vec};
-
-use litentry_primitives::Web3TokenType;
+use std::vec::Vec;
 
 use crate::Web3Network;
+use litentry_primitives::Web3TokenType;
+
+mod token_amount_range;
+use token_amount_range::*;
 pub mod token_decimals_filter;
 use token_decimals_filter::TokenDecimalsFilter;
 
@@ -61,6 +63,19 @@ impl TokenName for Web3TokenType {
 			Self::Sol => "SOL",
 			Self::Mcrt => "MCRT",
 			Self::Btc => "BTC",
+			Self::Ada => "ADA",
+			Self::Doge => "DOGE",
+			Self::Shib => "SHIB",
+			Self::Uni => "UNI",
+			Self::Bch => "BCH",
+			Self::Etc => "ETC",
+			Self::Atom => "ATOM",
+			Self::Dai => "DAI",
+			Self::Leo => "LEO",
+			Self::Fil => "FIL",
+			Self::Imx => "IMX",
+			Self::Cro => "CRO",
+			Self::Inj => "INJ",
 		}
 	}
 }
@@ -90,6 +105,13 @@ impl TokenAddress for Web3TokenType {
 			(Self::Usdc, Web3Network::Bsc) => Some("0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"),
 			(Self::Usdc, Web3Network::Ethereum) =>
 				Some("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
+			(Self::Usdc, Web3Network::Solana) =>
+				Some("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+			(Self::Usdc, Web3Network::Arbitrum) =>
+				Some("0xaf88d065e77c8cC2239327C5EDb3A432268e5831"),
+			(Self::Usdc, Web3Network::Polygon) =>
+				Some("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"),
+
 			// Usdt
 			(Self::Usdt, Web3Network::Bsc) => Some("0x55d398326f99059ff775485246999027b3197955"),
 			(Self::Usdt, Web3Network::Ethereum) =>
@@ -158,6 +180,72 @@ impl TokenAddress for Web3TokenType {
 				Some("0xde16ce60804a881e9f8c4ebb3824646edecd478d"),
 			(Self::Mcrt, Web3Network::Solana) =>
 				Some("FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"),
+
+			// Ada
+			(Self::Ada, Web3Network::Bsc) => Some("0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47"),
+
+			// Doge
+			(Self::Doge, Web3Network::Bsc) => Some("0xba2ae424d960c26247dd6c32edc70b295c744c43"),
+
+			// Shib
+			(Self::Shib, Web3Network::Ethereum) =>
+				Some("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"),
+
+			// Uni
+			(Self::Uni, Web3Network::Ethereum) =>
+				Some("0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"),
+			(Self::Uni, Web3Network::Bsc) => Some("0xbf5140a22578168fd562dccf235e5d43a02ce9b1"),
+			(Self::Uni, Web3Network::Solana) =>
+				Some("8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36"),
+			(Self::Uni, Web3Network::Arbitrum) =>
+				Some("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0"),
+			(Self::Uni, Web3Network::Polygon) => Some("0xb33eaad8d922b1083446dc23f610c2567fb5180f"),
+
+			// Bch
+			(Self::Bch, Web3Network::Bsc) => Some("0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf"),
+
+			// Etc
+			(Self::Etc, Web3Network::Bsc) => Some("0x3d6545b08693dae087e957cb1180ee38b9e3c25e"),
+
+			// Atom
+			(Self::Atom, Web3Network::Ethereum) =>
+				Some("0x8D983cb9388EaC77af0474fA441C4815500Cb7BB"),
+			(Self::Atom, Web3Network::Bsc) => Some("0x0eb3a705fc54725037cc9e008bdede697f62f335"),
+			(Self::Atom, Web3Network::Polygon) =>
+				Some("0xac51C4c48Dc3116487eD4BC16542e27B5694Da1b"),
+
+			// Dai
+			(Self::Dai, Web3Network::Ethereum) =>
+				Some("0x6b175474e89094c44da98b954eedeac495271d0f"),
+			(Self::Dai, Web3Network::Bsc) => Some("0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3"),
+			(Self::Dai, Web3Network::Polygon) => Some("0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063"),
+			(Self::Dai, Web3Network::Solana) =>
+				Some("EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o"),
+			(Self::Dai, Web3Network::Arbitrum) =>
+				Some("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"),
+
+			// Leo
+			(Self::Leo, Web3Network::Ethereum) =>
+				Some("0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3"),
+
+			// Fil
+			(Self::Fil, Web3Network::Bsc) => Some("0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153"),
+
+			// Imx
+			(Self::Imx, Web3Network::Ethereum) =>
+				Some("0xf57e7e7c23978c3caec3c3548e3d615c346e79ff"),
+
+			// Cro
+			(Self::Cro, Web3Network::Ethereum) =>
+				Some("0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b"),
+			(Self::Cro, Web3Network::Solana) =>
+				Some("DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA"),
+
+			// Inj
+			(Self::Inj, Web3Network::Ethereum) =>
+				Some("0xe28b3b32b6c345a34ff64674606124dd5aceca30"),
+			(Self::Inj, Web3Network::Bsc) => Some("0xa2b726b1145a4773f68593cf171187d8ebe4d495"),
+
 			_ => None,
 		}
 	}
@@ -181,8 +269,54 @@ pub trait TokenHoldingAmountRange {
 impl TokenHoldingAmountRange for Web3TokenType {
 	fn get_token_holding_amount_range(&self) -> Vec<f64> {
 		match self {
-			Self::Mcrt => vec![0.0, 2000.0, 10000.0, 50000.0, 150000.0, 500000.0],
-			_ => vec![0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0],
+			Self::Mcrt => MRCT_AMOUNT_RANGE.to_vec(),
+
+			// Eth
+			Self::Eth => ETH_AMOUNT_RNAGE.to_vec(),
+
+			// Usdc
+			Self::Usdc => USDC_AMOUNT_RANGE.to_vec(),
+
+			// Ada
+			Self::Ada => ADA_AMOUNT_RANGE.to_vec(),
+
+			// Doge
+			Self::Doge => DOGE_AMOUNT_RANGE.to_vec(),
+
+			// Shib
+			Self::Shib => SHIB_AMOUNT_RANGE.to_vec(),
+
+			// Uni
+			Self::Uni => UNI_AMOUNT_RANGE.to_vec(),
+
+			// Bch
+			Self::Bch => BCH_AMOUNT_RANGE.to_vec(),
+
+			// Etc
+			Self::Etc => ETC_AMOUNT_RANGE.to_vec(),
+
+			// Atom
+			Self::Atom => ATOM_AMOUNT_RANGE.to_vec(),
+
+			// Dai
+			Self::Dai => DAI_AMOUNT_RANGE.to_vec(),
+
+			// Leo
+			Self::Leo => LEO_AMOUNT_RANGE.to_vec(),
+
+			// Fil
+			Self::Fil => FIL_AMOUNT_RANGE.to_vec(),
+
+			// Imx
+			Self::Imx => IMX_AMOUNT_RANGE.to_vec(),
+
+			// Cro
+			Self::Cro => CRO_AMOUNT_RANGE.to_vec(),
+
+			// Inj
+			Self::Inj => INJ_AMOUNT_RANGE.to_vec(),
+
+			_ => [0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0].to_vec(),
 		}
 	}
 }

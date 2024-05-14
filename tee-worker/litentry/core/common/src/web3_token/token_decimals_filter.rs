@@ -26,20 +26,26 @@ pub const TOKEN_DECIMALS_2: (u32, [(Web3TokenType, Web3Network); 1]) = (
 	],
 );
 
-pub const TOKEN_DECIMALS_6: (u32, [(Web3TokenType, Web3Network); 4]) = (
+pub const TOKEN_DECIMALS_6: (u32, [(Web3TokenType, Web3Network); 9]) = (
 	6,
 	[
 		// Usdc
 		(Web3TokenType::Usdc, Web3Network::Ethereum),
+		(Web3TokenType::Usdc, Web3Network::Solana),
+		(Web3TokenType::Usdc, Web3Network::Arbitrum),
+		(Web3TokenType::Usdc, Web3Network::Polygon),
 		// Usdt
 		(Web3TokenType::Usdt, Web3Network::Ethereum),
 		// Trx
 		(Web3TokenType::Trx, Web3Network::Bsc),
 		(Web3TokenType::Trx, Web3Network::Ethereum),
+		// Atom
+		(Web3TokenType::Atom, Web3Network::Ethereum),
+		(Web3TokenType::Atom, Web3Network::Polygon),
 	],
 );
 
-pub const TOKEN_DECIMALS_8: (u32, [(Web3TokenType, Web3Network); 8]) = (
+pub const TOKEN_DECIMALS_8: (u32, [(Web3TokenType, Web3Network); 13]) = (
 	8,
 	[
 		// Wbtc
@@ -53,6 +59,15 @@ pub const TOKEN_DECIMALS_8: (u32, [(Web3TokenType, Web3Network); 8]) = (
 		(Web3TokenType::Btc, Web3Network::BitcoinP2sh),
 		(Web3TokenType::Btc, Web3Network::BitcoinP2wpkh),
 		(Web3TokenType::Btc, Web3Network::BitcoinP2wsh),
+		// Doge
+		(Web3TokenType::Doge, Web3Network::Bsc),
+		// Uni
+		(Web3TokenType::Uni, Web3Network::Solana),
+		// Dai
+		(Web3TokenType::Dai, Web3Network::Solana),
+		// Cro
+		(Web3TokenType::Cro, Web3Network::Ethereum),
+		(Web3TokenType::Cro, Web3Network::Solana),
 	],
 );
 
@@ -68,7 +83,7 @@ pub const TOKEN_DECIMALS_9: (u32, [(Web3TokenType, Web3Network); 4]) = (
 	],
 );
 
-pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 30]) = (
+pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 48]) = (
 	18,
 	[
 		// Bnb
@@ -121,6 +136,35 @@ pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 30]) = (
 		// Sol
 		(Web3TokenType::Sol, Web3Network::Bsc),
 		(Web3TokenType::Sol, Web3Network::Ethereum),
+		// Ada
+		(Web3TokenType::Ada, Web3Network::Bsc),
+		// Shib
+		(Web3TokenType::Shib, Web3Network::Ethereum),
+		// Uni
+		(Web3TokenType::Uni, Web3Network::Ethereum),
+		(Web3TokenType::Uni, Web3Network::Bsc),
+		(Web3TokenType::Uni, Web3Network::Arbitrum),
+		(Web3TokenType::Uni, Web3Network::Polygon),
+		// Bch
+		(Web3TokenType::Bch, Web3Network::Bsc),
+		// Etc
+		(Web3TokenType::Etc, Web3Network::Bsc),
+		// Atom
+		(Web3TokenType::Atom, Web3Network::Bsc),
+		// Dai
+		(Web3TokenType::Dai, Web3Network::Ethereum),
+		(Web3TokenType::Dai, Web3Network::Bsc),
+		(Web3TokenType::Dai, Web3Network::Polygon),
+		(Web3TokenType::Dai, Web3Network::Arbitrum),
+		// Leo
+		(Web3TokenType::Leo, Web3Network::Ethereum),
+		// Fil
+		(Web3TokenType::Fil, Web3Network::Bsc),
+		// Imx
+		(Web3TokenType::Imx, Web3Network::Ethereum),
+		// Inj
+		(Web3TokenType::Inj, Web3Network::Ethereum),
+		(Web3TokenType::Inj, Web3Network::Bsc),
 	],
 );
 
