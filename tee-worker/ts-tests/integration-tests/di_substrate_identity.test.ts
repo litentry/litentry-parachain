@@ -9,7 +9,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    buildTwitterValidation,
+    buildWeb2Validation,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -87,7 +87,8 @@ describe('Test Identity (direct invocation)', function () {
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -310,7 +311,8 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = aliceCurrentNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
