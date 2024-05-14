@@ -15,7 +15,7 @@
 
 */
 
-use std::marker::PhantomData;
+use crate::PhantomData;
 
 pub mod types {
 	pub use itp_types::{AccountData, AccountInfo, BlockNumber, Header as ParentchainHeader};

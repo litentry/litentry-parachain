@@ -22,9 +22,6 @@ use sp_core::{ed25519, Pair};
 use sp_runtime::traits::{BlakeTwo256, Hash};
 use std::vec;
 
-type Seed = [u8; 32];
-const TEST_SEED: Seed = *b"12345678901234567890123456789012";
-
 pub(crate) fn mr_enclave() -> [u8; 32] {
 	[1u8; 32]
 }

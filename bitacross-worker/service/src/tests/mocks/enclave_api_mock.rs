@@ -122,6 +122,10 @@ impl EnclaveBase for EnclaveMock {
 	fn publish_wallets(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn finish_enclave_init(&self) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {

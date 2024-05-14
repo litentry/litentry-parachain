@@ -21,7 +21,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::{generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential};
+use lc_credentials::{
+	generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential, IssuerRuntimeVersion,
+};
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, DataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
@@ -60,7 +62,12 @@ pub fn build(
 		}
 	}
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_generic_discord_role_assertion(rtype, has_role_value);
 			Ok(credential_unsigned)
@@ -137,6 +144,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -185,6 +194,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

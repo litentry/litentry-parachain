@@ -53,6 +53,8 @@ itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = 
 itp-test = { path = "../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["mocks"] }
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
+ita-parentchain-interface = { path = "../../../app-libs/parentchain-interface" }
+lc-evm-dynamic-assertions = { path = "../../../litentry/core/evm-dynamic-assertions" }
 
 [features]
 default = ["std"]
@@ -77,6 +79,8 @@ std = [
     # litentry
     "litentry-primitives/std",
     "itp-utils/std",
+    "parachain-core-primitives/std",
+    "sp-std/std",
     "lc-scheduled-enclave/std",
 ]
 sgx = [

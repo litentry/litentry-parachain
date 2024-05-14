@@ -21,7 +21,7 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
@@ -50,7 +50,7 @@ pub trait NodeMetadataTrait:
 	TeebagCallIndexes
 	+ IMPCallIndexes
 	+ VCMPCallIndexes
-	+ SystemSs58Prefix
+	+ SystemConstants
 	+ UtilityCallIndexes
 	+ ProxyCallIndexes
 	+ BalancesCallIndexes
@@ -62,7 +62,7 @@ impl<
 		T: TeebagCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
-			+ SystemSs58Prefix
+			+ SystemConstants
 			+ UtilityCallIndexes
 			+ ProxyCallIndexes
 			+ BalancesCallIndexes
@@ -98,6 +98,7 @@ impl NodeMetadata {
 			runtime_transaction_version,
 		}
 	}
+
 	/// Return the substrate chain runtime version.
 	pub fn get_runtime_version(&self) -> u32 {
 		self.runtime_spec_version

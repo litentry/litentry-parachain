@@ -68,12 +68,33 @@ export default {
             },
         },
         TwitterValidationData: {
+            _enum: {
+                PublicTweet: "PublicTweet",
+                OAuth2: "TwitterOAuth2",
+            },
+        },
+        PublicTweet: {
             tweet_id: "Vec<u8>",
         },
+        TwitterOAuth2: {
+            code: "Vec<u8>",
+            state: "Vec<u8>",
+            redirect_uri: "Vec<u8>",
+        },
         DiscordValidationData: {
+            _enum: {
+                PublicMessage: "PublicMessage",
+                OAuth2: "DiscordOAuth2",
+            },
+        },
+        PublicMessage: {
             channel_id: "Vec<u8>",
             message_id: "Vec<u8>",
             guild_id: "Vec<u8>",
+        },
+        DiscordOAuth2: {
+            code: "Vec<u8>",
+            redirect_uri: "Vec<u8>",
         },
         Web3ValidationData: {
             _enum: {

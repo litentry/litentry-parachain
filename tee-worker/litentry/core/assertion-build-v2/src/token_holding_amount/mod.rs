@@ -20,7 +20,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials_v2::{token_holding_amount::TokenHoldingAmountAssertionUpdate, Credential};
+use lc_credentials_v2::{
+	token_holding_amount::TokenHoldingAmountAssertionUpdate, Credential, IssuerRuntimeVersion,
+};
 use lc_service::web3_token::token_balance::get_token_balance;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Web3Network, Web3TokenType};
@@ -54,18 +56,25 @@ pub fn build(
 		});
 
 	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_token_holding_amount_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::TokenHoldingAmount(token_type),
-					e.into_error_detail(),
-				))
-			},
+		Ok(value) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_token_holding_amount_assertion(token_type, value);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::TokenHoldingAmount(token_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -77,7 +86,10 @@ mod tests {
 	use base58::FromBase58;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
-	use lc_common::web3_token::{TokenAddress, TokenName};
+	use lc_common::{
+		web3_network_to_chain,
+		web3_token::{TokenAddress, TokenName},
+	};
 	use lc_credentials_v2::assertion_logic::{AssertionLogic, Op};
 	use lc_mock_server::run;
 	use litentry_hex_utils::decode_hex;
@@ -96,6 +108,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -110,226 +124,32 @@ mod tests {
 		})
 	}
 
-	fn create_bsc_assertion_logic() -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![
-				Box::new(AssertionLogic::And {
-					items: vec![Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "bsc".into(),
-					})],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "ethereum".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Bnb
-								.get_token_address(Web3Network::Ethereum)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-			],
-		})
+	fn create_network_address_assertion_logic(
+		token_type: Web3TokenType,
+		network: Web3Network,
+	) -> AssertionLogic {
+		let mut assertion = AssertionLogic::new_and();
+		assertion = assertion.add_item(AssertionLogic::new_item(
+			"$network".into(),
+			Op::Equal,
+			web3_network_to_chain(&network),
+		));
+		if let Some(address) = token_type.get_token_address(network) {
+			assertion =
+				assertion.add_item(AssertionLogic::new_item("$address".into(), Op::Equal, address));
+		}
+		assertion
 	}
 
-	fn create_eth_assertion_logic() -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "bsc".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Eth
-								.get_token_address(Web3Network::Bsc)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "ethereum".into(),
-					})],
-				}),
-			],
-		})
-	}
-
-	fn create_evm_assertion_logic(token_type: Web3TokenType) -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "bsc".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: token_type.get_token_address(Web3Network::Bsc).unwrap().into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "ethereum".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: token_type
-								.get_token_address(Web3Network::Ethereum)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-			],
-		})
-	}
-
-	fn create_ethereum_assertion_logic(token_type: Web3TokenType) -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![Box::new(AssertionLogic::And {
-				items: vec![
-					Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "ethereum".into(),
-					}),
-					Box::new(AssertionLogic::Item {
-						src: "$address".into(),
-						op: Op::Equal,
-						dst: token_type.get_token_address(Web3Network::Ethereum).unwrap().into(),
-					}),
-				],
-			})],
-		})
-	}
-
-	fn create_lit_assertion_logic() -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "bsc".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Lit
-								.get_token_address(Web3Network::Bsc)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "ethereum".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Lit
-								.get_token_address(Web3Network::Ethereum)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "litentry".into(),
-					})],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "litmus".into(),
-					})],
-				}),
-			],
-		})
-	}
-
-	fn create_sol_assertion_logic() -> Box<AssertionLogic> {
-		Box::new(AssertionLogic::Or {
-			items: vec![
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "bsc".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Sol
-								.get_token_address(Web3Network::Bsc)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![
-						Box::new(AssertionLogic::Item {
-							src: "$network".into(),
-							op: Op::Equal,
-							dst: "ethereum".into(),
-						}),
-						Box::new(AssertionLogic::Item {
-							src: "$address".into(),
-							op: Op::Equal,
-							dst: Web3TokenType::Sol
-								.get_token_address(Web3Network::Ethereum)
-								.unwrap()
-								.into(),
-						}),
-					],
-				}),
-				Box::new(AssertionLogic::And {
-					items: vec![Box::new(AssertionLogic::Item {
-						src: "$network".into(),
-						op: Op::Equal,
-						dst: "solana".into(),
-					})],
-				}),
-			],
-		})
+	fn create_network_address_assertion_logics(token_type: Web3TokenType) -> Box<AssertionLogic> {
+		let assertion_logic = token_type.get_supported_networks().into_iter().fold(
+			AssertionLogic::new_or(),
+			|assertion, network| {
+				assertion
+					.add_item(create_network_address_assertion_logic(token_type.clone(), network))
+			},
+		);
+		Box::new(assertion_logic)
 	}
 
 	fn init() -> DataProviderConfig {
@@ -341,6 +161,9 @@ mod tests {
 		data_provider_config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e2".into());
 		data_provider_config
 			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
+			.unwrap();
+		data_provider_config
+			.set_blockchain_info_api_url(url.clone() + "/blockchain_info/")
 			.unwrap();
 		data_provider_config.set_achainable_url(url.clone()).unwrap();
 		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
@@ -371,7 +194,7 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Bnb),
-							create_bsc_assertion_logic(),
+							create_network_address_assertion_logics(Web3TokenType::Bnb),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
@@ -409,16 +232,16 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Eth),
-							create_eth_assertion_logic(),
+							create_network_address_assertion_logics(Web3TokenType::Eth),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "1".into()
+								dst: "0.6".into()
 							}),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "50".into()
+								dst: "1.2".into()
 							})
 						]
 					}
@@ -452,7 +275,7 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::SpaceId),
-							create_evm_assertion_logic(Web3TokenType::SpaceId),
+							create_network_address_assertion_logics(Web3TokenType::SpaceId),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
@@ -495,7 +318,7 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Amp),
-							create_ethereum_assertion_logic(Web3TokenType::Amp),
+							create_network_address_assertion_logics(Web3TokenType::Amp),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
@@ -538,7 +361,7 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Lit),
-							create_lit_assertion_logic(),
+							create_network_address_assertion_logics(Web3TokenType::Lit),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
@@ -563,14 +386,21 @@ mod tests {
 	#[test]
 	fn build_sol_holding_amount_works() {
 		let data_provider_config = init();
-		let address = "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+		let address1 = "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
 			.from_base58()
 			.unwrap()
 			.as_slice()
 			.try_into()
 			.unwrap();
-		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Solana(address), vec![Web3Network::Solana])];
+		let address2 = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities: Vec<IdentityNetworkTuple> = vec![
+			(Identity::Solana(address1), vec![Web3Network::Solana]),
+			(Identity::Evm(address2), vec![Web3Network::Ethereum]),
+		];
 
 		let req = crate_assertion_build_request(Web3TokenType::Sol, identities);
 
@@ -582,7 +412,7 @@ mod tests {
 					AssertionLogic::And {
 						items: vec![
 							create_token_assertion_logic(Web3TokenType::Sol),
-							create_sol_assertion_logic(),
+							create_network_address_assertion_logics(Web3TokenType::Sol),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
@@ -600,6 +430,243 @@ mod tests {
 			},
 			Err(e) => {
 				panic!("build sol TokenHoldingAmount failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_nfp_holding_amount_works() {
+		let data_provider_config = init();
+		let mut address =
+			decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes().to_vec())
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap();
+		let mut identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		let mut req = crate_assertion_build_request(Web3TokenType::Nfp, identities);
+		match build(&req, Web3TokenType::Nfp, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build nfp TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Nfp),
+							create_network_address_assertion_logics(Web3TokenType::Nfp),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "0".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "1".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+			},
+			Err(e) => {
+				panic!("build nfp TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e1c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		req = crate_assertion_build_request(Web3TokenType::Nfp, identities);
+		match build(&req, Web3TokenType::Nfp, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build nfp TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Nfp),
+							create_network_address_assertion_logics(Web3TokenType::Nfp),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "0".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "1".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build nfp TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		req = crate_assertion_build_request(Web3TokenType::Nfp, identities);
+		match build(&req, Web3TokenType::Nfp, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build nfp TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Nfp),
+							create_network_address_assertion_logics(Web3TokenType::Nfp),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "1".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "50".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build nfp TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		req = crate_assertion_build_request(Web3TokenType::Nfp, identities);
+		match build(&req, Web3TokenType::Nfp, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build nfp TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Nfp),
+							create_network_address_assertion_logics(Web3TokenType::Nfp),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "3000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build nfp TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+	}
+
+	#[test]
+	fn build_mcrt_holding_amount_works() {
+		let data_provider_config = init();
+		let address = "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+			.from_base58()
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Solana(address), vec![Web3Network::Solana])];
+
+		let req = crate_assertion_build_request(Web3TokenType::Mcrt, identities);
+
+		match build(&req, Web3TokenType::Mcrt, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build mcrt TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Mcrt),
+							create_network_address_assertion_logics(Web3TokenType::Mcrt),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "150000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "500000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build mcrt TokenHoldingAmount failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_btc_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		// bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0
+		let address = decode_hex(
+			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed"
+				.as_bytes()
+				.to_vec(),
+		)
+		.unwrap()
+		.as_slice()
+		.try_into()
+		.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Bitcoin(address), vec![Web3Network::BitcoinP2tr])];
+
+		let req = crate_assertion_build_request(Web3TokenType::Btc, identities);
+
+		match build(&req, Web3TokenType::Btc, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build btc TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Btc),
+							create_network_address_assertion_logics(Web3TokenType::Btc),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "1600".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "3000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build btc TokenHoldingAmount failed with error {:?}", e);
 			},
 		}
 	}

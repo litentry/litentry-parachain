@@ -9,6 +9,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
+    buildWeb2Validation,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -86,13 +87,14 @@ describe('Test Identity (direct invocation)', function () {
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        const twitterValidation = await buildValidations(
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
-            aliceSubstrateIdentity,
-            twitterIdentity,
-            twitterNonce,
-            'twitter'
-        );
+            signerIdentitity: aliceSubstrateIdentity,
+            linkIdentity: twitterIdentity,
+            verificationType: 'PublicTweet',
+            validationNonce: twitterNonce,
+        });
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
@@ -309,13 +311,14 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = aliceCurrentNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildValidations(
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
-            aliceSubstrateIdentity,
-            twitterIdentity,
-            twitterNonce,
-            'twitter'
-        );
+            signerIdentitity: aliceSubstrateIdentity,
+            linkIdentity: twitterIdentity,
+            verificationType: 'PublicTweet',
+            validationNonce: twitterNonce,
+        });
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;

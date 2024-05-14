@@ -24,7 +24,9 @@ use crate::{
 	achainable::{request_achainable, request_achainable_balance},
 	*,
 };
-use lc_credentials::litentry_profile::holding_amount::LitentryProfileHoldingAmount;
+use lc_credentials::{
+	litentry_profile::holding_amount::LitentryProfileHoldingAmount, IssuerRuntimeVersion,
+};
 use lc_data_providers::{
 	achainable_names::AchainableNameAmount, ConvertParameterString, DataProviderConfig,
 };
@@ -135,7 +137,12 @@ pub fn build_amount(
 		flag = request_achainable(addresses, achainable_param.clone(), data_provider_config)?;
 	}
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			if bname == AchainableNameAmount::BalanceUnderAmount {
 				credential_unsigned.update_eth_holding_amount(balance);

@@ -34,6 +34,7 @@ export default {
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
+                Dynamic: "([u8;20])",
             },
         },
         AssertionSupportedNetwork: {
@@ -183,11 +184,26 @@ export default {
                 "Trx",
                 "Nfp",
                 "Sol",
+                "Mcrt",
+                "Btc",
+                "Ada",
+                "Doge",
+                "Shib",
+                "Uni",
+                "Bch",
+                "Etc",
+                "Atom",
+                "Dai",
+                "Leo",
+                "Fil",
+                "Imx",
+                "Cro",
+                "Inj",
             ],
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: ["KaratDaoUser"],
+            _enum: ["KaratDaoUser", "MagicCraftStakingUser"],
         },
         // Web3NftType
         Web3NftType: {

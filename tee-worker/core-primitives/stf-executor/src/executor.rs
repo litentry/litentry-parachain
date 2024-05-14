@@ -123,6 +123,7 @@ where
 		}
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce());
+
 		let mut extrinsic_call_backs: Vec<ParentchainCall> = Vec::new();
 		return match Stf::execute_call(
 			state,
@@ -157,7 +158,7 @@ where
 					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
 				}
 				let force_connection_wait = result.force_connection_wait();
-				let rpc_response_value: Vec<u8> = result.get_encoded_result();
+				let rpc_response_value = result.get_encoded_result();
 				if let StatePostProcessing::Prune = post_processing {
 					state.prune_state_diff();
 				}

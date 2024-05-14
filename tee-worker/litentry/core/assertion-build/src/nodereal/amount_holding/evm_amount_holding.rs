@@ -27,7 +27,7 @@ use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
 		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
 	},
-	Credential,
+	Credential, IssuerRuntimeVersion,
 };
 use lc_data_providers::{
 	nodereal_jsonrpc::{
@@ -102,18 +102,25 @@ pub fn build(
 		});
 
 	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::EVMAmountHolding(token_type),
-					e.into_error_detail(),
-				))
-			},
+		Ok(value) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::EVMAmountHolding(token_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -193,6 +200,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -220,7 +229,7 @@ mod tests {
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);
@@ -248,6 +257,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -286,7 +297,7 @@ mod tests {
 	#[test]
 	fn build_evm_amount_holding_gte_max_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x90d53026a47ac20609accc3f2ddc9fb9b29bb310".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -303,6 +314,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -320,17 +333,12 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "0".into()
+								dst: "3000".into()
 							}),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::LessThan,
-								dst: "1".into()
-							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);

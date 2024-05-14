@@ -54,6 +54,7 @@ pub enum Opcode {
 	State,
 	LightClient,
 	ScheduledEnclave,
+	Assertions,
 }
 
 impl From<u8> for Opcode {
@@ -64,6 +65,7 @@ impl From<u8> for Opcode {
 			2 => Opcode::State,
 			3 => Opcode::LightClient,
 			4 => Opcode::ScheduledEnclave,
+			5 => Opcode::Assertions,
 			_ => unimplemented!("Unsupported/unknown Opcode for MU-RA exchange"),
 		}
 	}

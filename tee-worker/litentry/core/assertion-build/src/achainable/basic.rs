@@ -24,7 +24,10 @@ use crate::{
 	achainable::{request_achainable, request_uniswap_v2_or_v3_user},
 	*,
 };
-use lc_credentials::achainable::{bab_holder::UpdateBABHolder, uniswap_user::UpdateUniswapUser};
+use lc_credentials::{
+	achainable::{bab_holder::UpdateBABHolder, uniswap_user::UpdateUniswapUser},
+	IssuerRuntimeVersion,
+};
 use lc_data_providers::{achainable_names::AchainableNameBasic, DataProviderConfig};
 
 pub fn build_basic(
@@ -41,7 +44,13 @@ pub fn build_basic(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::Basic(param.clone());
-	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	let mut credential = Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(achainable_param.clone()),
 			e.into_error_detail(),
