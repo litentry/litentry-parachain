@@ -616,6 +616,7 @@ fn start_worker<E, T, InitializationHandler>(
 
 	// Publish generated custiodian wallets
 	enclave.publish_wallets();
+	enclave.finish_enclave_init();
 
 	ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(
 		&litentry_rpc_api,

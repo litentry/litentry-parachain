@@ -6,6 +6,7 @@ use crate::{
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_utils::stringify::account_id_to_string;
+use sp_core::H160;
 use substrate_api_client::ac_node_api::StaticEvent;
 
 // System pallet events
@@ -243,4 +244,28 @@ impl core::fmt::Display for OpaqueTaskPosted {
 impl StaticEvent for OpaqueTaskPosted {
 	const PALLET: &'static str = "Teebag";
 	const EVENT: &'static str = "OpaqueTaskPosted";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct AssertionCreated {
+	pub id: H160,
+	pub byte_code: Vec<u8>,
+	pub secrets: Vec<Vec<u8>>,
+}
+
+impl core::fmt::Display for AssertionCreated {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"{:?} :: byte_code: {:?}, secrets: {:?}",
+			AssertionCreated::EVENT,
+			self.byte_code,
+			self.secrets
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for AssertionCreated {
+	const PALLET: &'static str = "EvmAssertions";
+	const EVENT: &'static str = "AssertionCreated";
 }

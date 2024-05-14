@@ -73,6 +73,8 @@ pub struct AssertionBuildRequest {
 	pub top_hash: H256,
 	pub parachain_block_number: ParentchainBlockNumber,
 	pub sidechain_block_number: SidechainBlockNumber,
+	pub parachain_runtime_version: u32,
+	pub sidechain_runtime_version: u32,
 	pub maybe_key: Option<RequestAesKey>,
 	pub should_create_id_graph: bool,
 	pub req_ext_hash: H256,

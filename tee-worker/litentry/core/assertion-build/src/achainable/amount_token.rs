@@ -26,7 +26,7 @@ use crate::{
 };
 use lc_credentials::{
 	achainable::lit_holding_amount::AchainableLitHoldingAmountUpdate,
-	litentry_profile::token_balance::TokenBalanceInfo,
+	litentry_profile::token_balance::TokenBalanceInfo, IssuerRuntimeVersion,
 };
 use lc_data_providers::{
 	achainable_names::AchainableNameAmountToken, DataProviderConfig, ETokenAddress, TokenFromString,
@@ -60,7 +60,12 @@ pub fn build_amount_token(
 	let identities = transpose_identity(&req.identities);
 	let achainable_param = AchainableParams::AmountToken(param.clone());
 
-	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	let mut credential = Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(achainable_param.clone()),
 			e.into_error_detail(),

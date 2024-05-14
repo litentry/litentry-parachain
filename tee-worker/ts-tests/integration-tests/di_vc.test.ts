@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { initIntegrationTestContext } from './common/utils';
-import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
+import { buildWeb2Validation, initIntegrationTestContext } from './common/utils';
+import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
     createSignedTrustedCallLinkIdentity,
@@ -53,13 +53,14 @@ describe('Test Vc (direct invocation)', function () {
 
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildValidations(
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
-            aliceSubstrateIdentity,
-            twitterIdentity,
-            twitterNonce,
-            'twitter'
-        );
+            signerIdentitity: aliceSubstrateIdentity,
+            linkIdentity: twitterIdentity,
+            verificationType: 'PublicTweet',
+            validationNonce: twitterNonce,
+        });
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,

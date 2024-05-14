@@ -12,11 +12,11 @@ thiserror = { version = "1.0.26", optional = true }
 
 # sgx dependencies
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true, features = ["thread-pool"] }
-hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"], optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", features = ["net", "thread"], optional = true }
 
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+hex = { version = "0.4.3", default-features = false }
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -42,6 +42,8 @@ lc-assertion-build = { path = "../../assertion-build", default-features = false 
 lc-assertion-build-v2 = { path = "../../assertion-build-v2", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
+lc-dynamic-assertion = { path = "../../dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "../../evm-dynamic-assertions", default-features = false }
 lc-stf-task-receiver = { path = "../../stf-task/receiver", default-features = false }
 lc-stf-task-sender = { path = "../../stf-task/sender", default-features = false }
 lc-vc-task-sender = { path = "../sender", default-features = false }
@@ -53,7 +55,6 @@ pallet-identity-management-tee = { path = "../../../pallets/identity-management"
 default = ["std"]
 sgx = [
     "futures_sgx",
-    "hex-sgx",
     "sgx_tstd",
     "ita-stf/sgx",
     "itp-sgx-externalities/sgx",
@@ -72,10 +73,13 @@ sgx = [
     "itp-node-api/sgx",
     "itp-storage/sgx",
     "lc-vc-task-sender/sgx",
+    "lc-dynamic-assertion/sgx",
+    "lc-evm-dynamic-assertions/sgx",
 ]
 std = [
     "futures",
     "log/std",
+    "ita-stf/std",
     "itp-types/std",
     "itp-top-pool-author/std",
     "itp-stf-executor/std",
@@ -95,6 +99,8 @@ std = [
     "itp-node-api/std",
     "itp-storage/std",
     "lc-vc-task-sender/std",
+    "lc-dynamic-assertion/std",
+    "lc-evm-dynamic-assertions/std",
 ]
 development = [
     "ita-stf/development",

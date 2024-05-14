@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use core::result::Result;
 
 use lc_data_providers::{
-	karat_dao::{KaraDaoApi, KaratDaoClient},
+	karat_dao::{KaratDaoApi, KaratDaoClient},
 	DataProviderConfig,
 };
 

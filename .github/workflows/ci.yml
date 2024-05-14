@@ -260,6 +260,8 @@ jobs:
         working-directory: ./tee-worker
         run: |
           cargo test --release -p pallet-* --lib
+          cargo test --release -p lc-* --lib
+          cargo test --release -p litentry-primitives --lib
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
@@ -287,7 +289,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker develpment"
           cargo clippy --release --features offchain-worker,development -- -D warnings
-          echo "::endgroup::"                                        
+          echo "::endgroup::"
 
       - name: Clean up disk
         working-directory: ./tee-worker
@@ -323,7 +325,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker develpment"
           cargo clippy --release --features offchain-worker,development -- -D warnings
-          echo "::endgroup::"                                        
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -724,6 +726,8 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
+          - test_name: lit-twitter-identity-test
+          - test_name: lit-discord-identity-test
     steps:
       - uses: actions/checkout@v4
 

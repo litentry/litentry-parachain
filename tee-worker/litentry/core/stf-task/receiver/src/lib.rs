@@ -23,7 +23,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
-	pub use hex_sgx as hex;
 	pub use thiserror_sgx as thiserror;
 }
 
@@ -53,8 +52,11 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
+use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
+use sp_core::H160;
 use std::{
 	boxed::Box,
 	format,
@@ -89,6 +91,7 @@ pub struct StfTaskContext<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -99,6 +102,7 @@ pub struct StfTaskContext<
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 	pub data_provider_config: Arc<DataProviderConfig>,
+	pub assertion_repository: Arc<AR>,
 }
 
 impl<
@@ -107,7 +111,8 @@ impl<
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> StfTaskContext<ShieldingKeyRepository, A, S, H, O>
+		AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
+	> StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -120,6 +125,7 @@ where
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
 		data_provider_config: Arc<DataProviderConfig>,
+		assertion_repository: Arc<AR>,
 	) -> Self {
 		Self {
 			shielding_key,
@@ -128,6 +134,7 @@ where
 			state_handler,
 			ocall_api,
 			data_provider_config,
+			assertion_repository,
 		}
 	}
 
@@ -200,8 +207,8 @@ where
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<ShieldingKeyRepository, A, S, H, O>(
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+pub fn run_stf_task_receiver<ShieldingKeyRepository, A, S, H, O, AR>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 ) -> Result<(), Error>
 where
 	ShieldingKeyRepository: AccessKey + Sync + Send + 'static,
@@ -211,6 +218,7 @@ where
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem> + Send + Sync + 'static,
 {
 	let stf_task_receiver = init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;

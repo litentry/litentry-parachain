@@ -258,6 +258,14 @@ pub(crate) fn init_enclave(
 	Ok(())
 }
 
+pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
+
+	Ok(())
+}
+
 pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;

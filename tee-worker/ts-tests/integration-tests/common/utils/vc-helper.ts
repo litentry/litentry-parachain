@@ -191,6 +191,18 @@ export const mockAssertions = [
             TokenHoldingAmount: 'TRX',
         },
     },
+    {
+        description: 'The amount of BTC you are holding',
+        assertion: {
+            TokenHoldingAmount: 'BTC',
+        },
+    },
+    {
+        description: 'The amount of SHIB you are holding',
+        assertion: {
+            TokenHoldingAmount: 'SHIB',
+        },
+    },
 
     {
         description: 'The amount of LIT you are staking',
@@ -209,6 +221,13 @@ export const mockAssertions = [
         description: 'You are a user of a certain platform',
         assertion: {
             PlatformUser: 'KaratDaoUser',
+        },
+    },
+
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'MagicCraftStakingUser',
         },
     },
 ];
