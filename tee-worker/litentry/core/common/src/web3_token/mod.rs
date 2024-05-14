@@ -182,7 +182,7 @@ impl TokenAddress for Web3TokenType {
 				Some("FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"),
 
 			// Ada
-			(Self::Ada, Web3Network::Bsc) => Some("0xaf88d065e77c8cC2239327C5EDb3A432268e5831"),
+			(Self::Ada, Web3Network::Bsc) => Some("0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47"),
 
 			// Doge
 			(Self::Doge, Web3Network::Bsc) => Some("0xba2ae424d960c26247dd6c32edc70b295c744c43"),
