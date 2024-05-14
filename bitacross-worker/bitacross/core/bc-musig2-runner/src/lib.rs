@@ -105,21 +105,19 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 			{
 				let mut ceremonies_to_remove = vec![];
 
-
-
 				// do not hold lock for too long
 				let ceremonies_to_process: Vec<CeremonyId> =
 					ceremony_registry.lock().unwrap().keys().cloned().collect();
 
 				for ceremony_id_to_process in ceremonies_to_process {
 					// do not hold lock for too long as logic below includes I/O
-					let events = if let Some(ceremony) = ceremony_registry.lock()
-						.unwrap()
-						.get_mut(&ceremony_id_to_process) {
+					let events = if let Some(ceremony) =
+						ceremony_registry.lock().unwrap().get_mut(&ceremony_id_to_process)
+					{
 						ceremony.tick()
 					} else {
 						warn!("Could not find ceremony with id: {:?}", ceremony_id_to_process);
-						continue;
+						continue
 					};
 
 					trace!("Got ceremony {:?} events {:?}", ceremony_id_to_process, events);

@@ -28,9 +28,8 @@ use crate::{
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
@@ -61,7 +60,6 @@ use itc_direct_rpc_server::{
 
 use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId};
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
 	WebSocketServer,
@@ -89,10 +87,9 @@ use itp_stf_state_handler::{
 	state_snapshot_repository_loader::StateSnapshotRepositoryLoader, StateHandler,
 };
 use itp_top_pool::pool::Options as PoolOptions;
-use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
+use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
@@ -201,20 +198,13 @@ pub(crate) fn init_enclave(
 	let rpc_responder =
 		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
 
-	let (request_sink, broadcaster) = init(rpc_responder.clone());
-	let request_sink_cloned = request_sink.clone();
-
 	let top_pool_author = create_top_pool_author(
 		rpc_responder.clone(),
 		state_handler,
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
-		request_sink_cloned,
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
-
-	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
-	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 
@@ -415,7 +405,6 @@ pub fn create_top_pool_author(
 	state_handler: Arc<EnclaveStateHandler>,
 	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
-	requests_sink: Arc<std::sync::mpsc::SyncSender<BroadcastedRequest>>,
 ) -> Arc<EnclaveTopPoolAuthor> {
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
 	let top_pool =
@@ -424,10 +413,8 @@ pub fn create_top_pool_author(
 	Arc::new(EnclaveTopPoolAuthor::new(
 		top_pool,
 		AuthorTopFilter::<TrustedCallSigned, Getter>::new(),
-		BroadcastedTopFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repository,
 		ocall_api,
-		requests_sink,
 	))
 }

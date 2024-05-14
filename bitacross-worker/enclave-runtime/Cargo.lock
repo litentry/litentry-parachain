@@ -1040,7 +1040,6 @@ dependencies = [
  "itc-parentchain-block-importer",
  "itc-parentchain-light-client",
  "itc-parentchain-test",
- "itc-peer-top-broadcaster",
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-component-container",
@@ -2164,21 +2163,6 @@ version = "0.9.0"
 dependencies = [
  "itp-types",
  "sp-runtime",
-]
-
-[[package]]
-name = "itc-peer-top-broadcaster"
-version = "0.1.0"
-dependencies = [
- "itc-direct-rpc-client",
- "itc-direct-rpc-server",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-types",
- "itp-utils",
- "litentry-primitives",
- "log",
- "sgx_tstd",
 ]
 
 [[package]]
