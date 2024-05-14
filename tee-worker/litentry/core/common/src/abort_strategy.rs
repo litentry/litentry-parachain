@@ -56,8 +56,8 @@ where
 			Err(err) => match abort_strategy {
 				AbortStrategy::FailFast => return Err(err), // If FailFast is chosen, return the error immediately
 				AbortStrategy::ContinueUntil(ref predicate) => {
-					// If ContinueUntil is chosen, decide whether to return the error based on the predicate function
-					if predicate(item) {
+					// If ContinueUntil is chosen, decide whether to return the error based on the predicate function or return the error when processing the last item
+					if predicate(item) || index == items.len() - 1 {
 						return Err(err)
 					}
 				},
@@ -127,7 +127,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_continue_until() {
+	fn test_continue_until_match() {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
@@ -145,6 +145,27 @@ mod tests {
 
 		assert_ne!(loop_result.err(), None);
 		assert_eq!(result, "item3");
+	}
+
+	#[test]
+	fn test_continue_until_not_match() {
+		let test_array = vec!["item1", "item2", "item3", "item4"];
+		let mut result = "";
+
+		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+			test_array,
+			|item| {
+				result = *item;
+
+				Err(Error::DataProviderError(ErrorString::truncate_from(
+					"test error".as_bytes().to_vec(),
+				)))
+			},
+			AbortStrategy::ContinueUntil(|item: &&str| *item == "item5"),
+		);
+
+		assert_ne!(loop_result.err(), None);
+		assert_eq!(result, "item4");
 	}
 
 	#[test]
