@@ -446,7 +446,16 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		self.post(&req_body, fast_fail)
+		match self.post(&req_body, fast_fail) {
+			Ok(resp) => {
+				debug!("get_token_holdings, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_token_holdings, error: {:?}", e);
+				Err(e)
+			},
+		}
 	}
 }
 

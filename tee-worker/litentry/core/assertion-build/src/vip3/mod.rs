@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 pub mod card;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{
 	vip3::{VIP3Client, VIP3QuerySet},
 	DataProviderConfig,
@@ -59,13 +60,24 @@ impl VIP3SBTLogicInterface for VIP3SBTInfo {
 	) -> core::result::Result<bool, ErrorDetail> {
 		debug!("HAS specific card level");
 
-		for address in addresses.iter() {
-			let info = self.client.sbt_info(address).map_err(|e| e.into_error_detail())?;
-			if info.data.level == level.to_level() {
-				return Ok(true)
-			}
-		}
+		let mut result = false;
 
-		Ok(false)
+		loop_with_abort_strategy(
+			addresses,
+			|address| match self.client.sbt_info(address) {
+				Ok(info) =>
+					if info.data.level == level.to_level() {
+						result = true;
+						Ok(LoopControls::Break)
+					} else {
+						Ok(LoopControls::Continue)
+					},
+				Err(e) => Err(e.into_error_detail()),
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
+
+		Ok(result)
 	}
 }
