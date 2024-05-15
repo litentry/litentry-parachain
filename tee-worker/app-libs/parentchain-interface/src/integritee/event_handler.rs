@@ -19,10 +19,12 @@ use codec::{Decode, Encode};
 pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
+use itp_api_client_types::StaticEvent;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
-		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
+		ParentchainEventProcessingError,
 	},
 	RsaRequest, H256,
 };
@@ -378,10 +380,19 @@ where
 				.map_err(|_| ParentchainEventProcessingError::AssertionCreatedFailure)?;
 		}
 
+		if let Ok(events) = events.get_parentchain_block_proccessed_events() {
+			debug!("Handling ParentchainBlockProcessed events");
+			events.iter().for_each(|event| {
+				debug!("found ParentchainBlockProcessed event: {:?}", event);
+				// This is for monitoring purposes
+				handled_events.push(hash_of(ParentchainBlockProcessed::EVENT));
+			});
+		}
+
 		Ok(handled_events)
 	}
 }
 
-fn hash_of<T: Encode>(ev: &T) -> H256 {
+fn hash_of<T: Encode + ?Sized>(ev: &T) -> H256 {
 	blake2_256(&ev.encode()).into()
 }

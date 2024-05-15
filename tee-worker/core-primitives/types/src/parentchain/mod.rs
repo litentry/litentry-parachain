@@ -31,6 +31,8 @@ use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 
+use self::events::ParentchainBlockProcessed;
+
 pub type StorageProof = Vec<Vec<u8>>;
 
 // Basic Types.
@@ -114,6 +116,10 @@ pub trait FilterEvents {
 	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error>;
 
 	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error>;
+
+	fn get_parentchain_block_proccessed_events(
+		&self,
+	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -145,6 +151,7 @@ pub enum ParentchainEventProcessingError {
 	ScheduledEnclaveRemovedFailure,
 	OpaqueTaskPostedFailure,
 	AssertionCreatedFailure,
+	ParentchainBlockProcessedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -168,6 +175,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: OpaqueTaskPostedFailure",
 			ParentchainEventProcessingError::AssertionCreatedFailure =>
 				"Parentchain Event Processing Error: AssertionCreatedFailure",
+			ParentchainEventProcessingError::ParentchainBlockProcessedFailure =>
+				"Parentchain Event Processing Error: ParentchainBlockProcessedFailure",
 		};
 		write!(f, "{}", message)
 	}
