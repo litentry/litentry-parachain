@@ -23,7 +23,7 @@ jobs:
           echo "PARACHAIN_DOCKER_TAG-------: $PARACHAIN_DOCKER_TAG"
           echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
-          WORKER_DOCKER_TAG=$(echo ${{inputs.release-tag}} | cut -d'-' -f1 | sed 's/p/v/')
+          WORKER_DOCKER_TAG=$(echo ${{inputs.release-tag}}  | sed 's/.*w/v/;s/-.*//')
           echo "WORKER_DOCKER_TAG-------: $WORKER_DOCKER_TAG"
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 

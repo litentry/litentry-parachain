@@ -197,6 +197,7 @@ jobs:
       - name: Set env
         run: |
           WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*w/v/;s/-.*//')
+          echo "WORKER_DOCKER_TAG-------: $WORKER_DOCKER_TAG"
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build local builder
