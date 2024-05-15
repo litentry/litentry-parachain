@@ -129,6 +129,10 @@ jobs:
       - name: Set env
         run: |
           PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+
+          echo "PARACHAIN_DOCKER_TAG-------: $PARACHAIN_DOCKER_TAG"
+          echo "WORKER_DOCKER_TAG-------: $WORKER_DOCKER_TAG"
           echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build docker image
