@@ -27,6 +27,8 @@ use crate::{
 use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
+use itp_api_client_types::StaticEvent;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{
 	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
@@ -39,12 +41,17 @@ use itp_stf_primitives::{
 };
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::{HandleParentchainEvents, ParentchainId},
+	parentchain::{events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId},
 	OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
+use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{fmt::Debug, string::String, sync::Arc, vec::Vec};
+
+fn hash_of<T: Encode + ?Sized>(ev: &T) -> H256 {
+	blake2_256(&ev.encode()).into()
+}
 
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
@@ -161,6 +168,8 @@ impl<
 
 		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
 
+		update_parentchain_events_processed_metrics(metrics_api, &processed_events);
+
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
 		if self.parentchain_id == ParentchainId::Litentry {
@@ -194,6 +203,28 @@ impl<
 		//           however, we should not forget it in case we need it later
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
+}
+
+fn update_parentchain_events_processed_metrics<OCallApi>(
+	metrics_api: Arc<OCallApi>,
+	events: &[H256],
+) where
+	OCallApi: EnclaveMetricsOCallApi,
+{
+	events
+		.iter()
+		.filter_map(|ev| match *ev {
+			event if event == hash_of(ParentchainBlockProcessed::EVENT) =>
+				Some(ParentchainBlockProcessed::EVENT),
+			_ => None,
+		})
+		.for_each(|event| {
+			if let Err(e) = metrics_api
+				.update_metric(EnclaveMetric::ParentchainEventProcessed(String::from(event)))
+			{
+				warn!("Failed to update metric for {} event: {:?}", event, e);
+			}
+		});
 }
 
 impl<
