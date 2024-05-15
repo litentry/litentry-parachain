@@ -25,7 +25,7 @@ use core::result;
 use crate::*;
 use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
-		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
+		EVMAmountHoldingAssertionUpdate, EVMTokenAddress,
 	},
 	Credential, IssuerRuntimeVersion,
 };
@@ -46,7 +46,7 @@ fn get_holding_balance(
 	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
 	let mut total_balance = 0_u128;
 
-	let decimals = token_type.get_decimals();
+	let decimals = token_type.token_decimals();
 
 	for address in addresses.iter() {
 		let param = GetTokenBalance20Param {
