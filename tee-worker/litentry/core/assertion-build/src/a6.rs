@@ -73,9 +73,7 @@ pub fn build(
 	.map_err(|errors| {
 		Error::RequestVCFailed(
 			Assertion::A6,
-			ErrorDetail::StfError(ErrorString::truncate_from(
-				format!("{:?}", errors[0]).clone().into(),
-			)),
+			ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", errors[0]).into())),
 		)
 	})?;
 
