@@ -32,7 +32,7 @@ dependencies = [
  "derive_more",
  "either",
  "frame-metadata",
- "hex 0.4.3",
+ "hex",
  "log 0.4.20",
  "parity-scale-codec",
  "scale-bits",
@@ -455,7 +455,7 @@ dependencies = [
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex",
  "ita-stf",
  "itp-ocall-api",
  "itp-sgx-crypto",
@@ -536,7 +536,7 @@ dependencies = [
  "clap 4.1.0",
  "env_logger",
  "hdrhistogram",
- "hex 0.4.3",
+ "hex",
  "ita-parentchain-interface",
  "ita-stf",
  "itc-rpc-client",
@@ -583,7 +583,7 @@ dependencies = [
  "env_logger",
  "frame-support",
  "futures 0.3.28",
- "hex 0.4.3",
+ "hex",
  "humantime",
  "ipfs-api",
  "ita-parentchain-interface",
@@ -1454,7 +1454,7 @@ checksum = "7c24f403d068ad0b359e577a77f92392118be3f3c927538f2bb544a5ecd828c6"
 dependencies = [
  "curve25519-dalek 3.2.0",
  "hashbrown 0.12.3",
- "hex 0.4.3",
+ "hex",
  "rand_core 0.6.4",
  "sha2 0.9.9",
  "zeroize",
@@ -1817,7 +1817,7 @@ name = "fp-account"
 version = "1.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "impl-serde",
  "libsecp256k1",
  "log 0.4.20",
@@ -2438,14 +2438,6 @@ checksum = "443144c8cdadd93ebf52ddb4056d257f5b52c04d3c804e657d19eb73fc33668b"
 
 [[package]]
 name = "hex"
-version = "0.4.0"
-source = "git+https://github.com/mesalock-linux/rust-hex-sgx?tag=sgx_1.1.3#ee3266cd29b9f9c2eb69af9487f55c4f09c38f2b"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
@@ -2942,7 +2934,7 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
@@ -3251,7 +3243,7 @@ checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 name = "itp-api-client-extensions"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itp-api-client-types",
  "itp-types",
  "sp-consensus-grandpa",
@@ -3279,7 +3271,7 @@ dependencies = [
  "bit-vec",
  "chrono 0.4.11",
  "chrono 0.4.26",
- "hex 0.4.3",
+ "hex",
  "httparse 1.4.1",
  "itertools 0.10.5",
  "itp-ocall-api",
@@ -3322,7 +3314,7 @@ name = "itp-enclave-api"
 version = "0.9.0"
 dependencies = [
  "frame-support",
- "hex 0.4.3",
+ "hex",
  "itc-parentchain",
  "itp-enclave-api-ffi",
  "itp-settings",
@@ -3556,7 +3548,7 @@ dependencies = [
 name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itc-parentchain-test",
  "itp-node-api",
  "itp-ocall-api",
@@ -3665,7 +3657,7 @@ dependencies = [
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itp-node-api",
  "itp-node-api-metadata-provider",
  "itp-ocall-api",
@@ -3775,7 +3767,7 @@ dependencies = [
 name = "itp-utils"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "litentry-hex-utils",
  "parity-scale-codec",
 ]
@@ -4011,7 +4003,7 @@ dependencies = [
  "bc-relayer-registry",
  "bc-signer-registry",
  "core-primitives",
- "hex 0.4.3",
+ "hex",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "k256",
@@ -4154,7 +4146,7 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 name = "litentry-hex-utils"
 version = "0.9.12"
 dependencies = [
- "hex 0.4.3",
+ "hex",
 ]
 
 [[package]]
@@ -4168,7 +4160,7 @@ dependencies = [
  "base64 0.13.1",
  "bitcoin",
  "core-primitives",
- "hex 0.4.3",
+ "hex",
  "itp-sgx-crypto",
  "litentry-hex-utils",
  "log 0.4.20",
@@ -5048,7 +5040,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "impl-trait-for-tuples",
  "log 0.4.20",
@@ -5097,7 +5089,7 @@ dependencies = [
  "der 0.6.1",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "log 0.4.20",
  "pallet-balances",
@@ -5586,7 +5578,7 @@ checksum = "b1de8dacb0873f77e6aefc6d71e044761fcc68060290f5b1089fcdf84626bb69"
 dependencies = [
  "bitflags 1.3.2",
  "byteorder 1.4.3",
- "hex 0.4.3",
+ "hex",
  "lazy_static",
  "rustix 0.36.15",
 ]
@@ -7672,7 +7664,7 @@ dependencies = [
  "derive_more",
  "frame-metadata",
  "frame-support",
- "hex 0.4.3",
+ "hex",
  "log 0.4.20",
  "maybe-async",
  "parity-scale-codec",
@@ -8323,7 +8315,7 @@ checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
 dependencies = [
  "byteorder 1.4.3",
  "crunchy",
- "hex 0.4.3",
+ "hex",
  "static_assertions",
 ]
 
