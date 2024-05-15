@@ -30,6 +30,7 @@ use core::marker::PhantomData;
 use itp_node_api::metadata::{
 	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
 use itp_stf_primitives::{
@@ -43,7 +44,7 @@ use itp_types::{
 };
 use log::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
-use std::{fmt::Debug, sync::Arc, vec::Vec};
+use std::{fmt::Debug, string::String, sync::Arc, vec::Vec};
 
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
@@ -136,13 +137,15 @@ impl<
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
-	fn execute_indirect_calls_in_block<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock, OCallApi>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
+		metrics_api: Arc<OCallApi>,
 	) -> Result<Option<OpaqueCall>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+		OCallApi: EnclaveMetricsOCallApi,
 	{
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
