@@ -1,0 +1,52 @@
+name: Build bitacross-worker
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  build-worker:
+    runs-on: tee-prod-builder
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build local builder
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: bitacross-worker/build.Dockerfile
+          tags: local-builder:latest
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=offchain-worker
+            SGX_MODE=HW
+            ADDITIONAL_FEATURES_ARG=      
+            IMAGE_FOR_RELEASE=true
+
+      - name: Build worker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: bitacross-worker/build.Dockerfile
+          tags: litentry/bitacross-worker:latest
+          target: deployed-worker
+
+      - name: Dockerhub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push worker image
+        run: |
+          docker push litentry/bitacross-worker:latest
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.4
