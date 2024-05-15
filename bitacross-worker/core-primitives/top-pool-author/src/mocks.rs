@@ -45,7 +45,6 @@ use std::{
 	boxed::Box,
 	collections::HashMap,
 	marker::PhantomData,
-	string::String,
 	sync::{mpsc::Sender, Arc},
 	vec,
 	vec::Vec,
@@ -252,14 +251,6 @@ where
 			.send(request.payload().to_vec())
 			.unwrap();
 		Box::pin(ready(Ok([0u8; 32].into())))
-	}
-
-	fn watch_and_broadcast_top<R: DecryptableRequest + Encode>(
-		&self,
-		request: R,
-		_json_rpc_method: String,
-	) -> PoolFuture<H256, RpcError> {
-		self.watch_top(request)
 	}
 
 	fn update_connection_state(&self, _updates: Vec<(H256, (Vec<u8>, bool))>) {}

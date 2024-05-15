@@ -200,6 +200,7 @@ pub struct DataProviderConfig {
 	pub magic_craft_api_retry_delay: u64,
 	pub magic_craft_api_retry_times: u16,
 	pub magic_craft_api_url: String,
+	pub magic_craft_api_key: String,
 	pub moralis_api_url: String,
 	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
@@ -251,6 +252,7 @@ impl DataProviderConfig {
 			magic_craft_api_retry_delay: 5000,
 			magic_craft_api_retry_times: 2,
 			magic_craft_api_url: "https://lobby-api-prod.magiccraft.io/".to_string(),
+			magic_craft_api_key: "".to_string(),
 			moralis_api_key: "".to_string(),
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
@@ -391,6 +393,9 @@ impl DataProviderConfig {
 		}
 		if let Ok(v) = env::var("MORALIS_API_KEY") {
 			config.set_moralis_api_key(v);
+		}
+		if let Ok(v) = env::var("MAGIC_CRAFT_API_KEY") {
+			config.set_magic_craft_api_key(v);
 		}
 		Ok(config)
 	}
@@ -553,6 +558,10 @@ impl DataProviderConfig {
 		debug!("set_magic_craft_api_url: {:?}", v);
 		self.magic_craft_api_url = v;
 		Ok(())
+	}
+	pub fn set_magic_craft_api_key(&mut self, v: String) {
+		debug!("set_magic_craft_api_key: {:?}", v);
+		self.magic_craft_api_key = v;
 	}
 	pub fn set_moralis_api_key(&mut self, v: String) {
 		debug!("set_moralis_api_key: {:?}", v);

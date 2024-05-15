@@ -22,7 +22,10 @@ extern crate sgx_tstd as std;
 
 use core::result::Result;
 
-use lc_common::web3_token::{TokenAddress, TokenDecimals};
+use lc_common::{
+	abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls},
+	web3_token::{TokenAddress, TokenDecimals},
+};
 use lc_data_providers::nodereal_jsonrpc::{
 	EthBalance, FungibleApiList, GetTokenBalance20Param, Web3NetworkNoderealJsonrpcClient,
 };
@@ -37,40 +40,47 @@ pub fn get_balance(
 ) -> Result<f64, Error> {
 	let mut total_balance = 0_f64;
 
-	for address in addresses.iter() {
-		let network = address.0;
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			let network = address.0;
 
-		match network {
-			Web3Network::Bsc | Web3Network::Ethereum => {
-				let decimals = Web3TokenType::Bnb.get_decimals(network);
-				if let Some(mut client) =
-					network.create_nodereal_jsonrpc_client(data_provider_config)
-				{
-					let result = if network == Web3Network::Bsc {
-						client.get_balance(address.1.as_str(), false)
-					} else {
-						let param = GetTokenBalance20Param {
-							contract_address: Web3TokenType::Bnb
-								.get_token_address(network)
-								.unwrap_or_default()
-								.into(),
-							address: address.1.clone(),
-							block_number: "latest".into(),
-						};
-						client.get_token_balance_20(&param, false)
-					};
-
-					match result {
-						Ok(balance) => {
-							total_balance += calculate_balance_with_decimals(balance, decimals);
+			match network {
+				Web3Network::Bsc | Web3Network::Ethereum => {
+					let decimals = Web3TokenType::Bnb.get_decimals(network);
+					match network.create_nodereal_jsonrpc_client(data_provider_config) {
+						Some(mut client) => {
+							let result = if network == Web3Network::Bsc {
+								client.get_balance(address.1.as_str(), false)
+							} else {
+								let param = GetTokenBalance20Param {
+									contract_address: Web3TokenType::Bnb
+										.get_token_address(network)
+										.unwrap_or_default()
+										.into(),
+									address: address.1.clone(),
+									block_number: "latest".into(),
+								};
+								client.get_token_balance_20(&param, false)
+							};
+							match result {
+								Ok(balance) => {
+									total_balance +=
+										calculate_balance_with_decimals(balance, decimals);
+									Ok(LoopControls::Continue)
+								},
+								Err(err) => Err(err.into_error_detail()),
+							}
 						},
-						Err(err) => return Err(err.into_error_detail()),
+						None => Ok(LoopControls::Continue),
 					}
-				}
-			},
-			_ => {},
-		}
-	}
+				},
+				_ => Ok(LoopControls::Continue),
+			}
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(total_balance)
 }

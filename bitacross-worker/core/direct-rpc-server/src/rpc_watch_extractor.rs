@@ -67,6 +67,9 @@ where
 				Self::Hash::decode::<_>(&mut top_hash.as_ref())
 					.map(Some)
 					.map_err(DirectRpcError::EncodingError),
+			DirectRequestStatus::Processing(hash) => Self::Hash::decode::<_>(&mut hash.as_ref())
+				.map(Some)
+				.map_err(DirectRpcError::EncodingError),
 			_ => Ok(None),
 		}
 	}

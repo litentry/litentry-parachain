@@ -22,6 +22,33 @@ use lc_data_providers::nodereal_jsonrpc::{
 };
 use warp::{http::Response, hyper::body::Bytes, Filter};
 
+const RES_BODY_OK_GET_TOKEN_HOLDINGS: &str = r#"
+{
+	"id": "1",
+	"jsonrpc": "2.0",
+	"result": {
+		"totalCount": "0x34",
+		"nativeTokenBalance": "0x0",
+		"details": [
+			{
+				"tokenAddress": "0xfcb5DF42e06A39E233dc707bb3a80311eFD11576",
+				"tokenBalance": "0x0000000000000000000000000000000000000000f",
+				"tokenName": "www.METH.co.in",
+				"tokenSymbol": "METH"
+			}
+		]
+	}
+}
+"#;
+
+const RES_BODY_OK_GET_TRANSACTION_COUNT: &str = r#"
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": "0x1"
+}
+"#;
+
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::post()
 		.and(warp::path!("nodereal_jsonrpc" / "v1" / String))
@@ -127,6 +154,10 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
+				"nr_getTokenHoldings" =>
+					Response::builder().body(RES_BODY_OK_GET_TOKEN_HOLDINGS.to_string()),
+				"eth_getTransactionCount" =>
+					Response::builder().body(RES_BODY_OK_GET_TRANSACTION_COUNT.to_string()),
 				_ => Response::builder().status(404).body(String::from("Error query")),
 			}
 		})

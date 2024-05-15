@@ -106,16 +106,16 @@ pub(crate) fn query_user_by_name(
 	warp::get()
 		.and(warp::path!("2" / "users" / "by" / "username" / String))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |user_name, p: HashMap<String, String>| {
-			let expected_user_name = "twitterdev".to_string();
-
+		.map(move |user_name: String, p: HashMap<String, String>| {
 			let default = String::default();
 			let user_fields = p.get("user.fields").unwrap_or(&default);
 
-			if user_fields.as_str() != "public_metrics" || user_name != expected_user_name {
-				Response::builder().status(400).body(String::from("Error query"))
-			} else {
-				let twitter_user_data = TwitterUser {
+			if user_fields.as_str() != "public_metrics" {
+				return Response::builder().status(400).body(String::from("Error query"))
+			}
+
+			let user: Option<TwitterUser> = match user_name.as_str() {
+				"twitterdev" => Some(TwitterUser {
 					id: "2244994945".into(),
 					name: "TwitterDev".to_string(),
 					username: "TwitterDev".to_string(),
@@ -123,14 +123,21 @@ pub(crate) fn query_user_by_name(
 						followers_count: 100_u32,
 						following_count: 99_u32,
 					}),
-				};
-				let body = TwitterAPIV2Response {
-					data: Some(twitter_user_data),
-					meta: None,
-					includes: None,
-				};
-				Response::builder().body(serde_json::to_string(&body).unwrap())
-			}
+				}),
+				"mock_user" => Some(TwitterUser {
+					id: "mock_user_id".into(),
+					name: "MockUser".to_string(),
+					username: "MockUser".to_string(),
+					public_metrics: Some(TwitterUserPublicMetrics {
+						followers_count: 100_u32,
+						following_count: 99_u32,
+					}),
+				}),
+				_ => None,
+			};
+			let body: TwitterAPIV2Response<TwitterUser> =
+				TwitterAPIV2Response { data: user, meta: None, includes: None };
+			Response::builder().body(serde_json::to_string(&body).unwrap())
 		})
 }
 
