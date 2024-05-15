@@ -29,7 +29,9 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
-use bc_task_sender::{BitAcrossRequest, BitAcrossRequestSender};
+use bc_musig2_ceremony::{generate_aggregated_public_key, PublicKey};
+use bc_signer_registry::SignerRegistryLookup;
+use bc_task_sender::{BitAcrossProcessingResult, BitAcrossRequest, BitAcrossRequestSender};
 use codec::Encode;
 use core::result::Result;
 use futures_sgx::channel::oneshot;
@@ -74,7 +76,8 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi>(
+#[allow(clippy::too_many_arguments)]
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi, SR>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
@@ -82,6 +85,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	signing_key_repository: Arc<EnclaveSigningKeyRepository>,
 	bitcoin_key_repository: Arc<EnclaveBitcoinKeyRepository>,
 	ethereum_key_repository: Arc<EnclaveEthereumKeyRepository>,
+	signer_lookup: Arc<SR>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
@@ -90,6 +94,7 @@ where
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
 	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
+	SR: SignerRegistryLookup + Send + Sync + 'static,
 {
 	let mut io = IoHandler::new();
 
@@ -147,9 +152,30 @@ where
 		async move {
 			let json_value = match request_bit_across_inner(params).await {
 				Ok(value) => value.to_hex(),
-				Err(error) => compute_hex_encoded_return_error(&error),
+				Err(error) => RpcReturnValue {
+					value: error,
+					do_watch: false,
+					status: DirectRequestStatus::Error,
+				}
+				.to_hex(),
 			};
 			Ok(json!(json_value))
+		}
+	});
+
+	io.add_sync_method("bitacross_aggregatedPublicKey", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_aggregatedPublicKey");
+		if let Ok(keys) = signer_lookup
+			.get_all()
+			.iter()
+			.map(|(_, pub_key)| PublicKey::from_sec1_bytes(pub_key))
+			.collect()
+		{
+			let key_bytes = generate_aggregated_public_key(keys).to_sec1_bytes().to_vec();
+			let json_value = RpcReturnValue::new(key_bytes, false, DirectRequestStatus::Ok);
+			Ok(json!(json_value.to_hex()))
+		} else {
+			Ok(json!(compute_hex_encoded_return_error("Could not produce aggregate key")))
 		}
 	});
 
@@ -483,27 +509,51 @@ fn attesteer_forward_ias_attestation_report_inner(
 	Ok(ext)
 }
 
-async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, String> {
+pub enum BitacrossRequestError {
+	DirectCallError(Vec<u8>),
+	Other(Vec<u8>),
+}
+
+async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
 	let payload = get_request_payload(params)?;
 	let request = AesRequest::from_hex(&payload)
 		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
-	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
 	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {
-		Ok(Ok(response)) =>
-			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
+		Ok(Ok(response)) => match response {
+			BitAcrossProcessingResult::Ok(response_payload) => {
+				println!("BitAcrossProcessingResult::Ok");
+
+				Ok(RpcReturnValue {
+					do_watch: false,
+					value: response_payload,
+					status: DirectRequestStatus::Ok,
+				})
+			},
+			BitAcrossProcessingResult::Submitted(hash) => {
+				println!("BitAcrossProcessingResult::Submitted");
+				Ok(RpcReturnValue {
+					do_watch: true,
+					value: vec![],
+					status: DirectRequestStatus::Processing(hash.into()),
+				})
+			},
+		},
 		Ok(Err(e)) => {
-			log::error!("Received error in jsonresponse: {:?} ", e);
-			Err(compute_hex_encoded_return_error(&e))
+			println!("Got Ok(Err)");
+
+			Err(e)
 		},
 		Err(_) => {
+			println!("Got Err");
 			// This case will only happen if the sender has been dropped
-			Err(compute_hex_encoded_return_error("The sender has been dropped"))
+			Err(vec![])
 		},
 	}
 }

@@ -4,5 +4,6 @@ It connects to worker's trusted direct rpc endpoint exposed at `wss://localhost:
 Direct call is signed by ethereum keypair.
 
 ### Running
+Specify worker's trusted rpc port as first argument
 
-`go run example`
+`go run example --port 2000`

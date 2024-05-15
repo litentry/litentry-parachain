@@ -39,7 +39,7 @@ use crate::rpc_watch_extractor::RpcWatchExtractor;
 use codec::{Encode, Error as CodecError};
 use itc_tls_websocket_server::error::WebSocketError;
 use itp_rpc::RpcResponse;
-use itp_types::{TrustedOperationStatus, H256};
+use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
 use serde_json::error::Error as SerdeJsonError;
 use sp_runtime::traits;
 use std::{boxed::Box, fmt::Debug, vec::Vec};
@@ -124,6 +124,13 @@ pub trait SendRpcResponse: Send + Sync {
 	) -> DirectRpcResult<()>;
 
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()>;
+
+	fn send_state_with_status(
+		&self,
+		hash: Self::Hash,
+		state_encoded: Vec<u8>,
+		status: DirectRequestStatus,
+	) -> DirectRpcResult<()>;
 
 	fn update_force_wait(&self, hash: Self::Hash, force_wait: bool) -> DirectRpcResult<()>;
 

@@ -1,24 +1,50 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 use crate::PrehashedEthereumMessage;
 use bc_relayer_registry::RelayerRegistryLookup;
+use codec::Encode;
 use itp_sgx_crypto::{ecdsa::Pair, key_repository::AccessKey};
+use log::error;
 use parentchain_primitives::Identity;
-use std::{
-	format,
-	string::{String, ToString},
-};
+
+#[derive(Encode, Debug)]
+pub enum SignEthereumError {
+	InvalidSigner,
+	SigningError,
+}
 
 pub fn handle<RRL: RelayerRegistryLookup, EKR: AccessKey<KeyType = Pair>>(
 	signer: Identity,
 	msg: PrehashedEthereumMessage,
 	relayer_registry: &RRL,
 	key_repository: &EKR,
-) -> Result<[u8; 65], String> {
+) -> Result<[u8; 65], SignEthereumError> {
 	if relayer_registry.contains_key(signer) {
-		let key = key_repository.retrieve_key().map_err(|e| format!("{}", e))?;
-		let sig = key.sign_prehash_recoverable(&msg).map_err(|e| format!("{}", e))?;
+		let key = key_repository.retrieve_key().map_err(|e| {
+			error!("Could not retrieve ethereum signing key: {}", e);
+			SignEthereumError::SigningError
+		})?;
+		let sig = key.sign_prehash_recoverable(&msg).map_err(|e| {
+			error!("Could not sign: {}", e);
+			SignEthereumError::SigningError
+		})?;
 		Ok(sig)
 	} else {
-		Err("Unauthorized: Signer is not a valid relayer".to_string())
+		Err(SignEthereumError::InvalidSigner)
 	}
 }
 

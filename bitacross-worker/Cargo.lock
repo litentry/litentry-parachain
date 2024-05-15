@@ -346,7 +346,89 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
+name = "bc-enclave-registry"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.1",
+ "itp-settings",
+ "itp-sgx-io",
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-std",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
+name = "bc-musig2-ceremony"
+version = "0.1.0"
+dependencies = [
+ "bc-enclave-registry",
+ "itc-direct-rpc-client",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-types",
+ "k256",
+ "litentry-primitives",
+ "log 0.4.20",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=sgx)",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "sgx_rand",
+ "sgx_tstd",
+ "signature 2.1.0",
+]
+
+[[package]]
+name = "bc-musig2-runner"
+version = "0.1.0"
+dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
+ "itc-direct-rpc-client",
+ "itc-direct-rpc-server",
+ "itp-ocall-api",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-types",
+ "itp-utils",
+ "k256",
+ "lc-direct-call",
+ "litentry-primitives",
+ "log 0.4.20",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=sgx)",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "sgx_crypto_helper",
+ "sgx_rand",
+ "sgx_tstd",
+ "sp-core",
+]
+
+[[package]]
 name = "bc-relayer-registry"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.1",
+ "itp-settings",
+ "itp-sgx-io",
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-std",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
+name = "bc-signer-registry"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
@@ -366,7 +448,10 @@ dependencies = [
 name = "bc-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
@@ -377,6 +462,7 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
+ "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
@@ -445,6 +531,7 @@ version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
  "base58",
+ "bc-musig2-ceremony",
  "chrono 0.4.26",
  "clap 4.1.0",
  "env_logger",
@@ -1056,7 +1143,7 @@ checksum = "740fe28e594155f10cfc383984cbefd529d7396050557148f79cb0f621204124"
 dependencies = [
  "generic-array 0.14.7",
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -1077,17 +1164,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
 dependencies = [
  "generic-array 0.14.7",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "crypto-mac"
-version = "0.11.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
+checksum = "25fab6889090c8133f3deb8f73ba3c65a7f456f66436fc012a1b1e272b1e103e"
 dependencies = [
  "generic-array 0.14.7",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1108,7 +1195,7 @@ dependencies = [
  "byteorder 1.4.3",
  "digest 0.8.1",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -1121,7 +1208,7 @@ dependencies = [
  "byteorder 1.4.3",
  "digest 0.9.0",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -1256,7 +1343,7 @@ dependencies = [
  "block-buffer 0.10.4",
  "const-oid",
  "crypto-common",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1394,7 +1481,7 @@ dependencies = [
  "pkcs8",
  "rand_core 0.6.4",
  "sec1",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -1623,7 +1710,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2074,7 +2161,7 @@ name = "futures-task"
 version = "0.3.8"
 source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
 dependencies = [
- "once_cell 1.4.0",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx)",
  "sgx_tstd",
 ]
 
@@ -2205,7 +2292,7 @@ checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
 dependencies = [
  "ff",
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2400,7 +2487,7 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
- "crypto-mac 0.11.1",
+ "crypto-mac 0.11.0",
  "digest 0.9.0",
 ]
 
@@ -2795,7 +2882,9 @@ dependencies = [
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
+ "bc-enclave-registry",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "bs58",
  "env_logger",
  "ita-sgx-runtime",
@@ -3052,21 +3141,6 @@ version = "0.9.0"
 dependencies = [
  "itp-types",
  "sp-runtime",
-]
-
-[[package]]
-name = "itc-peer-top-broadcaster"
-version = "0.1.0"
-dependencies = [
- "itc-direct-rpc-client",
- "itc-direct-rpc-server",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-types",
- "itp-utils",
- "litentry-primitives",
- "log 0.4.20",
- "sgx_tstd",
 ]
 
 [[package]]
@@ -3890,7 +3964,7 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "once_cell 1.19.0",
- "sha2 0.10.7",
+ "sha2 0.10.8",
  "signature 2.1.0",
 ]
 
@@ -3932,13 +4006,17 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-direct-call"
 version = "0.1.0"
 dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "core-primitives",
  "hex 0.4.3",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "k256",
  "litentry-primitives",
+ "log 0.4.20",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "sgx_tstd",
@@ -4010,7 +4088,7 @@ checksum = "5be9b9bb642d8522a44d533eab56c16c738301965504753b03ad1de3425d5451"
 dependencies = [
  "crunchy",
  "digest 0.9.0",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4451,6 +4529,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "musig2"
+version = "0.0.8"
+source = "git+https://github.com/kziemianek/musig2.git?branch=master#cd5e61ac9ecdf842da58605ac7b07b6e359f08c5"
+dependencies = [
+ "base16ct",
+ "hmac 0.12.1",
+ "k256",
+ "once_cell 1.19.0",
+ "secp 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "secp256k1 0.28.0",
+ "sha2 0.10.8",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "musig2"
+version = "0.0.8"
+source = "git+https://github.com/kziemianek/musig2.git?branch=sgx#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
+dependencies = [
+ "base16ct",
+ "hmac 0.12.1",
+ "k256",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx?branch=master)",
+ "secp 0.2.3 (git+https://github.com/kziemianek/secp.git?branch=sgx)",
+ "secp256k1 0.28.0",
+ "sgx_tstd",
+ "sha2 0.10.8",
+ "subtle 2.5.0 (git+https://github.com/kziemianek/subtle-sgx.git?branch=2.5.0-update)",
+]
+
+[[package]]
 name = "nalgebra"
 version = "0.32.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4801,6 +4910,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5e609fc8b72da3dabd56427be9489d8a9f4bd2e4dc41660dd033c3c8e90b93c"
 dependencies = [
  "cipher",
+]
+
+[[package]]
+name = "once_cell"
+version = "1.4.0"
+source = "git+https://github.com/mesalock-linux/once_cell-sgx?branch=master#cefcaa03fed4d85276b3235d875f1b45d399cc3c"
+dependencies = [
+ "sgx_tstd",
 ]
 
 [[package]]
@@ -5184,7 +5301,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d95f5254224e617595d2cc3cc73ff0a5eaf2637519e25f03388154e9378b6ffa"
 dependencies = [
- "crypto-mac 0.11.1",
+ "crypto-mac 0.11.0",
 ]
 
 [[package]]
@@ -5202,7 +5319,7 @@ version = "0.8.2"
 source = "git+https://github.com/mesalock-linux/pem-rs-sgx#fdfef4f24a9fb3fa72e8a71bb28bd8ff15feff2f"
 dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx)",
- "once_cell 1.4.0",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx)",
  "regex 1.3.1",
  "sgx_tstd",
 ]
@@ -5273,7 +5390,7 @@ checksum = "2674c66ebb4b4d9036012091b537aae5878970d6999f81a265034d85b136b341"
 dependencies = [
  "once_cell 1.19.0",
  "pest",
- "sha2 0.10.7",
+ "sha2 0.10.8",
 ]
 
 [[package]]
@@ -5857,7 +5974,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac 0.12.1",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -6305,7 +6422,7 @@ dependencies = [
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.8.2",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -6351,8 +6468,34 @@ dependencies = [
  "der 0.7.8",
  "generic-array 0.14.7",
  "pkcs8",
- "subtle",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
+]
+
+[[package]]
+name = "secp"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1507279bb0404bb566f85523e48fcf37a158daa5380577ee0d93f3ef4df39ccc"
+dependencies = [
+ "base16ct",
+ "k256",
+ "once_cell 1.19.0",
+ "secp256k1 0.28.0",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "secp"
+version = "0.2.3"
+source = "git+https://github.com/kziemianek/secp.git?branch=sgx#0479a3b12fc204015cdb63c138078fefe7e32341"
+dependencies = [
+ "base16ct",
+ "k256",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx?branch=master)",
+ "secp256k1 0.28.0",
+ "sgx_tstd",
+ "subtle 2.5.0 (git+https://github.com/kziemianek/subtle-sgx.git?branch=2.5.0-update)",
 ]
 
 [[package]]
@@ -6760,9 +6903,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.10.7"
+version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479fb9d862239e610720565ca91403019f2f00410f1864c5aa7479b950a76ed8"
+checksum = "793db75ad2bcafc3ffa7c68b215fee268f537982cd901d132f89c6343f3a3dc8"
 dependencies = [
  "cfg-if 1.0.0",
  "cpufeatures",
@@ -7058,7 +7201,7 @@ dependencies = [
  "blake2b_simd",
  "byteorder 1.4.3",
  "digest 0.10.7",
- "sha2 0.10.7",
+ "sha2 0.10.8",
  "sha3",
  "sp-std",
  "twox-hash",
@@ -7573,9 +7716,17 @@ dependencies = [
 
 [[package]]
 name = "subtle"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+
+[[package]]
+name = "subtle"
+version = "2.5.0"
+source = "git+https://github.com/kziemianek/subtle-sgx.git?branch=2.5.0-update#57c424bdb6b98cbf9cfe19879748f20c3525c80e"
+dependencies = [
+ "sgx_tstd",
+]
 
 [[package]]
 name = "syn"
@@ -7749,7 +7900,7 @@ dependencies = [
  "pbkdf2 0.11.0",
  "rand 0.8.5",
  "rustc-hash",
- "sha2 0.10.7",
+ "sha2 0.10.8",
  "thiserror 1.0.44",
  "unicode-normalization 0.1.22",
  "wasm-bindgen",

@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -39,9 +40,9 @@ type request struct {
 }
 
 type rpcResult struct {
-	Value    string `json:"value"`
-	Do_watch bool   `json:"do_watch"`
-	Status   uint64 `json:"status"`
+	Value    string                 `json:"value"`
+	Do_watch bool                   `json:"do_watch"`
+	Status   map[string]interface{} `json:"status"`
 }
 
 type aesOutput struct {
@@ -56,9 +57,13 @@ type Rsa3072PubKey struct {
 }
 
 func main() {
+	portPtr := flag.String("port", "2000", "worker's port number")
+	flag.Parse()
+
+	fmt.Println("port:", *portPtr)
 
 	registerCustomTypes()
-	c := create_conn()
+	c := create_conn(*portPtr)
 
 	//** request shielding key
 	requestAuthorGetShieldingKey(*c)
@@ -67,6 +72,14 @@ func main() {
 	// ** decode response and parse shielding key
 	getShieldingKeyResult, _ := decodeRpcReturnValue(res.Result)
 	pubKey := parseShieldingKey(getShieldingKeyResult)
+
+	//** request aggregated public key
+	requestAggregatedPublicKey(*c)
+	res = read_response(*c)
+
+	aggregatedPubKeyResult, _ := decodeRpcReturnValue(res.Result)
+	fmt.Println("Aggregated public key:")
+	fmt.Println(utiles.HexToBytes(aggregatedPubKeyResult))
 
 	//** request mrenclave
 	requestStateGetMrenclave(*c)
@@ -137,17 +150,27 @@ func main() {
 	}
 
 	sendRequest(*c, serializedRequest)
-	signResp := read_response(*c)
 
 	// ** decode response and parse shielding key, status 0 means success
-	signResult, _ := decodeRpcReturnValue(signResp.Result)
+
+	signResp := read_response(*c)
+
+	signResult, signStatus := decodeRpcReturnValue(signResp.Result)
 	resultAesOutput := decodeAesOutput(signResult)
+	decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
 
-	signature := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
+	fmt.Println("Decrypted result")
+	fmt.Println(decryptedResult)
 
-	fmt.Println("Signature:")
-	fmt.Println(signature)
-
+	if _, ok := signStatus["Error"]; ok {
+		signBitcoinError := decodeSignEthereumError(decryptedResult)
+		fmt.Println("Got SignEthereumError")
+		fmt.Println(signBitcoinError)
+	} else {
+		signature := decryptedResult
+		fmt.Println("Got signature:")
+		fmt.Println(signature)
+	}
 }
 
 func prepareAesOutputObject(cipher []byte, aad []byte, nonce []byte) map[string]interface{} {
@@ -238,6 +261,60 @@ func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byt
 
 }
 
+func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"TaprootSpendable": map[string]interface{}{
+			"col1": string(bitcoinPayload),
+			"col2": utiles.BytesToHex(merkleRootHash[:]),
+		},
+	}
+
+	signBitcoinDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": signBitcoinDirectCall,
+	}
+
+}
+
+func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"TaprootUnspendable": string(bitcoinPayload),
+	}
+
+	signBitcoinDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": signBitcoinDirectCall,
+	}
+
+}
+
+func prepareSignBitcoinDerivedDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+	payload := map[string]interface{}{
+		"Derived": string(bitcoinPayload),
+	}
+
+	signBitcoinDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": signBitcoinDirectCall,
+	}
+
+}
+
 func parseShieldingKey(hexEncodedShieldingKey string) Rsa3072PubKey {
 	var pubKey Rsa3072PubKey
 	keyBytes := utiles.HexToBytes(hexEncodedShieldingKey)
@@ -252,6 +329,14 @@ func parseShieldingKey(hexEncodedShieldingKey string) Rsa3072PubKey {
 
 func requestAuthorGetShieldingKey(c websocket.Conn) {
 	err := c.WriteMessage(websocket.TextMessage, []byte("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"author_getShieldingKey\",\"params\":[]}"))
+	if err != nil {
+		fmt.Println("Error sending message")
+		fmt.Println(err)
+	}
+}
+
+func requestAggregatedPublicKey(c websocket.Conn) {
+	err := c.WriteMessage(websocket.TextMessage, []byte("{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"bitacross_aggregatedPublicKey\",\"params\":[]}"))
 	if err != nil {
 		fmt.Println("Error sending message")
 		fmt.Println(err)
@@ -274,7 +359,7 @@ func requestStateGetMrenclave(c websocket.Conn) {
 	}
 }
 
-func decodeRpcReturnValue(hexEncoded string) (string, uint64) {
+func decodeRpcReturnValue(hexEncoded string) (string, map[string]interface{}) {
 	bytes := scaleBytes.ScaleBytes{Data: utiles.HexToBytes(hexEncoded)}
 	m := types.ScaleDecoder{}
 	m.Init(bytes, nil)
@@ -302,6 +387,38 @@ func decodeAesOutput(hexEncoded string) aesOutput {
 	return output
 }
 
+func decodeSignBitcoinError(encoded []byte) map[string]interface{} {
+	bytes := scaleBytes.ScaleBytes{Data: encoded}
+	m := types.ScaleDecoder{}
+	m.Init(bytes, &types.ScaleDecoderOption{
+		SubType: "string,string",
+	})
+	var output map[string]interface{}
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("SignBitcoinError").(interface{}), &output)
+
+	if err != nil {
+		fmt.Println("Unmarshall error!")
+		fmt.Println(err)
+	}
+	return output
+}
+
+func decodeSignEthereumError(encoded []byte) map[string]interface{} {
+	bytes := scaleBytes.ScaleBytes{Data: encoded}
+	m := types.ScaleDecoder{}
+	m.Init(bytes, &types.ScaleDecoderOption{
+		SubType: "string,string",
+	})
+	var output map[string]interface{}
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("SignEthereumError").(interface{}), &output)
+
+	if err != nil {
+		fmt.Println("Unmarshall error!")
+		fmt.Println(err)
+	}
+	return output
+}
+
 func read_response(c websocket.Conn) response {
 	_, message, r_err := c.ReadMessage()
 	if r_err != nil {
@@ -316,13 +433,16 @@ func read_response(c websocket.Conn) response {
 	return res
 }
 
-func create_conn() *websocket.Conn {
+func create_conn(port string) *websocket.Conn {
 
 	dialer := *websocket.DefaultDialer
+	url := "wss://localhost:" + port
+	fmt.Println("Connecting to worker:")
+	fmt.Println(url)
 
 	// this is not secure, use with caution
 	dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	c, _, err := dialer.Dial("wss://bitacross-dev.litentry.io:2000", nil)
+	c, _, err := dialer.Dial(url, nil)
 	if err != nil {
 		fmt.Println("Could not connect to worker")
 		fmt.Println(err)

@@ -171,6 +171,8 @@ pub enum DirectRequestStatus {
     /// Direct request could not be executed
     #[codec(index = 2)]
     Error,
+    #[codec(index = 3)]
+    Processing
 }
 ```
 
