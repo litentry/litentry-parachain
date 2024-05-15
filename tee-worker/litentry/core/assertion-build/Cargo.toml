@@ -43,6 +43,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
+lc-common = { path = "../common", default-features = false }
 lc-credentials = { path = "../credentials", default-features = false }
 lc-data-providers = { path = "../data-providers", default-features = false }
 lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
@@ -67,6 +68,7 @@ sgx = [
     "thiserror_sgx",
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
+    "lc-common/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
     "lc-dynamic-assertion/sgx",
@@ -87,6 +89,7 @@ std = [
     "frame-support/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
+    "lc-common/std",
     "lc-credentials/std",
     "lc-data-providers/std",
     "lc-dynamic-assertion/std",

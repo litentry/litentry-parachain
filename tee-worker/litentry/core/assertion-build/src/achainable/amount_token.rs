@@ -82,7 +82,7 @@ pub fn build_amount_token(
 	match amount_token_name {
 		AchainableNameAmountToken::LITHoldingAmount => {
 			let lit_holding_amount =
-				query_lit_holding_amount(&achainable_param, &identities, data_provider_config)?;
+				query_lit_holding_amount(&achainable_param, identities, data_provider_config)?;
 			credential.update_lit_holding_amount(lit_holding_amount);
 		},
 		_ => {

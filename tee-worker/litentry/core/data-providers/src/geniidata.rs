@@ -29,6 +29,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use litentry_primitives::ErrorDetail;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -93,17 +94,28 @@ impl GeniidataClient {
 		addresses: Vec<String>,
 	) -> Result<Vec<ResponseItem>, DataProviderError> {
 		let mut all_items: Vec<ResponseItem> = Vec::new();
-		for address in addresses {
-			let query =
-				vec![("limit", GENIIDATA_QUERY_LIMIT), ("offset", "0"), ("address", &address)];
-			let response = self
-				.client
-				.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
-				.map_err(|e| {
-					DataProviderError::GeniiDataError(format!("GeniiData response error: {}", e))
-				})?;
-			all_items.extend(response.data.list);
-		}
+
+		loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
+			addresses,
+			|address| {
+				let query =
+					vec![("limit", GENIIDATA_QUERY_LIMIT), ("offset", "0"), ("address", address)];
+				let response = self
+					.client
+					.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
+					.map_err(|e| {
+						DataProviderError::GeniiDataError(format!(
+							"GeniiData response error: {}",
+							e
+						))
+					})?;
+				all_items.extend(response.data.list);
+
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(all_items)
 	}

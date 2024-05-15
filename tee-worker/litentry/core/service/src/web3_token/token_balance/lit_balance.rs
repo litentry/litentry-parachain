@@ -23,7 +23,10 @@ extern crate sgx_tstd as std;
 use core::result::Result;
 use std::vec;
 
-use lc_common::web3_token::{TokenAddress, TokenDecimals};
+use lc_common::{
+	abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls},
+	web3_token::{TokenAddress, TokenDecimals},
+};
 use lc_data_providers::{
 	achainable::{AchainableClient, HoldingAmount, Params, ParamsBasicTypeWithAmountToken},
 	achainable_names::{AchainableNameAmountToken, GetAchainableName},
@@ -40,30 +43,28 @@ pub fn get_balance(
 ) -> Result<f64, Error> {
 	let mut total_balance = 0_f64;
 
-	for address in addresses.iter() {
-		let network = address.0;
-		let account_address = address.1.clone();
-		match network {
+	loop_with_abort_strategy(
+		addresses,
+		|(network, address)| match network {
 			Web3Network::Bsc | Web3Network::Ethereum => {
-				let decimals = Web3TokenType::Lit.get_decimals(network);
+				let decimals = Web3TokenType::Lit.get_decimals(*network);
 				let param = GetTokenBalance20Param {
 					contract_address: Web3TokenType::Lit
-						.get_token_address(address.0)
+						.get_token_address(*network)
 						.unwrap_or_default()
 						.into(),
-					address: account_address,
+					address: address.clone(),
 					block_number: "latest".into(),
 				};
-
-				if let Some(mut client) =
-					network.create_nodereal_jsonrpc_client(data_provider_config)
-				{
-					match client.get_token_balance_20(&param, false) {
+				match network.create_nodereal_jsonrpc_client(data_provider_config) {
+					Some(mut client) => match client.get_token_balance_20(&param, false) {
 						Ok(balance) => {
 							total_balance += calculate_balance_with_decimals(balance, decimals);
+							Ok(LoopControls::Continue)
 						},
-						Err(err) => return Err(err.into_error_detail()),
-					}
+						Err(err) => Err(err.into_error_detail()),
+					},
+					None => Ok(LoopControls::Continue),
 				}
 			},
 			Web3Network::Litentry | Web3Network::Litmus => {
@@ -72,23 +73,26 @@ pub fn get_balance(
 				let param =
 					Params::ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken::new(
 						AchainableNameAmountToken::BalanceOverAmount.name().into(),
-						&network,
+						network,
 						"0".into(),
 						None,
 					));
-				match client.holding_amount(vec![account_address], param) {
+				match client.holding_amount(vec![address.clone()], param) {
 					Ok(balance) => match balance.parse::<f64>() {
 						Ok(balance_value) => {
 							total_balance += balance_value;
+							Ok(LoopControls::Continue)
 						},
-						Err(_) => return Err(Error::ParseError),
+						Err(_) => Err(Error::ParseError),
 					},
-					Err(err) => return Err(err.into_error_detail()),
+					Err(err) => Err(err.into_error_detail()),
 				}
 			},
-			_ => {},
-		}
-	}
+			_ => Ok(LoopControls::Continue),
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(total_balance)
 }
