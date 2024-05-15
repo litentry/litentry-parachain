@@ -19,11 +19,11 @@ jobs:
       - name: Set ENV
         run: |
           # extracting parachain version and worker version from release tag
-          PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          PARACHAIN_DOCKER_TAG=$(echo ${{inputs.release-tag}} | cut -d'-' -f1 | sed 's/p/v/')
           echo "PARACHAIN_DOCKER_TAG-------: $PARACHAIN_DOCKER_TAG"
           echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
-          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          WORKER_DOCKER_TAG=$(echo ${{inputs.release-tag}} | cut -d'-' -f1 | sed 's/p/v/')
           echo "WORKER_DOCKER_TAG-------: $WORKER_DOCKER_TAG"
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
