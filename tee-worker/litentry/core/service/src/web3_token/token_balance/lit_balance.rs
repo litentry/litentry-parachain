@@ -91,7 +91,8 @@ pub fn get_balance(
 			_ => Ok(LoopControls::Continue),
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(total_balance)
 }

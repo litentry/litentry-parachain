@@ -95,7 +95,8 @@ pub fn get_balance(
 			}
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(total_balance)
 }

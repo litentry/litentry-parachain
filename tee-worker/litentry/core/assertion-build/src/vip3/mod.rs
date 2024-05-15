@@ -75,7 +75,8 @@ impl VIP3SBTLogicInterface for VIP3SBTInfo {
 				Err(e) => Err(e.into_error_detail()),
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(result)
 	}

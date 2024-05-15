@@ -257,7 +257,8 @@ impl CryptoSummaryClient {
 				_ => Ok(LoopControls::Continue),
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok((total_txs, SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft)))
 	}
@@ -314,7 +315,8 @@ impl CryptoSummaryClient {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		// Update BNB
 		flag_bsc_token[11] = is_bnb_holder;
@@ -402,7 +404,8 @@ impl CryptoSummaryClient {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		// Update ETH
 		flag_eth_token[14] = is_eth_holder;

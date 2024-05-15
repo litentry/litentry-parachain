@@ -95,7 +95,7 @@ impl GeniidataClient {
 	) -> Result<Vec<ResponseItem>, DataProviderError> {
 		let mut all_items: Vec<ResponseItem> = Vec::new();
 
-		loop_with_abort_strategy(
+		loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 			addresses,
 			|address| {
 				let query =
@@ -114,7 +114,8 @@ impl GeniidataClient {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(all_items)
 	}

@@ -25,7 +25,9 @@ use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopCon
 use lc_credentials::{
 	generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential, IssuerRuntimeVersion,
 };
-use lc_data_providers::{discord_litentry::DiscordLitentryClient, DataProviderConfig};
+use lc_data_providers::{
+	discord_litentry::DiscordLitentryClient, DataProviderConfig, Error as DataProviderError,
+};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
 use std::string::ToString;
@@ -50,7 +52,7 @@ pub fn build(
 	let mut client =
 		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, Identity, DataProviderError>(
 		identities,
 		|identity| {
 			if let Identity::Discord(address) = &identity {
@@ -65,17 +67,20 @@ pub fn build(
 							Ok(LoopControls::Continue)
 						}
 					},
-					Err(err) => Err(Error::RequestVCFailed(
-						Assertion::GenericDiscordRole(rtype.clone()),
-						err.into_error_detail(),
-					)),
+					Err(err) => Err(err),
 				}
 			} else {
 				Ok(LoopControls::Continue)
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::GenericDiscordRole(rtype.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	let runtime_version = IssuerRuntimeVersion {
 		parachain: req.parachain_runtime_version,

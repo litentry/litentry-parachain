@@ -25,7 +25,7 @@ use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopCon
 use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	achainable::{AchainableAccountTotalTransactions, AchainableClient},
-	DataProviderConfig,
+	DataProviderConfig, Error as DataProviderError,
 };
 use litentry_primitives::BoundedWeb3Network;
 
@@ -47,7 +47,7 @@ pub fn build(
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, (Web3Network, Vec<String>), DataProviderError>(
 		identities,
 		|identity| {
 			let network = identity.0;
@@ -55,20 +55,19 @@ pub fn build(
 
 			networks_set.insert(network);
 
-			let txs = client.total_transactions(&network, addresses).map_err(|e| {
-				error!("Assertion A8 query total_transactions error: {:?}", e);
-				Error::RequestVCFailed(
-					Assertion::A8(bounded_web3networks.clone()),
-					e.into_error_detail(),
-				)
-			})?;
+			let txs = client.total_transactions(&network, addresses)?;
 
 			total_txs += txs;
 
 			Ok(LoopControls::Continue)
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		let e = errors[0].clone();
+		error!("Assertion A8 query total_transactions error: {:?}", e);
+		Error::RequestVCFailed(Assertion::A8(bounded_web3networks.clone()), e.into_error_detail())
+	})?;
 
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 

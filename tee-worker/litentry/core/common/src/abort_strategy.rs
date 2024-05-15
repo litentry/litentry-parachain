@@ -43,30 +43,34 @@ pub fn loop_with_abort_strategy<F, T, E>(
 	mut action: impl FnMut(&T) -> Result<LoopControls, E>,
 	// Control when to abort the loop
 	abort_strategy: AbortStrategy<F>,
-) -> Result<(), E>
+) -> Result<(), Vec<E>>
 where
 	F: Fn(&T) -> bool, // Type of the predicate function, takes a parameter of type T and returns a boolean
 {
+	let mut errors: Vec<E> = Vec::new();
 	for (index, item) in items.iter().enumerate() {
 		match action(item) {
 			Ok(control) => match control {
 				LoopControls::Break => break,
 				LoopControls::Continue => continue,
 			},
-			Err(err) => match abort_strategy {
-				AbortStrategy::FailFast => return Err(err), // If FailFast is chosen, return the error immediately
-				AbortStrategy::ContinueUntil(ref predicate) => {
-					// If ContinueUntil is chosen, decide whether to return the error based on the predicate function or return the error when processing the last item
-					if predicate(item) || index == items.len() - 1 {
-						return Err(err)
-					}
-				},
-				AbortStrategy::ContinueUntilEnd => {
-					// If ContinueUntilEnd is chosen, return the error when processing the last item
-					if index == items.len() - 1 {
-						return Err(err)
-					}
-				},
+			Err(err) => {
+				errors.push(err);
+				match abort_strategy {
+					AbortStrategy::FailFast => return Err(errors), // If FailFast is chosen, return the error immediately
+					AbortStrategy::ContinueUntil(ref predicate) => {
+						// If ContinueUntil is chosen, decide whether to return the error based on the predicate function or return the error when processing the last item
+						if predicate(item) || index == items.len() - 1 {
+							return Err(errors)
+						}
+					},
+					AbortStrategy::ContinueUntilEnd => {
+						// If ContinueUntilEnd is chosen, return the error when processing the last item
+						if index == items.len() - 1 {
+							return Err(errors)
+						}
+					},
+				}
 			},
 		}
 	}
@@ -85,7 +89,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -107,7 +111,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -122,7 +126,9 @@ mod tests {
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
 		);
 
-		assert_ne!(loop_result.err(), None);
+		let err = loop_result.err();
+		assert_ne!(err, None);
+		assert_eq!(err.unwrap().len(), 1);
 		assert_eq!(result, "item2");
 	}
 
@@ -131,7 +137,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -143,7 +149,9 @@ mod tests {
 			AbortStrategy::ContinueUntil(|item: &&str| *item == "item3"),
 		);
 
-		assert_ne!(loop_result.err(), None);
+		let err = loop_result.err();
+		assert_ne!(err, None);
+		assert_eq!(err.unwrap().len(), 3);
 		assert_eq!(result, "item3");
 	}
 
@@ -152,7 +160,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -164,7 +172,9 @@ mod tests {
 			AbortStrategy::ContinueUntil(|item: &&str| *item == "item5"),
 		);
 
-		assert_ne!(loop_result.err(), None);
+		let err = loop_result.err();
+		assert_ne!(err, None);
+		assert_eq!(err.unwrap().len(), 4);
 		assert_eq!(result, "item4");
 	}
 
@@ -173,7 +183,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -197,7 +207,7 @@ mod tests {
 		let test_array = vec!["item1", "item2", "item3", "item4"];
 		let mut result = "";
 
-		let loop_result: Result<(), Error> = loop_with_abort_strategy(
+		let loop_result: Result<(), Vec<Error>> = loop_with_abort_strategy(
 			test_array,
 			|item| {
 				result = *item;
@@ -209,7 +219,9 @@ mod tests {
 			AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
 		);
 
-		assert_ne!(loop_result.err(), None);
+		let err = loop_result.err();
+		assert_ne!(err, None);
+		assert_eq!(err.unwrap().len(), 4);
 		assert_eq!(result, "item4");
 	}
 }

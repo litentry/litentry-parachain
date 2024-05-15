@@ -126,7 +126,7 @@ impl DelegatorState {
 	) -> Result<u128> {
 		let mut total_staking_amount = 0_u128;
 
-		loop_with_abort_strategy(
+		loop_with_abort_strategy::<fn(&_) -> bool, Identity, Error>(
 			identities,
 			|identity| {
 				let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
@@ -141,7 +141,8 @@ impl DelegatorState {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(total_staking_amount / LIT_TOKEN_DECIMALS)
 	}

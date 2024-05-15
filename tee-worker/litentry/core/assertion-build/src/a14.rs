@@ -28,7 +28,7 @@ use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopCon
 use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableLabelQuery, LabelQueryReq, LabelQueryReqParams},
-	DataProviderConfig,
+	DataProviderConfig, Error as DataProviderError,
 };
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
@@ -53,7 +53,7 @@ pub fn build(
 	let mut value = false;
 	let mut client = AchainableClient::new(data_provider_config);
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 		polkadot_addresses,
 		|address| {
 			let data = LabelQueryReq {
@@ -61,9 +61,7 @@ pub fn build(
 				include_metadata: false,
 				include_widgets: false,
 			};
-			let result = client
-				.query_label("a719e99c-1f9b-432e-8f1d-cb3de0f14dde", &data)
-				.map_err(|e| Error::RequestVCFailed(Assertion::A14, e.into_error_detail()))?;
+			let result = client.query_label("a719e99c-1f9b-432e-8f1d-cb3de0f14dde", &data)?;
 			if result {
 				value = result;
 				Ok(LoopControls::Break)
@@ -72,7 +70,10 @@ pub fn build(
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(Assertion::A14, errors[0].clone().into_error_detail())
+	})?;
 
 	let runtime_version = IssuerRuntimeVersion {
 		parachain: req.parachain_runtime_version,

@@ -788,7 +788,7 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 	) -> Result<u64, Error> {
 		let mut txs = 0_u64;
 
-		loop_with_abort_strategy(
+		loop_with_abort_strategy::<fn(&_) -> bool, String, Error>(
 			addresses,
 			|address| {
 				let name = "Account total transactions under {amount}".to_string();
@@ -803,7 +803,8 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(txs)
 	}
@@ -869,7 +870,7 @@ impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
 
-		loop_with_abort_strategy(
+		loop_with_abort_strategy::<fn(&_) -> bool, String, Error>(
 			addresses,
 			|address| {
 				let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
@@ -880,7 +881,8 @@ impl HoldingAmount for AchainableClient {
 				Ok(LoopControls::Continue)
 			},
 			AbortStrategy::FailFast::<fn(&_) -> bool>,
-		)?;
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(total_balance.to_string())
 	}

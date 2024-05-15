@@ -33,7 +33,7 @@ use lc_data_providers::{
 		AchainableClient, AchainableTagDeFi, HoldingAmount, Params, ParamsBasicTypeWithAmountToken,
 	},
 	achainable_names::{AchainableNameAmountToken, GetAchainableName},
-	DataProviderConfig, LIT_TOKEN_ADDRESS,
+	DataProviderConfig, Error as DataProviderError, LIT_TOKEN_ADDRESS,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
@@ -90,14 +90,10 @@ pub fn request_achainable(
 
 	let mut result = false;
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 		addresses,
 		|address| {
-			let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
-				error!("Request achainable failed {:?}", e);
-
-				Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-			})?;
+			let ret = client.query_system_label(address, request_param.clone())?;
 
 			if ret {
 				result = true;
@@ -107,7 +103,13 @@ pub fn request_achainable(
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(param.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	Ok(false)
 }
@@ -124,25 +126,15 @@ pub fn request_uniswap_v2_or_v3_user(
 	let mut v2_user = false;
 	let mut v3_user = false;
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 		addresses,
 		|address| {
 			if !v2_user {
-				v2_user |= client.uniswap_v2_user(address).map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::Achainable(param.clone()),
-						e.into_error_detail(),
-					)
-				})?;
+				v2_user |= client.uniswap_v2_user(address)?;
 			}
 
 			if !v3_user {
-				v3_user |= client.uniswap_v3_user(address).map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::Achainable(param.clone()),
-						e.into_error_detail(),
-					)
-				})?;
+				v3_user |= client.uniswap_v3_user(address)?;
 			}
 
 			if v2_user && v3_user {
@@ -152,7 +144,13 @@ pub fn request_uniswap_v2_or_v3_user(
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(param.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	Ok((v2_user, v3_user))
 }
@@ -168,12 +166,10 @@ pub fn request_achainable_classofyear(
 
 	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 		addresses,
 		|address| {
-			let year = client.query_class_of_year(address, request_param.clone()).map_err(|e| {
-				Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-			})?;
+			let year = client.query_class_of_year(address, request_param.clone())?;
 
 			// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
 			if year.parse::<u32>().is_err() {
@@ -187,7 +183,13 @@ pub fn request_achainable_classofyear(
 			Ok(LoopControls::Continue)
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(param.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
 }
@@ -214,7 +216,7 @@ pub fn query_lit_holding_amount(
 	let mut total_lit_balance = 0_f64;
 	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, (Web3Network, Vec<String>), ErrorDetail>(
 		identities,
 		|(network, addresses)| {
 			let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
@@ -247,26 +249,19 @@ pub fn query_lit_holding_amount(
 			let params = Params::ParamsBasicTypeWithAmountToken(q_param);
 			let balance = client
 				.holding_amount(addresses.clone(), params)
-				.map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::Achainable(aparam.clone()),
-						e.into_error_detail(),
-					)
-				})?
+				.map_err(|e| e.into_error_detail())?
 				.parse::<f64>()
-				.map_err(|_| {
-					Error::RequestVCFailed(
-						Assertion::Achainable(aparam.clone()),
-						ErrorDetail::ParseError,
-					)
-				})?;
+				.map_err(|_| ErrorDetail::ParseError)?;
 
 			total_lit_balance += balance;
 
 			Ok(LoopControls::Continue)
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), errors[0].clone())
+	})?;
 
 	Ok(total_lit_balance as usize)
 }

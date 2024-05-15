@@ -76,7 +76,7 @@ pub fn build(
 
 	let mut errors: Vec<DataProviderError> = Vec::new();
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 		addresses,
 		|address| match check_has_nft(&mut client, address.as_str()) {
 			Ok(res) =>
@@ -92,22 +92,13 @@ pub fn build(
 			},
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
-
-	if !has_nft && !errors.is_empty() {
-		return Err(Error::RequestVCFailed(
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
 			Assertion::WeirdoGhostGangHolder,
-			ErrorDetail::DataProviderError(ErrorString::truncate_from(
-				errors
-					.into_iter()
-					.map(|e| format!("{e:?}"))
-					.collect::<Vec<String>>()
-					.join(", ")
-					.as_bytes()
-					.to_vec(),
-			)),
-		))
-	}
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	let runtime_version = IssuerRuntimeVersion {
 		parachain: req.parachain_runtime_version,

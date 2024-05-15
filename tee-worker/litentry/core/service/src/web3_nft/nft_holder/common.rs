@@ -79,7 +79,8 @@ pub fn has_nft_721(
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(result)
 }
@@ -139,7 +140,8 @@ pub fn has_nft_1155(
 			}
 		},
 		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(result)
 }

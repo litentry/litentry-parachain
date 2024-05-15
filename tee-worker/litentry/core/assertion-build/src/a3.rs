@@ -25,6 +25,7 @@ use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopCon
 use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
+	Error as DataProviderError,
 };
 
 const VC_A3_SUBJECT_DESCRIPTION: &str =
@@ -69,23 +70,16 @@ pub fn build(
 		.map(|(identity, _)| identity.clone())
 		.collect::<Vec<Identity>>();
 
-	loop_with_abort_strategy(
+	loop_with_abort_strategy::<fn(&_) -> bool, Identity, DataProviderError>(
 		identities,
 		|identity| {
 			if let Identity::Discord(address) = identity {
-				let resp = client
-					.check_id_hubber(
-						guild_id.to_vec(),
-						channel_id.to_vec(),
-						role_id.to_vec(),
-						address.inner_ref().to_vec(),
-					)
-					.map_err(|e| {
-						Error::RequestVCFailed(
-							Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
-							e.into_error_detail(),
-						)
-					})?;
+				let resp = client.check_id_hubber(
+					guild_id.to_vec(),
+					channel_id.to_vec(),
+					role_id.to_vec(),
+					address.inner_ref().to_vec(),
+				)?;
 
 				if resp.data {
 					has_commented = true;
@@ -95,7 +89,13 @@ pub fn build(
 			Ok(LoopControls::Continue)
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
 	let runtime_version = IssuerRuntimeVersion {
 		parachain: req.parachain_runtime_version,
