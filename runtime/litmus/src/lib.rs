@@ -37,8 +37,10 @@ use frame_system::EnsureRoot;
 use hex_literal::hex;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 
+use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
+pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -149,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9176,
+	spec_version: 9180,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -785,6 +787,23 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+}
+
+impl pallet_teebag::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MomentsPerDay = MomentsPerDay;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type MaxEnclaveIdentifier = ConstU32<3>;
+}
+
+impl pallet_bitacross::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+}
+
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -854,6 +873,8 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		AssetManager: pallet_asset_manager = 65,
+		Teebag: pallet_teebag = 66,
+		Bitacross: pallet_bitacross = 67,
 	}
 }
 
@@ -917,7 +938,11 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Session
 			RuntimeCall::Session(_) |
 			// Balance
-			RuntimeCall::Balances(_)
+			RuntimeCall::Balances(_) |
+			// TEE enclave management
+			RuntimeCall::Teebag(_) |
+			// Bitacross
+			RuntimeCall::Bitacross(_)
 		)
 	}
 }
