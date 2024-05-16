@@ -99,7 +99,6 @@ itc-parentchain-block-import-dispatcher = { path = "../core/parentchain/block-im
 itc-parentchain-block-importer = { path = "../core/parentchain/block-importer", default-features = false, features = ["sgx"] }
 itc-parentchain-light-client = { path = "../core/parentchain/light-client", default-features = false }
 itc-parentchain-test = { path = "../core/parentchain/test", default-features = false }
-itc-peer-top-broadcaster = { path = "../core/peer-top-broadcaster", default-features = false, features = ["sgx"] }
 itc-tls-websocket-server = { path = "../core/tls-websocket-server", default-features = false, features = ["sgx"] }
 itp-attestation-handler = { path = "../core-primitives/attestation-handler", default-features = false, features = ["sgx"] }
 itp-component-container = { path = "../core-primitives/component-container", default-features = false, features = ["sgx"] }
@@ -128,7 +127,11 @@ itp-types = { path = "../core-primitives/types", default-features = false }
 itp-utils = { path = "../core-primitives/utils", default-features = false }
 
 # litentry
+bc-enclave-registry = { path = "../bitacross/core/bc-enclave-registry", default-features = false, features = ["sgx"] }
+bc-musig2-ceremony = { path = "../bitacross/core/bc-musig2-ceremony", default-features = false, features = ["sgx"] }
+bc-musig2-runner = { path = "../bitacross/core/bc-musig2-runner", default-features = false, features = ["sgx"] }
 bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
+bc-signer-registry = { path = "../bitacross/core/bc-signer-registry", default-features = false, features = ["sgx"] }
 bc-task-sender = { path = "../bitacross/core/bc-task-sender", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }

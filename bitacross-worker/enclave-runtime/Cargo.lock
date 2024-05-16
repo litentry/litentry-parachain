@@ -32,7 +32,7 @@ dependencies = [
  "derive_more",
  "either",
  "frame-metadata",
- "hex 0.4.3",
+ "hex",
  "log",
  "parity-scale-codec",
  "scale-bits",
@@ -261,7 +261,80 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
+name = "bc-enclave-registry"
+version = "0.1.0"
+dependencies = [
+ "itp-settings",
+ "itp-sgx-io",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-std",
+ "thiserror",
+]
+
+[[package]]
+name = "bc-musig2-ceremony"
+version = "0.1.0"
+dependencies = [
+ "bc-enclave-registry",
+ "itc-direct-rpc-client",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-types",
+ "k256",
+ "litentry-primitives",
+ "log",
+ "musig2",
+ "parity-scale-codec",
+ "sgx_rand",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "bc-musig2-runner"
+version = "0.1.0"
+dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
+ "itc-direct-rpc-client",
+ "itc-direct-rpc-server",
+ "itp-ocall-api",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-types",
+ "itp-utils",
+ "k256",
+ "lc-direct-call",
+ "litentry-primitives",
+ "log",
+ "musig2",
+ "parity-scale-codec",
+ "sgx_crypto_helper",
+ "sgx_rand",
+ "sgx_tstd",
+ "sp-core",
+]
+
+[[package]]
 name = "bc-relayer-registry"
+version = "0.1.0"
+dependencies = [
+ "itp-settings",
+ "itp-sgx-io",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-std",
+ "thiserror",
+]
+
+[[package]]
+name = "bc-signer-registry"
 version = "0.1.0"
 dependencies = [
  "itp-settings",
@@ -279,17 +352,21 @@ dependencies = [
 name = "bc-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.0",
+ "hex",
  "ita-stf",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
+ "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
  "log",
@@ -695,7 +772,7 @@ checksum = "740fe28e594155f10cfc383984cbefd529d7396050557148f79cb0f621204124"
 dependencies = [
  "generic-array 0.14.7",
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -718,7 +795,7 @@ dependencies = [
  "byteorder 1.4.3",
  "digest 0.8.1",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -731,7 +808,7 @@ dependencies = [
  "byteorder 1.4.3",
  "digest 0.9.0",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -860,7 +937,7 @@ dependencies = [
  "block-buffer 0.10.4",
  "const-oid",
  "crypto-common",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -885,7 +962,7 @@ checksum = "7c24f403d068ad0b359e577a77f92392118be3f3c927538f2bb544a5ecd828c6"
 dependencies = [
  "curve25519-dalek 3.2.0",
  "hashbrown 0.12.3",
- "hex 0.4.3",
+ "hex",
  "rand_core 0.6.4",
  "sha2 0.9.9",
  "zeroize",
@@ -912,7 +989,7 @@ dependencies = [
  "pkcs8",
  "rand_core 0.6.4",
  "sec1",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -937,7 +1014,11 @@ name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
+ "bc-musig2-runner",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "bc-task-receiver",
  "bc-task-sender",
  "cid",
@@ -946,7 +1027,7 @@ dependencies = [
  "env_logger",
  "frame-support",
  "futures 0.3.8",
- "hex 0.4.3",
+ "hex",
  "ipfs-unixfs",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
@@ -959,7 +1040,6 @@ dependencies = [
  "itc-parentchain-block-importer",
  "itc-parentchain-light-client",
  "itc-parentchain-test",
- "itc-peer-top-broadcaster",
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-component-container",
@@ -996,7 +1076,7 @@ dependencies = [
  "litentry-proc-macros",
  "log",
  "multibase",
- "once_cell 1.4.0",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx)",
  "parity-scale-codec",
  "primitive-types",
  "rust-base58",
@@ -1170,7 +1250,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -1230,7 +1310,7 @@ name = "fp-account"
 version = "1.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "libsecp256k1",
  "log",
  "parity-scale-codec",
@@ -1496,7 +1576,7 @@ name = "futures-task"
 version = "0.3.8"
 source = "git+https://github.com/mesalock-linux/futures-rs-sgx#d54882f24ddf7d61327a067b2f608d6940a36444"
 dependencies = [
- "once_cell 1.4.0",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx)",
  "sgx_tstd",
 ]
 
@@ -1589,7 +1669,7 @@ checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
 dependencies = [
  "ff",
  "rand_core 0.6.4",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -1659,14 +1739,6 @@ name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-
-[[package]]
-name = "hex"
-version = "0.4.0"
-source = "git+https://github.com/mesalock-linux/rust-hex-sgx?tag=sgx_1.1.3#ee3266cd29b9f9c2eb69af9487f55c4f09c38f2b"
-dependencies = [
- "sgx_tstd",
-]
 
 [[package]]
 name = "hex"
@@ -1849,7 +1921,9 @@ dependencies = [
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
+ "bc-enclave-registry",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "bs58",
  "ita-sgx-runtime",
  "ita-stf",
@@ -1899,7 +1973,7 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
@@ -2084,21 +2158,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itc-peer-top-broadcaster"
-version = "0.1.0"
-dependencies = [
- "itc-direct-rpc-client",
- "itc-direct-rpc-server",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-types",
- "itp-utils",
- "litentry-primitives",
- "log",
- "sgx_tstd",
-]
-
-[[package]]
 name = "itc-tls-websocket-server"
 version = "0.9.0"
 dependencies = [
@@ -2166,7 +2225,7 @@ dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "bit-vec",
  "chrono 0.4.11",
- "hex 0.4.3",
+ "hex",
  "httparse",
  "itertools 0.10.5",
  "itp-ocall-api",
@@ -2380,7 +2439,7 @@ dependencies = [
 name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itc-parentchain-test",
  "itp-node-api",
  "itp-ocall-api",
@@ -2482,7 +2541,7 @@ dependencies = [
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "itp-node-api",
  "itp-node-api-metadata-provider",
  "itp-ocall-api",
@@ -2580,7 +2639,7 @@ dependencies = [
 name = "itp-utils"
 version = "0.9.0"
 dependencies = [
- "hex 0.4.3",
+ "hex",
  "litentry-hex-utils",
  "parity-scale-codec",
 ]
@@ -2638,11 +2697,15 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-direct-call"
 version = "0.1.0"
 dependencies = [
+ "bc-enclave-registry",
+ "bc-musig2-ceremony",
  "bc-relayer-registry",
+ "bc-signer-registry",
  "core-primitives",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "litentry-primitives",
+ "log",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -2703,7 +2766,7 @@ checksum = "5be9b9bb642d8522a44d533eab56c16c738301965504753b03ad1de3425d5451"
 dependencies = [
  "crunchy",
  "digest 0.9.0",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -2736,7 +2799,7 @@ dependencies = [
 name = "litentry-hex-utils"
 version = "0.9.12"
 dependencies = [
- "hex 0.4.3",
+ "hex",
 ]
 
 [[package]]
@@ -2749,7 +2812,7 @@ version = "0.1.0"
 dependencies = [
  "bitcoin",
  "core-primitives",
- "hex 0.4.3",
+ "hex",
  "itp-sgx-crypto",
  "litentry-hex-utils",
  "log",
@@ -2900,6 +2963,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "musig2"
+version = "0.0.8"
+source = "git+https://github.com/kziemianek/musig2.git?branch=sgx#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
+dependencies = [
+ "base16ct",
+ "hmac",
+ "k256",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx?branch=master)",
+ "secp",
+ "secp256k1 0.28.0",
+ "sgx_tstd",
+ "sha2 0.10.7",
+ "subtle 2.5.0",
+]
+
+[[package]]
 name = "net2"
 version = "0.2.33"
 source = "git+https://github.com/mesalock-linux/net2-rs-sgx#554583d15f3c9dff5d862a6ae64e227bb38fa729"
@@ -3022,6 +3101,14 @@ dependencies = [
 [[package]]
 name = "once_cell"
 version = "1.4.0"
+source = "git+https://github.com/mesalock-linux/once_cell-sgx?branch=master#cefcaa03fed4d85276b3235d875f1b45d399cc3c"
+dependencies = [
+ "sgx_tstd",
+]
+
+[[package]]
+name = "once_cell"
+version = "1.4.0"
 source = "git+https://github.com/mesalock-linux/once_cell-sgx#cefcaa03fed4d85276b3235d875f1b45d399cc3c"
 dependencies = [
  "sgx_tstd",
@@ -3070,7 +3157,7 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "impl-trait-for-tuples",
  "log",
@@ -3119,7 +3206,7 @@ dependencies = [
  "der 0.6.1",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
+ "hex",
  "hex-literal",
  "log",
  "pallet-timestamp",
@@ -3206,7 +3293,7 @@ version = "0.8.2"
 source = "git+https://github.com/mesalock-linux/pem-rs-sgx#fdfef4f24a9fb3fa72e8a71bb28bd8ff15feff2f"
 dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx)",
- "once_cell 1.4.0",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx)",
  "regex 1.3.1",
  "sgx_tstd",
 ]
@@ -3538,7 +3625,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac",
- "subtle",
+ "subtle 2.4.1",
 ]
 
 [[package]]
@@ -3808,7 +3895,7 @@ dependencies = [
  "merlin",
  "rand_core 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.8.2",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
 ]
 
@@ -3832,8 +3919,21 @@ dependencies = [
  "der 0.7.8",
  "generic-array 0.14.7",
  "pkcs8",
- "subtle",
+ "subtle 2.4.1",
  "zeroize",
+]
+
+[[package]]
+name = "secp"
+version = "0.2.3"
+source = "git+https://github.com/kziemianek/secp.git?branch=sgx#0479a3b12fc204015cdb63c138078fefe7e32341"
+dependencies = [
+ "base16ct",
+ "k256",
+ "once_cell 1.4.0 (git+https://github.com/mesalock-linux/once_cell-sgx?branch=master)",
+ "secp256k1 0.28.0",
+ "sgx_tstd",
+ "subtle 2.5.0",
 ]
 
 [[package]]
@@ -4699,7 +4799,7 @@ dependencies = [
  "async-trait",
  "derive_more",
  "frame-metadata",
- "hex 0.4.3",
+ "hex",
  "log",
  "maybe-async",
  "parity-scale-codec",
@@ -4715,6 +4815,14 @@ name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
+name = "subtle"
+version = "2.5.0"
+source = "git+https://github.com/kziemianek/subtle-sgx.git?branch=2.5.0-update#57c424bdb6b98cbf9cfe19879748f20c3525c80e"
+dependencies = [
+ "sgx_tstd",
+]
 
 [[package]]
 name = "syn"
@@ -4978,7 +5086,7 @@ checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
 dependencies = [
  "byteorder 1.4.3",
  "crunchy",
- "hex 0.4.3",
+ "hex",
  "static_assertions",
 ]
 

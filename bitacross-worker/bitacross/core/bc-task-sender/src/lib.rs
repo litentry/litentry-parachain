@@ -1,3 +1,19 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 #![feature(trait_alias)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -36,8 +52,16 @@ use std::{
 
 #[derive(Debug)]
 pub struct BitAcrossRequest {
-	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
+	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>,
 	pub request: AesRequest,
+}
+
+#[derive(Encode, Decode, Clone, Debug)]
+pub enum BitAcrossProcessingResult {
+	// we got immediate response
+	Ok(Vec<u8>),
+	// the response will be produced in the future
+	Submitted([u8; 32]),
 }
 
 #[derive(Encode, Decode, Clone)]
@@ -81,7 +105,7 @@ impl BitAcrossRequestSender {
 	}
 }
 
-/// Initialization of the extrinsic sender. Needs to be called before any sender access.
+/// Initialization of the task sender. Needs to be called before any sender access.
 pub fn init_bit_across_task_sender_storage() -> Receiver<BitAcrossRequest> {
 	let (sender, receiver) = channel();
 	// It makes no sense to handle the unwrap, as this statement fails only if the lock has been poisoned

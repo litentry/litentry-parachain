@@ -27,7 +27,7 @@ use itp_stf_primitives::types::{
 use itp_top_pool::primitives::{PoolFuture, PoolStatus};
 use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier, H256};
 use jsonrpc_core::Error as RpcError;
-use std::{string::String, vec::Vec};
+use std::vec::Vec;
 
 /// Trait alias for a full STF author API
 pub trait FullAuthor<
@@ -86,13 +86,6 @@ where
 	/// See [`TrustedOperationStatus`](sp_transaction_pool::TrustedOperationStatus) for details on transaction
 	/// life cycle.
 	fn watch_top<R: DecryptableRequest + Encode>(&self, request: R) -> PoolFuture<Hash, RpcError>;
-
-	/// Submit a request to watch and broadcasts it to known peers.
-	fn watch_and_broadcast_top<R: DecryptableRequest + Encode>(
-		&self,
-		request: R,
-		json_rpc_method: String,
-	) -> PoolFuture<Hash, RpcError>;
 
 	/// Litentry: set the rpc response value
 	fn update_connection_state(&self, updates: Vec<(Hash, (Vec<u8>, bool))>);
