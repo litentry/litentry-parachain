@@ -188,9 +188,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// #[pallet::call_index(4)] TODO: What should happen with index???
-		// #[pallet::weight({15_000_000})]
-
 		#[pallet::call_index(5)]
 		#[pallet::weight({15_000_000})]
 		pub fn remove_identity(

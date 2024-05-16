@@ -15,7 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	get_eligible_identities, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
+	get_eligible_identities, migrations::drop_web3networks_from_id_graph, mock::*, Error, IDGraph,
+	IDGraphs, Identity, IdentityContext, IdentityStatus,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::{all_evm_web3networks, all_substrate_web3networks, Web3Network};
@@ -475,5 +476,36 @@ fn remove_identity_graph_of_other_account_fails() {
 			),
 			Error::<Test>::IdentityNotExist
 		);
+	});
+}
+
+#[test]
+fn test_drop_web3networks_from_id_graph() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		let bob: Identity = BOB.into();
+
+		let context1 = IdentityContext {
+			link_block: 1,
+			web3networks: Some(vec![Web3Network::Ethereum, Web3Network::Bsc]),
+			status: IdentityStatus::Active,
+		};
+
+		let context2 = IdentityContext {
+			link_block: 2,
+			web3networks: Some(vec![]),
+			status: IdentityStatus::Inactive,
+		};
+
+		IDGraphs::<Test>::insert(alice.clone(), alice_substrate_identity(), context1);
+		IDGraphs::<Test>::insert(bob.clone(), bob_substrate_identity(), context2);
+
+		assert_ok!(drop_web3networks_from_id_graph::<Test>());
+
+		let updated_context1 = IDGraphs::<Test>::get(alice, alice_substrate_identity()).unwrap();
+		assert_eq!(updated_context1.web3networks, None);
+
+		let updated_context2 = IDGraphs::<Test>::get(bob, bob_substrate_identity()).unwrap();
+		assert_eq!(updated_context2.web3networks, None);
 	});
 }
