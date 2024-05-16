@@ -16,8 +16,8 @@ jobs:
       - name: Set ENV
         run: |
           # extracting parachain version and worker version from release tag
-          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}} | sed 's/p/v/;s/\(.*\)-w.*/\1/')" >> $GITHUB_ENV
-          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}} | sed 's/.*\(w.*\)/\1/;s/w/v/')" >> $GITHUB_ENV
+          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}} | cut -d'-' -f1 | sed 's/p/v/')" >> $GITHUB_ENV
+          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}} | cut -d'-' -f3 | sed 's/w/v/')" >> $GITHUB_ENV
 
       - name: Pull litentry image optionally
         run: |
