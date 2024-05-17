@@ -1,6 +1,7 @@
 import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { ApiPromise } from '@polkadot/api';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
+
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
@@ -88,3 +89,55 @@ export const subscribeToEvents = async (
         });
     });
 };
+
+type EventQuery = (data: any) => boolean;
+export type Event = { name: any; data: any; block: number; event_index: number };
+export async function observeEvent(
+    eventName: string,
+    api: ApiPromise,
+    eventQuery?: EventQuery,
+    stopObserveEvent?: () => boolean,
+    finalized = false,
+    maxWaitTime = 120 // Maximum wait time in seconds (2 minutes)
+): Promise<Event> {
+    let result: Event | undefined;
+    let eventFound = false;
+    let waitTime = 0;
+
+    const query = eventQuery ?? (() => true);
+    const stopObserve = stopObserveEvent ?? (() => false);
+
+    const [expectedSection, expectedMethod] = eventName.split(':');
+
+    const subscribeMethod = finalized ? api.rpc.chain.subscribeFinalizedHeads : api.rpc.chain.subscribeNewHeads;
+
+    const unsubscribe: any = await subscribeMethod(async (header) => {
+        const events: any[] = await api.query.system.events.at(header.hash);
+        events.forEach((record, index) => {
+            const { event } = record;
+            if (!eventFound && event.section.includes(expectedSection) && event.method.includes(expectedMethod)) {
+                const expectedEvent = {
+                    name: { section: event.section, method: event.method },
+                    data: event.toHuman().data,
+                    block: header.number.toNumber(),
+                    event_index: index,
+                };
+                if (query(expectedEvent)) {
+                    result = expectedEvent;
+                    eventFound = true;
+                    unsubscribe();
+                }
+            }
+        });
+    });
+
+    while (!eventFound && !stopObserve() && waitTime < maxWaitTime) {
+        await sleep(1000);
+        waitTime++;
+    }
+
+    if (!eventFound && waitTime >= maxWaitTime) {
+        throw new Error('Event not found within the specified time limit');
+    }
+    return result as Event;
+}
