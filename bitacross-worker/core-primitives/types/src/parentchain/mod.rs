@@ -92,8 +92,8 @@ pub trait IdentifyParentchain {
 }
 
 pub trait FilterEvents {
-	type Error: From<ParentchainError> + core::fmt::Debug;
 	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
+	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
 }
@@ -117,12 +117,12 @@ where
 }
 
 #[derive(Debug)]
-pub enum ParentchainError {
+pub enum ParentchainEventProcessingError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
 }
 
-impl core::fmt::Display for ParentchainError {
+impl core::fmt::Display for ParentchainEventProcessingError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = match &self {
 			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
@@ -132,8 +132,8 @@ impl core::fmt::Display for ParentchainError {
 	}
 }
 
-impl From<ParentchainError> for () {
-	fn from(_: ParentchainError) -> Self {}
+impl From<ParentchainEventProcessingError> for () {
+	fn from(_: ParentchainEventProcessingError) -> Self {}
 }
 
 /// a wrapper to target calls to specific parentchains
