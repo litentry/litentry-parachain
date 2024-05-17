@@ -21,6 +21,7 @@ use crate::{OpaqueCall, ShardIdentifier};
 use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
+use events::{BalanceTransfer, ScheduledEnclaveRemoved, ScheduledEnclaveSet};
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
 #[cfg(feature = "std")]
