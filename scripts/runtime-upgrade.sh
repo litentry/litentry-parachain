@@ -19,10 +19,10 @@ output_wasm=/tmp/runtime.wasm
 
 function usage() {
   echo
-  echo "Usage: $0 wasm-name [release-tag] [network]"
+  echo "Usage: $0 wasm-name [release-tag]"
 }
 
-[ $# -gt 3 ] && (usage; exit 1)
+[ $# -gt 2 ] && (usage; exit 1)
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -70,9 +70,7 @@ print_divider
 echo "Do runtime upgrade and verify ..."
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
-
-echo "Upgrade runtime for $3 ..."
-pnpm install && pnpm run test-runtime-upgrade --$3 2>&1
+pnpm install && pnpm run test-runtime-upgrade 2>&1
 
 print_divider
 

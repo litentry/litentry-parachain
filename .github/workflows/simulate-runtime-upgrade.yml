@@ -22,7 +22,8 @@ jobs:
       fail-fast: false
       matrix:
         chain:
-          - litmus
+          # litmus is not supported, as sudo was removed
+          # TODO: add runtime upgrade via governance
           - litentry
           - rococo
     steps:
@@ -50,7 +51,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }} ${{ matrix.chain }}
+          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
