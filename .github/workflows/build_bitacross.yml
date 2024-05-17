@@ -2,6 +2,11 @@ name: Build bitacross-worker
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: The commit SHA or tag for checking out code
+        default: ""
+        required: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,6 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
           fetch-depth: 0
 
       - name: Build local builder
@@ -45,7 +51,7 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/bitacross-worker:latest
+          docker push litentry/bitacross-worker:${{ github.event.inputs.ref || github.ref }}
 
       - name: Fail early
         if: failure()
