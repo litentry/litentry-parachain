@@ -66,9 +66,6 @@ pub enum ErrorDetail {
 	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
-	// error when trying to build vc but no eligible identity is found
-	#[codec(index = 11)]
-	NoEligibleIdentity,
 }
 
 impl fmt::Debug for ErrorDetail {
