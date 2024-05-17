@@ -153,8 +153,7 @@ impl<
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 
-		trace!("Scanning block {:?} for relevant xt", block_number);
-		let mut executed_calls = Vec::<H256>::new();
+		trace!("Scanning block {:?} for relevant events", block_number);
 
 		let events = self
 			.node_meta_data_provider
@@ -163,50 +162,17 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let xt_statuses = events.get_extrinsic_statuses().map_err(|e| {
-			Error::Other(format!("Error when shielding for privacy sidechain {:?}", e).into())
-		})?;
-		trace!("xt_statuses:: {:?}", xt_statuses);
-
 		let shard = self.get_default_shard();
-		if let Ok((vault, _parentchain_id)) = self.stf_enclave_signer.get_shard_vault(&shard) {
-			ParentchainEventHandler::handle_events(self, events, &vault)?;
-		}
+		let (vault, ..) = self.stf_enclave_signer.get_shard_vault(&shard)?;
+		let processed_events = ParentchainEventHandler::handle_events(self, events, &vault)?;
 
-		// This would be catastrophic but should never happen
-		if xt_statuses.len() != block.extrinsics().len() {
-			return Err(Error::Other("Extrinsic Status and Extrinsic count not equal".into()))
-		}
+		debug!("successfully processed {} indirect invocations", processed_events.len());
 
-		for (xt_opaque, xt_status) in block.extrinsics().iter().zip(xt_statuses.iter()) {
-			let encoded_xt_opaque = xt_opaque.encode();
-
-			let maybe_call = self.node_meta_data_provider.get_from_metadata(|metadata| {
-				FilterIndirectCalls::filter_into_from_metadata(&encoded_xt_opaque, metadata)
-			})?;
-
-			let call = match maybe_call {
-				Some(c) => c,
-				None => continue,
-			};
-
-			if let ExtrinsicStatus::Failed = xt_status {
-				warn!("Parentchain Extrinsic Failed, {:?} wont be dispatched", call);
-				continue
-			}
-
-			if let Err(e) = call.dispatch(self, ()) {
-				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
-			} else {
-				executed_calls.push(hash_of(&call));
-			}
-		}
-		debug!("successfully processed {} indirect invocations", executed_calls.len());
 		if self.parentchain_id == ParentchainId::Litentry {
 			// Include a processed parentchain block confirmation for each block.
 			Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
 				block_hash,
-				executed_calls,
+				processed_events,
 				block_number,
 			)?))
 		} else {
@@ -218,7 +184,7 @@ impl<
 	fn create_processed_parentchain_block_call<ParentchainBlock>(
 		&self,
 		block_hash: H256,
-		extrinsics: Vec<H256>,
+		events: Vec<H256>,
 		block_number: <<ParentchainBlock as ParentchainBlockTrait>::Header as Header>::Number,
 	) -> Result<OpaqueCall>
 	where
@@ -227,7 +193,7 @@ impl<
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
 			meta_data.parentchain_block_processed_call_indexes()
 		})??;
-		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
+		let root: H256 = merkle_root::<Keccak256, _>(events);
 		trace!("prepared parentchain_block_processed() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
 		// Litentry: we don't include `shard` in the extrinsic parameter to be backwards compatible,
 		//           however, we should not forget it in case we need it later
@@ -349,34 +315,13 @@ mod test {
 	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 	#[test]
-	fn indirect_call_can_be_added_to_pool_successfully() {
-		let _ = env_logger::builder().is_test(true).try_init();
-
-		let (indirect_calls_executor, top_pool_author, _) =
-			test_fixtures([0u8; 32], NodeMetadataMock::new());
-
-		let opaque_extrinsic =
-			OpaqueExtrinsic::from_bytes(invoke_unchecked_extrinsic().encode().as_slice()).unwrap();
-
-		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
-			.build();
-
-		indirect_calls_executor
-			.execute_indirect_calls_in_extrinsics(&parentchain_block, &Vec::new())
-			.unwrap();
-
-		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
-	}
-
-	#[test]
-	fn ensure_empty_extrinsic_vec_triggers_zero_filled_merkle_root() {
+	fn ensure_empty_events_vec_triggers_zero_filled_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([38u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = Vec::new();
+		let events = Vec::new();
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 		let expected_call =
@@ -384,7 +329,7 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then
@@ -392,13 +337,13 @@ mod test {
 	}
 
 	#[test]
-	fn ensure_non_empty_extrinsic_vec_triggers_non_zero_merkle_root() {
+	fn ensure_non_empty_events_vec_triggers_non_zero_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([39u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = vec![H256::from([4; 32]), H256::from([9; 32])];
+		let events = vec![H256::from([4; 32]), H256::from([9; 32])];
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 
@@ -407,46 +352,11 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then
 		assert_ne!(call.0, zero_root_call);
-	}
-
-	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<PostOpaqueTaskFn> {
-		let request = RsaRequest::new(shard_id(), vec![1u8, 2u8]);
-		let dummy_metadata = NodeMetadataMock::new();
-		let call_worker_indexes = dummy_metadata.post_opaque_task_call_indexes().unwrap();
-
-		ParentchainUncheckedExtrinsic::<PostOpaqueTaskFn>::new_signed(
-			(call_worker_indexes, request),
-			MultiAddress::Address32([1u8; 32]),
-			MultiSignature::Ed25519(default_signature()),
-			default_extrinsic_params().signed_extra(),
-		)
-	}
-
-	fn default_signature() -> ed25519::Signature {
-		signer().sign(&[0u8])
-	}
-
-	fn signer() -> ed25519::Pair {
-		ed25519::Pair::from_seed(&TEST_SEED)
-	}
-
-	fn shard_id() -> ShardIdentifier {
-		ShardIdentifier::default()
-	}
-
-	fn default_extrinsic_params() -> ParentchainExtrinsicParams {
-		ParentchainExtrinsicParams::new(
-			0,
-			0,
-			0,
-			H256::default(),
-			ParentchainAdditionalParams::default(),
-		)
 	}
 
 	fn test_fixtures(
