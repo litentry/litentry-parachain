@@ -3,12 +3,13 @@ use super::*;
 use crate::Runtime;
 use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 
-// This is just an example of how to write a custom migration
-// It has no effect on tee-worker running
-// For more details, see: https://docs.substrate.io/maintain/runtime-upgrades/#storage-migration
+// This is a place we triggre migrations
+// For more details, see: https://www.notion.so/web3builders/How-to-upgrade-enclave-one-worker-edfaf5871b4441579f9471074032ed1e
 pub struct Upgrade;
 impl OnRuntimeUpgrade for Upgrade {
 	fn on_runtime_upgrade() -> Weight {
+		pallet_imt::migrations::drop_web3networks_from_id_graph::<Runtime>()
+			.expect("Web3 networks should be dropped from idgraphs");
 		pallet_imt::migrations::migrate_to_v1::<Runtime, IdentityManagement>()
 	}
 }
