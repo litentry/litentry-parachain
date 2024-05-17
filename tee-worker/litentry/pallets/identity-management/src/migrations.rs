@@ -65,7 +65,7 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 }
 
 pub fn drop_web3networks_from_id_graph<T: crate::Config>() -> Result<Weight, Error<T>> {
-	for (who, identity, context) in IDGraphs::<T>::iter() {
+	for (who, identity, _context) in IDGraphs::<T>::iter() {
 		IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 			let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 			c.web3networks = None;
