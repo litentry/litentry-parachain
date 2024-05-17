@@ -6,7 +6,7 @@ import {
     assertIdGraphHash,
     buildIdentityHelper,
     initIntegrationTestContext,
-    buildTwitterValidation,
+    buildWeb2Validation,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -91,7 +91,8 @@ describe('Test Twitter Identity (direct invocation)', function () {
     step('linking twitter identity with public tweet verification (alice)', async function () {
         const nonce = aliceCurrentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -166,7 +167,8 @@ describe('Test Twitter Identity (direct invocation)', function () {
 
         const nonce = bobCurrentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user_me', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: bobSubstrateIdentity,
             linkIdentity: twitterIdentity,

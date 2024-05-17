@@ -123,6 +123,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
@@ -136,6 +138,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -184,6 +187,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
@@ -197,6 +202,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -245,6 +251,8 @@ services:
       - TWITTER_CLIENT_ID=
       - TWITTER_CLIENT_SECRET=
       - DISCORD_OFFICIAL_URL=http://localhost:19527
+      - DISCORD_CLIENT_ID=
+      - DISCORD_CLIENT_SECRET=
       - LITENTRY_DISCORD_MICROSERVICE_URL=http://localhost:19527
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
@@ -258,6 +266,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527

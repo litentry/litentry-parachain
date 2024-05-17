@@ -18,8 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
-	RetryableRestGet,
+	achainable::web3_network_to_chain, build_client_with_cert, DataProviderConfig, Error,
+	HttpError, ReqPath, RetryOption, RetryableRestGet,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
@@ -239,6 +239,28 @@ impl<'a> RestPath<ReqPath<'a>> for Vec<GetSolanaTokenBalanceByWalletResponse> {
 	}
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetEvmTokenBalanceByWalletResponse {
+	pub token_address: String,
+	pub symbol: String,
+	pub name: String,
+	pub logo: Option<String>,      // logo url(string type), MAY BE null
+	pub thumbnail: Option<String>, // thumbnail url(string type), MAY BE null
+	pub decimals: u64,
+	pub balance: String,
+	pub possible_spam: bool,
+	pub verified_contract: bool,
+	pub total_supply: String,
+	pub total_supply_formatted: String,
+	pub percentage_relative_to_total_supply: f64,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for Vec<GetEvmTokenBalanceByWalletResponse> {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
 pub trait BalanceApiList {
 	fn get_solana_native_balance_by_wallet(
 		&mut self,
@@ -251,6 +273,14 @@ pub trait BalanceApiList {
 		address: String,
 		fast_fail: bool,
 	) -> Result<Vec<GetSolanaTokenBalanceByWalletResponse>, Error>;
+
+	// https://docs.moralis.io/web3-data-api/evm/reference/wallet-api/get-token-balances-by-wallet
+	fn get_evm_tokens_balance_by_wallet(
+		&mut self,
+		address: String,
+		network: &Web3Network,
+		fast_fail: bool,
+	) -> Result<Vec<GetEvmTokenBalanceByWalletResponse>, Error>;
 }
 
 impl BalanceApiList for MoralisClient {
@@ -303,6 +333,33 @@ impl BalanceApiList for MoralisClient {
 			},
 			Err(e) => {
 				debug!("get_solana_tokens_balance_by_wallet, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	fn get_evm_tokens_balance_by_wallet(
+		&mut self,
+		address: String,
+		network: &Web3Network,
+		fast_fail: bool,
+	) -> Result<Vec<GetEvmTokenBalanceByWalletResponse>, Error> {
+		debug!("get_evm_tokens_balance_by_wallet, address: {}", address);
+
+		let query = Some(vec![("chain".to_string(), web3_network_to_chain(network))]);
+		let params = MoralisRequest { path: format!("{}/erc20", address), query };
+
+		match self.get::<Vec<GetEvmTokenBalanceByWalletResponse>>(
+			ClientType::Evm,
+			params,
+			fast_fail,
+		) {
+			Ok(resp) => {
+				debug!("get_evm_tokens_balance_by_wallet, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_evm_tokens_balance_by_wallet, error: {:?}", e);
 				Err(e)
 			},
 		}

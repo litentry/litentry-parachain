@@ -18,7 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError,
+	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError, ReqPath,
 	LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
@@ -28,6 +28,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use litentry_primitives::{AchainableParams, VCMPError, Web3Network};
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -775,7 +776,7 @@ pub trait AchainableAccountTotalTransactions {
 	fn total_transactions(
 		&mut self,
 		network: &Web3Network,
-		addresses: &[String],
+		addresses: Vec<String>,
 	) -> Result<u64, Error>;
 }
 
@@ -783,18 +784,27 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 	fn total_transactions(
 		&mut self,
 		network: &Web3Network,
-		addresses: &[String],
+		addresses: Vec<String>,
 	) -> Result<u64, Error> {
 		let mut txs = 0_u64;
-		for address in addresses.iter() {
-			let name = "Account total transactions under {amount}".to_string();
-			let amount = "1".to_string();
 
-			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
-			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
-			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
-			txs += tx;
-		}
+		loop_with_abort_strategy::<fn(&_) -> bool, String, Error>(
+			addresses,
+			|address| {
+				let name = "Account total transactions under {amount}".to_string();
+				let amount = "1".to_string();
+
+				let param = ParamsBasicTypeWithAmount::new(name, network, amount);
+				let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
+				let tx =
+					self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
+				txs += tx;
+
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(txs)
 	}
@@ -859,12 +869,20 @@ pub trait HoldingAmount {
 impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
-		for address in addresses.iter() {
-			let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
-			let balance =
-				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
-			total_balance += balance;
-		}
+
+		loop_with_abort_strategy::<fn(&_) -> bool, String, Error>(
+			addresses,
+			|address| {
+				let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
+				let balance =
+					self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
+				total_balance += balance;
+
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(total_balance.to_string())
 	}
@@ -1425,6 +1443,47 @@ fn request_basic_type_with_token(
 	}
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LabelQueryReq {
+	pub params: LabelQueryReqParams,
+	pub include_metadata: bool,
+	pub include_widgets: bool,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for LabelQueryReq {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LabelQueryReqParams {
+	pub address: String,
+}
+
+pub trait AchainableLabelQuery {
+	fn query_label(&mut self, label: &str, param: &LabelQueryReq) -> Result<bool, Error>;
+}
+
+impl AchainableLabelQuery for AchainableClient {
+	fn query_label(&mut self, label: &str, req: &LabelQueryReq) -> Result<bool, Error> {
+		match self.client.post_capture::<ReqPath, LabelQueryReq, serde_json::Value>(
+			ReqPath::new(format!("/v1/run/labels/{}", label).as_str()),
+			req,
+		) {
+			Ok(response) => {
+				debug!("Achainable query_label, response: {:?}", response);
+				AchainableClient::parse(response)
+			},
+			Err(e) => {
+				debug!("Achainable query_label, error: {:?}", e);
+				Err(Error::AchainableError(format!("Achainable response error: {}", e)))
+			},
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use crate::{
@@ -1452,7 +1511,7 @@ mod tests {
 		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
 
 		let mut client = new_achainable_client();
-		let r = client.total_transactions(&Web3Network::Litentry, &addresses);
+		let r = client.total_transactions(&Web3Network::Litentry, addresses);
 		assert!(r.is_ok());
 		let r = r.unwrap();
 		assert!(r == 41)

@@ -19,6 +19,7 @@ use self::summary::{
 	CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
 };
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{
 	achainable::web3_network_to_chain,
 	nodereal_jsonrpc::{
@@ -224,132 +225,192 @@ impl CryptoSummaryClient {
 
 	pub fn logic(
 		&mut self,
-		identities: &Vec<(Web3Network, Vec<String>)>,
+		identities: Vec<(Web3Network, Vec<String>)>,
 	) -> core::result::Result<(u64, SummaryHoldings), ErrorDetail> {
 		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
 		let mut flag_bsc_token: [bool; 12] = [false; 12];
 		let mut flag_eth_token: [bool; 15] = [false; 15];
 		let mut flag_eth_nft: [bool; 15] = [false; 15];
 
-		// ETH and BNB holder use different APIs than other tokens, so they need to be handled separately
-		let mut is_eth_holder = false;
+		let mut total_txs = 0_u64;
+
+		loop_with_abort_strategy::<fn(&_) -> bool, (Web3Network, Vec<String>), ErrorDetail>(
+			identities,
+			|(network, addresses)| match network {
+				Web3Network::Bsc => {
+					let result = self.bsc_logic(addresses.to_vec())?;
+
+					total_txs += result.0;
+					flag_bsc_token = result.1;
+
+					Ok(LoopControls::Continue)
+				},
+				Web3Network::Ethereum => {
+					let result = self.ethereum_logic(addresses.to_vec())?;
+
+					total_txs += result.0;
+					flag_eth_token = result.1;
+					flag_eth_nft = result.2;
+
+					Ok(LoopControls::Continue)
+				},
+				_ => Ok(LoopControls::Continue),
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
+
+		Ok((total_txs, SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft)))
+	}
+
+	fn bsc_logic(
+		&mut self,
+		addresses: Vec<String>,
+	) -> core::result::Result<(u64, [bool; 12]), ErrorDetail> {
+		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
+		let mut flag_bsc_token: [bool; 12] = [false; 12];
+
+		// BNB holder use different APIs than other tokens, so they need to be handled separately
 		let mut is_bnb_holder = false;
 
 		let mut total_txs = 0_u64;
 
-		for (network, addresses) in identities {
-			if *network == Web3Network::Bsc {
-				// Query Token
-				for address in addresses {
-					let res = self
-						.bsc_client
-						.get_token_holdings(address, false)
-						.map_err(|e| e.into_error_detail())?;
+		loop_with_abort_strategy::<fn(&_) -> bool, String, ErrorDetail>(
+			addresses,
+			|address| {
+				let res = self
+					.bsc_client
+					.get_token_holdings(address, false)
+					.map_err(|e| e.into_error_detail())?;
 
-					let result: ResponseTokenResult =
-						serde_json::from_value(res.result).map_err(|_| ErrorDetail::ParseError)?;
-					let mut token_addresses = vec![];
-					if let Some(details) = result.details {
-						details.iter().for_each(|detail| {
-							token_addresses.push(detail.token_address.clone());
-						});
-						Self::update_holding_flag(
-							&mut flag_bsc_token,
-							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
-							&token_addresses,
-						);
-					}
-
-					// Query BNB balance on BSC
-					if !is_bnb_holder {
-						let native_balance = result.native_token_balance;
-						let balance = get_native_token_balance(&native_balance);
-						if balance > 0.0 {
-							is_bnb_holder = true;
-						}
-					}
-
-					// Total txs on BSC
-					let tx = self
-						.bsc_client
-						.get_transaction_count(address, false)
-						.map_err(|e| e.into_error_detail())?;
-					total_txs += tx;
-				}
-			}
-
-			if *network == Web3Network::Ethereum {
-				for address in addresses {
-					// Query Token
-					let res_token = self
-						.eth_client
-						.get_token_holdings(address, false)
-						.map_err(|e| e.into_error_detail())?;
-					let result: ResponseTokenResult = serde_json::from_value(res_token.result)
-						.map_err(|_| ErrorDetail::ParseError)?;
-
-					let mut token_addresses = vec![];
-					if let Some(details) = result.details {
-						details.iter().for_each(|detail| {
-							token_addresses.push(detail.token_address.clone());
-						});
-						Self::update_holding_flag(
-							&mut flag_eth_token,
-							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
-							&token_addresses,
-						);
-					}
-
-					// Query ETH balance on Ethereum
-					if !is_eth_holder {
-						let native_balance = result.native_token_balance;
-						let balance = get_native_token_balance(&native_balance);
-						if balance > 0.0 {
-							is_eth_holder = true;
-						}
-					}
-
-					// Query NFT
-					let param = GetNFTHoldingsParam {
-						account_address: address.to_string(),
-						token_type: "ERC721".to_string(),
-						page: 1,
-						page_size: 100,
-					};
-
-					let res_nft = self
-						.eth_client
-						.get_nft_holdings(&param, false)
-						.map_err(|e| e.into_error_detail())?;
-
-					let details = res_nft.details;
-
-					let mut nft_addresses = vec![];
-					details.iter().for_each(|detail| {
-						nft_addresses.push(detail.token_address.clone());
+				let result: ResponseTokenResult =
+					serde_json::from_value(res.result).map_err(|_| ErrorDetail::ParseError)?;
+				let mut token_addresses = vec![];
+				if let Some(details) = result.details {
+					details.iter().for_each(|detail: &ResponseToken| {
+						token_addresses.push(detail.token_address.clone());
 					});
-
 					Self::update_holding_flag(
-						&mut flag_eth_nft,
-						&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
-						&nft_addresses,
+						&mut flag_bsc_token,
+						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+						&token_addresses,
 					);
-
-					// Total txs on Ethereum
-					let tx = self
-						.eth_client
-						.get_transaction_count(address, false)
-						.map_err(|e| e.into_error_detail())?;
-					total_txs += tx;
 				}
-			}
-		}
 
-		// Update ETH and BNB
+				// Query BNB balance on BSC
+				if !is_bnb_holder {
+					let native_balance = result.native_token_balance;
+					let balance = get_native_token_balance(&native_balance);
+					if balance > 0.0 {
+						is_bnb_holder = true;
+					}
+				}
+
+				// Total txs on BSC
+				let tx = self
+					.bsc_client
+					.get_transaction_count(address, false)
+					.map_err(|e| e.into_error_detail())?;
+				total_txs += tx;
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
+
+		// Update BNB
 		flag_bsc_token[11] = is_bnb_holder;
+
+		Ok((total_txs, flag_bsc_token))
+	}
+
+	fn ethereum_logic(
+		&mut self,
+		addresses: Vec<String>,
+	) -> core::result::Result<(u64, [bool; 15], [bool; 15]), ErrorDetail> {
+		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
+		let mut flag_eth_token: [bool; 15] = [false; 15];
+		let mut flag_eth_nft: [bool; 15] = [false; 15];
+
+		// ETH holder use different APIs than other tokens, so they need to be handled separately
+		let mut is_eth_holder = false;
+
+		let mut total_txs = 0_u64;
+
+		loop_with_abort_strategy::<fn(&_) -> bool, String, ErrorDetail>(
+			addresses,
+			|address| {
+				// Query Token
+				let res_token = self
+					.eth_client
+					.get_token_holdings(address, false)
+					.map_err(|e| e.into_error_detail())?;
+				let result: ResponseTokenResult = serde_json::from_value(res_token.result)
+					.map_err(|_| ErrorDetail::ParseError)?;
+
+				let mut token_addresses = vec![];
+				if let Some(details) = result.details {
+					details.iter().for_each(|detail| {
+						token_addresses.push(detail.token_address.clone());
+					});
+					Self::update_holding_flag(
+						&mut flag_eth_token,
+						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+						&token_addresses,
+					);
+				}
+
+				// Query ETH balance on Ethereum
+				if !is_eth_holder {
+					let native_balance = result.native_token_balance;
+					let balance = get_native_token_balance(&native_balance);
+					if balance > 0.0 {
+						is_eth_holder = true;
+					}
+				}
+
+				// Query NFT
+				let param = GetNFTHoldingsParam {
+					account_address: address.to_string(),
+					token_type: "ERC721".to_string(),
+					page: 1,
+					page_size: 100,
+				};
+
+				let res_nft = self
+					.eth_client
+					.get_nft_holdings(&param, false)
+					.map_err(|e| e.into_error_detail())?;
+
+				let details = res_nft.details;
+
+				let mut nft_addresses = vec![];
+				details.iter().for_each(|detail| {
+					nft_addresses.push(detail.token_address.clone());
+				});
+
+				Self::update_holding_flag(
+					&mut flag_eth_nft,
+					&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
+					&nft_addresses,
+				);
+
+				// Total txs on Ethereum
+				let tx = self
+					.eth_client
+					.get_transaction_count(address, false)
+					.map_err(|e| e.into_error_detail())?;
+				total_txs += tx;
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
+
+		// Update ETH
 		flag_eth_token[14] = is_eth_holder;
 
-		Ok((total_txs, SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft)))
+		Ok((total_txs, flag_eth_token, flag_eth_nft))
 	}
 
 	fn update_holding_flag(

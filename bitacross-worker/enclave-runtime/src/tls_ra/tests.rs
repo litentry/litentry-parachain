@@ -25,6 +25,8 @@ use crate::{
 	initialization::global_components::EnclaveStf,
 	tls_ra::seal_handler::{SealHandler, SealStateAndKeys, UnsealStateAndKeys},
 };
+use bc_enclave_registry::EnclaveRegistry;
+use bc_signer_registry::SignerRegistry;
 use ita_stf::State;
 use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
@@ -185,6 +187,15 @@ fn create_seal_handler(
 	let state_handler = Arc::new(HandleStateMock::default());
 	state_handler.reset(state, shard).unwrap();
 	let seal = Arc::new(LightValidationStateSealMock::new());
+	let signer_sealer: Arc<SignerRegistry> = Default::default();
+	let enclave_sealer: Arc<EnclaveRegistry> = Default::default();
 
-	SealHandler::new(state_handler, state_key_repository, shielding_key_repository, seal)
+	SealHandler::new(
+		state_handler,
+		state_key_repository,
+		shielding_key_repository,
+		seal,
+		signer_sealer,
+		enclave_sealer,
+	)
 }

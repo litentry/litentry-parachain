@@ -15,20 +15,21 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	trusted_base_cli::commands::bitacross::utils::{random_aes_key, send_direct_request},
+	trusted_base_cli::commands::bitacross::utils::{random_aes_key, send_direct_request_and_watch},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	Cli, CliResult, CliResultOk,
 };
-use itp_rpc::{RpcResponse, RpcReturnValue};
+use bc_musig2_ceremony::SignBitcoinPayload;
 use itp_stf_primitives::types::KeyPair;
-use itp_utils::FromHexPrefixed;
 use lc_direct_call::DirectCall;
+use litentry_primitives::{aes_decrypt, AesOutput};
 use sp_core::Pair;
 
 #[derive(Parser)]
 pub struct RequestDirectCallSignBitcoinCommand {
 	payload: Vec<u8>,
+	merkle_root: String,
 }
 
 impl RequestDirectCallSignBitcoinCommand {
@@ -37,20 +38,22 @@ impl RequestDirectCallSignBitcoinCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let key: [u8; 32] = random_aes_key();
 
-		let dc = DirectCall::SignBitcoin(alice.public().into(), key, self.payload.clone()).sign(
-			&KeyPair::Sr25519(Box::new(alice)),
-			&mrenclave,
-			&shard,
-		);
+		let merkle_root_bytes = hex::decode(self.merkle_root.clone()).unwrap();
 
-		let result: String = send_direct_request(cli, trusted_cli, dc, key).unwrap();
-		let response: RpcResponse = serde_json::from_str(&result).unwrap();
-		if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
-			println!("Got return value: {:?}", return_value);
-		} else {
-			println!("Could not decode return value: {:?}", response.result);
-		}
-		println!("Got result: {:?}", result);
+		let dc = DirectCall::SignBitcoin(
+			alice.public().into(),
+			key,
+			SignBitcoinPayload::TaprootSpendable(
+				self.payload.clone(),
+				merkle_root_bytes.try_into().unwrap(),
+			),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), &mrenclave, &shard);
+
+		let mut aes_output: AesOutput =
+			send_direct_request_and_watch(cli, trusted_cli, dc, key).unwrap();
+		let signature = aes_decrypt(&key, &mut aes_output).unwrap();
+		println!("Got signature: {:?}", signature);
 
 		Ok(CliResultOk::None)
 	}

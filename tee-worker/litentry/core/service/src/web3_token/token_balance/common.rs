@@ -93,11 +93,39 @@ pub fn get_balance(
 						Err(err) => Err(err.into_error_detail()),
 					}
 				},
+				Web3Network::Arbitrum | Web3Network::Polygon => {
+					let decimals = token_type.get_decimals(network);
+
+					let mut client = MoralisClient::new(data_provider_config);
+					let result =
+						client.get_evm_tokens_balance_by_wallet(address.1.clone(), &network, false);
+
+					match result {
+						Ok(items) =>
+							match items.iter().find(|&item| item.token_address == token_address) {
+								Some(item) => match item.balance.parse::<u128>() {
+									Ok(balance) => {
+										total_balance +=
+											calculate_balance_with_decimals(balance, decimals);
+
+										Ok(LoopControls::Continue)
+									},
+									Err(err) => {
+										error!("Failed to parse {} to f64: {}", item.balance, err);
+										Err(Error::ParseError)
+									},
+								},
+								None => Ok(LoopControls::Continue),
+							},
+						Err(err) => Err(err.into_error_detail()),
+					}
+				},
 				_ => Ok(LoopControls::Continue),
 			}
 		},
 		AbortStrategy::FailFast::<fn(&_) -> bool>,
-	)?;
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok(total_balance)
 }

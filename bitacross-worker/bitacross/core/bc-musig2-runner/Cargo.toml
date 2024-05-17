@@ -1,0 +1,73 @@
+[package]
+name = "bc-musig2-runner"
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# std dependencies
+
+# sgx dependencies
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
+
+
+bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
+bc-musig2-ceremony = { path = "../bc-musig2-ceremony", default-features = false }
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
+itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
+itp-types = { path = "../../../core-primitives/types", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core", "schnorr", "alloc"] }
+lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
+musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+rand = { version = "0.8.5", optional = true }
+sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", default-features = false }
+sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
+
+codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
+log = { version = "0.4", default-features = false }
+
+
+[dev-dependencies]
+rand = { version = "0.8.5" }
+
+
+[features]
+default = ["std"]
+std = [
+    "musig2",
+    "itc-direct-rpc-client/std",
+    "itc-direct-rpc-server/std",
+    "log/std",
+    "itp-types/std",
+    "bc-enclave-registry/std",
+    "litentry-primitives/std",
+    "itp-rpc/std",
+    "bc-musig2-ceremony/std",
+    "lc-direct-call/std",
+    "itp-sgx-crypto/std",
+    "rand",
+]
+sgx = [
+    "sgx_tstd",
+    "musig2_sgx",
+    "itc-direct-rpc-client/sgx",
+    "itc-direct-rpc-server/sgx",
+    "bc-enclave-registry/sgx",
+    "litentry-primitives/sgx",
+    "itp-rpc/sgx",
+    "bc-musig2-ceremony/sgx",
+    "lc-direct-call/sgx",
+    "itp-sgx-crypto/sgx",
+    "sgx_crypto_helper/mesalock_sgx",
+    "sgx_rand",
+]

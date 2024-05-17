@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
+#![recursion_limit = "256"]
+
 use std::thread;
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
@@ -65,6 +68,8 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(twitter_official::query_user_by_id())
 					.or(twitter_official::request_user_access_token())
 					.or(discord_official::query_message())
+					.or(discord_official::get_user_info())
+					.or(discord_official::request_user_access_token())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
 					.or(discord_litentry::has_role())
@@ -76,6 +81,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(blockchain_info::query_rawaddr())
 					.or(blockchain_info::query_multiaddr())
 					.or(achainable::query())
+					.or(achainable::query_labels())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())
 					.or(nodereal::query())

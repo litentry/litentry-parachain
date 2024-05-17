@@ -1,5 +1,6 @@
 [package]
 name = "bc-relayer-registry"
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
 

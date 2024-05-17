@@ -21,8 +21,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::IssuerRuntimeVersion;
-use lc_data_providers::{twitter_official::TwitterOfficialClient, DataProviderConfig};
+use lc_data_providers::{
+	twitter_official::TwitterOfficialClient, DataProviderConfig, Error as DataProviderError,
+};
 
 const VC_A6_SUBJECT_DESCRIPTION: &str = "The range of the user's Twitter follower count";
 const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
@@ -46,21 +49,33 @@ pub fn build(
 	);
 	let mut sum: u32 = 0;
 
-	for identity in &req.identities {
-		if let Identity::Twitter(address) = &identity.0 {
-			let twitter_handler = address.inner_ref().to_vec();
-			let user = client.query_user_by_name(twitter_handler).map_err(|e| {
-				Error::RequestVCFailed(
-					Assertion::A6,
-					ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", e).into())),
-				)
-			})?;
+	let identities = req
+		.identities
+		.iter()
+		.map(|(identity, _)| identity.clone())
+		.collect::<Vec<Identity>>();
 
-			if let Some(metrics) = user.public_metrics {
-				sum += metrics.followers_count;
+	loop_with_abort_strategy::<fn(&_) -> bool, Identity, DataProviderError>(
+		identities,
+		|identity| {
+			if let Identity::Twitter(address) = identity {
+				let twitter_handler = address.inner_ref().to_vec();
+				let user = client.query_user_by_name(twitter_handler)?;
+
+				if let Some(metrics) = user.public_metrics {
+					sum += metrics.followers_count;
+				}
 			}
-		}
-	}
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::A6,
+			ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", errors[0]).into())),
+		)
+	})?;
 
 	let min: u32;
 	let max: u32;

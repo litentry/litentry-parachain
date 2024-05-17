@@ -36,10 +36,7 @@ use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
-use itp_top_pool_author::{
-	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
-	traits::AuthorApi,
-};
+use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
 use itp_types::{RsaRequest, ShardIdentifier};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
@@ -63,16 +60,13 @@ pub fn process_indirect_call_in_top_pool() {
 	let (_, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
 
 	let top_pool = create_top_pool();
-	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
-		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
-		Arc::new(sender),
 	));
 
 	let encrypted_indirect_call =

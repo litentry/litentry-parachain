@@ -30,7 +30,7 @@ export default {
                 LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
                 BRC20AmountHolder: "Null",
-                CyptoSummary: "Null",
+                CryptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
@@ -186,14 +186,24 @@ export default {
                 "Sol",
                 "Mcrt",
                 "Btc",
+                "Ada",
+                "Doge",
+                "Shib",
+                "Uni",
+                "Bch",
+                "Etc",
+                "Atom",
+                "Dai",
+                "Leo",
+                "Fil",
+                "Imx",
+                "Cro",
+                "Inj",
             ],
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: [
-                "KaratDaoUser",
-                "MagicCraftStakingUser",
-            ],
+            _enum: ["KaratDaoUser", "MagicCraftStakingUser"],
         },
         // Web3NftType
         Web3NftType: {
