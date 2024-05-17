@@ -165,17 +165,24 @@ pub struct MockEvents;
 
 impl FilterEvents for MockEvents {
 	type Error = ();
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(Vec::from([ExtrinsicStatus::Success]))
-	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
+	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
 		let transfer = BalanceTransfer {
 			to: [0u8; 32].into(),
 			from: [0u8; 32].into(),
 			amount: Balance::default(),
 		};
 		Ok(Vec::from([transfer]))
+	}
+
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
 
@@ -190,8 +197,8 @@ where
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
 		_: &AccountId,
-	) -> core::result::Result<(), Error> {
-		Ok(())
+	) -> core::result::Result<Vec<H256>, Error> {
+		Ok(Vec::from([H256::default()]))
 	}
 }
 

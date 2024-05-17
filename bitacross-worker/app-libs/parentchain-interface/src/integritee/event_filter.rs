@@ -18,6 +18,7 @@
 
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
+use itp_node_api::api_client::StaticEvent;
 
 use itp_types::{
 	parentchain::{
@@ -33,6 +34,23 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 pub struct FilterableEvents(pub Events<H256>);
+
+impl FilterableEvents {
+	fn filter<T: StaticEvent, E>(&self) -> Result<Vec<T>, E> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<T>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+}
 
 // todo: improve: https://github.com/integritee-network/worker/pull/1378#discussion_r1393933766
 impl ToEvents<Events<H256>> for FilterableEvents {
@@ -50,7 +68,7 @@ impl From<Events<H256>> for FilterableEvents {
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
 
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
+	fn get_extrinsic_statuses(&self) -> Result<Vec<ExtrinsicStatus>, Self::Error> {
 		Ok(self
 			.to_events()
 			.iter()
@@ -72,18 +90,17 @@ impl FilterEvents for FilterableEvents {
 			.collect())
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.flatten() // flatten filters out the nones
-			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
-				Ok(maybe_event) => maybe_event,
-				Err(e) => {
-					log::error!("Could not decode event: {:?}", e);
-					None
-				},
-			})
-			.collect())
+	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+		self.filter()
 	}
 }

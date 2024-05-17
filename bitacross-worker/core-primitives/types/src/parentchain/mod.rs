@@ -26,7 +26,7 @@ use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::bounded::alloc;
+use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 use substrate_api_client::ac_node_api::StaticEvent;
 
@@ -92,16 +92,15 @@ pub trait IdentifyParentchain {
 }
 
 pub trait FilterEvents {
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
 	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
-}
 
-#[derive(Debug)]
-pub enum ExtrinsicStatus {
-	Success,
-	Failed,
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error>;
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>
@@ -113,20 +112,28 @@ where
 		executor: &Executor,
 		events: impl FilterEvents,
 		vault_account: &AccountId,
-	) -> core::result::Result<(), Error>;
+	) -> core::result::Result<Vec<H256>, Error>;
 }
 
 #[derive(Debug)]
 pub enum ParentchainEventProcessingError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
+	ScheduledEnclaveSetFailure,
+	ScheduledEnclaveRemovedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = match &self {
-			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
-			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
+			ParentchainEventProcessingError::ShieldFundsFailure =>
+				"Parentchain Event Processing Error: ShieldFundsFailure",
+			ParentchainEventProcessingError::FunctionalityDisabled =>
+				"Parentchain Event Processing Error: FunctionalityDisabled",
+			ParentchainEventProcessingError::ScheduledEnclaveSetFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
+			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
 		};
 		write!(f, "{}", message)
 	}
