@@ -87,7 +87,6 @@ impl fmt::Debug for ErrorDetail {
 			ErrorDetail::WrongWeb2Handle => write!(f, "WrongWeb2Handle"),
 			ErrorDetail::UnexpectedMessage => write!(f, "UnexpectedMessage"),
 			ErrorDetail::VerifyWeb3SignatureFailed => write!(f, "VerifyWeb3SignatureFailed"),
-			ErrorDetail::NoEligibleIdentity => write!(f, "NoEligibleIdentity"),
 		}
 	}
 }

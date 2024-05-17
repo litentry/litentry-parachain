@@ -46,7 +46,12 @@ pub fn build(
 	})?;
 
 	if response.is_empty() {
-		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
+		Err(Error::RequestVCFailed(
+			Assertion::BRC20AmountHolder,
+			ErrorDetail::StfError(ErrorString::truncate_from(
+				"BRC20 token not found for linked identity".as_bytes().to_vec(),
+			)),
+		))
 	} else {
 		let runtime_version = IssuerRuntimeVersion {
 			parachain: req.parachain_runtime_version,
