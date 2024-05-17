@@ -142,7 +142,7 @@ impl<
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
-	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
