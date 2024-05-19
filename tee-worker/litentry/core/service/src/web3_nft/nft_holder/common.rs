@@ -22,7 +22,10 @@ extern crate sgx_tstd as std;
 
 use core::result::Result;
 
-use lc_common::web3_nft::NftAddress;
+use lc_common::{
+	abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls},
+	web3_nft::NftAddress,
+};
 use lc_data_providers::{
 	moralis::{
 		GetNftsByWalletParam, MoralisChainParam, MoralisClient, NftApiList as MoralisNftApiList,
@@ -41,34 +44,45 @@ pub fn has_nft_721(
 	nft_type: Web3NftType,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
-	for address in addresses.iter() {
-		let network = address.0;
-		let token_address = nft_type.get_nft_address(network).unwrap_or_default();
+	let mut result = false;
 
-		match network {
-			Web3Network::Bsc | Web3Network::Ethereum => {
-				if let Some(mut client) =
-					network.create_nodereal_jsonrpc_client(data_provider_config)
-				{
-					let param = GetTokenBalance721Param {
-						token_address: token_address.into(),
-						account_address: address.1.clone(),
-						block_number: "latest".into(),
-					};
-					match client.get_token_balance_721(&param, false) {
-						Ok(balance) =>
-							if balance > 0 {
-								return Ok(true)
-							},
-						Err(err) => return Err(err.into_error_detail()),
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			let network = address.0;
+			let token_address = nft_type.get_nft_address(network).unwrap_or_default();
+
+			match network {
+				Web3Network::Bsc | Web3Network::Ethereum => {
+					match network.create_nodereal_jsonrpc_client(data_provider_config) {
+						Some(mut client) => {
+							let param = GetTokenBalance721Param {
+								token_address: token_address.into(),
+								account_address: address.1.clone(),
+								block_number: "latest".into(),
+							};
+							match client.get_token_balance_721(&param, false) {
+								Ok(balance) =>
+									if balance > 0 {
+										result = true;
+										Ok(LoopControls::Break)
+									} else {
+										Ok(LoopControls::Continue)
+									},
+								Err(err) => Err(err.into_error_detail()),
+							}
+						},
+						None => Ok(LoopControls::Continue),
 					}
-				}
-			},
-			_ => {},
-		}
-	}
+				},
+				_ => Ok(LoopControls::Continue),
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
-	Ok(false)
+	Ok(result)
 }
 
 // support ERC1155/BEP1155 nft token
@@ -77,48 +91,57 @@ pub fn has_nft_1155(
 	nft_type: Web3NftType,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
+	let mut result = false;
 	let mut client = MoralisClient::new(data_provider_config);
-	for address in addresses.iter() {
-		let network = address.0;
-		let token_address = nft_type.get_nft_address(network).unwrap_or_default();
 
-		match network {
-			Web3Network::Bsc
-			| Web3Network::Ethereum
-			| Web3Network::Polygon
-			| Web3Network::Arbitrum => {
-				let mut cursor: Option<String> = None;
-				'inner: loop {
-					let param = GetNftsByWalletParam {
-						address: address.1.clone(),
-						chain: MoralisChainParam::new(&network),
-						token_addresses: Some(vec![token_address.into()]),
-						limit: None,
-						cursor,
-					};
-					match client.get_nfts_by_wallet(&param, false) {
-						Ok(resp) => {
-							cursor = resp.cursor;
-							for item in &resp.result {
-								match item.amount.parse::<u32>() {
-									Ok(balance) =>
-										if balance > 0 {
-											return Ok(true)
-										},
-									Err(_) => return Err(ErrorDetail::ParseError),
+	loop_with_abort_strategy(
+		addresses,
+		|address| {
+			let network = address.0;
+			let token_address = nft_type.get_nft_address(network).unwrap_or_default();
+
+			match network {
+				Web3Network::Bsc
+				| Web3Network::Ethereum
+				| Web3Network::Polygon
+				| Web3Network::Arbitrum => {
+					let mut cursor: Option<String> = None;
+					'inner: loop {
+						let param = GetNftsByWalletParam {
+							address: address.1.clone(),
+							chain: MoralisChainParam::new(&network),
+							token_addresses: Some(vec![token_address.into()]),
+							limit: None,
+							cursor,
+						};
+						match client.get_nfts_by_wallet(&param, false) {
+							Ok(resp) => {
+								cursor = resp.cursor;
+								for item in &resp.result {
+									match item.amount.parse::<u32>() {
+										Ok(balance) =>
+											if balance > 0 {
+												result = true;
+												return Ok(LoopControls::Break)
+											},
+										Err(_) => return Err(ErrorDetail::ParseError),
+									}
 								}
-							}
-						},
-						Err(err) => return Err(err.into_error_detail()),
+							},
+							Err(err) => return Err(err.into_error_detail()),
+						}
+						if cursor.is_none() {
+							break 'inner
+						}
 					}
-					if cursor.is_none() {
-						break 'inner
-					}
-				}
-			},
-			_ => {},
-		}
-	}
+					Ok(LoopControls::Continue)
+				},
+				_ => Ok(LoopControls::Continue),
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
-	Ok(false)
+	Ok(result)
 }

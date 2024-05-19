@@ -89,7 +89,7 @@ jobs:
 
       - name: Build with srtool
         id: srtool_build
-        uses: chevdor/srtool-actions@v0.8.0
+        uses: chevdor/srtool-actions@v0.9.2
         env:
           # optional: will override the parachain pallet ID and authorize_upgrade call ID,
           #           which will result in a different parachain_authorize_upgrade_hash
@@ -128,7 +128,7 @@ jobs:
 
       - name: Set env
         run: |
-          PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/p/v/;s/\(.*\)-w.*/\1/')
+          PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build docker image
@@ -195,7 +195,7 @@ jobs:
 
       - name: Set env
         run: |
-          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
+          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3 | sed 's/w/v/')
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build local builder
@@ -308,7 +308,7 @@ jobs:
 
       - name: Download and tag docker image
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/p/v/;s/\(.*\)-w.*/\1/')
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           docker pull litentry/litentry-parachain:$DOCKER_TAG
           docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
 
@@ -353,7 +353,7 @@ jobs:
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/p/v/;s/\(.*\)-w.*/\1/')
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           PARACHAIN_NAME=local-parachain
           BASE_URL=ws://127.0.0.1:9944
           chain=${{ matrix.chain }}

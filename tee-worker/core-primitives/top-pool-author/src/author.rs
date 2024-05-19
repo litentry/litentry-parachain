@@ -272,16 +272,16 @@ impl<
 		}
 
 		if let Some(trusted_call_signed) = trusted_operation.to_call() {
-			debug!(
-				"Submitting trusted call to TOP pool: {:?}, TOP hash: {:?}",
-				trusted_call_signed,
-				self.hash_of(&trusted_operation)
+			info!(
+				"Submitting trusted call, hash: {:?}, call: {:?}",
+				self.hash_of(&trusted_operation),
+				trusted_call_signed
 			);
 		} else if let StfTrustedOperation::<TCS, G>::get(ref getter) = trusted_operation {
-			debug!(
-				"Submitting trusted or public getter to TOP pool: {:?}, TOP hash: {:?}",
+			info!(
+				"Submitting trusted getter, hash {:?}, call: {:?}",
+				self.hash_of(&trusted_operation),
 				getter,
-				self.hash_of(&trusted_operation)
 			);
 		}
 
@@ -309,7 +309,7 @@ impl<
 			),
 
 			TopSubmissionMode::SubmitWatchAndBroadcast(s) => {
-				let id = self.hash_of(&trusted_operation).to_hex();
+				let hash = self.hash_of(&trusted_operation).to_hex();
 				let can_be_broadcasted = self.broadcasted_top_filter.filter(&trusted_operation);
 				let result = Box::pin(
 					self.top_pool
@@ -324,11 +324,13 @@ impl<
 				// broadcast only if filter allowed
 				if can_be_broadcasted {
 					if let Err(e) = self.request_sink.send(BroadcastedRequest {
-						id,
+						id: hash.clone(),
 						payload: request_to_broadcast,
 						rpc_method: s,
 					}) {
 						error!("Could not send broadcasted request, reason: {:?}", e);
+					} else {
+						info!("Broadcast request OK, hash = {}", hash);
 					}
 				}
 				result
@@ -356,7 +358,7 @@ impl<
 			TrustedOperationOrHash::Operation(op) => Ok(self.top_pool.hash_of(&op)),
 		}?;
 
-		debug!("removing {:?} from top pool", hash);
+		info!("removing {:?} from top pool", hash);
 
 		// Update metric
 		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeDecrement) {
@@ -508,7 +510,7 @@ impl<
 			if let Err(e) = self.remove_top(executed_call.clone(), shard, inblock) {
 				// We don't want to return here before all calls have been iterated through,
 				// hence log message and collect failed calls in vec.
-				debug!("Error removing trusted call from top pool: {:?}", e);
+				warn!("Error removing trusted call from top pool: {:?}", e);
 				failed_to_remove.push(executed_call);
 			}
 		}

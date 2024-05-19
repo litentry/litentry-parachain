@@ -46,7 +46,7 @@ pub struct KaratDaoClient {
 }
 
 #[derive(Debug)]
-pub struct KaraDaoRequest {
+pub struct KaratDaoRequest {
 	path: String,
 	query: Option<Vec<(String, String)>>,
 }
@@ -66,7 +66,7 @@ impl KaratDaoClient {
 		KaratDaoClient { retry_option, client }
 	}
 
-	fn get<T>(&mut self, params: KaraDaoRequest, fast_fail: bool) -> Result<T, Error>
+	fn get<T>(&mut self, params: KaratDaoRequest, fast_fail: bool) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
 	{
@@ -105,7 +105,7 @@ pub struct UserVerificationResult {
 	pub is_valid: bool,
 }
 
-pub trait KaraDaoApi {
+pub trait KaratDaoApi {
 	fn user_verification(
 		&mut self,
 		address: String,
@@ -113,7 +113,7 @@ pub trait KaraDaoApi {
 	) -> Result<UserVerificationResponse, Error>;
 }
 
-impl KaraDaoApi for KaratDaoClient {
+impl KaratDaoApi for KaratDaoClient {
 	fn user_verification(
 		&mut self,
 		address: String,
@@ -121,7 +121,7 @@ impl KaraDaoApi for KaratDaoClient {
 	) -> Result<UserVerificationResponse, Error> {
 		let query: Vec<(String, String)> = vec![("address".to_string(), address)];
 
-		let params = KaraDaoRequest { path: "user/verification".into(), query: Some(query) };
+		let params = KaratDaoRequest { path: "user/verification".into(), query: Some(query) };
 
 		debug!("user_verification, params: {:?}", params);
 

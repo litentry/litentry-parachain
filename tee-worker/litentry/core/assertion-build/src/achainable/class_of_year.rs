@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
-use lc_credentials::Credential;
+use lc_credentials::{Credential, IssuerRuntimeVersion};
 use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{AchainableClassOfYear, AchainableParams};
@@ -72,7 +72,13 @@ pub fn build_class_of_year(
 	let achainable_param = AchainableParams::ClassOfYear(param);
 	let (ret, created_date) =
 		request_achainable_classofyear(addresses, achainable_param.clone(), data_provider_config)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_class_of_year(ret, created_date);

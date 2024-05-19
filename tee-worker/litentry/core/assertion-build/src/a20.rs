@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
+use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{build_client_with_cert, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +79,13 @@ pub fn build(
 				)),
 			)
 		})?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A20_SUBJECT_DESCRIPTION, VC_A20_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a20(value);

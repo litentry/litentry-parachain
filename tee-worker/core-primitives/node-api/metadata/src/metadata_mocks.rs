@@ -17,13 +17,14 @@
 
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
 use itp_api_client_types::Metadata;
+use sp_version::RuntimeVersion;
 
 impl TryFrom<NodeMetadataMock> for Metadata {
 	type Error = ();
@@ -247,9 +248,17 @@ impl RuntimeCall for NodeMetadataMock {
 	}
 }
 
-impl SystemSs58Prefix for NodeMetadataMock {
+impl SystemConstants for NodeMetadataMock {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		Ok(131)
+	}
+
+	fn system_version(&self) -> Result<RuntimeVersion> {
+		Ok(RuntimeVersion {
+			spec_version: self.runtime_spec_version,
+			transaction_version: self.runtime_transaction_version,
+			..Default::default()
+		})
 	}
 }
 

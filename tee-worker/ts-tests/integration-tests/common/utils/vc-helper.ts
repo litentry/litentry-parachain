@@ -114,9 +114,28 @@ export const mockAssertions = [
         },
     },
     {
+        description: 'A deployer of a smart contract on Ethereum',
+        assertion: {
+            Achainable: {
+                AmountToken: {
+                    name: 'LIT Holding Amount',
+                    chain: ['Litentry', 'Litmus'],
+                    amount: '0',
+                },
+            },
+        },
+    },
+
+    {
         description: 'The length of time a user continues to hold LIT token',
         assertion: {
             A4: '10',
+        },
+    },
+    {
+        description: "The range of the user's Twitter follower count",
+        assertion: {
+            A6: [],
         },
     },
     {
@@ -130,6 +149,12 @@ export const mockAssertions = [
             'The range of number of transactions a user has made for a specific token on all supported networks(Litentry)',
         assertion: {
             A8: ['Litentry'],
+        },
+    },
+    {
+        description: 'The user has participated in any Polkadot on-chain governance events',
+        assertion: {
+            A14: [],
         },
     },
 
@@ -178,7 +203,7 @@ export const mockAssertions = [
         },
     },
 
-    // nodereal_jsonrpc
+    // NftHolder
     {
         description: 'You are a holder of a certain kind of NFT',
         assertion: {
@@ -186,9 +211,59 @@ export const mockAssertions = [
         },
     },
     {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'Club3Sbt',
+        },
+    },
+
+    // TokenHoldingAmount
+    {
         description: 'The amount of TRX you are holding',
         assertion: {
             TokenHoldingAmount: 'TRX',
+        },
+    },
+    {
+        description: 'The amount of BNB you are holding',
+        assertion: {
+            TokenHoldingAmount: 'BNB',
+        },
+    },
+    {
+        description: 'The amount of ETH you are holding',
+        assertion: {
+            TokenHoldingAmount: 'ETH',
+        },
+    },
+    {
+        description: 'The amount of LIT you are holding',
+        assertion: {
+            TokenHoldingAmount: 'LIT',
+        },
+    },
+    {
+        description: 'The amount of SOL you are holding',
+        assertion: {
+            TokenHoldingAmount: 'SOL',
+        },
+    },
+    {
+        description: 'The amount of NFP you are holding',
+        assertion: {
+            TokenHoldingAmount: 'NFP',
+        },
+    },
+    {
+        description: 'The amount of BTC you are holding',
+        assertion: {
+            TokenHoldingAmount: 'BTC',
+        },
+    },
+    {
+        description: 'The amount of SHIB you are holding',
+        assertion: {
+            TokenHoldingAmount: 'SHIB',
         },
     },
 
@@ -205,10 +280,33 @@ export const mockAssertions = [
         },
     },
 
+    // PlatformUser
     {
         description: 'You are a user of a certain platform',
         assertion: {
             PlatformUser: 'KaratDaoUser',
+        },
+    },
+    {
+        description: 'You are a user of a certain platform',
+        assertion: {
+            PlatformUser: 'MagicCraftStakingUser',
+        },
+    },
+
+    // CryptoSummary
+    {
+        description: 'Generate a summary of your on-chain identity',
+        assertion: {
+            CryptoSummary: [],
+        },
+    },
+
+    // WeirdoGhostGangHolder
+    {
+        description: 'You are WeirdoGhostGang NFT holder',
+        assertion: {
+            WeirdoGhostGangHolder: [],
         },
     },
 ];

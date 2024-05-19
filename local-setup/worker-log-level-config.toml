@@ -29,6 +29,9 @@ lc_data_providers="debug"
 itp_top_pool="debug"
 itc_parentchain_indirect_calls_executor="debug"
 itc_direct_rpc_client="debug"
+itp_top_pool_author="debug"
+bc_musig2_runner="debug"
+bc_musig2_ceremony="debug"
 
 [litentry-cli]
 RUST_LOG="debug"

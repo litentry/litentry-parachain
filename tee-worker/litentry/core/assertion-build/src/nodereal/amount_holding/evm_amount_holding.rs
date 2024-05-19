@@ -23,11 +23,12 @@ extern crate sgx_tstd as std;
 use core::result;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
-		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
+		EVMAmountHoldingAssertionUpdate, EVMTokenAddress,
 	},
-	Credential,
+	Credential, IssuerRuntimeVersion,
 };
 use lc_data_providers::{
 	nodereal_jsonrpc::{
@@ -46,30 +47,37 @@ fn get_holding_balance(
 	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
 	let mut total_balance = 0_u128;
 
-	let decimals = token_type.get_decimals();
+	let decimals = token_type.token_decimals();
 
-	for address in addresses.iter() {
-		let param = GetTokenBalance20Param {
-			contract_address: token_type.get_address(address.0).unwrap_or_default().into(),
-			address: address.1.clone(),
-			block_number: "latest".into(),
-		};
-		match address.0 {
-			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
-				Ok(balance) => {
-					total_balance += balance;
+	loop_with_abort_strategy(
+		addresses,
+		|(network, address)| {
+			let param = GetTokenBalance20Param {
+				contract_address: token_type.get_address(*network).unwrap_or_default().into(),
+				address: address.clone(),
+				block_number: "latest".into(),
+			};
+			match network {
+				Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
+					Ok(balance) => {
+						total_balance += balance;
+						Ok(LoopControls::Continue)
+					},
+					Err(err) => Err(err),
 				},
-				Err(err) => return Err(err),
-			},
-			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
-				Ok(balance) => {
-					total_balance += balance;
+				Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
+					Ok(balance) => {
+						total_balance += balance;
+						Ok(LoopControls::Continue)
+					},
+					Err(err) => Err(err),
 				},
-				Err(err) => return Err(err),
-			},
-			_ => {},
-		}
-	}
+				_ => Ok(LoopControls::Continue),
+			}
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok((total_balance / decimals as u128) as f64
 		+ ((total_balance % decimals as u128) as f64 / decimals))
@@ -102,18 +110,25 @@ pub fn build(
 		});
 
 	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::EVMAmountHolding(token_type),
-					e.into_error_detail(),
-				))
-			},
+		Ok(value) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::EVMAmountHolding(token_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -193,6 +208,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -248,6 +265,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -303,6 +322,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

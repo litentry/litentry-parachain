@@ -20,6 +20,9 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{DetermineWatch, RpcConnectionRegistry, RpcHash};
 use itc_tls_websocket_server::{error::WebSocketResult, ConnectionToken, WebSocketMessageHandler};
+use itp_rpc::{RpcResponse, RpcReturnValue};
+use itp_types::DirectRequestStatus;
+use itp_utils::FromHexPrefixed;
 use jsonrpc_core::IoHandler;
 use log::*;
 use std::{string::String, sync::Arc};
@@ -66,9 +69,17 @@ where
 
 		debug!("RPC response string: {:?}", maybe_rpc_response);
 
-		if let Ok(rpc_response) =
-			serde_json::from_str(maybe_rpc_response.clone().unwrap_or_default().as_str())
-		{
+		if let Ok(rpc_response) = serde_json::from_str::<RpcResponse>(
+			maybe_rpc_response.clone().unwrap_or_default().as_str(),
+		) {
+			let ignore_response =
+				if let Ok(rpc_return_value) = RpcReturnValue::from_hex(&rpc_response.result) {
+					//in order to silence it
+					matches!(rpc_return_value.status, DirectRequestStatus::Processing(_))
+				} else {
+					false
+				};
+
 			if let Ok(Some(connection_hash)) =
 				self.connection_watcher.must_be_watched(&rpc_response)
 			{
@@ -78,6 +89,10 @@ where
 					rpc_response,
 					false,
 				);
+			}
+
+			if ignore_response {
+				return Ok(None)
 			}
 		}
 

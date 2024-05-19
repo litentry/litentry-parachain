@@ -94,6 +94,9 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	/// Publish generated wallets on parachain
 	fn publish_wallets(&self) -> EnclaveResult<()>;
+
+	// finish enclave initialization
+	fn finish_enclave_init(&self) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -473,6 +476,17 @@ mod impl_ffi {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let result = unsafe { ffi::publish_wallets(self.eid, &mut retval) };
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn finish_enclave_init(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::finish_enclave_init(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

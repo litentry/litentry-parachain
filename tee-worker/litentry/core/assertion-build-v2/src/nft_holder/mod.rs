@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials_v2::{nft_holder::NFTHolderAssertionUpdate, Credential};
+use lc_credentials_v2::{nft_holder::NFTHolderAssertionUpdate, Credential, IssuerRuntimeVersion};
 use lc_service::web3_nft::nft_holder::has_nft;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Web3Network, Web3NftType};
@@ -53,15 +53,25 @@ pub fn build(
 	});
 
 	match result {
-		Ok(has_nft) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_nft_holder_assertion(nft_type, has_nft);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(Assertion::NftHolder(nft_type), e.into_error_detail()))
-			},
+		Ok(has_nft) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_nft_holder_assertion(nft_type, has_nft);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::NftHolder(nft_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -91,6 +101,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

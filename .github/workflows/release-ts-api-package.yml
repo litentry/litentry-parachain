@@ -19,21 +19,24 @@ jobs:
       - name: Set ENV
         run: |
           # extracting parachain version and worker version from release tag
-          echo "PARACHAIN_TAG=$(echo ${{inputs.release-tag}} | sed 's/p/v/;s/\(.*\)-w.*/\1/')" >> $GITHUB_ENV
-          echo "WORKER_TAG=$(echo ${{inputs.release-tag}} | sed 's/.*\(w.*\)/\1/;s/w/v/')" >> $GITHUB_ENV
+          PARACHAIN_DOCKER_TAG=$(echo ${{inputs.release-tag}} | cut -d'-' -f1 | sed 's/p/v/')
+          echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
+
+          WORKER_DOCKER_TAG=$(echo ${{inputs.release-tag}}  | sed 's/.*w/v/;s/-.*//')
+          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
-          docker pull litentry/litentry-worker:$WORKER_TAG
-          docker pull litentry/litentry-cli:$WORKER_TAG
-          docker pull litentry/litentry-parachain:$PARACHAIN_TAG
+          docker pull litentry/litentry-worker:$WORKER_DOCKER_TAG
+          docker pull litentry/litentry-cli:$WORKER_DOCKER_TAG
+          docker pull litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG
 
       - name: Re-tag docker image
         run: |
-          docker tag litentry/litentry-worker:$WORKER_TAG litentry/litentry-worker:latest
-          docker tag litentry/litentry-cli:$WORKER_TAG litentry/litentry-cli:latest
-          docker tag litentry/litentry-parachain:$PARACHAIN_TAG litentry/litentry-parachain:latest
+          docker tag litentry/litentry-worker:$WORKER_DOCKER_TAG litentry/litentry-worker:latest
+          docker tag litentry/litentry-cli:$WORKER_DOCKER_TAG litentry/litentry-cli:latest
+          docker tag litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG litentry/litentry-parachain:latest
 
       - run: docker images --all
 

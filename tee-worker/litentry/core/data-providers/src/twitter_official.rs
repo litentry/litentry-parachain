@@ -18,6 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client_with_cert, vec_to_string, Error, HttpError, UserInfo};
+use base64::engine::{general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -28,6 +29,7 @@ use itc_rest_client::{
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
+	collections::HashMap,
 	format,
 	string::{String, ToString},
 	vec,
@@ -99,6 +101,22 @@ pub struct TargetTwitterUser {
 	pub followed_by: bool,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUserAccessTokenData {
+	pub client_id: String,
+	pub code: String,
+	pub code_verifier: String,
+	pub redirect_uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUserAccessToken {
+	pub access_token: String,
+	pub token_type: String,
+	pub expires_in: u32,
+	pub scope: String,
+}
+
 impl RestPath<String> for Tweet {
 	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
@@ -162,6 +180,10 @@ impl TwitterOfficialClient {
 		let client = build_client_with_cert(url, headers.clone());
 
 		TwitterOfficialClient { client }
+	}
+
+	pub fn oauth2_authorization(client_id: &str, client_secret: &str) -> String {
+		format!("Basic {}", BASE64_STANDARD.encode(format!("{}:{}", client_id, client_secret)))
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
@@ -244,6 +266,35 @@ impl TwitterOfficialClient {
 		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
 		Ok(user)
 	}
+
+	pub fn request_user_access_token(
+		&mut self,
+		data: TwitterUserAccessTokenData,
+	) -> Result<TwitterUserAccessToken, Error> {
+		debug!("Twitter create access token");
+
+		let path = String::from("/2/oauth2/token");
+
+		let mut body = HashMap::new();
+		body.insert("client_id".to_string(), data.client_id);
+		body.insert("code".to_string(), data.code);
+		body.insert("code_verifier".to_string(), data.code_verifier);
+		body.insert("redirect_uri".to_string(), data.redirect_uri);
+		body.insert("grant_type".to_string(), "authorization_code".to_string());
+
+		let resp = self
+			.client
+			.post_form_urlencoded_capture::<String, TwitterAPIV2Response<TwitterUserAccessToken>>(
+				path, body,
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let token = resp
+			.data
+			.ok_or_else(|| Error::RequestError("could not get token from twitter".to_string()))?;
+
+		Ok(token)
+	}
 }
 
 #[cfg(test)]
@@ -258,6 +309,15 @@ mod tests {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 		data_provider_config.set_twitter_official_url(url).unwrap();
 		data_provider_config
+	}
+
+	#[test]
+	fn test_oauth2_authorization() {
+		let client_id = "Z24wcG85SXVJUy1ldE1wdVl3MlA6MTpjaY";
+		let client_secret = "lYq3l-sMbGVk94iaze3j8G4ne1MBWAQ8pH4-L58yQ7y4mHOCgp";
+		let token = TwitterOfficialClient::oauth2_authorization(client_id, client_secret);
+
+		assert_eq!(token, "Basic WjI0d2NHODVTWFZKVXkxbGRFMXdkVmwzTWxBNk1UcGphWTpsWXEzbC1zTWJHVms5NGlhemUzajhHNG5lMU1CV0FROHBINC1MNTh5UTd5NG1IT0NncA==".to_string());
 	}
 
 	#[test]
@@ -307,6 +367,29 @@ mod tests {
 		let mut client =
 			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
 		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
+
+	#[test]
+	fn request_user_access_token_work() {
+		let data_provider_config = init();
+
+		let data = TwitterUserAccessTokenData {
+			client_id: data_provider_config.twitter_client_id.clone(),
+			code: "code".to_string(),
+			code_verifier: "code_verifier".to_string(),
+			redirect_uri: "redirect_uri".to_string(),
+		};
+		let authorization = TwitterOfficialClient::oauth2_authorization(
+			&data_provider_config.twitter_client_id,
+			&data_provider_config.twitter_client_secret,
+		);
+		let mut client = TwitterOfficialClient::v2(
+			&data_provider_config.twitter_official_url,
+			authorization.as_str(),
+		);
+		let result = client.request_user_access_token(data);
+
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }

@@ -21,7 +21,7 @@ use crate::{direct_client::DirectApi, error::Result};
 use codec::Decode;
 use frame_metadata::RuntimeMetadataPrefixed;
 use itp_api_client_types::Metadata;
-use itp_stf_primitives::types::{AccountId, ShardIdentifier};
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{MrEnclave, H256};
 use litentry_primitives::Identity;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;

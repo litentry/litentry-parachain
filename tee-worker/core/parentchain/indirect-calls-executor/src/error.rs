@@ -23,7 +23,7 @@ use itp_types::parentchain::ParentchainEventProcessingError;
 use lc_scheduled_enclave::error::Error as ScheduledEnclaveError;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
-use std::{boxed::Box, format};
+use std::{boxed::Box, format, string::String};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -54,6 +54,8 @@ pub enum Error {
 	BatchAllHandlingError,
 	#[error("ScheduledEnclave Error: {0:?}")]
 	ImportScheduledEnclave(ScheduledEnclaveError),
+	#[error("AssertionCreated handling error: {0:?}")]
+	AssertionCreatedHandling(String),
 }
 
 impl From<ParentchainEventProcessingError> for Error {

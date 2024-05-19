@@ -40,9 +40,6 @@ PORTS = [
     "BobWSPort",
     "BobRPCPort",
     "BobPort",
-    "CollatorWSPort",
-    "CollatorRPCPort",
-    "CollatorPort",
     "TrustedWorkerPort",
     "UntrustedWorkerPort",
     "MuRaPort",
@@ -199,7 +196,7 @@ def get_flags(index, worker):
 
     return list(filter(None, [
         "--clean-reset",
-        "-T", "ws://localhost",
+        "-T", "wss://localhost",
         "-P", ports['trusted_worker_port'],
         "-w", ports['untrusted_worker_port'],
         "-r", ports['mura_port'],
@@ -216,6 +213,15 @@ def get_subcommand_flags(index):
         "--dev"
     ]))
 
+def add_collator_ports():
+    PORTS.extend(
+        [
+            "CollatorWSPort",
+            "CollatorRPCPort",
+            "CollatorPort",
+        ]
+    )    
+
 def main(processes, worker, workers_number, parachain_type, log_config_path, offset, parachain_dir):
     # Litentry
     if worker == "identity":
@@ -229,15 +235,18 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
 
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
+        add_collator_ports()
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./local-setup/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary-standalone":
+        add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         run(["./scripts/launch-standalone.sh"], check=True)
     elif parachain_type == "local-binary":
+        add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         run(["./scripts/launch-local-binary.sh", "rococo"], check=True)

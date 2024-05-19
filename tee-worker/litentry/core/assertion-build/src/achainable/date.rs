@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
+use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::DataProviderConfig;
 
 pub fn build_date(
@@ -38,7 +39,13 @@ pub fn build_date(
 
 	let achainable_param = AchainableParams::Date(param.clone());
 	let _flag = request_achainable(addresses, achainable_param, data_provider_config)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);

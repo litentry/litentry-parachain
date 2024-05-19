@@ -22,7 +22,7 @@ use std::sync::SgxRwLock as RwLock;
 use std::sync::RwLock;
 
 use crate::{DirectRpcResult, RpcHash, SendRpcResponse};
-use itp_types::TrustedOperationStatus;
+use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use std::vec::Vec;
 
 /// Send RPC response mock.
@@ -48,6 +48,15 @@ where
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()> {
 		let mut states_lock = self.sent_states.write().unwrap();
 		states_lock.push((hash, state_encoded));
+		Ok(())
+	}
+
+	fn send_state_with_status(
+		&self,
+		_hash: Self::Hash,
+		_state_encoded: Vec<u8>,
+		_status: DirectRequestStatus,
+	) -> DirectRpcResult<()> {
 		Ok(())
 	}
 

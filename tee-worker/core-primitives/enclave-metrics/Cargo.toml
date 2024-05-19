@@ -18,9 +18,11 @@ substrate-fixed = { default-features = false, git = "https://github.com/encointe
 [features]
 default = ["std"]
 std = [
-    "substrate-fixed/std",
     "codec/std",
+    "lc-stf-task-sender/std",
+    "substrate-fixed/std",
 ]
 sgx = [
     "sgx_tstd",
+    "lc-stf-task-sender/sgx",
 ]

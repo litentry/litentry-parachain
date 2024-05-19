@@ -26,7 +26,7 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
 		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
@@ -67,7 +67,7 @@ use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
-	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
+	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
@@ -86,6 +86,7 @@ use its_sidechain::{
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_data_providers::DataProviderConfig;
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
@@ -94,6 +95,7 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
@@ -200,12 +202,20 @@ pub(crate) fn init_enclave(
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
+
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
+		data_provider_config,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -217,11 +227,8 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
-	if let Ok(data_provider_config) = DataProviderConfig::new() {
-		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
-	} else {
-		return Err(Error::Other("data provider initialize error".into()))
-	}
+	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
+	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
 
 	Ok(())
 }
@@ -246,6 +253,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -264,6 +272,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
 
 	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
@@ -274,6 +283,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
@@ -292,6 +302,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
 	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;

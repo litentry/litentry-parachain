@@ -60,6 +60,7 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
+	parentchain_event_handler: ParentchainEventHandler,
 	_phantom: PhantomData<(EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
@@ -89,6 +90,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
+		parentchain_event_handler: ParentchainEventHandler,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
@@ -96,6 +98,7 @@ impl<
 			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
+			parentchain_event_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -153,7 +156,7 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
+		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
 
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
@@ -257,8 +260,7 @@ impl<
 mod test {
 	use super::*;
 	use crate::mock::*;
-	use codec::{Decode, Encode};
-	use itc_parentchain_test::ParentchainBlockBuilder;
+	use codec::Encode;
 	use itp_node_api::{
 		api_client::{
 			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
@@ -268,10 +270,6 @@ mod test {
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
-	use itp_stf_primitives::{
-		traits::TrustedCallVerification,
-		types::{AccountId, TrustedOperation},
-	};
 	use itp_test::mock::{
 		shielding_crypto_mock::ShieldingCryptoMock,
 		stf_mock::{GetterMock, TrustedCallSignedMock},
@@ -279,8 +277,7 @@ mod test {
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
-	use std::assert_matches::assert_matches;
+	use sp_runtime::{MultiAddress, MultiSignature};
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
@@ -389,6 +386,7 @@ mod test {
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
+		let parentchain_event_handler = MockParentchainEventHandler {};
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
@@ -396,6 +394,7 @@ mod test {
 			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
+			parentchain_event_handler,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)

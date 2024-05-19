@@ -54,9 +54,6 @@ use std::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rust_base58_sgx as rust_base58;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate hex_sgx as hex;
-
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
@@ -81,6 +78,7 @@ pub mod litentry_profile;
 pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
+
 pub mod brc20;
 pub mod credential_schema;
 pub mod generic_discord_role;
@@ -117,11 +115,19 @@ pub struct DataSource {
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
+pub struct IssuerRuntimeVersion {
+	pub parachain: u32,
+	pub sidechain: u32,
+}
+
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
+#[serde(rename_all = "camelCase")]
 pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
 	pub mrenclave: String,
+	pub runtime_version: IssuerRuntimeVersion,
 }
 
 impl Issuer {
@@ -233,9 +239,14 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new(
+		subject: &Identity,
+		shard: &ShardIdentifier,
+		runtime_version: &IssuerRuntimeVersion,
+	) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, subject, shard)?;
+		let credential: Credential =
+			Credential::from_template(raw, subject, shard, runtime_version)?;
 		Ok(credential)
 	}
 
@@ -243,6 +254,7 @@ impl Credential {
 		s: &str,
 		subject: &Identity,
 		shard: &ShardIdentifier,
+		runtime_version: &IssuerRuntimeVersion,
 	) -> Result<Self, Error> {
 		debug!("generate credential from template, subject: {:?}", &subject);
 
@@ -250,6 +262,7 @@ impl Credential {
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
+		vc.issuer.runtime_version = runtime_version.clone();
 		vc.credential_subject.id =
 			subject.to_did().map_err(|err| Error::ParseError(err.to_string()))?;
 		vc.issuance_date = now_as_iso8601();
@@ -516,6 +529,21 @@ impl Credential {
 		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(ret);
 	}
+
+	pub fn update_dynamic(
+		&mut self,
+		description: String,
+		assertion_type: String,
+		assertions: Vec<AssertionLogic>,
+		schema_url: String,
+		result: bool,
+	) {
+		self.credential_subject.description = description;
+		self.credential_subject.types = assertion_type;
+		self.credential_subject.assertions = assertions;
+		self.credential_subject.values = vec![result];
+		self.credential_schema.id = schema_url;
+	}
 }
 
 /// Assertion To-Date
@@ -551,8 +579,10 @@ mod tests {
 
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
+		let runtime_version: IssuerRuntimeVersion =
+			IssuerRuntimeVersion { parachain: 6666, sidechain: 101 };
 
-		let vc = Credential::from_template(data, &identity, &shard).unwrap();
+		let vc = Credential::from_template(data, &identity, &shard, &runtime_version).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id;
 		assert_eq!(id, "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -563,6 +593,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let identity = who.into();
 		let shard = ShardIdentifier::default();
+		let runtime_version = IssuerRuntimeVersion { parachain: 0u32, sidechain: 0u32 };
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
 
@@ -570,7 +601,8 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new(&identity, &shard.clone(), &runtime_version).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -588,7 +620,9 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+
+			let mut credential_unsigned =
+				Credential::new(&identity, &shard.clone(), &runtime_version).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -606,7 +640,8 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new(&identity, &shard.clone(), &runtime_version).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -628,11 +663,12 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let identity = who.into();
 		let shard = ShardIdentifier::default();
-
+		let runtime_version = IssuerRuntimeVersion { parachain: 0u32, sidechain: 0u32 };
 		let networks = vec![Web3Network::Ethereum];
 
 		{
-			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new(&identity, &shard.clone(), &runtime_version).unwrap();
 			credential_unsigned.add_assertion_a8(networks.clone(), 0, 1);
 
 			let mut or_logic = AssertionLogic::new_or();
@@ -653,7 +689,8 @@ mod tests {
 		}
 
 		{
-			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new(&identity, &shard.clone(), &runtime_version).unwrap();
 			credential_unsigned.add_assertion_a8(networks.clone(), 500, u64::MAX);
 
 			let mut or_logic = AssertionLogic::new_or();
