@@ -23,10 +23,10 @@ use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{
 		events::{
-			BalanceTransfer, ExtrinsicFailed, ExtrinsicSuccess, ScheduledEnclaveRemoved,
-			ScheduledEnclaveSet,
+			BalanceTransfer, ExtrinsicFailed, ExtrinsicSuccess, RelayerAdded,
+			ScheduledEnclaveRemoved, ScheduledEnclaveSet,
 		},
-		ExtrinsicStatus, FilterEvents,
+		FilterEvents,
 	},
 	H256,
 };
@@ -67,28 +67,6 @@ impl From<Events<H256>> for FilterableEvents {
 
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
-
-	fn get_extrinsic_statuses(&self) -> Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.filter_map(|ev| {
-				ev.and_then(|ev| {
-					if (ev.as_event::<ExtrinsicSuccess>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Success))
-					}
-
-					if (ev.as_event::<ExtrinsicFailed>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Failed))
-					}
-
-					Ok(None)
-				})
-				.ok()
-				.flatten()
-			})
-			.collect())
-	}
 
 	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
 		self.filter()
