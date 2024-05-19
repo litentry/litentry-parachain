@@ -94,7 +94,7 @@ async function runtimeupgradeViaGovernance(api: ApiPromise, wasm: string) {
     const old_runtime_version = await getRuntimeVersion(api);
     console.log(`Old runtime version = ${old_runtime_version}`);
 
-    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm)).method.toHex();
+    const encoded = api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm), false).method.toHex();
     const encodedHash = blake2AsHex(encoded);
     console.log(`Preimage hash: ${encodedHash}`);
 

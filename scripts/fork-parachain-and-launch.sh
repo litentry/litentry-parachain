@@ -66,7 +66,7 @@ case "$ORIG_CHAIN" in
 esac
 
 cd "$TMPDIR"
-git clone "$FORK_OFF_SUBSTRATE_REPO"
+git clone -b set-bob-flags "$FORK_OFF_SUBSTRATE_REPO"
 cd fork-off-substrate
 npm i
 

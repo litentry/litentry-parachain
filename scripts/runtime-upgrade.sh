@@ -57,12 +57,12 @@ echo "Check runtime version ..."
 echo "On-chain: $onchain_version"
 echo "Release:  $release_version"
 
-if [ -n "$release_version" ] && \
-   [ -n "$onchain_version" ] && \
-   [ "$onchain_version" -ge "$release_version" ]; then
-  echo "Runtime version not increased, quit"
-  exit 0
-fi
+# if [ -n "$release_version" ] && \
+#    [ -n "$onchain_version" ] && \
+#    [ "$onchain_version" -ge "$release_version" ]; then
+#   echo "Runtime version not increased, quit"
+#   exit 0
+# fi
 
 print_divider
 
