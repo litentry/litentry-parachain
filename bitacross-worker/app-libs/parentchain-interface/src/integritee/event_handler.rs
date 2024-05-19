@@ -17,6 +17,7 @@
 
 use codec::Encode;
 
+use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
 pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
@@ -88,6 +89,13 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn add_relayer(account: Identity) -> Result<(), Error> {
+		info!("Adding Relayer Account to Registry: {:?}", account);
+		GLOBAL_RELAYER_REGISTRY.update(account)?;
+
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -155,6 +163,22 @@ where
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
+		}
+
+		if let Ok(events) = events.get_relayer_added_events() {
+			debug!("Handling RelayerAdded events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found RelayerAdded event: {:?}", event);
+					let result = Self::add_relayer(event.who);
+					handled_events.push(hash_of(&event));
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::RelayerAddFailure)?;
+
+			Ok(handled_events)
 		}
 
 		Ok(handled_events)

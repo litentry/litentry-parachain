@@ -81,4 +81,8 @@ impl FilterEvents for FilterableEvents {
 	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
 		self.filter()
 	}
+
+	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error> {
+		self.filter()
+	}
 }

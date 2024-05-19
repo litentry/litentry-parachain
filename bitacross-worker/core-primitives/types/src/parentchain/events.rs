@@ -6,6 +6,7 @@ use crate::{
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_utils::stringify::account_id_to_string;
+use litentry_primitives::Identity;
 use substrate_api_client::ac_node_api::StaticEvent;
 
 #[derive(Encode, Decode, Debug)]
@@ -117,4 +118,24 @@ impl core::fmt::Display for ScheduledEnclaveRemoved {
 impl StaticEvent for ScheduledEnclaveRemoved {
 	const PALLET: &'static str = "Teebag";
 	const EVENT: &'static str = "ScheduledEnclaveRemoved";
+}
+
+//  Bitacross pallet events
+
+#[derive(Encode, Decode, Debug)]
+pub struct RelayerAdded {
+	pub who: Identity,
+}
+
+impl core::fmt::Display for RelayerAdded {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let account_id = account_id_to_string::<AccountId>(&self.who.to_account_id());
+		let message = format!("RelayerAdded :: account_id: {:?}", account_id);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for RelayerAdded {
+	const PALLET: &'static str = "Bitacross";
+	const EVENT: &'static str = "RelayerAdded";
 }
