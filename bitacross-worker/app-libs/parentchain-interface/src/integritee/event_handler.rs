@@ -124,6 +124,13 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn remove_enclave(account_id: Address32) -> Result<(), Error> {
+		info!("Remove Enclave Account from Registry: {:?}", account_id);
+		GLOBAL_ENCLAVE_REGISTRY.remove(account_id)?;
+
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -237,6 +244,20 @@ where
 				.map_err(|_| ParentchainEventProcessingError::EnclaveAddFailure)?;
 
 			Ok(handled_events)
+		}
+
+		if let Ok(events) = events.get_enclave_removed_events() {
+			debug!("Handling EnclaveRemoved events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found EnclaveRemoved event: {:?}", event);
+					let result = Self::remove_enclave(event.who);
+					handled_events.push(hash_of(&event));
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::EnclaveRemoveFailure)?;
 		}
 	}
 }

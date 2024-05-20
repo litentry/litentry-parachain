@@ -23,8 +23,8 @@ use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{
 		events::{
-			BalanceTransfer, EnclaveAdded, ExtrinsicFailed, ExtrinsicSuccess, RelayerAdded,
-			RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+			BalanceTransfer, EnclaveAdded, EnclaveRemoved, ExtrinsicFailed, ExtrinsicSuccess,
+			RelayerAdded, RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
 		},
 		FilterEvents,
 	},
@@ -91,6 +91,10 @@ impl FilterEvents for FilterableEvents {
 	}
 
 	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error> {
 		self.filter()
 	}
 }

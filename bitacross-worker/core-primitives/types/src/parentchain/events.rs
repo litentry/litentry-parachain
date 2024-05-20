@@ -142,6 +142,23 @@ impl StaticEvent for EnclaveAdded {
 	const EVENT: &'static str = "EnclaveAdded";
 }
 
+#[derive(Encode, Decode, Debug)]
+pub struct EnclaveRemoved {
+	pub who: Address32,
+}
+
+impl core::fmt::Display for EnclaveRemoved {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!("EnclaveRemoved :: who: {:?}", self.who);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for EnclaveRemoved {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "EnclaveRemoved";
+}
+
 //  Bitacross pallet events
 
 #[derive(Encode, Decode, Debug)]
