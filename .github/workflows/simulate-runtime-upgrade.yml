@@ -22,8 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         chain:
-          # litmus is not supported, as sudo was removed
-          # TODO: add runtime upgrade via governance
+          - litmus
           - litentry
           - rococo
     steps:
