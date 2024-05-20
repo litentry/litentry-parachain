@@ -21,7 +21,9 @@ use crate::{OpaqueCall, ShardIdentifier};
 use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use events::{BalanceTransfer, RelayerAdded, ScheduledEnclaveRemoved, ScheduledEnclaveSet};
+use events::{
+	BalanceTransfer, RelayerAdded, RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+};
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
 #[cfg(feature = "std")]
@@ -103,6 +105,8 @@ pub trait FilterEvents {
 	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
 
 	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
+
+	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>
@@ -124,6 +128,7 @@ pub enum ParentchainEventProcessingError {
 	ScheduledEnclaveSetFailure,
 	ScheduledEnclaveRemovedFailure,
 	RelayerAddFailure,
+	RelayerRemoveFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -139,6 +144,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
 			ParentchainEventProcessingError::RelayerAddFailure =>
 				"Parentchain Event Processing Error: RelayerAddFailure",
+			ParentchainEventProcessingError::RelayerRemoveFailure =>
+				"Parentchain Event Processing Error: RelayerRemoveFailure",
 		};
 		write!(f, "{}", message)
 	}

@@ -96,6 +96,13 @@ impl ParentchainEventHandler {
 
 		Ok(())
 	}
+
+	fn remove_relayer(account: Identity) -> Result<(), Error> {
+		info!("Remove Relayer Account from Registry: {:?}", account);
+		GLOBAL_RELAYER_REGISTRY.remove(account)?;
+
+		Ok(())
+	}
 }
 
 impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -179,6 +186,20 @@ where
 				.map_err(|_| ParentchainEventProcessingError::RelayerAddFailure)?;
 
 			Ok(handled_events)
+		}
+
+		if let Ok(events) = events.get_relayers_removed_events() {
+			debug!("Handling RelayerRemoved events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found RelayerRemoved event: {:?}", event);
+					let result = Self::remove_relayer(event.who);
+					handled_events.push(hash_of(&event));
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::RelayerRemoveFailure)?;
 		}
 
 		Ok(handled_events)

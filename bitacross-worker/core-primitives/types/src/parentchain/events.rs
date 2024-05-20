@@ -139,3 +139,21 @@ impl StaticEvent for RelayerAdded {
 	const PALLET: &'static str = "Bitacross";
 	const EVENT: &'static str = "RelayerAdded";
 }
+
+#[derive(Encode, Decode, Debug)]
+pub struct RelayerRemoved {
+	pub who: Identity,
+}
+
+impl core::fmt::Display for RelayerRemoved {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let account_id = account_id_to_string::<AccountId>(&self.who.to_account_id());
+		let message = format!("RelayerRemoved :: account_id: {:?}", account_id);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for RelayerRemoved {
+	const PALLET: &'static str = "Bitacross";
+	const EVENT: &'static str = "RelayerRemoved";
+}
