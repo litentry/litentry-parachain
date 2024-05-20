@@ -21,13 +21,13 @@ use std::format;
 
 // Scale encodes string and ecrypts it with worker's shielding key
 // usage example:
-// ./litentry-cli get-shielded-string test
+// ./litentry-cli shield-text test
 #[derive(Parser)]
-pub struct GetShieldedStringCommand {
+pub struct ShieldTextCommand {
 	value: String,
 }
 
-impl GetShieldedStringCommand {
+impl ShieldTextCommand {
 	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
 		let shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted = shielding_key.encrypt(&self.value.encode()).unwrap();
