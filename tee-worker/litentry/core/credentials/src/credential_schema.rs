@@ -25,8 +25,6 @@ const NOT_IMPLEMENTED: &str =
 /// JSON Schemas can be found at https://github.com/litentry/vc-jsonschema
 pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 	match assertion {
-		Assertion::A1 => Some(format!("{BASE_URL}/1-basic-identity-verification/1-1-0.json")),
-
 		Assertion::A2(_) => Some(format!("{BASE_URL}/2-litentry-discord-member/1-1-0.json")),
 
 		Assertion::A3(_, _, _) => Some(format!("{BASE_URL}/3-active-discord-id-hubber/1-1-0.json")),

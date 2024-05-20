@@ -118,41 +118,6 @@ export async function linkIdentity(
     });
 }
 
-export async function requestVc1(
-    runner: Runner<string, boolean>,
-    primary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
-    teeWorker: WebSocketAsPromised,
-    parachainApi: ParachainApiPromise,
-    mrEnclave: string,
-    teeShieldingKey: crypto.KeyObject,
-    nonce: Index,
-    subject: CorePrimitivesIdentity,
-    log: WritableStream<string>
-): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-    const requestVcCall = await createSignedTrustedCallRequestVc(
-        parachainApi,
-        mrEnclave,
-        nonce,
-        primary,
-        subject,
-        parachainApi.createType('Assertion', { A1: null }),
-        parachainApi.createType('Option<RequestAesKey>', aesKey).toHex(),
-        requestIdentifier
-    );
-
-    const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-
-    await runner('requestVc1', async () => {
-        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, requestVcCall, log);
-
-        const events = await eventsPromise;
-
-        return events.map(({ event }) => event).some((event) => parachainApi.events.vcManagement.VCIssued.is(event));
-    });
-}
-
 export async function requestVc4(
     runner: Runner<string, boolean>,
     primary: Wallet,

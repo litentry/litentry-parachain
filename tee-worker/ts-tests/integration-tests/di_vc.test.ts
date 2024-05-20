@@ -180,7 +180,7 @@ describe('Test Vc (direct invocation)', function () {
             [
                 eveSubstrateIdentity.toHuman(),
                 bobSubstrateIdentity.toHuman(),
-                context.api.createType('Assertion', { A1: 'A1' }).toHex(),
+                context.api.createType('Assertion', { A6: 'A6' }).toHex(),
                 aesKey,
                 requestIdentifier,
             ]

@@ -61,8 +61,6 @@ use sp_std::{vec, vec::Vec};
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum Assertion {
-	#[codec(index = 0)]
-	A1,
 	#[codec(index = 1)]
 	A2(ParameterString),                                    // (guild_id)
 	#[codec(index = 2)]
@@ -180,7 +178,7 @@ impl Assertion {
 			// general rules
 			//
 			// any web3 network is allowed
-			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
+			Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),

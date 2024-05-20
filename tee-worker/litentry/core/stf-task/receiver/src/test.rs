@@ -10,7 +10,7 @@ use itp_test::mock::{
 	shielding_crypto_mock::ShieldingCryptoMock,
 };
 use itp_top_pool_author::mocks::AuthorApiMock;
-use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_assertion_build::dynamic::repository::InMemorySmartContractRepo;
 use lc_stf_task_sender::{SendStfRequest, StfRequestSender};
 use litentry_primitives::Assertion;
 
@@ -23,7 +23,7 @@ fn test_threadpool_behaviour() {
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
 	let data_provider_conifg = DataProviderConfig::new().unwrap();
-	let assertion_repository = EvmAssertionRepository::new(Default::default()).unwrap();
+	let assertion_repository = InMemorySmartContractRepo::new();
 	let context = StfTaskContext::new(
 		Arc::new(shielding_key_repository_mock),
 		author_mock.into(),
@@ -38,16 +38,19 @@ fn test_threadpool_behaviour() {
 	});
 
 	let sender = StfRequestSender::default();
+	let dynamic_assertion = Assertion::Dynamic(H160::from_low_u64_be(0));
 
 	// Sleep in order to initialize the components
 	std::thread::sleep(core::time::Duration::from_secs(2));
 
-	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
+	sender
+		.send_stf_request(construct_assertion_request(dynamic_assertion.clone()))
+		.unwrap();
 	sender.send_stf_request(construct_assertion_request(Assertion::A6)).unwrap();
 
 	let receiver = init_global_mock_author_api().unwrap();
-	// As you see in the expected output, We receive A6 first even though A1 is requested first and is put to sleep
-	let mut expected_output: Vec<Assertion> = vec![Assertion::A6, Assertion::A1];
+	// As you see in the expected output, We receive A6 first even though Dynamic is requested first and is put to sleep
+	let mut expected_output: Vec<Assertion> = vec![Assertion::A6, dynamic_assertion];
 
 	let timeout_duration = core::time::Duration::from_secs(30);
 	let start_time = std::time::Instant::now();

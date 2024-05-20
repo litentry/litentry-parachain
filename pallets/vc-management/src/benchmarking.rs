@@ -57,7 +57,7 @@ benchmarks! {
 	request_vc {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
-		let assertion = Assertion::A1;
+		let assertion = Assertion::Dynamic(Default::default());
 	}: _(RawOrigin::Signed(account.clone()), shard, assertion.clone())
 	verify{
 		assert_last_event::<T>(Event::VCRequested{ account, shard, assertion }.into());
@@ -68,7 +68,7 @@ benchmarks! {
 	vc_issued {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-		let assertion = Assertion::A1;
+		let assertion = Assertion::Dynamic(Default::default());
 		let id_graph_hash = H256::default();
 		let req_ext_hash = H256::default();
 	}: _<T::RuntimeOrigin>(call_origin, identity.clone(), assertion.clone(), id_graph_hash, req_ext_hash)
@@ -82,7 +82,7 @@ benchmarks! {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
 		let detail = ErrorDetail::WrongWeb2Handle;
-		let assertion = Assertion::A1;
+		let assertion = Assertion::Dynamic(Default::default());
 		let error = VCMPError::RequestVCFailed(assertion.clone(), detail.clone());
 		let req_ext_hash = H256::default();
 	}: _<T::RuntimeOrigin>(call_origin, Some(identity.clone()), error, req_ext_hash)

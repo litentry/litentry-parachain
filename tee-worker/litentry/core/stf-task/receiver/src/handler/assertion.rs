@@ -148,13 +148,6 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	let mut credential = match req.assertion.clone() {
-		Assertion::A1 => {
-			#[cfg(test)]
-			{
-				std::thread::sleep(core::time::Duration::from_secs(5));
-			}
-			lc_assertion_build::a1::build(req)
-		},
 		Assertion::A2(guild_id) =>
 			lc_assertion_build::a2::build(req, guild_id, &context.data_provider_config),
 
@@ -276,11 +269,17 @@ where
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 
-		Assertion::Dynamic(smart_contract_id) => lc_assertion_build::dynamic::build(
-			req,
-			smart_contract_id,
-			context.assertion_repository.clone(),
-		),
+		Assertion::Dynamic(smart_contract_id) => {
+			#[cfg(test)]
+			{
+				std::thread::sleep(core::time::Duration::from_secs(5));
+			}
+			lc_assertion_build::dynamic::build(
+				req,
+				smart_contract_id,
+				context.assertion_repository.clone(),
+			)
+		},
 	}?;
 
 	// post-process the credential

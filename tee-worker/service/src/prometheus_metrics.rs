@@ -277,7 +277,6 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Solana(_) => "Solana",
 		},
 		RequestType::AssertionVerification(request) => match request.assertion {
-			Assertion::A1 => "A1",
 			Assertion::A2(_) => "A2",
 			Assertion::A3(..) => "A3",
 			Assertion::A4(_) => "A4",

@@ -111,7 +111,6 @@ pub struct AssertionCommand {
 // see `assertion.rs`
 #[derive(Subcommand, Debug)]
 pub enum Command {
-	A1,
 	A2(A2Arg),
 	A3(A3Arg),
 	A4(HolderArg),
@@ -453,7 +452,6 @@ impl Command {
 	pub fn to_assertion(&self) -> Assertion {
 		use Assertion::*;
 		match self {
-			Command::A1 => A1,
 			Command::A2(arg) => A2(to_para_str(&arg.guild_id)),
 			Command::A3(arg) => A3(
 				to_para_str(&arg.guild_id),

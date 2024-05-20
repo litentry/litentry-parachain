@@ -370,17 +370,6 @@ impl Credential {
 		self.credential_subject.types = types.into();
 	}
 
-	pub fn add_assertion_a1(&mut self, value: bool) {
-		let has_web2_account = AssertionLogic::new_item("$has_web2_account", Op::Equal, "true");
-		let has_web3_account = AssertionLogic::new_item("$has_web3_account", Op::Equal, "true");
-
-		let assertion =
-			AssertionLogic::new_and().add_item(has_web2_account).add_item(has_web3_account);
-
-		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(value);
-	}
-
 	pub fn add_assertion_a2(&mut self, value: bool, guild_id: String) {
 		let verified = AssertionLogic::new_item("$verified_discord_account", Op::GreaterThan, "0");
 		let has_joined = AssertionLogic::new_item("$has_joined", Op::Equal, "true");

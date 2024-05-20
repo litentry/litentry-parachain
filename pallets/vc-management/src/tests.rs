@@ -35,12 +35,12 @@ fn request_vc_without_delegatee_works() {
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			Assertion::A1
+			Assertion::Dynamic(Default::default())
 		));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
 			account: alice,
 			shard,
-			assertion: Assertion::A1,
+			assertion: Assertion::Dynamic(Default::default()),
 		}));
 	});
 }
@@ -89,7 +89,7 @@ fn vc_issued_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(signer),
 			alice,
-			Assertion::A1,
+			Assertion::Dynamic(Default::default()),
 			H256::default(),
 			H256::default(),
 		));
@@ -105,7 +105,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(bob),
 				alice.into(),
-				Assertion::A1,
+				Assertion::Dynamic(Default::default()),
 				H256::default(),
 				H256::default(),
 			),

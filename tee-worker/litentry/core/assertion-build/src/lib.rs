@@ -35,7 +35,6 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-pub mod a1;
 pub mod a13;
 pub mod a14;
 pub mod a2;
