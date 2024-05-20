@@ -86,9 +86,9 @@ impl FilterEvents for FilterableEvents {
 		self.filter()
 	}
 
-	fn get_relayers_removed_events(
-		&self,
-	) -> Result<Vec<itp_types::parentchain::events::RelayerRemoved>, Self::Error> {
+	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error> {
+		self.filter()
+	}
 
 	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error> {
 		self.filter()
