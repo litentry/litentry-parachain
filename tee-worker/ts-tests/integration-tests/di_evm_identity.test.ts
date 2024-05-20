@@ -22,8 +22,7 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
 import { hexToU8a } from '@polkadot/util';
 
@@ -42,7 +41,6 @@ describe('Test Identity (evm direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
     this.timeout(6000000);
 
@@ -81,12 +79,10 @@ describe('Test Identity (evm direct invocation)', function () {
             'ethereum',
             context.web3Wallets.evm.Bob
         );
-        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
             validation: bobEvmValidation,
-            networks: bobEvmNetworks,
         });
 
         const eveSubstrateNonce = currentNonce++;
@@ -100,12 +96,10 @@ describe('Test Identity (evm direct invocation)', function () {
             'substrate',
             context.web3Wallets.substrate.Eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']);
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
             validation: eveSubstrateValidation,
-            networks: eveSubstrateNetworks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -118,7 +112,7 @@ describe('Test Identity (evm direct invocation)', function () {
         ];
 
         let counter = 0;
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of linkIdentityRequestParams) {
             counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
@@ -129,7 +123,6 @@ describe('Test Identity (evm direct invocation)', function () {
                 aliceEvmIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -165,13 +158,6 @@ describe('Test Identity (evm direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [
-            ['Ethereum', 'Bsc'],
-            ['Litentry', 'Khala'],
-        ];
-        let currentIndex = 0;
-
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
@@ -179,17 +165,12 @@ describe('Test Identity (evm direct invocation)', function () {
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
 
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
-
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
                 `status should be active for identity: ${identityDump}`
             );
             console.debug('active ✅');
-
-            currentIndex++;
         }
 
         await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);

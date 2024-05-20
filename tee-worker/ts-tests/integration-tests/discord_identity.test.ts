@@ -21,8 +21,7 @@ import {
 import { sleep } from './common/utils';
 import { aesKey } from './common/call';
 import type { IntegrationTestContext } from './common/common-types';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
 
 describe('Test Discord Identity (direct invocation)', function () {
@@ -37,14 +36,12 @@ describe('Test Discord Identity (direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     const bobLinkIdentityRequestParams: {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     this.timeout(6000000);
@@ -98,13 +95,11 @@ describe('Test Discord Identity (direct invocation)', function () {
             verificationType: 'PublicMessage',
             validationNonce: nonce,
         });
-        const networks = context.api.createType('Vec<Web3Network>', []);
 
         aliceLinkIdentityRequestParams.push({
             nonce,
             identity: discordIdentity,
             validation: discordValidation,
-            networks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -115,7 +110,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             ],
         ];
 
-        for (const { nonce, identity, validation, networks } of aliceLinkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of aliceLinkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -125,7 +120,6 @@ describe('Test Discord Identity (direct invocation)', function () {
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -163,13 +157,11 @@ describe('Test Discord Identity (direct invocation)', function () {
             validationNonce: nonce,
             verificationType: 'OAuth2',
         });
-        const networks = context.api.createType('Vec<Web3Network>', []);
 
         bobLinkIdentityRequestParams.push({
             nonce,
             identity: discordIdentity,
             validation: discordValidation,
-            networks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -180,7 +172,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             ],
         ];
 
-        for (const { nonce, identity, validation, networks } of bobLinkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of bobLinkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -190,7 +182,6 @@ describe('Test Discord Identity (direct invocation)', function () {
                 bobSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -234,9 +225,6 @@ describe('Test Discord Identity (direct invocation)', function () {
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
 
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, []);
-
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
@@ -263,9 +251,6 @@ describe('Test Discord Identity (direct invocation)', function () {
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
-
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, []);
 
             assert.equal(
                 idGraphNodeContext.status.toString(),

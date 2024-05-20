@@ -15,8 +15,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { CorePrimitivesIdentity } from 'parachain-api';
 import { mockAssertions } from './common/utils/vc-helper';
-import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData } from 'parachain-api';
 import { assert } from 'chai';
 
 describe('Test Vc (direct invocation)', function () {
@@ -34,7 +33,6 @@ describe('Test Vc (direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
     this.timeout(6000000);
 
@@ -61,12 +59,10 @@ describe('Test Vc (direct invocation)', function () {
             verificationType: 'PublicTweet',
             validationNonce: twitterNonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
             validation: twitterValidation,
-            networks: twitterNetworks,
         });
 
         const evmNonce = getNextNonce();
@@ -80,12 +76,10 @@ describe('Test Vc (direct invocation)', function () {
             'ethereum',
             context.web3Wallets.evm.Alice
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
             validation: evmValidation,
-            networks: evmNetworks,
         });
 
         const bitcoinNonce = getNextNonce();
@@ -100,16 +94,14 @@ describe('Test Vc (direct invocation)', function () {
             'bitcoin',
             context.web3Wallets.bitcoin.Alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,
             validation: bitcoinValidation,
-            networks: bitcoinNetworks,
         });
 
         let counter = 0;
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of linkIdentityRequestParams) {
             counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
@@ -120,7 +112,6 @@ describe('Test Vc (direct invocation)', function () {
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {

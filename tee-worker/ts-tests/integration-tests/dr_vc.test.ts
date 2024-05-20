@@ -15,8 +15,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
 import { mockBatchAssertion } from './common/utils/vc-helper';
-import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData } from 'parachain-api';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -33,7 +32,6 @@ describe('Test Vc (direct request)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
     this.timeout(6000000);
 
@@ -60,12 +58,10 @@ describe('Test Vc (direct request)', function () {
             verificationType: 'PublicTweet',
             validationNonce: twitterNonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
             validation: twitterValidation,
-            networks: twitterNetworks,
         });
 
         const evmNonce = getNextNonce();
@@ -79,12 +75,10 @@ describe('Test Vc (direct request)', function () {
             'ethereum',
             context.web3Wallets.evm.Alice
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
             validation: evmValidation,
-            networks: evmNetworks,
         });
 
         const bitcoinNonce = getNextNonce();
@@ -99,15 +93,13 @@ describe('Test Vc (direct request)', function () {
             'bitcoin',
             context.web3Wallets.bitcoin.Alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,
             validation: bitcoinValidation,
-            networks: bitcoinNetworks,
         });
 
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -117,7 +109,6 @@ describe('Test Vc (direct request)', function () {
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );

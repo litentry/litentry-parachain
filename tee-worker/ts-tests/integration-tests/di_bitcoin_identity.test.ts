@@ -23,8 +23,7 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { type Bytes, type Vec } from '@polkadot/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
 import { hexToU8a } from '@polkadot/util';
 
@@ -43,7 +42,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     const deactivateIdentityRequestParams: {
@@ -91,12 +89,10 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             'ethereum',
             context.web3Wallets.evm.Alice
         );
-        const aliceEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: aliceEvmNonce,
             identity: aliceEvmIdentity,
             validation: aliceEvmValidation,
-            networks: aliceEvmNetworks,
         });
 
         // link another bitcoin account
@@ -109,12 +105,10 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             'bitcoin',
             context.web3Wallets.bitcoin.Bob
         );
-        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bobBitcoinNonce,
             identity: bobBitcoinIdentity,
             validation: bobBitcoinValidation,
-            networks: bobBitcoinNetowrks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -127,7 +121,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         ];
 
         let counter = 0;
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of linkIdentityRequestParams) {
             counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
@@ -138,7 +132,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
                 aliceBitcoinIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -175,10 +168,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [['Ethereum', 'Bsc'], ['BitcoinP2tr']];
-        let currentIndex = 0;
-
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
@@ -186,17 +175,12 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
 
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
-
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
                 `status should be active for identity: ${identityDump}`
             );
             console.debug('active ✅');
-
-            currentIndex++;
         }
 
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
@@ -287,7 +271,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 context.web3Wallets.bitcoin.Alice,
-
                 aliceBitcoinIdentity,
                 identity.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),

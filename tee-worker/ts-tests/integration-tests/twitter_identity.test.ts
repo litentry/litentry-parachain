@@ -23,8 +23,7 @@ import { sleep } from './common/utils';
 import { aesKey, sendRequest, decodeRpcBytesAsString } from './common/call';
 import { createJsonRpcRequest, nextRequestId } from './common/helpers';
 import type { IntegrationTestContext } from './common/common-types';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
 import { hexToU8a } from '@polkadot/util';
 
@@ -40,14 +39,12 @@ describe('Test Twitter Identity (direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     const bobLinkIdentityRequestParams: {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
 
     this.timeout(6000000);
@@ -101,13 +98,11 @@ describe('Test Twitter Identity (direct invocation)', function () {
             verificationType: 'PublicTweet',
             validationNonce: nonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         aliceLinkIdentityRequestParams.push({
             nonce,
             identity: twitterIdentity,
             validation: twitterValidation,
-            networks: twitterNetworks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -118,7 +113,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             ],
         ];
 
-        for (const { nonce, identity, validation, networks } of aliceLinkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of aliceLinkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -128,7 +123,6 @@ describe('Test Twitter Identity (direct invocation)', function () {
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -178,13 +172,11 @@ describe('Test Twitter Identity (direct invocation)', function () {
             verificationType: 'OAuth2',
             oauthState: state,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         bobLinkIdentityRequestParams.push({
             nonce,
             identity: twitterIdentity,
             validation: twitterValidation,
-            networks: twitterNetworks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -195,7 +187,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             ],
         ];
 
-        for (const { nonce, identity, validation, networks } of bobLinkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of bobLinkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
@@ -205,7 +197,6 @@ describe('Test Twitter Identity (direct invocation)', function () {
                 bobSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -249,9 +240,6 @@ describe('Test Twitter Identity (direct invocation)', function () {
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
 
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, []);
-
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
@@ -278,9 +266,6 @@ describe('Test Twitter Identity (direct invocation)', function () {
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
-
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, []);
 
             assert.equal(
                 idGraphNodeContext.status.toString(),

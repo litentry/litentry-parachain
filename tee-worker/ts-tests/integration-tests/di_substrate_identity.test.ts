@@ -26,8 +26,7 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { Vec, Bytes } from '@polkadot/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import { ethers } from 'ethers';
 import type { HexString } from '@polkadot/util/types';
 import { sleep } from './common/utils';
@@ -50,7 +49,6 @@ describe('Test Identity (direct invocation)', function () {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
     }[] = [];
     this.timeout(6000000);
 
@@ -94,12 +92,10 @@ describe('Test Identity (direct invocation)', function () {
             verificationType: 'PublicTweet',
             validationNonce: twitterNonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
             validation: twitterValidation,
-            networks: twitterNetworks,
         });
 
         const evmNonce = aliceCurrentNonce++;
@@ -113,12 +109,10 @@ describe('Test Identity (direct invocation)', function () {
             'ethereum',
             context.web3Wallets.evm.Alice
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
             validation: evmValidation,
-            networks: evmNetworks,
         });
 
         const eveSubstrateNonce = aliceCurrentNonce++;
@@ -135,12 +129,10 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.web3Wallets.substrate.Eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']);
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
             validation: eveSubstrateValidation,
-            networks: eveSubstrateNetworks,
         });
 
         const bitcoinNonce = aliceCurrentNonce++;
@@ -158,12 +150,10 @@ describe('Test Identity (direct invocation)', function () {
             'bitcoin',
             context.web3Wallets.bitcoin.Alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,
             validation: bitcoinValidation,
-            networks: bitcoinNetworks,
         });
 
         const idGraphHashResults: HexString[] = [];
@@ -178,7 +168,7 @@ describe('Test Identity (direct invocation)', function () {
         ];
 
         let counter = 0;
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation } of linkIdentityRequestParams) {
             counter++;
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
@@ -189,7 +179,6 @@ describe('Test Identity (direct invocation)', function () {
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
-                networks.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier,
                 {
@@ -226,10 +215,6 @@ describe('Test Identity (direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry'], ['BitcoinP2tr']];
-        let currentIndex = 0;
-
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
@@ -237,17 +222,12 @@ describe('Test Identity (direct invocation)', function () {
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
 
-            const web3networks = idGraphNode![1].web3networks.toHuman();
-            assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
-
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
                 `status should be active for identity: ${identityDump}`
             );
             console.debug('active ✅');
-
-            currentIndex++;
         }
 
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
@@ -255,9 +235,6 @@ describe('Test Identity (direct invocation)', function () {
 
     step('linking identity with wrong signature', async function () {
         const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
-
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-
         const evmNonce = aliceCurrentNonce++;
 
         // random wrong msg
@@ -285,7 +262,6 @@ describe('Test Identity (direct invocation)', function () {
             aliceSubstrateIdentity,
             evmIdentity.toHex(),
             encodedVerifyIdentityValidation.toHex(),
-            evmNetworks.toHex(),
             context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
         );
@@ -318,7 +294,6 @@ describe('Test Identity (direct invocation)', function () {
             verificationType: 'PublicTweet',
             validationNonce: twitterNonce,
         });
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
@@ -329,7 +304,6 @@ describe('Test Identity (direct invocation)', function () {
             aliceSubstrateIdentity,
             twitterIdentity.toHex(),
             twitterValidation.toHex(),
-            twitterNetworks.toHex(),
             context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
         );
@@ -556,64 +530,6 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
 
-    step('check idgraph from sidechain storage before setting identity network', async function () {
-        const idGraphGetter = await createSignedTrustedGetterIdGraph(
-            context.api,
-            context.web3Wallets.substrate.Alice,
-
-            aliceSubstrateIdentity
-        );
-        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-
-        // the third (last) identity in the IDGraph is eveSubstrateIdentity
-        const eveSubstrateIdentity = idGraph[3];
-        const [, { web3networks }] = eveSubstrateIdentity;
-        const expectedWeb3Networks = ['Polkadot', 'Litentry'];
-
-        assert.equal(web3networks.length, expectedWeb3Networks.length);
-        assert.equal(web3networks.indexOf('Polkadot') !== -1, true);
-        assert.equal(web3networks.indexOf('Litentry') !== -1, true);
-    });
-
-    step('check idgraph from sidechain storage after setting identity network', async function () {
-        const expectedWeb3Networks = ['Kusama', 'Litentry'];
-        const idGraphGetter = await createSignedTrustedGetterIdGraph(
-            context.api,
-            context.web3Wallets.substrate.Alice,
-            aliceSubstrateIdentity
-        );
-        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-
-        assert.equal(
-            idGraph[3][1].web3networks.toHuman()?.toString(),
-            expectedWeb3Networks.toString(),
-            'idGraph should be changed after setting network'
-        );
-
-        await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
-    });
-
-    step('check idgraph from sidechain storage after setting incompatible identity network', async function () {
-        const expectedWeb3Networks = ['Kusama', 'Litentry'];
-        const idGraphGetter = await createSignedTrustedGetterIdGraph(
-            context.api,
-
-            context.web3Wallets.substrate.Alice,
-
-            aliceSubstrateIdentity
-        );
-        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-
-        assert.equal(
-            idGraph[3][1].web3networks.toHuman()?.toString(),
-            expectedWeb3Networks.toString(),
-            'idGraph should not be changed after setting incompatible network'
-        );
-    });
-
     step('deactivate prime identity', async function () {
         // deactivating prime identity should be possible and create the IDGraph if one doesn't exist already
         const deactivateIdentityRequestParams: {
@@ -675,14 +591,13 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.evm.Bob
         );
 
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
         const linkIdentityCall = await createSignedTrustedCall(
             context.api,
             [
                 'link_identity',
-                '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
+                '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Option<RequestAesKey>, H256)',
             ],
             context.web3Wallets.substrate.Bob,
             context.mrEnclave,
@@ -694,7 +609,6 @@ describe('Test Identity (direct invocation)', function () {
                 aliceEvmIdentity.toHuman(),
                 twitterIdentity,
                 aliceEvmValidation,
-                evmNetworks,
                 aesKey,
                 requestIdentifier,
             ]
