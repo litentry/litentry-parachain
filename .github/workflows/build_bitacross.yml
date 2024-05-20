@@ -27,7 +27,7 @@ jobs:
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
-          tags: local-builder:latest
+          tags: local-builder:${{ github.event.inputs.ref || github.ref }}
           target: builder
           build-args: |
             WORKER_MODE_ARG=offchain-worker
@@ -40,7 +40,7 @@ jobs:
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
-          tags: litentry/bitacross-worker:latest
+          tags: litentry/bitacross-worker:${{ github.event.inputs.ref || github.ref }}
           target: deployed-worker
 
       - name: Dockerhub login
