@@ -6,7 +6,7 @@ use crate::{
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Identity;
+use litentry_primitives::{Address32, Identity};
 use substrate_api_client::ac_node_api::StaticEvent;
 
 #[derive(Encode, Decode, Debug)]
@@ -118,6 +118,28 @@ impl core::fmt::Display for ScheduledEnclaveRemoved {
 impl StaticEvent for ScheduledEnclaveRemoved {
 	const PALLET: &'static str = "Teebag";
 	const EVENT: &'static str = "ScheduledEnclaveRemoved";
+}
+
+#[derive(Encode, Decode, Debug)]
+pub struct EnclaveAdded {
+	pub who: Address32,
+	pub worker_type: WorkerType,
+	pub url: Vec<u8>,
+}
+
+impl core::fmt::Display for EnclaveAdded {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let message = format!(
+			"EnclaveAdded :: who: {:?}, worker_type: {:?}, url: {:?}",
+			self.who, self.worker_type, self.url
+		);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for EnclaveAdded {
+	const PALLET: &'static str = "Teebag";
+	const EVENT: &'static str = "EnclaveAdded";
 }
 
 //  Bitacross pallet events

@@ -22,7 +22,8 @@ use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
-	BalanceTransfer, RelayerAdded, RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+	BalanceTransfer, EnclaveAdded, RelayerAdded, RelayerRemoved, ScheduledEnclaveRemoved,
+	ScheduledEnclaveSet,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
@@ -107,6 +108,8 @@ pub trait FilterEvents {
 	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
 
 	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
+
+	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>
@@ -129,6 +132,7 @@ pub enum ParentchainEventProcessingError {
 	ScheduledEnclaveRemovedFailure,
 	RelayerAddFailure,
 	RelayerRemoveFailure,
+	EnclaveAddFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -146,6 +150,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: RelayerAddFailure",
 			ParentchainEventProcessingError::RelayerRemoveFailure =>
 				"Parentchain Event Processing Error: RelayerRemoveFailure",
+			ParentchainEventProcessingError::EnclaveAddFailure =>
+				"Parentchain Event Processing Error: EnclaveAddFailure",
 		};
 		write!(f, "{}", message)
 	}

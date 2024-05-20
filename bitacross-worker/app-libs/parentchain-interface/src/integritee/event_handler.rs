@@ -17,7 +17,9 @@
 
 use codec::Encode;
 
+use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
 use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use core::str::from_utf8;
 pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
@@ -31,7 +33,7 @@ use itp_types::{
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_hex_utils::hex_encode;
-use litentry_primitives::SidechainBlockNumber;
+use litentry_primitives::{Address32, SidechainBlockNumber};
 use log::*;
 use sp_core::{blake2_256, H256};
 use sp_std::vec::Vec;
@@ -100,6 +102,25 @@ impl ParentchainEventHandler {
 	fn remove_relayer(account: Identity) -> Result<(), Error> {
 		info!("Remove Relayer Account from Registry: {:?}", account);
 		GLOBAL_RELAYER_REGISTRY.remove(account)?;
+
+		Ok(())
+	}
+
+	fn add_enclave(
+		account_id: Address32,
+		url: Vec<u8>,
+		worker_type: WorkerType,
+	) -> Result<(), Error> {
+		info!("Adding Enclave Account to Registry: {:?}", account_id);
+		if worker_type != WorkerType::BitAcross {
+			warn!("Ignore AddEnclave due to wrong worker_type");
+			return Ok(())
+		}
+
+		let url = from_utf8(&url)
+			.map_err(|_| Error::Other("Invalid enclave URL".to_string()))?
+			.to_string();
+		GLOBAL_ENCLAVE_REGISTRY.update(account_id, url)?;
 
 		Ok(())
 	}
@@ -202,7 +223,21 @@ where
 				.map_err(|_| ParentchainEventProcessingError::RelayerRemoveFailure)?;
 		}
 
-		Ok(handled_events)
+		if let Ok(events) = events.get_enclave_added_events() {
+			debug!("Handling EnclaveAdded events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found EnclaveAdded event: {:?}", event);
+					let result = Self::add_enclave(event.who, event.url, event.worker_type);
+					handled_events.push(hash_of(&event));
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::EnclaveAddFailure)?;
+
+			Ok(handled_events)
+		}
 	}
 }
 
