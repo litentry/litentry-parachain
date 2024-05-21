@@ -48,6 +48,9 @@ ENV WORKER_MODE=$WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
 ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
+ARG IMAGE_FOR_RELEASE=false
+ENV IMAGE_FOR_RELEASE=$IMAGE_FOR_RELEASE
+
 ARG FINGERPRINT=none
 
 ARG SGX_COMMERCIAL_KEY
@@ -57,11 +60,17 @@ WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
 RUN \
-  rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
-  rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
-  rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
-  rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-  make && sccache --show-stats
+  if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
+    echo "Omit cache for release image"; \
+    unset RUSTC_WRAPPER; \
+    make; \
+  else \
+    rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
+    rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
+    rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
+    rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
+    make && sccache --show-stats; \
+  fi
 
 RUN cargo test --release
 
@@ -122,12 +131,11 @@ RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/bitacross-worker
 RUN ls -al /usr/local/bin
 
-# checks
 ENV SGX_SDK /opt/sgxsdk
-ENV PATH $PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64
-ENV PKG_CONFIG_PATH $PKG_CONFIG_PATH:$SGX_SDK/pkgconfig
 ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
 
 RUN ldd /usr/local/bin/bitacross-worker && /usr/local/bin/bitacross-worker --version
