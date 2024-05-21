@@ -245,6 +245,12 @@ shellcheck:
 	@find tee-worker/scripts/litentry/ -name "*.sh" | xargs shellcheck -S warning
 	@echo "Ok"
 
+# generate release tag
+
+.PHONY: generate-tag ## generate full release tag
+generate-tag:
+	@./scripts/generate-release-tag.sh
+
 define pkgid
 $(shell cargo pkgid $1)
 endef
