@@ -75,26 +75,6 @@ impl AssertionTokenName for EVMTokenType {
 	}
 }
 
-pub trait TokenDecimals {
-	fn get_decimals(&self) -> f64;
-}
-
-impl TokenDecimals for EVMTokenType {
-	fn get_decimals(&self) -> f64 {
-		match self {
-			// TON on BSC&ETH decimals are both 9
-			// https://bscscan.com/token/0x76a797a59ba2c17726896976b7b3747bfd1d220f
-			// https://etherscan.io/token/0x582d872a1b094fc48f5de31d3b73f2d9be47def1
-			EVMTokenType::Ton => 1_000_000_000.0,
-
-			// TRX on BSC&ETH decimals are both 6
-			// https://bscscan.com/token/0xce7de646e7208a4ef112cb6ed5038fa6cc6b12e3
-			// https://etherscan.io/token/0x50327c6c5a14dcade707abad2e27eb517df87ab5
-			EVMTokenType::Trx => 1_000_000.0,
-		}
-	}
-}
-
 pub trait EVMAmountHoldingAssertionUpdate {
 	fn update_evm_amount_holding_assertion(&mut self, token_type: EVMTokenType, amount: f64);
 }
