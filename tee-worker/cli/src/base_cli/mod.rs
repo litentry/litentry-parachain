@@ -23,7 +23,7 @@ use crate::{
 		litentry::{
 			activate_identity::ActivateIdentityCommand,
 			deactivate_identity::DeactivateIdentityCommand, id_graph_hash::IDGraphHashCommand,
-			link_identity::LinkIdentityCommand,
+			link_identity::LinkIdentityCommand, shield_text::ShieldTextCommand,
 		},
 		register_tcb_info::RegisterTcbInfoCommand,
 		transfer::TransferCommand,
@@ -96,6 +96,9 @@ pub enum BaseCommand {
 
 	/// Activate identity
 	ActivateIdentity(ActivateIdentityCommand),
+
+	/// Shield text
+	ShieldText(ShieldTextCommand),
 }
 
 impl BaseCommand {
@@ -117,6 +120,7 @@ impl BaseCommand {
 			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 			BaseCommand::DeactivateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::ActivateIdentity(cmd) => cmd.run(cli),
+			BaseCommand::ShieldText(cmd) => cmd.run(cli),
 		}
 	}
 }
