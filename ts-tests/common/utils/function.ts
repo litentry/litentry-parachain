@@ -1,6 +1,7 @@
 import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { ApiPromise } from '@polkadot/api';
 import { FrameSystemEventRecord } from '@polkadot/types/lookup';
+
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
@@ -63,7 +64,7 @@ export const subscribeToEvents = async (
     api: ApiPromise
 ): Promise<FrameSystemEventRecord[]> => {
     return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
-        let blocksToScan = 15;
+        let blocksToScan = 30;
         const unsubscribe = api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
             const shiftedApi = await api.at(blockHeader.hash);
 
@@ -85,6 +86,41 @@ export const subscribeToEvents = async (
 
             resolve(matchingEvent);
             (await unsubscribe)();
+        });
+    });
+};
+
+export const observeEvent = async (expectedSection: string, expectedMethod: string, api: ApiPromise): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        let eventFound = false;
+        let result: any;
+        const query = (event: any) => true;
+        const timeout = setTimeout(() => {
+            if (!eventFound) {
+                reject(new Error(`Event -${expectedSection}.${expectedMethod} not found within the specified time`));
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+
+        const unsubscribe = api.rpc.chain.subscribeNewHeads(async (header) => {
+            const events = await api.query.system.events.at(header.hash);
+            events.forEach(async (record, index) => {
+                const { event } = record;
+                if (!eventFound && event.section.includes(expectedSection) && event.method.includes(expectedMethod)) {
+                    const expectedEvent = {
+                        name: { section: event.section, method: event.method },
+                        data: event.toHuman().data,
+                        block: header.number.toNumber(),
+                        event_index: index,
+                    };
+                    if (query(expectedEvent)) {
+                        result = expectedEvent;
+                        eventFound = true;
+                        clearTimeout(timeout);
+                        (await unsubscribe)();
+                        resolve(result);
+                    }
+                }
+            });
         });
     });
 };
