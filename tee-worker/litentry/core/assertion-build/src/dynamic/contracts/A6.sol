@@ -94,13 +94,13 @@ contract A6 is DynamicAssertion {
 
         string memory assertion = concatenateStrings(
             '{"and": [{ "src": "$total_followers", "op": ">", "dst": "',
-            Strings.toString(min)
+            Strings.toString(uint256(uint64(min)))
         );
         assertion = concatenateStrings(
             assertion,
             '" }, { "src": "$has_web3_account", "op": "<=", "dst": "'
         );
-        assertion = concatenateStrings(assertion, Strings.toString(max));
+        assertion = concatenateStrings(assertion, Strings.toString(uint256(uint64(max))));
         assertion = concatenateStrings(assertion, '" } ] }');
         assertions.push(assertion);
         return (description, assertion_type, assertions, schema_url, result);
