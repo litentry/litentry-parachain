@@ -150,14 +150,15 @@ async function setupCrossChainTransfer(
     }
 
     const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
-    if (resource.toHuman() !== 'BridgeTransfer.transfer') {
-        extrinsic.push(
-            await sudoWrapperGC(
-                pConfig.api,
-                pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
-            )
-        );
-    }
+
+    // Force token bridge resource to be some wrong input method
+    extrinsic.push(
+        await sudoWrapperGC(
+            pConfig.api,
+            pConfig.api.tx.chainBridge.setResource(destResourceId, 'AAAAAAAAAA')
+        )
+    );
+    console.log('Oh yes! Resource is worng! But still works?');
 
     const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
     if (!fee || fee.toString() !== parachainFee.toString()) {
