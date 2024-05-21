@@ -22,8 +22,8 @@ use alloc::{format, vec::Vec};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
-	BalanceTransfer, EnclaveAdded, EnclaveRemoved, RelayerAdded, RelayerRemoved,
-	ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+	BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, RelayerAdded,
+	RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_utils::stringify::account_id_to_string;
@@ -112,6 +112,8 @@ pub trait FilterEvents {
 	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
 
 	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
+
+	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error>
@@ -136,6 +138,7 @@ pub enum ParentchainEventProcessingError {
 	RelayerRemoveFailure,
 	EnclaveAddFailure,
 	EnclaveRemoveFailure,
+	BtcWalletGeneratedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -157,6 +160,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: EnclaveAddFailure",
 			ParentchainEventProcessingError::EnclaveRemoveFailure =>
 				"Parentchain Event Processing Error: EnclaveRemoveFailure",
+			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
+				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
 		};
 		write!(f, "{}", message)
 	}

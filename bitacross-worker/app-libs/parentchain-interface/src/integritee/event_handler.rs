@@ -19,6 +19,7 @@ use codec::Encode;
 
 use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
 use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use bc_signer_registry::{SignerRegistryUpdater, GLOBAL_SIGNER_REGISTRY};
 use core::str::from_utf8;
 pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
@@ -128,6 +129,13 @@ impl ParentchainEventHandler {
 	fn remove_enclave(account_id: Address32) -> Result<(), Error> {
 		info!("Remove Enclave Account from Registry: {:?}", account_id);
 		GLOBAL_ENCLAVE_REGISTRY.remove(account_id)?;
+
+		Ok(())
+	}
+
+	fn save_signer(account_id: AccountId, pub_key: [u8; 33]) -> Result<(), Error> {
+		info!("Saving Signer Account to Registry: {:?}", account_id);
+		GLOBAL_SIGNER_REGISTRY.update(account_id, pub_key)?;
 
 		Ok(())
 	}
@@ -258,6 +266,20 @@ where
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::EnclaveRemoveFailure)?;
+		}
+
+		if let Ok(events) = events.get_btc_wallet_generated_events() {
+			debug!("Handling BtcWalletGenerated events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					debug!("found BtcWalletGenerated event: {:?}", event);
+					let result = Self::save_signer(event.account_id, event.pub_key);
+					handled_events.push(hash_of(&event));
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::BtcWalletGeneratedFailure)?;
 		}
 	}
 }

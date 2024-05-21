@@ -196,3 +196,22 @@ impl StaticEvent for RelayerRemoved {
 	const PALLET: &'static str = "Bitacross";
 	const EVENT: &'static str = "RelayerRemoved";
 }
+
+#[derive(Encode, Decode, Debug)]
+pub struct BtcWalletGenerated {
+	pub pub_key: [u8; 33],
+	pub account_id: AccountId,
+}
+
+impl core::fmt::Display for BtcWalletGenerated {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		let account_id = account_id_to_string::<AccountId>(&self.account_id);
+		let message = format!("BtcWalletGenerated :: account_id: {:?}", account_id);
+		write!(f, "{}", message)
+	}
+}
+
+impl StaticEvent for BtcWalletGenerated {
+	const PALLET: &'static str = "Bitacross";
+	const EVENT: &'static str = "BtcWalletGenerated";
+}
