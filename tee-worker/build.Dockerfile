@@ -58,12 +58,16 @@ ENV IMAGE_FOR_RELEASE=$IMAGE_FOR_RELEASE
 
 ARG FINGERPRINT=none
 
+ARG SGX_COMMERCIAL_KEY
+ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
+
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
   if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
     echo "Omit cache for release image"; \
+    unset RUSTC_WRAPPER; \
     make; \
   else \
     rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
@@ -111,6 +115,15 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
+# Adding default user litentry
+# The user id could be changed during start, see entrypoint.sh
+#
+ARG UID=1000
+ARG GUID=1000
+RUN adduser -u ${UID} --disabled-password --gecos '' litentry
+RUN adduser -u ${UID} litentry sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 WORKDIR /usr/local/bin
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
@@ -125,6 +138,8 @@ RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
+ENV PATH $PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64
+ENV PKG_CONFIG_PATH $PKG_CONFIG_PATH:$SGX_SDK/pkgconfig
 ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm

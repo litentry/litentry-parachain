@@ -50,6 +50,9 @@ ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
 ARG FINGERPRINT=none
 
+ARG SGX_COMMERCIAL_KEY
+ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
+
 WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
@@ -98,6 +101,15 @@ ENTRYPOINT ["/usr/local/bin/bitacross-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
+# Adding default user litentry
+# The user id could be changed during start, see entrypoint.sh
+#
+ARG UID=1000
+ARG GUID=1000
+RUN adduser -u ${UID} --disabled-password --gecos '' litentry
+RUN adduser -u ${UID} litentry sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 WORKDIR /usr/local/bin
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
@@ -112,6 +124,8 @@ RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
+ENV PATH $PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64
+ENV PKG_CONFIG_PATH $PKG_CONFIG_PATH:$SGX_SDK/pkgconfig
 ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
