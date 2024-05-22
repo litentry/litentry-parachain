@@ -144,7 +144,7 @@ ENTRYPOINT ["/usr/local/bin/litentry-worker"]
 FROM ubuntu:22.04 AS worker-release
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
-RUN apt update && apt install -y libssl-dev iproute2 protobuf-compiler
+RUN apt update && apt install -y libssl-dev iproute2 curl protobuf-compiler
 
 # Adding default user litentry with uid 1000
 ARG UID=1000
