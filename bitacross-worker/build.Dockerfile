@@ -166,8 +166,8 @@ COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/entrypoint.sh /us
 WORKDIR /origin
 
 RUN touch spid.txt key.txt && \
-    cp ./litentry-* /usr/local/bin/ && \
-    chmod +x /usr/local/bin/litentry-* && \
+    cp ./bitacross-* /usr/local/bin/ && \
+    chmod +x /usr/local/bin/bitacross-* && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     ls -al /usr/local/bin
 
