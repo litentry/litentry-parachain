@@ -20,9 +20,9 @@ REPO=https://github.com/litentry/litentry-parachain
 
 type=$2
 
-export PARACHAIN_DOCKER_TAG=$(echo $RELEASE_TAG | cut -d'-' -f1 | sed 's/p/v/')
-export IDENTITY_WORKER_DOCKER_TAG=$(echo $RELEASE_TAG | cut -d'-' -f3 | sed 's/i/v/')
-export BITACROSS_WORKER_DOCKER_TAG=$(echo $RELEASE_TAG | cut -d'-' -f5 | sed 's/b/v/')
+export PARACHAIN_DOCKER_TAG=$RELEASE_TAG
+export IDENTITY_WORKER_DOCKER_TAG=$RELEASE_TAG
+export BITACROSS_WORKER_DOCKER_TAG=$RELEASE_TAG
 
 # helper functions to parse the type mask
 is_client_release() {
