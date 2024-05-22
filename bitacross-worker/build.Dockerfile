@@ -110,11 +110,8 @@ ENTRYPOINT ["/usr/local/bin/bitacross-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
-# Adding default user litentry
-# The user id could be changed during start, see entrypoint.sh
-#
+# Adding default user litentry with uid 1001 (1000 is used by node)
 ARG UID=1000
-ARG GUID=1000
 RUN adduser -u ${UID} --disabled-password --gecos '' litentry
 RUN adduser -u ${UID} litentry sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
