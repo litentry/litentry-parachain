@@ -69,6 +69,7 @@ impl InMemorySmartContractRepo {
 				vec!["twitter_api_key".to_string()]
 				)
 		);
+
 		InMemorySmartContractRepo { map: map.into() }
 	}
 }
