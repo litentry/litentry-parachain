@@ -8,13 +8,26 @@ These types were auto generated using [Polkadot.js Type Generation](https://polk
 
 1. Install the package from NPM
 
-   ```
+   ```typescript
    npm install @litentry/parachain-api
    ```
 
-2. Import type definitions as needed:
+2. Extend and decorate the API's types with:
 
+   ```typescript
+   import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
+     
+   const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
+   
+   const api = await ApiPromise.create({
+           provider,
+           types,
+       });
    ```
+
+3. Import type definitions as needed:
+
+   ```typescript
    import type { LitentryIdentity } from '@litentry/parachain-api';
    
    function myFunction(identity: LitentryIdentity) {
@@ -32,7 +45,7 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 1. Build the package
 
-   ```
+   ```typescript
    pnpm run build
    ```
 
@@ -40,11 +53,10 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 3. Publish the distribution files
 
-   ```
+   ```typescript
    npm publish --access=public
    ```
 
 ## How to regenerate types
 
 Please read the commands of [client-api](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/client-api/README.md).
-
