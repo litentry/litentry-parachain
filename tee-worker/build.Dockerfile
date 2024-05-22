@@ -141,7 +141,7 @@ ENTRYPOINT ["/usr/local/bin/litentry-worker"]
 
 ### Release worker image
 ##################################################
-FROM ubuntu AS worker-release
+FROM ubuntu:22.04 AS worker-release
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 RUN apt update && apt install -y libssl-dev iproute2 protobuf-compiler
