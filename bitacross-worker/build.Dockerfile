@@ -72,6 +72,7 @@ RUN \
     make && sccache --show-stats; \
   fi
 
+RUN make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}' > mrenclave.txt
 RUN cargo test --release
 
 
@@ -161,6 +162,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 RUN mkdir -p /origin /data
 
 COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/* /origin
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/mrenclave.txt /origin
 COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 WORKDIR /origin
