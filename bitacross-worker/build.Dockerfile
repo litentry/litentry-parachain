@@ -161,7 +161,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 RUN mkdir -p /origin /data
 
 COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/* /origin
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 WORKDIR /origin
 
