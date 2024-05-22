@@ -115,12 +115,6 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
-# Adding default user litentry with uid 1001 (1000 is used by node)
-ARG UID=1001
-RUN adduser -u ${UID} --disabled-password --gecos '' litentry
-RUN adduser -u ${UID} litentry sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
 WORKDIR /usr/local/bin
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
@@ -133,14 +127,60 @@ RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker
 RUN ls -al /usr/local/bin
 
+# checks
 ENV SGX_SDK /opt/sgxsdk
 ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
-ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
 
 RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
 # TODO: use entrypoint and aesm service launch, see P-295 too
 ENTRYPOINT ["/usr/local/bin/litentry-worker"]
+
+
+### Release worker image
+##################################################
+FROM ubuntu AS worker-release
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
+
+RUN apt update && apt install -y libssl-dev iproute2 protobuf-compiler
+
+# Adding default user litentry with uid 1000
+ARG UID=1000
+RUN adduser -u ${UID} --disabled-password --gecos '' litentry
+RUN adduser -u ${UID} litentry sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM xterm
+ENV SGX_SDK /opt/sgxsdk
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+
+RUN mkdir -p /origin /data
+
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /origin
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+
+WORKDIR /origin
+
+RUN touch spid.txt key.txt && \
+    cp ./litentry-* /usr/local/bin/ && \
+    chmod +x /usr/local/bin/litentry-* && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    ls -al /usr/local/bin
+
+RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
+
+ENV DATA_DIR /data
+
+USER litentry
+WORKDIR /data
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
