@@ -213,7 +213,7 @@ jobs:
           context: .
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-identity-worker:${{ env.RELEASE_TAG }}
-          target: deployed-worker
+          target: worker-release
 
       - run: docker images --all
 
@@ -280,7 +280,7 @@ jobs:
           context: .
           file: bitacross-worker/build.Dockerfile
           tags: litentry/litentry-bitacross-worker:${{ env.RELEASE_TAG }}
-          target: deployed-worker
+          target: worker-release
 
       - run: docker images --all
 
