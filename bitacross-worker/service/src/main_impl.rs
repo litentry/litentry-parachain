@@ -561,11 +561,16 @@ fn start_worker<E, T, InitializationHandler>(
 
 	println!("[Litentry:OCW] Finished initializing light client, syncing parentchain...");
 
+	// Litentry: apply skipped parentchain block
+	let parentchain_start_block = config
+		.try_parse_parentchain_start_block()
+		.expect("parentchain start block to be a valid number");
+
 	// Syncing all parentchain blocks, this might take a while..
 	let last_synced_header = integritee_parentchain_handler
 		.sync_parentchain_until_latest_finalized(
 			integritee_last_synced_header_at_last_run,
-			0,
+			parentchain_start_block,
 			*shard,
 			true,
 		)
