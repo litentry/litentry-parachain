@@ -255,7 +255,7 @@ jobs:
 
       - name: Write enclave signing key
         run: |
-          cat << EOF > tee-worker/enclave_key.pem
+          cat << EOF > bitacross-worker/enclave_key.pem
           ${{ secrets.PROD_ENCLAVE_SIGN_KEY }}
           EOF
 
