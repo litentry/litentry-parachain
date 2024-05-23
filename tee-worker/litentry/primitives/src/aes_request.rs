@@ -65,6 +65,7 @@ impl DecryptableRequest for AesRequest {
 }
 
 impl AesRequest {
+	#[allow(clippy::result_unit_err)]
 	pub fn decrypt_aes_key<T: Debug>(
 		&mut self,
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
