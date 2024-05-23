@@ -365,7 +365,7 @@ export const getIdGraphHash = async (
         primeIdentity.toHuman()
     );
     const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const res = await sendRsaRequestFromGetter(context, teeShieldingKey, getter);
     const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('H256', hash);
 };
@@ -396,7 +396,7 @@ export const sendRequestFromTrustedCall = async (
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
-export const sendRequestFromGetter = async (
+export const sendRsaRequestFromGetter = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     getter: Getter
@@ -405,6 +405,28 @@ export const sendRequestFromGetter = async (
     //            this is what `state_executeGetter` expects in rust
     const requestParam = await createRsaRequest(context.api, context.mrEnclave, teeShieldingKey, true, getter.toU8a());
     const request = createJsonRpcRequest('state_executeGetter', [u8aToHex(requestParam)], nextRequestId(context));
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
+    // hopefully we will query correct state
+    await sleep(1);
+    return sendRequest(context.tee, request, context.api);
+};
+
+export const sendAesRequestFromGetter = async (
+    context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    aesKey: Uint8Array,
+    getter: Getter
+): Promise<WorkerRpcReturnValue> => {
+    // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
+    //            this is what `state_executeAesGetter` expects in rust
+    const requestParam = await createAesRequest(
+        context.api,
+        context.mrEnclave,
+        teeShieldingKey,
+        aesKey,
+        getter.toU8a()
+    );
+    const request = createJsonRpcRequest('state_executeAesGetter', [u8aToHex(requestParam)], nextRequestId(context));
     // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
     // hopefully we will query correct state
     await sleep(1);
