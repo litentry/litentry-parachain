@@ -307,16 +307,13 @@ where
 	});
 
 	// TODO: supplant state_executeGetter
-	let shielding_key_cloned = shielding_key.clone();
-	let getter_executor_cloned = getter_executor.clone();
 	io.add_sync_method("state_executeAesGetter", move |params: Params| {
 		debug!("worker_api_direct rpc was called: state_executeAesGetter");
 
-		let shielding_key =
-			match shielding_key_cloned.retrieve_key().map_err(|e| format!("{:?}", e)) {
-				Ok(key) => key,
-				Err(e) => return Ok(json!(compute_hex_encoded_return_error(&e))),
-			};
+		let shielding_key = match shielding_key.retrieve_key().map_err(|e| format!("{:?}", e)) {
+			Ok(key) => key,
+			Err(e) => return Ok(json!(compute_hex_encoded_return_error(&e))),
+		};
 
 		let return_value: Result<AesOutput, String> = (|| {
 			let hex_encoded_params =
@@ -332,7 +329,7 @@ where
 				.map_err(|e: ()| format!("{:?}", e))?;
 			let shard = request.shard();
 
-			let state_getter_value = getter_executor_cloned
+			let state_getter_value = getter_executor
 				.execute_getter(&shard, encoded_trusted_getter)
 				.map_err(|e| format!("{:?}", e))?;
 
@@ -577,7 +574,6 @@ where
 
 // Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
 // in unencrypted, see P-183
-#[deprecated]
 fn execute_rsa_getter_inner<GE: ExecuteGetter>(
 	getter_executor: &GE,
 	params: Params,
