@@ -41,6 +41,7 @@ test = [
     "itp-test/sgx",
     "itp-top-pool-author/test",
     "itp-top-pool-author/mocks",
+    "bc-musig2-ceremony/sgx-test",
 ]
 dcap = []
 
