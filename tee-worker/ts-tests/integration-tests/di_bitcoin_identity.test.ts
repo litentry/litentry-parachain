@@ -78,8 +78,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             aliceBitcoinIdentity
         );
         const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
-        const value = decryptWithAes(aesKey, context.api.createType('AesOutput', res.value), 'utf-8').replace('0x', '');
-        const idGraph = decodeIdGraph(context.sidechainRegistry, context.api.createType('Bytes', hexToU8a(value)));
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
         assert.lengthOf(idGraph, 0);
     });
 

@@ -12,7 +12,14 @@ import type {
     TrustedGetterSigned,
     TrustedCall,
 } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep, createLitentryMultiSignature } from './utils';
+import {
+    encryptWithTeeShieldingKey,
+    Signer,
+    encryptWithAes,
+    sleep,
+    createLitentryMultiSignature,
+    decryptWithAes,
+} from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
@@ -396,6 +403,7 @@ export const sendRequestFromTrustedCall = async (
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
+/** @deprecated */
 export const sendRsaRequestFromGetter = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
@@ -430,7 +438,19 @@ export const sendAesRequestFromGetter = async (
     // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
     // hopefully we will query correct state
     await sleep(1);
-    return sendRequest(context.tee, request, context.api);
+    const res = await sendRequest(context.tee, request, context.api);
+
+    const decryptedValue = decryptWithAes(
+        u8aToHex(aesKey),
+        context.api.createType('AesOutput', res.value),
+        'utf-8'
+    ).replace('0x', '');
+
+    return context.api.createType('WorkerRpcReturnValue', {
+        value: context.api.createType('Bytes', hexToU8a(decryptedValue)),
+        do_watch: res.do_watch,
+        status: res.status,
+    });
 };
 
 // get TEE's shielding key directly via RPC
