@@ -440,7 +440,13 @@ export const sendAesRequestFromGetter = async (
     await sleep(1);
     const res = await sendRequest(context.tee, request, context.api);
 
+    console.warn('encrypted AES response');
+    console.warn(res.toHuman());
+
     const decryptedValue = decryptWithAes(u8aToHex(aesKey), context.api.createType('AesOutput', res.value), 'utf-8');
+
+    console.warn('decrypted AES response');
+    console.warn(decryptedValue);
 
     return context.api.createType('WorkerRpcReturnValue', {
         value: context.api.createType('Bytes', hexToU8a(decryptedValue)),
