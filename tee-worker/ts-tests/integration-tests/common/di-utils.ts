@@ -403,7 +403,7 @@ export const sendRequestFromTrustedCall = async (
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
-/** @deprecated */
+/** @deprecated use `sendAesRequestFromGetter` instead */
 export const sendRsaRequestFromGetter = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,

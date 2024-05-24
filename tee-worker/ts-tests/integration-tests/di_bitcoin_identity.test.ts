@@ -7,7 +7,6 @@ import {
     assertIdGraphMutationResult,
     assertIdGraphHash,
     sleep,
-    decryptWithAes,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {

@@ -306,7 +306,6 @@ where
 		Ok(json!(json_value))
 	});
 
-	// TODO: supplant state_executeGetter
 	io.add_sync_method("state_executeAesGetter", move |params: Params| {
 		debug!("worker_api_direct rpc was called: state_executeAesGetter");
 
@@ -572,8 +571,7 @@ where
 	io
 }
 
-// Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
-// in unencrypted, see P-183
+#[deprecated(note = "`state_executeAesGetter` should be preferred")]
 fn execute_rsa_getter_inner<GE: ExecuteGetter>(
 	getter_executor: &GE,
 	params: Params,
