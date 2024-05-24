@@ -50,8 +50,8 @@ pub fn build(
 		sidechain: req.sidechain_runtime_version,
 	};
 
-	let mut credential_unsigned = Credential::new(&req.who, &req.shard, &runtime_version)
-		.map_err(|e| {
+	let mut credential_unsigned =
+		Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
 			error!("Generate unsigned credential failed {:?}", e);
 			Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
 		})?;
