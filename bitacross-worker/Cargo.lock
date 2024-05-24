@@ -374,8 +374,8 @@ dependencies = [
  "k256",
  "litentry-primitives",
  "log 0.4.20",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?tag=v0.0.8)",
  "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
- "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=sgx)",
  "parity-scale-codec",
  "rand 0.8.5",
  "sgx_rand",
@@ -400,8 +400,8 @@ dependencies = [
  "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
+ "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?tag=v0.0.8)",
  "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
- "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=sgx)",
  "parity-scale-codec",
  "rand 0.8.5",
  "sgx_crypto_helper",
@@ -4523,22 +4523,7 @@ dependencies = [
 [[package]]
 name = "musig2"
 version = "0.0.8"
-source = "git+https://github.com/kziemianek/musig2.git?branch=master#cd5e61ac9ecdf842da58605ac7b07b6e359f08c5"
-dependencies = [
- "base16ct",
- "hmac 0.12.1",
- "k256",
- "once_cell 1.19.0",
- "secp 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "secp256k1 0.28.0",
- "sha2 0.10.8",
- "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "musig2"
-version = "0.0.8"
-source = "git+https://github.com/kziemianek/musig2.git?branch=sgx#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
+source = "git+https://github.com/kziemianek/musig2.git?tag=v0.0.8#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
 dependencies = [
  "base16ct",
  "hmac 0.12.1",
@@ -4549,6 +4534,21 @@ dependencies = [
  "sgx_tstd",
  "sha2 0.10.8",
  "subtle 2.5.0 (git+https://github.com/kziemianek/subtle-sgx.git?branch=2.5.0-update)",
+]
+
+[[package]]
+name = "musig2"
+version = "0.0.8"
+source = "git+https://github.com/kziemianek/musig2.git?branch=master#cd5e61ac9ecdf842da58605ac7b07b6e359f08c5"
+dependencies = [
+ "base16ct",
+ "hmac 0.12.1",
+ "k256",
+ "once_cell 1.19.0",
+ "secp 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "secp256k1 0.28.0",
+ "sha2 0.10.8",
+ "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
