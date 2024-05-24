@@ -2965,7 +2965,7 @@ dependencies = [
 [[package]]
 name = "musig2"
 version = "0.0.8"
-source = "git+https://github.com/kziemianek/musig2.git?branch=sgx#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
+source = "git+https://github.com/kziemianek/musig2.git?tag=v0.0.8#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
 dependencies = [
  "base16ct",
  "hmac",
