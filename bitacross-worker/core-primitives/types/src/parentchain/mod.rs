@@ -17,8 +17,8 @@
 
 pub mod events;
 
-use crate::{OpaqueCall, ShardIdentifier};
-use alloc::{format, vec::Vec};
+use crate::OpaqueCall;
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
@@ -26,12 +26,10 @@ use events::{
 	RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
-use itp_utils::stringify::account_id_to_string;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
-use substrate_api_client::ac_node_api::StaticEvent;
 
 pub type StorageProof = Vec<Vec<u8>>;
 

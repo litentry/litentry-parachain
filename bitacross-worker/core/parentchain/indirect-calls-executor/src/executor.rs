@@ -21,10 +21,9 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	error::{Error, Result},
-	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
-	traits::{ExecuteIndirectCalls, IndirectDispatch},
+	filter_metadata::EventsFromMetadata,
+	traits::ExecuteIndirectCalls,
 };
-use alloc::format;
 use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
@@ -39,11 +38,10 @@ use itp_stf_primitives::{
 };
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::{ExtrinsicStatus, FilterEvents, HandleParentchainEvents, ParentchainId},
+	parentchain::{HandleParentchainEvents, ParentchainId},
 	OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
-use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{fmt::Debug, sync::Arc, vec::Vec};
 
@@ -52,7 +50,6 @@ pub struct IndirectCallsExecutor<
 	StfEnclaveSigner,
 	TopPoolAuthor,
 	NodeMetadataProvider,
-	IndirectCallsFilter,
 	EventCreator,
 	ParentchainEventHandler,
 	TCS,
@@ -63,14 +60,13 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
-	_phantom: PhantomData<(IndirectCallsFilter, EventCreator, ParentchainEventHandler, TCS, G)>,
+	_phantom: PhantomData<(EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		IndirectCallsFilter,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -81,7 +77,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		IndirectCallsFilter,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -111,7 +106,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -122,7 +116,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventCreator,
 		ParentchainEventHandler,
 		TCS,
@@ -134,9 +127,7 @@ impl<
 	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
-	FilterIndirectCalls::Output: IndirectDispatch<Self, TCS, Args = ()> + Encode + Debug,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
 	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
@@ -206,7 +197,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventFilter,
 		PrivacySidechain,
 		TCS,
@@ -217,7 +207,6 @@ impl<
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-		FilterIndirectCalls,
 		EventFilter,
 		PrivacySidechain,
 		TCS,
@@ -264,10 +253,6 @@ impl<
 	) -> Result<TCS> {
 		Ok(self.stf_enclave_signer.sign_call_with_self(trusted_call, shard)?)
 	}
-}
-
-pub fn hash_of<T: Encode>(xt: &T) -> H256 {
-	blake2_256(&xt.encode()).into()
 }
 
 #[cfg(test)]

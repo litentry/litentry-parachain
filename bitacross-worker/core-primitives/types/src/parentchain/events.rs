@@ -1,4 +1,4 @@
-use super::alloc::format;
+use super::alloc::{format, vec::Vec};
 use crate::{
 	AccountId, Balance, BlockNumber, Hash, MrEnclave, ShardIdentifier, SidechainBlockNumber,
 	WorkerType,
