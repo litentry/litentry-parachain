@@ -299,13 +299,13 @@ mod test {
 	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 	#[test]
-	fn ensure_empty_extrinsic_vec_triggers_zero_filled_merkle_root() {
+	fn ensure_empty_events_vec_triggers_zero_filled_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([38u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = Vec::new();
+		let events = Vec::new();
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 		let expected_call =
@@ -313,7 +313,7 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then
@@ -321,13 +321,13 @@ mod test {
 	}
 
 	#[test]
-	fn ensure_non_empty_extrinsic_vec_triggers_non_zero_merkle_root() {
+	fn ensure_non_empty_events_vec_triggers_non_zero_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([39u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = vec![H256::from([4; 32]), H256::from([9; 32])];
+		let events = vec![H256::from([4; 32]), H256::from([9; 32])];
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 
@@ -336,7 +336,7 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then
