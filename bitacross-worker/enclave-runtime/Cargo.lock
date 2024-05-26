@@ -2965,7 +2965,7 @@ dependencies = [
 [[package]]
 name = "musig2"
 version = "0.0.8"
-source = "git+https://github.com/kziemianek/musig2.git?branch=sgx#179f1eb5e7b9d7433bd1a5fd9af94477efb0fb38"
+source = "git+https://github.com/kailai-wang/musig2.git?branch=use-sha2-0.8#93857e52abbe8f9898c9ec743eecb1380132abcb"
 dependencies = [
  "base16ct",
  "hmac",
@@ -2975,6 +2975,7 @@ dependencies = [
  "secp256k1 0.28.0",
  "sgx_tstd",
  "sha2 0.10.7",
+ "sha2_v08_wrapper",
  "subtle 2.5.0",
 ]
 
@@ -4307,6 +4308,14 @@ dependencies = [
  "cfg-if 1.0.0",
  "cpufeatures",
  "digest 0.10.7",
+]
+
+[[package]]
+name = "sha2_v08_wrapper"
+version = "0.1.0"
+source = "git+https://github.com/kailai-wang/sha2_v08#c41176becc675e84cd708e8b18ba2cd0c9cf8eb0"
+dependencies = [
+ "sha2 0.8.2",
 ]
 
 [[package]]
