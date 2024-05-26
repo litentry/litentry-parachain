@@ -17,7 +17,7 @@ use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMoc
 use itp_types::{
 	parentchain::{
 		events::{BalanceTransfer, ScheduledEnclaveRemoved, ScheduledEnclaveSet},
-		ExtrinsicStatus, FilterEvents, HandleParentchainEvents,
+		FilterEvents, HandleParentchainEvents,
 	},
 	Address, RsaRequest, ShardIdentifier, H256,
 };
@@ -182,6 +182,36 @@ impl FilterEvents for MockEvents {
 	fn get_scheduled_enclave_removed_events(
 		&self,
 	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayer_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayers_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_btc_wallet_generated_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::BtcWalletGenerated>, Self::Error> {
 		Ok(Vec::new())
 	}
 }
