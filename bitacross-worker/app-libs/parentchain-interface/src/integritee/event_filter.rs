@@ -23,9 +23,8 @@ use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{
 		events::{
-			BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, ExtrinsicFailed,
-			ExtrinsicSuccess, RelayerAdded, RelayerRemoved, ScheduledEnclaveRemoved,
-			ScheduledEnclaveSet,
+			BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, RelayerAdded,
+			RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
 		},
 		FilterEvents,
 	},
