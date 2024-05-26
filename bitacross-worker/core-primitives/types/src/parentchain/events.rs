@@ -168,9 +168,12 @@ pub struct RelayerAdded {
 
 impl core::fmt::Display for RelayerAdded {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let account_id = account_id_to_string::<AccountId>(&self.who.to_account_id());
-		let message = format!("RelayerAdded :: account_id: {:?}", account_id);
-		write!(f, "{}", message)
+		if let Some(account_id) = self.who.to_account_id() {
+			let message = format!("RelayerAdded :: account_id: {:?}", account_id);
+			write!(f, "{}", message)
+		} else {
+			write!(f, "RelayerAdded :: account_id: None")
+		}
 	}
 }
 
@@ -186,9 +189,12 @@ pub struct RelayerRemoved {
 
 impl core::fmt::Display for RelayerRemoved {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let account_id = account_id_to_string::<AccountId>(&self.who.to_account_id());
-		let message = format!("RelayerRemoved :: account_id: {:?}", account_id);
-		write!(f, "{}", message)
+		if let Some(account_id) = self.who.to_account_id() {
+			let message = format!("RelayerRemoved :: account_id: {:?}", account_id);
+			write!(f, "{}", message)
+		} else {
+			write!(f, "RelayerRemoved :: account_id: None")
+		}
 	}
 }
 
