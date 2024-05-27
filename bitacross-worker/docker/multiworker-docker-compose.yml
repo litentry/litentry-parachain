@@ -211,7 +211,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/bitacross-worker --clean-reset --ws-external -M bitacross-worker-2 -T wss://bitacross-worker-2
-      -u ws://litentry-node -U ws://litentry-worker-2 -P 2011 -w 2101 -p 9912 -h 4645
+      -u ws://litentry-node -U ws://bitacross-worker-2 -P 2011 -w 2101 -p 9912 -h 4645
       run --dev --skip-ra --request-state"
     restart: "no"
 volumes:
