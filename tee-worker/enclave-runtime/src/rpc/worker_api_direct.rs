@@ -293,7 +293,7 @@ where
 	// TODO: deprecate
 	let getter_executor_cloned = getter_executor.clone();
 	io.add_sync_method("state_executeGetter", move |params: Params| {
-		debug!("worker_api_direct rpc was called: state_executeGetter");
+		warn!("worker_api_direct rpc was called: state_executeGetter");
 		#[allow(deprecated)]
 		let json_value = match execute_rsa_getter_inner(getter_executor_cloned.as_ref(), params) {
 			Ok(state_getter_value) => RpcReturnValue {
