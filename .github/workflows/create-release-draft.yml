@@ -212,7 +212,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-identity-worker:${{ env.RELEASE_TAG }}
+          tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
       - run: docker images --all
@@ -225,7 +225,7 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/litentry-identity-worker:${{ env.RELEASE_TAG }}
+          docker push litentry/identity-worker:${{ env.RELEASE_TAG }}
 
   build-bitacross-worker:
     if: ${{ github.event.inputs.bitacross_worker == 'true' }}
@@ -279,7 +279,7 @@ jobs:
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
-          tags: litentry/litentry-bitacross-worker:${{ env.RELEASE_TAG }}
+          tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
       - run: docker images --all
@@ -292,7 +292,7 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/litentry-bitacross-worker:${{ env.RELEASE_TAG }}
+          docker push litentry/bitacross-worker:${{ env.RELEASE_TAG }}
 
 
   parachain-ts-tests:

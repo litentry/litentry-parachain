@@ -182,8 +182,8 @@ if is_identity_worker_release; then
   WORKER_RUSTC_VERSION=$(cd tee-worker && rustc --version)
   UPSTREAM_COMMIT=$(cat tee-worker/upstream_commit)
   RUNTIME_VERSION=$(grep spec_version tee-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
-  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/litentry-identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
-  MRENCLAVE=$(docker run --entrypoint cat litentry/litentry-identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/mrenclave.txt)
+  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
+  MRENCLAVE=$(docker run --entrypoint cat litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
 ## Identity TEE worker
 
@@ -192,7 +192,7 @@ client version               : $WORKER_VERSION
 client name                  : $WORKER_BIN
 rustc                        : $WORKER_RUSTC_VERSION
 upstream commit:             : $UPSTREAM_COMMIT
-docker image                 : litentry/litentry-identity-worker:$IDENTITY_WORKER_DOCKER_TAG
+docker image                 : litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG
 
 runtime version:             : $RUNTIME_VERSION
 enclave sha1sum:             : $ENCLAVE_SHASUM
@@ -208,8 +208,8 @@ if is_identity_worker_release; then
   WORKER_RUSTC_VERSION=$(cd bitacross-worker && rustc --version)
   UPSTREAM_COMMIT=$(cat bitacross-worker/upstream_commit)
   RUNTIME_VERSION=$(grep spec_version bitacross-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
-  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/litentry-bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
-  MRENCLAVE=$(docker run --entrypoint cat litentry/litentry-bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/mrenclave.txt)
+  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
+  MRENCLAVE=$(docker run --entrypoint cat litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
 ## Bitacross TEE worker
 
@@ -218,7 +218,7 @@ client version               : $WORKER_VERSION
 client name                  : $WORKER_BIN
 rustc                        : $WORKER_RUSTC_VERSION
 upstream commit:             : $UPSTREAM_COMMIT
-docker image                 : litentry/litentry-bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG
+docker image                 : litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG
 
 runtime version:             : $RUNTIME_VERSION
 enclave sha1sum:             : $ENCLAVE_SHASUM
