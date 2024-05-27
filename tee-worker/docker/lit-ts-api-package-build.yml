@@ -1,6 +1,6 @@
 services:
     lit-ts-api-package-build:
-        image: litentry/litentry-cli:latest
+        image: litentry/identity-cli:latest
         container_name: litentry-lit-ts-api-package-build
         volumes:
             - ../client-api:/client-api
