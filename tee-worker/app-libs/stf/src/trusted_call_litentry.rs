@@ -197,7 +197,7 @@ impl TrustedCallSigned {
 		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
 
 		if identities.is_empty() {
-			warn!("[RequestVc] : No eligible identities");
+			debug!("[RequestVc]: No eligible identities");
 		}
 
 		let parachain_block_number = ParentchainLitentry::block_number();
