@@ -1,4 +1,3 @@
-# Reference: ci.yml
 name: Release Ts API Package
 
 on:
