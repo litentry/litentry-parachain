@@ -10,7 +10,7 @@ on:
       release-tag:
         description: "Client-api release tag"
         type: choice
-         options:
+        options:
           - latest
           - next
         default: 'latest'
