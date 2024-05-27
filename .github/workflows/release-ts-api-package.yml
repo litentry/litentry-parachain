@@ -4,9 +4,17 @@ name: Release Ts API Package
 on:
   workflow_dispatch:
     inputs:
-      release-tag:
-        description: "Client-api release tag (e.g. p1.2.0-9701-w0.0.1-101)"
+      docker-tag:
+        description: "Docker image tag (e.g. p1.2.0-9701-w0.0.1-101)"
         required: true
+      release-tag:
+        description: "Client-api release tag"
+        type: choice
+         options:
+          - latest
+          - next
+        default: 'latest'
+
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
@@ -19,11 +27,12 @@ jobs:
       - name: Set ENV
         run: |
           # extracting parachain version and worker version from release tag
-          PARACHAIN_DOCKER_TAG=$(echo ${{inputs.release-tag}} | cut -d'-' -f1 | sed 's/p/v/')
+          PARACHAIN_DOCKER_TAG=$(echo ${{inputs.docker-tag}} | cut -d'-' -f1 | sed 's/p/v/')
           echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
-          WORKER_DOCKER_TAG=$(echo ${{inputs.release-tag}}  | sed 's/.*w/v/;s/-.*//')
+          WORKER_DOCKER_TAG=$(echo ${{ inputs.docker-tag }} | cut -d'-' -f3 | sed 's/w/v/')
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
+
 
       - name: Pull litentry image optionally
         run: |
@@ -61,12 +70,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          registry-url: https://npm.pkg.github.com/
+          registry-url: "https://registry.npmjs.org"
 
       - name: Setup npm config
         run: |
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
-          npm config set @litentry:registry https://npm.pkg.github.com
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
 
       - name: Publish parachain API and sidechain API
         working-directory: ./tee-worker/client-api
@@ -82,7 +90,7 @@ jobs:
               echo "$api dist and build files do not exist. Publishing failed."
               exit 1
             fi
-            npm publish --tag ${{ inputs.release-tag }}
+            npm publish --tag ${{inputs.release-tag}}
 
             echo "------------------------$api published------------------------"
             cd ..
