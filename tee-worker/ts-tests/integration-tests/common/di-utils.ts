@@ -49,8 +49,9 @@ async function sendRequest(
             const parsed = JSON.parse(data);
             if (parsed.id === request.id) {
                 if ('error' in parsed) {
-                    console.log('Error response: ' + JSON.stringify(parsed, null, 2));
-                    throw new Error(parsed.error.message, { cause: parsed.error });
+                    const transaction = { request, response: parsed };
+                    console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
+                    throw new Error(parsed.error.message, { cause: transaction });
                 }
 
                 const result = parsed.result;
@@ -439,14 +440,14 @@ export const sendAesRequestFromGetter = async (
         getter.toU8a()
     );
     const request = createJsonRpcRequest('state_executeAesGetter', [u8aToHex(requestParam)], nextRequestId(context));
-    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 5 sec
     // hopefully we will query correct state
-    await sleep(1);
+    await sleep(5);
     const res = await sendRequest(context.tee, request, context.api);
     console.warn(res.toHuman());
     const aesOutput = context.api.createType('AesOutput', res.value);
     console.warn(aesOutput.toHuman());
-    const decryptedValue = decryptWithAes(u8aToHex(aesKey), context.api.createType('AesOutput', res.value), 'utf-8');
+    const decryptedValue = decryptWithAes(u8aToHex(aesKey), aesOutput, 'hex');
 
     return context.api.createType('WorkerRpcReturnValue', {
         value: hexToU8a(decryptedValue),
