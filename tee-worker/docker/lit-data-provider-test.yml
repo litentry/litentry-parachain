@@ -1,6 +1,6 @@
 services:
     lit-data-provider-test:
-        image: litentry/litentry-cli:latest
+        image: litentry/identity-cli:latest
         container_name: litentry-data-provider-test
         volumes:
             - ../ts-tests:/ts-tests
