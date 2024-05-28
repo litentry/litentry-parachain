@@ -130,16 +130,6 @@ jobs:
           echo "============================="
           docker images
 
-      - name: Dockerhub login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-
       - name: Generate genesis artefacts if need
         if: github.event.inputs.genesis_release != 'none'
         run: |
@@ -150,6 +140,10 @@ jobs:
         run: |
           docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
 
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain::${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
+
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
         with:
@@ -157,6 +151,7 @@ jobs:
           if-no-files-found: ignore
           path: |
             litentry-collator
+            litentry-parachain-dev.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -309,13 +304,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-collator
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
+          docker images
+
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
-
-      - name: Download and tag docker image
-        run: |
-          docker pull litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
 
       - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 20
@@ -335,6 +335,15 @@ jobs:
         run: |
           make clean-docker-${{ matrix.chain }}
 
+      - name: Dockerhub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
 
   ## create the release draft ##
   create-release-draft:
