@@ -20,7 +20,9 @@ REPO=https://github.com/litentry/litentry-parachain
 
 type=$2
 
-export DOCKER_TAG=$(echo $RELEASE_TAG | cut -d'-' -f1 | sed 's/p/v/')
+export PARACHAIN_DOCKER_TAG=$RELEASE_TAG
+export IDENTITY_WORKER_DOCKER_TAG=$RELEASE_TAG
+export BITACROSS_WORKER_DOCKER_TAG=$RELEASE_TAG
 
 # helper functions to parse the type mask
 is_client_release() {
@@ -31,11 +33,11 @@ is_runtime_release() {
   [ "${type:1:1}" = "1" ]
 }
 
-is_worker_release() {
+is_identity_worker_release() {
   [ "${type:2:1}" = "1" ]
 }
 
-is_enclave_release() {
+is_bitacross_worker_release() {
   [ "${type:3:1}" = "1" ]
 }
 
@@ -45,7 +47,7 @@ if is_client_release; then
 
   # somehow `docker inspect` doesn't pull our litentry-parachain image sometimes
   docker pull "$NODE_BUILD_BASE_IMAGE"
-  docker pull "litentry/litentry-parachain:$DOCKER_TAG"
+  docker pull "litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG"
 
   NODE_VERSION=$(grep version node/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   NODE_BIN=litentry-collator
@@ -73,15 +75,15 @@ if is_runtime_release; then
 else
   echo "- [ ] Parachain runtime" >> "$1"
 fi
-if is_worker_release; then
-  echo "- [x] TEE worker" >> "$1"
+if is_identity_worker_release; then
+  echo "- [x] Identity TEE worker" >> "$1"
 else
-  echo "- [ ] TEE worker" >> "$1"
+  echo "- [ ] Identity TEE worker" >> "$1"
 fi
-if is_enclave_release; then
-  echo "- [x] TEE enclave" >> "$1"
+if is_bitacross_worker_release; then
+  echo "- [x] Bitacross TEE worker" >> "$1"
 else
-  echo "- [ ] TEE enclave" >> "$1"
+  echo "- [ ] Bitacross TEE worker" >> "$1"
 fi
 echo >> "$1"
 
@@ -108,7 +110,7 @@ version                      : $NODE_VERSION
 name                         : $NODE_BIN
 rustc                        : $NODE_RUSTC_VERSION
 sha1sum                      : $NODE_SHA1SUM
-docker image                 : litentry/litentry-parachain:$DOCKER_TAG
+docker image                 : litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG
 <CODEBLOCK>
 
 EOF
@@ -153,7 +155,7 @@ if [ "$GENESIS_RELEASE" != "none" ]; then
 
   # double check that exported wasm matches what's written in chain-spec
   # intentionally use 'generate-prod' as chain type
-  docker run --rm "litentry/litentry-parachain:$DOCKER_TAG" build-spec --chain=generate-$GENESIS_RELEASE --raw | \
+  docker run --rm "litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG" build-spec --chain=generate-$GENESIS_RELEASE --raw | \
   grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
 
   if cmp /tmp/built-wasm litentry-collator/$GENESIS_RELEASE-genesis-wasm; then
@@ -174,34 +176,53 @@ sha1sum of genesis wasm   : $GENESIS_WASM_HASH
 EOF
 fi
 
-if is_worker_release; then
+if is_identity_worker_release; then
   WORKER_VERSION=$(grep version tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_BIN=$(grep name tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_RUSTC_VERSION=$(cd tee-worker && rustc --version)
   UPSTREAM_COMMIT=$(cat tee-worker/upstream_commit)
+  RUNTIME_VERSION=$(grep spec_version tee-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
+  MRENCLAVE=$(docker run --entrypoint cat litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
-## TEE worker
+## Identity TEE worker
 
 <CODEBLOCK>
-version                      : $WORKER_VERSION
-name                         : $WORKER_BIN
+client version               : $WORKER_VERSION
+client name                  : $WORKER_BIN
 rustc                        : $WORKER_RUSTC_VERSION
-sha1sum                      : $WORKER_SHA1SUM
 upstream commit:             : $UPSTREAM_COMMIT
+docker image                 : litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG
+
+runtime version:             : $RUNTIME_VERSION
+enclave sha1sum:             : $ENCLAVE_SHASUM
+mrenclave:                   : $MRENCLAVE
 <CODEBLOCK>
 
 EOF
 fi
 
-if is_enclave_release; then
-  ENCLAVE_VERSION=$(grep spec_version tee-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+if is_identity_worker_release; then
+  WORKER_VERSION=$(grep version bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_BIN=$(grep name bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_RUSTC_VERSION=$(cd bitacross-worker && rustc --version)
+  UPSTREAM_COMMIT=$(cat bitacross-worker/upstream_commit)
+  RUNTIME_VERSION=$(grep spec_version bitacross-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+  ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
+  MRENCLAVE=$(docker run --entrypoint cat litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
-## TEE enclave
+## Bitacross TEE worker
 
 <CODEBLOCK>
-version                      : $ENCLAVE_VERSION
-sha1sum                      : $ENCLAVE_SHA1SUM
-mrenclave                    : $MRENCLAVE
+client version               : $WORKER_VERSION
+client name                  : $WORKER_BIN
+rustc                        : $WORKER_RUSTC_VERSION
+upstream commit:             : $UPSTREAM_COMMIT
+docker image                 : litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG
+
+runtime version:             : $RUNTIME_VERSION
+enclave sha1sum:             : $ENCLAVE_SHASUM
+mrenclave:                   : $MRENCLAVE
 <CODEBLOCK>
 
 EOF
