@@ -330,11 +330,6 @@ jobs:
           path: /tmp/parachain_dev/
           retention-days: 3
 
-      - name: Clean up for ${{ matrix.chain }}
-        if: ${{ always() }}
-        run: |
-          make clean-docker-${{ matrix.chain }}
-
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:
@@ -344,6 +339,11 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+
+      - name: Clean up for ${{ matrix.chain }}
+        if: ${{ always() }}
+        run: |
+          make clean-docker-${{ matrix.chain }}
 
   ## create the release draft ##
   create-release-draft:
