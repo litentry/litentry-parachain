@@ -49,7 +49,10 @@ async function sendRequest(
             const parsed = JSON.parse(data);
             if (parsed.id === request.id) {
                 const result = parsed.result;
-                console.log('Raw response: ' + JSON.stringify(parsed, null, 2));
+                if ('error' in result) {
+                    console.log('Error response: ' + JSON.stringify(parsed, null, 2));
+                    throw new Error(result.error.message, { cause: result.error });
+                }
 
                 const res = api.createType('WorkerRpcReturnValue', result);
 
