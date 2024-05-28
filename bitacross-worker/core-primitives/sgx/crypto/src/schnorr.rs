@@ -19,10 +19,9 @@ pub use sgx::*;
 use crate::error::{Error, Result};
 use k256::{
 	elliptic_curve::group::GroupEncoding,
-	schnorr::{signature::Signer, Signature, SigningKey},
+	schnorr::{SigningKey},
 	PublicKey,
 };
-use std::string::ToString;
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "schnorr_key_sealed.bin";
@@ -55,11 +54,6 @@ impl Pair {
 		self.private.to_bytes().as_slice().try_into().unwrap()
 	}
 
-	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
-		let signature: Signature =
-			self.private.try_sign(payload).map_err(|e| Error::Other(e.to_string().into()))?;
-		Ok(signature.to_bytes())
-	}
 }
 
 #[cfg(feature = "sgx")]
@@ -151,7 +145,6 @@ pub mod sgx_tests {
 		std::string::ToString,
 	};
 	use itp_sgx_temp_dir::TempDir;
-	use k256::schnorr::{signature::Verifier, Signature, VerifyingKey};
 	use std::path::PathBuf;
 
 	pub fn schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key() {
@@ -202,18 +195,4 @@ pub mod sgx_tests {
 		assert_eq!(pair.public, new_pair.public);
 	}
 
-	pub fn schnorr_sign_should_produce_valid_signature() {
-		//given
-		let temp_dir = TempDir::with_prefix("ecdsa_sign_should_produce_valid_signature").unwrap();
-		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
-		let pair = seal.init().unwrap();
-		let message = [1; 32];
-
-		//when
-		let signature = Signature::try_from(pair.sign(&message).unwrap().as_slice()).unwrap();
-
-		//then
-		let verifying_key = VerifyingKey::try_from(&pair.public).unwrap();
-		assert!(verifying_key.verify(&message, &signature).is_ok());
-	}
 }
