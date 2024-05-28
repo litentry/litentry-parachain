@@ -439,10 +439,13 @@ export const sendAesRequestFromGetter = async (
     // hopefully we will query correct state
     await sleep(1);
     const res = await sendRequest(context.tee, request, context.api);
+    console.warn(res.toHuman());
+    const aesOutput = context.api.createType('AesOutput', res.value);
+    console.warn(aesOutput.toHuman());
     const decryptedValue = decryptWithAes(u8aToHex(aesKey), context.api.createType('AesOutput', res.value), 'utf-8');
 
     return context.api.createType('WorkerRpcReturnValue', {
-        value: context.api.createType('Option<Bytes>', hexToU8a(decryptedValue)),
+        value: hexToU8a(decryptedValue),
         do_watch: res.do_watch,
         status: res.status,
     });

@@ -27,6 +27,7 @@ import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from
 import { createType, type Bytes, type Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aWrapBytes } from '@polkadot/util';
+import { fail } from 'assert';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -341,5 +342,9 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         await sleep(20);
         const nonce = await getSidechainNonce(context, aliceBitcoinIdentity);
         assert.equal(nonce.toNumber(), currentNonce);
+    });
+
+    step('prevent automerge while debugging', function () {
+        assert.fail();
     });
 });

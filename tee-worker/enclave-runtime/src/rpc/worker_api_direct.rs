@@ -323,10 +323,12 @@ where
 
 			let aes_key = request
 				.decrypt_aes_key(Box::new(shielding_key))
-				.map_err(|e: ()| format!("{:?}", e))?;
+				.map_err(|e: ()| "Could not decrypt request AES key")?;
+
 			let encoded_trusted_getter = aes_decrypt(&aes_key, &mut request.payload)
 				.ok_or(())
-				.map_err(|e: ()| format!("{:?}", e))?;
+				.map_err(|e: ()| "Could not decrypt getter request")?;
+
 			let shard = request.shard();
 
 			let state_getter_value = getter_executor
