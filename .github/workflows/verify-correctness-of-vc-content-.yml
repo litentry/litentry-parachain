@@ -22,14 +22,14 @@ jobs:
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
-          docker pull litentry/litentry-worker:$WORKER_TAG
-          docker pull litentry/litentry-cli:$WORKER_TAG
+          docker pull litentry/identity-worker:$WORKER_TAG
+          docker pull litentry/identity-cli:$WORKER_TAG
           docker pull litentry/litentry-parachain:$PARACHAIN_TAG
 
       - name: Re-tag docker image
         run: |
-          docker tag litentry/litentry-worker:$WORKER_TAG litentry/litentry-worker:latest
-          docker tag litentry/litentry-cli:$WORKER_TAG litentry/litentry-cli:latest
+          docker tag litentry/identity-worker:$WORKER_TAG litentry/identity-worker:latest
+          docker tag litentry/identity-cli:$WORKER_TAG litentry/identity-cli:latest
           docker tag litentry/litentry-parachain:$PARACHAIN_TAG litentry/litentry-parachain:latest
 
       - run: docker images --all
