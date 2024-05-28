@@ -1,6 +1,6 @@
 services:
   demo-shielding-unshielding-multiworker:
-    image: litentry/litentry-cli:latest
+    image: litentry/identity-cli:latest
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
