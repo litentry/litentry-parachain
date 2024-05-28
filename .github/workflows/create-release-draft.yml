@@ -142,7 +142,7 @@ jobs:
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain::${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
