@@ -48,14 +48,13 @@ async function sendRequest(
         wsClient.onMessage.addListener((data) => {
             const parsed = JSON.parse(data);
             if (parsed.id === request.id) {
-                const result = parsed.result;
-                if ('error' in result) {
+                if ('error' in parsed) {
                     console.log('Error response: ' + JSON.stringify(parsed, null, 2));
-                    throw new Error(result.error.message, { cause: result.error });
+                    throw new Error(parsed.error.message, { cause: parsed.error });
                 }
 
+                const result = parsed.result;
                 const res = api.createType('WorkerRpcReturnValue', result);
-
                 console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
 
                 if (res.status.isError) {
