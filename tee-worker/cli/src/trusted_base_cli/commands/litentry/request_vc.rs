@@ -273,6 +273,7 @@ pub enum TokenHoldingAmountCommand {
 	Sol,
 	Mcrt,
 	Btc,
+	Bean,
 }
 
 #[derive(Subcommand, Debug)]
@@ -616,6 +617,7 @@ impl Command {
 				TokenHoldingAmountCommand::Sol => TokenHoldingAmount(Web3TokenType::Sol),
 				TokenHoldingAmountCommand::Mcrt => TokenHoldingAmount(Web3TokenType::Mcrt),
 				TokenHoldingAmountCommand::Btc => TokenHoldingAmount(Web3TokenType::Btc),
+				TokenHoldingAmountCommand::Bean => TokenHoldingAmount(Web3TokenType::Bean),
 			},
 			Command::PlatformUser(arg) => match arg {
 				PlatformUserCommand::KaratDaoUser => PlatformUser(PlatformUserType::KaratDaoUser),

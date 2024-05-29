@@ -665,4 +665,44 @@ mod tests {
 			},
 		}
 	}
+
+	#[test]
+	fn build_bean_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		let req = crate_assertion_build_request(Web3TokenType::Bean, identities);
+		match build(&req, Web3TokenType::Bean, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build bean TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Bean),
+							create_network_address_assertion_logics(Web3TokenType::Bean),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "5000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "10000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build bean TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+	}
 }
