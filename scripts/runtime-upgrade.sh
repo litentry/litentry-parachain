@@ -36,7 +36,7 @@ if [ -z "$2" ]; then
   cp -f "$1" "$output_wasm"
 else
   echo "Download $1 from release tag $2 ..."
-  gh release download "$2" -p "$1" -O "$output_wasm"
+  gh release download "$2" -p "$1" -O "$output_wasm" || true
 fi
 
 if [ -f "$output_wasm" ] && [ -s "$output_wasm" ]; then
