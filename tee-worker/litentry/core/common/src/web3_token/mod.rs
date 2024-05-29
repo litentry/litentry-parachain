@@ -249,6 +249,7 @@ impl TokenAddress for Web3TokenType {
 
 			// Bean
 			(Self::Bean, Web3Network::Bsc) => Some("0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c"),
+			(Self::Bean, Web3Network::Combo) => Some("0xba7b9936a965fac23bb7a8190364fa60622b3cff"),
 
 			_ => None,
 		}

@@ -49,7 +49,7 @@ pub fn get_balance(
 			let token_address = token_type.get_token_address(network).unwrap_or_default();
 
 			match network {
-				Web3Network::Bsc | Web3Network::Ethereum => {
+				Web3Network::Bsc | Web3Network::Ethereum | Web3Network::Combo => {
 					let decimals = token_type.get_decimals(network);
 					match network.create_nodereal_jsonrpc_client(data_provider_config) {
 						Some(mut client) => {

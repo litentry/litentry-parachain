@@ -188,6 +188,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::Polygon => "polygon".into(),
 		Web3Network::Arbitrum => "arbitrum".into(),
 		Web3Network::Solana => "solana".into(),
+		Web3Network::Combo => "combo".into(),
 	}
 }
 
