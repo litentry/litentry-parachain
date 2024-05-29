@@ -95,7 +95,7 @@ impl NoderealChain {
 			NoderealChain::Aptos => "aptos",
 			NoderealChain::Opt => "opt",
 			NoderealChain::Polygon => "polygon",
-			NoderealChain::Combo => "combo-mainnet",
+			NoderealChain::Combo => "combo",
 		}
 	}
 }
