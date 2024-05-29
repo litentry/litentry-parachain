@@ -73,6 +73,5 @@ pub mod tests {
 		schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key,
 		schnorr_seal_init_should_create_new_key_if_not_present,
 		schnorr_seal_init_should_not_change_key_if_exists,
-		schnorr_sign_should_produce_valid_signature,
 	};
 }
