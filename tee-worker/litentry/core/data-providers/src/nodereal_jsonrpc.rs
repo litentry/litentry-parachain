@@ -79,6 +79,8 @@ pub enum NoderealChain {
 	Opt,
 	// Polygon
 	Polygon,
+	// Combo
+	Combo,
 }
 
 impl NoderealChain {
@@ -91,6 +93,7 @@ impl NoderealChain {
 			NoderealChain::Aptos => "aptos",
 			NoderealChain::Opt => "opt",
 			NoderealChain::Polygon => "polygon",
+			NoderealChain::Combo => "combo-mainnet",
 		}
 	}
 }
