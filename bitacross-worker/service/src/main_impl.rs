@@ -278,6 +278,9 @@ pub(crate) fn main() {
 		let ethereum_keypair = enclave.get_ethereum_wallet_pair().unwrap();
 		println!("public : 0x{}", hex::encode(ethereum_keypair.public_bytes()));
 		println!("private: 0x{}", hex::encode(ethereum_keypair.private_bytes()));
+	} else if let Some(sub_matches) = matches.subcommand_matches("init-wallet") {
+		println!("Initializing wallets");
+		enclave.init_wallets(config.data_dir().to_str().unwrap()).unwrap();
 	} else {
 		println!("For options: use --help");
 	}

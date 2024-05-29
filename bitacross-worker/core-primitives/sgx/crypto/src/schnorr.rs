@@ -71,9 +71,10 @@ pub mod sgx {
 	pub fn create_schnorr_repository(
 		path: PathBuf,
 		key_file_prefix: &str,
+		key: Option<[u8; 32]>,
 	) -> Result<KeyRepository<Pair, Seal>> {
 		let seal = Seal::new(path, key_file_prefix.to_string());
-		Ok(KeyRepository::new(seal.init()?, seal.into()))
+		Ok(KeyRepository::new(seal.init(key)?, seal.into()))
 	}
 
 	#[derive(Clone, Debug)]
@@ -102,13 +103,23 @@ pub mod sgx {
 			self.path().exists()
 		}
 
-		pub fn init(&self) -> Result<Pair> {
-			if !self.exists() {
-				info!("Keyfile not found, creating new! {}", self.path().display());
-				let mut seed = [0u8; 32];
-				let mut rand = StdRng::new()?;
-				rand.fill_bytes(&mut seed);
-				seal(&seed, self.path())?;
+		pub fn init(&self, key: Option<[u8; 32]>) -> Result<Pair> {
+			if !self.exists() || key.is_some() {
+				if !self.exists() {
+					info!("Keyfile not found, creating new! {}", self.path().display());
+				}
+				if key.is_some() {
+					info!("New key provided, it will be sealed!");
+				}
+				let key = if let Some(key) = key {
+					key
+				} else {
+					let mut seed = [0u8; 32];
+					let mut rand = StdRng::new()?;
+					rand.fill_bytes(&mut seed);
+					seed
+				};
+				seal(&key, self.path())?;
 			}
 			self.unseal_pair()
 		}
@@ -146,7 +157,7 @@ pub mod sgx_tests {
 		//given
 		let key_file_prefix = "test";
 		fn get_key_from_repo(path: PathBuf, prefix: &str) -> Pair {
-			create_schnorr_repository(path, prefix).unwrap().retrieve_key().unwrap()
+			create_schnorr_repository(path, prefix, None).unwrap().retrieve_key().unwrap()
 		}
 		let temp_dir = TempDir::with_prefix(
 			"schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key",
@@ -162,6 +173,35 @@ pub mod sgx_tests {
 		assert_eq!(first_key.public, second_key.public);
 	}
 
+	pub fn schnorr_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key() {
+		//given
+		let key_file_prefix = "test";
+		fn get_key_from_repo(path: PathBuf, prefix: &str, key: Option<[u8; 32]>) -> Pair {
+			create_schnorr_repository(path, prefix, key).unwrap().retrieve_key().unwrap()
+		}
+		let temp_dir = TempDir::with_prefix(
+			"schnorr_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key",
+		)
+		.unwrap();
+		let temp_path = temp_dir.path().to_path_buf();
+		let new_key: [u8; 32] =
+			hex::decode("189ab2ba2ace8ee33cb578c200766628e24083c5996441ba50097f200b9ea7d2")
+				.unwrap()
+				.try_into()
+				.unwrap();
+
+		//when
+		let first_key = get_key_from_repo(temp_path.clone(), key_file_prefix, None);
+		let second_key = get_key_from_repo(temp_path.clone(), key_file_prefix, Some(new_key));
+
+		//then
+		assert_ne!(first_key.public, second_key.public);
+		assert_eq!(
+			hex::encode(second_key.public_bytes()),
+			"027e82fc627f33650f8be418b52c35e304d706956afc4c9e4341248783319d8d1c"
+		)
+	}
+
 	pub fn schnorr_seal_init_should_create_new_key_if_not_present() {
 		//given
 		let temp_dir =
@@ -170,7 +210,7 @@ pub mod sgx_tests {
 		assert!(!seal.exists());
 
 		//when
-		seal.init().unwrap();
+		seal.init(None).unwrap();
 
 		//then
 		assert!(seal.exists());
@@ -181,10 +221,10 @@ pub mod sgx_tests {
 		let temp_dir =
 			TempDir::with_prefix("schnorr_seal_init_should_not_change_key_if_exists").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
-		let pair = seal.init().unwrap();
+		let pair = seal.init(None).unwrap();
 
 		//when
-		let new_pair = seal.init().unwrap();
+		let new_pair = seal.init(None).unwrap();
 
 		//then
 		assert_eq!(pair.public, new_pair.public);

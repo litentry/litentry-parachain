@@ -90,6 +90,7 @@ use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_macros::if_development_or;
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
@@ -107,12 +108,14 @@ pub(crate) fn init_enclave(
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
 
-	let bitcoin_key_repository = Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin")?);
+	let bitcoin_key_repository =
+		Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin", None)?);
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
 	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public_bytes());
 
-	let ethereum_key_repository = Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum")?);
+	let ethereum_key_repository =
+		Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum", None)?);
 	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
 	let ethereum_key = ethereum_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public_bytes());
@@ -264,6 +267,41 @@ pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
+}
+
+#[allow(unused_variables)]
+pub(crate) fn init_wallets(base_dir: PathBuf) -> EnclaveResult<()> {
+	if_development_or!(
+		{
+			println!("Initializing wallets from BTC_KEY and ETH_KEY env variables");
+			let btc_key: Option<[u8; 32]> = read_key_from_env("BTC_KEY")?;
+			create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
+
+			let eth_key: Option<[u8; 32]> = read_key_from_env("ETH_KEY")?;
+			create_ecdsa_repository(base_dir.clone(), "ethereum", eth_key)?;
+		},
+		{
+			println!("Init wallets available in dev mode only!");
+		}
+	);
+
+	Ok(())
+}
+
+#[cfg(feature = "development")]
+fn read_key_from_env(env_variable: &str) -> EnclaveResult<Option<[u8; 32]>> {
+	use std::env;
+	if let Ok(value) = env::var(env_variable) {
+		let decoded =
+			hex::decode(value).map_err(|_| Error::Other("Could not decode key value".into()))?;
+		Ok(Some(
+			decoded
+				.try_into()
+				.map_err(|_| Error::Other("Provided key is not 32 bytes long".into()))?,
+		))
+	} else {
+		Ok(None)
+	}
 }
 
 pub(crate) fn publish_wallets() -> EnclaveResult<()> {
