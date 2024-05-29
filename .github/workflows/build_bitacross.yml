@@ -1,0 +1,32 @@
+name: Build bitacross-worker
+
+on:
+  push
+
+env:
+  CARGO_TERM_COLOR: always
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  build-worker:
+    runs-on: tee-prod-builder
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.sha }}
+          fetch-depth: 0
+
+      - name: Build release artefacts
+        run: |
+          source /opt/intel/sgxsdk/environment 
+          ./bitacross-worker/scripts/litentry/release/build.sh true true
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitacross-worker
+          path: ./bitacross-worker/enclave_release/*      
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.4
