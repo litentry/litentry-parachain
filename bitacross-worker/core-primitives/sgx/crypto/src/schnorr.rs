@@ -17,11 +17,7 @@
 pub use sgx::*;
 
 use crate::error::{Error, Result};
-use k256::{
-	elliptic_curve::group::GroupEncoding,
-	schnorr::{SigningKey},
-	PublicKey,
-};
+use k256::{elliptic_curve::group::GroupEncoding, schnorr::SigningKey, PublicKey};
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "schnorr_key_sealed.bin";
@@ -53,7 +49,6 @@ impl Pair {
 		// safe to unwrap here
 		self.private.to_bytes().as_slice().try_into().unwrap()
 	}
-
 }
 
 #[cfg(feature = "sgx")]
@@ -194,5 +189,4 @@ pub mod sgx_tests {
 		//then
 		assert_eq!(pair.public, new_pair.public);
 	}
-
 }

@@ -17,7 +17,11 @@
 pub use sgx::*;
 
 use crate::error::{Error, Result};
-use k256::{ecdsa::{SigningKey, VerifyingKey}, elliptic_curve::group::GroupEncoding, PublicKey};
+use k256::{
+	ecdsa::{SigningKey, VerifyingKey},
+	elliptic_curve::group::GroupEncoding,
+	PublicKey,
+};
 use secp256k1::Message;
 
 /// File name of the sealed seed file.
@@ -51,12 +55,14 @@ impl Pair {
 
 	// sign the prehashed message
 	pub fn sign_prehash_recoverable(&self, payload: &[u8]) -> Result<[u8; 65]> {
-
 		let secret = secp256k1::SecretKey::from_slice(&self.private_bytes())
 			.map_err(|e| Error::Other(format!("SecKey error {:?}", e).into()))?;
 		let secp = secp256k1::Secp256k1::new();
-		let msg = Message::from_digest_slice(payload)
-			.map_err(|e| Error::Other(format!("Could not create message from given prehashed payload {:?}", e).into()))?;
+		let msg = Message::from_digest_slice(payload).map_err(|e| {
+			Error::Other(
+				format!("Could not create message from given prehashed payload {:?}", e).into(),
+			)
+		})?;
 		let sig = secp.sign_ecdsa_recoverable(&msg, &secret);
 
 		let (rid, sig_bytes) = sig.serialize_compact();
@@ -153,9 +159,8 @@ pub mod sgx_tests {
 	};
 	use itp_sgx_temp_dir::TempDir;
 	use k256::ecdsa::VerifyingKey;
-	use sgx_tstd::path::PathBuf;
 	use secp256k1::Message;
-
+	use sgx_tstd::path::PathBuf;
 
 	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
 		//given
@@ -218,9 +223,13 @@ pub mod sgx_tests {
 		//then
 		let msg = Message::from_digest_slice(&message).unwrap();
 		let id = secp256k1::ecdsa::RecoveryId::from_i32(signature[64] as i32).unwrap();
-		let sig = secp256k1::ecdsa::RecoverableSignature::from_compact(&signature[0..64], id).unwrap();
+		let sig =
+			secp256k1::ecdsa::RecoverableSignature::from_compact(&signature[0..64], id).unwrap();
 		let secp = secp256k1::Secp256k1::new();
 		let pub_key = secp.recover_ecdsa(&msg, &sig).unwrap();
-		assert_eq!(pub_key, secp256k1::PublicKey::from_slice(&pair.public.to_sec1_bytes()).unwrap());
+		assert_eq!(
+			pub_key,
+			secp256k1::PublicKey::from_slice(&pair.public.to_sec1_bytes()).unwrap()
+		);
 	}
 }
