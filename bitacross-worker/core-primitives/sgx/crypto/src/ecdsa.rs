@@ -22,7 +22,7 @@ use k256::{
 	elliptic_curve::group::GroupEncoding,
 	PublicKey,
 };
-use std::string::ToString;
+use secp256k1::Message;
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
@@ -55,13 +55,20 @@ impl Pair {
 
 	// sign the prehashed message
 	pub fn sign_prehash_recoverable(&self, payload: &[u8]) -> Result<[u8; 65]> {
-		let (signature, rid) = self
-			.private
-			.sign_prehash_recoverable(payload)
-			.map_err(|e| Error::Other(e.to_string().into()))?;
+		let secret = secp256k1::SecretKey::from_slice(&self.private_bytes())
+			.map_err(|e| Error::Other(format!("SecKey error {:?}", e).into()))?;
+		let secp = secp256k1::Secp256k1::new();
+		let msg = Message::from_digest_slice(payload).map_err(|e| {
+			Error::Other(
+				format!("Could not create message from given prehashed payload {:?}", e).into(),
+			)
+		})?;
+		let sig = secp.sign_ecdsa_recoverable(&msg, &secret);
+
+		let (rid, sig_bytes) = sig.serialize_compact();
 		let mut bytes = [0u8; 65];
-		bytes[..64].copy_from_slice(signature.to_vec().as_slice());
-		bytes[64] = rid.to_byte();
+		bytes[..64].copy_from_slice(sig_bytes.as_slice());
+		bytes[64] = rid.to_i32().to_le_bytes()[0];
 		Ok(bytes)
 	}
 }
@@ -152,6 +159,7 @@ pub mod sgx_tests {
 	};
 	use itp_sgx_temp_dir::TempDir;
 	use k256::ecdsa::VerifyingKey;
+	use secp256k1::Message;
 	use sgx_tstd::path::PathBuf;
 
 	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
@@ -210,10 +218,18 @@ pub mod sgx_tests {
 		let message = [1u8; 32];
 
 		//when
-		let (signature, rid) = &pair.private.sign_prehash_recoverable(&message).unwrap();
+		let signature = &pair.sign_prehash_recoverable(&message).unwrap();
 
 		//then
-		let verifying_key = VerifyingKey::recover_from_prehash(&message, signature, *rid).unwrap();
-		assert_eq!(verifying_key, VerifyingKey::from(&pair.private));
+		let msg = Message::from_digest_slice(&message).unwrap();
+		let id = secp256k1::ecdsa::RecoveryId::from_i32(signature[64] as i32).unwrap();
+		let sig =
+			secp256k1::ecdsa::RecoverableSignature::from_compact(&signature[0..64], id).unwrap();
+		let secp = secp256k1::Secp256k1::new();
+		let pub_key = secp.recover_ecdsa(&msg, &sig).unwrap();
+		assert_eq!(
+			pub_key,
+			secp256k1::PublicKey::from_slice(&pair.public.to_sec1_bytes()).unwrap()
+		);
 	}
 }
