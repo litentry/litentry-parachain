@@ -58,6 +58,8 @@ impl Web3NetworkNoderealJsonrpcClient for Web3Network {
 				Some(NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)),
 			Web3Network::Polygon =>
 				Some(NoderealJsonrpcClient::new(NoderealChain::Polygon, data_provider_config)),
+			Web3Network::Combo =>
+				Some(NoderealJsonrpcClient::new(NoderealChain::Combo, data_provider_config)),
 			_ => None,
 		}
 	}
