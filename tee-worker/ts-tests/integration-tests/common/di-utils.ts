@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat } from '@polkadot/util';
+import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
@@ -44,42 +44,46 @@ async function sendRequest(
     api: ApiPromise,
     onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ): Promise<WorkerRpcReturnValue> {
-    const p = new Promise<WorkerRpcReturnValue>((resolve) =>
+    const p = new Promise<WorkerRpcReturnValue>((resolve, reject) =>
         wsClient.onMessage.addListener((data) => {
             const parsed = JSON.parse(data);
-            if (parsed.id === request.id) {
-                if ('error' in parsed) {
-                    const transaction = { request, response: parsed };
-                    console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
-                    throw new Error(parsed.error.message, { cause: transaction });
-                }
+            if (parsed.id !== request.id) {
+                return;
+            }
 
-                const result = parsed.result;
-                const res = api.createType('WorkerRpcReturnValue', result);
-                console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
+            console.log('Parsed: ' + JSON.stringify(parsed, null, 2));
+            if ('error' in parsed) {
+                const transaction = { request, response: parsed };
+                console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
+                reject(new Error(parsed.error.message, { cause: transaction }));
+            }
 
-                if (res.status.isError) {
-                    console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
-                }
+            const result = parsed.result;
+            console.log('Result: ' + JSON.stringify(result, null, 2));
+            const res = api.createType('WorkerRpcReturnValue', result);
+            console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
 
-                if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
-                    console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
-                    const stfError = api.createType('StfError', res.value);
-                    const msg = stfErrorToString(stfError);
-                    console.log('TrustedOperationStatus error: ', msg);
-                }
-                // sending every response we receive from websocket
-                if (onMessageReceived) onMessageReceived(res);
+            if (res.status.isError) {
+                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
+            }
 
-                // resolve it once `do_watch` is false, meaning it's the final response
-                if (res.do_watch.isFalse) {
-                    // TODO: maybe only remove this listener
-                    wsClient.onMessage.removeAllListeners();
-                    resolve(res);
-                } else {
-                    // `do_watch` is true means: hold on - there's still something coming
-                    console.log('do_watch is true, continue watching ...');
-                }
+            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                const stfError = api.createType('StfError', res.value);
+                const msg = stfErrorToString(stfError);
+                console.log('TrustedOperationStatus error: ', msg);
+            }
+            // sending every response we receive from websocket
+            if (onMessageReceived) onMessageReceived(res);
+
+            // resolve it once `do_watch` is false, meaning it's the final response
+            if (res.do_watch.isFalse) {
+                // TODO: maybe only remove this listener
+                wsClient.onMessage.removeAllListeners();
+                resolve(res);
+            } else {
+                // `do_watch` is true means: hold on - there's still something coming
+                console.log('do_watch is true, continue watching ...');
             }
         })
     );
@@ -440,17 +444,18 @@ export const sendAesRequestFromGetter = async (
         getter.toU8a()
     );
     const request = createJsonRpcRequest('state_executeAesGetter', [u8aToHex(requestParam)], nextRequestId(context));
-    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 5 sec
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
     // hopefully we will query correct state
-    await sleep(5);
+    await sleep(1);
     const res = await sendRequest(context.tee, request, context.api);
     console.warn(res.toHuman());
     const aesOutput = context.api.createType('AesOutput', res.value);
     console.warn(aesOutput.toHuman());
     const decryptedValue = decryptWithAes(u8aToHex(aesKey), aesOutput, 'hex');
+    console.warn(stringToU8a(decryptedValue.substring(2)));
 
     return context.api.createType('WorkerRpcReturnValue', {
-        value: hexToU8a(decryptedValue),
+        value: decryptedValue,
         do_watch: res.do_watch,
         status: res.status,
     });
