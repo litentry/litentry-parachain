@@ -106,7 +106,7 @@ pub fn get_balance(
 
 					match result {
 						Ok(items) =>
-							if items.len() > 0 {
+							if !items.is_empty() {
 								match items[0].balance.parse::<u128>() {
 									Ok(balance) => {
 										total_balance +=
