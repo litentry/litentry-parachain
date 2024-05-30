@@ -172,6 +172,9 @@ pub mod sgx_tests {
 	use secp256k1::Message;
 	use sgx_tstd::path::PathBuf;
 
+	static PRIVATE_KEY: &str = "2ec6ffb73cb6a9782caab37ae16fca66fa355d2952ec53248dad83b9ef8be519";
+	static PUBLIC_KEY: &str = "029651aee0df8c75ad987819b2b91b3067d5b4daf7afe8d37485e1f8fb63d354a6";
+
 	pub fn ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key() {
 		//given
 		let key_file_prefix = "test";
@@ -179,7 +182,7 @@ pub mod sgx_tests {
 			create_ecdsa_repository(path, prefix, None).unwrap().retrieve_key().unwrap()
 		}
 		let temp_dir = TempDir::with_prefix(
-			"creating_repository_with_same_path_and_prefix_results_in_same_key",
+			"ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key",
 		)
 		.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
@@ -199,15 +202,11 @@ pub mod sgx_tests {
 			create_ecdsa_repository(path, prefix, key).unwrap().retrieve_key().unwrap()
 		}
 		let temp_dir = TempDir::with_prefix(
-			"schnorr_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key",
+			"ecdsa_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key",
 		)
 		.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
-		let new_key: [u8; 32] =
-			hex::decode("2ec6ffb73cb6a9782caab37ae16fca66fa355d2952ec53248dad83b9ef8be519")
-				.unwrap()
-				.try_into()
-				.unwrap();
+		let new_key: [u8; 32] = hex::decode(PRIVATE_KEY).unwrap().try_into().unwrap();
 
 		//when
 		let first_key = get_key_from_repo(temp_path.clone(), key_file_prefix, None);
@@ -215,10 +214,7 @@ pub mod sgx_tests {
 
 		//then
 		assert_ne!(first_key.public, second_key.public);
-		assert_eq!(
-			hex::encode(second_key.public_bytes()),
-			"029651aee0df8c75ad987819b2b91b3067d5b4daf7afe8d37485e1f8fb63d354a6"
-		)
+		assert_eq!(hex::encode(second_key.public_bytes()), PUBLIC_KEY)
 	}
 
 	pub fn ecdsa_seal_init_should_create_new_key_if_not_present() {
@@ -235,10 +231,27 @@ pub mod sgx_tests {
 		assert!(seal.exists());
 	}
 
-	pub fn ecdsa_seal_init_should_not_change_key_if_exists() {
+	pub fn ecdsa_seal_init_should_seal_provided_key() {
 		//given
-		let temp_dir =
-			TempDir::with_prefix("ecdsa_seal_init_should_not_change_key_if_exists").unwrap();
+		let temp_dir = TempDir::with_prefix("ecdsa_seal_init_should_seal_provided_key").unwrap();
+		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
+		assert!(!seal.exists());
+		let new_key: [u8; 32] = hex::decode(PRIVATE_KEY).unwrap().try_into().unwrap();
+
+		//when
+		let pair = seal.init(Some(new_key)).unwrap();
+
+		//then
+		assert!(seal.exists());
+		assert_eq!(hex::encode(pair.public_bytes()), PUBLIC_KEY)
+	}
+
+	pub fn ecdsa_seal_init_should_not_change_key_if_exists_and_not_provided() {
+		//given
+		let temp_dir = TempDir::with_prefix(
+			"ecdsa_seal_init_should_not_change_key_if_exists_and_not_provided",
+		)
+		.unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		let pair = seal.init(None).unwrap();
 
@@ -247,6 +260,21 @@ pub mod sgx_tests {
 
 		//then
 		assert_eq!(pair.public, new_pair.public);
+	}
+
+	pub fn ecdsa_seal_init_with_key_should_change_current_key() {
+		//given
+		let temp_dir =
+			TempDir::with_prefix("ecdsa_seal_init_with_key_should_change_current_key").unwrap();
+		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
+		let _ = seal.init(None).unwrap();
+		let new_key: [u8; 32] = hex::decode(PRIVATE_KEY).unwrap().try_into().unwrap();
+
+		//when
+		let new_pair = seal.init(Some(new_key)).unwrap();
+
+		//then
+		assert_eq!(hex::encode(new_pair.public_bytes()), PUBLIC_KEY)
 	}
 
 	pub fn ecdsa_sign_should_produce_valid_signature() {
