@@ -100,7 +100,7 @@ services:
       RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
     ulimits: *a1
   litentry-worker-1:
-    image: litentry/litentry-worker:latest
+    image: litentry/identity-worker:latest
     container_name: litentry-worker-1
     build:
       context: ${PWD}/..
