@@ -199,6 +199,7 @@ export default {
                 "Imx",
                 "Cro",
                 "Inj",
+                "Bean",
             ],
         },
         // PlatformUserType

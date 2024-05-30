@@ -83,7 +83,7 @@ pub const TOKEN_DECIMALS_9: (u32, [(Web3TokenType, Web3Network); 4]) = (
 	],
 );
 
-pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 48]) = (
+pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 50]) = (
 	18,
 	[
 		// Bnb
@@ -165,6 +165,9 @@ pub const TOKEN_DECIMALS_18: (u32, [(Web3TokenType, Web3Network); 48]) = (
 		// Inj
 		(Web3TokenType::Inj, Web3Network::Ethereum),
 		(Web3TokenType::Inj, Web3Network::Bsc),
+		// Bean
+		(Web3TokenType::Bean, Web3Network::Bsc),
+		(Web3TokenType::Bean, Web3Network::Combo),
 	],
 );
 

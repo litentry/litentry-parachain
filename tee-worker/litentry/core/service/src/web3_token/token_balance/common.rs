@@ -49,7 +49,7 @@ pub fn get_balance(
 			let token_address = token_type.get_token_address(network).unwrap_or_default();
 
 			match network {
-				Web3Network::Bsc | Web3Network::Ethereum => {
+				Web3Network::Bsc | Web3Network::Ethereum | Web3Network::Combo => {
 					let decimals = token_type.get_decimals(network);
 					match network.create_nodereal_jsonrpc_client(data_provider_config) {
 						Some(mut client) => {
@@ -97,13 +97,17 @@ pub fn get_balance(
 					let decimals = token_type.get_decimals(network);
 
 					let mut client = MoralisClient::new(data_provider_config);
-					let result =
-						client.get_evm_tokens_balance_by_wallet(address.1.clone(), &network, false);
+					let result = client.get_evm_token_balance_by_wallet(
+						address.1.clone(),
+						token_address.into(),
+						&network,
+						false,
+					);
 
 					match result {
 						Ok(items) =>
-							match items.iter().find(|&item| item.token_address == token_address) {
-								Some(item) => match item.balance.parse::<u128>() {
+							if !items.is_empty() {
+								match items[0].balance.parse::<u128>() {
 									Ok(balance) => {
 										total_balance +=
 											calculate_balance_with_decimals(balance, decimals);
@@ -111,11 +115,15 @@ pub fn get_balance(
 										Ok(LoopControls::Continue)
 									},
 									Err(err) => {
-										error!("Failed to parse {} to f64: {}", item.balance, err);
+										error!(
+											"Failed to parse {} to f64: {}",
+											items[0].balance, err
+										);
 										Err(Error::ParseError)
 									},
-								},
-								None => Ok(LoopControls::Continue),
+								}
+							} else {
+								Ok(LoopControls::Continue)
 							},
 						Err(err) => Err(err.into_error_detail()),
 					}
