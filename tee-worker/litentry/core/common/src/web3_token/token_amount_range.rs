@@ -48,3 +48,4 @@ pub const CRO_AMOUNT_RANGE: [f64; 7] =
 pub const INJ_AMOUNT_RANGE: [f64; 6] = [0.0, 1.0, 5.0, 20.0, 50.0, 80.0];
 pub const BTC_AMOUNT_RANGE: [f64; 14] =
 	[0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
+pub const BEAN_AMOUNT_RANGE: [f64; 5] = [0.0, 1_500.0, 5_000.0, 10_000.0, 50_000.0];
