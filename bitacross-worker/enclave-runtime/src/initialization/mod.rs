@@ -278,7 +278,7 @@ pub(crate) fn init_wallets(base_dir: PathBuf) -> EnclaveResult<()> {
 			create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
 
 			let eth_key: Option<[u8; 32]> = read_key_from_env("ETH_KEY")?;
-			create_ecdsa_repository(base_dir.clone(), "ethereum", eth_key)?;
+			create_ecdsa_repository(base_dir, "ethereum", eth_key)?;
 		},
 		{
 			println!("Init wallets available in dev mode only!");
