@@ -234,7 +234,13 @@ where
 		new_shard: ShardIdentifier,
 	) -> Result<Self::HashType> {
 		let (state, _) = self.load_cloned(&old_shard)?;
-		self.reset(state, &new_shard)
+		let reset_result = self.reset(state, &new_shard)?;
+		let state_snapshot_lock =
+			self.state_snapshot_repository.read().map_err(|_| Error::LockPoisoning)?;
+		if state_snapshot_lock.compare_shards_state_sizes(&old_shard, &new_shard)? != 0 {
+			return Err(Error::LockPoisoning) // TODO: use correct error
+		}
+		Ok(reset_result)
 	}
 }
 

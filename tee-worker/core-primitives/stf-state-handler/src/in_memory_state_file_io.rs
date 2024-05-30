@@ -196,6 +196,10 @@ where
 			.ok_or_else(|| Error::InvalidShard(*shard_identifier))?;
 		Ok(shard_directory.keys().cloned().collect())
 	}
+
+	fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
+		todo!()
+	}
 }
 
 pub fn create_sgx_externalities_in_memory_state_io(

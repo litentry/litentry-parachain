@@ -99,4 +99,12 @@ where
 	fn list_shards(&self) -> Result<Vec<ShardIdentifier>> {
 		Ok(self.state_history.keys().copied().collect())
 	}
+
+	fn compare_shards_state_sizes(
+		&self,
+		shard_a: &ShardIdentifier,
+		shard_b: &ShardIdentifier,
+	) -> Result<i64> {
+		todo!()
+	}
 }

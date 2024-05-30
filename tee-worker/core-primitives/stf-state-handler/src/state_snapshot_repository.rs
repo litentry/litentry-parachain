@@ -65,6 +65,13 @@ pub trait VersionedStateAccess {
 
 	/// Lists all shards.
 	fn list_shards(&self) -> Result<Vec<ShardIdentifier>>;
+
+	/// Compare the sizes of the state files of two shards.
+	fn compare_shards_state_sizes(
+		&self,
+		shard_a: &ShardIdentifier,
+		shard_b: &ShardIdentifier,
+	) -> Result<i64>;
 }
 
 /// State snapshot repository.
@@ -280,6 +287,20 @@ where
 
 	fn list_shards(&self) -> Result<Vec<ShardIdentifier>> {
 		Ok(self.snapshot_history.keys().cloned().collect())
+	}
+
+	fn compare_shards_state_sizes(
+		&self,
+		shard_a: &ShardIdentifier,
+		shard_b: &ShardIdentifier,
+	) -> Result<i64> {
+		let state_a_id = self.get_latest_snapshot_metadata(shard_a)?.state_id;
+		let state_size_a = self.file_io.state_file_size(shard_a, state_a_id)?;
+		let state_b_id = self.get_latest_snapshot_metadata(shard_b)?.state_id;
+		let state_size_b = self.file_io.state_file_size(shard_b, state_b_id)?;
+		let size_diff = state_size_a as i64 - state_size_b as i64;
+
+		Ok(size_diff)
 	}
 }
 
