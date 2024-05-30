@@ -53,7 +53,7 @@ use lc_identity_verification::web2::twitter;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
-use log::{debug, warn};
+use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
@@ -293,7 +293,6 @@ where
 	// TODO: deprecate
 	let getter_executor_cloned = getter_executor.clone();
 	io.add_sync_method("state_executeGetter", move |params: Params| {
-		warn!("BANANA");
 		debug!("worker_api_direct rpc was called: state_executeGetter");
 		#[allow(deprecated)]
 		let json_value = match execute_rsa_getter_inner(getter_executor_cloned.as_ref(), params) {
@@ -309,7 +308,6 @@ where
 	});
 
 	io.add_sync_method("state_executeAesGetter", move |params: Params| {
-		warn!("PINEAPPLE");
 		debug!("worker_api_direct rpc was called: state_executeAesGetter");
 
 		let shielding_key = match shielding_key.retrieve_key().map_err(|e| format!("{:?}", e)) {

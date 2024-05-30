@@ -343,8 +343,4 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const nonce = await getSidechainNonce(context, aliceBitcoinIdentity);
         assert.equal(nonce.toNumber(), currentNonce);
     });
-
-    step('prevent automerge while debugging', function () {
-        assert.fail();
-    });
 });
