@@ -529,10 +529,7 @@ where
 		let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
-
-		if identities.is_empty() {
-			debug!("[RequestVc]: No eligible identities");
-		}
+		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer_account = signer
 			.to_account_id()
