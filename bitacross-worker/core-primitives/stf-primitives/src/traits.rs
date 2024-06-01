@@ -54,7 +54,7 @@ pub trait PoolTransactionValidation {
 
 /// Trait to be implemented on the executor to serve helper methods of the executor
 /// to the `IndirectDispatch` implementation.
-pub trait IndirectExecutor<TCS, Error>
+pub trait IndirectExecutor<TCS, Error, RRU>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
@@ -73,4 +73,6 @@ where
 		trusted_call: &TC,
 		shard: &ShardIdentifier,
 	) -> Result<TCS, Error>;
+
+	fn get_relayer_registry_updater(&self) -> &RRU;
 }

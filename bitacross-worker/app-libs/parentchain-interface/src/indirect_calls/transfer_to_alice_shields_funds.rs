@@ -15,6 +15,7 @@
 
 */
 
+use bc_relayer_registry::RelayerRegistry;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
@@ -58,8 +59,8 @@ pub const ALICE_ACCOUNT_ID: AccountId = AccountId::new([
 	76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
 ]);
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for TransferToAliceShieldsFundsArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for TransferToAliceShieldsFundsArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

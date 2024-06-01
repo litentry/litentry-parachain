@@ -3,6 +3,7 @@ use crate::{
 	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
 	IndirectDispatch,
 };
+use bc_relayer_registry::RelayerRegistry;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use litentry_primitives::DecryptableRequest;
@@ -130,8 +131,8 @@ pub enum IndirectCall {
 	Invoke(InvokeArgs),
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for IndirectCall
+impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSignedMock, RelayerRegistry> for IndirectCall
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> ICResult<()> {
@@ -178,10 +179,10 @@ impl FilterEvents for MockEvents {
 
 pub struct MockParentchainEventHandler {}
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
+impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error, RelayerRegistry>
 	for MockParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
+	Executor: IndirectExecutor<TrustedCallSignedMock, Error, RelayerRegistry>,
 {
 	fn handle_events(
 		_: &Executor,
@@ -200,8 +201,8 @@ pub struct ShieldFundsArgs {
 	shard: ShardIdentifier,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for ShieldFundsArgs
+impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSignedMock, RelayerRegistry> for ShieldFundsArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {
@@ -231,8 +232,8 @@ pub struct InvokeArgs {
 	request: RsaRequest,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for InvokeArgs
+impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSignedMock, RelayerRegistry> for InvokeArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {

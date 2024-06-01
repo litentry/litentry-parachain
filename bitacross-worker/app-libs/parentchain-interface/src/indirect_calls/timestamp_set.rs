@@ -16,6 +16,7 @@
 */
 
 use crate::{Litentry, ParentchainInstance, TargetA, TargetB};
+use bc_relayer_registry::RelayerRegistry;
 use codec::{Compact, Decode, Encode};
 use core::{any::TypeId, marker::PhantomData};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
@@ -33,8 +34,10 @@ pub struct TimestampSetArgs<I: ParentchainInstance> {
 	_phantom: PhantomData<I>,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>, I: ParentchainInstance + 'static>
-	IndirectDispatch<Executor, TrustedCallSigned> for TimestampSetArgs<I>
+impl<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>,
+		I: ParentchainInstance + 'static,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for TimestampSetArgs<I>
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

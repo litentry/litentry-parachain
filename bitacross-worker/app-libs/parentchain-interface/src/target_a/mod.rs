@@ -23,6 +23,7 @@ use crate::{
 	indirect_calls::timestamp_set::TimestampSetArgs,
 	TargetA,
 };
+use bc_relayer_registry::RelayerRegistry;
 use codec::{Decode, Encode};
 pub use event_filter::FilterableEvents;
 pub use event_handler::ParentchainEventHandler;
@@ -46,8 +47,8 @@ pub enum IndirectCall {
 	TimestampSet(TimestampSetArgs<TargetA>),
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for IndirectCall
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

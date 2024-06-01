@@ -15,6 +15,7 @@
 
 */
 
+use bc_relayer_registry::RelayerRegistry;
 pub use ita_sgx_runtime::{Balance, Index};
 
 use ita_stf::TrustedCallSigned;
@@ -25,10 +26,10 @@ use log::*;
 
 pub struct ParentchainEventHandler {}
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error, RelayerRegistry>
 	for ParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>,
 {
 	fn handle_events(
 		_executor: &Executor,

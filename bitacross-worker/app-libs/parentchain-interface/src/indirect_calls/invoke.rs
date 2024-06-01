@@ -15,6 +15,7 @@
 
 */
 
+use bc_relayer_registry::RelayerRegistry;
 use codec::{Decode, Encode};
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
@@ -29,8 +30,8 @@ pub struct InvokeArgs {
 	request: RsaRequest,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for InvokeArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for InvokeArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

@@ -47,7 +47,7 @@ use base58::ToBase58;
 use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
 use bc_musig2_ceremony::{CeremonyRegistry, MuSig2Ceremony};
 use bc_musig2_runner::init_ceremonies_thread;
-use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 use bc_signer_registry::{SignerRegistryUpdater, GLOBAL_SIGNER_REGISTRY};
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
@@ -81,6 +81,7 @@ use itp_sgx_crypto::{
 	schnorr::{create_schnorr_repository, Pair as SchnorrPair, Seal},
 };
 
+use crate::initialization::global_components::GLOBAL_RELAYER_REGISTRY;
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
 	state_snapshot_repository::VersionedStateAccess,
@@ -144,7 +145,7 @@ pub(crate) fn init_enclave(
 	GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(target_b_light_client_seal);
 
 	let state_file_io =
-		Arc::new(EnclaveStateFileIo::new(state_key_repository, StateDir::new(base_dir)));
+		Arc::new(EnclaveStateFileIo::new(state_key_repository, StateDir::new(base_dir.clone())));
 	let state_initializer =
 		Arc::new(EnclaveStateInitializer::new(shielding_key_repository.clone()));
 	let state_snapshot_repository_loader = StateSnapshotRepositoryLoader::<
@@ -219,7 +220,10 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository.clone()));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
-	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
+	let relayer_registry = RelayerRegistry::new(base_dir);
+	relayer_registry.init().map_err(|e| Error::Other(e.into()))?;
+	GLOBAL_RELAYER_REGISTRY.initialize(relayer_registry.into());
+
 	GLOBAL_ENCLAVE_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 	GLOBAL_SIGNER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
 
@@ -330,7 +334,7 @@ fn run_bit_across_handler(
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.clone();
+	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.get()?;
 	let enclave_registry_lookup = GLOBAL_ENCLAVE_REGISTRY.clone();
 	let signer_registry_lookup = GLOBAL_SIGNER_REGISTRY.clone();
 

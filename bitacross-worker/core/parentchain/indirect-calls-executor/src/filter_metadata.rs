@@ -76,6 +76,7 @@ pub struct DenyAll;
 mod seal {
 	use super::*;
 	use crate::Error;
+	use bc_relayer_registry::RelayerRegistry;
 	use core::fmt::Debug;
 	use itp_stf_primitives::traits::TrustedCallVerification;
 
@@ -92,7 +93,8 @@ mod seal {
 		}
 	}
 
-	impl<Executor: IndirectExecutor<TCS, Error>, TCS> IndirectDispatch<Executor, TCS> for CantExecute
+	impl<Executor: IndirectExecutor<TCS, Error, RelayerRegistry>, TCS>
+		IndirectDispatch<Executor, TCS, RelayerRegistry> for CantExecute
 	where
 		TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	{

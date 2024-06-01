@@ -25,6 +25,7 @@ use crate::{
 	traits::{ExecuteIndirectCalls, IndirectDispatch},
 };
 use alloc::format;
+use bc_relayer_registry::RelayerRegistryUpdater;
 use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
@@ -57,12 +58,16 @@ pub struct IndirectCallsExecutor<
 	ParentchainEventHandler,
 	TCS,
 	G,
-> {
+	RRU,
+> where
+	RRU: RelayerRegistryUpdater,
+{
 	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
 	pub stf_enclave_signer: Arc<StfEnclaveSigner>,
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
+	pub relayer_registry_updater: Arc<RRU>,
 	_phantom: PhantomData<(IndirectCallsFilter, EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
@@ -75,6 +80,7 @@ impl<
 		ParentchainEventHandler,
 		TCS,
 		G,
+		RRU,
 	>
 	IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -86,7 +92,9 @@ impl<
 		ParentchainEventHandler,
 		TCS,
 		G,
-	>
+		RRU,
+	> where
+	RRU: RelayerRegistryUpdater,
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -94,6 +102,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
+		relayer_registry_updater: Arc<RRU>,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
@@ -101,6 +110,7 @@ impl<
 			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
+			relayer_registry_updater,
 			_phantom: Default::default(),
 		}
 	}
@@ -116,6 +126,7 @@ impl<
 		ParentchainEventHandler,
 		TCS,
 		G,
+		RRU,
 	> ExecuteIndirectCalls
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -127,6 +138,7 @@ impl<
 		ParentchainEventHandler,
 		TCS,
 		G,
+		RRU,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -136,11 +148,12 @@ impl<
 	NodeMetadataProvider: AccessNodeMetadata,
 	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
-	FilterIndirectCalls::Output: IndirectDispatch<Self, TCS, Args = ()> + Encode + Debug,
+	FilterIndirectCalls::Output: IndirectDispatch<Self, TCS, RRU, Args = ()> + Encode + Debug,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
-	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error>,
+	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error, RRU>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	RRU: RelayerRegistryUpdater,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -245,7 +258,8 @@ impl<
 		PrivacySidechain,
 		TCS,
 		G,
-	> IndirectExecutor<TCS, Error>
+		RRU,
+	> IndirectExecutor<TCS, Error, RRU>
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
@@ -256,6 +270,7 @@ impl<
 		PrivacySidechain,
 		TCS,
 		G,
+		RRU,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -264,6 +279,7 @@ impl<
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	RRU: RelayerRegistryUpdater,
 {
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
 		if let Err(e) = futures::executor::block_on(
@@ -298,6 +314,10 @@ impl<
 	) -> Result<TCS> {
 		Ok(self.stf_enclave_signer.sign_call_with_self(trusted_call, shard)?)
 	}
+
+	fn get_relayer_registry_updater(&self) -> &RRU {
+		self.relayer_registry_updater.as_ref()
+	}
 }
 
 pub fn hash_of<T: Encode>(xt: &T) -> H256 {
@@ -308,6 +328,7 @@ pub fn hash_of<T: Encode>(xt: &T) -> H256 {
 mod test {
 	use super::*;
 	use crate::mock::*;
+	use bc_relayer_registry::RelayerRegistry;
 	use codec::Encode;
 	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
@@ -342,6 +363,7 @@ mod test {
 		MockParentchainEventHandler,
 		TrustedCallSignedMock,
 		GetterMock,
+		RelayerRegistry,
 	>;
 
 	type Seed = [u8; 32];
@@ -457,6 +479,7 @@ mod test {
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
+		let relayer_registry = Arc::new(RelayerRegistry::new(Default::default()));
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
@@ -464,6 +487,7 @@ mod test {
 			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
+			relayer_registry,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)
