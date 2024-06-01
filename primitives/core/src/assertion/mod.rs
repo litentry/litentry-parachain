@@ -197,6 +197,7 @@ impl Assertion {
 	//
 	// This fn is used in `get_eligible_identities` to decide if we should keep web2 identities
 	// regardless of the value of `get_supported_web3networks`
+	#[allow(clippy::match_like_matches_macro)]
 	pub fn force_retain_web2_identity(&self) -> bool {
 		match self {
 			Self::A1 => true,
