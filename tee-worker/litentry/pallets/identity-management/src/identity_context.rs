@@ -86,6 +86,7 @@ pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)])
 
 // get the active identities in the `id_graph` whose web3networks match the `desired_web3networks`,
 // return a `Vec<(Identity, Vec<Web3Network>)` with retained web3networks
+#[allow(clippy::collapsible_else_if)]
 pub fn get_eligible_identities<T: Config>(
 	id_graph: &IDGraph<T>,
 	desired_web3networks: Vec<Web3Network>,
