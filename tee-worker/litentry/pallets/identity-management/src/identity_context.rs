@@ -89,6 +89,7 @@ pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)])
 pub fn get_eligible_identities<T: Config>(
 	id_graph: &IDGraph<T>,
 	desired_web3networks: Vec<Web3Network>,
+	force_retain_web2_identity: bool,
 ) -> Vec<IdentityNetworkTuple> {
 	id_graph
 		.iter()
@@ -101,6 +102,11 @@ pub fn get_eligible_identities<T: Config>(
 				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
 				// - it helps to reduce the request size a bit
 				networks.retain(|n| desired_web3networks.contains(n));
+
+				if force_retain_web2_identity && item.0.is_web2() {
+					return Some((item.0.clone(), Vec::new()))
+				}
+
 				// differentiate between web2 and web3 assertions:
 				// desired_web3networks.is_empty() means it's a web2 assertion,
 				// otherwise web2 identities might survive to be unexpectedly "eligible" for web3 assertions.
