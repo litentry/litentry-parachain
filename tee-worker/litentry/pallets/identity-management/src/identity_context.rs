@@ -101,10 +101,21 @@ pub fn get_eligible_identities<T: Config>(
 				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
 				// - it helps to reduce the request size a bit
 				networks.retain(|n| desired_web3networks.contains(n));
-				if networks.is_empty() && item.0.is_web3() {
-					None
+				// differentiate between web2 and web3 assertions:
+				// desired_web3networks.is_empty() means it's a web2 assertion,
+				// otherwise web2 identities might survive to be unexpectedly "eligible" for web3 assertions.
+				if desired_web3networks.is_empty() {
+					if item.0.is_web2() {
+						Some((item.0.clone(), networks))
+					} else {
+						None
+					}
 				} else {
-					Some((item.0.clone(), networks))
+					if item.0.is_web3() && !networks.is_empty() {
+						Some((item.0.clone(), networks))
+					} else {
+						None
+					}
 				}
 			} else {
 				None
