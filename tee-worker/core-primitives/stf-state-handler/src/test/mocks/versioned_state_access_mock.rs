@@ -17,7 +17,7 @@
 
 use crate::{
 	error::{Error, Result},
-	state_snapshot_repository::{StateFilesComparisonResult, VersionedStateAccess},
+	state_snapshot_repository::{ShardStateFileComparison, VersionedStateAccess},
 };
 use codec::Encode;
 use itp_types::ShardIdentifier;
@@ -105,16 +105,16 @@ where
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,
-	) -> Result<StateFilesComparisonResult> {
+	) -> Result<ShardStateFileComparison> {
 		let state_a = self.load_latest(shard_a)?;
 		let state_b = self.load_latest(shard_b)?;
 
 		let size = state_a.encode().len() as i64 - state_b.encode().len() as i64;
 
 		match size {
-			0 => Ok(StateFilesComparisonResult::Equal),
-			_ if size > 0 => Ok(StateFilesComparisonResult::ShardAIsLarger),
-			_ => Ok(StateFilesComparisonResult::ShardBIsLarger),
+			0 => Ok(ShardStateFileComparison::Equal),
+			_ if size > 0 => Ok(ShardStateFileComparison::ShardAIsLarger),
+			_ => Ok(ShardStateFileComparison::ShardBIsLarger),
 		}
 	}
 }
