@@ -237,7 +237,7 @@ where
 		let reset_result = self.reset(state, &new_shard)?;
 		let state_snapshot_lock =
 			self.state_snapshot_repository.read().map_err(|_| Error::LockPoisoning)?;
-		if state_snapshot_lock.compare_shards_state_sizes(&old_shard, &new_shard)? != 0 {
+		if state_snapshot_lock.compare_shards_state_file_size(&old_shard, &new_shard)? != 0 {
 			return Err(Error::Other("State files size do not match after migration".into()))
 		}
 		Ok(reset_result)

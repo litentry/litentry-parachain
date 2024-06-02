@@ -67,7 +67,7 @@ pub trait VersionedStateAccess {
 	fn list_shards(&self) -> Result<Vec<ShardIdentifier>>;
 
 	/// Compare the sizes of the state files of two shards.
-	fn compare_shards_state_sizes(
+	fn compare_shards_state_file_size(
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,
@@ -289,7 +289,7 @@ where
 		Ok(self.snapshot_history.keys().cloned().collect())
 	}
 
-	fn compare_shards_state_sizes(
+	fn compare_shards_state_file_size(
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,

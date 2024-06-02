@@ -100,7 +100,7 @@ where
 		Ok(self.state_history.keys().copied().collect())
 	}
 
-	fn compare_shards_state_sizes(
+	fn compare_shards_state_file_size(
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,
