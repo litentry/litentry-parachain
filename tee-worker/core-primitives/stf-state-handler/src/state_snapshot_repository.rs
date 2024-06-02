@@ -28,6 +28,13 @@ use itp_types::ShardIdentifier;
 use log::*;
 use std::{collections::VecDeque, fmt::Debug, format, sync::Arc, vec::Vec};
 
+#[derive(Debug, PartialEq)]
+pub enum StateFilesComparisonResult {
+	Equal,
+	ShardAIsLarger,
+	ShardBIsLarger,
+}
+
 /// Trait for versioned state access. Manages history of state snapshots.
 pub trait VersionedStateAccess {
 	type StateType: Clone;
@@ -71,7 +78,7 @@ pub trait VersionedStateAccess {
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,
-	) -> Result<i64>;
+	) -> Result<StateFilesComparisonResult>;
 }
 
 /// State snapshot repository.
@@ -293,14 +300,19 @@ where
 		&self,
 		shard_a: &ShardIdentifier,
 		shard_b: &ShardIdentifier,
-	) -> Result<i64> {
+	) -> Result<StateFilesComparisonResult> {
 		let state_a_id = self.get_latest_snapshot_metadata(shard_a)?.state_id;
 		let state_size_a = self.file_io.state_file_size(shard_a, state_a_id)?;
 		let state_b_id = self.get_latest_snapshot_metadata(shard_b)?.state_id;
 		let state_size_b = self.file_io.state_file_size(shard_b, state_b_id)?;
 		let size_diff = state_size_a as i64 - state_size_b as i64;
 
-		Ok(size_diff)
+		match size_diff {
+			x if x == 0 => Ok(StateFilesComparisonResult::Equal),
+			x if x > 0 => Ok(StateFilesComparisonResult::ShardAIsLarger),
+			x if x < 0 => Ok(StateFilesComparisonResult::ShardBIsLarger),
+			_ => Err(Error::Other("Unexpected state file size comparison result".into())),
+		}
 	}
 }
 

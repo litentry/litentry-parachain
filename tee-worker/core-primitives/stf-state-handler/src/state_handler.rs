@@ -26,7 +26,7 @@ use crate::{
 	handle_state::HandleState,
 	query_shard_state::QueryShardState,
 	state_initializer::InitializeState,
-	state_snapshot_repository::VersionedStateAccess,
+	state_snapshot_repository::{StateFilesComparisonResult, VersionedStateAccess},
 };
 use core::fmt::Debug;
 use itp_hashing::Hash;
@@ -238,7 +238,9 @@ where
 
 		let state_snapshot_lock =
 			self.state_snapshot_repository.read().map_err(|_| Error::LockPoisoning)?;
-		if state_snapshot_lock.compare_shards_state_file_size(&old_shard, &new_shard)? != 0 {
+		let comparison_result =
+			state_snapshot_lock.compare_shards_state_file_size(&old_shard, &new_shard)?;
+		if comparison_result != StateFilesComparisonResult::Equal {
 			return Err(Error::Other("State files size do not match after migration".into()))
 		}
 
