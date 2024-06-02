@@ -198,7 +198,16 @@ where
 	}
 
 	fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
-		todo!()
+		let directory_lock =
+			self.emulated_shard_directory.read().map_err(|_| Error::LockPoisoning)?;
+		let states_for_shard =
+			directory_lock.get(shard).ok_or_else(|| Error::InvalidShard(*shard))?;
+		let state = states_for_shard
+			.get(&state_id)
+			.map(|(_, s)| -> State { s.clone() })
+			.ok_or_else(|| Error::InvalidStateId(state_id))?;
+
+		Ok(state.encode().len() as u64)
 	}
 }
 
