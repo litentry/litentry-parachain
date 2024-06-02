@@ -32,7 +32,7 @@ use crate::{
 			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 			GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		},
-		EnclaveStfEnclaveSigner, GLOBAL_RELAYER_REGISTRY,
+		EnclaveStfEnclaveSigner, GLOBAL_RELAYER_REGISTRY, GLOBAL_SIGNER_REGISTRY,
 	},
 };
 use itp_component_container::ComponentGetter;
@@ -56,6 +56,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
+	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -70,6 +71,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		node_metadata_repository,
 		ParentchainId::Litentry,
 		relayer_registry,
+		signer_registry,
 	));
 	Ok(IntegriteeParentchainBlockImporter::new(
 		validator_access,
@@ -94,6 +96,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
+	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -108,6 +111,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		node_metadata_repository,
 		ParentchainId::TargetA,
 		relayer_registry,
+		signer_registry,
 	));
 	Ok(TargetAParentchainBlockImporter::new(
 		validator_access,
@@ -132,6 +136,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
+	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -146,6 +151,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		node_metadata_repository,
 		ParentchainId::TargetB,
 		relayer_registry,
+		signer_registry,
 	));
 	Ok(TargetBParentchainBlockImporter::new(
 		validator_access,

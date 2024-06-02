@@ -16,6 +16,7 @@
 */
 
 use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::{
@@ -38,8 +39,8 @@ pub struct ShieldFundsArgs {
 	shard: ShardIdentifier,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for ShieldFundsArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry> for ShieldFundsArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

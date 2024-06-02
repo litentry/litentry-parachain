@@ -3079,6 +3079,7 @@ name = "itc-parentchain-indirect-calls-executor"
 version = "0.9.0"
 dependencies = [
  "bc-relayer-registry",
+ "bc-signer-registry",
  "binary-merkle-tree",
  "bs58",
  "env_logger",

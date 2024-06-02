@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::Encode;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::{Error, Result};
@@ -27,13 +28,17 @@ pub trait ArgsExecutor {
 	fn error(&self) -> Error;
 	fn name() -> &'static str;
 	fn shard(&self) -> ShardIdentifier;
-	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>(
+	fn prepare_trusted_call<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+	>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,
 		hash: H256,
 	) -> Result<TrustedCall>;
-	fn execute<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>(
+	fn execute<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+	>(
 		&self,
 		executor: &Executor,
 		address: Option<MultiAddress<AccountId32, ()>>,
@@ -45,7 +50,9 @@ pub trait ArgsExecutor {
 		Ok(())
 	}
 
-	fn submit<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>(
+	fn submit<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+	>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,

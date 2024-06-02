@@ -25,7 +25,7 @@ use crate::{
 };
 use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
 use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
-use bc_signer_registry::{SignerRegistryUpdater, GLOBAL_SIGNER_REGISTRY};
+use bc_signer_registry::{SignerRegistry, SignerRegistryUpdater};
 use codec::{Decode, Encode};
 use core::str::from_utf8;
 pub use event_filter::FilterableEvents;
@@ -78,8 +78,8 @@ pub struct DispatchArgs<RRU: RelayerRegistryUpdater> {
 	pub relayer_registry_updater: Arc<RRU>,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for IndirectCall
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry> for IndirectCall
 {
 	//todo: pass registry updater as args to this call and to downstream calls
 	type Args = ();
@@ -105,8 +105,8 @@ pub struct AddRelayerArgs {
 	account_id: Identity,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for AddRelayerArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry> for AddRelayerArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -121,8 +121,9 @@ pub struct RemoveRelayerArgs {
 	account_id: Identity,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for RemoveRelayerArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	for RemoveRelayerArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -160,19 +161,23 @@ pub struct TeebagRegisterEnclaveCall {
 	attestation_type: AttestationType,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for SaveSignerArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry> for SaveSignerArgs
 {
 	type Args = ();
-	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		log::info!("Save signer : {:?}, pub_key: {:?}", self.account_id, self.pub_key);
-		GLOBAL_SIGNER_REGISTRY.update(self.account_id, self.pub_key).unwrap();
+		executor
+			.get_signer_registry_updater()
+			.update(self.account_id, self.pub_key)
+			.unwrap();
 		Ok(())
 	}
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for RegisterEnclaveArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	for RegisterEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -189,8 +194,9 @@ pub struct UnregisterEnclaveArgs {
 	account_id: Address32,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for UnregisterEnclaveArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	for UnregisterEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {

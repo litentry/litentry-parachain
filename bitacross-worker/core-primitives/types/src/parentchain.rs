@@ -164,9 +164,9 @@ impl StaticEvent for ParentchainBlockProcessed {
 	const EVENT: &'static str = "ParentchainBlockProcessed";
 }
 
-pub trait HandleParentchainEvents<Executor, TCS, Error, RRU>
+pub trait HandleParentchainEvents<Executor, TCS, Error, RRU, SRU>
 where
-	Executor: IndirectExecutor<TCS, Error, RRU>,
+	Executor: IndirectExecutor<TCS, Error, RRU, SRU>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
 	fn handle_events(

@@ -39,7 +39,8 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
-bc-relayer-registry = { path = "../../../bitacross/core//bc-relayer-registry", default-features = false }
+bc-relayer-registry = { path = "../../../bitacross/core/bc-relayer-registry", default-features = false }
+bc-signer-registry = { path = "../../../bitacross/core/bc-signer-registry", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
@@ -76,6 +77,7 @@ std = [
     "litentry-primitives/std",
     "lc-scheduled-enclave/std",
     "bc-relayer-registry/std",
+    "bc-signer-registry/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -90,4 +92,5 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
     "bc-relayer-registry/sgx",
+    "bc-signer-registry/sgx",
 ]

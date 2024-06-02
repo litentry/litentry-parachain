@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
@@ -33,8 +34,9 @@ pub struct SetScheduledEnclaveArgs {
 	mrenclave: MrEnclave,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for SetScheduledEnclaveArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	for SetScheduledEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -54,8 +56,9 @@ pub struct RemoveScheduledEnclaveArgs {
 	sbn: SidechainBlockNumber,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry> for RemoveScheduledEnclaveArgs
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
+	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	for RemoveScheduledEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {

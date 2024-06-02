@@ -16,6 +16,7 @@
 */
 
 use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::Encode;
 
 pub use ita_sgx_runtime::{Balance, Index};
@@ -31,7 +32,9 @@ use log::*;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn shield_funds<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>>(
+	fn shield_funds<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+	>(
 		executor: &Executor,
 		account: &AccountId,
 		amount: Balance,
@@ -56,10 +59,11 @@ impl ParentchainEventHandler {
 	}
 }
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error, RelayerRegistry>
+impl<Executor>
+	HandleParentchainEvents<Executor, TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>
 	for ParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry>,
+	Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
 {
 	fn handle_events(
 		executor: &Executor,

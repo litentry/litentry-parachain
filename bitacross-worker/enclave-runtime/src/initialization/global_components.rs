@@ -177,6 +177,7 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 	RelayerRegistry,
+	SignerRegistry,
 >;
 
 pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
@@ -221,6 +222,7 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 	RelayerRegistry,
+	SignerRegistry,
 >;
 
 pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
@@ -265,6 +267,7 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 	RelayerRegistry,
+	SignerRegistry,
 >;
 
 pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
@@ -442,3 +445,7 @@ pub static GLOBAL_RPC_WS_HANDLER_COMPONENT: ComponentContainer<EnclaveRpcWsHandl
 /// Relayer registry
 pub static GLOBAL_RELAYER_REGISTRY: ComponentContainer<RelayerRegistry> =
 	ComponentContainer::new("relayer_registry");
+
+/// Signer registry
+pub static GLOBAL_SIGNER_REGISTRY: ComponentContainer<SignerRegistry> =
+	ComponentContainer::new("signer_registry");
