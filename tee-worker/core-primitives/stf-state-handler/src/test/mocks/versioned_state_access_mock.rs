@@ -43,7 +43,7 @@ impl<State, Hash> VersionedStateAccessMock<State, Hash> {
 impl<State, Hash> VersionedStateAccess for VersionedStateAccessMock<State, Hash>
 where
 	State: Default + Clone,
-	Hash: Default,
+	Hash: Default + PartialEq,
 {
 	type StateType = State;
 	type HashType = Hash;

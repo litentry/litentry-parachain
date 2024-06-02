@@ -233,14 +233,22 @@ where
 		old_shard: ShardIdentifier,
 		new_shard: ShardIdentifier,
 	) -> Result<Self::HashType> {
-		let (state, _) = self.load_cloned(&old_shard)?;
-		let reset_result = self.reset(state, &new_shard)?;
+		let (old_shard_state, old_shard_state_hash) = self.load_cloned(&old_shard)?;
+		self.reset(old_shard_state, &new_shard)?;
+
 		let state_snapshot_lock =
 			self.state_snapshot_repository.read().map_err(|_| Error::LockPoisoning)?;
 		if state_snapshot_lock.compare_shards_state_file_size(&old_shard, &new_shard)? != 0 {
 			return Err(Error::Other("State files size do not match after migration".into()))
 		}
-		Ok(reset_result)
+
+		let (_, new_shard_state_hash) = self.load_cloned(&new_shard)?;
+
+		if new_shard_state_hash != old_shard_state_hash {
+			return Err(Error::Other("State hash does not match after migration".into()))
+		}
+
+		Ok(new_shard_state_hash)
 	}
 }
 

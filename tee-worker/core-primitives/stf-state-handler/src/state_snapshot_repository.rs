@@ -31,7 +31,7 @@ use std::{collections::VecDeque, fmt::Debug, format, sync::Arc, vec::Vec};
 /// Trait for versioned state access. Manages history of state snapshots.
 pub trait VersionedStateAccess {
 	type StateType: Clone;
-	type HashType;
+	type HashType: PartialEq;
 
 	/// Load the latest version of the state.
 	fn load_latest(&self, shard_identifier: &ShardIdentifier) -> Result<Self::StateType>;
