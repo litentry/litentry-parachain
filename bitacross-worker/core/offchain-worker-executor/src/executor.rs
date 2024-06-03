@@ -23,9 +23,9 @@ use itc_parentchain_light_client::{
 	NumberFor,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_stf_executor::{traits::StateUpdateProposer, ExecutedOperation};
+use itp_stf_executor::traits::StateUpdateProposer;
 use itp_stf_interface::system_pallet::SystemPalletEventInterface;
-use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperationOrHash};
+use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{parentchain::ParentchainCall, OpaqueCall, ShardIdentifier, H256};
@@ -141,29 +141,8 @@ impl<
 			parentchain_effects
 				.append(&mut batch_execution_result.get_extrinsic_callbacks().clone());
 
-			let failed_operations = batch_execution_result.get_failed_operations();
-			let successful_operations: Vec<ExecutedOperation<TCS, G>> = batch_execution_result
-				.get_executed_operation_hashes()
-				.into_iter()
-				.map(|h| {
-					ExecutedOperation::success(
-						h,
-						TrustedOperationOrHash::Hash(h),
-						Vec::new(),
-						Vec::new(),
-						false,
-					)
-				})
-				.collect();
-
-			// Remove all not successfully executed operations from the top pool.
-			self.remove_calls_from_pool(&shard, failed_operations);
-
 			// Apply the state update
 			self.apply_state_update(&shard, batch_execution_result.state_after_execution)?;
-
-			// Remove successful operations from pool
-			self.remove_calls_from_pool(&shard, successful_operations);
 
 			// TODO: notify parentchain about executed operations? -> add to parentchain effects
 		}
@@ -223,26 +202,6 @@ impl<
 		self.validator_accessor
 			.execute_mut_on_validator(|v| v.send_extrinsics(extrinsics))?;
 		Ok(())
-	}
-
-	fn remove_calls_from_pool(
-		&self,
-		shard: &ShardIdentifier,
-		executed_calls: Vec<ExecutedOperation<TCS, G>>,
-	) -> Vec<ExecutedOperation<TCS, G>> {
-		let executed_calls_tuple: Vec<_> = executed_calls
-			.iter()
-			.map(|e| (e.trusted_operation_or_hash.clone(), e.is_success()))
-			.collect();
-		let failed_to_remove_hashes =
-			self.top_pool_author.remove_calls_from_pool(*shard, executed_calls_tuple);
-
-		let failed_executed_calls: Vec<_> = executed_calls
-			.into_iter()
-			.filter(|e| failed_to_remove_hashes.contains(&e.trusted_operation_or_hash))
-			.collect();
-
-		failed_executed_calls
 	}
 }
 

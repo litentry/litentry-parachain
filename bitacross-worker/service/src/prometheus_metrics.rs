@@ -173,12 +173,6 @@ pub struct EnclaveMetricsReceiver;
 impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	fn receive_enclave_metric(&self, metric: EnclaveMetric) -> ServiceResult<()> {
 		match metric {
-			EnclaveMetric::TopPoolSizeIncrement => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.inc();
-			},
-			EnclaveMetric::TopPoolSizeDecrement => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
-			},
 			EnclaveMetric::SuccessfulTrustedOperationIncrement(metric_name) => {
 				ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[&metric_name]).inc();
 			},

@@ -72,45 +72,6 @@ where
 	pub remove_attempts: RwLock<usize>,
 }
 
-impl<Hash, BlockHash, TCS, G> AuthorApiMock<Hash, BlockHash, TCS, G>
-where
-	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + TrustedCallVerification,
-	G: PartialEq + Encode + Decode + Debug + Send + Sync,
-{
-	fn remove_top(
-		&self,
-		bytes_or_hash: Vec<TrustedOperationOrHash<TCS, G>>,
-		shard: ShardIdentifier,
-		_inblock: bool,
-	) -> Result<Vec<H256>> {
-		let hashes = bytes_or_hash
-			.into_iter()
-			.map(|x| match x {
-				TrustedOperationOrHash::Hash(h) => h,
-				TrustedOperationOrHash::OperationEncoded(bytes) => {
-					let top: StfTrustedOperation<TCS, G> =
-						StfTrustedOperation::<TCS, G>::decode(&mut bytes.as_slice()).unwrap();
-					top.hash()
-				},
-				TrustedOperationOrHash::Operation(op) => op.hash(),
-			})
-			.collect::<Vec<_>>();
-
-		let mut tops_lock = self.tops.write().unwrap();
-
-		match tops_lock.get_mut(&shard) {
-			Some(tops_encoded) => {
-				let removed_tops = tops_encoded
-					.drain_filter(|t| hashes.contains(&blake2_256(t).into()))
-					.map(|t| blake2_256(&t).into())
-					.collect::<Vec<_>>();
-				Ok(removed_tops)
-			},
-			None => Ok(Vec::new()),
-		}
-	}
-}
-
 impl<TCS, G> AuthorApi<H256, H256, TCS, G> for AuthorApiMock<H256, H256, TCS, G>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + TrustedCallVerification + Send + Sync,
@@ -222,23 +183,6 @@ where
 	fn list_handled_shards(&self) -> Vec<ShardIdentifier> {
 		//dummy
 		self.tops.read().unwrap().keys().cloned().collect()
-	}
-
-	fn remove_calls_from_pool(
-		&self,
-		shard: ShardIdentifier,
-		executed_calls: Vec<(TrustedOperationOrHash<TCS, G>, bool)>,
-	) -> Vec<TrustedOperationOrHash<TCS, G>> {
-		let mut remove_attempts_lock = self.remove_attempts.write().unwrap();
-		*remove_attempts_lock += 1;
-
-		let mut failed_to_remove = Vec::new();
-		for (executed_call, inblock) in executed_calls {
-			if self.remove_top(vec![executed_call.clone()], shard, inblock).is_err() {
-				failed_to_remove.push(executed_call);
-			}
-		}
-		failed_to_remove
 	}
 
 	fn watch_top<R: DecryptableRequest>(&self, request: R) -> PoolFuture<H256, RpcError> {

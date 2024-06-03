@@ -299,7 +299,6 @@ pub type EnclaveTopPoolAuthor = Author<
 	AuthorTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
-	EnclaveOCallApi,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 >;

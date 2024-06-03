@@ -26,12 +26,10 @@ use crate::{
 	traits::{AuthorApi, OnBlockImported},
 };
 use codec::{Decode, Encode};
-use itp_enclave_metrics::EnclaveMetric;
-use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt};
 use itp_stf_primitives::{
 	traits::{PoolTransactionValidation, TrustedCallVerification},
-	types::{AccountId, Hash, TrustedOperation as StfTrustedOperation, TrustedOperationOrHash},
+	types::{AccountId, Hash, TrustedOperation as StfTrustedOperation},
 };
 use itp_stf_state_handler::query_shard_state::QueryShardState;
 use itp_top_pool::{
@@ -66,7 +64,7 @@ pub type RequestIdWithParamsAndMethod = Option<(Hash, Vec<String>)>;
 /// Authoring API for RPC calls
 ///
 ///
-pub struct Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+pub struct Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 where
 	TopPool: TrustedOperationPool<StfTrustedOperation<TCS, G>> + Sync + Send + 'static,
 	TopFilter: Filter<Value = StfTrustedOperation<TCS, G>>,
@@ -80,18 +78,16 @@ where
 	top_filter: TopFilter,
 	state_facade: Arc<StateFacade>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
-	ocall_api: Arc<OCallApi>,
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
-	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
+	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 where
 	TopPool: TrustedOperationPool<StfTrustedOperation<TCS, G>> + Sync + Send + 'static,
 	TopFilter: Filter<Value = StfTrustedOperation<TCS, G>>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
-	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Clone + Debug + Send + Sync,
 	G: PartialEq + Encode + Clone + PoolTransactionValidation + Debug + Send + Sync,
 {
@@ -101,9 +97,8 @@ where
 		top_filter: TopFilter,
 		state_facade: Arc<StateFacade>,
 		encryption_key: Arc<ShieldingKeyRepository>,
-		ocall_api: Arc<OCallApi>,
 	) -> Self {
-		Author { top_pool, top_filter, state_facade, shielding_key_repo: encryption_key, ocall_api }
+		Author { top_pool, top_filter, state_facade, shielding_key_repo: encryption_key }
 	}
 }
 
@@ -112,15 +107,14 @@ enum TopSubmissionMode {
 	SubmitWatch,
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
-	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
+	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 where
 	TopPool: TrustedOperationPool<StfTrustedOperation<TCS, G>> + Sync + Send + 'static,
 	TopFilter: Filter<Value = StfTrustedOperation<TCS, G>>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
-	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 	TCS: PartialEq
 		+ Encode
 		+ Decode
@@ -185,11 +179,6 @@ where
 		// dummy block hash
 		let best_block_hash = Default::default();
 
-		// Update metric
-		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeIncrement) {
-			warn!("Failed to update metric for top pool size: {:?}", e);
-		}
-
 		if let Some(trusted_call_signed) = trusted_operation.to_call() {
 			debug!(
 				"Submitting trusted call to TOP pool: {:?}, TOP hash: {:?}",
@@ -228,44 +217,6 @@ where
 			),
 		}
 	}
-
-	fn remove_top(
-		&self,
-		bytes_or_hash: TrustedOperationOrHash<TCS, G>,
-		shard: ShardIdentifier,
-		inblock: bool,
-	) -> Result<TxHash> {
-		let hash = match bytes_or_hash {
-			TrustedOperationOrHash::Hash(h) => Ok(h),
-			TrustedOperationOrHash::OperationEncoded(bytes) => {
-				match Decode::decode(&mut bytes.as_slice()) {
-					Ok(op) => Ok(self.top_pool.hash_of(&op)),
-					Err(e) => {
-						error!("Failed to decode trusted operation: {:?}, operation will not be removed from pool", e);
-						Err(StateRpcError::CodecError(e))
-					},
-				}
-			},
-			TrustedOperationOrHash::Operation(op) => Ok(self.top_pool.hash_of(&op)),
-		}?;
-
-		debug!("removing {:?} from top pool", hash);
-
-		// Update metric
-		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeDecrement) {
-			warn!("Failed to update metric for top pool size: {:?}", e);
-		}
-
-		let removed_op_hash = self
-			.top_pool
-			.remove_invalid(&[hash], shard, inblock)
-			// Only remove a single element, so first should return Ok().
-			.first()
-			.map(|o| o.hash())
-			.ok_or(PoolError::InvalidTrustedOperation)?;
-
-		Ok(removed_op_hash)
-	}
 }
 
 fn map_top_error<P: TrustedOperationPool<StfTrustedOperation<TCS, G>>, TCS, G>(
@@ -284,16 +235,15 @@ where
 	.into()
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 	AuthorApi<TxHash, BlockHash, TCS, G>
-	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 where
 	TopPool: TrustedOperationPool<StfTrustedOperation<TCS, G>> + Sync + Send + 'static,
 	TopFilter: Filter<Value = StfTrustedOperation<TCS, G>>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
-	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 	G: PartialEq
 		+ Encode
 		+ Decode
@@ -374,23 +324,6 @@ where
 		self.state_facade.list_shards().unwrap_or_default()
 	}
 
-	fn remove_calls_from_pool(
-		&self,
-		shard: ShardIdentifier,
-		executed_calls: Vec<(TrustedOperationOrHash<TCS, G>, bool)>,
-	) -> Vec<TrustedOperationOrHash<TCS, G>> {
-		let mut failed_to_remove = Vec::new();
-		for (executed_call, inblock) in executed_calls {
-			if let Err(e) = self.remove_top(executed_call.clone(), shard, inblock) {
-				// We don't want to return here before all calls have been iterated through,
-				// hence log message and collect failed calls in vec.
-				debug!("Error removing trusted call from top pool: {:?}", e);
-				failed_to_remove.push(executed_call);
-			}
-		}
-		failed_to_remove
-	}
-
 	fn watch_top<R: DecryptableRequest + Encode>(
 		&self,
 		request: R,
@@ -407,15 +340,14 @@ where
 	}
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G> OnBlockImported
-	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi, TCS, G>
+impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G> OnBlockImported
+	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, TCS, G>
 where
 	TopPool: TrustedOperationPool<StfTrustedOperation<TCS, G>> + Sync + Send + 'static,
 	TopFilter: Filter<Value = StfTrustedOperation<TCS, G>>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
-	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 	G: PartialEq + Encode + Clone + PoolTransactionValidation + Debug + Send + Sync,
 	TCS: PartialEq + Encode + Clone + Debug + Send + Sync,
 {

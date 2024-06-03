@@ -66,7 +66,6 @@ pub fn process_indirect_call_in_top_pool() {
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo,
-		Arc::new(MetricsOCallMock::default()),
 	));
 
 	let encrypted_indirect_call =

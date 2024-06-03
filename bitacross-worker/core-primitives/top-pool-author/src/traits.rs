@@ -73,14 +73,6 @@ where
 	/// returns all shards which are handled by our worker
 	fn list_handled_shards(&self) -> Vec<ShardIdentifier>;
 
-	/// Remove a collection of trusted operations from the pool.
-	/// Return operations that were not successfully removed.
-	fn remove_calls_from_pool(
-		&self,
-		shard: ShardIdentifier,
-		executed_calls: Vec<(TrustedOperationOrHash<TCS, G>, bool)>,
-	) -> Vec<TrustedOperationOrHash<TCS, G>>;
-
 	/// Submit a request to watch.
 	///
 	/// See [`TrustedOperationStatus`](sp_transaction_pool::TrustedOperationStatus) for details on transaction
