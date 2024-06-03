@@ -2384,6 +2384,7 @@ version = "0.9.0"
 dependencies = [
  "aes",
  "derive_more",
+ "hex",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
  "k256",
