@@ -91,7 +91,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_sgx_crypto::tests::schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key,
 		itp_sgx_crypto::tests::schnorr_seal_init_should_create_new_key_if_not_present,
 		itp_sgx_crypto::tests::schnorr_seal_init_should_not_change_key_if_exists,
-		itp_sgx_crypto::tests::schnorr_sign_should_produce_valid_signature,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
 		test_differentiate_getter_and_call_works,

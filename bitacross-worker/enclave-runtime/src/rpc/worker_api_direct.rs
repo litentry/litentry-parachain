@@ -98,6 +98,7 @@ where
 {
 	let mut io = IoHandler::new();
 
+	let signer_lookup_cloned = signer_lookup.clone();
 	let shielding_key_cloned = shielding_key.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
@@ -202,6 +203,22 @@ where
 			"bitcoin_key": bitcoin_key,
 			"ethereum_key": ethereum_key
 		}))
+	});
+
+	io.add_sync_method("bitacross_getSealedSigners", move |_: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_getSealedSigners");
+
+		let keys: Vec<Value> = signer_lookup_cloned
+			.get_all()
+			.iter()
+			.map(|(signer, pub_key)| {
+				json!({
+					"signer": signer.as_ref().to_vec(),
+					"key": pub_key.to_vec()
+				})
+			})
+			.collect();
+		Ok(json!(keys))
 	});
 
 	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
