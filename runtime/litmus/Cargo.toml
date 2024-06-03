@@ -32,6 +32,7 @@ frame-try-runtime = { workspace = true, optional = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
+pallet-bitacross = { workspace = true }
 pallet-bounties = { workspace = true }
 pallet-collective = { workspace = true }
 pallet-democracy = { workspace = true }
@@ -82,6 +83,7 @@ pallet-drop3 = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
+pallet-teebag = { workspace = true }
 pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
 
@@ -118,7 +120,6 @@ runtime-benchmarks = [
     "pallet-balances/runtime-benchmarks",
     "pallet-bounties/runtime-benchmarks",
     # This module returned an error when ran the benchmark, temporarily chose to comment it out
-    #  "pallet-collator-selection/runtime-benchmarks",
     "pallet-collective/runtime-benchmarks",
     "pallet-democracy/runtime-benchmarks",
     "pallet-ethereum/runtime-benchmarks",
@@ -129,6 +130,7 @@ runtime-benchmarks = [
     "pallet-preimage/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
     "pallet-scheduler/runtime-benchmarks",
+    "pallet-teebag/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "pallet-treasury/runtime-benchmarks",
     "pallet-utility/runtime-benchmarks",
@@ -219,6 +221,8 @@ std = [
     "pallet-group/std",
     "pallet-identity-management/std",
     "pallet-vc-management/std",
+    "pallet-bitacross/std",
+    "pallet-teebag/std",
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
@@ -240,6 +244,7 @@ try-runtime = [
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
+    "pallet-bitacross/try-runtime",
     "pallet-bounties/try-runtime",
     "pallet-bridge/try-runtime",
     "pallet-bridge-transfer/try-runtime",
@@ -259,6 +264,7 @@ try-runtime = [
     "pallet-proxy/try-runtime",
     "pallet-scheduler/try-runtime",
     "pallet-session/try-runtime",
+    "pallet-teebag/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",

@@ -30,7 +30,7 @@ export default {
                 LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
                 BRC20AmountHolder: "Null",
-                CyptoSummary: "Null",
+                CryptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
@@ -199,6 +199,7 @@ export default {
                 "Imx",
                 "Cro",
                 "Inj",
+                "Bean",
             ],
         },
         // PlatformUserType

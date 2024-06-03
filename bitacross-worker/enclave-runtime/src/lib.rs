@@ -408,6 +408,35 @@ pub unsafe extern "C" fn finish_enclave_init() -> sgx_status_t {
 	sgx_status_t::SGX_SUCCESS
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn init_wallets(
+	encoded_base_dir_str: *const u8,
+	encoded_base_dir_size: u32,
+) -> sgx_status_t {
+	let base_dir = match String::decode(&mut slice::from_raw_parts(
+		encoded_base_dir_str,
+		encoded_base_dir_size as usize,
+	))
+	.map_err(Error::Codec)
+	{
+		Ok(b) => b,
+		Err(e) => return e.into(),
+	};
+
+	info!("Setting base_dir to {}", base_dir);
+
+	let path = PathBuf::from(base_dir);
+	// Litentry: the default value here is only for clippy checking
+	BASE_PATH.set(path.clone()).unwrap_or(());
+
+	if let Err(e) = initialization::init_wallets(path) {
+		error!("Failed to init wallets: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
 /// Call this once at worker startup to initialize the TOP pool and direct invocation RPC server.
 ///
 /// This function will run the RPC server on the same thread as it is called and will loop there.

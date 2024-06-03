@@ -1,6 +1,6 @@
 services:
     lit-test-stress-script:
-        image: litentry/litentry-cli:latest
+        image: litentry/identity-cli:latest
         container_name: litentry-test-stress-script
         volumes:
             - ../ts-tests:/ts-tests

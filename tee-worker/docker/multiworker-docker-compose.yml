@@ -101,7 +101,7 @@ services:
 
     ulimits: *a1
   litentry-worker-1:
-    image: litentry/litentry-worker:latest
+    image: litentry/identity-worker:latest
     container_name: litentry-worker-1
     build:
       context: ${PWD}/..
@@ -138,6 +138,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -162,7 +163,7 @@ services:
       run --dev --skip-ra"
     restart: "no"
   litentry-worker-2:
-    image: litentry/litentry-worker:latest
+    image: litentry/identity-worker:latest
     container_name: litentry-worker-2
     build:
       context: ${PWD}/..
@@ -201,6 +202,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -225,7 +227,7 @@ services:
       run --dev --skip-ra"
     restart: "no"
   litentry-worker-3:
-    image: litentry/litentry-worker:latest
+    image: litentry/identity-worker:latest
     container_name: litentry-worker-3
     build:
       context: ${PWD}/..
@@ -264,6 +266,7 @@ services:
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527

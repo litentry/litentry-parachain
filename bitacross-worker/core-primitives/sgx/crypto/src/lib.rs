@@ -64,15 +64,21 @@ pub mod tests {
 	};
 
 	pub use super::ecdsa::sgx_tests::{
+		ecdsa_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
 		ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key,
 		ecdsa_seal_init_should_create_new_key_if_not_present,
-		ecdsa_seal_init_should_not_change_key_if_exists, ecdsa_sign_should_produce_valid_signature,
+		ecdsa_seal_init_should_not_change_key_if_exists_and_not_provided,
+		ecdsa_seal_init_should_seal_provided_key,
+		ecdsa_seal_init_with_key_should_change_current_key,
+		ecdsa_sign_should_produce_valid_signature,
 	};
 
 	pub use super::schnorr::sgx_tests::{
+		schnorr_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
 		schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key,
 		schnorr_seal_init_should_create_new_key_if_not_present,
-		schnorr_seal_init_should_not_change_key_if_exists,
-		schnorr_sign_should_produce_valid_signature,
+		schnorr_seal_init_should_not_change_key_if_exists_and_not_provided,
+		schnorr_seal_init_should_seal_provided_key,
+		schnorr_seal_init_with_key_should_change_key_current_key,
 	};
 }

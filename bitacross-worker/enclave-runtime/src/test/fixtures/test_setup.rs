@@ -33,11 +33,7 @@ use itp_test::mock::{
 	shielding_crypto_mock::ShieldingCryptoMock,
 };
 use itp_top_pool::{basic_pool::BasicPool, pool::ExtrinsicHash};
-use itp_top_pool_author::{
-	api::SidechainApi,
-	author::Author,
-	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
-};
+use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
 use itp_types::{Block, MrEnclave};
 use sp_core::{crypto::Pair, ed25519 as spEd25519};
 use std::sync::Arc;
@@ -52,7 +48,6 @@ pub type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 pub type TestTopPoolAuthor = Author<
 	TestTopPool,
 	AllowAllTopsFilter<TrustedCallSigned, Getter>,
-	DirectCallsOnlyFilter<TrustedCallSigned, Getter>,
 	HandleStateMock,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,
@@ -97,17 +92,13 @@ pub fn test_setup() -> (
 		node_metadata_repo,
 	));
 
-	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
-
 	(
 		Arc::new(TestTopPoolAuthor::new(
 			Arc::new(top_pool),
 			AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
-			DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 			state_handler.clone(),
 			shielding_key_repo,
 			Arc::new(MetricsOCallMock::default()),
-			Arc::new(sender),
 		)),
 		state,
 		shard,
