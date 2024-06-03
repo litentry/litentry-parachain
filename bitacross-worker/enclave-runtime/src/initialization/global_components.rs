@@ -178,6 +178,7 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveGetter,
 	RelayerRegistry,
 	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
@@ -223,6 +224,7 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveGetter,
 	RelayerRegistry,
 	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
@@ -268,6 +270,7 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveGetter,
 	RelayerRegistry,
 	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
@@ -449,3 +452,7 @@ pub static GLOBAL_RELAYER_REGISTRY: ComponentContainer<RelayerRegistry> =
 /// Signer registry
 pub static GLOBAL_SIGNER_REGISTRY: ComponentContainer<SignerRegistry> =
 	ComponentContainer::new("signer_registry");
+
+/// Enclave registry
+pub static GLOBAL_ENCLAVE_REGISTRY: ComponentContainer<EnclaveRegistry> =
+	ComponentContainer::new("enclave_registry");

@@ -15,6 +15,7 @@
 
 */
 
+use bc_enclave_registry::EnclaveRegistry;
 use bc_relayer_registry::RelayerRegistry;
 use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
@@ -39,8 +40,16 @@ pub struct ShieldFundsArgs {
 	shard: ShardIdentifier,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry> for ShieldFundsArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
+	for ShieldFundsArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {

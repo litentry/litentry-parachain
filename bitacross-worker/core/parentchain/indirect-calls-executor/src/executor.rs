@@ -25,6 +25,7 @@ use crate::{
 	traits::{ExecuteIndirectCalls, IndirectDispatch},
 };
 use alloc::format;
+use bc_enclave_registry::EnclaveRegistryUpdater;
 use bc_relayer_registry::RelayerRegistryUpdater;
 use bc_signer_registry::SignerRegistryUpdater;
 use binary_merkle_tree::merkle_root;
@@ -61,9 +62,11 @@ pub struct IndirectCallsExecutor<
 	G,
 	RRU,
 	SRU,
+	ERU,
 > where
 	RRU: RelayerRegistryUpdater,
 	SRU: SignerRegistryUpdater,
+	ERU: EnclaveRegistryUpdater,
 {
 	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
 	pub stf_enclave_signer: Arc<StfEnclaveSigner>,
@@ -72,6 +75,7 @@ pub struct IndirectCallsExecutor<
 	pub parentchain_id: ParentchainId,
 	pub relayer_registry_updater: Arc<RRU>,
 	pub signer_registry_updater: Arc<SRU>,
+	pub enclave_registry_updater: Arc<ERU>,
 	_phantom: PhantomData<(IndirectCallsFilter, EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
@@ -86,6 +90,7 @@ impl<
 		G,
 		RRU,
 		SRU,
+		ERU,
 	>
 	IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -99,10 +104,13 @@ impl<
 		G,
 		RRU,
 		SRU,
+		ERU,
 	> where
 	RRU: RelayerRegistryUpdater,
 	SRU: SignerRegistryUpdater,
+	ERU: EnclaveRegistryUpdater,
 {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
 		stf_enclave_signer: Arc<StfEnclaveSigner>,
@@ -111,6 +119,7 @@ impl<
 		parentchain_id: ParentchainId,
 		relayer_registry_updater: Arc<RRU>,
 		signer_registry_updater: Arc<SRU>,
+		enclave_registry_updater: Arc<ERU>,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
@@ -120,6 +129,7 @@ impl<
 			parentchain_id,
 			relayer_registry_updater,
 			signer_registry_updater,
+			enclave_registry_updater,
 			_phantom: Default::default(),
 		}
 	}
@@ -137,6 +147,7 @@ impl<
 		G,
 		RRU,
 		SRU,
+		ERU,
 	> ExecuteIndirectCalls
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -150,6 +161,7 @@ impl<
 		G,
 		RRU,
 		SRU,
+		ERU,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -159,13 +171,15 @@ impl<
 	NodeMetadataProvider: AccessNodeMetadata,
 	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
-	FilterIndirectCalls::Output: IndirectDispatch<Self, TCS, RRU, SRU, Args = ()> + Encode + Debug,
+	FilterIndirectCalls::Output:
+		IndirectDispatch<Self, TCS, RRU, SRU, ERU, Args = ()> + Encode + Debug,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
-	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error, RRU, SRU>,
+	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error, RRU, SRU, ERU>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	RRU: RelayerRegistryUpdater,
 	SRU: SignerRegistryUpdater,
+	ERU: EnclaveRegistryUpdater,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -272,7 +286,8 @@ impl<
 		G,
 		RRU,
 		SRU,
-	> IndirectExecutor<TCS, Error, RRU, SRU>
+		ERU,
+	> IndirectExecutor<TCS, Error, RRU, SRU, ERU>
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
@@ -285,6 +300,7 @@ impl<
 		G,
 		RRU,
 		SRU,
+		ERU,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -295,6 +311,7 @@ impl<
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	RRU: RelayerRegistryUpdater,
 	SRU: SignerRegistryUpdater,
+	ERU: EnclaveRegistryUpdater,
 {
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
 		if let Err(e) = futures::executor::block_on(
@@ -337,6 +354,10 @@ impl<
 	fn get_signer_registry_updater(&self) -> &SRU {
 		self.signer_registry_updater.as_ref()
 	}
+
+	fn get_enclave_registry_updater(&self) -> &ERU {
+		self.enclave_registry_updater.as_ref()
+	}
 }
 
 pub fn hash_of<T: Encode>(xt: &T) -> H256 {
@@ -347,6 +368,7 @@ pub fn hash_of<T: Encode>(xt: &T) -> H256 {
 mod test {
 	use super::*;
 	use crate::mock::*;
+	use bc_enclave_registry::EnclaveRegistry;
 	use bc_relayer_registry::RelayerRegistry;
 	use bc_signer_registry::SignerRegistry;
 	use codec::Encode;
@@ -365,7 +387,7 @@ mod test {
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
+	use itp_types::{Block, Enclave, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 
@@ -385,6 +407,7 @@ mod test {
 		GetterMock,
 		RelayerRegistry,
 		SignerRegistry,
+		EnclaveRegistry,
 	>;
 
 	type Seed = [u8; 32];
@@ -502,6 +525,7 @@ mod test {
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
 		let relayer_registry = Arc::new(RelayerRegistry::new(Default::default()));
 		let signer_registry = Arc::new(SignerRegistry::new(Default::default()));
+		let enclave_registry = Arc::new(EnclaveRegistry::new(Default::default()));
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
@@ -511,6 +535,7 @@ mod test {
 			ParentchainId::Litentry,
 			relayer_registry,
 			signer_registry,
+			enclave_registry,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)

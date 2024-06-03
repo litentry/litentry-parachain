@@ -32,7 +32,7 @@ use crate::{
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
 
-use bc_enclave_registry::GLOBAL_ENCLAVE_REGISTRY;
+use crate::initialization::global_components::GLOBAL_ENCLAVE_REGISTRY;
 use codec::Decode;
 use itp_attestation_handler::RemoteAttestationType;
 use itp_component_container::ComponentGetter;
@@ -249,7 +249,13 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 	};
-	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.clone();
+	let enclave_registry = match GLOBAL_ENCLAVE_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
 
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,

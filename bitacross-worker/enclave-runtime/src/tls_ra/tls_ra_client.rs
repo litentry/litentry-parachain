@@ -36,11 +36,11 @@ use codec::Encode;
 use itp_attestation_handler::{RemoteAttestationType, DEV_HOSTNAME};
 use itp_component_container::ComponentGetter;
 
-use bc_enclave_registry::GLOBAL_ENCLAVE_REGISTRY;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
 
+use crate::initialization::global_components::GLOBAL_ENCLAVE_REGISTRY;
 use log::*;
 use rustls::{ClientConfig, ClientSession, Stream};
 use sgx_types::*;
@@ -223,7 +223,13 @@ pub unsafe extern "C" fn request_state_provisioning(
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 	};
-	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.clone();
+	let enclave_registry = match GLOBAL_ENCLAVE_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
 
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,

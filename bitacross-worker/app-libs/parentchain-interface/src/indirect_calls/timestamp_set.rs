@@ -16,6 +16,7 @@
 */
 
 use crate::{Litentry, ParentchainInstance, TargetA, TargetB};
+use bc_enclave_registry::EnclaveRegistry;
 use bc_relayer_registry::RelayerRegistry;
 use bc_signer_registry::SignerRegistry;
 use codec::{Compact, Decode, Encode};
@@ -36,9 +37,15 @@ pub struct TimestampSetArgs<I: ParentchainInstance> {
 }
 
 impl<
-		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
 		I: ParentchainInstance + 'static,
-	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
 	for TimestampSetArgs<I>
 {
 	type Args = ();

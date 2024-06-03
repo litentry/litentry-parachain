@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use bc_enclave_registry::EnclaveRegistry;
 use bc_relayer_registry::RelayerRegistry;
 use bc_signer_registry::SignerRegistry;
 use codec::Encode;
@@ -29,7 +30,13 @@ pub trait ArgsExecutor {
 	fn name() -> &'static str;
 	fn shard(&self) -> ShardIdentifier;
 	fn prepare_trusted_call<
-		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
 	>(
 		&self,
 		executor: &Executor,
@@ -37,7 +44,13 @@ pub trait ArgsExecutor {
 		hash: H256,
 	) -> Result<TrustedCall>;
 	fn execute<
-		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
 	>(
 		&self,
 		executor: &Executor,
@@ -51,7 +64,13 @@ pub trait ArgsExecutor {
 	}
 
 	fn submit<
-		Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>,
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
 	>(
 		&self,
 		executor: &Executor,

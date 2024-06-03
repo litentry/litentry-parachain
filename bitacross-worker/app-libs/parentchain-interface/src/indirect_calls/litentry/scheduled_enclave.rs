@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use bc_enclave_registry::EnclaveRegistry;
 use bc_relayer_registry::RelayerRegistry;
 use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
@@ -34,8 +35,15 @@ pub struct SetScheduledEnclaveArgs {
 	mrenclave: MrEnclave,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
 	for SetScheduledEnclaveArgs
 {
 	type Args = ();
@@ -56,8 +64,15 @@ pub struct RemoveScheduledEnclaveArgs {
 	sbn: SidechainBlockNumber,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error, RelayerRegistry, SignerRegistry>>
-	IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry>
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
 	for RemoveScheduledEnclaveArgs
 {
 	type Args = ();

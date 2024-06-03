@@ -44,7 +44,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
-use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
+use bc_enclave_registry::EnclaveRegistryUpdater;
 use bc_musig2_ceremony::{CeremonyRegistry, MuSig2Ceremony};
 use bc_musig2_runner::init_ceremonies_thread;
 use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
@@ -81,7 +81,10 @@ use itp_sgx_crypto::{
 	schnorr::{create_schnorr_repository, Pair as SchnorrPair, Seal},
 };
 
-use crate::initialization::global_components::{GLOBAL_RELAYER_REGISTRY, GLOBAL_SIGNER_REGISTRY};
+use crate::initialization::global_components::{
+	GLOBAL_ENCLAVE_REGISTRY, GLOBAL_RELAYER_REGISTRY, GLOBAL_SIGNER_REGISTRY,
+};
+use bc_enclave_registry::EnclaveRegistry;
 use bc_signer_registry::SignerRegistry;
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
@@ -225,11 +228,13 @@ pub(crate) fn init_enclave(
 	relayer_registry.init().map_err(|e| Error::Other(e.into()))?;
 	GLOBAL_RELAYER_REGISTRY.initialize(relayer_registry.into());
 
-	GLOBAL_ENCLAVE_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
-
-	let signer_registry = Arc::new(SignerRegistry::new(base_dir));
+	let signer_registry = Arc::new(SignerRegistry::new(base_dir.clone()));
 	signer_registry.init().map_err(|e| Error::Other(e.into()))?;
 	GLOBAL_SIGNER_REGISTRY.initialize(signer_registry.clone());
+
+	let enclave_registry = Arc::new(EnclaveRegistry::new(base_dir));
+	enclave_registry.init().map_err(|e| Error::Other(e.into()))?;
+	GLOBAL_ENCLAVE_REGISTRY.initialize(enclave_registry.clone());
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
@@ -257,7 +262,7 @@ pub(crate) fn init_enclave(
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?,
 		Arc::new(client_factory),
-		GLOBAL_ENCLAVE_REGISTRY.clone(),
+		enclave_registry,
 		ceremony_registry_cloned,
 		pending_ceremony_commands_cloned,
 		ocall_api,
@@ -339,7 +344,7 @@ fn run_bit_across_handler(
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.get()?;
-	let enclave_registry_lookup = GLOBAL_ENCLAVE_REGISTRY.clone();
+	let enclave_registry_lookup = GLOBAL_ENCLAVE_REGISTRY.get()?;
 	let signer_registry_lookup = GLOBAL_SIGNER_REGISTRY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;

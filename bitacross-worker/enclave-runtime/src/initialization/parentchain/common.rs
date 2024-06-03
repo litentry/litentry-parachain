@@ -32,7 +32,8 @@ use crate::{
 			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 			GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		},
-		EnclaveStfEnclaveSigner, GLOBAL_RELAYER_REGISTRY, GLOBAL_SIGNER_REGISTRY,
+		EnclaveStfEnclaveSigner, GLOBAL_ENCLAVE_REGISTRY, GLOBAL_RELAYER_REGISTRY,
+		GLOBAL_SIGNER_REGISTRY,
 	},
 };
 use itp_component_container::ComponentGetter;
@@ -57,6 +58,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
+	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -72,6 +74,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		ParentchainId::Litentry,
 		relayer_registry,
 		signer_registry,
+		enclave_registry,
 	));
 	Ok(IntegriteeParentchainBlockImporter::new(
 		validator_access,
@@ -97,6 +100,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
+	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -112,6 +116,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		ParentchainId::TargetA,
 		relayer_registry,
 		signer_registry,
+		enclave_registry,
 	));
 	Ok(TargetAParentchainBlockImporter::new(
 		validator_access,
@@ -137,6 +142,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let relayer_registry = GLOBAL_RELAYER_REGISTRY.get()?;
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
+	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -152,6 +158,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		ParentchainId::TargetB,
 		relayer_registry,
 		signer_registry,
+		enclave_registry,
 	));
 	Ok(TargetBParentchainBlockImporter::new(
 		validator_access,

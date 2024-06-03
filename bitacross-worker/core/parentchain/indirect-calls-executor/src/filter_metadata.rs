@@ -76,6 +76,7 @@ pub struct DenyAll;
 mod seal {
 	use super::*;
 	use crate::Error;
+	use bc_enclave_registry::EnclaveRegistry;
 	use bc_relayer_registry::RelayerRegistry;
 	use bc_signer_registry::SignerRegistry;
 	use core::fmt::Debug;
@@ -94,8 +95,10 @@ mod seal {
 		}
 	}
 
-	impl<Executor: IndirectExecutor<TCS, Error, RelayerRegistry, SignerRegistry>, TCS>
-		IndirectDispatch<Executor, TCS, RelayerRegistry, SignerRegistry> for CantExecute
+	impl<
+			Executor: IndirectExecutor<TCS, Error, RelayerRegistry, SignerRegistry, EnclaveRegistry>,
+			TCS,
+		> IndirectDispatch<Executor, TCS, RelayerRegistry, SignerRegistry, EnclaveRegistry> for CantExecute
 	where
 		TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	{
