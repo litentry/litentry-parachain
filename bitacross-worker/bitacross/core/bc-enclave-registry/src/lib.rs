@@ -158,7 +158,7 @@ impl EnclaveRegistrySealer for EnclaveRegistry {
 		}
 
 		let enclave_seal = EnclaveRegistrySeal::new(self.seal_path.clone());
-		enclave_seal.seal(&state)
+		enclave_seal.seal(&registry)
 	}
 
 	#[cfg(feature = "sgx")]

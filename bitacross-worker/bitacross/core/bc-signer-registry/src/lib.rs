@@ -160,7 +160,7 @@ impl SignerRegistrySealer for SignerRegistry {
 		}
 
 		let signer_seal = SignerRegistrySeal::new(self.seal_path.clone());
-		signer_seal.seal(&state)
+		signer_seal.seal(&registry)
 	}
 
 	#[cfg(feature = "sgx")]
