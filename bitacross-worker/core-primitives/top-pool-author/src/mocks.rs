@@ -32,13 +32,13 @@ use crate::{
 use codec::{Decode, Encode};
 use itp_stf_primitives::{
 	traits::TrustedCallVerification,
-	types::{AccountId, TrustedOperation as StfTrustedOperation, TrustedOperationOrHash},
+	types::{AccountId, TrustedOperation as StfTrustedOperation},
 };
 use itp_top_pool::primitives::{PoolFuture, PoolStatus};
 use itp_types::{DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
-use sp_core::{blake2_256, H256};
+use sp_core::H256;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 use std::{
@@ -46,7 +46,6 @@ use std::{
 	collections::HashMap,
 	marker::PhantomData,
 	sync::{mpsc::Sender, Arc},
-	vec,
 	vec::Vec,
 };
 

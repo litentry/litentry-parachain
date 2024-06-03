@@ -50,6 +50,7 @@ use std::{fmt::Debug, sync::Arc, vec::Vec};
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
 	StfEnclaveSigner,
+	TopPoolAuthor,
 	NodeMetadataProvider,
 	IndirectCallsFilter,
 	EventCreator,
@@ -59,6 +60,7 @@ pub struct IndirectCallsExecutor<
 > {
 	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
 	pub stf_enclave_signer: Arc<StfEnclaveSigner>,
+	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
 	_phantom: PhantomData<(IndirectCallsFilter, EventCreator, ParentchainEventHandler, TCS, G)>,
@@ -66,6 +68,7 @@ pub struct IndirectCallsExecutor<
 impl<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		IndirectCallsFilter,
 		EventCreator,
@@ -76,6 +79,7 @@ impl<
 	IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		IndirectCallsFilter,
 		EventCreator,
@@ -87,12 +91,14 @@ impl<
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
 		stf_enclave_signer: Arc<StfEnclaveSigner>,
+		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
 			stf_enclave_signer,
+			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
 			_phantom: Default::default(),
@@ -103,6 +109,7 @@ impl<
 impl<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
 		EventCreator,
@@ -113,6 +120,7 @@ impl<
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
 		EventCreator,
@@ -124,6 +132,7 @@ impl<
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
 	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
@@ -229,6 +238,7 @@ impl<
 impl<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
 		EventFilter,
@@ -239,6 +249,7 @@ impl<
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
+		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
 		EventFilter,
@@ -250,6 +261,7 @@ impl<
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
 	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
@@ -440,18 +452,20 @@ mod test {
 	fn test_fixtures(
 		mr_enclave: [u8; 32],
 		metadata: NodeMetadataMock,
-	) -> (TestIndirectCallExecutor, Arc<TestShieldingKeyRepo>) {
+	) -> (TestIndirectCallExecutor, Arc<TestTopPoolAuthor>, Arc<TestShieldingKeyRepo>) {
 		let shielding_key_repo = Arc::new(TestShieldingKeyRepo::default());
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
+		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
 			stf_enclave_signer,
+			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
 		);
 
-		(executor, shielding_key_repo)
+		(executor, top_pool_author, shielding_key_repo)
 	}
 }

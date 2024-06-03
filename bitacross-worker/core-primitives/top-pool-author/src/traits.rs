@@ -21,9 +21,7 @@ use codec::Encode;
 use core::fmt::Debug;
 
 use crate::error::Result;
-use itp_stf_primitives::types::{
-	AccountId, TrustedOperation as StfTrustedOperation, TrustedOperationOrHash,
-};
+use itp_stf_primitives::types::{AccountId, TrustedOperation as StfTrustedOperation};
 use itp_top_pool::primitives::{PoolFuture, PoolStatus};
 use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier, H256};
 use jsonrpc_core::Error as RpcError;
