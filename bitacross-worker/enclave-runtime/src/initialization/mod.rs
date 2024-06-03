@@ -24,7 +24,7 @@ use crate::{
 	get_node_metadata_repository_from_integritee_solo_or_parachain,
 	get_validator_accessor_from_integritee_solo_or_parachain,
 	initialization::global_components::{
-		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveOCallApi, EnclaveRpcResponder,
+		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveRpcResponder,
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
