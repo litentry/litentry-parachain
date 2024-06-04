@@ -302,10 +302,10 @@ where
 		shard_b: &ShardIdentifier,
 	) -> Result<ShardStateFileComparison> {
 		let state_a_id = self.get_latest_snapshot_metadata(shard_a)?.state_id;
-		let state_size_a = self.file_io.state_file_size(shard_a, state_a_id)?;
+		let state_a_size = self.file_io.state_file_size(shard_a, state_a_id)?;
 		let state_b_id = self.get_latest_snapshot_metadata(shard_b)?.state_id;
-		let state_size_b = self.file_io.state_file_size(shard_b, state_b_id)?;
-		let size_diff = state_size_a as i64 - state_size_b as i64;
+		let state_b_size = self.file_io.state_file_size(shard_b, state_b_id)?;
+		let size_diff = state_a_size as i64 - state_b_size as i64;
 
 		match size_diff {
 			x if x == 0 => Ok(ShardStateFileComparison::Equal),
