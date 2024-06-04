@@ -57,7 +57,6 @@ pub struct NodeMetadataMock {
 	imp_identity_linked: u8,
 	imp_identity_deactivated: u8,
 	imp_identity_activated: u8,
-	imp_identity_networks_set: u8,
 	imp_some_error: u8,
 	// VCMP
 	vcmp_module: u8,
@@ -108,7 +107,6 @@ impl NodeMetadataMock {
 			imp_identity_linked: 6u8,
 			imp_identity_deactivated: 7u8,
 			imp_identity_activated: 8u8,
-			imp_identity_networks_set: 9u8,
 			imp_some_error: 10u8,
 
 			vcmp_module: 66u8,
@@ -195,10 +193,6 @@ impl IMPCallIndexes for NodeMetadataMock {
 
 	fn identity_activated_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_identity_activated])
-	}
-
-	fn identity_networks_set_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_networks_set])
 	}
 
 	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {

@@ -36,7 +36,6 @@ fn link_identity_without_delegatee_works() {
 			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested {
@@ -44,7 +43,6 @@ fn link_identity_without_delegatee_works() {
 				account: alice,
 				encrypted_identity: vec![1u8; 2048],
 				encrypted_validation_data: vec![1u8; 2048],
-				encrypted_web3networks: vec![1u8; 2048],
 			},
 		));
 	});
@@ -62,7 +60,6 @@ fn link_identity_with_authorized_delegatee_works() {
 			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested {
@@ -70,7 +67,6 @@ fn link_identity_with_authorized_delegatee_works() {
 				account: alice,
 				encrypted_identity: vec![1u8; 2048],
 				encrypted_validation_data: vec![1u8; 2048],
-				encrypted_web3networks: vec![1u8; 2048],
 			},
 		));
 	});
@@ -87,7 +83,6 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 				RuntimeOrigin::signed(bob),
 				shard,
 				alice,
-				vec![1u8; 2048],
 				vec![1u8; 2048],
 				vec![1u8; 2048],
 			),
@@ -166,7 +161,6 @@ fn extrinsic_whitelist_origin_works() {
 				alice.clone(),
 				vec![1u8; 2048],
 				vec![1u8; 2048],
-				vec![1u8; 2048],
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -179,7 +173,6 @@ fn extrinsic_whitelist_origin_works() {
 			alice.clone(),
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			vec![1u8; 2048],
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested {
@@ -187,7 +180,6 @@ fn extrinsic_whitelist_origin_works() {
 				account: alice,
 				encrypted_identity: vec![1u8; 2048],
 				encrypted_validation_data: vec![1u8; 2048],
-				encrypted_web3networks: vec![1u8; 2048],
 			},
 		));
 	});

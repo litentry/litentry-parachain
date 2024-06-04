@@ -84,7 +84,6 @@ pub mod pallet {
 			account: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
-			encrypted_web3networks: Vec<u8>,
 		},
 		DeactivateIdentityRequested {
 			shard: ShardIdentifier,
@@ -186,23 +185,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Link an identity with given network types and validation data.
-		/// We do the origin check for this extrinsic, it has to be
-		/// - either the caller themselves, i.e. ensure_signed(origin)? == who
-		/// - or from a delegatee in the list
-		///
-		/// `encrypted_web3networks`:
-		/// an initial list of web3 networks on which the identity is used:
-		/// Vec<Web3Network> encrypted with TEE's shielding key. In fact, it
-		/// doesn't have to be encrypted as it's a finite set and you can sort
-		/// it out by enumerating all possible combinations. But still, to keep
-		/// it consistent with identities and validation data.
-		///
-		/// The networks must match the identity type, it means:
-		/// - for web2 identity, Vec<Web3Network> must be empty;
-		/// - for substrate identity, Vec<Web3Network> must have substrate networks only;
-		/// - for evm identity, Vec<Web3Network> must have evm networks only.
-		/// Otherwise the linking will fail.
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
 		pub fn link_identity(
@@ -211,7 +193,6 @@ pub mod pallet {
 			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
-			encrypted_web3networks: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
@@ -223,7 +204,6 @@ pub mod pallet {
 				account: user,
 				encrypted_identity,
 				encrypted_validation_data,
-				encrypted_web3networks,
 			});
 			Ok(().into())
 		}
@@ -309,23 +289,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityActivated {
-				prime_identity,
-				id_graph_hash,
-				req_ext_hash,
-			});
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(34)]
-		#[pallet::weight(<T as Config>::WeightInfo::identity_networks_set())]
-		pub fn identity_networks_set(
-			origin: OriginFor<T>,
-			prime_identity: Identity,
-			id_graph_hash: H256,
-			req_ext_hash: H256,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityNetworksSet {
 				prime_identity,
 				id_graph_hash,
 				req_ext_hash,

@@ -66,7 +66,7 @@ fn link_twitter_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_twitter_identity(1)).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -83,7 +83,7 @@ fn link_substrate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -100,7 +100,7 @@ fn link_evm_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -116,7 +116,7 @@ fn link_identity_fails_for_linked_identity() {
 		assert_ok!(IMT::link_identity(RuntimeOrigin::signed(ALICE), bob.clone(), alice.clone(),));
 		assert_eq!(
 			IMT::id_graphs(bob.clone(), alice.clone()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&bob), 2);
 
@@ -149,7 +149,7 @@ fn cannot_link_identity_again() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who_bob.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who_bob), 2);
 
@@ -212,7 +212,7 @@ fn deactivate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone());
@@ -226,7 +226,7 @@ fn deactivate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Inactive, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone())
@@ -259,7 +259,7 @@ fn activate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		let id_graph = IMT::id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
@@ -272,7 +272,7 @@ fn activate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Inactive, web3networks: None }
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive }
 		);
 		let id_graph = IMT::id_graph(&who.clone())
 			.into_iter()
@@ -485,17 +485,9 @@ fn test_drop_web3networks_from_id_graph() {
 		let alice: Identity = ALICE.into();
 		let bob: Identity = BOB.into();
 
-		let context1 = IdentityContext {
-			link_block: 1,
-			web3networks: Some(vec![Web3Network::Ethereum, Web3Network::Bsc]),
-			status: IdentityStatus::Active,
-		};
+		let context1 = IdentityContext { link_block: 1, status: IdentityStatus::Active };
 
-		let context2 = IdentityContext {
-			link_block: 2,
-			web3networks: Some(vec![]),
-			status: IdentityStatus::Inactive,
-		};
+		let context2 = IdentityContext { link_block: 2, status: IdentityStatus::Inactive };
 
 		IDGraphs::<Test>::insert(alice.clone(), alice_substrate_identity(), context1);
 		IDGraphs::<Test>::insert(bob.clone(), bob_substrate_identity(), context2);
@@ -503,9 +495,11 @@ fn test_drop_web3networks_from_id_graph() {
 		assert_ok!(drop_web3networks_from_id_graph::<Test>());
 
 		let updated_context1 = IDGraphs::<Test>::get(alice, alice_substrate_identity()).unwrap();
-		assert_eq!(updated_context1.web3networks, None);
+		assert_eq!(updated_context1.link_block, 1);
+		assert_eq!(updated_context1.status, IdentityStatus::Active);
 
 		let updated_context2 = IDGraphs::<Test>::get(bob, bob_substrate_identity()).unwrap();
-		assert_eq!(updated_context2.web3networks, None);
+		assert_eq!(updated_context2.link_block, 2);
+		assert_eq!(updated_context2.status, IdentityStatus::Inactive);
 	});
 }

@@ -59,15 +59,13 @@ benchmarks! {
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
-		let encrypted_web3networks = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data.clone(), encrypted_web3networks.clone())
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data.clone())
 	verify {
 		assert_last_event::<T>(Event::LinkIdentityRequested{
 			shard,
 			account: caller,
 			encrypted_identity: encrypted_did,
 			encrypted_validation_data,
-			encrypted_web3networks,
 		}.into());
 	}
 
@@ -78,8 +76,7 @@ benchmarks! {
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
-		let encrypted_web3networks = vec![1u8; 2048];
-		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data)?;
 	}: _(RawOrigin::Signed(caller.clone()), shard, encrypted_did.clone())
 	verify {
 		assert_last_event::<T>(Event::DeactivateIdentityRequested{
@@ -96,8 +93,7 @@ benchmarks! {
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
-		let encrypted_web3networks = vec![1u8; 2048];
-		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data)?;
 	}: _(RawOrigin::Signed(caller.clone()), shard, encrypted_did.clone())
 	verify {
 		assert_last_event::<T>(Event::ActivateIdentityRequested{
@@ -141,18 +137,6 @@ benchmarks! {
 	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityActivated { prime_identity, id_graph_hash, req_ext_hash }.into());
-	}
-
-	// Benchmark `identity_networks_set`. There are no worst conditions. The benchmark showed that
-	// execution time is constant irrespective of encrypted_data size.
-	identity_networks_set {
-		let id_graph_hash = H256::default();
-		let req_ext_hash = H256::default();
-		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
-	verify {
-		assert_last_event::<T>(Event::IdentityNetworksSet { prime_identity, id_graph_hash, req_ext_hash }.into());
 	}
 
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that

@@ -28,7 +28,6 @@ pub trait IMPCallIndexes {
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_deactivated_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_activated_call_indexes(&self) -> Result<[u8; 2]>;
-	fn identity_networks_set_call_indexes(&self) -> Result<[u8; 2]>;
 	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
@@ -59,10 +58,6 @@ impl IMPCallIndexes for NodeMetadata {
 
 	fn identity_activated_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "identity_activated")
-	}
-
-	fn identity_networks_set_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "identity_networks_set")
 	}
 
 	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
