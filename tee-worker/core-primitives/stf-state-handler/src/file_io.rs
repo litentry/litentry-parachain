@@ -102,6 +102,12 @@ impl StateDir {
 		self.state_file_path(shard, state_id).exists()
 	}
 
+	pub fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
+		let state_file_path = self.state_file_path(shard, state_id);
+		let metadata = std::fs::metadata(&state_file_path)?;
+		Ok(metadata.len())
+	}
+
 	#[cfg(feature = "test")]
 	pub fn given_initialized_shard(&self, shard: &ShardIdentifier) {
 		if self.shard_exists(shard) {
@@ -161,6 +167,9 @@ pub trait StateFileIo {
 
 	/// List all states for a shard.
 	fn list_state_ids_for_shard(&self, shard_identifier: &ShardIdentifier) -> Result<Vec<StateId>>;
+
+	/// Returns the size of the state file in bytes.
+	fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64>;
 }
 
 #[cfg(feature = "sgx")]
@@ -315,6 +324,10 @@ pub mod sgx {
 
 		fn list_state_ids_for_shard(&self, shard: &ShardIdentifier) -> Result<Vec<StateId>> {
 			self.state_dir.list_state_ids_for_shard(shard)
+		}
+
+		fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
+			self.state_dir.state_file_size(shard, state_id)
 		}
 	}
 }
