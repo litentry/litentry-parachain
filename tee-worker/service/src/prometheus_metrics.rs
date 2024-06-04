@@ -235,8 +235,9 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::VCBuildTime(assertion, time) =>
-				VC_BUILD_TIME.with_label_values(&[&assertion]).observe(time.as_secs_f64()),
+			EnclaveMetric::VCBuildTime(assertion, time) => VC_BUILD_TIME
+				.with_label_values(&[assertion_to_string(assertion)])
+				.observe(time.as_secs_f64()),
 			EnclaveMetric::SuccessfullVCIssuance => {
 				SUCCESSFULL_VC_ISSUANCE_TASKS.inc();
 			},
@@ -276,37 +277,41 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Bitcoin(_) => "Bitcoin",
 			Identity::Solana(_) => "Solana",
 		},
-		RequestType::AssertionVerification(request) => match request.assertion {
-			Assertion::A1 => "A1",
-			Assertion::A2(_) => "A2",
-			Assertion::A3(..) => "A3",
-			Assertion::A4(_) => "A4",
-			Assertion::A6 => "A6",
-			Assertion::A7(_) => "A7",
-			Assertion::A8(_) => "A8",
-			Assertion::A10(_) => "A10",
-			Assertion::A11(_) => "A11",
-			Assertion::A13(_) => "A13",
-			Assertion::A14 => "A14",
-			Assertion::A20 => "A20",
-			Assertion::Achainable(..) => "Achainable",
-			Assertion::OneBlock(..) => "OneBlock",
-			Assertion::BnbDomainHolding => "BnbDomainHolding",
-			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
-			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
-			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
-			Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
-			Assertion::LITStaking => "LITStaking",
-			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
-			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
-			Assertion::CryptoSummary => "CryptoSummary",
-			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
-			Assertion::PlatformUser(_) => "PlatformUser",
-			Assertion::NftHolder(_) => "NftHolder",
-		},
+		RequestType::AssertionVerification(request) => &assertion_to_string(request.assertion),
 	};
 	inc_stf_calls(category, label);
 	observe_execution_time(category, label, time)
+}
+
+fn assertion_to_string(assertion: Assertion) -> &'static str {
+	match assertion {
+		Assertion::A1 => "A1",
+		Assertion::A2(_) => "A2",
+		Assertion::A3(..) => "A3",
+		Assertion::A4(_) => "A4",
+		Assertion::A6 => "A6",
+		Assertion::A7(_) => "A7",
+		Assertion::A8(_) => "A8",
+		Assertion::A10(_) => "A10",
+		Assertion::A11(_) => "A11",
+		Assertion::A13(_) => "A13",
+		Assertion::A14 => "A14",
+		Assertion::A20 => "A20",
+		Assertion::Achainable(..) => "Achainable",
+		Assertion::OneBlock(..) => "OneBlock",
+		Assertion::BnbDomainHolding => "BnbDomainHolding",
+		Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
+		Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
+		Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
+		Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
+		Assertion::LITStaking => "LITStaking",
+		Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
+		Assertion::BRC20AmountHolder => "BRC20AmountHolder",
+		Assertion::CryptoSummary => "CryptoSummary",
+		Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
+		Assertion::PlatformUser(_) => "PlatformUser",
+		Assertion::NftHolder(_) => "NftHolder",
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
