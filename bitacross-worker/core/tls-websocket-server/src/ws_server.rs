@@ -47,10 +47,10 @@ use std::{collections::HashMap, format, net, string::String, sync::Arc};
 pub(crate) const NEW_CONNECTIONS_LISTENER: mio::Token = mio::Token(0);
 pub(crate) const SERVER_SIGNAL_TOKEN: mio::Token = mio::Token(1);
 
-/// Secure web-socket server implementation using the Tungstenite library.
+/// Websocket server implementation using the Tungstenite library.
 pub struct TungsteniteWsServer<Handler, ConfigProvider> {
 	ws_address: String,
-	config_provider: Arc<ConfigProvider>,
+	maybe_config_provider: Option<Arc<ConfigProvider>>,
 	connection_handler: Arc<Handler>,
 	id_generator: ConnectionIdGenerator,
 	connections: RwLock<HashMap<mio::Token, TungsteniteWsConnection<Handler>>>,
@@ -65,12 +65,12 @@ where
 {
 	pub fn new(
 		ws_address: String,
-		config_provider: Arc<ConfigProvider>,
+		maybe_config_provider: Option<Arc<ConfigProvider>>,
 		connection_handler: Arc<Handler>,
 	) -> Self {
 		TungsteniteWsServer {
 			ws_address,
-			config_provider,
+			maybe_config_provider,
 			connection_handler,
 			id_generator: ConnectionIdGenerator::default(),
 			connections: Default::default(),
@@ -83,20 +83,19 @@ where
 		&self,
 		poll: &mut Poll,
 		tcp_listener: &TcpListener,
-		tls_config: Arc<ServerConfig>,
+		maybe_tls_config: Option<Arc<ServerConfig>>,
 	) -> WebSocketResult<()> {
 		let (socket, addr) = tcp_listener.accept()?;
 
 		debug!("Accepting new connection from {:?}", addr);
 
-		let tls_session = rustls::ServerSession::new(&tls_config);
 		let connection_id = self.id_generator.next_id()?;
 		let token = mio::Token(connection_id);
 		trace!("New connection has token {:?}", token);
 
 		let mut web_socket_connection = TungsteniteWsConnection::new(
 			socket,
-			tls_session,
+			maybe_tls_config.map(|c| rustls::ServerSession::new(&c)),
 			token,
 			self.connection_handler.clone(),
 		)?;
@@ -123,6 +122,7 @@ where
 
 			if connection.is_closed() {
 				trace!("Connection {:?} is closed, removing", token);
+				connection.deregister(poll)?;
 				connections_lock.remove(&token);
 				trace!(
 					"Closed {:?}, {} active connections remaining",
@@ -213,12 +213,15 @@ where
 	type Connection = TungsteniteWsConnection<Handler>;
 
 	fn run(&self) -> WebSocketResult<()> {
-		debug!("Running tungstenite web socket server on {}", self.ws_address);
+		info!("Running tungstenite web socket server on {}", self.ws_address);
 
 		let socket_addr: SocketAddr =
 			self.ws_address.parse().map_err(WebSocketError::InvalidWsAddress)?;
 
-		let config = self.config_provider.get_config()?;
+		let maybe_config = match &self.maybe_config_provider {
+			Some(p) => Some(p.get_config()?),
+			None => None,
+		};
 
 		let (server_signal_sender, mut signal_receiver) = channel::<ServerSignal>();
 		self.register_server_signal_sender(server_signal_sender)?;
@@ -255,7 +258,7 @@ where
 					NEW_CONNECTIONS_LISTENER => {
 						trace!("Received new connection event");
 						if let Err(e) =
-							self.accept_connection(&mut poll, &tcp_listener, config.clone())
+							self.accept_connection(&mut poll, &tcp_listener, maybe_config.clone())
 						{
 							error!("Failed to accept new web-socket connection: {:?}", e);
 						}
@@ -502,15 +505,15 @@ mod tests {
 	}
 
 	fn connect_tls_client(server_addr: &str) -> WebSocket<MaybeTlsStream<TcpStream>> {
-		let ws_server_url = Url::parse(format!("wss://{}", server_addr).as_str()).unwrap();
+		let server_url = Url::parse(format!("wss://{}", server_addr).as_str()).unwrap();
 
 		let mut config = ClientConfig::new();
 		config.dangerous().set_certificate_verifier(Arc::new(NoCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let stream = TcpStream::connect(server_addr).unwrap();
+		let stream = TcpStream::connect(server_url.authority()).unwrap();
 
 		let (socket, _response) =
-			client_tls_with_config(ws_server_url, stream, None, Some(connector))
+			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.expect("Can't connect");
 
 		socket
