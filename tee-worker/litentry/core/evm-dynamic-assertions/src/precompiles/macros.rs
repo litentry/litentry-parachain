@@ -14,13 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use evm::{executor::stack::PrecompileFailure, ExitError};
-use std::{borrow::Cow, string::String};
-
-pub fn prepare_custom_failure(reason: String) -> PrecompileFailure {
-	PrecompileFailure::Error { exit_status: ExitError::Other(Cow::Owned(reason)) }
-}
-
 #[macro_export]
 macro_rules! http_get_precompile_fn {
 	($name:ident, $token:ident, $parse_fn_name:ident) => {
@@ -28,7 +21,7 @@ macro_rules! http_get_precompile_fn {
 			input: Vec<u8>,
 			client: T,
 		) -> $crate::precompiles::PrecompileResult {
-			let decoded = ethabi::decode(
+			let decoded = match ethabi::decode(
 				&[
 					ethabi::ParamType::String,
 					ethabi::ParamType::String,
@@ -41,21 +34,34 @@ macro_rules! http_get_precompile_fn {
 					),
 				],
 				&input,
-			)
-			.map_err(|e| {
-				$crate::precompiles::macros::prepare_custom_failure(std::format!(
-					"Could not decode bytes {:?}, reason: {:?}",
-					input, e
-				))
-			})?;
+			) {
+				Ok(d) => d,
+				Err(e) => {
+					log::debug!("Could not decode bytes {:?}, reason: {:?}", input, e);
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
+			};
 			// safe to unwrap
 			let url = decoded.get(0).unwrap().clone().into_string().unwrap();
-			let url = itc_rest_client::rest_client::Url::parse(&url).map_err(|e| {
-				$crate::precompiles::macros::prepare_custom_failure(std::format!(
-					"Could not parse url {:?}, reason: {:?}",
-					url, e
-				))
-			})?;
+			let url = match itc_rest_client::rest_client::Url::parse(&url) {
+				Ok(v) => v,
+				Err(e) => {
+					log::debug!("Could not parse url {:?}, reason: {:?}", url, e);
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
+			};
 
 			// safe to unwrap
 			let pointer = decoded.get(1).unwrap().clone().into_string().unwrap();
@@ -89,41 +95,68 @@ macro_rules! http_get_precompile_fn {
 					(name, value)
 				})
 				.collect();
-			let resp = client
-				.send_request_raw(
-					url,
-					itc_rest_client::rest_client::Method::GET,
-					None,
-					http_headers,
-				)
-				.map_err(|e| {
-					$crate::precompiles::macros::prepare_custom_failure(std::format!(
-						"Error while performing http call: {:?}",
-						e
-					))
-				})?;
-			let value: serde_json::Value = serde_json::from_slice(&resp.1).map_err(|e| {
-				$crate::precompiles::macros::prepare_custom_failure(std::format!(
-					"Could not parse json {:?}, reason: {:?}",
-					resp.1, e
-				))
-			})?;
+			let resp = match client.send_request_raw(
+				url,
+				itc_rest_client::rest_client::Method::GET,
+				None,
+				http_headers,
+			) {
+				Ok(resp) => resp,
+				Err(e) => {
+					log::debug!("Error while performing http call: {:?}", e);
+
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
+			};
+			let value: serde_json::Value = match serde_json::from_slice(&resp.1) {
+				Ok(v) => v,
+				Err(e) => {
+					log::debug!("Could not parse json {:?}, reason: {:?}", resp.1, e);
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
+			};
 			let result = match value.pointer(&pointer) {
 				Some(v) => v,
-				None =>
-					return Err($crate::precompiles::macros::prepare_custom_failure(std::format!(
-						"No value under given pointer: :{:?}",
-						pointer
-					))),
+				None => {
+					log::debug!("No value under given pointer: :{:?}", pointer);
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
 			};
 
 			let encoded = match result.$parse_fn_name() {
-				Some(v) => ethabi::encode(&[ethabi::Token::$token(v.into())]),
-				None =>
-					return Err($crate::precompiles::macros::prepare_custom_failure(std::format!(
+				Some(v) =>
+					ethabi::encode(&[ethabi::Token::Bool(true), ethabi::Token::$token(v.into())]),
+				None => {
+					log::debug!(
 						"There is no value or it might be of different type, pointer: ${:?}",
 						pointer
-					))),
+					);
+					return Ok(evm::executor::stack::PrecompileOutput {
+						exit_status: evm::ExitSucceed::Returned,
+						output: ethabi::encode(&[
+							ethabi::Token::Bool(false),
+							ethabi::Token::$token(Default::default()),
+						]),
+					})
+				},
 			};
 			Ok(evm::executor::stack::PrecompileOutput {
 				exit_status: evm::ExitSucceed::Returned,

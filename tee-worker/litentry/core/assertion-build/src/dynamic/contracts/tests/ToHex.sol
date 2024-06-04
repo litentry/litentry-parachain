@@ -39,8 +39,10 @@ contract ToHex is DynamicAssertion {
         return (description, assertion_type, assertions, schema_url, result);
     }
 
-    function callToHex(string memory text) public returns (string memory) {
+    function callToHex(string memory text)
+        public
+        returns (bool, string memory)
+    {
         return toHex(bytes(text));
     }
-
 }
