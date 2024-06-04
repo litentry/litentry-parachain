@@ -41,7 +41,7 @@ use ethabi::{
 use evm::{
 	backend::{MemoryBackend, MemoryVicinity},
 	executor::stack::{MemoryStackState, StackExecutor, StackSubstateMetadata},
-	Config,
+	Config, ExitReason,
 };
 use lc_dynamic_assertion::{
 	AssertionExecutor, AssertionLogicRepository, AssertionResult, Identity, IdentityNetworkTuple,
@@ -72,6 +72,29 @@ pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
 }
 
+pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitReason, Vec<u8>) {
+	// prepare EVM runtime
+	let config = prepare_config();
+	let vicinity = prepare_memory();
+	let state = BTreeMap::new();
+	let mut backend = MemoryBackend::new(&vicinity, state);
+	let metadata = StackSubstateMetadata::new(u64::MAX, &config);
+	let state = MemoryStackState::new(metadata, &mut backend);
+	let precompiles = Precompiles {};
+	let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
+
+	// caller, just an unused account
+	let caller = hash(5); //0x05
+
+	// deploy assertion smart contract
+	let address = executor.create_address(evm::CreateScheme::Legacy { caller });
+	let _create_result =
+		executor.transact_create(caller, U256::zero(), byte_code, u64::MAX, Vec::new());
+
+	// call assertion smart contract
+	executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new())
+}
+
 impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 	AssertionExecutor<AssertionId> for EvmAssertionExecutor<A>
 {
@@ -88,32 +111,7 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 		let input = prepare_execute_call_input(identities, secrets)
 			.map_err(|_| "Could not prepare evm execution input")?;
 
-		// prepare EVM runtime
-		let config = prepare_config();
-		let vicinity = prepare_memory();
-		let state = BTreeMap::new();
-		let mut backend = MemoryBackend::new(&vicinity, state);
-		let metadata = StackSubstateMetadata::new(u64::MAX, &config);
-		let state = MemoryStackState::new(metadata, &mut backend);
-		let precompiles = Precompiles {};
-		let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
-
-		// caller, just an unused account
-		let caller = hash(5); //0x05
-
-		// deploy assertion smart contract
-		let address = executor.create_address(evm::CreateScheme::Legacy { caller });
-		let _create_result = executor.transact_create(
-			caller,
-			U256::zero(),
-			smart_contract_byte_code,
-			u64::MAX,
-			Vec::new(),
-		);
-
-		// call assertion smart contract
-		let call_result =
-			executor.transact_call(caller, address, U256::zero(), input, u64::MAX, Vec::new());
+		let call_result = execute_smart_contract(smart_contract_byte_code, input);
 
 		let (description, assertion_type, assertions, schema_url, meet) =
 			decode_result(&call_result.1)
@@ -203,7 +201,8 @@ pub fn network_to_token(network: &Web3Network) -> Token {
 	)
 }
 
-fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Result<Vec<u8>, ()> {
+#[allow(clippy::result_unit_err)]
+pub fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Result<Vec<u8>, ()> {
 	let mut call_input = hex::decode(function_hash).map_err(|_| ())?;
 	call_input.append(&mut input);
 	Ok(call_input)

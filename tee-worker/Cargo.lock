@@ -4461,6 +4461,7 @@ version = "0.1.0"
 dependencies = [
  "blake2-rfc",
  "env_logger 0.10.0",
+ "ethabi",
  "frame-support",
  "hex",
  "http 0.2.1",
