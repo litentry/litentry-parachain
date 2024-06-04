@@ -14,10 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod activate_identity;
-pub mod deactivate_identity;
-pub mod id_graph_hash;
-pub mod link_identity;
-pub mod shield_text;
+use crate::{command_utils::get_shielding_key, Cli, CliResult, CliResultOk};
+use codec::Encode;
+use itp_sgx_crypto::ShieldingCryptoEncrypt;
+use std::format;
 
-pub const IMP: &str = "IdentityManagement";
+// Scale encodes string and ecrypts it with worker's shielding key
+// usage example:
+// ./litentry-cli shield-text test
+#[derive(Parser)]
+pub struct ShieldTextCommand {
+	value: String,
+}
+
+impl ShieldTextCommand {
+	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
+		let shielding_key = get_shielding_key(cli).unwrap();
+		let encrypted = shielding_key.encrypt(&self.value.encode()).unwrap();
+		std::println!("Shielded: {:?}", hex::encode(encrypted.clone()));
+		Ok(CliResultOk::Bytes { bytes: encrypted })
+	}
+}

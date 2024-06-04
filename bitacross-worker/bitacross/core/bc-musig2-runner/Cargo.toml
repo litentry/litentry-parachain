@@ -26,7 +26,7 @@ k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core",
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
-musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+musig2_sgx = { package = "musig2", git = "https://github.com/kailai-wang/musig2.git", branch = "use-sha2-0.8", optional = true, features = ["k256"] }
 rand = { version = "0.8.5", optional = true }
 sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", default-features = false }
 sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }

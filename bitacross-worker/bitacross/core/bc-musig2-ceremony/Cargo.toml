@@ -12,7 +12,7 @@ musig2 = { package = "musig2", branch = "master", git = "https://github.com/kzie
 rand = { version = "0.8.5", optional = true }
 
 # sgx dependencies
-musig2_sgx = { package = "musig2", branch = "sgx", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
+musig2_sgx = { package = "musig2", git = "https://github.com/kailai-wang/musig2.git", branch = "use-sha2-0.8", optional = true, features = ["k256"] }
 sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
@@ -35,6 +35,7 @@ signature = "2.1.0"
 
 [features]
 default = ["std"]
+sgx-test = ["sgx"]
 std = [
     "musig2",
     "itc-direct-rpc-client/std",

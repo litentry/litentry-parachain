@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 pragma solidity ^0.8.8;
 
 import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
@@ -24,6 +26,7 @@ contract A6 is DynamicAssertion {
     public
     override
     returns (
+
         string memory,
         string memory,
         string[] memory,
