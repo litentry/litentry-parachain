@@ -266,6 +266,12 @@ export const mockAssertions = [
             TokenHoldingAmount: 'SHIB',
         },
     },
+    {
+        description: 'The amount of BEAN you are holding',
+        assertion: {
+            TokenHoldingAmount: 'BEAN',
+        },
+    },
 
     {
         description: 'The amount of LIT you are staking',

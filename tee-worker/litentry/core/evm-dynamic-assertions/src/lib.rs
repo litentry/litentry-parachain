@@ -195,6 +195,7 @@ pub fn network_to_token(network: &Web3Network) -> Token {
 			Web3Network::Polygon => 14,
 			Web3Network::Arbitrum => 15,
 			Web3Network::Solana => 16,
+			Web3Network::Combo => 17,
 		}
 		.into(),
 	)

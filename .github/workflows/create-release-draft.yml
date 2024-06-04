@@ -3,31 +3,31 @@ name: Create release draft
 on:
   workflow_dispatch:
     inputs:
-      release_client:
+      parachain_client:
         type: boolean
         description: parachain-client
         required: true
         default: true
-      release_runtime:
+      parachain_runtime:
         type: boolean
         description: parachain-runtime
         required: true
         default: true
-      release_worker:
+      identity_worker:
         type: boolean
-        description: tee-worker
+        description: identity-worker
         required: true
         default: true
-      release_enclave:
+      bitacross_worker:
         type: boolean
-        description: tee-enclave
+        description: bitacross-worker
         required: true
         default: true
       release_tag:
-        description: an existing tag for creating release (e.g. p1.2.0-w0.0.1-101)
+        description: an existing tag for creating release (e.g. v1.2.0)
         required: true
       diff_tag:
-        description: an existing tag to run diff against (e.g. p1.1.0-w0.0.1-100)
+        description: an existing tag to run diff against (e.g. v1.1.0)
         default: ""
         required: false
       genesis_release:
@@ -55,10 +55,10 @@ jobs:
         run: |
           # use something similar to mask to store the release type
           t=0000
-          [ "${{ github.event.inputs.release_client }}" = "true" ] && t="${t:0:0}1${t:1}"
-          [ "${{ github.event.inputs.release_runtime }}" = "true" ] && t="${t:0:1}1${t:2}"
-          [ "${{ github.event.inputs.release_worker }}" = "true" ] && t="${t:0:2}1${t:3}"
-          [ "${{ github.event.inputs.release_enclave }}" = "true" ] && t="${t:0:3}1${t:4}"
+          [ "${{ github.event.inputs.parachain_client }}" = "true" ] && t="${t:0:0}1${t:1}"
+          [ "${{ github.event.inputs.parachain_runtime }}" = "true" ] && t="${t:0:1}1${t:2}"
+          [ "${{ github.event.inputs.identity_worker }}" = "true" ] && t="${t:0:2}1${t:3}"
+          [ "${{ github.event.inputs.bitacross_worker }}" = "true" ] && t="${t:0:3}1${t:4}"
           if [ $t = "0000"]; then
             echo "::error::Please select at least one release type."
             exit 1
@@ -70,9 +70,8 @@ jobs:
     outputs:
       release_type: ${{ steps.vars.outputs.release_type }}
 
-  ## build parachain runtime wasm ##
-  build-wasm:
-    if: ${{ github.event.inputs.release_runtime == 'true' }}
+  build-parachain-runtime:
+    if: ${{ github.event.inputs.parachain_runtime == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -115,9 +114,8 @@ jobs:
             ${{ matrix.chain }}-parachain-srtool-digest.json
             ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
-  ## build docker image of parachain binary ##
-  build-parachain-docker:
-    if: ${{ github.event.inputs.release_client == 'true' }}
+  build-parachain-client:
+    if: ${{ github.event.inputs.parachain_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
@@ -126,36 +124,25 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
-      - name: Set env
-        run: |
-          PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
-          echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
-
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh production $PARACHAIN_DOCKER_TAG
+          ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
           echo "============================="
           docker images
-
-      - name: Dockerhub login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG
 
       - name: Generate genesis artefacts if need
         if: github.event.inputs.genesis_release != 'none'
         run: |
-          docker run --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
-          docker run --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
       - name: Copy client binary to disk
         run: |
-          docker cp $(docker create --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG):/usr/local/bin/litentry-collator .
+          docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
+
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -164,11 +151,12 @@ jobs:
           if-no-files-found: ignore
           path: |
             litentry-collator
+            litentry-parachain-dev.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
-  build-worker-docker:
-    if: ${{ github.event.inputs.release_worker == 'true' }}
+  build-identity-worker:
+    if: ${{ github.event.inputs.identity_worker == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
@@ -193,10 +181,11 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
-      - name: Set env
+      - name: Write enclave signing key
         run: |
-          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3 | sed 's/w/v/')
-          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
+          cat << EOF > tee-worker/enclave_key.pem
+          ${{ secrets.PROD_ENCLAVE_SIGN_KEY }}
+          EOF
 
       - name: Build local builder
         uses: docker/build-push-action@v5
@@ -208,23 +197,18 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
+            SGX_PRODUCTION=1
+            SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
+            SGX_COMMERCIAL_KEY=enclave_key.pem
 
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:${{ env.WORKER_DOCKER_TAG }}
-          target: deployed-worker
-
-      - name: Build cli
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:${{ env.WORKER_DOCKER_TAG }}
-          target: deployed-client
+          tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
+          target: worker-release
 
       - run: docker images --all
 
@@ -236,17 +220,11 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/litentry-worker:$WORKER_DOCKER_TAG
-          docker push litentry/litentry-cli:$WORKER_DOCKER_TAG
+          docker push litentry/identity-worker:${{ env.RELEASE_TAG }}
 
-  ## Build the enclave and package config files
-  build-tee:
-    if: ${{ github.event.inputs.release_worker == 'true' }} || ${{ github.event.inputs.release_enclave == 'true' }}
-    runs-on: tee-prod-builder
-    outputs:
-      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
-      enclave_sha1sum: ${{ steps.shasum.outputs.enclave_sha1sum }}
-      worker_sha1sum: ${{ steps.shasum.outputs.worker_sha1sum }}
+  build-bitacross-worker:
+    if: ${{ github.event.inputs.bitacross_worker == 'true' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -254,44 +232,67 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
-      - name: Build release artefacts
-        run: |
-          source /opt/intel/sgxsdk/environment 
-          ./tee-worker/scripts/litentry/release/build.sh ${{ github.event.inputs.release_worker }} ${{ github.event.inputs.release_enclave }}
-
-      - name: Set MRENCLAVE
-        id: mrenclave
-        run: |
-          MRENCLAVE=
-          f="tee-worker/enclave_release/mrenclave.txt"
-          [ -f "$f" ] && MRENCLAVE=$(cat "$f")
-          echo "mrenclave=$MRENCLAVE" >> $GITHUB_OUTPUT
-
-      - name: Set shasum
-        id: shasum
-        run: |
-          ENCLAVE_SHA1SUM=
-          WORKER_SHA1SUM=
-          cd tee-worker/enclave_release
-          [ -f "enclave.signed.so" ] && ENCLAVE_SHA1SUM=$(shasum enclave.signed.so | awk '{print $1}')
-          [ -f "litentry-worker" ] && WORKER_SHA1SUM=$(shasum litentry-worker | awk '{print $1}')
-          echo "enclave_sha1sum=$ENCLAVE_SHA1SUM" >> $GITHUB_OUTPUT
-          echo "worker_sha1sum=$WORKER_SHA1SUM" >> $GITHUB_OUTPUT
-
-      - name: Upload artefacts
-        uses: actions/upload-artifact@v4
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
         with:
-          name: litentry-tee
-          path: ./tee-worker/enclave_release/*
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
 
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # use the docker driver to access the local image
+          # we don't need external caches or multi platforms here
+          # see https://docs.docker.com/build/drivers/
+          driver: docker
 
-  ## test again the built docker image ##
-  run-ts-tests:
+      - name: Write enclave signing key
+        run: |
+          cat << EOF > bitacross-worker/enclave_key.pem
+          ${{ secrets.PROD_ENCLAVE_SIGN_KEY }}
+          EOF
+
+      - name: Build local builder
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: bitacross-worker/build.Dockerfile
+          tags: local-builder:latest
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=offchain-worker
+            ADDITIONAL_FEATURES_ARG=
+            SGX_PRODUCTION=1
+            SGX_MODE=HW
+            IMAGE_FOR_RELEASE=true
+            SGX_COMMERCIAL_KEY=enclave_key.pem
+
+      - name: Build worker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: bitacross-worker/build.Dockerfile
+          tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
+          target: worker-release
+
+      - run: docker images --all
+
+      - name: Dockerhub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push worker image
+        run: |
+          docker push litentry/bitacross-worker:${{ env.RELEASE_TAG }}
+
+
+  parachain-ts-tests:
     runs-on: ubuntu-latest
-    needs: build-parachain-docker
+    needs: build-parachain-client
     strategy:
       matrix:
         chain:
@@ -303,14 +304,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-collator
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
+          docker images
+
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
-
-      - name: Download and tag docker image
-        run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
-          docker pull litentry/litentry-parachain:$DOCKER_TAG
-          docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
 
       - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 20
@@ -325,78 +330,20 @@ jobs:
           path: /tmp/parachain_dev/
           retention-days: 3
 
+      - name: Dockerhub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}
         run: |
           make clean-docker-${{ matrix.chain }}
-
-  ## check extrinsic ##
-  extrinsic-ordering-check-from-bin:
-    runs-on: ubuntu-latest
-    needs: build-parachain-docker
-    strategy:
-      matrix:
-        chain: [rococo, litmus, litentry]
-        include:
-          - chain: rococo
-            ref_url: wss://rpc.rococo-parachain.litentry.io
-          - chain: litmus
-            ref_url: wss://rpc.litmus-parachain.litentry.io
-          - chain: litentry
-            ref_url: wss://rpc.litentry-parachain.litentry.io
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Prepare output and compare the metadata
-        timeout-minutes: 3
-        run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
-          PARACHAIN_NAME=local-parachain
-          BASE_URL=ws://127.0.0.1:9944
-          chain=${{ matrix.chain }}
-          REF_URL=${{ matrix.ref_url }}
-          echo "Metadata comparison:" > output-$chain.txt
-          echo "Date: $(date)" >> output-$chain.txt
-          echo "Base: $BASE_URL" >> output-$chain.txt
-          echo "Reference: $REF_URL" >> output-$chain.txt
-          echo "Target Tag: ${{ env.RELEASE_TAG }}" >> output-$chain.txt
-          echo "Chain: $chain" >> output-$chain.txt
-          echo "----------------------------------------------------------------------" >> output-$chain.txt
-          echo "Running parachain: $chain"
-          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$DOCKER_TAG --chain=$chain-dev --rpc-cors=all --ws-external --tmp -- --dev
-          sleep 3
-          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
-          echo -e "Running:\n$CMD"
-          docker run --pull always --rm --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$chain.txt
-          SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$chain.txt)
-          echo -e $SUMMARY >> output-$chain.txt
-          docker stop $PARACHAIN_NAME
-          content=$(< output-$chain.txt)
-          echo "content<<EOF" >> $GITHUB_ENV
-          echo "$content" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Find issues
-        uses: actions-cool/issues-helper@v3
-        id: findissueid
-        with:
-          actions: "find-issues"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-state: "open"
-          title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
-
-      - name: Create comment
-        if: ${{ steps.findissueid.outputs.issues }} != '[]'
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: "create-comment"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ fromJson(steps.findissueid.outputs.issues)[0].number }}
-          body: |
-            ${{ env.content }}
 
   ## create the release draft ##
   create-release-draft:
@@ -405,12 +352,13 @@ jobs:
     # seems to be the only way to achieve this
     needs:
       - set-release-type
-      - build-tee
-      - run-ts-tests
-      - build-wasm
+      - build-parachain-runtime
+      - build-identity-worker
+      - build-bitacross-worker
+      - parachain-ts-tests
     if: |
       !failure()  &&
-      (success('build-wasm') || success('run-ts-tests') || success('build-tee'))
+      (success('build-parachain-runtime') || success('parachain-ts-tests') || success('build-identity-worker') || success('build-bitacross-worker'))
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -423,9 +371,6 @@ jobs:
 
       - name: Generate release notes
         run: |
-          export MRENCLAVE="${{ needs.build-tee.outputs.mrenclave }}"
-          export ENCLAVE_SHA1SUM="${{ needs.build-tee.outputs.enclave_sha1sum }}"
-          export WORKER_SHA1SUM="${{ needs.build-tee.outputs.worker_sha1sum }}"
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -435,11 +380,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: Litentry-parachain ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
-            litentry-tee/*

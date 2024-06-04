@@ -126,6 +126,10 @@ impl EnclaveBase for EnclaveMock {
 	fn finish_enclave_init(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn init_wallets(&self, _base_dir: &str) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {
