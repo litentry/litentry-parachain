@@ -317,6 +317,7 @@ fn assertion_to_string(assertion: Assertion) -> &'static str {
 		Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
 		Assertion::PlatformUser(_) => "PlatformUser",
 		Assertion::NftHolder(_) => "NftHolder",
+		Assertion::Dynamic(_) => "Dynamic Assertion",
 	}
 }
 
