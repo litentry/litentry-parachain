@@ -164,6 +164,9 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
 		itc_parentchain::light_client::io::sgx_tests::sealing_creates_backup,
 
+		// evm assertions test
+		lc_evm_dynamic_assertions::repository::sgx_tests::restores_state_from_seal,
+
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
 		// ipfs::test_verification_ok_for_correct_content,

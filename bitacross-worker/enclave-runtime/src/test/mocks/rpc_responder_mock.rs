@@ -16,7 +16,7 @@
 */
 
 use itc_direct_rpc_server::{DirectRpcResult, RpcHash, SendRpcResponse};
-use itp_types::TrustedOperationStatus;
+use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use std::{marker::PhantomData, vec::Vec};
 
 pub struct RpcResponderMock<Hash> {
@@ -49,6 +49,15 @@ where
 	}
 
 	fn send_state(&self, _hash: Self::Hash, _state_encoded: Vec<u8>) -> DirectRpcResult<()> {
+		Ok(())
+	}
+
+	fn send_state_with_status(
+		&self,
+		_hash: Self::Hash,
+		_state_encoded: Vec<u8>,
+		_status: DirectRequestStatus,
+	) -> DirectRpcResult<()> {
 		Ok(())
 	}
 

@@ -18,8 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, DataProviderConfig, Error, HttpError, ReqPath, RetryOption,
-	RetryableRestGet,
+	achainable::web3_network_to_chain, build_client_with_cert, DataProviderConfig, Error,
+	HttpError, ReqPath, RetryOption, RetryableRestGet,
 };
 use http::header::CONNECTION;
 use http_req::response::Headers;
@@ -215,12 +215,47 @@ impl NftApiList for MoralisClient {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct GetSolanaNativeBalanceBalanceByWalletResponse {
+pub struct GetSolanaNativeBalanceByWalletResponse {
 	pub lamports: String,
 	pub solana: String,
 }
 
-impl<'a> RestPath<ReqPath<'a>> for GetSolanaNativeBalanceBalanceByWalletResponse {
+impl<'a> RestPath<ReqPath<'a>> for GetSolanaNativeBalanceByWalletResponse {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetSolanaTokenBalanceByWalletResponse {
+	// token address
+	pub mint: String,
+	pub amount: String,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for Vec<GetSolanaTokenBalanceByWalletResponse> {
+	fn get_path(path: ReqPath) -> Result<String, HttpError> {
+		Ok(path.path.into())
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetEvmTokenBalanceByWalletResponse {
+	pub token_address: String,
+	pub symbol: String,
+	pub name: String,
+	pub logo: Option<String>,      // logo url(string type), MAY BE null
+	pub thumbnail: Option<String>, // thumbnail url(string type), MAY BE null
+	pub decimals: u64,
+	pub balance: String,
+	pub possible_spam: bool,
+	pub verified_contract: bool,
+	pub total_supply: String,
+	pub total_supply_formatted: String,
+	pub percentage_relative_to_total_supply: f64,
+}
+
+impl<'a> RestPath<ReqPath<'a>> for Vec<GetEvmTokenBalanceByWalletResponse> {
 	fn get_path(path: ReqPath) -> Result<String, HttpError> {
 		Ok(path.path.into())
 	}
@@ -231,7 +266,22 @@ pub trait BalanceApiList {
 		&mut self,
 		address: String,
 		fast_fail: bool,
-	) -> Result<GetSolanaNativeBalanceBalanceByWalletResponse, Error>;
+	) -> Result<GetSolanaNativeBalanceByWalletResponse, Error>;
+
+	fn get_solana_tokens_balance_by_wallet(
+		&mut self,
+		address: String,
+		fast_fail: bool,
+	) -> Result<Vec<GetSolanaTokenBalanceByWalletResponse>, Error>;
+
+	// https://docs.moralis.io/web3-data-api/evm/reference/wallet-api/get-token-balances-by-wallet
+	fn get_evm_token_balance_by_wallet(
+		&mut self,
+		address: String,
+		token_address: String,
+		network: &Web3Network,
+		fast_fail: bool,
+	) -> Result<Vec<GetEvmTokenBalanceByWalletResponse>, Error>;
 }
 
 impl BalanceApiList for MoralisClient {
@@ -240,13 +290,13 @@ impl BalanceApiList for MoralisClient {
 		&mut self,
 		address: String,
 		fast_fail: bool,
-	) -> Result<GetSolanaNativeBalanceBalanceByWalletResponse, Error> {
+	) -> Result<GetSolanaNativeBalanceByWalletResponse, Error> {
 		let params =
 			MoralisRequest { path: format!("account/mainnet/{}/balance", address), query: None };
 
 		debug!("get_solana_native_balance_by_wallet, address: {:?}", address);
 
-		match self.get::<GetSolanaNativeBalanceBalanceByWalletResponse>(
+		match self.get::<GetSolanaNativeBalanceByWalletResponse>(
 			ClientType::Solana,
 			params,
 			fast_fail,
@@ -257,6 +307,64 @@ impl BalanceApiList for MoralisClient {
 			},
 			Err(e) => {
 				debug!("get_solana_native_balance_by_wallet, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	// https://docs.moralis.io/web3-data-api/solana/reference/get-spl
+	fn get_solana_tokens_balance_by_wallet(
+		&mut self,
+		address: String,
+		fast_fail: bool,
+	) -> Result<Vec<GetSolanaTokenBalanceByWalletResponse>, Error> {
+		let params =
+			MoralisRequest { path: format!("account/mainnet/{}/tokens", address), query: None };
+
+		debug!("get_solana_tokens_balance_by_wallet, address: {:?}", address);
+
+		match self.get::<Vec<GetSolanaTokenBalanceByWalletResponse>>(
+			ClientType::Solana,
+			params,
+			fast_fail,
+		) {
+			Ok(resp) => {
+				debug!("get_solana_tokens_balance_by_wallet, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_solana_tokens_balance_by_wallet, error: {:?}", e);
+				Err(e)
+			},
+		}
+	}
+
+	fn get_evm_token_balance_by_wallet(
+		&mut self,
+		address: String,
+		token_address: String,
+		network: &Web3Network,
+		fast_fail: bool,
+	) -> Result<Vec<GetEvmTokenBalanceByWalletResponse>, Error> {
+		debug!("get_evm_token_balance_by_wallet, address: {}", address);
+
+		let query = Some(vec![
+			("chain".to_string(), web3_network_to_chain(network)),
+			("token_addresses[0]".to_string(), token_address),
+		]);
+		let params = MoralisRequest { path: format!("{}/erc20", address), query };
+
+		match self.get::<Vec<GetEvmTokenBalanceByWalletResponse>>(
+			ClientType::Evm,
+			params,
+			fast_fail,
+		) {
+			Ok(resp) => {
+				debug!("get_evm_token_balance_by_wallet, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_evm_token_balance_by_wallet, error: {:?}", e);
 				Err(e)
 			},
 		}
@@ -322,5 +430,29 @@ mod tests {
 			.unwrap();
 		assert_eq!(result.lamports, "0");
 		assert_eq!(result.solana, "0");
+	}
+
+	#[test]
+	fn does_get_solana_tokens_balance_by_wallet_works() {
+		let config = init();
+		let mut client = MoralisClient::new(&config);
+		let mut result = client
+			.get_solana_tokens_balance_by_wallet(
+				"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6".into(),
+				true,
+			)
+			.unwrap();
+		assert_eq!(result.len(), 2);
+		assert_eq!(result[0].mint, "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq");
+		assert_eq!(result[0].amount, "405219.979008");
+		assert_eq!(result[1].mint, "BNrgKeLwMUwWQYovZpANYQNCC7Aw8FgvFL3GQut1gL6B");
+		assert_eq!(result[1].amount, "31");
+		result = client
+			.get_solana_tokens_balance_by_wallet(
+				"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ1".into(),
+				true,
+			)
+			.unwrap();
+		assert_eq!(result.len(), 0);
 	}
 }

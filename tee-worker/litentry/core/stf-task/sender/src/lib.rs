@@ -42,9 +42,13 @@ pub use request::*;
 use std::sync::Mutex;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
-use std::sync::{
-	mpsc::{channel, Receiver, Sender},
-	Arc,
+use std::{
+	boxed::Box,
+	error::Error as StdError,
+	sync::{
+		mpsc::{channel, Receiver, Sender},
+		Arc,
+	},
 };
 
 pub type StfSender = Sender<RequestType>;

@@ -55,6 +55,7 @@ use crate::{AccountId, ParameterString};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_core::H160;
 use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
@@ -135,6 +136,9 @@ pub enum Assertion {
 
 	#[codec(index = 26)]
 	NftHolder(Web3NftType),
+
+	#[codec(index = 27)]
+	Dynamic(H160) // smart contract code identifier
 }
 
 impl Assertion {
@@ -182,6 +186,22 @@ impl Assertion {
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
 			Self::NftHolder(t_type) => t_type.get_supported_networks(),
+			Self::Dynamic(_) => all_web3networks(),
+		}
+	}
+
+	// Given an assertion, normally either "web2" or "web3" identities are expected to be used
+	// to build the assertion, but not both.
+	// However, there's one exception: A1, which requires at least 1 web2 identity and 1 web3
+	// identity.
+	//
+	// This fn is used in `get_eligible_identities` to decide if we should keep web2 identities
+	// regardless of the value of `get_supported_web3networks`
+	#[allow(clippy::match_like_matches_macro)]
+	pub fn force_retain_web2_identity(&self) -> bool {
+		match self {
+			Self::A1 => true,
+			_ => false,
 		}
 	}
 }

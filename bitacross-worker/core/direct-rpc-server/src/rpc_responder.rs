@@ -196,6 +196,32 @@ where
 		debug!("swap hash OK");
 		Ok(())
 	}
+
+	fn send_state_with_status(
+		&self,
+		hash: Self::Hash,
+		state_encoded: Vec<u8>,
+		status: DirectRequestStatus,
+	) -> DirectRpcResult<()> {
+		debug!("sending state with status for hash {:?}", hash);
+
+		// withdraw removes it from the registry
+		let (connection_token, mut response, _force_wait) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		// create return value
+		let result = RpcReturnValue::new(state_encoded, false, status);
+
+		// update response
+		response.result = result.to_hex();
+
+		self.encode_and_send_response(connection_token, &response)?;
+
+		debug!("sending state successful");
+		Ok(())
+	}
 }
 
 fn continue_watching(status: &TrustedOperationStatus) -> bool {

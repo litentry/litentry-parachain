@@ -49,12 +49,96 @@ export function parseIdGraph(
     return idGraph;
 }
 
+type Web2ValidationConfig =
+    | {
+          identityType: 'Discord';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'PublicMessage' | 'OAuth2';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Twitter';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'PublicTweet';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Twitter';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'OAuth2';
+          validationNonce: number;
+          oauthState: string;
+      };
+
+export async function buildWeb2Validation(config: Web2ValidationConfig): Promise<LitentryValidationData> {
+    const { context, signerIdentitity, linkIdentity, validationNonce } = config;
+    const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
+    console.log(`post verification msg to ${config.identityType}:`, msg);
+
+    if (config.identityType === 'Discord') {
+        const discordValidationData = {
+            Web2Validation: {
+                Discord: {},
+            },
+        };
+
+        if (config.verificationType === 'PublicMessage') {
+            discordValidationData.Web2Validation.Discord = {
+                PublicMessage: {
+                    channel_id: `0x${Buffer.from('919848392035794945', 'utf8').toString('hex')}`,
+                    message_id: `0x${Buffer.from('1', 'utf8').toString('hex')}`,
+                    guild_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            discordValidationData.Web2Validation.Discord = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', discordValidationData);
+    } else {
+        const twitterValidationData = {
+            Web2Validation: {
+                Twitter: {},
+            },
+        };
+
+        if (config.verificationType === 'PublicTweet') {
+            twitterValidationData.Web2Validation.Twitter = {
+                PublicTweet: {
+                    tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            twitterValidationData.Web2Validation.Twitter = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    state: config.oauthState,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', twitterValidationData);
+    }
+}
+
 export async function buildValidations(
     context: IntegrationTestContext,
     signerIdentitity: CorePrimitivesIdentity,
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'solana',
+    network: 'ethereum' | 'substrate' | 'bitcoin' | 'solana',
     signer?: Signer
 ): Promise<LitentryValidationData> {
     const validationNonce = startingSidechainNonce++;
@@ -116,19 +200,6 @@ export async function buildValidations(
         bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
 
         return context.api.createType('LitentryValidationData', bitcoinValidationData);
-    }
-
-    if (network === 'twitter') {
-        console.log('post verification msg to twitter: ', msg);
-        const twitterValidationData = {
-            Web2Validation: {
-                Twitter: {
-                    tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
-                },
-            },
-        };
-
-        return context.api.createType('LitentryValidationData', twitterValidationData);
     }
 
     if (network === 'solana') {

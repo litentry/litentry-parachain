@@ -128,3 +128,14 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 		},
 	)
 }
+
+pub(crate) fn query_labels(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post().and(warp::path!("v1" / "run" / "labels" / String)).map(|label| {
+		if label == "a719e99c-1f9b-432e-8f1d-cb3de0f14dde" {
+			Response::builder().body(RES_BODY_TRUE.to_string())
+		} else {
+			Response::builder().body(RES_BODY_FALSE.to_string())
+		}
+	})
+}

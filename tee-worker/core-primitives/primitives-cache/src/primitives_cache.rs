@@ -83,6 +83,7 @@ pub mod tests {
 		let mut lock = cache.load_for_mutation().unwrap();
 		let mu_ra_url = "hello".to_string();
 		let untrusted_url = "world".to_string();
+
 		let primitives = Primitives::new(mu_ra_url, untrusted_url);
 		*lock = primitives.clone();
 		std::mem::drop(lock);

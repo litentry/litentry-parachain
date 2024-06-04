@@ -99,6 +99,9 @@ pub enum Web3Network {
 	// solana
 	#[codec(index = 16)]
 	Solana,
+	// combo L2 of BSC
+	#[codec(index = 17)]
+	Combo,
 }
 
 // mainly used in CLI
@@ -123,7 +126,7 @@ impl Web3Network {
 	}
 
 	pub fn is_evm(&self) -> bool {
-		matches!(self, Self::Ethereum | Self::Bsc | Self::Polygon | Self::Arbitrum)
+		matches!(self, Self::Ethereum | Self::Bsc | Self::Polygon | Self::Arbitrum | Self::Combo)
 	}
 
 	pub fn is_bitcoin(&self) -> bool {
@@ -195,6 +198,7 @@ mod tests {
 					Web3Network::Polygon => true,
 					Web3Network::Arbitrum => true,
 					Web3Network::Solana => false,
+					Web3Network::Combo => true,
 				}
 			)
 		})
@@ -223,6 +227,7 @@ mod tests {
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
 					Web3Network::Solana => false,
+					Web3Network::Combo => false,
 				}
 			)
 		})
@@ -251,6 +256,7 @@ mod tests {
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
 					Web3Network::Solana => false,
+					Web3Network::Combo => false,
 				}
 			)
 		})
@@ -279,6 +285,7 @@ mod tests {
 					Web3Network::Polygon => false,
 					Web3Network::Arbitrum => false,
 					Web3Network::Solana => true,
+					Web3Network::Combo => false,
 				}
 			)
 		})

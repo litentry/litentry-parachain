@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'precompile-utils-macro'
-version = '0.9.17'
+version = '0.1.0'
 
 [lib]
 proc-macro = true

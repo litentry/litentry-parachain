@@ -54,6 +54,18 @@ pub trait SendHttpRequest {
 	) -> Result<(Response, EncodedBody), Error>
 	where
 		T: RestPath<U>;
+
+	fn send_request_raw(
+		&self,
+		url: Url,
+		method: Method,
+		maybe_body: Option<String>,
+		headers: Vec<(String, String)>,
+	) -> Result<(Response, EncodedBody), Error>;
+}
+
+pub trait SetHttpHeader {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error>;
 }
 
 /// Send trait used by the http client to send HTTP request, based on `http_req`.
@@ -157,21 +169,23 @@ where
 		self.authorization = Some(format!("Basic {}", base64::encode(&s)));
 	}
 
+	/// Clear all previously set headers
+	pub fn clear_headers(&mut self) {
+		self.headers = Headers::new();
+	}
+}
+
+impl<SendType> SetHttpHeader for HttpClient<SendType> {
 	/// Set HTTP header from string name and value.
 	///
 	/// The header is added to all subsequent GET and POST requests
 	/// unless the headers are cleared with `clear_headers()` call.
-	pub fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
+	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
 		let header_name = HeaderName::from_str(name).map_err(|_| Error::InvalidValue)?;
 		let value = HeaderValue::from_str(value).map_err(|_| Error::InvalidValue)?;
 
 		add_to_headers(&mut self.headers, header_name, value);
 		Ok(())
-	}
-
-	/// Clear all previously set headers
-	pub fn clear_headers(&mut self) {
-		self.headers = Headers::new();
 	}
 }
 
@@ -199,6 +213,86 @@ where
 		request.method(method);
 
 		let mut request_headers = Headers::default_http(&uri);
+
+		if let Some(body) = maybe_body.as_ref() {
+			if self.send_null_body || body != "null" {
+				add_to_headers(
+					&mut request_headers,
+					CONTENT_TYPE,
+					HeaderValue::from_str("application/json")
+						.expect("Request Header: invalid characters"),
+				);
+			}
+			let len =
+				HeaderValue::from_str(&body.len().to_string()).map_err(|_| Error::RequestError)?;
+			add_to_headers(&mut request_headers, CONTENT_LENGTH, len);
+
+			trace!("set request body: {}", body);
+			request.body(body.as_bytes()); // takes body non-owned (!)
+		} else {
+			debug!("no body to send");
+		}
+
+		if let Some(ref auth) = self.authorization {
+			add_to_headers(
+				&mut request_headers,
+				AUTHORIZATION,
+				HeaderValue::from_str(auth).map_err(|_| Error::RequestError)?,
+			);
+		}
+
+		// add pre-set headers
+		for (key, value) in self.headers.iter() {
+			request_headers.insert(key, &value.clone());
+		}
+
+		// add user agent header
+		let pkg_version = env!("CARGO_PKG_VERSION");
+		add_to_headers(
+			&mut request_headers,
+			USER_AGENT,
+			HeaderValue::from_str(format!("integritee/{}", pkg_version).as_str())
+				.map_err(|_| Error::RequestError)?,
+		);
+
+		request.headers(HashMap::from(request_headers));
+
+		request
+			.timeout(self.timeout)
+			.connect_timeout(self.timeout)
+			.read_timeout(self.timeout)
+			.write_timeout(self.timeout);
+
+		trace!("request is: {:?}", request);
+
+		let mut writer = Vec::new();
+
+		let response = self.send.execute_send_request(&mut request, &mut writer)?;
+
+		Ok((response, writer))
+	}
+
+	fn send_request_raw(
+		&self,
+		url: Url,
+		method: Method,
+		maybe_body: Option<String>,
+		headers: Vec<(String, String)>,
+	) -> Result<(Response, EncodedBody), Error> {
+		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
+
+		trace!("uri: {:?}", uri);
+
+		let mut request = Request::new(&uri);
+		request.method(method);
+
+		let mut request_headers = Headers::default_http(&uri);
+
+		headers.iter().for_each(|h| {
+			//todo: remove unwraps
+			let value = HeaderValue::from_str(&h.1).unwrap();
+			add_to_headers(&mut request_headers, HeaderName::from_str(&h.0).unwrap(), value)
+		});
 
 		if let Some(body) = maybe_body.as_ref() {
 			if self.send_null_body || body != "null" {

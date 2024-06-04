@@ -22,10 +22,11 @@ std = [
     "substrate-fixed/std",
     "codec/std",
     "litentry-primitives/std",
+    "lc-stf-task-sender/std", 
 
 ]
 sgx = [
     "sgx_tstd",
     "litentry-primitives/sgx",
-
+    "lc-stf_task-sender/std", 
 ]

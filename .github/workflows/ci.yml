@@ -260,6 +260,8 @@ jobs:
         working-directory: ./tee-worker
         run: |
           cargo test --release -p pallet-* --lib
+          cargo test --release -p lc-* --lib
+          cargo test --release -p litentry-primitives --lib
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
@@ -287,7 +289,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker develpment"
           cargo clippy --release --features offchain-worker,development -- -D warnings
-          echo "::endgroup::"                                        
+          echo "::endgroup::"
 
       - name: Clean up disk
         working-directory: ./tee-worker
@@ -323,7 +325,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker develpment"
           cargo clippy --release --features offchain-worker,development -- -D warnings
-          echo "::endgroup::"                                        
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -541,7 +543,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:latest
+          tags: litentry/identity-worker:latest
           target: deployed-worker
 
       - name: Build cli
@@ -550,14 +552,14 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:latest
+          tags: litentry/identity-cli:latest
           target: deployed-client
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
         run: |
-          docker pull litentry/litentry-worker:latest
-          docker pull litentry/litentry-cli:latest
+          docker pull litentry/identity-worker:latest
+          docker pull litentry/identity-cli:latest
 
       - run: docker images --all
 
@@ -565,16 +567,16 @@ jobs:
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/litentry-worker:latest test --all
+        run: docker run litentry/identity-worker:latest test --all
 
       - name: Save docker images
-        run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v4
         with:
-          name: litentry-tee
-          path: litentry-tee.tar.gz
+          name: litentry-identity
+          path: litentry-identity.tar.gz
           if-no-files-found: error
       - name: Fail early
         if: failure()
@@ -724,6 +726,8 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-scheduled-enclave-test
+          - test_name: lit-twitter-identity-test
+          - test_name: lit-discord-identity-test
     steps:
       - uses: actions/checkout@v4
 
@@ -737,12 +741,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
+          docker load < litentry-identity.tar.gz
           docker images
 
       - name: Enable corepack and pnpm
@@ -821,12 +825,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
+          docker load < litentry-identity.tar.gz
           docker images
 
       - name: Enable corepack and pnpm
@@ -901,12 +905,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
+          docker load < litentry-identity.tar.gz
 
       - name: Dockerhub login
         uses: docker/login-action@v3
@@ -924,5 +928,5 @@ jobs:
       - name: Push tee-worker image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
-          docker push litentry/litentry-worker
-          docker push litentry/litentry-cli
+          docker push litentry/identity-worker
+          docker push litentry/identity-cli

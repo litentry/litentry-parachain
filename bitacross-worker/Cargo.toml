@@ -7,7 +7,6 @@ members = [
     "cli",
     "core/direct-rpc-client",
     "core/direct-rpc-server",
-    "core/peer-top-broadcaster",
     "core/offchain-worker-executor",
     "core/parentchain/block-import-dispatcher",
     "core/parentchain/block-importer",
@@ -60,7 +59,11 @@ members = [
     "litentry/core/direct-call",
     "bitacross/core/bc-task-receiver",
     "bitacross/core/bc-task-sender",
+    "bitacross/core/bc-enclave-registry",
     "bitacross/core/bc-relayer-registry",
+    "bitacross/core/bc-signer-registry",
+    "bitacross/core/bc-musig2-ceremony",
+    "bitacross/core/bc-musig2-runner",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

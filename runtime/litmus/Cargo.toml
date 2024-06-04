@@ -32,6 +32,7 @@ frame-try-runtime = { workspace = true, optional = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
+pallet-bitacross = { workspace = true }
 pallet-bounties = { workspace = true }
 pallet-collective = { workspace = true }
 pallet-democracy = { workspace = true }
@@ -82,8 +83,18 @@ pallet-drop3 = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
+pallet-teebag = { workspace = true }
 pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
+
+fp-rpc = { workspace = true }
+fp-self-contained = { workspace = true }
+pallet-ethereum = { workspace = true }
+pallet-evm = { workspace = true }
+
+moonbeam-evm-tracer = { workspace = true }
+moonbeam-rpc-primitives-debug = { workspace = true }
+moonbeam-rpc-primitives-txpool = { workspace = true }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
@@ -109,15 +120,17 @@ runtime-benchmarks = [
     "pallet-balances/runtime-benchmarks",
     "pallet-bounties/runtime-benchmarks",
     # This module returned an error when ran the benchmark, temporarily chose to comment it out
-    #  "pallet-collator-selection/runtime-benchmarks",
     "pallet-collective/runtime-benchmarks",
     "pallet-democracy/runtime-benchmarks",
+    "pallet-ethereum/runtime-benchmarks",
+    "pallet-evm/runtime-benchmarks",
     "pallet-identity/runtime-benchmarks",
     "pallet-membership/runtime-benchmarks",
     "pallet-multisig/runtime-benchmarks",
     "pallet-preimage/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
     "pallet-scheduler/runtime-benchmarks",
+    "pallet-teebag/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "pallet-treasury/runtime-benchmarks",
     "pallet-utility/runtime-benchmarks",
@@ -166,6 +179,8 @@ std = [
     "pallet-bounties/std",
     "pallet-collective/std",
     "pallet-democracy/std",
+    "pallet-ethereum/std",
+    "pallet-evm/std",
     "pallet-identity/std",
     "pallet-membership/std",
     "pallet-multisig/std",
@@ -195,6 +210,8 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "fp-rpc/std",
+    "fp-self-contained/std",
     "frame-benchmarking?/std",
     'runtime-common/std',
     "pallet-bridge/std",
@@ -204,6 +221,11 @@ std = [
     "pallet-group/std",
     "pallet-identity-management/std",
     "pallet-vc-management/std",
+    "pallet-bitacross/std",
+    "pallet-teebag/std",
+    "moonbeam-evm-tracer/std",
+    "moonbeam-rpc-primitives-debug/std",
+    "moonbeam-rpc-primitives-txpool/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -215,18 +237,22 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
+    "fp-self-contained/try-runtime",
     "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
+    "pallet-bitacross/try-runtime",
     "pallet-bounties/try-runtime",
     "pallet-bridge/try-runtime",
     "pallet-bridge-transfer/try-runtime",
     "pallet-collator-selection/try-runtime",
     "pallet-collective/try-runtime",
     "pallet-democracy/try-runtime",
+    "pallet-ethereum/try-runtime",
+    "pallet-evm/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
@@ -238,6 +264,7 @@ try-runtime = [
     "pallet-proxy/try-runtime",
     "pallet-scheduler/try-runtime",
     "pallet-session/try-runtime",
+    "pallet-teebag/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",

@@ -103,6 +103,9 @@ pub enum CliResultOk {
 	H160 {
 		hash: H160,
 	},
+	Bytes {
+		bytes: Vec<u8>,
+	},
 	// TODO should ideally be removed; or at least drastically less used
 	// We WANT all commands exposed by the cli to return something useful for the caller(ie instead of printing)
 	None,

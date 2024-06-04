@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use lc_common::{
 	web3_network_to_chain,
-	web3_token::{TokenAddress, TokenName},
+	web3_token::{TokenAddress, TokenHoldingAmountRange, TokenName},
 };
 use litentry_primitives::{Web3Network, Web3TokenType};
 
@@ -32,9 +32,6 @@ use lc_credentials::{
 	litentry_profile::{BalanceRange, BalanceRangeIndex},
 	Credential,
 };
-
-const TOKEN_HOLDING_AMOUNT_RANGE: [f64; 10] =
-	[0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0];
 
 const TYPE: &str = "Token Holding Amount";
 const DESCRIPTION: &str = "The amount of a particular token you are holding";
@@ -82,11 +79,13 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 
 	assertion = assertion.add_item(network_assertion);
 
-	let index = BalanceRange::index(&TOKEN_HOLDING_AMOUNT_RANGE, balance);
+	let token_holding_amount_range_vec = token_type.get_token_holding_amount_range();
+	let token_holding_amount_range = token_holding_amount_range_vec.as_slice();
+	let index = BalanceRange::index(token_holding_amount_range, balance);
 	match index {
 		Some(index) => {
-			let min = format!("{}", &TOKEN_HOLDING_AMOUNT_RANGE[index]);
-			let max = format!("{}", &TOKEN_HOLDING_AMOUNT_RANGE[index + 1]);
+			let min = format!("{}", token_holding_amount_range[index]);
+			let max = format!("{}", token_holding_amount_range[index + 1]);
 			let min_item =
 				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::GreaterEq, &min);
 			let max_item =
@@ -101,7 +100,7 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 			let min_item = AssertionLogic::new_item(
 				ASSERTION_KEYS.holding_amount,
 				Op::GreaterEq,
-				&format!("{}", &TOKEN_HOLDING_AMOUNT_RANGE.last().unwrap()),
+				&format!("{}", token_holding_amount_range.last().unwrap()),
 			);
 			assertion = assertion.add_item(min_item);
 

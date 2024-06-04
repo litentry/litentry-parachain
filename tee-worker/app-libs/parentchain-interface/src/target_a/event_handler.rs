@@ -32,7 +32,11 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 {
-	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
+	fn handle_events(
+		&self,
+		_executor: &Executor,
+		_events: impl FilterEvents,
+	) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target a");
 		Ok(Vec::new())
 	}

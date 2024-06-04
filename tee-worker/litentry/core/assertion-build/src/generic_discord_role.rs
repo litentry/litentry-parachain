@@ -21,8 +21,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::{generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential};
-use lc_data_providers::{discord_litentry::DiscordLitentryClient, DataProviderConfig};
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_credentials::{
+	generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential, IssuerRuntimeVersion,
+};
+use lc_data_providers::{
+	discord_litentry::DiscordLitentryClient, DataProviderConfig, Error as DataProviderError,
+};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
 use std::string::ToString;
@@ -37,30 +42,52 @@ pub fn build(
 			Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype.clone()), error_detail)
 		})?;
 
+	let identities = req
+		.identities
+		.iter()
+		.map(|(identity, _)| identity.clone())
+		.collect::<Vec<Identity>>();
+
 	let mut has_role_value = false;
 	let mut client =
 		DiscordLitentryClient::new(&data_provider_config.litentry_discord_microservice_url);
-	for identity in &req.identities {
-		if let Identity::Discord(address) = &identity.0 {
-			let resp =
-				client.has_role(role_id.clone(), address.inner_ref().to_vec()).map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::GenericDiscordRole(rtype.clone()),
-						e.into_error_detail(),
-					)
-				})?;
 
-			debug!("Litentry & Discord user has role response: {:?}", resp);
-
-			// data is true if the user has the specified role, otherwise, it is false.
-			if resp.data {
-				has_role_value = true;
-				break
+	loop_with_abort_strategy::<fn(&_) -> bool, Identity, DataProviderError>(
+		identities,
+		|identity| {
+			if let Identity::Discord(address) = &identity {
+				match client.has_role(role_id.clone(), address.inner_ref().to_vec()) {
+					Ok(resp) => {
+						debug!("Litentry & Discord user has role response: {:?}", resp);
+						// data is true if the user has the specified role, otherwise, it is false.
+						if resp.data {
+							has_role_value = true;
+							Ok(LoopControls::Break)
+						} else {
+							Ok(LoopControls::Continue)
+						}
+					},
+					Err(err) => Err(err),
+				}
+			} else {
+				Ok(LoopControls::Continue)
 			}
-		}
-	}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(
+			Assertion::GenericDiscordRole(rtype.clone()),
+			errors[0].clone().into_error_detail(),
+		)
+	})?;
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_generic_discord_role_assertion(rtype, has_role_value);
 			Ok(credential_unsigned)
@@ -137,6 +164,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -185,6 +214,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),

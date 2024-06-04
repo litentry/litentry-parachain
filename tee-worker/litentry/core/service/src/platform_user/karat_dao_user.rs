@@ -21,9 +21,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use core::result::Result;
+use std::string::ToString;
 
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_data_providers::{
-	karat_dao::{KaraDaoApi, KaratDaoClient},
+	karat_dao::{KaratDaoApi, KaratDaoClient},
 	DataProviderConfig,
 };
 
@@ -33,18 +35,24 @@ pub fn is_user(
 	addresses: Vec<String>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
-	let mut is_user = false;
+	let mut result = false;
 	let mut client = KaratDaoClient::new(data_provider_config);
-	for address in addresses {
-		match client.user_verification(address, true) {
-			Ok(response) => {
-				is_user = response.result.is_valid;
-				if is_user {
-					break
-				}
-			},
-			Err(err) => return Err(err.into_error_detail()),
-		}
-	}
-	Ok(is_user)
+
+	loop_with_abort_strategy(
+		addresses,
+		|address| match client.user_verification(address.to_string(), true) {
+			Ok(response) =>
+				if response.result.is_valid {
+					result = true;
+					Ok(LoopControls::Break)
+				} else {
+					Ok(LoopControls::Continue)
+				},
+			Err(err) => Err(err.into_error_detail()),
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
+
+	Ok(result)
 }

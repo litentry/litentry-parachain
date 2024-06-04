@@ -1,0 +1,40 @@
+[package]
+authors = ['Trust Computing GmbH <info@litentry.com>']
+version = "0.1.0"
+edition = "2021"
+homepage = 'https://litentry.com'
+name = 'pallet-evm-assertions'
+repository = 'https://github.com/litentry/litentry-parachain'
+
+[dependencies]
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+]
+std = [
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "sp-std/std",
+    "sp-runtime/std",
+    "sp-core/std",
+    "sp-io/std",
+    "frame-support/std",
+    "frame-system/std",
+]
+try-runtime = ["frame-support/try-runtime"]

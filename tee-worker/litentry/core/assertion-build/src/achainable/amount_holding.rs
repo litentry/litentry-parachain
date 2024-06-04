@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_balance, *};
-use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
+use lc_credentials::{litentry_profile::token_balance::TokenBalanceInfo, IssuerRuntimeVersion};
 use lc_data_providers::{DataProviderConfig, ETokenAddress, TokenFromString};
 
 pub fn build_amount_holding(
@@ -47,7 +47,12 @@ pub fn build_amount_holding(
 				)
 			})?;
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_token_balance(token, balance);
 			Ok(credential_unsigned)

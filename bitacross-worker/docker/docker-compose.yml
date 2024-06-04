@@ -132,6 +132,8 @@ services:
       - MORALIS_API_URL=http://localhost:19527/moralis/
       - MORALIS_SOLANA_API_URL=http://localhost:19527/moralis_solana/
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
+      - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
+      - MAGIC_CRAFT_API_KEY=
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527
@@ -140,6 +142,7 @@ services:
       - CONTEST_LEGEND_DISCORD_ROLE_ID=CONTEST_LEGEND_DISCORD_ROLE_ID
       - CONTEST_POPULARITY_DISCORD_ROLE_ID=CONTEST_POPULARITY_DISCORD_ROLE_ID
       - CONTEST_PARTICIPANT_DISCORD_ROLE_ID=CONTEST_PARTICIPANT_DISCORD_ROLE_ID
+      - BLOCKCHAIN_INFO_API_URL=http://localhost:19527/blockchain_info/
     networks:
       - litentry-test-network
     healthcheck:

@@ -18,7 +18,7 @@ use crate::{
 	vip3::{VIP3SBTInfo, VIP3SBTLogicInterface},
 	*,
 };
-use lc_credentials::vip3::UpdateVIP3MembershipCardCredential;
+use lc_credentials::{vip3::UpdateVIP3MembershipCardCredential, IssuerRuntimeVersion};
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::VIP3MembershipCardLevel;
 
@@ -41,7 +41,12 @@ pub fn build(
 		.has_card_level(addresses, &level)
 		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_vip3_membership_card(level, value);
 			Ok(credential_unsigned)

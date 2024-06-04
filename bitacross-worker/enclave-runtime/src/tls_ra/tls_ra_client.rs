@@ -35,6 +35,8 @@ use codec::Encode;
 use itp_attestation_handler::{RemoteAttestationType, DEV_HOSTNAME};
 use itp_component_container::ComponentGetter;
 
+use bc_enclave_registry::GLOBAL_ENCLAVE_REGISTRY;
+use bc_signer_registry::GLOBAL_SIGNER_REGISTRY;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
@@ -138,6 +140,8 @@ where
 			Opcode::StateKey => self.seal_handler.seal_state_key(&bytes)?,
 			Opcode::State => self.seal_handler.seal_state(&bytes, &self.shard)?,
 			Opcode::LightClient => self.seal_handler.seal_light_client_state(&bytes)?,
+			Opcode::Signers => self.seal_handler.seal_signers(&bytes)?,
+			Opcode::Enclaves => self.seal_handler.seal_enclaves(&bytes)?,
 		};
 		Ok(Some(header.opcode))
 	}
@@ -212,11 +216,16 @@ pub unsafe extern "C" fn request_state_provisioning(
 		},
 	};
 
+	let signer_registry = GLOBAL_SIGNER_REGISTRY.clone();
+	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.clone();
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
+		signer_registry,
+		enclave_registry,
 	);
 
 	let signing_key_repository = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {

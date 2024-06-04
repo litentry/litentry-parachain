@@ -1,6 +1,6 @@
 services:
   lit-parentchain-nonce:
-    image: litentry/litentry-cli:latest
+    image: litentry/identity-cli:latest
     container_name: litentry-parentchain-nonce
     volumes:
       - ../cli:/usr/local/worker-cli
