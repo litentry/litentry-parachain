@@ -11,7 +11,9 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 
 # local dependencies
 itp-api-client-types = { path = "../../../core-primitives/node-api/api-client-types", default-features = false }
+itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-node-api = { path = "../../../core-primitives/node-api", default-features = false }
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-runtime-primitives = { path = "../../../core-primitives/sgx-runtime-primitives", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
@@ -70,6 +72,7 @@ std = [
     "itp-test/std",
     "itp-types/std",
     "itp-sgx-runtime-primitives/std",
+    "itp-enclave-metrics/std",
     "log/std",
     #substrate
     "binary-merkle-tree/std",
@@ -90,6 +93,7 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
+    "itp-enclave-metrics/sgx",
     "itp-test/sgx",
     "thiserror_sgx",
     # litentry
