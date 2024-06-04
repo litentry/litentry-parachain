@@ -73,6 +73,9 @@ lazy_static! {
 	static ref ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME: Histogram =
 		register_histogram!("litentry_worker_enclave_parentchain_block_import_time", "Time taken to import parentchain block")
 			.unwrap();
+	static ref ENCLAVE_PARENTCHAIN_EVENT_PROCESSED: CounterVec =
+		register_counter_vec!("litentry_worker_enclave_parentchain_event_processed", "Parentchain events processed", &["event"])
+			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME: Histogram =
 		register_histogram!("litentry_worker_enclave_sidechain_block_import_time", "Time taken to import sidechain block")
 			.unwrap();
@@ -225,6 +228,9 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 			EnclaveMetric::ParentchainBlockImportTime(time) =>
 				ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
+			EnclaveMetric::ParentchainEventProcessed(event) => {
+				ENCLAVE_PARENTCHAIN_EVENT_PROCESSED.with_label_values(&[&event]).inc();
+			},
 			EnclaveMetric::SidechainBlockImportTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainSlotPrepareTime(time) =>

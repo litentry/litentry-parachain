@@ -20,7 +20,7 @@ use crate::{
 		fixtures::test_server_config_provider::TestServerConfigProvider,
 		mocks::web_socket_handler_mock::WebSocketHandlerMock,
 	},
-	TungsteniteWsServer,
+	ws_server::TungsteniteWsServer,
 };
 use std::{string::String, sync::Arc};
 
@@ -35,7 +35,10 @@ pub fn create_server(
 
 	let server_addr_string = format!("127.0.0.1:{}", port);
 
-	let server =
-		Arc::new(TungsteniteWsServer::new(server_addr_string, config_provider, handler.clone()));
+	let server = Arc::new(TungsteniteWsServer::new(
+		server_addr_string,
+		Some(config_provider),
+		handler.clone(),
+	));
 	(server, handler)
 }
