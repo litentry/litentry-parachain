@@ -51,7 +51,6 @@ async function sendRequest(
                 return;
             }
 
-            console.log('Parsed: ' + JSON.stringify(parsed, null, 2));
             if ('error' in parsed) {
                 const transaction = { request, response: parsed };
                 console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
@@ -59,9 +58,7 @@ async function sendRequest(
             }
 
             const result = parsed.result;
-            console.log('Result: ' + JSON.stringify(result, null, 2));
             const res = api.createType('WorkerRpcReturnValue', result);
-            console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
 
             if (res.status.isError) {
                 console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
@@ -448,11 +445,8 @@ export const sendAesRequestFromGetter = async (
     // hopefully we will query correct state
     await sleep(1);
     const res = await sendRequest(context.tee, request, context.api);
-    console.warn(res.toHuman());
     const aesOutput = context.api.createType('AesOutput', res.value);
-    console.warn(aesOutput.toHuman());
     const decryptedValue = decryptWithAes(u8aToHex(aesKey), aesOutput, 'hex');
-    console.warn(stringToU8a(decryptedValue.substring(2)));
 
     return context.api.createType('WorkerRpcReturnValue', {
         value: decryptedValue,

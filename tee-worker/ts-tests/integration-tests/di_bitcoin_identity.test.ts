@@ -24,10 +24,9 @@ import {
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import { createType, type Bytes, type Vec } from '@polkadot/types';
+import { type Bytes, type Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aWrapBytes } from '@polkadot/util';
-import { fail } from 'assert';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;

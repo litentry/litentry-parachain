@@ -25,7 +25,7 @@ import { aesKey } from './common/call';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
-import { count } from 'console';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
