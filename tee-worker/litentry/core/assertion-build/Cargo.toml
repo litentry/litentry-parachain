@@ -58,7 +58,6 @@ lc-mock-server = { path = "../mock-server" }
 litentry-hex-utils = { path = "../../../../primitives/hex" }
 ethabi = { version = "18.0.0", default-features = false }
 
-
 [features]
 default = ["std"]
 sgx = [
