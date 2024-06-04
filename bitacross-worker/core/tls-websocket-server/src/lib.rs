@@ -38,17 +38,11 @@ pub mod sgx_reexport_prelude {
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	config_provider::FromFileConfigProvider,
 	connection_id_generator::{ConnectionId, ConnectionIdGenerator},
 	error::{WebSocketError, WebSocketResult},
-	ws_server::TungsteniteWsServer,
 };
 use mio::{event::Evented, Token};
-use std::{
-	fmt::Debug,
-	string::{String, ToString},
-	sync::Arc,
-};
+use std::{fmt::Debug, string::String};
 
 pub mod certificate_generation;
 pub mod config_provider;
@@ -159,19 +153,14 @@ pub(crate) trait WebSocketConnection: Send + Sync {
 			None => Err(WebSocketError::ConnectionClosed),
 		}
 	}
-}
 
-pub fn create_ws_server<Handler>(
-	addr_plain: &str,
-	private_key: &str,
-	certificate: &str,
-	handler: Arc<Handler>,
-) -> Arc<TungsteniteWsServer<Handler, FromFileConfigProvider>>
-where
-	Handler: WebSocketMessageHandler,
-{
-	let config_provider =
-		Arc::new(FromFileConfigProvider::new(private_key.to_string(), certificate.to_string()));
-
-	Arc::new(TungsteniteWsServer::new(addr_plain.to_string(), config_provider, handler))
+	fn deregister(&mut self, poll: &mio::Poll) -> WebSocketResult<()> {
+		match self.socket() {
+			Some(s) => {
+				poll.deregister(s)?;
+				Ok(())
+			},
+			None => Err(WebSocketError::ConnectionClosed),
+		}
+	}
 }
