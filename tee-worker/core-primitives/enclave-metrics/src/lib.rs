@@ -47,4 +47,5 @@ pub enum EnclaveMetric {
 	VCBuildTime(String, Duration),
 	SuccessfullVCIssuance,
 	FailedVCIssuance,
+	ParentchainEventProcessed(String),
 }
