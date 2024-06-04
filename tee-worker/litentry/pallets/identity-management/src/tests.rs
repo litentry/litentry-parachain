@@ -33,24 +33,40 @@ fn get_eligible_identities_works() {
 	));
 	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
 	let mut desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
-	let mut identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone());
+	let mut identities =
+		get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone(), true);
 	assert_eq!(identities.len(), 2);
 	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);
 
 	// `alice_evm_identity` should be filtered out
 	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![])));
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
 	assert_eq!(identities.len(), 2);
 	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);
 
 	// `alice_substrate_identity` should be filtered out
 	desired_web3networks = all_evm_web3networks();
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
 	assert_eq!(identities.len(), 2);
 	assert_eq!(identities[0].1, vec![]);
 	assert_eq!(identities[1].1, all_evm_web3networks());
+
+	// only twitter identity is left
+	desired_web3networks = vec![];
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
+	assert_eq!(identities.len(), 1);
+	assert_eq!(identities[0].1, vec![]);
+	assert_eq!(identities[0].0, alice_twitter_identity(1));
+
+	desired_web3networks = vec![Web3Network::Arbitrum];
+
+	// only `alice_evm_identity` is left
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
+	assert_eq!(identities.len(), 1);
+	assert_eq!(identities[0].1, vec![Web3Network::Arbitrum]);
+	assert_eq!(identities[0].0, alice_evm_identity());
 }
 
 #[test]
