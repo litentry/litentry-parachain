@@ -197,7 +197,7 @@ impl TrustedCallSigned {
 		let identities = get_eligible_identities(
 			id_graph.as_ref(),
 			assertion_networks,
-			assertion.force_retain_web2_identity(),
+			assertion.skip_identity_filtering(),
 		);
 
 		ensure!(
