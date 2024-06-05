@@ -17,15 +17,15 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
     sendRequestFromTrustedCall,
+    sendAesRequestFromGetter,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
-import { count } from 'console';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -64,7 +64,7 @@ describe('Test Identity (evm direct invocation)', function () {
             context.web3Wallets.evm.Alice,
             aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -161,7 +161,7 @@ describe('Test Identity (evm direct invocation)', function () {
             context.web3Wallets.evm.Alice,
             aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -257,7 +257,7 @@ describe('Test Identity (evm direct invocation)', function () {
             context.web3Wallets.evm.Alice,
             aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -342,7 +342,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
             aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {

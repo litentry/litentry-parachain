@@ -59,11 +59,21 @@ impl DecryptableRequest for AesRequest {
 		&mut self,
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
 	) -> core::result::Result<Vec<u8>, ()> {
-		let aes_key: RequestAesKey = enclave_shielding_key
+		let aes_key: RequestAesKey = self.decrypt_aes_key(enclave_shielding_key)?;
+		aes_decrypt(&aes_key, &mut self.payload).ok_or(())
+	}
+}
+
+impl AesRequest {
+	#[allow(clippy::result_unit_err)]
+	pub fn decrypt_aes_key<T: Debug>(
+		&mut self,
+		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
+	) -> core::result::Result<RequestAesKey, ()> {
+		enclave_shielding_key
 			.decrypt(&self.key)
 			.map_err(|_| ())?
 			.try_into()
-			.map_err(|_| ())?;
-		aes_decrypt(&aes_key, &mut self.payload).ok_or(())
+			.map_err(|_| ())
 	}
 }

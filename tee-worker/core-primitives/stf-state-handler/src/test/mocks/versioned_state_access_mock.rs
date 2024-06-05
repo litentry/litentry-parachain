@@ -17,8 +17,9 @@
 
 use crate::{
 	error::{Error, Result},
-	state_snapshot_repository::VersionedStateAccess,
+	state_snapshot_repository::{ShardStateFileComparison, VersionedStateAccess},
 };
+use codec::Encode;
 use itp_types::ShardIdentifier;
 use std::{
 	collections::{HashMap, VecDeque},
@@ -42,8 +43,8 @@ impl<State, Hash> VersionedStateAccessMock<State, Hash> {
 
 impl<State, Hash> VersionedStateAccess for VersionedStateAccessMock<State, Hash>
 where
-	State: Default + Clone,
-	Hash: Default,
+	State: Default + Clone + Encode,
+	Hash: Default + PartialEq,
 {
 	type StateType = State;
 	type HashType = Hash;
@@ -98,5 +99,22 @@ where
 
 	fn list_shards(&self) -> Result<Vec<ShardIdentifier>> {
 		Ok(self.state_history.keys().copied().collect())
+	}
+
+	fn compare_shards_state_file_size(
+		&self,
+		shard_a: &ShardIdentifier,
+		shard_b: &ShardIdentifier,
+	) -> Result<ShardStateFileComparison> {
+		let state_a = self.load_latest(shard_a)?;
+		let state_b = self.load_latest(shard_b)?;
+
+		let size = state_a.encode().len() as i64 - state_b.encode().len() as i64;
+
+		match size {
+			0 => Ok(ShardStateFileComparison::Equal),
+			_ if size > 0 => Ok(ShardStateFileComparison::ShardAIsLarger),
+			_ => Ok(ShardStateFileComparison::ShardBIsLarger),
+		}
 	}
 }

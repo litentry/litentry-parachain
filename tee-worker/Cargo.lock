@@ -3163,7 +3163,9 @@ dependencies = [
  "ita-parentchain-interface",
  "itc-parentchain-test",
  "itp-api-client-types",
+ "itp-enclave-metrics",
  "itp-node-api",
+ "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-executor",
@@ -4459,6 +4461,7 @@ version = "0.1.0"
 dependencies = [
  "blake2-rfc",
  "env_logger 0.10.0",
+ "ethabi",
  "frame-support",
  "hex",
  "http 0.2.1",

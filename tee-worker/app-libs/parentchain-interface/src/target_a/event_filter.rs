@@ -105,4 +105,10 @@ impl FilterEvents for FilterableEvents {
 	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
 		self.filter()
 	}
+
+	fn get_parentchain_block_proccessed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::ParentchainBlockProcessed>, Self::Error> {
+		Ok(Vec::new())
+	}
 }

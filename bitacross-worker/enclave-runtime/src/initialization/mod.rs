@@ -61,7 +61,8 @@ use itc_direct_rpc_server::{
 use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId};
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ed25519_self_signed_certificate,
+	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
@@ -90,6 +91,7 @@ use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_macros::if_development_or;
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
@@ -107,12 +109,14 @@ pub(crate) fn init_enclave(
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
 
-	let bitcoin_key_repository = Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin")?);
+	let bitcoin_key_repository =
+		Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin", None)?);
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
 	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public_bytes());
 
-	let ethereum_key_repository = Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum")?);
+	let ethereum_key_repository =
+		Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum", None)?);
 	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
 	let ethereum_key = ethereum_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public_bytes());
@@ -266,6 +270,41 @@ pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
 	Ok(())
 }
 
+#[allow(unused_variables)]
+pub(crate) fn init_wallets(base_dir: PathBuf) -> EnclaveResult<()> {
+	if_development_or!(
+		{
+			println!("Initializing wallets from BTC_KEY and ETH_KEY env variables");
+			let btc_key: Option<[u8; 32]> = read_key_from_env("BTC_KEY")?;
+			create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
+
+			let eth_key: Option<[u8; 32]> = read_key_from_env("ETH_KEY")?;
+			create_ecdsa_repository(base_dir, "ethereum", eth_key)?;
+		},
+		{
+			println!("Init wallets available in dev mode only!");
+		}
+	);
+
+	Ok(())
+}
+
+#[cfg(feature = "development")]
+fn read_key_from_env(env_variable: &str) -> EnclaveResult<Option<[u8; 32]>> {
+	use std::env;
+	if let Ok(value) = env::var(env_variable) {
+		let decoded =
+			hex::decode(value).map_err(|_| Error::Other("Could not decode key value".into()))?;
+		Ok(Some(
+			decoded
+				.try_into()
+				.map_err(|_| Error::Other("Provided key is not 32 bytes long".into()))?,
+		))
+	} else {
+		Ok(None)
+	}
+}
+
 pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
@@ -366,19 +405,30 @@ fn run_bit_across_handler(
 }
 
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
+	info!("Initialize direct invocation server on {}", &server_addr);
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	let cert =
-		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	let url = url::Url::parse(&server_addr).map_err(|e| Error::Other(format!("{}", e).into()))?;
+	let maybe_config_provider = if url.scheme() == "wss" {
+		let cert = ed25519_self_signed_certificate(signer, "Enclave")
+			.map_err(|e| Error::Other(e.into()))?;
 
-	// Serialize certificate(s) and private key to PEM.
-	// PEM format is needed as a certificate chain can only be serialized into PEM.
-	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
-	let private_key = cert.serialize_private_key_pem();
+		// Serialize certificate(s) and private key to PEM.
+		// PEM format is needed as a certificate chain can only be serialized into PEM.
+		let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
+		let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
+	} else {
+		None
+	};
+
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 
