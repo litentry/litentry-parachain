@@ -15,8 +15,9 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
+    sendAesRequestFromGetter,
 } from './common/di-utils'; // @fixme move to a better place
 import { sleep } from './common/utils';
 import { aesKey, sendRequest, decodeRpcBytesAsString } from './common/call';
@@ -25,6 +26,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Twitter Identity (direct invocation)', function () {
     let context: IntegrationTestContext;
@@ -70,7 +72,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -82,7 +84,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -237,7 +239,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of aliceLinkIdentityRequestParams) {
@@ -267,7 +269,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of bobLinkIdentityRequestParams) {
