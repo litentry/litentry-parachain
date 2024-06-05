@@ -20,7 +20,7 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use codec::{Decode, Encode};
-use ita_stf::{helpers::get_expected_raw_message, Web3Network};
+use ita_stf::helpers::get_expected_raw_message;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
@@ -40,9 +40,6 @@ pub struct LinkIdentityCommand {
 	/// Delegate signer for the account
 	#[clap(short = 'd')]
 	delegate: Option<String>,
-	/// Web3 networks for the linking
-	#[clap(num_args = 0.., value_delimiter = ',')]
-	networks: Vec<String>,
 }
 
 impl LinkIdentityCommand {
@@ -61,8 +58,7 @@ impl LinkIdentityCommand {
 		chain_api.set_signer(signer.into());
 
 		let (identity, encrypted_identity) = self.encrypt_identity(cli);
-		let (encrypted_web3network, encrypted_validation_data) =
-			self.prepare_validation_data(&identity, cli, nonce);
+		let encrypted_validation_data = self.prepare_validation_data(&identity, cli, nonce);
 
 		let xt = compose_extrinsic!(
 			chain_api,
@@ -71,8 +67,7 @@ impl LinkIdentityCommand {
 			shard,
 			who.public().0,
 			encrypted_identity,
-			encrypted_validation_data,
-			encrypted_web3network
+			encrypted_validation_data
 		);
 
 		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Broadcast).unwrap();
@@ -98,22 +93,11 @@ impl LinkIdentityCommand {
 		(identity, encrypted_identity)
 	}
 
-	fn prepare_validation_data(
-		&self,
-		identity: &Identity,
-		cli: &Cli,
-		nonce: u32,
-	) -> (Vec<u8>, Vec<u8>) {
+	fn prepare_validation_data(&self, identity: &Identity, cli: &Cli, nonce: u32) -> Vec<u8> {
 		if identity.is_web3() {
 			let who_identity = Identity::from(self.get_signer().public());
 			let validation_payload = get_expected_raw_message(&who_identity, identity, nonce);
-			let web3network: Vec<Web3Network> = self
-				.networks
-				.iter()
-				.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
-				.collect();
 			let tee_shielding_key = get_shielding_key(cli).unwrap();
-			let encrypted_web3network = tee_shielding_key.encrypt(&web3network.encode()).unwrap();
 
 			let identity_account_id = identity.to_account_id().unwrap();
 			let identity_public_key = format!("{}", identity_account_id);
@@ -127,12 +111,10 @@ impl LinkIdentityCommand {
 			let validation_data = litentry_primitives::ValidationData::Web3(
 				litentry_primitives::Web3ValidationData::Substrate(web3common),
 			);
-			let encrypted_validation_data =
-				tee_shielding_key.encrypt(&validation_data.encode()).unwrap();
 
-			(encrypted_web3network, encrypted_validation_data)
+			tee_shielding_key.encrypt(&validation_data.encode()).unwrap()
 		} else {
-			(vec![0], vec![0])
+			vec![0]
 		}
 	}
 }
