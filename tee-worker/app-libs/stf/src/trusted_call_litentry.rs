@@ -200,10 +200,9 @@ impl TrustedCallSigned {
 			assertion.skip_identity_filtering(),
 		);
 
-		ensure!(
-			!identities.is_empty(),
-			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
-		);
+		if identities.is_empty() {
+			debug!("[RequestVc]: No eligible identities");
+		}
 
 		let parachain_block_number = ParentchainLitentry::block_number();
 		let sidechain_block_number = System::block_number();

@@ -533,7 +533,10 @@ where
 			assertion_networks,
 			assertion.skip_identity_filtering(),
 		);
-		ensure!(!identities.is_empty(), "No eligible identity".to_string());
+
+		if identities.is_empty() {
+			debug!("[RequestVc]: No eligible identities");
+		}
 
 		let signer_account = signer
 			.to_account_id()

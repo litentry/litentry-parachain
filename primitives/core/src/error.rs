@@ -66,9 +66,6 @@ pub enum ErrorDetail {
 	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
-	// error when trying to build vc but no eligible identity is found
-	#[codec(index = 11)]
-	NoEligibleIdentity,
 }
 
 impl fmt::Debug for ErrorDetail {
@@ -90,7 +87,6 @@ impl fmt::Debug for ErrorDetail {
 			ErrorDetail::WrongWeb2Handle => write!(f, "WrongWeb2Handle"),
 			ErrorDetail::UnexpectedMessage => write!(f, "UnexpectedMessage"),
 			ErrorDetail::VerifyWeb3SignatureFailed => write!(f, "VerifyWeb3SignatureFailed"),
-			ErrorDetail::NoEligibleIdentity => write!(f, "NoEligibleIdentity"),
 		}
 	}
 }
