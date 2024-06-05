@@ -165,7 +165,7 @@ where
 	fn handle_events(
 		executor: &Executor,
 		events: impl FilterEvents,
-		vault_account: &AccountId,
+		vault_account: Option<AccountId>,
 	) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 
@@ -176,7 +176,13 @@ where
 			);
 			events
 				.iter()
-				.filter(|&event| event.to == *vault_account)
+				.filter(|&event| {
+					if let Some(vault_account) = &vault_account {
+						event.to == *vault_account
+					} else {
+						false
+					}
+				})
 				.try_for_each(|event| {
 					info!("found transfer_event to vault account: {}", event);
 					//debug!("shielding from Integritee suppressed");

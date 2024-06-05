@@ -154,8 +154,11 @@ impl<
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
 		let shard = self.get_default_shard();
-		let (vault, ..) = self.stf_enclave_signer.get_shard_vault(&shard)?;
-		let processed_events = ParentchainEventHandler::handle_events(self, events, &vault)?;
+		let maybe_vault = match self.stf_enclave_signer.get_shard_vault(&shard) {
+			Ok(vault) => Some(vault.0),
+			Err(_) => None,
+		};
+		let processed_events = ParentchainEventHandler::handle_events(self, events, maybe_vault)?;
 
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
