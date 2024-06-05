@@ -44,7 +44,7 @@ FIRST_NEW_ACCOUNT=$(${CLIENT} new-account)
 echo "New Account created: ${FIRST_NEW_ACCOUNT}" 
 
 echo "Linking identity to Bob"
-OUTPUT=$(${CLIENT} link-identity //Bob did:litentry:substrate:${FIRST_NEW_ACCOUNT} litentry) || { echo "Link identity command failed"; exit 1; }
+OUTPUT=$(${CLIENT} link-identity //Bob did:litentry:substrate:${FIRST_NEW_ACCOUNT}) || { echo "Link identity command failed"; exit 1; }
 echo "Finished Linking identity to Bob"
 sleep 30
 
@@ -56,7 +56,7 @@ SECOND_NEW_ACCOUNT=$(${CLIENT} new-account)
 echo "New Account created: ${SECOND_NEW_ACCOUNT}" 
 
 echo "Linking new identity to Bob with Eve as delegate signer"
-OUTPUT=$(${CLIENT} link-identity //Bob "did:litentry:substrate:${SECOND_NEW_ACCOUNT}" litentry -d //Eve) || { echo "Link identity command failed"; exit 1; }
+OUTPUT=$(${CLIENT} link-identity //Bob "did:litentry:substrate:${SECOND_NEW_ACCOUNT}" -d //Eve) || { echo "Link identity command failed"; exit 1; }
 echo "Finished Linking identity to Bob"
 sleep 30
 
