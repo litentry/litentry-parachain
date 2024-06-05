@@ -38,7 +38,7 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
-                "__Null",
+                "SubstrateTestnet",
                 "Ethereum",
                 "Bsc",
                 "BitcoinP2tr",
@@ -133,6 +133,7 @@ export default {
         IdentityContext: {
             link_block: "BlockNumber",
             status: "IdentityStatus",
+            web3networks: "BoundedWeb3Network",
         },
         BoundedWeb3Network: "BoundedVec<Web3Network, ConstU32<128>>",
     },

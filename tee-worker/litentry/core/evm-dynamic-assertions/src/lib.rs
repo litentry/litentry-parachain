@@ -184,6 +184,7 @@ pub fn network_to_token(network: &Web3Network) -> Token {
 			Web3Network::Litmus => 3,
 			Web3Network::LitentryRococo => 4,
 			Web3Network::Khala => 5,
+			Web3Network::SubstrateTestnet => 6,
 			Web3Network::Ethereum => 7,
 			Web3Network::Bsc => 8,
 			Web3Network::BitcoinP2tr => 9,

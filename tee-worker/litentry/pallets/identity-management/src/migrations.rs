@@ -19,8 +19,6 @@ use frame_support::{
 	weights::Weight,
 };
 
-use crate::{Error, IDGraphs, IdentityContext};
-
 // This is just an example of how to write a custom migration
 pub fn migrate_to_v1<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>() -> Weight {
 	let on_chain_storage_version = <P as GetStorageVersion>::on_chain_storage_version();
@@ -62,17 +60,4 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 		// );
 	}
 	Weight::zero()
-}
-
-pub fn drop_web3networks_from_id_graph<T: crate::Config>() -> Result<Weight, Error<T>> {
-	for (who, identity, _context) in IDGraphs::<T>::iter() {
-		IDGraphs::<T>::try_mutate(&who, &identity, |context| {
-			let c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-			// dropping web3networks data by recreating context
-			*context = Some(IdentityContext { link_block: c.link_block, status: c.status });
-			Result::<(), Error<T>>::Ok(())
-		})?;
-	}
-
-	Ok(Weight::zero())
 }

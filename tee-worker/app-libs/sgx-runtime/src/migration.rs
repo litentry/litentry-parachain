@@ -8,8 +8,6 @@ use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 pub struct Upgrade;
 impl OnRuntimeUpgrade for Upgrade {
 	fn on_runtime_upgrade() -> Weight {
-		pallet_imt::migrations::drop_web3networks_from_id_graph::<Runtime>()
-			.expect("Web3 networks should be dropped from idgraphs");
 		pallet_imt::migrations::migrate_to_v1::<Runtime, IdentityManagement>()
 	}
 }
