@@ -45,31 +45,28 @@ pub fn build(
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 
-	let result = get_token_balance(token_type.clone(), addresses, data_provider_config)
-		.map_err(|e| Error::RequestVCFailed(Assertion::TokenHoldingAmount(token_type.clone()), e));
+	let result =
+		get_token_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(Assertion::TokenHoldingAmount(token_type.clone()), e)
+		})?;
 
-	match result {
-		Ok(value) => {
-			let runtime_version = IssuerRuntimeVersion {
-				parachain: req.parachain_runtime_version,
-				sidechain: req.sidechain_runtime_version,
-			};
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
 
-			match Credential::new(&req.who, &req.shard, &runtime_version) {
-				Ok(mut credential_unsigned) => {
-					credential_unsigned.update_token_holding_amount_assertion(token_type, value);
-					Ok(credential_unsigned)
-				},
-				Err(e) => {
-					error!("Generate unsigned credential failed {:?}", e);
-					Err(Error::RequestVCFailed(
-						Assertion::TokenHoldingAmount(token_type),
-						e.into_error_detail(),
-					))
-				},
-			}
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_token_holding_amount_assertion(token_type, result);
+			Ok(credential_unsigned)
 		},
-		Err(e) => Err(e),
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::TokenHoldingAmount(token_type),
+				e.into_error_detail(),
+			))
+		},
 	}
 }
 
