@@ -23,19 +23,18 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contr
 
 contract A6 is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
-    public
-    override
-    returns (
-
-        string memory,
-        string memory,
-        string[] memory,
-        string memory,
-        bool
-    )
+        public
+        override
+        returns (
+            string memory,
+            string memory,
+            string[] memory,
+            string memory,
+            bool
+        )
     {
         string
-        memory description = "The range of the user's Twitter follower count";
+            memory description = "The range of the user's Twitter follower count";
         string memory assertion_type = "Twitter Follower Amount";
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/6-twitter-follower-amount/1-0-0.json";
 
@@ -58,13 +57,15 @@ contract A6 is DynamicAssertion {
                 // we expect first secret to be twitter api key
                 headers[0] = HttpHeader("authorization", secrets[0]);
 
-                int64 followers_count = GetI64(
+                (bool get_success, int64 followers_count) = GetI64(
                     full_url,
                     "/data/public_metrics/followers_count",
                     headers
                 );
 
-                sum += followers_count;
+                if (get_success) {
+                    sum += followers_count;
+                }
             }
         }
 
