@@ -28,7 +28,7 @@ use crate::{
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
-use ita_stf::{Getter, TrustedCallSigned};
+use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
@@ -52,12 +52,12 @@ use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::twitter;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::{if_development, if_development_or};
-use litentry_primitives::{DecryptableRequest, Identity};
+use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
-use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -120,8 +120,9 @@ where
 
 	// author_getEnclaveSignerAccount
 	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
+	let shielding_key_cloned = shielding_key.clone();
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
-		let enclave_signer_public_key = match shielding_key
+		let enclave_signer_public_key = match shielding_key_cloned
 			.retrieve_key()
 			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
 		{
@@ -277,7 +278,7 @@ where
 	});
 
 	io.add_sync_method("state_getMetadata", |_: Params| {
-		debug!("worker_api_direct rpc was called: tate_getMetadata");
+		debug!("worker_api_direct rpc was called: state_getMetadata");
 		let metadata = Runtime::metadata();
 		let json_value = RpcReturnValue::new(metadata.into(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
@@ -289,9 +290,12 @@ where
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
+	// TODO: deprecate
+	let getter_executor_cloned = getter_executor.clone();
 	io.add_sync_method("state_executeGetter", move |params: Params| {
 		debug!("worker_api_direct rpc was called: state_executeGetter");
-		let json_value = match execute_getter_inner(getter_executor.as_ref(), params) {
+		#[allow(deprecated)]
+		let json_value = match execute_rsa_getter_inner(getter_executor_cloned.as_ref(), params) {
 			Ok(state_getter_value) => RpcReturnValue {
 				do_watch: false,
 				value: state_getter_value.encode(),
@@ -301,6 +305,49 @@ where
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
+	});
+
+	io.add_sync_method("state_executeAesGetter", move |params: Params| {
+		debug!("worker_api_direct rpc was called: state_executeAesGetter");
+
+		let shielding_key = match shielding_key.retrieve_key().map_err(|e| format!("{:?}", e)) {
+			Ok(key) => key,
+			Err(e) => return Ok(json!(compute_hex_encoded_return_error(&e))),
+		};
+
+		let return_value: Result<AesOutput, String> = (|| {
+			let hex_encoded_params =
+				params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+			let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+			let mut request = AesRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
+
+			let aes_key = request
+				.decrypt_aes_key(Box::new(shielding_key))
+				.map_err(|_err: ()| "Could not decrypt request AES key")?;
+
+			let encoded_trusted_getter = aes_decrypt(&aes_key, &mut request.payload)
+				.ok_or(())
+				.map_err(|_err: ()| "Could not decrypt getter request")?;
+
+			let shard = request.shard();
+
+			let state_getter_value = getter_executor
+				.execute_getter(&shard, encoded_trusted_getter)
+				.map_err(|e| format!("{:?}", e))?;
+
+			Ok(aes_encrypt_default(&aes_key, state_getter_value.encode().as_slice()))
+		})();
+
+		match return_value {
+			Ok(aes_output) => Ok(json!(RpcReturnValue {
+				do_watch: false,
+				value: aes_output.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex())),
+			// FIXME: error not encrypted :sadpanda:
+			Err(error) => Ok(json!(compute_hex_encoded_return_error(error.as_str()))),
+		}
 	});
 
 	io.add_sync_method("attesteer_forwardDcapQuote", move |params: Params| {
@@ -527,9 +574,8 @@ where
 	io
 }
 
-// Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
-// in unencrypted, see P-183
-fn execute_getter_inner<GE: ExecuteGetter>(
+#[deprecated(note = "`state_executeAesGetter` should be preferred")]
+fn execute_rsa_getter_inner<GE: ExecuteGetter>(
 	getter_executor: &GE,
 	params: Params,
 ) -> Result<Option<Vec<u8>>, String> {
