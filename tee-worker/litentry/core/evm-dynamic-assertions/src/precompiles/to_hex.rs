@@ -14,22 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::precompiles::{macros::prepare_custom_failure, PrecompileResult};
+use crate::precompiles::PrecompileResult;
 use std::{format, vec::Vec};
 
 pub fn to_hex(input: Vec<u8>) -> PrecompileResult {
-	let decoded = ethabi::decode(&[ethabi::ParamType::Bytes], &input).map_err(|e| {
-		prepare_custom_failure(format!("Could not decode bytes {:?}, reason: {:?}", input, e))
-	})?;
-
+	let decoded = match ethabi::decode(&[ethabi::ParamType::Bytes], &input) {
+		Ok(d) => d,
+		Err(e) => {
+			log::debug!("Could not decode bytes {:?}, reason: {:?}", input, e);
+			let encoded = ethabi::encode(&[
+				ethabi::Token::Bool(true),
+				ethabi::Token::String(Default::default()),
+			]);
+			return Ok(evm::executor::stack::PrecompileOutput {
+				exit_status: evm::ExitSucceed::Returned,
+				output: encoded,
+			})
+		},
+	};
 	// safe to unwrap
 	let bytes = decoded.get(0).unwrap().clone().into_bytes().unwrap();
-
 	let hex_encoded = format!("0x{}", hex::encode(&bytes));
-	let encoded = ethabi::encode(&[ethabi::Token::String(hex_encoded)]);
+	let encoded = ethabi::encode(&[ethabi::Token::Bool(true), ethabi::Token::String(hex_encoded)]);
 	Ok(evm::executor::stack::PrecompileOutput {
 		exit_status: evm::ExitSucceed::Returned,
-		output: encoded[32..encoded.len()].to_vec(),
+		output: encoded,
 	})
 }
 
@@ -50,7 +59,10 @@ pub mod test {
 		//then
 		assert!(matches!(result.exit_status, ExitSucceed::Returned));
 		assert_eq!(
-			ethabi::encode(&[ethabi::Token::String("0x01020304".to_string())])[32..].to_vec(),
+			ethabi::encode(&[
+				ethabi::Token::Bool(true),
+				ethabi::Token::String("0x01020304".to_string())
+			]),
 			result.output
 		)
 	}
