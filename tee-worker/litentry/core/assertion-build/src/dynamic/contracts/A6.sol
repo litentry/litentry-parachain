@@ -36,7 +36,7 @@ contract A6 is DynamicAssertion {
         string
             memory description = "The range of the user's Twitter follower count";
         string memory assertion_type = "Twitter Follower Amount";
-        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/6-twitter-follower-amount/1-0-0.json";
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/6-twitter-follower-amount/1-1-1.json";
 
         bool result;
 
@@ -44,8 +44,9 @@ contract A6 is DynamicAssertion {
 
         for (uint256 i = 0; i < identities.length; i++) {
             if (is_twitter(identities[i])) {
+                /// "http://localhost:19528/2/users/by/username/" mock address used in dev env
                 string memory url = concatenateStrings(
-                    "http://localhost:19528/2/users/by/username/",
+                    "https://api.twitter.com/2/users/by/username/",
                     string(identities[i].value)
                 );
                 string memory full_url = concatenateStrings(
@@ -53,9 +54,7 @@ contract A6 is DynamicAssertion {
                     "?user.fields=public_metrics"
                 );
 
-                HttpHeader[] memory headers = new HttpHeader[](1);
-                // we expect first secret to be twitter api key
-                headers[0] = HttpHeader("authorization", secrets[0]);
+                HttpHeader[] memory headers = prepareHeaders(secrets[0]);
 
                 (bool get_success, int64 followers_count) = GetI64(
                     full_url,
@@ -91,7 +90,7 @@ contract A6 is DynamicAssertion {
             min = 100000;
             max = 9223372036854775807;
         }
-        result = true;
+        result = min != 0;
 
         string memory assertion = concatenateStrings(
             '{"and": [{ "src": "$total_followers", "op": ">", "dst": "',
@@ -105,5 +104,24 @@ contract A6 is DynamicAssertion {
         assertion = concatenateStrings(assertion, '" } ] }');
         assertions.push(assertion);
         return (description, assertion_type, assertions, schema_url, result);
+    }
+
+    function prepareHeaders(string memory apiKey)
+        private
+        pure
+        returns (HttpHeader[] memory)
+    {
+        HttpHeader[] memory headers = new HttpHeader[](1);
+        // we expect first secret to be twitter api key
+        headers[0] = HttpHeader("authorization", prepareAuthHeader(apiKey));
+        return headers;
+    }
+
+    function prepareAuthHeader(string memory apiKey)
+        private
+        pure
+        returns (string memory)
+    {
+        return concatenateStrings("Bearer ", apiKey);
     }
 }
