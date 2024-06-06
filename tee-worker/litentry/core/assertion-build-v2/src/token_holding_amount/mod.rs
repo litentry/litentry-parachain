@@ -45,15 +45,8 @@ pub fn build(
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 
-	let result =
-		get_token_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
-			Error::RequestVCFailed(
-				Assertion::TokenHoldingAmount(token_type.clone()),
-				ErrorDetail::DataProviderError(ErrorString::truncate_from(
-					format!("{e:?}").as_bytes().to_vec(),
-				)),
-			)
-		});
+	let result = get_token_balance(token_type.clone(), addresses, data_provider_config)
+		.map_err(|e| Error::RequestVCFailed(Assertion::TokenHoldingAmount(token_type.clone()), e));
 
 	match result {
 		Ok(value) => {
