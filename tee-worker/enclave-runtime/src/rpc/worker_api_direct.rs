@@ -319,7 +319,7 @@ where
 		let return_value: Result<AesOutput, String> = (|| {
 			let hex_encoded_params =
 				params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-			let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+			let param = &hex_encoded_params.first().ok_or("Could not get first param")?;
 			let mut request = AesRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 			let aes_key = request
