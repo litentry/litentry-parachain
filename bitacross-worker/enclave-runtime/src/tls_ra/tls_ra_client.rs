@@ -23,7 +23,8 @@ use crate::{
 	error::{Error as EnclaveError, Result as EnclaveResult},
 	initialization::global_components::{
 		EnclaveSealHandler, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIGNER_REGISTRY,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
 	shard_config::init_shard_config,
@@ -35,12 +36,11 @@ use codec::Encode;
 use itp_attestation_handler::{RemoteAttestationType, DEV_HOSTNAME};
 use itp_component_container::ComponentGetter;
 
-use bc_enclave_registry::GLOBAL_ENCLAVE_REGISTRY;
-use bc_signer_registry::GLOBAL_SIGNER_REGISTRY;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
 
+use crate::initialization::global_components::GLOBAL_ENCLAVE_REGISTRY;
 use log::*;
 use rustls::{ClientConfig, ClientSession, Stream};
 use sgx_types::*;
@@ -216,8 +216,20 @@ pub unsafe extern "C" fn request_state_provisioning(
 		},
 	};
 
-	let signer_registry = GLOBAL_SIGNER_REGISTRY.clone();
-	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.clone();
+	let signer_registry = match GLOBAL_SIGNER_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+	let enclave_registry = match GLOBAL_ENCLAVE_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
 
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,

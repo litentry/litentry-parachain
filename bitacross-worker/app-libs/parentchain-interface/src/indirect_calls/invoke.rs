@@ -15,6 +15,9 @@
 
 */
 
+use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
@@ -29,8 +32,16 @@ pub struct InvokeArgs {
 	request: RsaRequest,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for InvokeArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
+	for InvokeArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
