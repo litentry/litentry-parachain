@@ -283,10 +283,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Bitcoin(_) => "Bitcoin".into(),
 			Identity::Solana(_) => "Solana".into(),
 		},
-		RequestType::AssertionVerification(request) => {
-			let assertion = assertion_to_string(request.assertion);
-			assertion
-		},
+		RequestType::AssertionVerification(request) => assertion_to_string(request.assertion),
 	};
 	inc_stf_calls(category, &label);
 	observe_execution_time(category, &label, time)
