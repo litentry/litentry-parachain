@@ -33,8 +33,8 @@ pub fn to_hex(input: Vec<u8>) -> PrecompileResult {
 		},
 	};
 	// safe to unwrap
-	let bytes = decoded.get(0).unwrap().clone().into_bytes().unwrap();
-	let hex_encoded = format!("0x{}", hex::encode(&bytes));
+	let bytes = decoded.first().unwrap().clone().into_bytes().unwrap();
+	let hex_encoded = format!("0x{}", hex::encode(bytes));
 	let encoded = ethabi::encode(&[ethabi::Token::Bool(true), ethabi::Token::String(hex_encoded)]);
 	Ok(evm::executor::stack::PrecompileOutput {
 		exit_status: evm::ExitSucceed::Returned,

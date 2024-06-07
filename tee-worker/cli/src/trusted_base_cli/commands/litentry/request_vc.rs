@@ -629,7 +629,7 @@ impl Command {
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
 			},
 			Command::Dynamic(arg) => {
-				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();
+				let decoded_id = hex::decode(arg.smart_contract_id.clone()).unwrap();
 				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
 				Assertion::Dynamic(H160::from(id_bytes))
 			},

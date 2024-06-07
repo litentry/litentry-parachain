@@ -104,7 +104,7 @@ impl StateDir {
 
 	pub fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
 		let state_file_path = self.state_file_path(shard, state_id);
-		let metadata = std::fs::metadata(&state_file_path)?;
+		let metadata = std::fs::metadata(state_file_path)?;
 		Ok(metadata.len())
 	}
 

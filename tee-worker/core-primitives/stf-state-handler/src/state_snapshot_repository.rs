@@ -296,6 +296,7 @@ where
 		Ok(self.snapshot_history.keys().cloned().collect())
 	}
 
+	#[allow(clippy::redundant_guards)]
 	fn compare_shards_state_file_size(
 		&self,
 		shard_a: &ShardIdentifier,
