@@ -21,7 +21,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::achainable::amount_holding_time::AchainableAmountHoldingTimeUpdate;
+use lc_credentials::{
+	achainable::amount_holding_time::AchainableAmountHoldingTimeUpdate, IssuerRuntimeVersion,
+};
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string, DataProviderConfig, LIT_TOKEN_ADDRESS, WBTC_TOKEN_ADDRESS,
@@ -262,7 +264,12 @@ fn generate_vc(
 	q_min_balance: &str,
 	holding_date: Option<&str>,
 ) -> core::result::Result<Credential, ErrorDetail> {
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_amount_holding_time_credential(
 				htype,

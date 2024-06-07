@@ -9,7 +9,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    buildTwitterValidation,
+    buildWeb2Validation,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -20,7 +20,7 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
     createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCall,
@@ -75,7 +75,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -87,7 +87,8 @@ describe('Test Identity (direct invocation)', function () {
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -222,7 +223,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -310,7 +311,8 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = aliceCurrentNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -433,7 +435,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -534,7 +536,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -562,7 +564,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // the third (last) identity in the IDGraph is eveSubstrateIdentity
@@ -620,7 +622,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.equal(
@@ -674,7 +676,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.equal(

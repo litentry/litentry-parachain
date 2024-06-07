@@ -6,7 +6,7 @@ import {
     assertIdGraphHash,
     buildIdentityHelper,
     initIntegrationTestContext,
-    buildTwitterValidation,
+    buildWeb2Validation,
 } from './common/utils';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -15,8 +15,9 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
+    sendAesRequestFromGetter,
 } from './common/di-utils'; // @fixme move to a better place
 import { sleep } from './common/utils';
 import { aesKey, sendRequest, decodeRpcBytesAsString } from './common/call';
@@ -25,6 +26,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Twitter Identity (direct invocation)', function () {
     let context: IntegrationTestContext;
@@ -70,7 +72,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -82,7 +84,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -91,7 +93,8 @@ describe('Test Twitter Identity (direct invocation)', function () {
     step('linking twitter identity with public tweet verification (alice)', async function () {
         const nonce = aliceCurrentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: aliceSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -166,7 +169,8 @@ describe('Test Twitter Identity (direct invocation)', function () {
 
         const nonce = bobCurrentNonce++;
         const twitterIdentity = await buildIdentityHelper('mock_user_me', 'Twitter', context);
-        const twitterValidation = await buildTwitterValidation({
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
             signerIdentitity: bobSubstrateIdentity,
             linkIdentity: twitterIdentity,
@@ -235,7 +239,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of aliceLinkIdentityRequestParams) {
@@ -265,7 +269,7 @@ describe('Test Twitter Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of bobLinkIdentityRequestParams) {

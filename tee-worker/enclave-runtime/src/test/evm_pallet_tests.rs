@@ -82,6 +82,8 @@ pub fn test_evm_call() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut parentchain_calls,
@@ -136,6 +138,8 @@ pub fn test_evm_counter() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut parentchain_calls,
@@ -268,7 +272,17 @@ fn execute_and_verify_evm_call(
 	.sign(&pair, nonce, mrenclave, shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(state, &shard, inc_call, Default::default(), calls, repo).unwrap();
+	TestStf::execute_call(
+		state,
+		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
+		inc_call,
+		Default::default(),
+		calls,
+		repo,
+	)
+	.unwrap();
 
 	let counter_value = state
 		.execute_with(|| get_evm_account_storages(&execution_address, &H256::zero()))
@@ -318,6 +332,8 @@ pub fn test_evm_create() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut parentchain_calls,
@@ -382,6 +398,8 @@ pub fn test_evm_create2() {
 	TestStf::execute_call(
 		&mut state,
 		&shard,
+		&parachain_runtime_version,
+		&sidechain_runtime_version,
 		trusted_call,
 		Default::default(),
 		&mut parentchain_calls,

@@ -58,12 +58,16 @@ ENV IMAGE_FOR_RELEASE=$IMAGE_FOR_RELEASE
 
 ARG FINGERPRINT=none
 
+ARG SGX_COMMERCIAL_KEY
+ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
+
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
   if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
     echo "Omit cache for release image"; \
+    unset RUSTC_WRAPPER; \
     make; \
   else \
     rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
@@ -73,6 +77,7 @@ RUN \
     make && sccache --show-stats; \
   fi
 
+RUN make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}' > mrenclave.txt
 RUN cargo test --release
 
 
@@ -80,7 +85,7 @@ RUN cargo test --release
 ##################################################
 FROM node:18-bookworm-slim AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 jq curl
+RUN apt update && apt install -y libssl-dev iproute2 jq curl protobuf-compiler
 RUN corepack enable && corepack prepare pnpm@8.7.6 --activate && corepack enable pnpm
 
 
@@ -134,3 +139,51 @@ RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --versi
 
 # TODO: use entrypoint and aesm service launch, see P-295 too
 ENTRYPOINT ["/usr/local/bin/litentry-worker"]
+
+
+### Release worker image
+##################################################
+FROM ubuntu:22.04 AS worker-release
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
+
+RUN apt update && apt install -y libssl-dev iproute2 curl protobuf-compiler
+
+# Adding default user litentry with uid 1000
+ARG UID=1000
+RUN adduser -u ${UID} --disabled-password --gecos '' litentry
+RUN adduser -u ${UID} litentry sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM xterm
+ENV SGX_SDK /opt/sgxsdk
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+
+RUN mkdir -p /origin /data
+
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /origin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/mrenclave.txt /origin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+WORKDIR /origin
+
+RUN touch spid.txt key.txt && \
+    cp ./litentry-* /usr/local/bin/ && \
+    chmod +x /usr/local/bin/litentry-* && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    ls -al /usr/local/bin
+
+RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
+
+ENV DATA_DIR /data
+
+USER litentry
+WORKDIR /data
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -26,7 +26,10 @@ use itc_rest_client::{
 };
 use itp_stf_primitives::types::AccountId;
 use itp_utils::hex_display::AsBytesRef;
-use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_credentials::{
+	litentry_profile::lit_staking::UpdateLITStakingAmountCredential, IssuerRuntimeVersion,
+};
 use lc_data_providers::build_client_with_cert;
 use litentry_primitives::ParentchainBalance;
 use pallet_parachain_staking::types::Delegator;
@@ -119,21 +122,27 @@ impl DelegatorState {
 	pub fn query_lit_staking(
 		&mut self,
 		client: &mut LitentryStakingClient,
-		identities: &[Identity],
+		identities: Vec<Identity>,
 	) -> Result<u128> {
 		let mut total_staking_amount = 0_u128;
 
-		for identity in identities {
-			let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
-			let storage_in_hex = client.query_delegator_state(&storage_key)?;
+		loop_with_abort_strategy::<fn(&_) -> bool, Identity, Error>(
+			identities,
+			|identity| {
+				let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
+				let storage_in_hex = client.query_delegator_state(&storage_key)?;
 
-			if let Some(storage_in_hex) = storage_in_hex {
-				let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
-				let total = delegator.total;
+				if let Some(storage_in_hex) = storage_in_hex {
+					let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
+					let total = delegator.total;
 
-				total_staking_amount += total;
-			}
-		}
+					total_staking_amount += total;
+				}
+				Ok(LoopControls::Continue)
+			},
+			AbortStrategy::FailFast::<fn(&_) -> bool>,
+		)
+		.map_err(|errors| errors[0].clone())?;
 
 		Ok(total_staking_amount / LIT_TOKEN_DECIMALS)
 	}
@@ -183,8 +192,12 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		});
 
 	let mut client = LitentryStakingClient::new();
-	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
-	match Credential::new(&req.who, &req.shard) {
+	let staking_amount = DelegatorState.query_lit_staking(&mut client, identities)?;
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_lit_staking_amount(staking_amount);
 			Ok(credential_unsigned)

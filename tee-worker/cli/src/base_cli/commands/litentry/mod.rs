@@ -18,5 +18,6 @@ pub mod activate_identity;
 pub mod deactivate_identity;
 pub mod id_graph_hash;
 pub mod link_identity;
+pub mod shield_text;
 
 pub const IMP: &str = "IdentityManagement";

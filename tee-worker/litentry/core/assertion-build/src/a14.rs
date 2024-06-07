@@ -24,78 +24,16 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 
 use crate::*;
-use http::header::{AUTHORIZATION, CONNECTION};
-use http_req::response::Headers;
-use itc_rest_client::{
-	error::Error as RestClientError,
-	http_client::{HttpClient, SendWithCertificateVerification},
-	rest_client::RestClient,
-	RestPath, RestPost,
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_credentials::IssuerRuntimeVersion;
+use lc_data_providers::{
+	achainable::{AchainableClient, AchainableLabelQuery, LabelQueryReq, LabelQueryReqParams},
+	DataProviderConfig, Error as DataProviderError,
 };
-use lc_data_providers::{build_client_with_cert, DataProviderConfig};
-use serde::{Deserialize, Serialize};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
 	"The user has participated in any Polkadot on-chain governance events";
 const VC_A14_SUBJECT_TYPE: &str = "Polkadot Governance Participation Proof";
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct A14Data {
-	params: A14DataParams,
-	include_metadata: bool,
-	include_widgets: bool,
-}
-
-impl RestPath<String> for A14Data {
-	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
-		Ok(path)
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct A14DataParams {
-	address: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct A14Response {
-	#[serde(flatten)]
-	data: serde_json::Value,
-}
-
-// TODO: merge it to new achainable API client once the migration is done
-pub struct A14Client {
-	client: RestClient<HttpClient<SendWithCertificateVerification>>,
-}
-
-impl A14Client {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
-		let mut headers = Headers::new();
-		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert(
-			AUTHORIZATION.as_str(),
-			data_provider_config.achainable_auth_key.clone().as_str(),
-		);
-		let client =
-			build_client_with_cert("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
-		A14Client { client }
-	}
-
-	pub fn send_request(&mut self, data: &A14Data) -> Result<A14Response> {
-		self.client
-			.post_capture::<String, A14Data, A14Response>(String::default(), data)
-			.map_err(|e| {
-				Error::RequestVCFailed(
-					Assertion::A14,
-					ErrorDetail::DataProviderError(ErrorString::truncate_from(
-						format!("{e:?}").as_bytes().to_vec(),
-					)),
-				)
-			})
-	}
-}
 
 pub fn build(
 	req: &AssertionBuildRequest,
@@ -113,28 +51,36 @@ pub fn build(
 		}
 	}
 	let mut value = false;
-	let mut client = A14Client::new(data_provider_config);
+	let mut client = AchainableClient::new(data_provider_config);
 
-	for address in polkadot_addresses {
-		let data = A14Data {
-			params: A14DataParams { address },
-			include_metadata: false,
-			include_widgets: false,
-		};
-		let response = client.send_request(&data)?;
+	loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
+		polkadot_addresses,
+		|address| {
+			let data = LabelQueryReq {
+				params: LabelQueryReqParams { address: address.clone() },
+				include_metadata: false,
+				include_widgets: false,
+			};
+			let result = client.query_label("a719e99c-1f9b-432e-8f1d-cb3de0f14dde", &data)?;
+			if result {
+				value = result;
+				Ok(LoopControls::Break)
+			} else {
+				Ok(LoopControls::Continue)
+			}
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| {
+		Error::RequestVCFailed(Assertion::A14, errors[0].clone().into_error_detail())
+	})?;
 
-		let result = response
-			.data
-			.get("result")
-			.and_then(|r| r.as_bool())
-			.ok_or(Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
-		if result {
-			value = result;
-			break
-		}
-	}
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
 
-	match Credential::new(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(VC_A14_SUBJECT_DESCRIPTION, VC_A14_SUBJECT_TYPE);
@@ -147,5 +93,68 @@ pub fn build(
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(Assertion::A14, e.into_error_detail()))
 		},
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use itp_stf_primitives::types::ShardIdentifier;
+	use lc_credentials::assertion_logic::{AssertionLogic, Op};
+	use lc_data_providers::DataProviderConfig;
+	use lc_mock_server::run;
+	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple};
+	use log;
+	use std::{vec, vec::Vec};
+
+	fn init() -> DataProviderConfig {
+		let _ = env_logger::builder().is_test(true).try_init();
+		let url = run(0).unwrap();
+		let mut data_provider_conifg = DataProviderConfig::new().unwrap();
+
+		data_provider_conifg.set_achainable_url(url).unwrap();
+		data_provider_conifg
+	}
+
+	#[test]
+	fn build_a14_works() {
+		let data_provider_config = init();
+
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Substrate(AccountId::from([0; 32]).into()), vec![])];
+
+		let req: AssertionBuildRequest = AssertionBuildRequest {
+			shard: ShardIdentifier::default(),
+			signer: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]).into(),
+			assertion: Assertion::A14,
+			identities,
+			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
+			maybe_key: None,
+			should_create_id_graph: false,
+			req_ext_hash: Default::default(),
+		};
+
+		match build(&req, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build A14 done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::Item {
+						src: String::from("$total_governance_action"),
+						op: Op::GreaterThan,
+						dst: "0".into()
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build A14 failed with error {:?}", e);
+			},
+		}
 	}
 }

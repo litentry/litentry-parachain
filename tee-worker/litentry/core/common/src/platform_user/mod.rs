@@ -30,6 +30,7 @@ impl PlatformName for PlatformUserType {
 	fn get_platform_name(&self) -> &'static str {
 		match self {
 			Self::KaratDaoUser => "KaratDao",
+			Self::MagicCraftStakingUser => "MagicCraft",
 		}
 	}
 }

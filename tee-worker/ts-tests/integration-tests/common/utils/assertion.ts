@@ -16,6 +16,7 @@ import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
+import { fail } from 'assert';
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -83,19 +84,6 @@ export async function assertIdGraphMutationResult(
     return u8aToHex(decodedResult.id_graph_hash);
 }
 
-/*
-    assert vc
-    steps:
-    1. check vc status should be Active
-    2. compare vc payload hash(blake vc payload) with vc hash
-    3. check subject
-    4. compare vc index with vcPayload id
-    5. check vc signature
-    6. check vc schema
-
-    TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
-*/
-
 export async function assertVc(context: IntegrationTestContext, subject: CorePrimitivesIdentity, data: Bytes) {
     const results = context.api.createType('RequestVCResult', data);
     // step 1
@@ -151,21 +139,29 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // step 7
     // check VC mrenclave with enclave's mrenclave from registry
     assert.equal(
-        base58.encode(lastRegisteredEnclave.mrenclave),
         vcPayloadJson.issuer.mrenclave,
-        'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
+        base58.encode(lastRegisteredEnclave.mrenclave),
+        "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
     );
 
     // step 8
     // check vc issuer id
     assert.equal(
-        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
         vcPayloadJson.issuer.id,
-        'Check VC id: it should equals enclaves pubkey from parachains enclave registry'
+        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
+        "Check VC id: it should equal enclave's pubkey from parachains enclave registry"
     );
 
     // step 9
-    // validate VC aganist schema
+    // check runtime version is present
+    assert.deepEqual(
+        vcPayloadJson.issuer.runtimeVersion,
+        { parachain: 9180, sidechain: 106 },
+        'Check VC runtime version: it should equal the current defined versions'
+    );
+
+    // step 10
+    // validate VC against schema
 
     const schemaResult = await validateVcSchema(vcPayloadJson);
 

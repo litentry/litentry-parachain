@@ -278,6 +278,9 @@ pub(crate) fn main() {
 		let ethereum_keypair = enclave.get_ethereum_wallet_pair().unwrap();
 		println!("public : 0x{}", hex::encode(ethereum_keypair.public_bytes()));
 		println!("private: 0x{}", hex::encode(ethereum_keypair.private_bytes()));
+	} else if let Some(sub_matches) = matches.subcommand_matches("init-wallet") {
+		println!("Initializing wallets");
+		enclave.init_wallets(config.data_dir().to_str().unwrap()).unwrap();
 	} else {
 		println!("For options: use --help");
 	}
@@ -561,11 +564,16 @@ fn start_worker<E, T, InitializationHandler>(
 
 	println!("[Litentry:OCW] Finished initializing light client, syncing parentchain...");
 
+	// Litentry: apply skipped parentchain block
+	let parentchain_start_block = config
+		.try_parse_parentchain_start_block()
+		.expect("parentchain start block to be a valid number");
+
 	// Syncing all parentchain blocks, this might take a while..
 	let last_synced_header = integritee_parentchain_handler
 		.sync_parentchain_until_latest_finalized(
 			integritee_last_synced_header_at_last_run,
-			0,
+			parentchain_start_block,
 			*shard,
 			true,
 		)
@@ -616,6 +624,7 @@ fn start_worker<E, T, InitializationHandler>(
 
 	// Publish generated custiodian wallets
 	enclave.publish_wallets();
+	enclave.finish_enclave_init();
 
 	ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(
 		&litentry_rpc_api,

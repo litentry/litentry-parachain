@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{oneblock::query_oneblock_status, *};
-use lc_credentials::oneblock::OneBlockAssertionUpdate;
+use lc_credentials::{oneblock::OneBlockAssertionUpdate, IssuerRuntimeVersion};
 use lc_data_providers::DataProviderConfig;
 
 pub fn build(
@@ -36,7 +36,13 @@ pub fn build(
 		.collect::<Vec<String>>();
 
 	let value = query_oneblock_status(&course_type, addresses, data_provider_config)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_notion_assertion(&course_type, value);
 			Ok(credential_unsigned)

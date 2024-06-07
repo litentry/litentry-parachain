@@ -19,19 +19,17 @@
 use sp_core::{H160, U256};
 
 #[cfg(feature = "evm")]
-use std::vec::Vec;
-
-#[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 #[cfg(feature = "development")]
 use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
+	format,
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
 		SetIdentityNetworksResult, TrustedCallResult,
 	},
-	Getter,
+	Arc, Getter, String, ToString, Vec,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -39,9 +37,11 @@ use frame_support::{ensure, traits::UnfilteredDispatchable};
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 pub use ita_sgx_runtime::{
 	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
-	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System,
+	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{
+	pallet_system::SystemConstants, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
@@ -67,7 +67,6 @@ use sp_core::{
 };
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
-use std::{format, prelude::v1::*, sync::Arc};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
@@ -789,6 +788,10 @@ where
 					assertion
 				);
 
+				let parachain_runtime_version =
+					node_metadata_repo.get_from_metadata(|m| m.system_version())??.spec_version;
+				let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
+
 				Self::request_vc_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
@@ -797,6 +800,8 @@ where
 					req_ext_hash,
 					maybe_key,
 					shard,
+					parachain_runtime_version,
+					sidechain_runtime_version,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
