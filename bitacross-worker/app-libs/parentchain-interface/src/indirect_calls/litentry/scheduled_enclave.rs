@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::{
@@ -32,8 +35,16 @@ pub struct SetScheduledEnclaveArgs {
 	mrenclave: MrEnclave,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for SetScheduledEnclaveArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
+	for SetScheduledEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -53,8 +64,16 @@ pub struct RemoveScheduledEnclaveArgs {
 	sbn: SidechainBlockNumber,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-	IndirectDispatch<Executor, TrustedCallSigned> for RemoveScheduledEnclaveArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	> IndirectDispatch<Executor, TrustedCallSigned, RelayerRegistry, SignerRegistry, EnclaveRegistry>
+	for RemoveScheduledEnclaveArgs
 {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
