@@ -15,7 +15,7 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import { sleep } from './common/utils';
@@ -69,7 +69,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -81,7 +81,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.lengthOf(idGraph, 0);
@@ -224,7 +224,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of aliceLinkIdentityRequestParams) {
@@ -254,7 +254,7 @@ describe('Test Discord Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Bob,
             bobSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of bobLinkIdentityRequestParams) {

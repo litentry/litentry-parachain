@@ -18,9 +18,9 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity} from "./DynamicAssertion.sol";
+import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
 
-contract A1 is DynamicAssertion {
+contract ToHex is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
         public
         override
@@ -32,28 +32,17 @@ contract A1 is DynamicAssertion {
             bool
         )
     {
-        string
-            memory description = "You've identified at least one account/address in both Web2 and Web3.";
-        string memory assertion_type = "Basic Identity Verification";
-        assertions.push(
-            '{"and": [{ "src": "$has_web2_account", "op": "==", "dst": "true" }, { "src": "$has_web3_account", "op": "==", "dst": "true" } ] }'
-        );
-        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/1-basic-identity-verification/1-0-0.json";
-
-        bool result;
-
-        bool has_web3_identity = false;
-        bool has_web2_identity = false;
-
-        for (uint256 i = 0; i < identities.length; i++) {
-            if (is_web2(identities[i])) {
-                has_web2_identity = true;
-            } else if (is_web3(identities[i])) {
-                has_web3_identity = true;
-            }
-        }
-        result = has_web2_identity && has_web3_identity;
+        string memory description = "description";
+        string memory assertion_type = "assertion type";
+        bool result = false;
 
         return (description, assertion_type, assertions, schema_url, result);
+    }
+
+    function callToHex(string memory text)
+        public
+        returns (bool, string memory)
+    {
+        return toHex(bytes(text));
     }
 }

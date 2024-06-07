@@ -86,25 +86,46 @@ pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)])
 
 // get the active identities in the `id_graph` whose web3networks match the `desired_web3networks`,
 // return a `Vec<(Identity, Vec<Web3Network>)` with retained web3networks
+//
+// if `skip_filtering` is true, the **active** identities will be passed through regardless of the value
+// of `desired_web3networks`, which basically let assertion logic itself to handle those identities.
+#[allow(clippy::collapsible_else_if)]
 pub fn get_eligible_identities<T: Config>(
 	id_graph: &IDGraph<T>,
 	desired_web3networks: Vec<Web3Network>,
+	skip_filtering: bool,
 ) -> Vec<IdentityNetworkTuple> {
 	id_graph
 		.iter()
 		.filter_map(|item| {
 			if item.1.is_active() {
 				let mut networks = item.0.default_web3networks();
+
+				if skip_filtering {
+					return Some((item.0.clone(), networks))
+				}
 				// filter out identities whose web3networks are not supported by this specific `assertion`.
 				// We do it here before every request sending because:
 				// - it's a common step for all assertion buildings, for those assertions which only
 				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
 				// - it helps to reduce the request size a bit
 				networks.retain(|n| desired_web3networks.contains(n));
-				if networks.is_empty() && item.0.is_web3() {
-					None
+
+				// differentiate between web2 and web3 assertions:
+				// desired_web3networks.is_empty() means it's a web2 assertion,
+				// otherwise web2 identities might survive to be unexpectedly "eligible" for web3 assertions.
+				if desired_web3networks.is_empty() {
+					if item.0.is_web2() {
+						Some((item.0.clone(), networks))
+					} else {
+						None
+					}
 				} else {
-					Some((item.0.clone(), networks))
+					if item.0.is_web3() && !networks.is_empty() {
+						Some((item.0.clone(), networks))
+					} else {
+						None
+					}
 				}
 			} else {
 				None

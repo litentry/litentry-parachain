@@ -194,7 +194,11 @@ impl TrustedCallSigned {
 			should_create_id_graph = true;
 		}
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
+		let identities = get_eligible_identities(
+			id_graph.as_ref(),
+			assertion_networks,
+			assertion.skip_identity_filtering(),
+		);
 
 		ensure!(
 			!identities.is_empty(),

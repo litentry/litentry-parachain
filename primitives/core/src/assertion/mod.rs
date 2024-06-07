@@ -189,4 +189,14 @@ impl Assertion {
 			Self::Dynamic(_) => all_web3networks(),
 		}
 	}
+
+	// Used in `get_eligible_identities` to decide if we should pass identities through
+	// and let assertion logic handle them
+	#[allow(clippy::match_like_matches_macro)]
+	pub fn skip_identity_filtering(&self) -> bool {
+		match self {
+			Self::A1 | Self::Dynamic(_) => true,
+			_ => false,
+		}
+	}
 }
