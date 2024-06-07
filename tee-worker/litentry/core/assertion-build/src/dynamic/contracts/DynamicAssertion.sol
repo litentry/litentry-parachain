@@ -119,6 +119,85 @@ abstract contract DynamicAssertion {
         return (success, value);
     }
 
+    function PostI64(
+        string memory url,
+        string memory jsonPointer,
+        string memory payload,
+        HttpHeader[] memory headers
+    ) internal returns (bool, int64) {
+        bool success;
+        int64 value;
+
+        bytes memory encoded_params = abi.encode(
+            url,
+            jsonPointer,
+            payload,
+            headers
+        );
+        uint256 encoded_params_len = encoded_params.length;
+        assembly {
+            let memPtr := mload(0x40)
+            if iszero(
+                call(
+                    not(0),
+                    0x03EB,
+                    0,
+                    add(encoded_params, 0x20),
+                    encoded_params_len,
+                    memPtr,
+                    0x40
+                )
+            ) {
+                revert(0, 0)
+            }
+            success := mload(memPtr)
+            value := mload(add(memPtr, 0x20))
+            mstore(0x40, add(memPtr, 0x40))
+        }
+
+        return (success, value);
+    }
+
+    function PostBool(
+        string memory url,
+        string memory jsonPointer,
+        string memory payload,
+        HttpHeader[] memory headers
+    ) internal returns (bool, bool) {
+        bool success;
+        bool value;
+
+        bytes memory encoded_params = abi.encode(
+            url,
+            jsonPointer,
+            payload,
+            headers
+        );
+        uint256 encoded_params_len = encoded_params.length;
+
+        assembly {
+            let memPtr := mload(0x40)
+            if iszero(
+                call(
+                    not(0),
+                    0x03EC,
+                    0,
+                    add(encoded_params, 0x20),
+                    encoded_params_len,
+                    memPtr,
+                    0x40
+                )
+            ) {
+                revert(0, 0)
+            }
+            success := mload(memPtr)
+            value := mload(add(memPtr, 0x20))
+            mstore(0x40, add(memPtr, 0x40))
+        }
+
+        return (success, value);
+    }
+
     function concatenateStrings(string memory a, string memory b)
         internal
         pure
