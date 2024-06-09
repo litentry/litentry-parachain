@@ -20,7 +20,7 @@ pragma solidity ^0.8.8;
 
 import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
 
-contract GetBool is DynamicAssertion {
+contract GetI64 is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
         public
         override
@@ -41,9 +41,22 @@ contract GetBool is DynamicAssertion {
 
     function callGetBool(string memory url, string memory jsonPointer)
         public
-        returns (bool)
+        returns (bool, bool)
     {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        return GetBool(url, jsonPointer, headers);(url, jsonPointer, headers);
+        return GetBool(url, jsonPointer, headers);
+        (url, jsonPointer, headers);
+    }
+
+    function callGetBoolTwiceAndReturnSecondResult(
+        string memory firstUrl,
+        string memory firstJsonPointer,
+        string memory secondUrl,
+        string memory secondJsonPointer
+    ) public returns (bool, bool) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        GetBool(firstUrl, firstJsonPointer, headers);
+        (firstUrl, firstJsonPointer, headers);
+        return GetBool(secondUrl, secondJsonPointer, headers);
     }
 }

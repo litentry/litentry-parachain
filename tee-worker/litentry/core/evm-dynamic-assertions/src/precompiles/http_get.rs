@@ -26,10 +26,9 @@ pub mod test {
 	use crate::precompiles::{
 		http_get::{http_get_bool, http_get_i64, http_get_string},
 		mocks::MockedHttpClient,
-		PrecompileResult,
 	};
 	use ethabi::ethereum_types::U256;
-	use evm::{executor::stack::PrecompileFailure, ExitError, ExitSucceed};
+	use evm::ExitSucceed;
 
 	#[test]
 	pub fn test_get_bool() {
@@ -42,7 +41,10 @@ pub mod test {
 
 		// then
 		assert!(matches!(result.exit_status, ExitSucceed::Returned));
-		assert_eq!(ethabi::encode(&[ethabi::Token::Bool(true)]), result.output)
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(true), ethabi::Token::Bool(true)]),
+			result.output
+		)
 	}
 
 	#[test]
@@ -57,7 +59,10 @@ pub mod test {
 		// then
 		assert!(matches!(result.exit_status, ExitSucceed::Returned));
 		assert_eq!(
-			ethabi::encode(&[ethabi::Token::Uint(U256::try_from(10).unwrap())]),
+			ethabi::encode(&[
+				ethabi::Token::Bool(true),
+				ethabi::Token::Uint(U256::try_from(10).unwrap())
+			]),
 			result.output
 		)
 	}
@@ -73,78 +78,98 @@ pub mod test {
 
 		// then
 		assert!(matches!(result.exit_status, ExitSucceed::Returned));
-		assert_eq!(ethabi::encode(&[ethabi::Token::String("string".to_string())]), result.output)
+		assert_eq!(
+			ethabi::encode(&[
+				ethabi::Token::Bool(true),
+				ethabi::Token::String("string".to_string())
+			]),
+			result.output
+		)
 	}
 
 	#[test]
-	pub fn returns_error_for_invalid_url() {
+	pub fn returns_failure_for_invalid_url() {
 		// given
 		let client = MockedHttpClient::default();
 		let data = prepare_input_data("invalid_url", "/string");
 
 		// when
-		let result = http_get_string(data, client);
+		let result = http_get_string(data, client).unwrap();
 
 		// then
-		assert_exit_status_reason(
-			&result,
-			"Could not parse url \"invalid_url\", reason: RelativeUrlWithoutBase",
-		);
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::String("".to_string())]),
+			result.output
+		)
 	}
 
 	#[test]
-	pub fn returns_error_for_invalid_json_pointer() {
+	pub fn returns_failure_for_invalid_json_pointer() {
 		// given
 		let client = MockedHttpClient::default();
 		let data = prepare_input_data("https://www.litentry.com/", "invalid_pointer");
 
 		// when
-		let result = http_get_string(data, client);
+		let result = http_get_string(data, client).unwrap();
 
 		// then
-		assert_exit_status_reason(&result, "No value under given pointer: :\"invalid_pointer\"");
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::String("".to_string())]),
+			result.output
+		)
 	}
 
 	#[test]
-	pub fn returns_error_for_malformed_json() {
+	pub fn returns_failure_for_malformed_json() {
 		// given
 		let client = MockedHttpClient::malformed_json();
 		let data = prepare_input_data("https://www.litentry.com/", "string");
 
 		// when
-		let result = http_get_string(data, client);
+		let result = http_get_string(data, client).unwrap();
 
 		// then
-		assert_exit_status_reason(&result, "Could not parse json [123, 123], reason: Error(\"key must be a string\", line: 1, column: 2)");
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::String("".to_string())]),
+			result.output
+		)
 	}
 
 	#[test]
-	pub fn returns_error_for_value_of_type_other_than_expected() {
+	pub fn returns_failure_for_value_of_type_other_than_expected() {
 		// given
 		let client = MockedHttpClient::default();
 		let data = prepare_input_data("https://www.litentry.com/", "/not_bool");
 
 		// when
-		let result = http_get_bool(data, client);
+		let result = http_get_bool(data, client).unwrap();
 
 		// then
-		assert_exit_status_reason(
-			&result,
-			"There is no value or it might be of different type, pointer: $\"/not_bool\"",
-		);
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::Bool(false)]),
+			result.output
+		)
 	}
 
 	#[test]
-	pub fn returns_error_for_invalid_input_data() {
+	pub fn returns_failure_for_invalid_input_data() {
 		// given
 		let client = MockedHttpClient::default();
 		let data = [0u8, 11];
 
 		// when
-		let result = http_get_bool(data.to_vec(), client);
+		let result = http_get_bool(data.to_vec(), client).unwrap();
 
 		// then
-		assert_exit_status_reason(&result, "Could not decode bytes [0, 11], reason: InvalidData");
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::Bool(false)]),
+			result.output
+		)
 	}
 
 	#[test]
@@ -154,28 +179,14 @@ pub mod test {
 		let data = prepare_input_data("https://www.litentry.com/", "string");
 
 		// when
-		let result = http_get_string(data, client);
+		let result = http_get_string(data, client).unwrap();
 
 		// then
-		assert_exit_status_reason(
-			&result,
-			"Error while performing http call: HttpError(404, \"Not found\")",
-		);
-	}
-
-	fn assert_exit_status_reason(result: &PrecompileResult, expected_reason: &str) {
-		match result {
-			Err(e) => match e {
-				PrecompileFailure::Error { exit_status } => match exit_status {
-					ExitError::Other(reason) => {
-						assert_eq!(reason.to_string(), expected_reason)
-					},
-					_ => panic!("Different exit status"),
-				},
-				_ => panic!("Different failure"),
-			},
-			_ => panic!("Expected err"),
-		}
+		assert!(matches!(result.exit_status, ExitSucceed::Returned));
+		assert_eq!(
+			ethabi::encode(&[ethabi::Token::Bool(false), ethabi::Token::String("".to_string())]),
+			result.output
+		)
 	}
 
 	fn prepare_input_data(url: &str, pointer: &str) -> Vec<u8> {

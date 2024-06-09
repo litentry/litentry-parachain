@@ -18,22 +18,22 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity} from "DynamicAssertion.sol";
+import {DynamicAssertion, Identity} from "./DynamicAssertion.sol";
 
 contract A1 is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
-    public
-    override
-    returns (
-        string memory,
-        string memory,
-        string[] memory,
-        string memory,
-        bool
-    )
+        public
+        override
+        returns (
+            string memory,
+            string memory,
+            string[] memory,
+            string memory,
+            bool
+        )
     {
         string
-        memory description = "You've identified at least one account/address in both Web2 and Web3.";
+            memory description = "You've identified at least one account/address in both Web2 and Web3.";
         string memory assertion_type = "Basic Identity Verification";
         assertions.push(
             '{"and": [{ "src": "$has_web2_account", "op": "==", "dst": "true" }, { "src": "$has_web3_account", "op": "==", "dst": "true" } ] }'
