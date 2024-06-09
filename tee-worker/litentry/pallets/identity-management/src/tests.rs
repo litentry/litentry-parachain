@@ -67,7 +67,7 @@ fn link_twitter_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_twitter_identity(1)).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -84,7 +84,7 @@ fn link_substrate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -101,7 +101,7 @@ fn link_evm_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
@@ -117,7 +117,7 @@ fn link_identity_fails_for_linked_identity() {
 		assert_ok!(IMT::link_identity(RuntimeOrigin::signed(ALICE), bob.clone(), alice.clone(),));
 		assert_eq!(
 			IMT::id_graphs(bob.clone(), alice.clone()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&bob), 2);
 
@@ -150,7 +150,7 @@ fn cannot_link_identity_again() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who_bob.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who_bob), 2);
 
@@ -213,7 +213,7 @@ fn deactivate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone());
@@ -227,11 +227,7 @@ fn deactivate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				status: IdentityStatus::Inactive,
-				web3networks: vec![]
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive }
 		);
 
 		let id_graph = IMT::id_graph(&who.clone())
@@ -264,7 +260,7 @@ fn activate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active, web3networks: vec![] }
+			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 		let id_graph = IMT::id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
@@ -277,11 +273,7 @@ fn activate_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				status: IdentityStatus::Inactive,
-				web3networks: vec![]
-			}
+			IdentityContext { link_block: 1, status: IdentityStatus::Inactive }
 		);
 		let id_graph = IMT::id_graph(&who.clone())
 			.into_iter()

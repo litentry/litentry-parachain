@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::{IDGraphs, IdentityContext, OldIDGraphs};
 use frame_support::{
 	traits::{GetStorageVersion, PalletInfoAccess, StorageVersion},
 	weights::Weight,
@@ -59,5 +60,17 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 		// 	[2u8; 32],
 		// );
 	}
+	Weight::zero()
+}
+
+pub fn drop_web3networks_from_id_graph<T: crate::Config>() -> Weight {
+	for (who, identity, context) in OldIDGraphs::<T>::iter() {
+		IDGraphs::<T>::insert(
+			&who,
+			&identity,
+			IdentityContext { link_block: context.link_block, status: context.status },
+		);
+	}
+
 	Weight::zero()
 }
