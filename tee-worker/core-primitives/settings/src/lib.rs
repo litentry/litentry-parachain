@@ -47,6 +47,7 @@ pub mod files {
 
 	// litentry
 	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
+	pub const ASSERTIONS_FILE: &str = "assertions_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 

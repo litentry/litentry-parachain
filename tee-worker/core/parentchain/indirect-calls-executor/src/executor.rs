@@ -27,9 +27,12 @@ use crate::{
 use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
+use itp_api_client_types::StaticEvent;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{
 	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
 use itp_stf_primitives::{
@@ -38,12 +41,17 @@ use itp_stf_primitives::{
 };
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::{HandleParentchainEvents, ParentchainId},
+	parentchain::{events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId},
 	OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
+use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
-use std::{fmt::Debug, sync::Arc, vec::Vec};
+use std::{fmt::Debug, string::String, sync::Arc, vec::Vec};
+
+fn hash_of<T: Encode + ?Sized>(ev: &T) -> H256 {
+	blake2_256(&ev.encode()).into()
+}
 
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
@@ -60,6 +68,7 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
+	parentchain_event_handler: ParentchainEventHandler,
 	_phantom: PhantomData<(EventCreator, ParentchainEventHandler, TCS, G)>,
 }
 impl<
@@ -89,6 +98,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
+		parentchain_event_handler: ParentchainEventHandler,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
@@ -96,6 +106,7 @@ impl<
 			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
+			parentchain_event_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -133,13 +144,15 @@ impl<
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
-	fn execute_indirect_calls_in_block<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock, OCallApi>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
+		metrics_api: Arc<OCallApi>,
 	) -> Result<Option<OpaqueCall>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+		OCallApi: EnclaveMetricsOCallApi,
 	{
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
@@ -153,7 +166,9 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
+		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
+
+		update_parentchain_events_processed_metrics(metrics_api, &processed_events);
 
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
@@ -188,6 +203,28 @@ impl<
 		//           however, we should not forget it in case we need it later
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
+}
+
+fn update_parentchain_events_processed_metrics<OCallApi>(
+	metrics_api: Arc<OCallApi>,
+	events: &[H256],
+) where
+	OCallApi: EnclaveMetricsOCallApi,
+{
+	events
+		.iter()
+		.filter_map(|ev| match *ev {
+			event if event == hash_of(ParentchainBlockProcessed::EVENT) =>
+				Some(ParentchainBlockProcessed::EVENT),
+			_ => None,
+		})
+		.for_each(|event| {
+			if let Err(e) = metrics_api
+				.update_metric(EnclaveMetric::ParentchainEventProcessed(String::from(event)))
+			{
+				warn!("Failed to update metric for {} event: {:?}", event, e);
+			}
+		});
 }
 
 impl<
@@ -257,8 +294,7 @@ impl<
 mod test {
 	use super::*;
 	use crate::mock::*;
-	use codec::{Decode, Encode};
-	use itc_parentchain_test::ParentchainBlockBuilder;
+	use codec::Encode;
 	use itp_node_api::{
 		api_client::{
 			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
@@ -268,10 +304,6 @@ mod test {
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
-	use itp_stf_primitives::{
-		traits::TrustedCallVerification,
-		types::{AccountId, TrustedOperation},
-	};
 	use itp_test::mock::{
 		shielding_crypto_mock::ShieldingCryptoMock,
 		stf_mock::{GetterMock, TrustedCallSignedMock},
@@ -279,8 +311,7 @@ mod test {
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
 	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
-	use std::assert_matches::assert_matches;
+	use sp_runtime::{MultiAddress, MultiSignature};
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
@@ -389,6 +420,7 @@ mod test {
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
+		let parentchain_event_handler = MockParentchainEventHandler {};
 
 		let executor = IndirectCallsExecutor::new(
 			shielding_key_repo.clone(),
@@ -396,6 +428,7 @@ mod test {
 			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
+			parentchain_event_handler,
 		);
 
 		(executor, top_pool_author, shielding_key_repo)

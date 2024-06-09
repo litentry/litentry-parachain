@@ -7,7 +7,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
-	pub use hex_sgx as hex;
 }
 
 #[cfg(all(feature = "std", feature = "sgx"))]
@@ -19,7 +18,10 @@ pub use crate::sgx_reexport_prelude::*;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPoolBuilder;
-use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
+use ita_sgx_runtime::{
+	pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime, VERSION as SIDECHAIN_VERSION,
+};
+
 #[cfg(feature = "development")]
 use ita_stf::helpers::ensure_alice;
 use ita_stf::{
@@ -31,7 +33,8 @@ use ita_stf::{
 use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
-	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_system::SystemConstants, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	NodeMetadataTrait,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -45,6 +48,8 @@ use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall,
 	ShardIdentifier, H256,
 };
+use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
@@ -52,7 +57,7 @@ use litentry_macros::if_development_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
-use sp_core::blake2_256;
+use sp_core::{blake2_256, H160};
 use std::{
 	boxed::Box,
 	collections::{HashMap, HashSet},
@@ -67,8 +72,8 @@ use std::{
 	vec::Vec,
 };
 
-pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 ) where
@@ -83,6 +88,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem> + Send + Sync + 'static,
 {
 	let vc_task_receiver = init_vc_task_sender_storage();
 	let n_workers = 960;
@@ -365,9 +371,9 @@ impl RequestRegistry {
 	}
 }
 
-fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
+fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	hash: H256,
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	response: Result<Vec<u8>, String>,
 	idx: u8,
 	len: u8,
@@ -381,6 +387,7 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	let vc_res: RequestVcResultOrError = match response.clone() {
 		Ok(payload) => RequestVcResultOrError { payload, is_error: false, idx, len },
@@ -399,9 +406,9 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O>(
 	}
 }
 
-fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
+fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 	shard: H256,
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
@@ -419,8 +426,18 @@ where
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	let start_time = Instant::now();
+	let parachain_runtime_version = node_metadata_repo
+		.get_from_metadata(|m| {
+			m.system_version()
+				.map_err(|_| "Failed to get version from system pallet".to_string())
+		})
+		.map_err(|_| "Failed to get metadata".to_string())??
+		.spec_version;
+	let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
+
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
@@ -506,7 +523,11 @@ where
 
 		let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
+		let identities = get_eligible_identities(
+			id_graph.as_ref(),
+			assertion_networks,
+			assertion.skip_identity_filtering(),
+		);
 		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer_account = signer
@@ -534,6 +555,8 @@ where
 			top_hash: H256::zero(),
 			parachain_block_number,
 			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,

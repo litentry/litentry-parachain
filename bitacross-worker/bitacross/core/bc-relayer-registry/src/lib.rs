@@ -1,3 +1,19 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate core;
@@ -9,20 +25,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use sp_std::{boxed::Box, fmt::Debug};
 
-use lazy_static::lazy_static;
 use litentry_primitives::Identity;
 use log::error;
-use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+use std::{collections::BTreeMap, path::PathBuf};
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
-
-lazy_static! {
-	/// Global instance of a RelayerRegistry
-	pub static ref GLOBAL_RELAYER_REGISTRY: Arc<RelayerRegistry> = Default::default();
-}
 
 pub type RelayerRegistryMap = BTreeMap<Identity, ()>;
 
@@ -30,6 +40,12 @@ pub type RelayerRegistryMap = BTreeMap<Identity, ()>;
 pub struct RelayerRegistry {
 	pub registry: RwLock<RelayerRegistryMap>,
 	pub seal_path: PathBuf,
+}
+
+impl RelayerRegistry {
+	pub fn new(base_dir: PathBuf) -> Self {
+		RelayerRegistry { registry: Default::default(), seal_path: base_dir }
+	}
 }
 
 pub type RegistryResult<T> = core::result::Result<T, RegistryError>;
@@ -145,18 +161,12 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 				"[Enclave] RelayerRegistry file not found, creating new! {}",
 				RELAYER_REGISTRY_FILE
 			);
-			let registry = GLOBAL_RELAYER_REGISTRY
-				.registry
-				.write()
-				.map_err(|_| RegistryError::PoisonLock)?;
+			let registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 			enclave_seal.seal(&*registry)
 		} else {
 			let m = enclave_seal.unseal()?;
 			info!("[Enclave] RelayerRegistry unsealed from file: {:?}", m);
-			let mut registry = GLOBAL_RELAYER_REGISTRY
-				.registry
-				.write()
-				.map_err(|_| RegistryError::PoisonLock)?;
+			let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 			*registry = m;
 			Ok(())
 		}
@@ -164,20 +174,14 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 
 	#[cfg(feature = "sgx")]
 	fn update(&self, account: Identity) -> RegistryResult<()> {
-		let mut registry = GLOBAL_RELAYER_REGISTRY
-			.registry
-			.write()
-			.map_err(|_| RegistryError::PoisonLock)?;
+		let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 		registry.insert(account, ());
 		RelayerRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
 	}
 
 	#[cfg(feature = "sgx")]
 	fn remove(&self, account: Identity) -> RegistryResult<()> {
-		let mut registry = GLOBAL_RELAYER_REGISTRY
-			.registry
-			.write()
-			.map_err(|_| RegistryError::PoisonLock)?;
+		let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 		let old_value = registry.remove(&account);
 		if old_value.is_some() {
 			return RelayerRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
@@ -196,7 +200,7 @@ impl RelayerRegistryLookup for RelayerRegistry {
 	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: Identity) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
-		let registry = GLOBAL_RELAYER_REGISTRY.registry.read().unwrap();
+		let registry = self.registry.read().unwrap();
 		registry.contains_key(&account)
 	}
 }

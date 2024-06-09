@@ -18,8 +18,8 @@
 
 use crate::error::{Error, ServiceResult};
 use itp_settings::files::{
-	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH,
-	SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE,
+	SHARDS_PATH, SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 	TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use std::{fs, path::Path};
@@ -147,6 +147,7 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_dir_if_it_exists(root_directory, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 
 	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
+	remove_file_if_it_exists(root_directory, ASSERTIONS_FILE)?;
 	Ok(())
 }
 
@@ -196,6 +197,8 @@ mod tests {
 		fs::create_dir_all(&root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
 			.unwrap();
 
+		fs::File::create(&root_directory.join(ASSERTIONS_FILE)).unwrap();
+
 		purge_files(&root_directory).unwrap();
 
 		assert!(!shards_path.exists());
@@ -203,6 +206,8 @@ mod tests {
 		assert!(!root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 		assert!(!root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(ASSERTIONS_FILE).exists());
 	}
 
 	#[test]

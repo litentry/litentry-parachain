@@ -21,9 +21,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_credentials::IssuerRuntimeVersion;
 use lc_data_providers::{
 	achainable::{AchainableAccountTotalTransactions, AchainableClient},
-	DataProviderConfig,
+	DataProviderConfig, Error as DataProviderError,
 };
 use litentry_primitives::BoundedWeb3Network;
 
@@ -44,19 +46,29 @@ pub fn build(
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
-	for (network, addresses) in identities {
-		networks_set.insert(network);
 
-		let txs = client.total_transactions(&network, &addresses).map_err(|e| {
-			error!("Assertion A8 query total_transactions error: {:?}", e);
-			Error::RequestVCFailed(
-				Assertion::A8(bounded_web3networks.clone()),
-				e.into_error_detail(),
-			)
-		})?;
+	loop_with_abort_strategy::<fn(&_) -> bool, (Web3Network, Vec<String>), DataProviderError>(
+		identities,
+		|identity| {
+			let network = identity.0;
+			let addresses = identity.1.to_vec();
 
-		total_txs += txs;
-	}
+			networks_set.insert(network);
+
+			let txs = client.total_transactions(&network, addresses)?;
+
+			total_txs += txs;
+
+			Ok(LoopControls::Continue)
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| {
+		let e = errors[0].clone();
+		error!("Assertion A8 query total_transactions error: {:?}", e);
+		Error::RequestVCFailed(Assertion::A8(bounded_web3networks.clone()), e.into_error_detail())
+	})?;
+
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let networks = if networks_set.is_empty() {
@@ -66,7 +78,13 @@ pub fn build(
 	};
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(networks, min, max);

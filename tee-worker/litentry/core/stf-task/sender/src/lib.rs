@@ -38,9 +38,13 @@ pub use error::*;
 mod request;
 pub use request::*;
 
-use std::sync::{
-	mpsc::{channel, Receiver, Sender},
-	Arc, Mutex,
+use std::{
+	boxed::Box,
+	error::Error as StdError,
+	sync::{
+		mpsc::{channel, Receiver, Sender},
+		Arc, Mutex,
+	},
 };
 
 pub type StfSender = Sender<RequestType>;

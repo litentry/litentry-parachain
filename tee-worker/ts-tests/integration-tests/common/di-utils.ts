@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat } from '@polkadot/util';
+import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
@@ -12,7 +12,14 @@ import type {
     TrustedGetterSigned,
     TrustedCall,
 } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep, createLitentryMultiSignature } from './utils';
+import {
+    encryptWithTeeShieldingKey,
+    Signer,
+    encryptWithAes,
+    sleep,
+    createLitentryMultiSignature,
+    decryptWithAes,
+} from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
@@ -37,37 +44,43 @@ async function sendRequest(
     api: ApiPromise,
     onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ): Promise<WorkerRpcReturnValue> {
-    const p = new Promise<WorkerRpcReturnValue>((resolve) =>
+    const p = new Promise<WorkerRpcReturnValue>((resolve, reject) =>
         wsClient.onMessage.addListener((data) => {
             const parsed = JSON.parse(data);
-            if (parsed.id === request.id) {
-                const result = parsed.result;
-                const res = api.createType('WorkerRpcReturnValue', result);
+            if (parsed.id !== request.id) {
+                return;
+            }
 
-                console.log('Got response: ' + JSON.stringify(res.toHuman(), null, 2));
+            if ('error' in parsed) {
+                const transaction = { request, response: parsed };
+                console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
+                reject(new Error(parsed.error.message, { cause: transaction }));
+            }
 
-                if (res.status.isError) {
-                    console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
-                }
+            const result = parsed.result;
+            const res = api.createType('WorkerRpcReturnValue', result);
 
-                if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
-                    console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
-                    const stfError = api.createType('StfError', res.value);
-                    const msg = stfErrorToString(stfError);
-                    console.log('TrustedOperationStatus error: ', msg);
-                }
-                // sending every response we receive from websocket
-                if (onMessageReceived) onMessageReceived(res);
+            if (res.status.isError) {
+                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
+            }
 
-                // resolve it once `do_watch` is false, meaning it's the final response
-                if (res.do_watch.isFalse) {
-                    // TODO: maybe only remove this listener
-                    wsClient.onMessage.removeAllListeners();
-                    resolve(res);
-                } else {
-                    // `do_watch` is true means: hold on - there's still something coming
-                    console.log('do_watch is true, continue watching ...');
-                }
+            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                const stfError = api.createType('StfError', res.value);
+                const msg = stfErrorToString(stfError);
+                console.log('TrustedOperationStatus error: ', msg);
+            }
+            // sending every response we receive from websocket
+            if (onMessageReceived) onMessageReceived(res);
+
+            // resolve it once `do_watch` is false, meaning it's the final response
+            if (res.do_watch.isFalse) {
+                // TODO: maybe only remove this listener
+                wsClient.onMessage.removeAllListeners();
+                resolve(res);
+            } else {
+                // `do_watch` is true means: hold on - there's still something coming
+                console.log('do_watch is true, continue watching ...');
             }
         })
     );
@@ -365,7 +378,7 @@ export const getIdGraphHash = async (
         primeIdentity.toHuman()
     );
     const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const res = await sendRsaRequestFromGetter(context, teeShieldingKey, getter);
     const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('H256', hash);
 };
@@ -396,7 +409,8 @@ export const sendRequestFromTrustedCall = async (
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
-export const sendRequestFromGetter = async (
+/** @deprecated use `sendAesRequestFromGetter` instead */
+export const sendRsaRequestFromGetter = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     getter: Getter
@@ -409,6 +423,36 @@ export const sendRequestFromGetter = async (
     // hopefully we will query correct state
     await sleep(1);
     return sendRequest(context.tee, request, context.api);
+};
+
+export const sendAesRequestFromGetter = async (
+    context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    aesKey: Uint8Array,
+    getter: Getter
+): Promise<WorkerRpcReturnValue> => {
+    // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
+    //            this is what `state_executeAesGetter` expects in rust
+    const requestParam = await createAesRequest(
+        context.api,
+        context.mrEnclave,
+        teeShieldingKey,
+        aesKey,
+        getter.toU8a()
+    );
+    const request = createJsonRpcRequest('state_executeAesGetter', [u8aToHex(requestParam)], nextRequestId(context));
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
+    // hopefully we will query correct state
+    await sleep(1);
+    const res = await sendRequest(context.tee, request, context.api);
+    const aesOutput = context.api.createType('AesOutput', res.value);
+    const decryptedValue = decryptWithAes(u8aToHex(aesKey), aesOutput, 'hex');
+
+    return context.api.createType('WorkerRpcReturnValue', {
+        value: decryptedValue,
+        do_watch: res.do_watch,
+        status: res.status,
+    });
 };
 
 // get TEE's shielding key directly via RPC

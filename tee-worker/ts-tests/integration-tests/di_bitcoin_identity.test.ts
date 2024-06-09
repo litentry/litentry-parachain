@@ -17,14 +17,16 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
+    sendAesRequestFromGetter,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { Bytes, Vec } from '@polkadot/types';
+import { type Bytes, type Vec } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
+import { hexToU8a } from '@polkadot/util';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -74,7 +76,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context.web3Wallets.bitcoin.Alice,
             aliceBitcoinIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
         assert.lengthOf(idGraph, 0);
     });
@@ -170,7 +172,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context.web3Wallets.bitcoin.Alice,
             aliceBitcoinIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
@@ -246,7 +248,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context.web3Wallets.bitcoin.Alice,
             aliceBitcoinIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of deactivateIdentityRequestParams) {
@@ -315,7 +317,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context.web3Wallets.bitcoin.Alice,
             aliceBitcoinIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {

@@ -22,7 +22,7 @@ use codec::Decode;
 use frame_metadata::RuntimeMetadataPrefixed;
 use itp_api_client_types::Metadata;
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use itp_types::{MrEnclave, H256};
+use itp_types::MrEnclave;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
 

@@ -28,9 +28,8 @@ use crate::{
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
@@ -45,18 +44,25 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
-use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
+use bc_enclave_registry::EnclaveRegistryUpdater;
+use bc_musig2_ceremony::{CeremonyRegistry, MuSig2Ceremony};
+use bc_musig2_runner::init_ceremonies_thread;
+use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
+use bc_signer_registry::SignerRegistryUpdater;
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use ita_stf::{Getter, TrustedCallSigned};
+use itc_direct_rpc_client::DirectRpcClientFactory;
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
+
+use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId};
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ed25519_self_signed_certificate,
+	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
@@ -70,22 +76,32 @@ use itp_settings::files::{
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
-	ecdsa::create_ecdsa_repository, get_aes_repository, get_ed25519_repository,
-	get_rsa3072_repository, key_repository::AccessKey, schnorr::create_schnorr_repository,
+	ecdsa::create_ecdsa_repository,
+	get_aes_repository, get_ed25519_repository, get_rsa3072_repository,
+	key_repository::{AccessKey, KeyRepository},
+	schnorr::{create_schnorr_repository, Pair as SchnorrPair, Seal},
 };
+
+use crate::initialization::global_components::{
+	GLOBAL_ENCLAVE_REGISTRY, GLOBAL_RELAYER_REGISTRY, GLOBAL_SIGNER_REGISTRY,
+};
+use bc_enclave_registry::EnclaveRegistry;
+use bc_signer_registry::SignerRegistry;
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
 	state_snapshot_repository::VersionedStateAccess,
 	state_snapshot_repository_loader::StateSnapshotRepositoryLoader, StateHandler,
 };
 use itp_top_pool::pool::Options as PoolOptions;
-use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
+use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::BroadcastedRequest;
+use litentry_macros::if_development_or;
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
+use std::sync::SgxMutex as Mutex;
 
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
@@ -98,12 +114,14 @@ pub(crate) fn init_enclave(
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
 
-	let bitcoin_key_repository = Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin")?);
+	let bitcoin_key_repository =
+		Arc::new(create_schnorr_repository(base_dir.clone(), "bitcoin", None)?);
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
 	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public_bytes());
 
-	let ethereum_key_repository = Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum")?);
+	let ethereum_key_repository =
+		Arc::new(create_ecdsa_repository(base_dir.clone(), "ethereum", None)?);
 	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
 	let ethereum_key = ethereum_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public_bytes());
@@ -135,7 +153,7 @@ pub(crate) fn init_enclave(
 	GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(target_b_light_client_seal);
 
 	let state_file_io =
-		Arc::new(EnclaveStateFileIo::new(state_key_repository, StateDir::new(base_dir)));
+		Arc::new(EnclaveStateFileIo::new(state_key_repository, StateDir::new(base_dir.clone())));
 	let state_initializer =
 		Arc::new(EnclaveStateInitializer::new(shielding_key_repository.clone()));
 	let state_snapshot_repository_loader = StateSnapshotRepositoryLoader::<
@@ -189,43 +207,115 @@ pub(crate) fn init_enclave(
 	let rpc_responder =
 		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
 
-	let (request_sink, broadcaster) = init(rpc_responder.clone());
-	let request_sink_cloned = request_sink.clone();
-
 	let top_pool_author = create_top_pool_author(
-		rpc_responder,
+		rpc_responder.clone(),
 		state_handler,
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
-		request_sink_cloned,
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
-	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
-	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
-
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
+
+	let ceremony_registry = Arc::new(Mutex::new(HashMap::<
+		CeremonyId,
+		MuSig2Ceremony<KeyRepository<SchnorrPair, Seal>>,
+	>::new()));
+
+	let pending_ceremony_commands = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+
+	let attestation_handler =
+		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository.clone()));
+	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
+
+	let relayer_registry = RelayerRegistry::new(base_dir.clone());
+	relayer_registry.init().map_err(|e| Error::Other(e.into()))?;
+	GLOBAL_RELAYER_REGISTRY.initialize(relayer_registry.into());
+
+	let signer_registry = Arc::new(SignerRegistry::new(base_dir.clone()));
+	signer_registry.init().map_err(|e| Error::Other(e.into()))?;
+	GLOBAL_SIGNER_REGISTRY.initialize(signer_registry.clone());
+
+	let enclave_registry = Arc::new(EnclaveRegistry::new(base_dir));
+	enclave_registry.init().map_err(|e| Error::Other(e.into()))?;
+	GLOBAL_ENCLAVE_REGISTRY.initialize(enclave_registry.clone());
+
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
 		ocall_api.clone(),
-		signing_key_repository.clone(),
+		signing_key_repository,
 		bitcoin_key_repository,
 		ethereum_key_repository,
+		signer_registry,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
-	let attestation_handler =
-		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
-	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
+	let ceremony_registry_cloned = ceremony_registry.clone();
+	let pending_ceremony_commands_cloned = pending_ceremony_commands.clone();
 
-	GLOBAL_RELAYER_REGISTRY.init().map_err(|e| Error::Other(e.into()))?;
+	std::thread::spawn(move || {
+		run_bit_across_handler(ceremony_registry, pending_ceremony_commands, signer.public().0)
+			.unwrap()
+	});
 
-	std::thread::spawn(move || run_bit_across_handler().unwrap());
+	let client_factory = DirectRpcClientFactory {};
+	init_ceremonies_thread(
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?,
+		Arc::new(client_factory),
+		enclave_registry,
+		ceremony_registry_cloned,
+		pending_ceremony_commands_cloned,
+		ocall_api,
+		rpc_responder,
+	);
+	Ok(())
+}
+
+pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
+}
+
+#[allow(unused_variables)]
+pub(crate) fn init_wallets(base_dir: PathBuf) -> EnclaveResult<()> {
+	if_development_or!(
+		{
+			println!("Initializing wallets from BTC_KEY and ETH_KEY env variables");
+			let btc_key: Option<[u8; 32]> = read_key_from_env("BTC_KEY")?;
+			create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
+
+			let eth_key: Option<[u8; 32]> = read_key_from_env("ETH_KEY")?;
+			create_ecdsa_repository(base_dir, "ethereum", eth_key)?;
+		},
+		{
+			println!("Init wallets available in dev mode only!");
+		}
+	);
+
+	Ok(())
+}
+
+#[cfg(feature = "development")]
+fn read_key_from_env(env_variable: &str) -> EnclaveResult<Option<[u8; 32]>> {
+	use std::env;
+	if let Ok(value) = env::var(env_variable) {
+		let decoded =
+			hex::decode(value).map_err(|_| Error::Other("Could not decode key value".into()))?;
+		Ok(Some(
+			decoded
+				.try_into()
+				.map_err(|_| Error::Other("Provided key is not 32 bytes long".into()))?,
+		))
+	} else {
+		Ok(None)
+	}
 }
 
 pub(crate) fn publish_wallets() -> EnclaveResult<()> {
@@ -261,6 +351,11 @@ pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 		.execute_mut_on_validator(|v| v.send_extrinsics(xts))
 		.map_err(|e| Error::Other(e.into()))?;
 
+	//todo: this should be called as late as possible P-727
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
+
 	Ok(())
 }
 
@@ -279,19 +374,21 @@ fn initialize_state_observer(
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
 }
 
-fn run_bit_across_handler() -> Result<(), Error> {
+fn run_bit_across_handler(
+	musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
+	musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
+	signing_key_pub: [u8; 32],
+) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.clone();
+	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.get()?;
+	let enclave_registry_lookup = GLOBAL_ENCLAVE_REGISTRY.get()?;
+	let signer_registry_lookup = GLOBAL_SIGNER_REGISTRY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
 	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
-
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
@@ -310,25 +407,41 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 		relayer_registry_lookup,
+		musig2_ceremony_registry,
+		enclave_registry_lookup,
+		signer_registry_lookup,
+		musig2_ceremony_pending_commands,
+		signing_key_pub,
 	);
 	run_bit_across_handler_runner(Arc::new(stf_task_context));
 	Ok(())
 }
 
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
+	info!("Initialize direct invocation server on {}", &server_addr);
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	let cert =
-		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	let url = url::Url::parse(&server_addr).map_err(|e| Error::Other(format!("{}", e).into()))?;
+	let maybe_config_provider = if url.scheme() == "wss" {
+		let cert = ed25519_self_signed_certificate(signer, "Enclave")
+			.map_err(|e| Error::Other(e.into()))?;
 
-	// Serialize certificate(s) and private key to PEM.
-	// PEM format is needed as a certificate chain can only be serialized into PEM.
-	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
-	let private_key = cert.serialize_private_key_pem();
+		// Serialize certificate(s) and private key to PEM.
+		// PEM format is needed as a certificate chain can only be serialized into PEM.
+		let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
+		let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
+	} else {
+		None
+	};
+
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 
@@ -363,7 +476,6 @@ pub fn create_top_pool_author(
 	state_handler: Arc<EnclaveStateHandler>,
 	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
-	requests_sink: Arc<std::sync::mpsc::SyncSender<BroadcastedRequest>>,
 ) -> Arc<EnclaveTopPoolAuthor> {
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
 	let top_pool =
@@ -372,10 +484,8 @@ pub fn create_top_pool_author(
 	Arc::new(EnclaveTopPoolAuthor::new(
 		top_pool,
 		AuthorTopFilter::<TrustedCallSigned, Getter>::new(),
-		BroadcastedTopFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repository,
 		ocall_api,
-		requests_sink,
 	))
 }

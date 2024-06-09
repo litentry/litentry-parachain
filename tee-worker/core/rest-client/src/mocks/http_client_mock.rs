@@ -91,6 +91,16 @@ impl SendHttpRequest for HttpClientMock {
 
 		Ok((response, encoded_response_body))
 	}
+
+	fn send_request_raw(
+		&self,
+		_url: Url,
+		_method: Method,
+		_maybe_body: Option<String>,
+		_headers: Vec<(String, String)>,
+	) -> Result<(Response, EncodedBody), Error> {
+		todo!()
+	}
 }
 
 impl SetHttpHeader for HttpClientMock {

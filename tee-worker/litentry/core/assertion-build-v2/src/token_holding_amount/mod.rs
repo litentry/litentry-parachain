@@ -20,7 +20,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials_v2::{token_holding_amount::TokenHoldingAmountAssertionUpdate, Credential};
+use lc_credentials_v2::{
+	token_holding_amount::TokenHoldingAmountAssertionUpdate, Credential, IssuerRuntimeVersion,
+};
 use lc_service::web3_token::token_balance::get_token_balance;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Web3Network, Web3TokenType};
@@ -45,29 +47,26 @@ pub fn build(
 
 	let result =
 		get_token_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
-			Error::RequestVCFailed(
-				Assertion::TokenHoldingAmount(token_type.clone()),
-				ErrorDetail::DataProviderError(ErrorString::truncate_from(
-					format!("{e:?}").as_bytes().to_vec(),
-				)),
-			)
-		});
+			Error::RequestVCFailed(Assertion::TokenHoldingAmount(token_type.clone()), e)
+		})?;
 
-	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_token_holding_amount_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::TokenHoldingAmount(token_type),
-					e.into_error_detail(),
-				))
-			},
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_token_holding_amount_assertion(token_type, result);
+			Ok(credential_unsigned)
 		},
-		Err(e) => Err(e),
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::TokenHoldingAmount(token_type),
+				e.into_error_detail(),
+			))
+		},
 	}
 }
 
@@ -99,6 +98,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -225,12 +226,12 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "1".into()
+								dst: "0.6".into()
 							}),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "50".into()
+								dst: "1.2".into()
 							})
 						]
 					}
@@ -642,12 +643,7 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "1600".into()
-							}),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::LessThan,
-								dst: "3000".into()
+								dst: "50".into()
 							})
 						]
 					}
@@ -658,5 +654,45 @@ mod tests {
 				panic!("build btc TokenHoldingAmount failed with error {:?}", e);
 			},
 		}
+	}
+
+	#[test]
+	fn build_bean_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		let req = crate_assertion_build_request(Web3TokenType::Bean, identities);
+		match build(&req, Web3TokenType::Bean, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build bean TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Bean),
+							create_network_address_assertion_logics(Web3TokenType::Bean),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "5000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "10000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build bean TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
 	}
 }
