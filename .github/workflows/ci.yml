@@ -247,7 +247,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:latest"
+    container: "litentry/litentry-tee-dev:intel-sgx-sdk-2.21"
     steps:
       - uses: actions/checkout@v4
 
@@ -339,7 +339,7 @@ jobs:
       - sequentialise
     if: needs.set-condition.outputs.rebuild_bitacross == 'true'
     #    todo: we might want to change this image in the future
-    container: "litentry/litentry-tee-dev:intel-sgx-sdk-2.17"
+    container: "litentry/litentry-tee-dev:intel-sgx-sdk-2.21"
     steps:
       - uses: actions/checkout@v4
 
