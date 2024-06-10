@@ -3,10 +3,13 @@ use crate::{
 	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
 	IndirectDispatch,
 };
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use litentry_primitives::DecryptableRequest;
 
+use bc_enclave_registry::EnclaveRegistry;
 use itp_node_api::{
 	api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4},
 	metadata::NodeMetadataTrait,
@@ -130,8 +133,22 @@ pub enum IndirectCall {
 	Invoke(InvokeArgs),
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for IndirectCall
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSignedMock,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>
+	IndirectDispatch<
+		Executor,
+		TrustedCallSignedMock,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for IndirectCall
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> ICResult<()> {
@@ -178,10 +195,23 @@ impl FilterEvents for MockEvents {
 
 pub struct MockParentchainEventHandler {}
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
-	for MockParentchainEventHandler
+impl<Executor>
+	HandleParentchainEvents<
+		Executor,
+		TrustedCallSignedMock,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for MockParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
+	Executor: IndirectExecutor<
+		TrustedCallSignedMock,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	>,
 {
 	fn handle_events(
 		_: &Executor,
@@ -200,8 +230,22 @@ pub struct ShieldFundsArgs {
 	shard: ShardIdentifier,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for ShieldFundsArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSignedMock,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>
+	IndirectDispatch<
+		Executor,
+		TrustedCallSignedMock,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for ShieldFundsArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {
@@ -231,8 +275,22 @@ pub struct InvokeArgs {
 	request: RsaRequest,
 }
 
-impl<Executor: IndirectExecutor<TrustedCallSignedMock, Error>>
-	IndirectDispatch<Executor, TrustedCallSignedMock> for InvokeArgs
+impl<
+		Executor: IndirectExecutor<
+			TrustedCallSignedMock,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>
+	IndirectDispatch<
+		Executor,
+		TrustedCallSignedMock,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for InvokeArgs
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> ICResult<()> {

@@ -15,9 +15,12 @@
 
 */
 
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::Encode;
 pub use ita_sgx_runtime::{Balance, Index};
 
+use bc_enclave_registry::EnclaveRegistry;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -30,7 +33,15 @@ use log::*;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn shield_funds<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn shield_funds<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>(
 		executor: &Executor,
 		account: &AccountId,
 		amount: Balance,
@@ -55,10 +66,23 @@ impl ParentchainEventHandler {
 	}
 }
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler
+impl<Executor>
+	HandleParentchainEvents<
+		Executor,
+		TrustedCallSigned,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for ParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<
+		TrustedCallSigned,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	>,
 {
 	fn handle_events(
 		executor: &Executor,
