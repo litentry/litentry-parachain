@@ -18,31 +18,28 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import {BRC20} from "../BRC20.sol";
 
-contract ConcatenateStrings is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-        public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
-    {
-        string memory description = "description";
-        string memory assertion_type = "assertion type";
-        bool result = false;
-
-        return (description, assertion_type, assertions, schema_url, result);
+contract Cats is BRC20 {
+    function getTokenName() internal pure override returns (string memory) {
+        return "cats";
     }
 
-    function callConcatenateStrings(string memory s1, string memory s2)
-        public
-        returns (string memory)
+    function getTokenRanges()
+        internal
+        pure
+        override
+        returns (uint256[] memory)
     {
-        return concatenateStrings(s1, s2);
+        uint256[] memory ranges = new uint256[](8);
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 10000;
+        ranges[3] = 50000;
+        ranges[4] = 100000;
+        ranges[5] = 200000;
+        ranges[6] = 500000;
+        ranges[7] = 800000;
+        return ranges;
     }
 }
