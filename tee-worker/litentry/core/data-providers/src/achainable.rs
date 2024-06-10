@@ -803,7 +803,10 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 				let amount = "1".to_string();
 
 				let param = ParamsBasicTypeWithAmount::new(name, network, amount);
-				let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
+				let body = ReqBody::new_with_false_metadata(
+					address.into(),
+					Params::ParamsBasicTypeWithAmount(param),
+				);
 				let tx =
 					self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
 				txs += tx;
