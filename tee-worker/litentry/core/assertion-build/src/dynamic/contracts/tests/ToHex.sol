@@ -18,7 +18,7 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import {DynamicAssertion, Identity, HttpHeader} from "./../DynamicAssertion.sol";
 
 contract ToHex is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)

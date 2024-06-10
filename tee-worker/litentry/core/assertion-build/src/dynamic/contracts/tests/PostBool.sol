@@ -18,7 +18,7 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import {DynamicAssertion, Identity, HttpHeader} from "./../DynamicAssertion.sol";
 
 contract PostBool is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
@@ -57,7 +57,7 @@ contract PostBool is DynamicAssertion {
         string memory secondPayload
     ) public returns (bool, bool) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        PostI64(firstUrl, firstJsonPointer, firstPayload, headers);
+        PostBool(firstUrl, firstJsonPointer, firstPayload, headers);
         return PostBool(secondUrl, secondJsonPointer, secondPayload, headers);
     }
 }
