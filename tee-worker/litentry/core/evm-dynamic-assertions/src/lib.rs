@@ -113,11 +113,15 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 
 		let call_result = execute_smart_contract(smart_contract_byte_code, input);
 
-		let (description, assertion_type, assertions, schema_url, meet) =
-			decode_result(&call_result.1)
-				.map_err(|_| "Could not decode evm assertion execution result")?;
+		if call_result.0.is_succeed() {
+			let (description, assertion_type, assertions, schema_url, meet) =
+				decode_result(&call_result.1)
+					.map_err(|_| "Could not decode evm assertion execution result")?;
 
-		Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+			Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+		} else {
+			Err(std::format!("Fail to execution evm dynamic assertion: {:?}", call_result.0))
+		}
 	}
 }
 
@@ -176,29 +180,7 @@ pub fn secret_to_token(secret: &String) -> Token {
 }
 
 pub fn network_to_token(network: &Web3Network) -> Token {
-	Token::Uint(
-		match network {
-			Web3Network::Polkadot => 0,
-			Web3Network::Kusama => 1,
-			Web3Network::Litentry => 2,
-			Web3Network::Litmus => 3,
-			Web3Network::LitentryRococo => 4,
-			Web3Network::Khala => 5,
-			Web3Network::SubstrateTestnet => 6,
-			Web3Network::Ethereum => 7,
-			Web3Network::Bsc => 8,
-			Web3Network::BitcoinP2tr => 9,
-			Web3Network::BitcoinP2pkh => 10,
-			Web3Network::BitcoinP2sh => 11,
-			Web3Network::BitcoinP2wpkh => 12,
-			Web3Network::BitcoinP2wsh => 13,
-			Web3Network::Polygon => 14,
-			Web3Network::Arbitrum => 15,
-			Web3Network::Solana => 16,
-			Web3Network::Combo => 17,
-		}
-		.into(),
-	)
+	Token::Uint(network.get_code().into())
 }
 
 #[allow(clippy::result_unit_err)]
@@ -238,6 +220,20 @@ fn decode_result(data: &[u8]) -> Result<(String, String, Vec<String>, String, bo
 
 fn hash(a: u64) -> H160 {
 	H160::from_low_u64_be(a)
+}
+
+pub fn success_precompile_output(token: ethabi::Token) -> evm::executor::stack::PrecompileOutput {
+	evm::executor::stack::PrecompileOutput {
+		exit_status: evm::ExitSucceed::Returned,
+		output: ethabi::encode(&[ethabi::Token::Bool(true), token]),
+	}
+}
+
+pub fn failure_precompile_output(token: ethabi::Token) -> evm::executor::stack::PrecompileOutput {
+	evm::executor::stack::PrecompileOutput {
+		exit_status: evm::ExitSucceed::Returned,
+		output: ethabi::encode(&[ethabi::Token::Bool(false), token]),
+	}
 }
 
 #[cfg(test)]

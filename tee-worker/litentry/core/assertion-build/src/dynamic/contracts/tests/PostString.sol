@@ -20,24 +20,32 @@ pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
 
-contract GetI64 {
-    function callGetBool(string memory url, string memory jsonPointer)
-        public
-        returns (bool, bool)
-    {
+contract PostString {
+    function callPostString(
+        string memory url,
+        string memory jsonPointer,
+        string memory payload
+    ) public returns (bool, string memory) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        return Http.GetBool(url, jsonPointer, headers);
+        return Http.PostString(url, jsonPointer, payload, headers);
     }
 
-    function callGetBoolTwiceAndReturnSecondResult(
+    function callPostStringTwiceAndReturnSecondResult(
         string memory firstUrl,
         string memory firstJsonPointer,
+        string memory firstPayload,
         string memory secondUrl,
-        string memory secondJsonPointer
-    ) public returns (bool, bool) {
+        string memory secondJsonPointer,
+        string memory secondPayload
+    ) public returns (bool, string memory) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        Http.GetBool(firstUrl, firstJsonPointer, headers);
-        (firstUrl, firstJsonPointer, headers);
-        return Http.GetBool(secondUrl, secondJsonPointer, headers);
+        Http.PostString(firstUrl, firstJsonPointer, firstPayload, headers);
+        return
+            Http.PostString(
+                secondUrl,
+                secondJsonPointer,
+                secondPayload,
+                headers
+            );
     }
 }

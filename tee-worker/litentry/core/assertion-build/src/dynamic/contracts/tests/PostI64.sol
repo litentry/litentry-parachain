@@ -18,33 +18,16 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./../DynamicAssertion.sol";
+import "../libraries/Http.sol";
 
-contract PostI64 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-        public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
-    {
-        string memory description = "description";
-        string memory assertion_type = "assertion type";
-        bool result = false;
-
-        return (description, assertion_type, assertions, schema_url, result);
-    }
-
-    function callPostI64(string memory url, string memory jsonPointer, string memory payload)
-        public
-        returns (bool, int64)
-    {
+contract PostI64 {
+    function callPostI64(
+        string memory url,
+        string memory jsonPointer,
+        string memory payload
+    ) public returns (bool, int64) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        return PostI64(url, jsonPointer, payload, headers);
+        return Http.PostI64(url, jsonPointer, payload, headers);
     }
 
     function callPostI64TwiceAndReturnSecondResult(
@@ -56,7 +39,8 @@ contract PostI64 is DynamicAssertion {
         string memory secondPayload
     ) public returns (bool, int64) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        PostI64(firstUrl, firstJsonPointer, firstPayload, headers);
-        return PostI64(secondUrl, secondJsonPointer, secondPayload, headers);
+        Http.PostI64(firstUrl, firstJsonPointer, firstPayload, headers);
+        return
+            Http.PostI64(secondUrl, secondJsonPointer, secondPayload, headers);
     }
 }

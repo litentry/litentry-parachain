@@ -18,34 +18,16 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./../DynamicAssertion.sol";
+import "../libraries/Http.sol";
 
-contract PostBool is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-        public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
-    {
-        string memory description = "description";
-        string memory assertion_type = "assertion type";
-        bool result = false;
-
-        return (description, assertion_type, assertions, schema_url, result);
-    }
-
+contract PostBool {
     function callPostBool(
         string memory url,
         string memory jsonPointer,
         string memory payload
     ) public returns (bool, bool) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        return PostBool(url, jsonPointer, payload, headers);
+        return Http.PostBool(url, jsonPointer, payload, headers);
     }
 
     function callPostBoolTwiceAndReturnSecondResult(
@@ -57,7 +39,8 @@ contract PostBool is DynamicAssertion {
         string memory secondPayload
     ) public returns (bool, bool) {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        PostBool(firstUrl, firstJsonPointer, firstPayload, headers);
-        return PostBool(secondUrl, secondJsonPointer, secondPayload, headers);
+        Http.PostBool(firstUrl, firstJsonPointer, firstPayload, headers);
+        return
+            Http.PostBool(secondUrl, secondJsonPointer, secondPayload, headers);
     }
 }
