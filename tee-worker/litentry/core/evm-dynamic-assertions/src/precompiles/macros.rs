@@ -38,13 +38,7 @@ macro_rules! http_get_precompile_fn {
 				Ok(d) => d,
 				Err(e) => {
 					log::debug!("Could not decode bytes {:?}, reason: {:?}", input, e);
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 			// safe to unwrap
@@ -53,13 +47,7 @@ macro_rules! http_get_precompile_fn {
 				Ok(v) => v,
 				Err(e) => {
 					log::debug!("Could not parse url {:?}, reason: {:?}", url, e);
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 
@@ -104,64 +92,35 @@ macro_rules! http_get_precompile_fn {
 				Ok(resp) => resp,
 				Err(e) => {
 					log::debug!("Error while performing http call: {:?}", e);
-
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 			let value: serde_json::Value = match serde_json::from_slice(&resp.1) {
 				Ok(v) => v,
 				Err(e) => {
 					log::debug!("Could not parse json {:?}, reason: {:?}", resp.1, e);
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 			let result = match value.pointer(&pointer) {
 				Some(v) => v,
 				None => {
 					log::debug!("No value under given pointer: :{:?}", pointer);
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 
 			let encoded = match result.$parse_fn_name() {
-				Some(v) =>
-					ethabi::encode(&[ethabi::Token::Bool(true), ethabi::Token::$token(v.into())]),
+				Some(v) => ethabi::Token::$token(v.into()),
 				None => {
 					log::debug!(
 						"There is no value or it might be of different type, pointer: ${:?}",
 						pointer
 					);
-					return Ok(evm::executor::stack::PrecompileOutput {
-						exit_status: evm::ExitSucceed::Returned,
-						output: ethabi::encode(&[
-							ethabi::Token::Bool(false),
-							ethabi::Token::$token(Default::default()),
-						]),
-					})
+					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
-			Ok(evm::executor::stack::PrecompileOutput {
-				exit_status: evm::ExitSucceed::Returned,
-				output: encoded,
-			})
+			Ok(success_precompile_output(encoded))
 		}
 	};
 }

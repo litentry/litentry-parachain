@@ -4621,6 +4621,8 @@ dependencies = [
 name = "lc-evm-dynamic-assertions"
 version = "0.1.0"
 dependencies = [
+ "base58",
+ "blake2-rfc",
  "ethabi",
  "evm 0.41.1",
  "hex",
@@ -4631,12 +4633,17 @@ dependencies = [
  "itp-settings",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
+ "itp-utils",
  "lc-dynamic-assertion",
+ "lc-mock-server",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
+ "rust_decimal",
  "serde_json 1.0.103",
  "sgx_tstd",
+ "ss58-registry",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
 ]
@@ -7153,6 +7160,16 @@ checksum = "f6d5f2436026b4f6e79dc829837d467cc7e9a55ee40e750d716713540715a2df"
 dependencies = [
  "cfg-if 1.0.0",
  "ordered-multimap",
+]
+
+[[package]]
+name = "rust_decimal"
+version = "1.35.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1790d1c4c0ca81211399e0e0af16333276f375209e71a37b67698a373db5b47a"
+dependencies = [
+ "arrayvec 0.7.4",
+ "num-traits 0.2.16",
 ]
 
 [[package]]

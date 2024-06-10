@@ -18,19 +18,29 @@
 
 pragma solidity ^0.8.8;
 
-import "./libraries/Identities.sol";
+import {BRC20} from "../BRC20.sol";
 
-abstract contract DynamicAssertion {
-    string schema_url;
+contract Sats is BRC20 {
+    function getTokenName() internal pure override returns (string memory) {
+        return "sats";
+    }
 
-    function execute(Identity[] memory identities, string[] memory secrets)
-        public
-        virtual
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        );
+    function getTokenRanges()
+        internal
+        pure
+        override
+        returns (uint256[] memory)
+    {
+        uint256[] memory ranges = new uint256[](9);
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 40000000;
+        ranges[3] = 200000000;
+        ranges[4] = 500000000;
+        ranges[5] = 1000000000;
+        ranges[6] = 2000000000;
+        ranges[7] = 4000000000;
+        ranges[8] = 6000000000;
+        return ranges;
+    }
 }

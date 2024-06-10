@@ -18,19 +18,25 @@
 
 pragma solidity ^0.8.8;
 
-import "./libraries/Identities.sol";
+import "../libraries/Http.sol";
 
-abstract contract DynamicAssertion {
-    string schema_url;
-
-    function execute(Identity[] memory identities, string[] memory secrets)
+contract GetString {
+    function callGetString(string memory url, string memory jsonPointer)
         public
-        virtual
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        );
+        returns (bool, string memory)
+    {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        return Http.GetString(url, jsonPointer, headers);
+    }
+
+    function callGetStringTwiceAndReturnSecondResult(
+        string memory firstUrl,
+        string memory firstJsonPointer,
+        string memory secondUrl,
+        string memory secondJsonPointer
+    ) public returns (bool, string memory) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        Http.GetI64(firstUrl, firstJsonPointer, headers);
+        return Http.GetString(secondUrl, secondJsonPointer, headers);
+    }
 }

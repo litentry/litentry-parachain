@@ -18,8 +18,11 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/utils/Strings.sol";
+import "./libraries/AssertionLogic.sol";
+import "./libraries/Http.sol";
+import "./libraries/Identities.sol";
+import "./DynamicAssertion.sol";
 
 contract A6 is DynamicAssertion {
     function execute(Identity[] memory identities, string[] memory secrets)
@@ -43,21 +46,21 @@ contract A6 is DynamicAssertion {
         int64 sum = 0;
 
         for (uint256 i = 0; i < identities.length; i++) {
-            if (is_twitter(identities[i])) {
-                /// "http://localhost:19528/2/users/by/username/" mock address used in dev env
-                string memory url = concatenateStrings(
-                    "https://api.twitter.com/2/users/by/username/",
-                    string(identities[i].value)
-                );
-                string memory full_url = concatenateStrings(
-                    url,
-                    "?user.fields=public_metrics"
+            if (Identities.is_twitter(identities[i])) {
+                string memory url = string(
+                    abi.encodePacked(
+                        "https://api.twitter.com/2/users/by/username/",
+                        // below url is used for test against mock server
+                        // "http://localhost:19528/2/users/by/username/",
+                        string(identities[i].value),
+                        "?user.fields=public_metrics"
+                    )
                 );
 
                 HttpHeader[] memory headers = prepareHeaders(secrets[0]);
 
-                (bool get_success, int64 followers_count) = GetI64(
-                    full_url,
+                (bool get_success, int64 followers_count) = Http.GetI64(
+                    url,
                     "/data/public_metrics/followers_count",
                     headers
                 );
@@ -92,17 +95,27 @@ contract A6 is DynamicAssertion {
         }
         result = min != 0;
 
-        string memory assertion = concatenateStrings(
-            '{"and": [{ "src": "$total_followers", "op": ">", "dst": "',
+        string memory variable = "$total_followers";
+        AssertionLogic.CompositeCondition memory cc = AssertionLogic
+            .CompositeCondition(new AssertionLogic.Condition[](2), true);
+        AssertionLogic.andOp(
+            cc,
+            0,
+            variable,
+            AssertionLogic.Op.GreaterThan,
             Strings.toString(min)
         );
-        assertion = concatenateStrings(
-            assertion,
-            '" }, { "src": "$has_web3_account", "op": "<=", "dst": "'
+        AssertionLogic.andOp(
+            cc,
+            1,
+            variable,
+            AssertionLogic.Op.LessEq,
+            Strings.toString(max)
         );
-        assertion = concatenateStrings(assertion, Strings.toString(max));
-        assertion = concatenateStrings(assertion, '" } ] }');
-        assertions.push(assertion);
+
+        string[] memory assertions = new string[](1);
+        assertions[0] = AssertionLogic.toString(cc);
+
         return (description, assertion_type, assertions, schema_url, result);
     }
 
