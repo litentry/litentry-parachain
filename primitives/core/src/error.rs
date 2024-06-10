@@ -66,6 +66,10 @@ pub enum ErrorDetail {
 	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
+	// this is deprecated as this should not be emitted anymore to not leak the information, kept
+	// here so client side type definition do not need change
+	#[codec(index = 11)]
+	NoEligibleIdentity,
 }
 
 impl fmt::Debug for ErrorDetail {
