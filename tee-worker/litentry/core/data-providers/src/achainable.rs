@@ -57,7 +57,8 @@ impl AchainableClient {
 	}
 
 	pub fn query_system_label(&mut self, address: &str, params: Params) -> Result<bool, Error> {
-		let body = ReqBody::new(address.into(), params);
+		// TODO: double-check it with Zhouhui if we don't ever need metadata here
+		let body = ReqBody::new_with_false_metadata(address.into(), params);
 		self.post(SystemLabelReqPath::default(), &body)
 			.and_then(AchainableClient::parse)
 	}
@@ -96,8 +97,13 @@ impl AchainablePost for AchainableClient {
 		let response = self
 			.client
 			.post_capture::<SystemLabelReqPath, ReqBody, serde_json::Value>(params, body);
-		debug!("ReqBody response: {:?}", response);
-		response.map_err(|e| Error::AchainableError(format!("Achainable response error: {}", e)))
+		match response {
+			Ok(r) => {
+				debug!("ReqBody response: {}", r);
+				Ok(r)
+			},
+			Err(e) => Err(Error::AchainableError(format!("Achainable response error: {}", e))),
+		}
 	}
 }
 
