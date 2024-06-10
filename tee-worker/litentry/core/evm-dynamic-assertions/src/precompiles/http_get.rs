@@ -235,7 +235,7 @@ pub mod integration_test {
 
 	// we want to check here that execution is not interrupted by http error
 	#[test]
-	pub fn test_get_i64_returns_second_error_in_case_of_first_request_failure() {
+	pub fn test_get_i64_returns_second_result_in_case_of_first_request_failure() {
 		let url = run(0).unwrap();
 		let byte_code = hex::decode(GET_I64_BYTE_CODE).unwrap();
 		let return_types = vec![ParamType::Bool, ParamType::Int(2)];
@@ -309,7 +309,7 @@ pub mod integration_test {
 
 	// we want to check here that execution is not interrupted by http error
 	#[test]
-	pub fn test_get_bool_returns_second_error_in_case_of_first_request_failure() {
+	pub fn test_get_bool_returns_second_result_in_case_of_first_request_failure() {
 		let url = run(0).unwrap();
 		let byte_code = hex::decode(GET_BOOL_BYTE_CODE).unwrap();
 		let return_types = vec![ParamType::Bool, ParamType::Bool];
@@ -393,7 +393,7 @@ pub mod integration_test {
 
 	// we want to check here that execution is not interrupted by http error
 	#[test]
-	pub fn test_get_string_returns_second_error_in_case_of_first_request_failure() {
+	pub fn test_get_string_returns_second_result_in_case_of_first_request_failure() {
 		let url = run(0).unwrap();
 		let byte_code = hex::decode(GET_STRING_BYTE_CODE).unwrap();
 		let return_types = vec![ParamType::Bool, ParamType::String];

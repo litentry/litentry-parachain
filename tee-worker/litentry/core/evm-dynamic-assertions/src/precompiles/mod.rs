@@ -23,6 +23,7 @@ use crate::sgx_reexport_prelude::*;
 use crate::precompiles::{
 	hex_to_number::hex_to_number,
 	http_get::{http_get_bool, http_get_i64, http_get_string},
+	http_post::{http_post_bool, http_post_i64, http_post_string},
 	identity_to_string::identity_to_string,
 	parse_decimal::parse_decimal,
 	parse_int::parse_int,
@@ -37,6 +38,7 @@ use std::result::Result as StdResult;
 
 mod hex_to_number;
 mod http_get;
+mod http_post;
 mod identity_to_string;
 mod macros;
 mod parse_decimal;
@@ -66,6 +68,9 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1000) => Some(http_get_i64(handle.input().to_vec(), client)),
 			a if a == hash(1001) => Some(http_get_bool(handle.input().to_vec(), client)),
 			a if a == hash(1002) => Some(http_get_string(handle.input().to_vec(), client)),
+			a if a == hash(1003) => Some(http_post_i64(handle.input().to_vec(), client)),
+			a if a == hash(1004) => Some(http_post_bool(handle.input().to_vec(), client)),
+			a if a == hash(1005) => Some(http_post_string(handle.input().to_vec(), client)),
 			a if a == hash(1051) => Some(to_hex(handle.input().to_vec())),
 			a if a == hash(1052) => Some(identity_to_string(handle.input().to_vec())),
 			a if a == hash(1053) => Some(hex_to_number(handle.input().to_vec())),
@@ -82,6 +87,12 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1001) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			a if a == hash(1002) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1003) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1004) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1005) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			a if a == hash(1051) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
