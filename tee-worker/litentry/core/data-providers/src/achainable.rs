@@ -59,11 +59,8 @@ impl AchainableClient {
 	pub fn query_system_label(&mut self, address: &str, params: Params) -> Result<bool, Error> {
 		// TODO: double-check it with Zhouhui if we don't ever need metadata here
 		let body = ReqBody::new_with_false_metadata(address.into(), params);
-		let r = self
-			.post(SystemLabelReqPath::default(), &body)
-			.and_then(AchainableClient::parse);
-		debug!("r is {:?}", r);
-		r
+		self.post(SystemLabelReqPath::default(), &body)
+			.and_then(AchainableClient::parse)
 	}
 
 	fn parse_class_of_year(value: serde_json::Value) -> Result<String, Error> {
@@ -120,10 +117,7 @@ impl AchainableResultParser for AchainableClient {
 	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
 		value
 			.get("result")
-			.and_then(|res| {
-				debug!("parse result: {}", res);
-				res.as_bool()
-			})
+			.and_then(|res| res.as_bool())
 			.ok_or_else(|| Error::AchainableError("Achainable Parse result error".to_string()))
 	}
 }
