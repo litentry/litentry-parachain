@@ -45,21 +45,17 @@ pub fn build(
 		)
 	})?;
 
-	if response.is_empty() {
-		Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, ErrorDetail::NoEligibleIdentity))
-	} else {
-		let runtime_version = IssuerRuntimeVersion {
-			parachain: req.parachain_runtime_version,
-			sidechain: req.sidechain_runtime_version,
-		};
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
 
-		let mut credential_unsigned = Credential::new(&req.who, &req.shard, &runtime_version)
-			.map_err(|e| {
-				error!("Generate unsigned credential failed {:?}", e);
-				Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
-			})?;
-		credential_unsigned.update_brc20_amount_holder_credential(&response);
+	let mut credential_unsigned =
+		Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
+			error!("Generate unsigned credential failed {:?}", e);
+			Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+		})?;
+	credential_unsigned.update_brc20_amount_holder_credential(&response);
 
-		Ok(credential_unsigned)
-	}
+	Ok(credential_unsigned)
 }
