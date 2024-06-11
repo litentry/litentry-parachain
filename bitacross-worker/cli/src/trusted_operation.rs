@@ -32,7 +32,7 @@ use itp_stf_primitives::{
 	types::{ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{BlockHash, BlockNumber, Hash, ParentchainBlockProcessed},
+	parentchain::{events::ParentchainBlockProcessed, BlockHash, BlockNumber, Hash},
 	DirectRequestStatus, RsaRequest, TrustedOperationStatus,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
