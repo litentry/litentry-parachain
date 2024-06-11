@@ -25,21 +25,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use sp_std::{boxed::Box, fmt::Debug};
 
-use lazy_static::lazy_static;
 use log::error;
-use std::{
-	collections::BTreeMap, error::Error, path::PathBuf, string::String, sync::Arc, vec::Vec,
-};
+use std::{collections::BTreeMap, error::Error, path::PathBuf, string::String, vec::Vec};
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
-
-lazy_static! {
-	/// Global instance of a EnclaveRegistry
-	pub static ref GLOBAL_ENCLAVE_REGISTRY: Arc<EnclaveRegistry> = Default::default();
-}
 
 pub type EnclaveRegistryMap = BTreeMap<Address32, String>;
 
@@ -47,6 +39,12 @@ pub type EnclaveRegistryMap = BTreeMap<Address32, String>;
 pub struct EnclaveRegistry {
 	pub registry: RwLock<EnclaveRegistryMap>,
 	pub seal_path: PathBuf,
+}
+
+impl EnclaveRegistry {
+	pub fn new(base_dir: PathBuf) -> Self {
+		EnclaveRegistry { registry: Default::default(), seal_path: base_dir }
+	}
 }
 
 pub type RegistryResult<T> = Result<T, RegistryError>;
@@ -154,16 +152,13 @@ impl EnclaveRegistrySealer for EnclaveRegistry {
 
 	#[cfg(feature = "sgx")]
 	fn seal(&self, mut state: EnclaveRegistryMap) -> RegistryResult<()> {
-		let mut registry = GLOBAL_ENCLAVE_REGISTRY
-			.registry
-			.write()
-			.map_err(|_| RegistryError::PoisonLock)?;
+		let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 		while let Some((key, val)) = state.pop_first() {
 			registry.insert(key, val);
 		}
 
 		let enclave_seal = EnclaveRegistrySeal::new(self.seal_path.clone());
-		enclave_seal.seal(&state)
+		enclave_seal.seal(&registry)
 	}
 
 	#[cfg(feature = "sgx")]
@@ -201,18 +196,12 @@ impl EnclaveRegistryUpdater for EnclaveRegistry {
 				"[Enclave] EnclaveRegistry file not found, creating new! {}",
 				ENCLAVE_REGISTRY_FILE
 			);
-			let registry = GLOBAL_ENCLAVE_REGISTRY
-				.registry
-				.write()
-				.map_err(|_| RegistryError::PoisonLock)?;
+			let registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 			enclave_seal.seal(&*registry)
 		} else {
 			let m = enclave_seal.unseal()?;
 			info!("[Enclave] EnclaveRegistry unsealed from file: {:?}", m);
-			let mut registry = GLOBAL_ENCLAVE_REGISTRY
-				.registry
-				.write()
-				.map_err(|_| RegistryError::PoisonLock)?;
+			let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 			*registry = m;
 			Ok(())
 		}
@@ -220,20 +209,14 @@ impl EnclaveRegistryUpdater for EnclaveRegistry {
 
 	#[cfg(feature = "sgx")]
 	fn update(&self, account: Address32, worker_url: String) -> RegistryResult<()> {
-		let mut registry = GLOBAL_ENCLAVE_REGISTRY
-			.registry
-			.write()
-			.map_err(|_| RegistryError::PoisonLock)?;
+		let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 		registry.insert(account, worker_url);
 		EnclaveRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
 	}
 
 	#[cfg(feature = "sgx")]
 	fn remove(&self, account: Address32) -> RegistryResult<()> {
-		let mut registry = GLOBAL_ENCLAVE_REGISTRY
-			.registry
-			.write()
-			.map_err(|_| RegistryError::PoisonLock)?;
+		let mut registry = self.registry.write().map_err(|_| RegistryError::PoisonLock)?;
 		let old_value = registry.remove(&account);
 		if old_value.is_some() {
 			return EnclaveRegistrySeal::new(self.seal_path.clone()).seal(&*registry)
@@ -258,14 +241,14 @@ impl EnclaveRegistryLookup for EnclaveRegistry {
 	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: &Address32) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
-		let registry = GLOBAL_ENCLAVE_REGISTRY.registry.read().unwrap();
+		let registry = self.registry.read().unwrap();
 		registry.contains_key(account)
 	}
 
 	#[cfg(feature = "sgx")]
 	fn get_all(&self) -> Vec<(Address32, String)> {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
-		let registry = GLOBAL_ENCLAVE_REGISTRY.registry.read().unwrap();
+		let registry = self.registry.read().unwrap();
 		registry.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
 	}
 }

@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use codec::Encode;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::{Error, Result};
@@ -26,13 +29,29 @@ pub trait ArgsExecutor {
 	fn error(&self) -> Error;
 	fn name() -> &'static str;
 	fn shard(&self) -> ShardIdentifier;
-	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn prepare_trusted_call<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,
 		hash: H256,
 	) -> Result<TrustedCall>;
-	fn execute<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn execute<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>(
 		&self,
 		executor: &Executor,
 		address: Option<MultiAddress<AccountId32, ()>>,
@@ -44,7 +63,15 @@ pub trait ArgsExecutor {
 		Ok(())
 	}
 
-	fn submit<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn submit<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,
