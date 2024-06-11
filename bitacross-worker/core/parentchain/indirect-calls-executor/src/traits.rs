@@ -31,7 +31,7 @@ pub trait ExecuteIndirectCalls {
 	/// Scans blocks for extrinsics that ask the enclave to execute some actions.
 	/// Executes indirect invocation calls, including shielding and unshielding calls.
 	/// Returns all unshielding call confirmations as opaque calls and the hashes of executed shielding calls.
-	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
