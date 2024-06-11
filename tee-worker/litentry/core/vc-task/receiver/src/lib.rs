@@ -609,10 +609,10 @@ where
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
-		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::VCBuildTime(
-			format!("{:?}", assertion),
-			start_time.elapsed(),
-		)) {
+		if let Err(e) = context
+			.ocall_api
+			.update_metric(EnclaveMetric::VCBuildTime(assertion, start_time.elapsed()))
+		{
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 

@@ -18,10 +18,17 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import "./libraries/AssertionLogic.sol";
+import "./libraries/Http.sol";
+import "./libraries/Identities.sol";
+import "./libraries/Utils.sol";
+import "./DynamicAssertion.sol";
 
 contract A20 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
+    function execute(
+        Identity[] memory identities,
+        string[] memory /*secrets*/
+    )
         public
         override
         returns (
@@ -35,25 +42,30 @@ contract A20 is DynamicAssertion {
         string
             memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
-        assertions.push('{ "src": "$has_joined", "op": "==", "dst": "true" }');
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
-        bool result = false;
 
+        bool result = false;
         for (uint256 i = 0; i < identities.length; i++) {
-            if (is_web3(identities[i])) {
-                (bool success, string memory res) = toHex(identities[i].value);
+            if (Identities.is_web3(identities[i])) {
+                (bool success, string memory res) = Utils.toHex(
+                    identities[i].value
+                );
                 if (success) {
                     if (!success) {
                         continue;
                     }
-                    string memory url = concatenateStrings(
-                        "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
-                        res
+                    string memory url = string(
+                        abi.encodePacked(
+                            "https://archive-test.litentry.io/events/does-user-joined-evm-campaign?account=",
+                            // below url is used for test against mock server
+                            // "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
+                            res
+                        )
                     );
                     string memory jsonPointer = "/hasJoined";
                     HttpHeader[] memory headers = new HttpHeader[](0);
 
-                    (bool get_success, bool get_result) = GetBool(
+                    (bool get_success, bool get_result) = Http.GetBool(
                         url,
                         jsonPointer,
                         headers
@@ -68,6 +80,15 @@ contract A20 is DynamicAssertion {
                 }
             }
         }
+
+        AssertionLogic.Condition memory condition = AssertionLogic.Condition(
+            "$has_joined",
+            AssertionLogic.Op.Equal,
+            "true"
+        );
+        string[] memory assertions = new string[](1);
+        assertions[0] = AssertionLogic.toString(condition);
+
         return (description, assertion_type, assertions, schema_url, result);
     }
 }
