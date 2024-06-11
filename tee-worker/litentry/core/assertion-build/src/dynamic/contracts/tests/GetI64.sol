@@ -18,32 +18,25 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import "../libraries/Http.sol";
 
-contract GetI64 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-        public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
-    {
-        string memory description = "description";
-        string memory assertion_type = "assertion type";
-        bool result = false;
-
-        return (description, assertion_type, assertions, schema_url, result);
-    }
-
+contract GetI64 {
     function callGetI64(string memory url, string memory jsonPointer)
         public
-        returns (int64)
+        returns (bool, int64)
     {
         HttpHeader[] memory headers = new HttpHeader[](0);
-        return GetI64(url, jsonPointer, headers);
+        return Http.GetI64(url, jsonPointer, headers);
+    }
+
+    function callGetI64TwiceAndReturnSecondResult(
+        string memory firstUrl,
+        string memory firstJsonPointer,
+        string memory secondUrl,
+        string memory secondJsonPointer
+    ) public returns (bool, int64) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        Http.GetI64(firstUrl, firstJsonPointer, headers);
+        return Http.GetI64(secondUrl, secondJsonPointer, headers);
     }
 }

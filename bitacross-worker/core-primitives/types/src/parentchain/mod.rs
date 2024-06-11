@@ -114,9 +114,9 @@ pub trait FilterEvents {
 	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
 }
 
-pub trait HandleParentchainEvents<Executor, TCS, Error>
+pub trait HandleParentchainEvents<Executor, TCS, Error, RRU, SRU, ERU>
 where
-	Executor: IndirectExecutor<TCS, Error>,
+	Executor: IndirectExecutor<TCS, Error, RRU, SRU, ERU>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
 	fn handle_events(

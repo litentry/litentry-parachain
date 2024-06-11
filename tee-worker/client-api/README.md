@@ -39,14 +39,5 @@ Once update the `client-api/parachain-api` or `client-api/sidechain-api`, all yo
 
 ## Publish
 
-1. Modify the `version` in the `package.json` files of both the parachain-api and sidechain-api, like:
-
-```
-"version": "1.0.0-{tag}"
-```
-
-Please refer to the [version rules](https://docs.npmjs.com/about-semantic-versioning) and ensure that it is unique and hasn't been published on the GitHub package registry before.
-
-2. Merge into the target branch.
-
-3. Run the [Release Ts API Package](https://github.com/litentry/litentry-parachain/actions/workflows/release-ts-api-package.yml) action.
+1. [parachain-api](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/client-api/parachain-api/README.md#publish-new-versions)
+2. [sidechain-api](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/client-api/sidechain-api/README.md#publish-new-versions)

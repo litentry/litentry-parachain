@@ -31,6 +31,7 @@ use crate::{
 	tls_ra::seal_handler::SealHandler,
 };
 use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
 use bc_signer_registry::SignerRegistry;
 use ita_parentchain_interface::{integritee, target_a, target_b};
 use ita_sgx_runtime::Runtime;
@@ -174,6 +175,9 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
@@ -216,6 +220,9 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	target_a::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
@@ -258,6 +265,9 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	target_b::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
@@ -431,3 +441,15 @@ pub static GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
 /// Enclave RPC WS handler.
 pub static GLOBAL_RPC_WS_HANDLER_COMPONENT: ComponentContainer<EnclaveRpcWsHandler> =
 	ComponentContainer::new("rpc_ws_handler");
+
+/// Relayer registry
+pub static GLOBAL_RELAYER_REGISTRY: ComponentContainer<RelayerRegistry> =
+	ComponentContainer::new("relayer_registry");
+
+/// Signer registry
+pub static GLOBAL_SIGNER_REGISTRY: ComponentContainer<SignerRegistry> =
+	ComponentContainer::new("signer_registry");
+
+/// Enclave registry
+pub static GLOBAL_ENCLAVE_REGISTRY: ComponentContainer<EnclaveRegistry> =
+	ComponentContainer::new("enclave_registry");

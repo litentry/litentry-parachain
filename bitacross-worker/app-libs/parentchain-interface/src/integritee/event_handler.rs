@@ -15,13 +15,13 @@
 
 */
 
-use codec::Encode;
-
-use bc_enclave_registry::{EnclaveRegistryUpdater, GLOBAL_ENCLAVE_REGISTRY};
-use bc_relayer_registry::{RelayerRegistryUpdater, GLOBAL_RELAYER_REGISTRY};
-use bc_signer_registry::{SignerRegistryUpdater, GLOBAL_SIGNER_REGISTRY};
-use core::str::from_utf8;
 pub use ita_sgx_runtime::{Balance, Index};
+
+use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
+use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
+use bc_signer_registry::{SignerRegistry, SignerRegistryUpdater};
+use codec::Encode;
+use core::str::from_utf8;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -43,7 +43,15 @@ use std::string::ToString;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn shield_funds<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn shield_funds<
+		Executor: IndirectExecutor<
+			TrustedCallSigned,
+			Error,
+			RelayerRegistry,
+			SignerRegistry,
+			EnclaveRegistry,
+		>,
+	>(
 		executor: &Executor,
 		account: &AccountId,
 		amount: Balance,
@@ -94,9 +102,9 @@ impl ParentchainEventHandler {
 		Ok(())
 	}
 
-	fn add_relayer(account: Identity) -> Result<(), Error> {
+	fn add_relayer(relayer_registry: &RelayerRegistry, account: Identity) -> Result<(), Error> {
 		info!("Adding Relayer Account to Registry: {:?}", account);
-		GLOBAL_RELAYER_REGISTRY.update(account).map_err(|e| {
+		relayer_registry.update(account).map_err(|e| {
 			error!("Error adding relayer: {:?}", e);
 			Error::Other("Error adding relayer".into())
 		})?;
@@ -104,9 +112,9 @@ impl ParentchainEventHandler {
 		Ok(())
 	}
 
-	fn remove_relayer(account: Identity) -> Result<(), Error> {
+	fn remove_relayer(relayer_registry: &RelayerRegistry, account: Identity) -> Result<(), Error> {
 		info!("Remove Relayer Account from Registry: {:?}", account);
-		GLOBAL_RELAYER_REGISTRY.remove(account).map_err(|e| {
+		relayer_registry.remove(account).map_err(|e| {
 			error!("Error removing relayer: {:?}", e);
 			Error::Other("Error removing relayer".into())
 		})?;
@@ -115,6 +123,7 @@ impl ParentchainEventHandler {
 	}
 
 	fn add_enclave(
+		enclave_registry: &EnclaveRegistry,
 		account_id: Address32,
 		url: Vec<u8>,
 		worker_type: WorkerType,
@@ -128,7 +137,7 @@ impl ParentchainEventHandler {
 		let url = from_utf8(&url)
 			.map_err(|_| Error::Other("Invalid enclave URL".into()))?
 			.to_string();
-		GLOBAL_ENCLAVE_REGISTRY.update(account_id, url).map_err(|e| {
+		enclave_registry.update(account_id, url).map_err(|e| {
 			error!("Error adding enclave: {:?}", e);
 			Error::Other("Error adding enclave".into())
 		})?;
@@ -136,9 +145,12 @@ impl ParentchainEventHandler {
 		Ok(())
 	}
 
-	fn remove_enclave(account_id: Address32) -> Result<(), Error> {
+	fn remove_enclave(
+		enclave_registry: &EnclaveRegistry,
+		account_id: Address32,
+	) -> Result<(), Error> {
 		info!("Remove Enclave Account from Registry: {:?}", account_id);
-		GLOBAL_ENCLAVE_REGISTRY.remove(account_id).map_err(|e| {
+		enclave_registry.remove(account_id).map_err(|e| {
 			error!("Error removing enclave: {:?}", e);
 			Error::Other("Error removing enclave".into())
 		})?;
@@ -146,9 +158,13 @@ impl ParentchainEventHandler {
 		Ok(())
 	}
 
-	fn save_signer(account_id: Address32, pub_key: [u8; 33]) -> Result<(), Error> {
+	fn save_signer(
+		signer_registry: &SignerRegistry,
+		account_id: Address32,
+		pub_key: [u8; 33],
+	) -> Result<(), Error> {
 		info!("Saving Signer Account to Registry: {:?}", account_id);
-		GLOBAL_SIGNER_REGISTRY.update(account_id, pub_key).map_err(|e| {
+		signer_registry.update(account_id, pub_key).map_err(|e| {
 			error!("Error saving signer: {:?}", e);
 			Error::Other("Error saving signer".into())
 		})?;
@@ -157,10 +173,23 @@ impl ParentchainEventHandler {
 	}
 }
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler
+impl<Executor>
+	HandleParentchainEvents<
+		Executor,
+		TrustedCallSigned,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	> for ParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<
+		TrustedCallSigned,
+		Error,
+		RelayerRegistry,
+		SignerRegistry,
+		EnclaveRegistry,
+	>,
 {
 	fn handle_events(
 		executor: &Executor,
@@ -231,11 +260,12 @@ where
 
 		if let Ok(events) = events.get_relayer_added_events() {
 			debug!("Handling RelayerAdded events");
+			let relayer_registry = executor.get_relayer_registry_updater();
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found RelayerAdded event: {:?}", event);
-					let result = Self::add_relayer(event.who.clone());
+					let result = Self::add_relayer(relayer_registry, event.who.clone());
 					handled_events.push(hash_of(&event));
 
 					result
@@ -245,11 +275,12 @@ where
 
 		if let Ok(events) = events.get_relayers_removed_events() {
 			debug!("Handling RelayerRemoved events");
+			let relayer_registry = executor.get_relayer_registry_updater();
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found RelayerRemoved event: {:?}", event);
-					let result = Self::remove_relayer(event.who.clone());
+					let result = Self::remove_relayer(relayer_registry, event.who.clone());
 					handled_events.push(hash_of(&event));
 
 					result
@@ -259,11 +290,17 @@ where
 
 		if let Ok(events) = events.get_enclave_added_events() {
 			debug!("Handling EnclaveAdded events");
+			let enclave_registry = executor.get_enclave_registry_updater();
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found EnclaveAdded event: {:?}", event);
-					let result = Self::add_enclave(event.who, event.url.clone(), event.worker_type);
+					let result = Self::add_enclave(
+						enclave_registry,
+						event.who,
+						event.url.clone(),
+						event.worker_type,
+					);
 					handled_events.push(hash_of(&event));
 
 					result
@@ -273,11 +310,12 @@ where
 
 		if let Ok(events) = events.get_enclave_removed_events() {
 			debug!("Handling EnclaveRemoved events");
+			let enclave_registry = executor.get_enclave_registry_updater();
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found EnclaveRemoved event: {:?}", event);
-					let result = Self::remove_enclave(event.who);
+					let result = Self::remove_enclave(enclave_registry, event.who);
 					handled_events.push(hash_of(&event));
 
 					result
@@ -287,11 +325,16 @@ where
 
 		if let Ok(events) = events.get_btc_wallet_generated_events() {
 			debug!("Handling BtcWalletGenerated events");
+			let signer_registry = executor.get_signer_registry_updater();
 			events
 				.iter()
 				.try_for_each(|event| {
 					debug!("found BtcWalletGenerated event: {:?}", event);
-					let result = Self::save_signer(event.account_id.clone().into(), event.pub_key);
+					let result = Self::save_signer(
+						signer_registry,
+						event.account_id.clone().into(),
+						event.pub_key,
+					);
 					handled_events.push(hash_of(&event));
 
 					result

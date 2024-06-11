@@ -18,29 +18,13 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "./DynamicAssertion.sol";
+import "../libraries/Utils.sol";
 
-contract ToHex is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
+contract ToHex {
+    function callToHex(string memory text)
         public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
+        returns (bool, string memory)
     {
-        string memory description = "description";
-        string memory assertion_type = "assertion type";
-        bool result = false;
-
-        return (description, assertion_type, assertions, schema_url, result);
+        return Utils.toHex(bytes(text));
     }
-
-    function callToHex(string memory text) public returns (string memory) {
-        return toHex(bytes(text));
-    }
-
 }
