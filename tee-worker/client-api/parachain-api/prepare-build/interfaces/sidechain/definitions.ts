@@ -86,7 +86,7 @@ export default {
                 UnexpectedMessage: "Null",
                 __Unused_WrongSignatureType: "Null",
                 VerifyWeb3SignatureFailed: "Null",
-                __Unused_NoEligibleIdentity: "Null",
+                NoEligibleIdentity: "Null",
             },
         },
         ShardIdentifier: "H256",
