@@ -57,7 +57,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 			let method = json.get("method").unwrap().as_str().unwrap();
 			let address = json.get("params").unwrap().as_array().unwrap()[0].as_str().unwrap();
-			debug!("Method: {}, Address: {}", method, address);
 			let expected_address = "0x4B04b9166f472a72e067d68560a141a1d02332Ef";
 
 			let params: Vec<String> = json
@@ -153,8 +152,8 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						let body = RpcResponse {
 							jsonrpc: "2.0".into(),
 							id: Id::Number(1),
-							// 1 * 10^18
-							result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
+							// 10 * 10^18
+							result: serde_json::to_value("0x8ac7230489e80000").unwrap(),
 						};
 						return Response::builder().body(serde_json::to_string(&body).unwrap())
 					} else {
@@ -162,7 +161,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 							jsonrpc: "2.0".into(),
 							id: Id::Number(1),
 							// 1 * 10^18
-							result: serde_json::to_value("0x8ac7230489e80000").unwrap(),
+							result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
 						};
 						Response::builder().body(serde_json::to_string(&body).unwrap())
 					}
