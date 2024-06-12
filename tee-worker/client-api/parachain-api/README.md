@@ -15,7 +15,7 @@ These types were auto generated using [Polkadot.js Type Generation](https://polk
 2. Extend and decorate the API's types with:
 
     ```typescript
-    import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
+    import { identity, vc, trusted_operations, sidechain } from "parachain-api";
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
 
@@ -28,7 +28,7 @@ These types were auto generated using [Polkadot.js Type Generation](https://polk
 3. Import type definitions as needed:
 
     ```typescript
-    import type { LitentryIdentity } from '@litentry/parachain-api';
+    import type { LitentryIdentity } from "@litentry/parachain-api";
 
     function myFunction(identity: LitentryIdentity) {
         // ...
@@ -47,14 +47,18 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 1. Build the package
 
-    ```typescript
+    ```s
     pnpm run build
     ```
 
 1. Publish the distribution files
 
-    ```typescript
-    npm publish --access=public
+    ```s
+    # for preview versions
+    npm publish --access=public --tag next
+
+    # for stable versions
+    npm publish --access=public --tag latest
     ```
 
 ## How to regenerate types

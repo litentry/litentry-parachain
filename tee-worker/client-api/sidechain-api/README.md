@@ -34,14 +34,20 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 1. Build the package
 
-    ```typescript
+    ```s
     pnpm run build
     ```
 
 1. Publish the distribution files
 
-    ```typescript
-    npm publish --access=public
+    Use `next` tag for preview versions. Use `latest` tag for
+
+    ```s
+    # for preview versions
+    npm publish --access=public --tag next
+
+    # for stable versions
+    npm publish --access=public --tag latest
     ```
 
 ## How to regenerate types
