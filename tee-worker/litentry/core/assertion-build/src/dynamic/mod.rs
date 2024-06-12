@@ -291,9 +291,7 @@ pub mod assertion_test {
 		let network = Web3Network::Bsc;
 		let identities = vec![(Identity::Evm(address), vec![network])];
 
-		println!("identities: {:?}", identities);
 		let smart_contract_id = hash(4);
-		println!("smart_contract_id: {:?}", smart_contract_id);
 
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -325,7 +323,7 @@ pub mod assertion_test {
 	#[test]
 	pub fn test_token_holding_amount_trx_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run(19530).unwrap();
+		run(19531).unwrap();
 		// given
 		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes().to_vec())
 			.unwrap()
