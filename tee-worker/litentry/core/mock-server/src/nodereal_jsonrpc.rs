@@ -21,7 +21,7 @@ use lc_data_providers::nodereal_jsonrpc::{
 	GetNFTInventoryResultDetail, RpcResponse,
 };
 use warp::{http::Response, hyper::body::Bytes, Filter};
-
+use log::debug;
 const RES_BODY_OK_GET_TOKEN_HOLDINGS: &str = r#"
 {
 	"id": "1",
@@ -56,6 +56,9 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 		.map(|_, body: Bytes| {
 			let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 			let method = json.get("method").unwrap().as_str().unwrap();
+			let address = json.get("params").unwrap().as_array().unwrap()[0].as_str().unwrap();
+			debug!("Method: {}, Address: {}", method, address);
+			let expected_address = "0x4B04b9166f472a72e067d68560a141a1d02332Ef";
 
 			let params: Vec<String> = json
 				.get("params")
@@ -146,13 +149,23 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
 				"eth_getBalance" => {
-					let body = RpcResponse {
-						jsonrpc: "2.0".into(),
-						id: Id::Number(1),
-						// 1 * 10^18
-						result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
-					};
-					Response::builder().body(serde_json::to_string(&body).unwrap())
+					if address == expected_address {
+						let body = RpcResponse {
+							jsonrpc: "2.0".into(),
+							id: Id::Number(1),
+							// 1 * 10^18
+							result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
+						};
+						return Response::builder().body(serde_json::to_string(&body).unwrap())
+					} else {
+						let body = RpcResponse {
+							jsonrpc: "2.0".into(),
+							id: Id::Number(1),
+							// 1 * 10^18
+							result: serde_json::to_value("0x8ac7230489e80000").unwrap(),
+						};
+						Response::builder().body(serde_json::to_string(&body).unwrap())
+					}
 				},
 				"nr_getTokenHoldings" =>
 					Response::builder().body(RES_BODY_OK_GET_TOKEN_HOLDINGS.to_string()),
