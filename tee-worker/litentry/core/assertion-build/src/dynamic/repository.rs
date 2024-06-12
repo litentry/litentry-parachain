@@ -89,8 +89,6 @@ impl InMemorySmartContractRepo {
 				)
 		);
 
-
-
 		// token holding amount
 		// Trx
 		map.insert(

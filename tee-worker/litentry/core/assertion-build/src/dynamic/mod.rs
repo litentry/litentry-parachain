@@ -276,7 +276,7 @@ pub mod assertion_test {
 		// then
 		assert!(credential.credential_subject.values[0]);
 	}
-	
+
 	#[test]
 	pub fn test_token_holding_amount_bnb_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
@@ -289,9 +289,8 @@ pub mod assertion_test {
 			.unwrap();
 
 		let network = Web3Network::Bsc;
-		let identities=
-			vec![(Identity::Evm(address), vec![network])];
-		
+		let identities = vec![(Identity::Evm(address), vec![network])];
+
 		println!("identities: {:?}", identities);
 		let smart_contract_id = hash(4);
 		println!("smart_contract_id: {:?}", smart_contract_id);
@@ -323,8 +322,6 @@ pub mod assertion_test {
 		assert!(credential.credential_subject.values[0]);
 	}
 
-
-
 	#[test]
 	pub fn test_token_holding_amount_trx_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
@@ -337,9 +334,8 @@ pub mod assertion_test {
 			.unwrap();
 
 		let network = Web3Network::Ethereum;
-		let identities=
-			vec![(Identity::Evm(address), vec![network])];
-		
+		let identities = vec![(Identity::Evm(address), vec![network])];
+
 		println!("identities: {:?}", identities);
 		let smart_contract_id = hash(5);
 		println!("smart_contract_id: {:?}", smart_contract_id);

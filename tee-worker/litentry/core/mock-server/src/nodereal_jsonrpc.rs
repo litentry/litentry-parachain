@@ -20,8 +20,8 @@ use lc_data_providers::nodereal_jsonrpc::{
 	GetNFTHoldingsResult, GetNFTHoldingsResultDetail, GetNFTInventoryResult,
 	GetNFTInventoryResultDetail, RpcResponse,
 };
-use warp::{http::Response, hyper::body::Bytes, Filter};
 use log::debug;
+use warp::{http::Response, hyper::body::Bytes, Filter};
 const RES_BODY_OK_GET_TOKEN_HOLDINGS: &str = r#"
 {
 	"id": "1",
