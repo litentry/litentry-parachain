@@ -18,11 +18,10 @@
 
 pragma solidity ^0.8.8;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/utils/Strings.sol";
 import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
-import "../libraries/DecimalConverter.sol";
 abstract contract TokenHoldingAmount is DynamicAssertion {
 	uint256 constant decimals_factor = 100;
 	function execute(
