@@ -32,15 +32,15 @@ contract Btcs is BRC20 {
         returns (uint256[] memory)
     {
         uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0;
-        ranges[1] = 1;
-        ranges[2] = 5;
-        ranges[3] = 20;
-        ranges[4] = 50;
-        ranges[5] = 100;
-        ranges[6] = 200;
-        ranges[7] = 500;
-        ranges[8] = 800;
+        ranges[0] = 0 * decimals_factor;
+		ranges[1] = 1 * decimals_factor; 
+		ranges[2] = 5 * decimals_factor;
+		ranges[3] = 20 * decimals_factor;
+		ranges[4] = 50 * decimals_factor;
+		ranges[5] = 100 * decimals_factor;
+		ranges[6] = 200	* decimals_factor;
+		ranges[7] = 500 * decimals_factor;
+		ranges[8] = 800 * decimals_factor;
         return ranges;
     }
 }

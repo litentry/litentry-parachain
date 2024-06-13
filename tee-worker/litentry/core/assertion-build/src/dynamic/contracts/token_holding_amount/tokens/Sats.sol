@@ -18,29 +18,29 @@
 
 pragma solidity ^0.8.8;
 
-import {BRC20} from "../BRC20.sol";
+import { BRC20 } from "../BRC20.sol";
 
 contract Sats is BRC20 {
-    function getTokenName() internal pure override returns (string memory) {
-        return "sats";
-    }
+	function getTokenName() internal pure override returns (string memory) {
+		return "sats";
+	}
 
-    function getTokenRanges()
-        internal
-        pure
-        override
-        returns (uint256[] memory)
-    {
-        uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0;
-        ranges[1] = 1;
-        ranges[2] = 40000000;
-        ranges[3] = 200000000;
-        ranges[4] = 500000000;
-        ranges[5] = 1000000000;
-        ranges[6] = 2000000000;
-        ranges[7] = 4000000000;
-        ranges[8] = 6000000000;
-        return ranges;
-    }
+	function getTokenRanges()
+		internal
+		pure
+		override
+		returns (uint256[] memory)
+	{
+		uint256[] memory ranges = new uint256[](9);
+		ranges[0] = 0 * decimals_factor;
+		ranges[1] = 1 * decimals_factor;
+		ranges[2] = 40000000 * decimals_factor;
+		ranges[3] = 200000000 * decimals_factor;
+		ranges[4] = 500000000 * decimals_factor;
+		ranges[5] = 1000000000 * decimals_factor;
+		ranges[6] = 2000000000 * decimals_factor;
+		ranges[7] = 4000000000 * decimals_factor;
+		ranges[8] = 6000000000 * decimals_factor;
+		return ranges;
+	}
 }
