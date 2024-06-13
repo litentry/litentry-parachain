@@ -56,8 +56,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 		.map(|_, body: Bytes| {
 			let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 			let method = json.get("method").unwrap().as_str().unwrap();
-			let address = json.get("params").unwrap().as_array().unwrap()[0].as_str().unwrap();
-			let expected_address = "0x4B04b9166f472a72e067d68560a141a1d02332Ef";
 
 			let params: Vec<String> = json
 				.get("params")
