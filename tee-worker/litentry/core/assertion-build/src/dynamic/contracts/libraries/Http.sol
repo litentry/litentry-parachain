@@ -126,6 +126,39 @@ library Http {
         return (success, value);
     }
 
+    function Get(string memory url, HttpHeader[] memory headers)
+        internal
+        returns (bool, string memory)
+    {
+        bool success;
+        string memory value;
+
+        bytes memory encoded_params = abi.encode(url, headers);
+        uint256 encoded_params_len = encoded_params.length;
+
+        assembly {
+            let memPtr := mload(0x40)
+            if iszero(
+                call(
+                    not(0),
+                    0x03EE,
+                    0,
+                    add(encoded_params, 0x20),
+                    encoded_params_len,
+                    memPtr,
+                    0x1000
+                )
+            ) {
+                revert(0, 0)
+            }
+            success := mload(memPtr)
+            value := add(memPtr, 0x40)
+            mstore(0x40, add(memPtr, 0x1000))
+        }
+
+        return (success, value);
+    }
+
     function PostI64(
         string memory url,
         string memory jsonPointer,
