@@ -20,9 +20,9 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 
-contract Trx is ERC20 {
+contract Sol is ERC20 {
 	function getTokenName() internal pure override returns (string memory) {
-		return "trx";
+		return "sol";
 	}
 
 	function getTokenContractAddress()
@@ -34,8 +34,8 @@ contract Trx is ERC20 {
 		string[] memory addresses = new string[](2);
 
 		// [0] is bsc address, [1] is eth address
-		addresses[0] = "0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3";
-		addresses[1] = "0x50327c6c5a14dcade707abad2e27eb517df87ab5";
+		addresses[0] = "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
+		addresses[1] = "0x5288738df1aeb0894713de903e1d0c001eeb7644";
 		return addresses;
 	}
 
