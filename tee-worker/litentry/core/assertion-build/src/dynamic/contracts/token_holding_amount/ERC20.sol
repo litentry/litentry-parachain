@@ -19,68 +19,70 @@
 pragma solidity ^0.8.8;
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
-import {TokenHoldingAmount} from "./TokenHoldingAmount.sol";
-import {NoderealClient} from "./NoderealClient.sol";
+import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
+import { NoderealClient } from "./NoderealClient.sol";
 
 abstract contract ERC20 is TokenHoldingAmount {
-    function getTokenDecimals() internal pure override returns (uint8) {
-        return 18;
-    }
 
-    function queryBalance(
-        Identity memory identity,
-        uint32 network,
-        string[] memory secrets
-    ) internal virtual override returns (uint256) {
-        (bool identityToStringSuccess, string memory identityString) = Utils
-            .identityToString(network, identity.value);
-        if (identityToStringSuccess) {
-            string memory url;
-            if (
-            // For bip20 balance
-                network == Web3Networks.Bsc) {
-                url = string(
-                abi.encodePacked(
-                    // "https://bsc-mainnet.nodereal.io/v1/",
-                    "http://localhost:19530/nodereal_jsonrpc/v1/",
-                    secrets[0]
-                )
-            );
-            } else if (
+	function getTokenDecimals() internal pure override returns (uint8) {
+		return 18;
+	}
 
-            // For erc20 balance
-                network == Web3Networks.Ethereum
+	function queryBalance(
+		Identity memory identity,
+		uint32 network,
+		string[] memory secrets
+	) internal virtual override returns (uint256) {
+		(bool identityToStringSuccess, string memory identityString) = Utils
+			.identityToString(network, identity.value);
 
-            ){
-                
-                url = string(
-                abi.encodePacked(
-                    // "https://ethereum-mainnet.nodereal.io/v1/",
-                    "http://localhost:19530/nodereal_jsonrpc/v1/",
-                    secrets[0]
-                )
-            );
+		if (identityToStringSuccess) {
+			string[] memory _tokenContractAddresses = getTokenContractAddress();
+			string memory url;
 
-            } else{
+			// _tokenContractAddresses = [bsc-toen-contract-address, eth-token-contract-address]
+			// We could add more dataproviders here.
+			for (uint i = 0; i < _tokenContractAddresses.length; i++) {
+				if (network == Web3Networks.Bsc && i == 0) {
+					url = string(
+						abi.encodePacked(
+							// "https://bsc-mainnet.nodereal.io/v1/",
+							"http://localhost:19530/nodereal_jsonrpc/v1/",
+							secrets[0]
+						)
+					);
+				} else if (network == Web3Networks.Ethereum && i == 1) {
+					url = string(
+						abi.encodePacked(
+							// "https://ethereum-mainnet.nodereal.io/v1/",
+							"http://localhost:19530/nodereal_jsonrpc/v1/",
+							secrets[0]
+						)
+					);
+				}
 
-                revert("Unsupport network type");
-            }
+				(bool success, uint256 balance) = NoderealClient
+					.getTokenBalance(
+						url,
+						_tokenContractAddresses[i],
+						identityString
+					);
+				if (success) {
+					return balance;
+				}
+			}
+		}
+		return 0;
+	}
+	function getTokenContractAddress()
+		internal
+		pure
+		virtual
+		returns (string[] memory);
 
-                string memory tokenContractAddress = getTokenName(); 
-                   (bool success, uint256 balance) = NoderealClient.getErc20Balance(url, tokenContractAddress, identityString);
-                if (success) {
-                    return balance;
-                }
-        }
-        return 0;
-    }
-
-    function isSupportedNetwork(uint32 network)
-        internal
-        pure
-        override
-        returns (bool)
-    {
-        return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
-    }
+	function isSupportedNetwork(
+		uint32 network
+	) internal pure override returns (bool) {
+		return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
+	}
 }
