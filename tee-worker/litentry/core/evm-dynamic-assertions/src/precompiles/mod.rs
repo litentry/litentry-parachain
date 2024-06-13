@@ -40,6 +40,7 @@ mod hex_to_number;
 mod http_get;
 mod http_post;
 mod identity_to_string;
+mod json_utils;
 mod macros;
 mod parse_decimal;
 mod parse_int;
@@ -76,6 +77,10 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1053) => Some(hex_to_number(handle.input().to_vec())),
 			a if a == hash(1054) => Some(parse_decimal(handle.input().to_vec())),
 			a if a == hash(1055) => Some(parse_int(handle.input().to_vec())),
+			a if a == hash(1100) => Some(json_utils::json_get_string(handle.input().to_vec())),
+			a if a == hash(1101) => Some(json_utils::json_get_i64(handle.input().to_vec())),
+			a if a == hash(1102) => Some(json_utils::json_get_bool(handle.input().to_vec())),
+			a if a == hash(1103) => Some(json_utils::get_array_len(handle.input().to_vec())),
 			_ => None,
 		}
 	}
@@ -103,6 +108,14 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1054) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			a if a == hash(1055) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1100) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1101) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1102) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
+			a if a == hash(1103) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 			_ => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
 		}
