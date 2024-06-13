@@ -46,16 +46,20 @@ abstract contract ERC20 is TokenHoldingAmount {
 				if (network == Web3Networks.Bsc && i == 0) {
 					url = string(
 						abi.encodePacked(
-							// "https://bsc-mainnet.nodereal.io/v1/",
-							"http://localhost:19530/nodereal_jsonrpc/v1/",
+							"https://bsc-mainnet.nodereal.io/v1/",
+
+                    		// 	below url is used for test against mock server
+							// "http://localhost:19530/nodereal_jsonrpc/v1/",
 							secrets[0]
 						)
 					);
 				} else if (network == Web3Networks.Ethereum && i == 1) {
 					url = string(
 						abi.encodePacked(
-							// "https://ethereum-mainnet.nodereal.io/v1/",
-							"http://localhost:19530/nodereal_jsonrpc/v1/",
+							"https://ethereum-mainnet.nodereal.io/v1/",
+
+                    		// 	below url is used for test against mock server
+							// "http://localhost:19530/nodereal_jsonrpc/v1/",
 							secrets[0]
 						)
 					);
