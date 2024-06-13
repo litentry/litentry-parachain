@@ -44,6 +44,7 @@ use std::{
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
+use rsa::{BigUint, RsaPublicKey, Oaep, sha2::Sha256};
 use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
@@ -476,7 +477,14 @@ pub(crate) fn get_json_request(
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto::rsa::Rsa3072PublicKey,
 ) -> String {
-	let encrypted_top = shielding_pubkey.encrypt(&top.encode()).unwrap();
+	let pubkey: sgx_types::types::Rsa3072PubKey = shielding_pubkey.into();
+	let n = BigUint::from_bytes_le(pubkey.modulus.as_ref());
+	let e = BigUint::from_bytes_le(pubkey.exponent.as_ref());
+	let pubkey = RsaPublicKey::new(n, e).unwrap();
+
+	// let encrypted_top = shielding_pubkey.encrypt(&top.encode()).unwrap();
+	let mut rng = rand::thread_rng();
+	let encrypted_top = pubkey.encrypt(& mut rng, Oaep::new::<Sha256>(), &top.encode()).unwrap();
 
 	// compose jsonrpc call
 	let request = RsaRequest::new(shard, encrypted_top);
