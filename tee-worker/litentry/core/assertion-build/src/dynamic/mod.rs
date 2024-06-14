@@ -73,7 +73,7 @@ pub fn build<
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Dynamic(smart_contract_id, smart_contract_params.clone()),
+				Assertion::Dynamic(smart_contract_id, smart_contract_params),
 				e.into_error_detail(),
 			))
 		},
