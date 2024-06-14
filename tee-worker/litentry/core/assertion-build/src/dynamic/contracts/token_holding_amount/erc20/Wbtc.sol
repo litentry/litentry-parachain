@@ -26,14 +26,14 @@ contract SpaceId is ERC20 {
 		// Initialize network token addresses
 		networkTokenAddresses[
 			Web3Networks.Ethereum
-		] = "0x2dff88a56767223a5529ea5960da7a3f5f766406";
+		] = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 		networkTokenAddresses[
 			Web3Networks.Bsc
-		] = "0x2dff88a56767223a5529ea5960da7a3f5f766406";
+		] = "";
 		// Add more addresses as needed
 	}
 	function getTokenName() internal pure override returns (string memory) {
-		return "SpaceId";
+		return "wbtc";
 	}
 
 	function getTokenRanges()
@@ -42,17 +42,24 @@ contract SpaceId is ERC20 {
 		override
 		returns (uint256[] memory)
 	{
-		uint256[] memory ranges = new uint256[](10);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1 * decimals_factor;
-		ranges[2] = 50 * decimals_factor;
-		ranges[3] = 100 * decimals_factor;
-		ranges[4] = 200 * decimals_factor;
-		ranges[5] = 500 * decimals_factor;
-		ranges[6] = 800 * decimals_factor;
-		ranges[7] = 1200 * decimals_factor;
-		ranges[8] = 1600 * decimals_factor;
-		ranges[9] = 3000 * decimals_factor;
+		uint256[] memory ranges = new uint256[](14);
+
+		// all ranges multiplied by decimals_factor(1000).
+        // pub const BTC_AMOUNT_RANGE: [f64; 14] =[0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
+		ranges[0] = 0;
+		ranges[1] = 1;
+		ranges[2] = 100;
+		ranges[3] = 300;
+		ranges[4] = 600;
+		ranges[5] = 1000;
+		ranges[6] = 2000;
+		ranges[7] = 5000;
+		ranges[8] = 10000;
+		ranges[9] = 15000;
+		ranges[10] = 25000;
+		ranges[11] = 30000;
+		ranges[12] = 40000;
+		ranges[13] = 50000;
 
 		return ranges;
 	}
