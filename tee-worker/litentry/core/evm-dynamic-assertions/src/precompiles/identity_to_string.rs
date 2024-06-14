@@ -31,7 +31,8 @@ pub fn identity_to_string(input: Vec<u8>) -> PrecompileResult {
 			},
 		};
 
-	let network_type = decoded.first().and_then(|v| v.clone().into_uint().map(|t| t.as_u32() as u8));
+	let network_type =
+		decoded.first().and_then(|v| v.clone().into_uint().map(|t| t.as_u32() as u8));
 	let identity_value = decoded.get(1).and_then(|v| v.clone().into_bytes());
 
 	let value = match (network_type, identity_value) {
