@@ -21,12 +21,11 @@ import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
-
 abstract contract ERC20 is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkTokenAddresses;
 
 	mapping(uint32 => string) internal networkUrls;
-
+	mapping(uint32 => bool) private queriedNetworks;
 	constructor() {
 		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/";
 		networkUrls[
@@ -48,31 +47,38 @@ abstract contract ERC20 is TokenHoldingAmount {
 		(bool identityToStringSuccess, string memory identityString) = Utils
 			.identityToString(network, identity.value);
 
-		if (identityToStringSuccess && isSupportedNetwork(network)) {
+		if (identityToStringSuccess) {
 			string memory url;
 			uint32[] memory networks = getTokenNetworks();
 			uint256 totalBalance = 0;
 
 			for (uint32 i = 0; i < networks.length; i++) {
-				string memory _tokenContractAddress = getNetworkTokenAddresses(
-					networks[i]
-				);
-				url = string(
-					abi.encodePacked(networkUrls[networks[i]], secrets[0])
-				);
 
-				(bool success, uint256 balance) = NoderealClient
-					.getTokenBalance(
-						url,
-						_tokenContractAddress,
-						identityString
+				// Check if this network has been queried
+				if (!queriedNetworks[network]) {
+					string
+						memory _tokenContractAddress = getNetworkTokenAddresses(
+							networks[i]
+						);
+
+					url = string(
+						abi.encodePacked(networkUrls[networks[i]], secrets[0])
 					);
 
-				if (success) {
-					totalBalance += balance;
+					(bool success, uint256 balance) = NoderealClient
+						.getTokenBalance(
+							url,
+							_tokenContractAddress,
+							identityString
+						);
+
+					if (success) {
+						totalBalance += balance;
+					}
+					// Mark this network as queried
+					queriedNetworks[network] = true;
 				}
 			}
-
 			return totalBalance;
 		}
 		return 0;
