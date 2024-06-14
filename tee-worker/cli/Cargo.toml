@@ -53,13 +53,13 @@ itp-utils = { path = "../core-primitives/utils" }
 lc-credentials = { path = "../litentry/core/credentials" }
 
 # litentry
-scale-value = "0.6.0"
 frame-metadata = "15.0.0"
-sp-core-hashing = "6.0.0"
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+lc-rsa-wrapper = { path = "../litentry/core/rsa-wrapper" }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
-lc-rsa-wrapper = { path = "../litentry/core/rsa-wrapper" }
+scale-value = "0.6.0"
+sp-core-hashing = "6.0.0"
 
 [features]
 default = []
