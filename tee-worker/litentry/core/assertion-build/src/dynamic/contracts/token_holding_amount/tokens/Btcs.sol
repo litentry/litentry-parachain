@@ -14,5 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-mod args_executor;
-pub mod scheduled_enclave;
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pragma solidity ^0.8.8;
+
+import {BRC20} from "../BRC20.sol";
+
+contract Btcs is BRC20 {
+    function getTokenName() internal pure override returns (string memory) {
+        return "btcs";
+    }
+
+    function getTokenRanges()
+        internal
+        pure
+        override
+        returns (uint256[] memory)
+    {
+        uint256[] memory ranges = new uint256[](9);
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 5;
+        ranges[3] = 20;
+        ranges[4] = 50;
+        ranges[5] = 100;
+        ranges[6] = 200;
+        ranges[7] = 500;
+        ranges[8] = 800;
+        return ranges;
+    }
+}

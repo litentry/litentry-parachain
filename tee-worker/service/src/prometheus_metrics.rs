@@ -241,8 +241,9 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			EnclaveMetric::VCBuildTime(assertion, time) =>
-				VC_BUILD_TIME.with_label_values(&[&assertion]).observe(time.as_secs_f64()),
+			EnclaveMetric::VCBuildTime(assertion, time) => VC_BUILD_TIME
+				.with_label_values(&[&assertion_to_string(assertion)])
+				.observe(time.as_secs_f64()),
 			EnclaveMetric::SuccessfullVCIssuance => {
 				SUCCESSFULL_VC_ISSUANCE_TASKS.inc();
 			},
@@ -272,48 +273,54 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 		RequestType::AssertionVerification(_) => "request_vc",
 	};
 
-	let label = match req {
+	let label: String = match req {
 		RequestType::IdentityVerification(request) => match request.identity {
-			Identity::Twitter(_) => "Twitter",
-			Identity::Discord(_) => "Discord",
-			Identity::Github(_) => "Github",
-			Identity::Substrate(_) => "Substrate",
-			Identity::Evm(_) => "Evm",
-			Identity::Bitcoin(_) => "Bitcoin",
-			Identity::Solana(_) => "Solana",
+			Identity::Twitter(_) => "Twitter".into(),
+			Identity::Discord(_) => "Discord".into(),
+			Identity::Github(_) => "Github".into(),
+			Identity::Substrate(_) => "Substrate".into(),
+			Identity::Evm(_) => "Evm".into(),
+			Identity::Bitcoin(_) => "Bitcoin".into(),
+			Identity::Solana(_) => "Solana".into(),
 		},
-		RequestType::AssertionVerification(request) => match request.assertion {
-			Assertion::A1 => "A1",
-			Assertion::A2(_) => "A2",
-			Assertion::A3(..) => "A3",
-			Assertion::A4(_) => "A4",
-			Assertion::A6 => "A6",
-			Assertion::A7(_) => "A7",
-			Assertion::A8(_) => "A8",
-			Assertion::A10(_) => "A10",
-			Assertion::A11(_) => "A11",
-			Assertion::A13(_) => "A13",
-			Assertion::A14 => "A14",
-			Assertion::A20 => "A20",
-			Assertion::Achainable(..) => "Achainable",
-			Assertion::OneBlock(..) => "OneBlock",
-			Assertion::BnbDomainHolding => "BnbDomainHolding",
-			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
-			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
-			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
-			Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
-			Assertion::LITStaking => "LITStaking",
-			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
-			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
-			Assertion::CryptoSummary => "CryptoSummary",
-			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
-			Assertion::PlatformUser(_) => "PlatformUser",
-			Assertion::NftHolder(_) => "NftHolder",
-			Assertion::Dynamic(_) => "Dynamic",
-		},
+		RequestType::AssertionVerification(request) => assertion_to_string(request.assertion),
 	};
-	inc_stf_calls(category, label);
-	observe_execution_time(category, label, time)
+	inc_stf_calls(category, &label);
+	observe_execution_time(category, &label, time)
+}
+
+fn assertion_to_string(assertion: Assertion) -> String {
+	match assertion {
+		Assertion::A1 => "A1".into(),
+		Assertion::A2(_) => "A2".into(),
+		Assertion::A3(..) => "A3".into(),
+		Assertion::A4(_) => "A4".into(),
+		Assertion::A6 => "A6".into(),
+		Assertion::A7(_) => "A7".into(),
+		Assertion::A8(_) => "A8".into(),
+		Assertion::A10(_) => "A10".into(),
+		Assertion::A11(_) => "A11".into(),
+		Assertion::A13(_) => "A13".into(),
+		Assertion::A14 => "A14".into(),
+		Assertion::A20 => "A20".into(),
+		Assertion::Achainable(..) => "Achainable".into(),
+		Assertion::OneBlock(..) => "OneBlock".into(),
+		Assertion::BnbDomainHolding => "BnbDomainHolding".into(),
+		Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub".into(),
+		Assertion::GenericDiscordRole(_) => "GenericDiscordRole".into(),
+		Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard".into(),
+		Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder".into(),
+		Assertion::LITStaking => "LITStaking".into(),
+		Assertion::EVMAmountHolding(_) => "EVMAmountHolding".into(),
+		Assertion::BRC20AmountHolder => "BRC20AmountHolder".into(),
+		Assertion::CryptoSummary => "CryptoSummary".into(),
+		Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount".into(),
+		Assertion::PlatformUser(_) => "PlatformUser".into(),
+		Assertion::NftHolder(_) => "NftHolder".into(),
+		Assertion::Dynamic(id) => {
+			format!("DynamicAssertion({:?})", id)
+		},
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
