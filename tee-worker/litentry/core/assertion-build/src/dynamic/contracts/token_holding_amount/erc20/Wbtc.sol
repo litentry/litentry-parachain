@@ -21,7 +21,7 @@ pragma solidity ^0.8.8;
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
 
-contract SpaceId is ERC20 {
+contract Wbtc is ERC20 {
 	constructor() {
 		// Initialize network token addresses
 		networkTokenAddresses[
