@@ -146,23 +146,13 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
 				"eth_getBalance" => {
-					if address == expected_address {
-						let body = RpcResponse {
-							jsonrpc: "2.0".into(),
-							id: Id::Number(1),
-							// 10 * 10^18
-							result: serde_json::to_value("0x8ac7230489e80000").unwrap(),
-						};
-						return Response::builder().body(serde_json::to_string(&body).unwrap())
-					} else {
-						let body = RpcResponse {
-							jsonrpc: "2.0".into(),
-							id: Id::Number(1),
-							// 1 * 10^18
-							result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
-						};
-						Response::builder().body(serde_json::to_string(&body).unwrap())
-					}
+					let body = RpcResponse {
+						jsonrpc: "2.0".into(),
+						id: Id::Number(1),
+						// 1 * 10^18
+						result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
 				"nr_getTokenHoldings" =>
 					Response::builder().body(RES_BODY_OK_GET_TOKEN_HOLDINGS.to_string()),
