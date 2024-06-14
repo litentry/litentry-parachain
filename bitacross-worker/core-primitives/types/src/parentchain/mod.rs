@@ -15,17 +15,21 @@
 
 */
 
-use crate::{OpaqueCall, ShardIdentifier};
-use alloc::{format, vec::Vec};
+pub mod events;
+
+use crate::OpaqueCall;
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
+use events::{
+	BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, RelayerAdded,
+	RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+};
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
-use itp_utils::stringify::account_id_to_string;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::bounded::alloc;
+use sp_core::{bounded::alloc, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
-use substrate_api_client::ac_node_api::StaticEvent;
 
 pub type StorageProof = Vec<Vec<u8>>;
 
@@ -89,79 +93,25 @@ pub trait IdentifyParentchain {
 }
 
 pub trait FilterEvents {
-	type Error: From<ParentchainError> + core::fmt::Debug;
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error>;
+	type Error: From<ParentchainEventProcessingError> + core::fmt::Debug;
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
-}
 
-#[derive(Encode, Decode, Debug)]
-pub struct ExtrinsicSuccess;
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error>;
 
-impl StaticEvent for ExtrinsicSuccess {
-	const PALLET: &'static str = "System";
-	const EVENT: &'static str = "ExtrinsicSuccess";
-}
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
 
-#[derive(Encode, Decode)]
-pub struct ExtrinsicFailed;
+	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
 
-impl StaticEvent for ExtrinsicFailed {
-	const PALLET: &'static str = "System";
-	const EVENT: &'static str = "ExtrinsicFailed";
-}
+	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
 
-#[derive(Debug)]
-pub enum ExtrinsicStatus {
-	Success,
-	Failed,
-}
+	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
 
-#[derive(Encode, Decode, Debug)]
-pub struct BalanceTransfer {
-	pub from: AccountId,
-	pub to: AccountId,
-	pub amount: Balance,
-}
+	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
 
-impl core::fmt::Display for BalanceTransfer {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"BalanceTransfer :: from: {}, to: {}, amount: {}",
-			account_id_to_string::<AccountId>(&self.from),
-			account_id_to_string::<AccountId>(&self.to),
-			self.amount
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for BalanceTransfer {
-	const PALLET: &'static str = "Balances";
-	const EVENT: &'static str = "Transfer";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct ParentchainBlockProcessed {
-	pub shard: ShardIdentifier,
-	pub block_number: BlockNumber,
-	pub block_hash: Hash,
-	pub task_merkle_root: Hash,
-}
-
-impl core::fmt::Display for crate::parentchain::ParentchainBlockProcessed {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"ParentchainBlockProcessed :: nr {} shard: {}, merkle: {:?}, block hash {:?}",
-			self.block_number, self.shard, self.task_merkle_root, self.block_hash
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for ParentchainBlockProcessed {
-	const PALLET: &'static str = "Teebag";
-	const EVENT: &'static str = "ParentchainBlockProcessed";
+	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
 }
 
 pub trait HandleParentchainEvents<Executor, TCS, Error, RRU, SRU, ERU>
@@ -172,28 +122,51 @@ where
 	fn handle_events(
 		executor: &Executor,
 		events: impl FilterEvents,
-		vault_account: &AccountId,
-	) -> core::result::Result<(), Error>;
+		vault_account: Option<AccountId>,
+	) -> core::result::Result<Vec<H256>, Error>;
 }
 
 #[derive(Debug)]
-pub enum ParentchainError {
+pub enum ParentchainEventProcessingError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
+	ScheduledEnclaveSetFailure,
+	ScheduledEnclaveRemovedFailure,
+	RelayerAddFailure,
+	RelayerRemoveFailure,
+	EnclaveAddFailure,
+	EnclaveRemoveFailure,
+	BtcWalletGeneratedFailure,
 }
 
-impl core::fmt::Display for ParentchainError {
+impl core::fmt::Display for ParentchainEventProcessingError {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = match &self {
-			ParentchainError::ShieldFundsFailure => "Parentchain Error: ShieldFundsFailure",
-			ParentchainError::FunctionalityDisabled => "Parentchain Error: FunctionalityDisabled",
+			ParentchainEventProcessingError::ShieldFundsFailure =>
+				"Parentchain Event Processing Error: ShieldFundsFailure",
+			ParentchainEventProcessingError::FunctionalityDisabled =>
+				"Parentchain Event Processing Error: FunctionalityDisabled",
+			ParentchainEventProcessingError::ScheduledEnclaveSetFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
+			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
+				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
+			ParentchainEventProcessingError::RelayerAddFailure =>
+				"Parentchain Event Processing Error: RelayerAddFailure",
+			ParentchainEventProcessingError::RelayerRemoveFailure =>
+				"Parentchain Event Processing Error: RelayerRemoveFailure",
+			ParentchainEventProcessingError::EnclaveAddFailure =>
+				"Parentchain Event Processing Error: EnclaveAddFailure",
+			ParentchainEventProcessingError::EnclaveRemoveFailure =>
+				"Parentchain Event Processing Error: EnclaveRemoveFailure",
+			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
+				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
 		};
 		write!(f, "{}", message)
 	}
 }
 
-impl From<ParentchainError> for () {
-	fn from(_: ParentchainError) -> Self {}
+impl From<ParentchainEventProcessingError> for () {
+	fn from(_: ParentchainEventProcessingError) -> Self {}
 }
 
 /// a wrapper to target calls to specific parentchains

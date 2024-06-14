@@ -67,7 +67,8 @@ impl AchainableLitHoldingAmountUpdate for Credential {
 		}
 
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		// The credential value should be true if amount > ranges[0].
+		self.credential_subject.values.push(amount > lit_holding_amount.get_range()[0]);
 
 		let info = lit_holding_amount.get_info();
 		self.add_subject_info(info.1, info.0);
