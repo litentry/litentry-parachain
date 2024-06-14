@@ -19,24 +19,22 @@
 pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
+import "../../libraries/Identities.sol";
 
 contract Mcrt is ERC20 {
-	function getTokenName() internal pure override returns (string memory) {
-		return "mcrt";
+	constructor() {
+		// Initialize network token addresses
+		networkTokenAddresses[
+			Web3Networks.Ethereum
+		] = "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
+		networkTokenAddresses[
+			Web3Networks.Bsc
+		] = "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
+		// Add more addresses as needed
 	}
 
-	function getTokenContractAddress()
-		internal
-		pure
-		override
-		returns (string[] memory)
-	{
-		string[] memory addresses = new string[](2);
-
-		// [0] is bsc address, [1] is eth address
-		addresses[0] = "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
-		addresses[1] = "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
-		return addresses;
+	function getTokenName() internal pure override returns (string memory) {
+		return "mcrt";
 	}
 
 	function getTokenRanges()

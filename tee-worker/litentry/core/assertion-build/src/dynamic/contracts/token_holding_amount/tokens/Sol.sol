@@ -19,24 +19,21 @@
 pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
+import "../../libraries/Identities.sol";
 
 contract Sol is ERC20 {
+	constructor() {
+		// Initialize network token addresses
+		networkTokenAddresses[
+			Web3Networks.Ethereum
+		] = "0x5288738df1aeb0894713de903e1d0c001eeb7644";
+		networkTokenAddresses[
+			Web3Networks.Bsc
+		] = "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
+		// Add more addresses as needed
+	}
 	function getTokenName() internal pure override returns (string memory) {
 		return "sol";
-	}
-
-	function getTokenContractAddress()
-		internal
-		pure
-		override
-		returns (string[] memory)
-	{
-		string[] memory addresses = new string[](2);
-
-		// [0] is bsc address, [1] is eth address
-		addresses[0] = "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
-		addresses[1] = "0x5288738df1aeb0894713de903e1d0c001eeb7644";
-		return addresses;
 	}
 
 	function getTokenRanges()
