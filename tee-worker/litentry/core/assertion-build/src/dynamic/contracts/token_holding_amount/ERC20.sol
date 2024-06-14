@@ -32,6 +32,7 @@ abstract contract ERC20 is TokenHoldingAmount {
 			Web3Networks.Ethereum
 		] = "https://eth-mainnet.nodereal.io/v1";
 		// Add more networks as needed
+		
 		// 	below url is used for test against mock server
 		// "http://localhost:19530/nodereal_jsonrpc/v1/",
 	}
@@ -53,13 +54,11 @@ abstract contract ERC20 is TokenHoldingAmount {
 			uint256 totalBalance = 0;
 
 			for (uint32 i = 0; i < networks.length; i++) {
-
 				// Check if this network has been queried
 				if (!queriedNetworks[network]) {
-					string
-						memory _tokenContractAddress = getNetworkTokenAddresses(
-							networks[i]
-						);
+					string memory _tokenContractAddress = networkTokenAddresses[
+						network
+					];
 
 					url = string(
 						abi.encodePacked(networkUrls[networks[i]], secrets[0])
@@ -90,12 +89,6 @@ abstract contract ERC20 is TokenHoldingAmount {
 		networks[1] = Web3Networks.Bsc;
 		// Add more networks as needed
 		return networks;
-	}
-
-	function getNetworkTokenAddresses(
-		uint32 network
-	) internal view returns (string memory) {
-		return networkTokenAddresses[network];
 	}
 
 	function isSupportedNetwork(
