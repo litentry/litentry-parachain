@@ -15,24 +15,25 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 // SPDX-License-Identifier: GPL-3.0-or-later
-
 pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
 
-contract Eth is ERC20 {
+contract Ada is ERC20 {
 	constructor() {
 		// Initialize network token addresses
-		networkTokenAddresses[Web3Networks.Ethereum] = "Native Token";
+		networkTokenAddresses[
+			Web3Networks.Ethereum
+		] = "";
 		networkTokenAddresses[
 			Web3Networks.Bsc
-		] = "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
+		] = "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47";
 		// Add more addresses as needed
 	}
 
 	function getTokenName() internal pure override returns (string memory) {
-		return "eth";
+		return "ada";
 	}
 
 	function getTokenRanges()
@@ -41,20 +42,14 @@ contract Eth is ERC20 {
 		override
 		returns (uint256[] memory)
 	{
-		uint256[] memory ranges = new uint256[](10);
-
-		// all ranges multiplied by decimals_factor(1000).
-		// pub const ETH_AMOUNT_RANGE: [f64; 10] = [0.0, 0.01, 0.05, 0.2, 0.6, 1.2, 3.0, 8.0, 20.0, 50.0];
-		ranges[0] = 0;
-		ranges[1] = 10;
-		ranges[2] = 50;
-		ranges[3] = 200;
-		ranges[4] = 600;
-		ranges[5] = 1200;
-		ranges[6] = 3000;
-		ranges[7] = 8000;
-		ranges[8] = 20000;
-		ranges[9] = 50000;
+		uint256[] memory ranges = new uint256[](7);
+		ranges[0] = 0 * decimals_factor;
+		ranges[1] = 1000 * decimals_factor;
+		ranges[2] = 5000 * decimals_factor;
+		ranges[3] = 20000* decimals_factor;
+		ranges[4] = 50000 * decimals_factor;
+		ranges[5] = 100000 * decimals_factor;
+		ranges[6] = 300000 * decimals_factor;
 
 		return ranges;
 	}

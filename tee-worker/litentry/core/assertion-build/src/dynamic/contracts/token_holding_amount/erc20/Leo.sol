@@ -21,18 +21,20 @@ pragma solidity ^0.8.8;
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
 
-contract Eth is ERC20 {
+contract Leo is ERC20 {
 	constructor() {
 		// Initialize network token addresses
-		networkTokenAddresses[Web3Networks.Ethereum] = "Native Token";
+		networkTokenAddresses[
+			Web3Networks.Ethereum
+		] = "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3";
 		networkTokenAddresses[
 			Web3Networks.Bsc
-		] = "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
+		] = "";
 		// Add more addresses as needed
 	}
 
 	function getTokenName() internal pure override returns (string memory) {
-		return "eth";
+		return "leo";
 	}
 
 	function getTokenRanges()
@@ -41,20 +43,13 @@ contract Eth is ERC20 {
 		override
 		returns (uint256[] memory)
 	{
-		uint256[] memory ranges = new uint256[](10);
-
-		// all ranges multiplied by decimals_factor(1000).
-		// pub const ETH_AMOUNT_RANGE: [f64; 10] = [0.0, 0.01, 0.05, 0.2, 0.6, 1.2, 3.0, 8.0, 20.0, 50.0];
-		ranges[0] = 0;
-		ranges[1] = 10;
-		ranges[2] = 50;
-		ranges[3] = 200;
-		ranges[4] = 600;
-		ranges[5] = 1200;
-		ranges[6] = 3000;
-		ranges[7] = 8000;
-		ranges[8] = 20000;
-		ranges[9] = 50000;
+		uint256[] memory ranges = new uint256[](6);
+		ranges[0] = 0 * decimals_factor;
+		ranges[1] = 10 * decimals_factor;
+		ranges[2] = 30 * decimals_factor;
+		ranges[3] = 80 * decimals_factor;
+		ranges[4] = 200 * decimals_factor;
+		ranges[5] = 500 * decimals_factor;
 
 		return ranges;
 	}
