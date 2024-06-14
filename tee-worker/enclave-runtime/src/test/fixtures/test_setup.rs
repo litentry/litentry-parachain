@@ -81,7 +81,7 @@ pub fn test_setup() -> (
 	Arc<HandleStateMock>,
 	Arc<TestStfExecutor>,
 ) {
-	let shielding_key = ShieldingCryptoMock::default();
+	let shielding_key = ShieldingCryptoMock::new(false);
 	let shielding_key_repo = Arc::new(KeyRepositoryMock::new(shielding_key.clone()));
 
 	let state_handler = Arc::new(HandleStateMock::default());

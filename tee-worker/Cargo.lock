@@ -3840,6 +3840,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "jsonrpc-core 18.0.0 (git+https://github.com/Kailai-Wang/jsonrpc-sgx?branch=sgx-sdk-2.0.0)",
+ "lc-rsa-wrapper",
  "lc-teebag-storage",
  "litentry-primitives",
  "log 0.4.21",
@@ -3906,6 +3907,7 @@ dependencies = [
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/Kailai-Wang/jsonrpc-sgx?branch=sgx-sdk-2.0.0)",
  "lazy_static",
+ "lc-rsa-wrapper",
  "litentry-primitives",
  "log 0.4.21",
  "parity-scale-codec",
@@ -4717,6 +4719,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-rsa-wrapper"
+version = "0.1.0"
+dependencies = [
+ "num-traits 0.2.18",
+ "rand 0.8.5",
+ "rsa",
+ "sgx_crypto",
+ "sgx_types",
+]
+
+[[package]]
 name = "lc-scheduled-enclave"
 version = "0.8.0"
 dependencies = [
@@ -5044,6 +5057,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-credentials",
+ "lc-rsa-wrapper",
  "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.21",
@@ -5054,12 +5068,10 @@ dependencies = [
  "rayon",
  "regex",
  "reqwest",
- "rsa",
  "scale-value",
  "serde",
  "serde_json",
  "sgx_crypto",
- "sgx_types",
  "sp-application-crypto",
  "sp-consensus-aura",
  "sp-core",

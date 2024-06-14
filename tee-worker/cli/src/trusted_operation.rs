@@ -35,6 +35,7 @@ use itp_types::{
 	DirectRequestStatus, RsaRequest, TrustedOperationStatus,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use lc_rsa_wrapper::RsaWrapperEncrypt;
 use litentry_primitives::{aes_encrypt_default, AesRequest, RequestAesKey};
 use log::*;
 use sp_core::H256;
@@ -44,7 +45,6 @@ use std::{
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
-use rsa::{BigUint, RsaPublicKey, Oaep, sha2::Sha256};
 use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
@@ -161,7 +161,8 @@ fn send_indirect_request<T: Decode + Debug>(
 ) -> TrustedOpResult<T> {
 	let mut chain_api = get_chain_api(cli);
 	let encryption_key = get_shielding_key(cli).unwrap();
-	let call_encrypted = encryption_key.encrypt(&trusted_operation.encode()).unwrap();
+	let call_encrypted =
+		encryption_key.encrypt_with_rsa_wrapper(&trusted_operation.encode()).unwrap();
 
 	let shard = read_shard(trusted_args, cli).unwrap();
 	debug!(
@@ -477,14 +478,7 @@ pub(crate) fn get_json_request(
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto::rsa::Rsa3072PublicKey,
 ) -> String {
-	let pubkey: sgx_types::types::Rsa3072PubKey = shielding_pubkey.into();
-	let n = BigUint::from_bytes_le(pubkey.modulus.as_ref());
-	let e = BigUint::from_bytes_le(pubkey.exponent.as_ref());
-	let pubkey = RsaPublicKey::new(n, e).unwrap();
-
-	// let encrypted_top = shielding_pubkey.encrypt(&top.encode()).unwrap();
-	let mut rng = rand::thread_rng();
-	let encrypted_top = pubkey.encrypt(& mut rng, Oaep::new::<Sha256>(), &top.encode()).unwrap();
+	let encrypted_top = shielding_pubkey.encrypt_with_rsa_wrapper(&top.encode()).unwrap();
 
 	// compose jsonrpc call
 	let request = RsaRequest::new(shard, encrypted_top);

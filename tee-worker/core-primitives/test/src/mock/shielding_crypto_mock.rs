@@ -20,36 +20,78 @@ use itp_sgx_crypto::{
 };
 use sgx_crypto::rsa::Rsa3072KeyPair;
 use sp_core::ed25519::Pair as Ed25519Pair;
-use std::vec::Vec;
+use std::{format, vec::Vec};
 
-#[derive(Clone, Default)]
+#[cfg(all(not(feature = "sgx"), feature = "std"))]
+use lc_rsa_wrapper::{RsaWrapperCreate, RsaWrapperDecrypt, RsaWrapperEncrypt};
+
+#[derive(Clone)]
 pub struct ShieldingCryptoMock {
 	key: Rsa3072KeyPair,
+	// this flag forces to use dummy(identity) encryption and decryption, otherwise
+	// `test_threadpool_behaviour` won't pass, the root cause is unclear, but I suspect that
+	// it's related to multi-threaded key creation and encryption - the `encrypt` call never
+	// returns on another thread (somehow).
+	//
+	// since this struct is used in `std` only and `lc_rsa_wrapper` is a workaround anyway,
+	// I consider it fine for now
+	use_dummy_enc_dec: bool,
+}
+
+impl ShieldingCryptoMock {
+	pub fn new(use_dummy_enc_dec: bool) -> Self {
+		ShieldingCryptoMock {
+			use_dummy_enc_dec,
+			#[cfg(all(not(feature = "std"), feature = "sgx"))]
+			key: Rsa3072KeyPair::create().expect("default RSA3072 key for shielding key mock"),
+			#[cfg(all(not(feature = "sgx"), feature = "std"))]
+			key: Rsa3072KeyPair::create_with_rsa_wrapper()
+				.expect("default RSA3072 key for shielding key mock"),
+		}
+	}
 }
 
 impl ShieldingCryptoEncrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
-	// Commented out temporarily due to sgx_crypto issue under `ucrypto` feature,
-	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456
 	fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		Ok(data.to_vec())
-		// self.key
-		// 	.encrypt(data)
-		// 	.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()))
+		if self.use_dummy_enc_dec {
+			return Ok(data.to_vec())
+		}
+
+		#[cfg(all(not(feature = "std"), feature = "sgx"))]
+		return self
+			.key
+			.encrypt(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()));
+
+		#[cfg(all(not(feature = "sgx"), feature = "std"))]
+		self.key
+			.public_key()
+			.encrypt_with_rsa_wrapper(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("encrypt error: {:?}", e).into()))
 	}
 }
 
 impl ShieldingCryptoDecrypt for ShieldingCryptoMock {
 	type Error = itp_sgx_crypto::Error;
 
-	// Commented out temporarily due to sgx_crypto issue under `ucrypto` feature,
-	// see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/456
 	fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, Self::Error> {
-		Ok(data.to_vec())
-		// self.key
-		// 	.decrypt(data)
-		// 	.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()))
+		if self.use_dummy_enc_dec {
+			return Ok(data.to_vec())
+		}
+
+		#[cfg(all(not(feature = "std"), feature = "sgx"))]
+		return self
+			.key
+			.decrypt(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()));
+
+		#[cfg(all(not(feature = "sgx"), feature = "std"))]
+		self.key
+			.private_key()
+			.decrypt_with_rsa_wrapper(data)
+			.map_err(|e| itp_sgx_crypto::Error::Other(format!("decrypt error: {:?}", e).into()))
 	}
 }
 
