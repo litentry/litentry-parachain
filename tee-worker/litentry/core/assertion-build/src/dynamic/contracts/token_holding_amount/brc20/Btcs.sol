@@ -18,29 +18,29 @@
 
 pragma solidity ^0.8.8;
 
-import {BRC20} from "../BRC20.sol";
+import { BRC20 } from "../BRC20.sol";
 
 contract Btcs is BRC20 {
-    function getTokenName() internal pure override returns (string memory) {
-        return "btcs";
-    }
+	function getTokenName() internal pure override returns (string memory) {
+		return "btcs";
+	}
 
-    function getTokenRanges()
-        internal
-        pure
-        override
-        returns (uint256[] memory)
-    {
-        uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1 * decimals_factor; 
+	function getTokenRanges()
+		internal
+		pure
+		override
+		returns (uint256[] memory)
+	{
+		uint256[] memory ranges = new uint256[](9);
+		ranges[0] = 0 * decimals_factor;
+		ranges[1] = 1 * decimals_factor;
 		ranges[2] = 5 * decimals_factor;
 		ranges[3] = 20 * decimals_factor;
 		ranges[4] = 50 * decimals_factor;
 		ranges[5] = 100 * decimals_factor;
-		ranges[6] = 200	* decimals_factor;
+		ranges[6] = 200 * decimals_factor;
 		ranges[7] = 500 * decimals_factor;
 		ranges[8] = 800 * decimals_factor;
-        return ranges;
-    }
+		return ranges;
+	}
 }
