@@ -115,7 +115,7 @@ pub fn build(
 	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A6_SUBJECT_DESCRIPTION, VC_A6_SUBJECT_TYPE);
-			credential_unsigned.add_assertion_a6(min, max);
+			credential_unsigned.add_assertion_a6(sum > 0, min, max);
 
 			Ok(credential_unsigned)
 		},
