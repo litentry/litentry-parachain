@@ -38,6 +38,12 @@ pub struct ShieldingCryptoMock {
 	use_dummy_enc_dec: bool,
 }
 
+impl Default for ShieldingCryptoMock {
+	fn default() -> Self {
+		Self::new(false)
+	}
+}
+
 impl ShieldingCryptoMock {
 	pub fn new(use_dummy_enc_dec: bool) -> Self {
 		ShieldingCryptoMock {
