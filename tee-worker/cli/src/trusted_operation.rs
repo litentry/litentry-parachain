@@ -452,7 +452,7 @@ pub(crate) fn get_vc_json_request(
 	shielding_pubkey: sgx_crypto::rsa::Rsa3072PublicKey,
 	key: RequestAesKey,
 ) -> String {
-	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
+	let encrypted_key = shielding_pubkey.encrypt_with_rsa_wrapper(&key).unwrap();
 	let encrypted_top = aes_encrypt_default(&key, &top.encode());
 
 	// compose jsonrpc call

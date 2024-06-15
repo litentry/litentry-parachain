@@ -23,6 +23,7 @@ use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::Identity;
+use lc_rsa_wrapper::RsaWrapperEncrypt;
 use log::*;
 use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
@@ -67,7 +68,7 @@ impl ActivateIdentityCommand {
 	fn encrypt_identity(&self, cli: &Cli) -> (Identity, Vec<u8>) {
 		let identity = Identity::from_did(&self.did).unwrap();
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
+		let encrypted_identity = tee_shielding_key.encrypt_with_rsa_wrapper(&identity.encode()).unwrap();
 		(identity, encrypted_identity)
 	}
 }
