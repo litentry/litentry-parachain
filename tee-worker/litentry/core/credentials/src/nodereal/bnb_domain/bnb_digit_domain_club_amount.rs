@@ -93,7 +93,8 @@ impl UpdateDigitDomainClubAmountCredential for Credential {
 		}
 
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(digit_domain.get_index(amount) != Some(0));
+		// The credential value should be true if amount > ranges[0].
+		self.credential_subject.values.push(amount > digit_domain.get_range()[0]);
 
 		let info = digit_domain.get_info();
 		self.add_subject_info(info.1, info.0);

@@ -14,5 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-mod args_executor;
-pub mod scheduled_enclave;
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pragma solidity ^0.8.8;
+
+import "../libraries/Http.sol";
+
+contract Get {
+    function callGet(string memory url) public returns (bool, string memory) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        return Http.Get(url, headers);
+    }
+
+    function callGetTwiceAndReturnSecondResult(
+        string memory firstUrl,
+        string memory secondUrl
+    ) public returns (bool, string memory) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        Http.Get(firstUrl, headers);
+        return Http.Get(secondUrl, headers);
+    }
+}

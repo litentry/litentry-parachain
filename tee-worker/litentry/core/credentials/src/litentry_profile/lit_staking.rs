@@ -67,7 +67,8 @@ impl UpdateLITStakingAmountCredential for Credential {
 		}
 
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		// The credential value should be true if amount > ranges[0].
+		self.credential_subject.values.push(amount > lit_staking.get_range()[0] as u128);
 
 		let info = lit_staking.get_info();
 		self.add_subject_info(info.1, info.0);

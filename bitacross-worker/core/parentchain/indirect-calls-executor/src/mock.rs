@@ -18,7 +18,10 @@ use itp_sgx_runtime_primitives::types::{AccountId, Balance};
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
-	parentchain::{BalanceTransfer, ExtrinsicStatus, FilterEvents, HandleParentchainEvents},
+	parentchain::{
+		events::{BalanceTransfer, ScheduledEnclaveRemoved, ScheduledEnclaveSet},
+		FilterEvents, HandleParentchainEvents,
+	},
 	Address, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
@@ -179,17 +182,54 @@ pub struct MockEvents;
 
 impl FilterEvents for MockEvents {
 	type Error = ();
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(Vec::from([ExtrinsicStatus::Success]))
-	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
+	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
 		let transfer = BalanceTransfer {
 			to: [0u8; 32].into(),
 			from: [0u8; 32].into(),
 			amount: Balance::default(),
 		};
 		Ok(Vec::from([transfer]))
+	}
+
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayer_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayers_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_btc_wallet_generated_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::BtcWalletGenerated>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
 
@@ -216,9 +256,9 @@ where
 	fn handle_events(
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
-		_: &AccountId,
-	) -> core::result::Result<(), Error> {
-		Ok(())
+		_: Option<AccountId>,
+	) -> core::result::Result<Vec<H256>, Error> {
+		Ok(Vec::from([H256::default()]))
 	}
 }
 
