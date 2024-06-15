@@ -16,8 +16,8 @@
 
 use crate::{command_utils::get_shielding_key, Cli, CliResult, CliResultOk};
 use codec::Encode;
-use std::format;
 use lc_rsa_wrapper::RsaWrapperEncrypt;
+use std::format;
 
 // Scale encodes string and ecrypts it with worker's shielding key
 // usage example:
