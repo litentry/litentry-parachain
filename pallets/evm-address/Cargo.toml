@@ -1,6 +1,6 @@
 [package]
 authors = ['Litentry Dev']
-description = 'Pallet for interacting with drop3 project'
+description = 'Pallet for managing EVM and AccountId addresses'
 edition = '2021'
 homepage = 'https://litentry.com/'
 license = 'GPL-3.0'
