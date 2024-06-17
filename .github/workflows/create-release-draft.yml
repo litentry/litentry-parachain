@@ -188,7 +188,7 @@ jobs:
           EOF
 
       - name: Build local builder
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tee-worker/build.Dockerfile
@@ -203,7 +203,7 @@ jobs:
             SGX_COMMERCIAL_KEY=enclave_key.pem
 
       - name: Build worker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tee-worker/build.Dockerfile
@@ -255,7 +255,7 @@ jobs:
           EOF
 
       - name: Build local builder
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
@@ -270,7 +270,7 @@ jobs:
             SGX_COMMERCIAL_KEY=enclave_key.pem
 
       - name: Build worker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
