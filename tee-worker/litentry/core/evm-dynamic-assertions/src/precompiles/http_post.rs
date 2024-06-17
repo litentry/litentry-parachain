@@ -220,6 +220,7 @@ pub mod integration_test {
 	use crate::{execute_smart_contract, prepare_function_call_input};
 	use ethabi::{encode, ethereum_types::U256, Token};
 	use lc_mock_server::run;
+	use serde_json::Value;
 
 	// tee-worker/litentry/core/assertion-build/src/dynamic/contracts/tests/PostI64.sol
 	const POST_I64_FUNCTION_HASH_0: &str = "2381daad"; // callPostI64(string,string,string)
@@ -488,13 +489,18 @@ pub mod integration_test {
 														 ])).unwrap();
 		let (_, return_data) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
+		let expected_value: Value = serde_json::from_str("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}").unwrap();
 
 		// when
 		let decoded = ethabi::decode(&types, &return_data).unwrap();
 
 		// then
 		assert_eq!(true, decoded[0].clone().into_bool().unwrap());
-		assert_eq!("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}", decoded[1].clone().into_string().unwrap());
+
+		let actual_value: Value =
+			serde_json::from_str(&decoded[1].clone().into_string().unwrap()).unwrap();
+
+		assert_eq!(expected_value, actual_value);
 	}
 
 	#[test]
@@ -536,12 +542,17 @@ pub mod integration_test {
 		).unwrap();
 		let (_, return_data) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
+		let expected_value: Value = serde_json::from_str("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}").unwrap();
 
 		// when
 		let decoded = ethabi::decode(&types, &return_data).unwrap();
 
 		// then
 		assert_eq!(true, decoded[0].clone().into_bool().unwrap());
-		assert_eq!("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}", decoded[1].clone().into_string().unwrap());
+
+		let actual_value: Value =
+			serde_json::from_str(&decoded[1].clone().into_string().unwrap()).unwrap();
+
+		assert_eq!(expected_value, actual_value);
 	}
 }
