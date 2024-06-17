@@ -41,7 +41,7 @@ library AchainableClient {
         string memory chain
     ) internal returns (bool success, Response memory) {
         HttpHeader[] memory headers = new HttpHeader[](1);
-        headers[0] = HttpHeader("authorization", prepareAuthHeader(key));
+        headers[0] = HttpHeader("authorization", key);
 
         string memory payload = string(
             abi.encodePacked(
@@ -131,13 +131,5 @@ library AchainableClient {
             }
         }
         return (true, displays);
-    }
-
-    function prepareAuthHeader(string memory apiKey)
-        private
-        pure
-        returns (string memory)
-    {
-        return string(abi.encodePacked("Bearer ", apiKey));
     }
 }
