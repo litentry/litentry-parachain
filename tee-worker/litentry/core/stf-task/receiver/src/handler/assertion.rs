@@ -276,11 +276,13 @@ where
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 
-		Assertion::Dynamic(smart_contract_id) => lc_assertion_build::dynamic::build(
-			req,
-			smart_contract_id,
-			context.assertion_repository.clone(),
-		),
+		Assertion::Dynamic(smart_contract_id, smart_contract_params) =>
+			lc_assertion_build::dynamic::build(
+				req,
+				smart_contract_id,
+				smart_contract_params,
+				context.assertion_repository.clone(),
+			),
 	}?;
 
 	// post-process the credential
