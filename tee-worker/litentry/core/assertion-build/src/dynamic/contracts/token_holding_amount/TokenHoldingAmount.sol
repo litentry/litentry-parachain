@@ -23,25 +23,25 @@ import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	uint256 constant decimals_factor = 100;
-	function execute(
-		Identity[] memory identities,
-		string[] memory secrets
-	)
-		public
-		override
-		returns (
-			string memory,
-			string memory,
-			string[] memory,
-			string memory,
-			bool
-		)
-	{
-		string
-			memory description = "The amount of a particular token you are holding";
-		string memory assertion_type = "Token Holding Amount";
-		schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
+    function execute(
+        Identity[] memory identities,
+        string[] memory secrets,
+        bytes memory /*params*/
+    )
+        public
+        override
+        returns (
+            string memory,
+            string memory,
+            string[] memory,
+            string memory,
+            bool
+        )
+    {
+        string
+            memory description = "The amount of a particular token you are holding";
+        string memory assertion_type = "Token Holding Amount";
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
 
 		uint256 balance = queryTotalBalance(identities, secrets);
 

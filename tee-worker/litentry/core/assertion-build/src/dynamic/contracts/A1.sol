@@ -25,7 +25,8 @@ import "./DynamicAssertion.sol";
 contract A1 is DynamicAssertion {
     function execute(
         Identity[] memory identities,
-        string[] memory /*secrets*/
+        string[] memory /*secrets*/,
+        bytes memory /*params*/
     )
         public
         override
