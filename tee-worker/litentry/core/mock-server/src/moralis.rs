@@ -18,13 +18,15 @@
 use std::collections::HashMap;
 
 use lc_data_providers::moralis::{
-	GetNftsByWalletResult, GetSolanaNativeBalanceByWalletResponse,
-	GetSolanaTokenBalanceByWalletResponse, MoralisPageResponse,
+	GetEvmTokenBalanceByWalletResponse, GetNftsByWalletResult,
+	GetSolanaNativeBalanceByWalletResponse, GetSolanaTokenBalanceByWalletResponse,
+	MoralisPageResponse,
 };
 
 use warp::{http::Response, Filter};
 
-pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub(crate) fn query_nft() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+{
 	warp::get()
 		.and(warp::path!("moralis" / String / "nft"))
 		.and(warp::query::<HashMap<String, String>>())
@@ -52,6 +54,35 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					page_size: 100,
 					result: vec![],
 				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_erc20(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("moralis" / String / "erc20"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |address, _| {
+			if address == "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee" {
+				let body = vec![GetEvmTokenBalanceByWalletResponse {
+					token_address: "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".to_string(),
+					symbol: "SYM".to_string(),
+					name: "Name #1".to_string(),
+					logo: None,
+					thumbnail: None,
+					decimals: 10,
+					balance: "1000".to_string(),
+					possible_spam: false,
+					verified_contract: true,
+					total_supply: "100000000".to_string(),
+					total_supply_formatted: "100000000".to_string(),
+					percentage_relative_to_total_supply: 0.00001,
+				}];
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				let body: Vec<GetEvmTokenBalanceByWalletResponse> = vec![];
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
