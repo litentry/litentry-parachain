@@ -24,7 +24,11 @@ import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
+    function execute(
+        Identity[] memory identities,
+        string[] memory secrets,
+        bytes memory /*params*/
+    )
         public
         override
         returns (

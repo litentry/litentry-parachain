@@ -114,6 +114,6 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 		Assertion::TokenHoldingAmount(_) =>
 			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-2.json")),
 
-		Assertion::Dynamic(_) => None,
+		Assertion::Dynamic(..) => None,
 	}
 }
