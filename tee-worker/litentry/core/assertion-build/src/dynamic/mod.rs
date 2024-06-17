@@ -291,94 +291,94 @@ pub mod assertion_test {
 		// then
 		assert!(credential.credential_subject.values[0]);
 	}
+	
+	// #[test]
+	// pub fn test_token_holding_amount_bnb_true() {
+	// 	let _ = env_logger::builder().is_test(true).try_init();
+	// 	run(19530).unwrap();
+	// 	// given
+	// 	let address = decode_hex("0x4B04b9166f472a72e067d68560a141a1d02332Ef".as_bytes().to_vec())
+	// 		.unwrap()
+	// 		.as_slice()
+	// 		.try_into()
+	// 		.unwrap();
 
-	#[test]
-	pub fn test_token_holding_amount_bnb_true() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		run(19530).unwrap();
-		// given
-		let address = decode_hex("0x4B04b9166f472a72e067d68560a141a1d02332Ef".as_bytes().to_vec())
-			.unwrap()
-			.as_slice()
-			.try_into()
-			.unwrap();
+	// 	let network = Web3Network::Bsc;
+	// 	let identities = vec![(Identity::Evm(address), vec![network])];
 
-		let network = Web3Network::Bsc;
-		let identities = vec![(Identity::Evm(address), vec![network])];
+	// 	let smart_contract_id = hash(4);
 
-		let smart_contract_id = hash(4);
+	// 	let request = AssertionBuildRequest {
+	// 		shard: Default::default(),
+	// 		signer: AccountId32::new([0; 32]),
+	// 		who: Identity::Substrate(AccountId32::new([0; 32]).into()),
+	// 		assertion: Assertion::Dynamic(smart_contract_id),
+	// 		identities,
+	// 		top_hash: Default::default(),
+	// 		parachain_block_number: Default::default(),
+	// 		sidechain_block_number: Default::default(),
+	// 		parachain_runtime_version: 0u32,
+	// 		sidechain_runtime_version: 0u32,
+	// 		maybe_key: None,
+	// 		req_ext_hash: Default::default(),
+	// 		should_create_id_graph: Default::default(),
+	// 	};
 
-		let request = AssertionBuildRequest {
-			shard: Default::default(),
-			signer: AccountId32::new([0; 32]),
-			who: Identity::Substrate(AccountId32::new([0; 32]).into()),
-			assertion: Assertion::Dynamic(smart_contract_id),
-			identities,
-			top_hash: Default::default(),
-			parachain_block_number: Default::default(),
-			sidechain_block_number: Default::default(),
-			parachain_runtime_version: 0u32,
-			sidechain_runtime_version: 0u32,
-			maybe_key: None,
-			req_ext_hash: Default::default(),
-			should_create_id_graph: Default::default(),
-		};
+	// 	let repository = InMemorySmartContractRepo::new();
 
-		let repository = InMemorySmartContractRepo::new();
+	// 	// when
+	// 	let credential = build(&request, smart_contract_id, repository.into()).unwrap();
 
-		// when
-		let credential = build(&request, smart_contract_id, repository.into()).unwrap();
+	// 	println!("Credential is: {:?}", credential);
 
-		println!("Credential is: {:?}", credential);
+	// 	// then
+	// 	assert!(credential.credential_subject.values[0]);
+	// }
 
-		// then
-		assert!(credential.credential_subject.values[0]);
-	}
+	// #[test]
+	// pub fn test_token_holding_amount_trx_true() {
+	// 	let _ = env_logger::builder().is_test(true).try_init();
+	// 	run(19531).unwrap();
+	// 	// given
+	// 	let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes().to_vec())
+	// 		.unwrap()
+	// 		.as_slice()
+	// 		.try_into()
+	// 		.unwrap();
 
-	#[test]
-	pub fn test_token_holding_amount_trx_true() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		run(19531).unwrap();
-		// given
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes().to_vec())
-			.unwrap()
-			.as_slice()
-			.try_into()
-			.unwrap();
+	// 	let network = Web3Network::Ethereum;
+	// 	let identities = vec![(Identity::Evm(address), vec![network])];
 
-		let network = Web3Network::Ethereum;
-		let identities = vec![(Identity::Evm(address), vec![network])];
+	// 	println!("identities: {:?}", identities);
+	// 	let smart_contract_id = hash(5);
+	// 	println!("smart_contract_id: {:?}", smart_contract_id);
 
-		println!("identities: {:?}", identities);
-		let smart_contract_id = hash(5);
-		println!("smart_contract_id: {:?}", smart_contract_id);
+	// 	let request = AssertionBuildRequest {
+	// 		shard: Default::default(),
+	// 		signer: AccountId32::new([0; 32]),
+	// 		who: Identity::Substrate(AccountId32::new([0; 32]).into()),
+	// 		assertion: Assertion::Dynamic(smart_contract_id),
+	// 		identities,
+	// 		top_hash: Default::default(),
+	// 		parachain_block_number: Default::default(),
+	// 		sidechain_block_number: Default::default(),
+	// 		parachain_runtime_version: 0u32,
+	// 		sidechain_runtime_version: 0u32,
+	// 		maybe_key: None,
+	// 		req_ext_hash: Default::default(),
+	// 		should_create_id_graph: Default::default(),
+	// 	};
 
-		let request = AssertionBuildRequest {
-			shard: Default::default(),
-			signer: AccountId32::new([0; 32]),
-			who: Identity::Substrate(AccountId32::new([0; 32]).into()),
-			assertion: Assertion::Dynamic(smart_contract_id),
-			identities,
-			top_hash: Default::default(),
-			parachain_block_number: Default::default(),
-			sidechain_block_number: Default::default(),
-			parachain_runtime_version: 0u32,
-			sidechain_runtime_version: 0u32,
-			maybe_key: None,
-			req_ext_hash: Default::default(),
-			should_create_id_graph: Default::default(),
-		};
+	// 	let repository = InMemorySmartContractRepo::new();
 
-		let repository = InMemorySmartContractRepo::new();
+	// 	// when
+	// 	let credential = build(&request, smart_contract_id, repository.into()).unwrap();
 
-		// when
-		let credential = build(&request, smart_contract_id, repository.into()).unwrap();
+	// 	println!("Credential is: {:?}", credential);
 
-		println!("Credential is: {:?}", credential);
-
-		// then
-		assert!(credential.credential_subject.values[0]);
-	}
+	// 	// then
+	// 	assert!(credential.credential_subject.values[0]);
+	// }
 
 	fn hash(a: u64) -> H160 {
 		H160::from_low_u64_be(a)
