@@ -431,7 +431,7 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_assertion_a6(&mut self, min: u32, max: u32) {
+	pub fn add_assertion_a6(&mut self, value: bool, min: u32, max: u32) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
@@ -440,7 +440,7 @@ impl Credential {
 
 		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {

@@ -62,6 +62,7 @@ pub mod mock;
 pub use itp_settings::files::ASSERTIONS_FILE;
 
 pub type AssertionId = H160;
+pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
@@ -93,11 +94,12 @@ pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitR
 }
 
 impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
-	AssertionExecutor<AssertionId> for EvmAssertionExecutor<A>
+	AssertionExecutor<AssertionId, AssertionParams> for EvmAssertionExecutor<A>
 {
 	fn execute(
 		&self,
 		assertion_id: A::Id,
+		assertion_params: AssertionParams,
 		identities: &[IdentityNetworkTuple],
 	) -> Result<AssertionResult, String> {
 		let (smart_contract_byte_code, secrets) = self
@@ -105,7 +107,7 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 			.get(&assertion_id)
 			.map_err(|_| "Could not access assertion repository")?
 			.ok_or("Assertion not found")?;
-		let input = prepare_execute_call_input(identities, secrets)
+		let input = prepare_execute_call_input(identities, secrets, assertion_params)
 			.map_err(|_| "Could not prepare evm execution input")?;
 
 		let call_result = execute_smart_contract(smart_contract_byte_code, input);
@@ -148,13 +150,15 @@ fn prepare_memory() -> MemoryVicinity {
 fn prepare_execute_call_input(
 	identities: &[IdentityNetworkTuple],
 	secrets: Vec<String>,
+	params: Vec<u8>,
 ) -> Result<Vec<u8>, ()> {
 	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
-	let input = encode(&[Token::Array(identities), Token::Array(secrets)]);
+	let input = encode(&[Token::Array(identities), Token::Array(secrets), Token::Bytes(params)]);
 	// hash of function to be called, all assertions contracts must have a function with this hash, signature:
-	// function execute(Identity[] memory identities, string[] memory secrets)
-	let function_hash = "e2561846";
+	// function execute(Identity[] memory identities, string[] memory secrets, bytes memory params)
+	// use this string to generate function hash: execute((uint32,bytes,uint32[])[],string[],bytes)
+	let function_hash = "b4e4c685";
 	prepare_function_call_input(function_hash, input)
 }
 

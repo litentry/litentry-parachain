@@ -30,10 +30,10 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType, EVMTokenType,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
-	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType,
-	REQUEST_AES_KEY_LEN,
+	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType, DynamicParams,
+	EVMTokenType, GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString,
+	PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::{Pair, H160};
 
@@ -156,8 +156,11 @@ pub struct A2Arg {
 
 #[derive(Args, Debug)]
 pub struct DynamicArg {
-	//hex encoded smart contract id
+	// hex encoded smart contract id
 	pub smart_contract_id: String,
+	// hex encoded smart contract params
+	// can use this online tool to encode params: https://abi.hashex.org/
+	pub smart_contract_param: String,
 }
 
 #[derive(Args, Debug)]
@@ -631,7 +634,17 @@ impl Command {
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(arg.smart_contract_id.clone()).unwrap();
 				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
-				Assertion::Dynamic(H160::from(id_bytes))
+				let params = hex::decode(&arg.smart_contract_param.clone()).unwrap();
+				let params_len = params.len();
+				let truncated_params = DynamicParams::truncate_from(params);
+				let truncated_params_len = truncated_params.len();
+				if params_len > truncated_params_len {
+					println!(
+						"The dynamic params length {} is over the maximum value {}",
+						params_len, truncated_params_len
+					);
+				}
+				Assertion::Dynamic(H160::from(id_bytes), truncated_params)
 			},
 		}
 	}

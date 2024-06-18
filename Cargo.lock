@@ -2272,15 +2272,15 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "0.99.17"
+version = "0.99.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
+checksum = "5f33878137e4dafd7fa914ad4e259e18a4e8e532b9617a2d0150262bf53abfce"
 dependencies = [
  "convert_case",
  "proc-macro2",
  "quote",
  "rustc_version",
- "syn 1.0.109",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -5513,7 +5513,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -5612,7 +5611,6 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -7141,22 +7139,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-drop3"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -10556,7 +10538,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-assertions",
