@@ -55,6 +55,8 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 1. Publish the distribution files
 
+    Use `next` tag for preview versions. Use `latest` tag for
+
     ```s
     # for preview versions
     npm publish --access=public --tag next
