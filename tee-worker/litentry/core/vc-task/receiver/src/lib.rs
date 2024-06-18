@@ -55,6 +55,7 @@ use itp_types::{
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
+use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
@@ -602,15 +603,10 @@ where
 			.send((shard, c))
 			.map_err(|e| format!("Failed to send trusted call: {}", e))?;
 
-		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
-		let xt = extrinsic_factory
-			.create_extrinsics(&[call], None)
-			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
-
-		context
-			.ocall_api
-			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+		let extrinsic_sender = ParachainExtrinsicSender::new();
+		extrinsic_sender
+			.send(call)
+			.map_err(|e| format!("Failed to send call to the extrinsic sender: {}", e))?;
 
 		if let Err(e) = context
 			.ocall_api
