@@ -36,7 +36,6 @@ use ita_stf::{
 	Getter, TrustedCall, TrustedCallSigned,
 };
 use itp_enclave_metrics::EnclaveMetric;
-use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_system::SystemConstants, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 	NodeMetadataTrait,
@@ -50,8 +49,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall,
-	ShardIdentifier, H256,
+	AccountId, BlockNumber as SidechainBlockNumber, OpaqueCall, ShardIdentifier, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
@@ -78,9 +76,8 @@ use std::{
 	vec::Vec,
 };
 
-pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
+pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
-	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
@@ -91,7 +88,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
-	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem> + Send + Sync + 'static,
@@ -188,7 +184,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 
 			let shard_pool = request.shard;
 			let context_pool = context.clone();
-			let extrinsic_factory_pool = extrinsic_factory.clone();
 			let node_metadata_repo_pool = node_metadata_repo.clone();
 			let tc_sender_pool = tc_sender.clone();
 			let req_registry_pool = req_registry.clone();
@@ -196,7 +191,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 				let response = process_single_request(
 					shard_pool,
 					context_pool.clone(),
-					extrinsic_factory_pool,
 					node_metadata_repo_pool,
 					tc_sender_pool,
 					tcs.call.clone(),
@@ -254,7 +248,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 
 					let shard_pool = request.shard;
 					let context_pool = context.clone();
-					let extrinsic_factory_pool = extrinsic_factory.clone();
 					let node_metadata_repo_pool = node_metadata_repo.clone();
 					let tc_sender_pool = tc_sender.clone();
 					let req_registry_pool = req_registry.clone();
@@ -263,7 +256,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 						let response = process_single_request(
 							shard_pool,
 							context_pool.clone(),
-							extrinsic_factory_pool,
 							node_metadata_repo_pool,
 							tc_sender_pool,
 							new_call,
@@ -412,10 +404,9 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	}
 }
 
-fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
+fn process_single_request<ShieldingKeyRepository, A, S, H, O, N, AR>(
 	shard: H256,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
-	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
 	call: TrustedCall,
@@ -429,7 +420,6 @@ where
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
-	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
