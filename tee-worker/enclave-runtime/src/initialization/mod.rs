@@ -315,8 +315,8 @@ fn run_vc_issuance() -> Result<(), Error> {
 fn run_parachain_extrinsic_sender() -> Result<(), Error> {
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	run_parachain_extrinsic_task_receiver(ocall_api, extrinsics_factory);
-	Ok(())
+
+	run_parachain_extrinsic_task_receiver(ocall_api, extrinsics_factory).map_err(|e| e.into())
 }
 
 pub(crate) fn init_enclave_sidechain_components(
