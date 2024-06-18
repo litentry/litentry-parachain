@@ -24,18 +24,15 @@ where
 	let task_receiver = init_parachain_extrinsic_sender_storage().map_err(|e| {
 		format!("Failed to initialize parachain extrinsic task sender storage: {:?}", e)
 	})?;
-
 	let mut calls = vec::Vec::new();
 
 	loop {
 		let start_time = time::Instant::now();
-
 		while start_time.elapsed() < time::Duration::from_secs(6) {
 			if let Ok(call) = task_receiver.recv() {
 				calls.push(call);
 			}
 		}
-
 		if !calls.is_empty() {
 			let extrinsic =
 				match extrinsic_factory.create_batch_extrinsic(calls.drain(..).collect(), None) {
@@ -45,7 +42,6 @@ where
 						continue
 					},
 				};
-
 			if api
 				.send_to_parentchain(vec![extrinsic], &ParentchainId::Litentry, false)
 				.is_err()
