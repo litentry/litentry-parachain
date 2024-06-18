@@ -67,7 +67,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 				debug!("Ceremony {:?} not found, saving events...", ceremony_id);
 				let mut commands = ceremony_commands.lock().unwrap();
 				// ~1 minute (1 tick ~ 1 s)
-				let ceremony_tick_to_live = 60;
+				let ceremony_tick_to_live = 60_000;
 				let command = PendingCeremonyCommand {
 					ticks_left: ceremony_tick_to_live,
 					command: CeremonyCommand::SaveNonce(*address.as_ref(), nonce),
