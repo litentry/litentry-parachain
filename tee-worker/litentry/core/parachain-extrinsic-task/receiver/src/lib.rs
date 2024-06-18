@@ -8,16 +8,10 @@ extern crate sgx_tstd as std;
 
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_types::{parentchain::ParentchainId, OpaqueCall};
+use itp_types::parentchain::ParentchainId;
 use lc_parachain_extrinsic_task_sender::init_parachain_extrinsic_sender_storage;
 use log::*;
-use sp_runtime::OpaqueExtrinsic;
-use std::{
-	format,
-	string::String,
-	sync::{mpsc::Receiver, Arc},
-	thread, time, vec,
-};
+use std::{format, string::String, sync::Arc, time, vec};
 
 pub fn run_parachain_extrinsic_task_receiver<ExtrinsicsFactory, OCallApi>(
 	api: Arc<OCallApi>,
