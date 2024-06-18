@@ -422,16 +422,25 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
+          docker pull litentry/litentry-chain-aio:latest
 
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-chain-aio:latest | gzip > litentry-chain-aio-dev.tar.gz
 
       - name: Upload docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
+          if-no-files-found: error
+
+      - name: Upload docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: litentry-chain-aio-dev
+          path: litentry-chain-aio-dev.tar.gz
           if-no-files-found: error
 
       - name: Fail early
@@ -905,13 +914,18 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
+          name: litentry-chain-aio-dev
+
+      - uses: actions/download-artifact@v4
+        with:
           name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-chain-aio-dev.tar.gz
           docker load < litentry-identity.tar.gz
-
+          
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:
@@ -923,6 +937,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
+          docker push litentry/litentry-chain-aio
 
       # only push TEE images if we rebuilt them
       - name: Push tee-worker image
