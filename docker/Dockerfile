@@ -96,7 +96,7 @@ COPY ./node/src/chain_specs /code/litentry-parachain/node/src/chain_specs
 COPY ./ts-tests /code/litentry-parachain/ts-tests 
 RUN chown -R litentry:litentry /code
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER litentry
