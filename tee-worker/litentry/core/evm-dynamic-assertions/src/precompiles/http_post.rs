@@ -1,6 +1,8 @@
-use crate::{precompiles::PrecompileResult, *};
+use crate::{
+	precompiles::{macros::do_post, PrecompileResult},
+	*,
+};
 use itc_rest_client::http_client::SendHttpRequest;
-use crate::precompiles::macros::extract_http_headers;
 
 http_post_precompile_fn!(http_post_bool, Bool, as_bool);
 http_post_precompile_fn!(http_post_i64, Uint, as_i64);
@@ -21,37 +23,9 @@ pub fn http_post<T: SendHttpRequest>(input: Vec<u8>, client: T) -> PrecompileRes
 			return Ok(failure_precompile_output(Token::String(Default::default())))
 		},
 	};
-
-	let url = decoded.get(0).unwrap().clone().into_string().unwrap();
-	let url = match itc_rest_client::rest_client::Url::parse(&url) {
+	let value: serde_json::Value = match do_post(client, &decoded, 0, 2, 1) {
 		Ok(v) => v,
-		Err(e) => {
-			log::debug!("Could not parse url {:?}, reason: {:?}", url, e);
-			return Ok(failure_precompile_output(Token::String(Default::default())))
-		},
-	};
-
-	let payload = decoded.get(1).unwrap().clone().into_string().unwrap();
-
-	let http_headers: Vec<(String, String)> = extract_http_headers(decoded, 2);
-	let resp = match client.send_request_raw(
-		url,
-		itc_rest_client::rest_client::Method::POST,
-		Some(payload),
-		http_headers,
-	) {
-		Ok(resp) => resp,
-		Err(e) => {
-			log::debug!("Error while performing http call: {:?}", e);
-			return Ok(failure_precompile_output(Token::String(Default::default())))
-		},
-	};
-	let value: serde_json::Value = match serde_json::from_slice(&resp.1) {
-		Ok(v) => v,
-		Err(e) => {
-			log::debug!("Could not parse json {:?}, reason: {:?}", resp.1, e);
-			return Ok(failure_precompile_output(Token::String(Default::default())))
-		},
+		Err(_) => return Ok(failure_precompile_output(Token::String(Default::default()))),
 	};
 	Ok(success_precompile_output(Token::String(value.to_string())))
 }
