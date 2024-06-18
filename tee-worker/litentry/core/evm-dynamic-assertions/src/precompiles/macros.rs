@@ -200,7 +200,7 @@ pub fn extract_http_headers(
 		.iter()
 		.map(|v| {
 			let name =
-				v.clone().into_tuple().unwrap().get(0).unwrap().clone().into_string().unwrap();
+				v.clone().into_tuple().unwrap().first().unwrap().clone().into_string().unwrap();
 			let value =
 				v.clone().into_tuple().unwrap().get(1).unwrap().clone().into_string().unwrap();
 

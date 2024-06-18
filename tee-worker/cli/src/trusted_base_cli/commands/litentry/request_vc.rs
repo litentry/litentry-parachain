@@ -634,7 +634,7 @@ impl Command {
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(arg.smart_contract_id.clone()).unwrap();
 				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
-				let params = hex::decode(&arg.smart_contract_param.clone()).unwrap();
+				let params = hex::decode(arg.smart_contract_param.clone()).unwrap();
 				let params_len = params.len();
 				let truncated_params = DynamicParams::truncate_from(params);
 				let truncated_params_len = truncated_params.len();
