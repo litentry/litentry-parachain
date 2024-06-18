@@ -5513,7 +5513,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -5612,7 +5611,6 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -7141,22 +7139,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-drop3"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -10556,7 +10538,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-assertions",
