@@ -62,9 +62,16 @@ fn top_encryption_works() {
 }
 
 fn encrypt_and_decrypt_top(top: &TrustedOperationMock) -> TrustedOperationMock {
-	let encryption_key = Rsa3072KeyPair::create().unwrap();
-	let encrypted_top = encryption_key.encrypt(top.encode().as_slice()).unwrap();
-	let decrypted_top = encryption_key.decrypt(encrypted_top.as_slice()).unwrap();
+	use lc_rsa_wrapper::{RsaWrapperCreate, RsaWrapperDecrypt, RsaWrapperEncrypt};
+	let encryption_key = Rsa3072KeyPair::create_with_rsa_wrapper().unwrap();
+	let encrypted_top = encryption_key
+		.public_key()
+		.encrypt_with_rsa_wrapper(top.encode().as_slice())
+		.unwrap();
+	let decrypted_top = encryption_key
+		.private_key()
+		.decrypt_with_rsa_wrapper(encrypted_top.as_slice())
+		.unwrap();
 
 	TrustedOperationMock::decode(&mut decrypted_top.as_slice()).unwrap()
 }
@@ -179,7 +186,7 @@ fn create_author_with_filter<
 	let state_facade = HandleStateMock::from_shard(shard_id).unwrap();
 	state_facade.load_cloned(&shard_id).unwrap();
 
-	let encryption_key = ShieldingCryptoMock::default();
+	let encryption_key = ShieldingCryptoMock::new(false);
 	let shielding_key_repo =
 		Arc::new(KeyRepositoryMock::<ShieldingCryptoMock>::new(encryption_key.clone()));
 	let ocall_mock = Arc::new(MetricsOCallMock::default());

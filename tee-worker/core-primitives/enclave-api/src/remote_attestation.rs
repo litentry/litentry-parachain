@@ -397,7 +397,7 @@ mod impl_ffi {
 		}
 
 		fn set_sgx_qpl_logging(&self) -> EnclaveResult<()> {
-			let res = unsafe { sgx_ql_set_logging_callback(forward_qpl_log) };
+			let res = unsafe { sgx_ql_set_logging_callback(forward_qpl_log, QlLogLevel::LogInfo) };
 			if res == Quote3Error::Success {
 				Ok(())
 			} else {

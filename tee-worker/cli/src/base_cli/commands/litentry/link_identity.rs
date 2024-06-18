@@ -24,6 +24,7 @@ use ita_stf::{helpers::get_expected_raw_message, Web3Network};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use lc_rsa_wrapper::RsaWrapperEncrypt;
 use litentry_primitives::{Identity, LitentryMultiSignature, Web3CommonValidationData};
 use log::*;
 use sp_application_crypto::Pair;
@@ -93,7 +94,8 @@ impl LinkIdentityCommand {
 	fn encrypt_identity(&self, cli: &Cli) -> (Identity, Vec<u8>) {
 		let identity = Identity::from_did(&self.did).unwrap();
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
+		let encrypted_identity =
+			tee_shielding_key.encrypt_with_rsa_wrapper(&identity.encode()).unwrap();
 		(identity, encrypted_identity)
 	}
 
@@ -112,7 +114,8 @@ impl LinkIdentityCommand {
 				.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
 				.collect();
 			let tee_shielding_key = get_shielding_key(cli).unwrap();
-			let encrypted_web3network = tee_shielding_key.encrypt(&web3network.encode()).unwrap();
+			let encrypted_web3network =
+				tee_shielding_key.encrypt_with_rsa_wrapper(&web3network.encode()).unwrap();
 
 			let identity_account_id = identity.to_account_id().unwrap();
 			let identity_public_key = format!("{}", identity_account_id);
@@ -127,7 +130,7 @@ impl LinkIdentityCommand {
 				litentry_primitives::Web3ValidationData::Substrate(web3common),
 			);
 			let encrypted_validation_data =
-				tee_shielding_key.encrypt(&validation_data.encode()).unwrap();
+				tee_shielding_key.encrypt_with_rsa_wrapper(&validation_data.encode()).unwrap();
 
 			(encrypted_web3network, encrypted_validation_data)
 		} else {

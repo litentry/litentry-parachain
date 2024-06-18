@@ -16,6 +16,7 @@
 
 use crate::{command_utils::get_shielding_key, Cli, CliResult, CliResultOk};
 use codec::Encode;
+use lc_rsa_wrapper::RsaWrapperEncrypt;
 use std::format;
 
 // Scale encodes string and ecrypts it with worker's shielding key
@@ -29,7 +30,7 @@ pub struct ShieldTextCommand {
 impl ShieldTextCommand {
 	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
 		let shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted = shielding_key.encrypt(&self.value.encode()).unwrap();
+		let encrypted = shielding_key.encrypt_with_rsa_wrapper(&self.value.encode()).unwrap();
 		std::println!("Shielded: {:?}", hex::encode(encrypted.clone()));
 		Ok(CliResultOk::Bytes { bytes: encrypted })
 	}

@@ -55,6 +55,7 @@ lc-credentials = { path = "../litentry/core/credentials" }
 # litentry
 frame-metadata = "15.0.0"
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+lc-rsa-wrapper = { path = "../litentry/core/rsa-wrapper" }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 scale-value = "0.6.0"
