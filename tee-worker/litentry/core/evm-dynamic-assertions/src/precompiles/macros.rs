@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use ethabi::Token;
 #[macro_export]
 macro_rules! json_get_fn {
 	($name:ident, $token:ident, $parse_fn_name:ident) => {
@@ -101,36 +102,7 @@ macro_rules! http_get_precompile_fn {
 
 			// safe to unwrap
 			let pointer = decoded.get(1).unwrap().clone().into_string().unwrap();
-			let http_headers: Vec<(String, String)> = decoded
-				.get(2)
-				.unwrap()
-				.clone()
-				.into_array()
-				.unwrap()
-				.iter()
-				.map(|v| {
-					let name = v
-						.clone()
-						.into_tuple()
-						.unwrap()
-						.get(0)
-						.unwrap()
-						.clone()
-						.into_string()
-						.unwrap();
-					let value = v
-						.clone()
-						.into_tuple()
-						.unwrap()
-						.get(1)
-						.unwrap()
-						.clone()
-						.into_string()
-						.unwrap();
-
-					(name, value)
-				})
-				.collect();
+			let http_headers: Vec<(String, String)> = extract_http_headers(decoded, 2);
 			let resp = match client.send_request_raw(
 				url,
 				itc_rest_client::rest_client::Method::GET,
@@ -216,36 +188,7 @@ macro_rules! http_post_precompile_fn {
 
 			let payload = decoded.get(2).unwrap().clone().into_string().unwrap();
 
-			let http_headers: Vec<(String, String)> = decoded
-				.get(3)
-				.unwrap()
-				.clone()
-				.into_array()
-				.unwrap()
-				.iter()
-				.map(|v| {
-					let name = v
-						.clone()
-						.into_tuple()
-						.unwrap()
-						.get(0)
-						.unwrap()
-						.clone()
-						.into_string()
-						.unwrap();
-					let value = v
-						.clone()
-						.into_tuple()
-						.unwrap()
-						.get(1)
-						.unwrap()
-						.clone()
-						.into_string()
-						.unwrap();
-
-					(name, value)
-				})
-				.collect();
+			let http_headers: Vec<(String, String)> = extract_http_headers(decoded, 3);
 			let resp = match client.send_request_raw(
 				url,
 				itc_rest_client::rest_client::Method::POST,
@@ -286,4 +229,23 @@ macro_rules! http_post_precompile_fn {
 			Ok(success_precompile_output(encoded))
 		}
 	};
+}
+
+pub fn extract_http_headers(decoded: Vec<Token>, index: usize) -> Vec<(String, String)> {
+	decoded
+		.get(index)
+		.unwrap()
+		.clone()
+		.into_array()
+		.unwrap()
+		.iter()
+		.map(|v| {
+			let name =
+				v.clone().into_tuple().unwrap().get(0).unwrap().clone().into_string().unwrap();
+			let value =
+				v.clone().into_tuple().unwrap().get(1).unwrap().clone().into_string().unwrap();
+
+			(name, value)
+		})
+		.collect()
 }

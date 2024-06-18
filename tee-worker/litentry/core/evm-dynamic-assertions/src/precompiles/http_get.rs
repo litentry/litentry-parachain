@@ -16,6 +16,7 @@
 
 use crate::{precompiles::PrecompileResult, *};
 use itc_rest_client::http_client::SendHttpRequest;
+use crate::precompiles::macros::extract_http_headers;
 
 http_get_precompile_fn!(http_get_bool, Bool, as_bool);
 http_get_precompile_fn!(http_get_i64, Uint, as_i64);
@@ -45,22 +46,7 @@ pub fn http_get<T: SendHttpRequest>(input: Vec<u8>, client: T) -> PrecompileResu
 		},
 	};
 
-	let http_headers: Vec<(String, String)> = decoded
-		.get(1)
-		.unwrap()
-		.clone()
-		.into_array()
-		.unwrap()
-		.iter()
-		.map(|v| {
-			let name =
-				v.clone().into_tuple().unwrap().get(0).unwrap().clone().into_string().unwrap();
-			let value =
-				v.clone().into_tuple().unwrap().get(1).unwrap().clone().into_string().unwrap();
-
-			(name, value)
-		})
-		.collect();
+	let http_headers: Vec<(String, String)> = extract_http_headers(decoded, 1);
 	let resp = match client.send_request_raw(
 		url,
 		itc_rest_client::rest_client::Method::GET,
