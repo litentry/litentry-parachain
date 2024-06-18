@@ -25,7 +25,11 @@ import "./libraries/Identities.sol";
 import "./DynamicAssertion.sol";
 
 contract A6 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
+    function execute(
+        Identity[] memory identities,
+        string[] memory secrets,
+        bytes memory /*params*/
+    )
         public
         override
         returns (
@@ -135,6 +139,6 @@ contract A6 is DynamicAssertion {
         pure
         returns (string memory)
     {
-        return concatenateStrings("Bearer ", apiKey);
+        return string(abi.encodePacked("Bearer ", apiKey));
     }
 }

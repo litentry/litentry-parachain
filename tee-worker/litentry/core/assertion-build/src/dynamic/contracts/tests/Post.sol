@@ -18,29 +18,25 @@
 
 pragma solidity ^0.8.8;
 
-import {BRC20} from "../BRC20.sol";
+import "../libraries/Http.sol";
 
-contract Long is BRC20 {
-    function getTokenName() internal pure override returns (string memory) {
-        return "long";
+contract Post {
+    function callPost(string memory url, string memory payload)
+        public
+        returns (bool, string memory)
+    {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        return Http.Post(url, payload, headers);
     }
 
-    function getTokenRanges()
-        internal
-        pure
-        override
-        returns (uint256[] memory)
-    {
-        uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0;
-        ranges[1] = 1;
-        ranges[2] = 20;
-        ranges[3] = 50;
-        ranges[4] = 200;
-        ranges[5] = 500;
-        ranges[6] = 1000;
-        ranges[7] = 2000;
-        ranges[8] = 3000;
-        return ranges;
+    function callPostTwiceAndReturnSecondResult(
+        string memory firstUrl,
+        string memory firstPayload,
+        string memory secondUrl,
+        string memory secondPayload
+    ) public returns (bool, string memory) {
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        Http.Post(firstUrl, firstPayload, headers);
+        return Http.Post(secondUrl, secondPayload, headers);
     }
 }
