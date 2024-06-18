@@ -21,7 +21,7 @@ name: General CI
 # - fmt
 # - set-condition
 # - parachain-build-dev
-# - tee-build
+# - identity-build
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -240,7 +240,7 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.5
 
-  tee-clippy:
+  identity-clippy:
     runs-on: ubuntu-latest
     needs:
       - fmt
@@ -348,6 +348,12 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
+      - name: Pallet unittests
+        working-directory: ./bitacross-worker
+        run: |
+          cargo test --release -p lc-* --lib
+          cargo test --release -p litentry-primitives --lib
+
       - name: bitacross-worker clippy
         working-directory: ./bitacross-worker
         run: |
@@ -438,7 +444,7 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.5
 
-  tee-build:
+  identity-build:
     runs-on: ubuntu-latest
     needs:
       - fmt
@@ -711,7 +717,7 @@ jobs:
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-build
+      - identity-build
     strategy:
       fail-fast: false
       matrix:
@@ -799,7 +805,7 @@ jobs:
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-build
+      - identity-build
     strategy:
       fail-fast: false
       matrix:
