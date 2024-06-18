@@ -353,7 +353,6 @@ mod test {
 		TestStfEnclaveSigner,
 		TestTopPoolAuthor,
 		TestNodeMetadataRepository,
-		MockExtrinsicFilter<MockParentchainExtrinsicParser>,
 		TestEventCreator,
 		MockParentchainEventHandler,
 		TrustedCallSignedMock,
