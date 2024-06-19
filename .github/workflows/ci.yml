@@ -429,14 +429,14 @@ jobs:
           docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
           docker save litentry/litentry-chain-aio:latest | gzip > litentry-chain-aio-dev.tar.gz
 
-      - name: Upload docker image
+      - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
           if-no-files-found: error
 
-      - name: Upload docker image
+      - name: Upload chain-aio docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-chain-aio-dev

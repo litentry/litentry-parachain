@@ -3,6 +3,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 PARACHAIN_BASEDIR="/opt/litentry/parachain"
 REPO_DIR="/code/litentry-parachain"
+# Currently, only chain type rococo is supported.
+CHAIN='rococo'
 
 check(){
     if [ -z "$CHAIN" ]; then
@@ -119,7 +121,7 @@ watch_pid(){
 }
 
 main(){
-    check
+    # check
     init
     run_relay_alice
     sleep 5
