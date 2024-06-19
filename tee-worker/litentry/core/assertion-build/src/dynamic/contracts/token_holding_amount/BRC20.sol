@@ -21,62 +21,86 @@ pragma solidity ^0.8.8;
 import "../libraries/Identities.sol";
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
-import {TokenHoldingAmount} from "./TokenHoldingAmount.sol";
+import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
+import { Btcs } from "./brc20/Btcs.sol";
+import { Cats } from "./brc20/Cats.sol";
+contract BRC20 is TokenHoldingAmount {
+	function getTokenDecimals() internal pure override returns (uint8) {
+		return 18;
+	}
 
-abstract contract BRC20 is TokenHoldingAmount {
-    function getTokenDecimals() internal pure override returns (uint8) {
-        return 18;
-    }
+	function queryBalance(
+		Identity memory identity,
+		uint32 network,
+		string[] memory secrets,
+		string memory tokenName
+	) internal virtual override returns (uint256) {
+		(bool identityToStringSuccess, string memory identityString) = Utils
+			.identityToString(network, identity.value);
+		if (identityToStringSuccess) {
+			// https://geniidata.readme.io/reference/get-brc20-tick-list-copy
+			string memory url = string(
+				abi.encodePacked(
+					// "https://api.geniidata.com/api/1/brc20/balance",
+					// below url is used for test against mock server
+					"http://localhost:19529/api/1/brc20/balance",
+					"?tick=",
+					tokenName,
+					"&address=",
+					identityString
+				)
+			);
 
-    function queryBalance(
-        Identity memory identity,
-        uint32 network,
-        string[] memory secrets
-    ) internal virtual override returns (uint256) {
-        (bool identityToStringSuccess, string memory identityString) = Utils
-            .identityToString(network, identity.value);
-        if (identityToStringSuccess) {
-            // https://geniidata.readme.io/reference/get-brc20-tick-list-copy
-            string memory url = string(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance",
-                    // below url is used for test against mock server
-                    // "http://localhost:19529/api/1/brc20/balance",
-                    "?tick=",
-                    getTokenName(),
-                    "&address=",
-                    identityString
-                )
-            );
+			HttpHeader[] memory headers = new HttpHeader[](1);
+			headers[0] = HttpHeader("api-key", secrets[0]);
 
-            HttpHeader[] memory headers = new HttpHeader[](1);
-            headers[0] = HttpHeader("api-key", secrets[0]);
+			(bool success, string memory value) = Http.GetString(
+				url,
+				"/data/list/0/available_balance",
+				headers
+			);
 
-            (bool success, string memory value) = Http.GetString(
-                url,
-                "/data/list/0/available_balance",
-                headers
-            );
+			if (success) {
+				(bool parseDecimalSuccess, uint256 result) = Utils.parseDecimal(
+					value,
+					getTokenDecimals()
+				);
+				if (parseDecimalSuccess) {
+					return result;
+				}
+			}
+		}
+		return 0;
+	}
 
-            if (success) {
-                (bool parseDecimalSuccess, uint256 result) = Utils.parseDecimal(
-                    value,
-                    getTokenDecimals()
-                );
-                if (parseDecimalSuccess) {
-                    return result;
-                }
-            }
-        }
-        return 0;
-    }
+	function isSupportedNetwork(
+		uint32 network
+	) internal pure override returns (bool) {
+		return network == Web3Networks.BitcoinP2tr;
+	}
 
-    function isSupportedNetwork(uint32 network)
-        internal
-        pure
-        override
-        returns (bool)
-    {
-        return network == Web3Networks.BitcoinP2tr;
-    }
+	function getTokenInfo(
+		string memory decodedParams
+	)
+		internal
+		pure
+		override
+		returns (string memory, uint256[] memory, string memory, string memory)
+	{
+		string memory tokenName;
+		uint256[] memory ranges;
+		string memory tokenBscAddress = "";
+		string memory tokenEthereumAddress = "";
+
+		if (Utils.isStringsEqual(decodedParams, "Btcs")) {
+			tokenName = Btcs.getTokenName();
+			ranges = Btcs.getTokenRanges();
+		} else if (Utils.isStringsEqual(decodedParams, "Cats")) {
+			tokenName = Cats.getTokenName();
+			ranges = Cats.getTokenRanges();
+		} else {
+			revert("Unsupported token");
+		}
+		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
+	}
 }

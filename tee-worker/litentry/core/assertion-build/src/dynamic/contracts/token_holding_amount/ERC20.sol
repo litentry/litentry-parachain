@@ -17,25 +17,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity ^0.8.8;
+
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
-abstract contract ERC20 is TokenHoldingAmount {
-	mapping(uint32 => string) internal networkTokenAddresses;
+import { Ada } from "./erc20/Ada.sol";
+import { Amp } from "./erc20/Amp.sol";
 
+import "hardhat/console.sol";
+contract ERC20 is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
+
 	constructor() {
 		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/";
 		networkUrls[
 			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1";
+		] = "https://eth-mainnet.nodereal.io/v1/";
 		// Add more networks as needed
-		
-		// 	below url is used for test against mock server
+		// below url is used for test against mock server
 		// "http://localhost:19530/nodereal_jsonrpc/v1/",
+
+		// Initialize network token addresses using Ada library
 	}
+
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
 	}
@@ -43,8 +49,9 @@ abstract contract ERC20 is TokenHoldingAmount {
 	function queryBalance(
 		Identity memory identity,
 		uint32 network,
-		string[] memory secrets
-	) internal virtual override returns (uint256) {
+		string[] memory secrets,
+		string memory /*tokenName*/
+	) internal override returns (uint256) {
 		(bool identityToStringSuccess, string memory identityString) = Utils
 			.identityToString(network, identity.value);
 
@@ -55,9 +62,9 @@ abstract contract ERC20 is TokenHoldingAmount {
 
 			for (uint32 i = 0; i < networks.length; i++) {
 				// Check if this network has been queried
-				if (!queriedNetworks[network]) {
-					string memory _tokenContractAddress = networkTokenAddresses[
-						network
+				if (!queriedNetworks[networks[i]]) {
+					string memory _tokenContractAddress = tokenAddresses[
+						networks[i]
 					];
 
 					url = string(
@@ -75,7 +82,7 @@ abstract contract ERC20 is TokenHoldingAmount {
 						totalBalance += balance;
 					}
 					// Mark this network as queried
-					queriedNetworks[network] = true;
+					queriedNetworks[networks[i]] = true;
 				}
 			}
 			return totalBalance;
@@ -95,5 +102,35 @@ abstract contract ERC20 is TokenHoldingAmount {
 		uint32 network
 	) internal pure override returns (bool) {
 		return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
+	}
+
+	function getTokenInfo(
+		string memory decodedParams
+	)
+		internal
+		pure
+		override
+		returns (string memory, uint256[] memory, string memory, string memory)
+	{
+		string memory tokenName;
+		uint256[] memory ranges;
+		string memory tokenBscAddress;
+		string memory tokenEthereumAddress;
+
+		if (Utils.isStringsEqual(decodedParams, "Ada")) {
+			tokenName = Ada.getTokenName();
+			ranges = Ada.getTokenRanges();
+			tokenBscAddress = Ada.getTokenBscAddress();
+			tokenEthereumAddress = Ada.getTokenEthereumAddress();
+		} else if (Utils.isStringsEqual(decodedParams, "Amp")) {
+			tokenName = Amp.getTokenName();
+			ranges = Amp.getTokenRanges();
+			tokenBscAddress = Amp.getTokenBscAddress();
+			tokenEthereumAddress = Amp.getTokenEthereumAddress();
+		} else {
+			revert("Unsupported token");
+		}
+
+		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
 }
