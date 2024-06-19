@@ -28,6 +28,7 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 k256 = { version = "0.13.3", features = ["ecdsa-core", "schnorr"] }
 rand = { version = "0.7" }
 hex = { version = "0.4" }
+itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mocks"] }
 
 [features]
 default = ["std"]
