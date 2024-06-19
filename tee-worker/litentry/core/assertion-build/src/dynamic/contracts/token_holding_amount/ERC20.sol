@@ -25,7 +25,6 @@ import { NoderealClient } from "./NoderealClient.sol";
 import { Ada } from "./erc20/Ada.sol";
 import { Amp } from "./erc20/Amp.sol";
 
-import "hardhat/console.sol";
 contract ERC20 is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
