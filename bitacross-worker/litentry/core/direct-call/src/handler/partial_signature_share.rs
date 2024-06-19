@@ -76,7 +76,7 @@ pub mod test {
 	};
 	use alloc::sync::Arc;
 	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
-	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
+	use bc_musig2_ceremony::{CeremonyRegistry, SignBitcoinPayload};
 	use codec::alloc::sync::Mutex;
 	use itp_sgx_crypto::{key_repository::AccessKey, Error};
 	use parentchain_primitives::Identity;
@@ -100,7 +100,8 @@ pub mod test {
 		let ceremony_id = SignBitcoinPayload::Derived(vec![]);
 		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
 		let enclave_registry = Arc::new(EnclaveRegistry::default());
-		enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
+		let _ =
+			enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
 
 		// when
 		let result = handle(

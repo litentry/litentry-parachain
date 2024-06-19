@@ -99,17 +99,14 @@ pub mod test {
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
 	use codec::alloc::sync::Mutex;
-	use itp_sgx_crypto::{
-		key_repository::AccessKey, mocks::KeyRepositoryMock, schnorr::Pair as SchnorrPair, Error,
-	};
-	use k256::elliptic_curve::{rand_core, PublicKey};
+	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
 	use parentchain_primitives::{Address32, Identity};
 	use sp_core::{sr25519, Pair};
 
 	struct SignersRegistryMock {}
 
 	impl SignerRegistryLookup for SignersRegistryMock {
-		fn contains_key(&self, account: &Address32) -> bool {
+		fn contains_key(&self, _account: &Address32) -> bool {
 			true
 		}
 
