@@ -41,9 +41,9 @@ contract BRC20 is TokenHoldingAmount {
 			// https://geniidata.readme.io/reference/get-brc20-tick-list-copy
 			string memory url = string(
 				abi.encodePacked(
-					// "https://api.geniidata.com/api/1/brc20/balance",
+					"https://api.geniidata.com/api/1/brc20/balance",
 					// below url is used for test against mock server
-					"http://localhost:19529/api/1/brc20/balance",
+					// "http://localhost:19529/api/1/brc20/balance",
 					"?tick=",
 					tokenName,
 					"&address=",
