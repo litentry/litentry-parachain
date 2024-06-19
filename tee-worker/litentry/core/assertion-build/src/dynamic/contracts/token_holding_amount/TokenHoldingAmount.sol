@@ -23,6 +23,7 @@ import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 abstract contract TokenHoldingAmount is DynamicAssertion {
+	uint256 constant decimals_factor = 1000;
     function execute(
         Identity[] memory identities,
         string[] memory secrets,
