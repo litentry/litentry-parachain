@@ -25,6 +25,7 @@ import "../DynamicAssertion.sol";
 import "../libraries/Constants.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
+	
 	mapping(uint32 => string) tokenAddresses;
 	string tokenName;
 	uint256[] tokenRanges;
