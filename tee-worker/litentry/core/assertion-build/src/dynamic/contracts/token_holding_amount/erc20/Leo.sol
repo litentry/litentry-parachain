@@ -20,36 +20,28 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Leo is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "";
-		// Add more addresses as needed
+library Leo {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "leo";
+	function getTokenName() internal pure returns (string memory) {
+		return "Leo";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 10 * decimals_factor;
-		ranges[2] = 30 * decimals_factor;
-		ranges[3] = 80 * decimals_factor;
-		ranges[4] = 200 * decimals_factor;
-		ranges[5] = 500 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 10 * Constants.decimals_factor;
+		ranges[2] = 30 * Constants.decimals_factor;
+		ranges[3] = 80 * Constants.decimals_factor;
+		ranges[4] = 200 * Constants.decimals_factor;
+		ranges[5] = 500 * Constants.decimals_factor;
 
 		return ranges;
 	}

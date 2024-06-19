@@ -20,39 +20,30 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Uni is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0xbf5140a22578168fd562dccf235e5d43a02ce9b1";
-		// Add more addresses as needed
+library Uni {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0xbf5140a22578168fd562dccf235e5d43a02ce9b1";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
+	}
+	function getTokenName() internal pure returns (string memory) {
+		return "Uni";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "uni";
-	}
-
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 10 * decimals_factor;
-		ranges[2] = 30 * decimals_factor;
-		ranges[3] = 80 * decimals_factor;
-		ranges[4] = 200 * decimals_factor;
-		ranges[5] = 500 * decimals_factor;
-		ranges[6] = 1000 * decimals_factor;
-		ranges[7] = 2000 * decimals_factor;
-		ranges[8] = 5000 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 10 * Constants.decimals_factor;
+		ranges[2] = 30 * Constants.decimals_factor;
+		ranges[3] = 80 * Constants.decimals_factor;
+		ranges[4] = 200 * Constants.decimals_factor;
+		ranges[5] = 500 * Constants.decimals_factor;
+		ranges[6] = 1000 * Constants.decimals_factor;
+		ranges[7] = 2000 * Constants.decimals_factor;
+		ranges[8] = 5000 * Constants.decimals_factor;
 
 		return ranges;
 	}

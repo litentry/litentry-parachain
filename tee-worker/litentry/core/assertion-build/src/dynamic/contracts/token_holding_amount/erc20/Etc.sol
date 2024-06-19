@@ -20,36 +20,28 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Etc is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0x3d6545b08693dae087e957cb1180ee38b9e3c25e";
-		// Add more addresses as needed
+library Etc {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0x3d6545b08693dae087e957cb1180ee38b9e3c25e";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "etc";
+	function getTokenName() internal pure returns (string memory) {
+		return "Etc";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1 * decimals_factor;
-		ranges[2] = 5 * decimals_factor;
-		ranges[3] = 20 * decimals_factor;
-		ranges[4] = 50 * decimals_factor;
-		ranges[5] = 80 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 1 * Constants.decimals_factor;
+		ranges[2] = 5 * Constants.decimals_factor;
+		ranges[3] = 20 * Constants.decimals_factor;
+		ranges[4] = 50 * Constants.decimals_factor;
+		ranges[5] = 80 * Constants.decimals_factor;
 
 		return ranges;
 	}

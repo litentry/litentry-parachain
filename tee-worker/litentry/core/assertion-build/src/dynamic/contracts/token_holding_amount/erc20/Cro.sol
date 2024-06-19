@@ -20,37 +20,29 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Cro is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "";
-		// Add more addresses as needed
+library Cro {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "cro";
+	function getTokenName() internal pure returns (string memory) {
+		return "Cro";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](7);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1000 * decimals_factor;
-		ranges[2] = 5000 * decimals_factor;
-		ranges[3] = 20000 * decimals_factor;
-		ranges[4] = 50000 * decimals_factor;
-		ranges[5] = 100000 * decimals_factor;
-		ranges[6] = 300000 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 1000 * Constants.decimals_factor;
+		ranges[2] = 5000 * Constants.decimals_factor;
+		ranges[3] = 20000 * Constants.decimals_factor;
+		ranges[4] = 50000 * Constants.decimals_factor;
+		ranges[5] = 100000 * Constants.decimals_factor;
+		ranges[6] = 300000 * Constants.decimals_factor;
 
 		return ranges;
 	}

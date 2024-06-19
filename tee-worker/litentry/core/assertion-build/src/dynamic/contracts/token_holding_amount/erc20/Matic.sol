@@ -20,40 +20,32 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Matic is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0xcc42724c6683b7e57334c4e856f4c9965ed682bd";
-		// Add more addresses as needed
+library Matic {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0xcc42724c6683b7e57334c4e856f4c9965ed682bd";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "matic";
+	function getTokenName() internal pure returns (string memory) {
+		return "Matic";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1 * decimals_factor;
-		ranges[2] = 50 * decimals_factor;
-		ranges[3] = 100 * decimals_factor;
-		ranges[4] = 200 * decimals_factor;
-		ranges[5] = 500 * decimals_factor;
-		ranges[6] = 800 * decimals_factor;
-		ranges[7] = 1200 * decimals_factor;
-		ranges[8] = 1600 * decimals_factor;
-		ranges[9] = 3000 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 1 * Constants.decimals_factor;
+		ranges[2] = 50 * Constants.decimals_factor;
+		ranges[3] = 100 * Constants.decimals_factor;
+		ranges[4] = 200 * Constants.decimals_factor;
+		ranges[5] = 500 * Constants.decimals_factor;
+		ranges[6] = 800 * Constants.decimals_factor;
+		ranges[7] = 1200 * Constants.decimals_factor;
+		ranges[8] = 1600 * Constants.decimals_factor;
+		ranges[9] = 3000 * Constants.decimals_factor;
 
 		return ranges;
 	}

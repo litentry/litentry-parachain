@@ -20,36 +20,27 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../../libraries/Constants.sol";
 
-contract Mcrt is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
-		// Add more addresses as needed
+library Mcrt {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
+	}
+	function getTokenName() internal pure returns (string memory) {
+		return "Mcrt";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "mcrt";
-	}
-
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 2000 * decimals_factor;
-		ranges[2] = 10000 * decimals_factor;
-		ranges[3] = 50000 * decimals_factor;
-		ranges[4] = 150000 * decimals_factor;
-		ranges[5] = 500000 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 2000 * Constants.decimals_factor;
+		ranges[2] = 10000 * Constants.decimals_factor;
+		ranges[3] = 50000 * Constants.decimals_factor;
+		ranges[4] = 150000 * Constants.decimals_factor;
+		ranges[5] = 500000 * Constants.decimals_factor;
 
 		return ranges;
 	}

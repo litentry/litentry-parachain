@@ -19,40 +19,32 @@
 pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
+import "../../libraries/Constants.sol";
 import "../../libraries/Identities.sol";
 
-contract Dai is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0x6b175474e89094c44da98b954eedeac495271d0f";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3";
-		// Add more addresses as needed
+library Dai {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3";
+	}
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0x6b175474e89094c44da98b954eedeac495271d0f";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
-		return "dai";
+	function getTokenName() internal pure returns (string memory) {
+		return "Dai";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 10 * decimals_factor;
-		ranges[2] = 30 * decimals_factor;
-		ranges[3] = 80 * decimals_factor;
-		ranges[4] = 200 * decimals_factor;
-		ranges[5] = 500 * decimals_factor;
-		ranges[6] = 1000 * decimals_factor;
-		ranges[7] = 2000 * decimals_factor;
-		ranges[8] = 5000 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 10 * Constants.decimals_factor;
+		ranges[2] = 30 * Constants.decimals_factor;
+		ranges[3] = 80 * Constants.decimals_factor;
+		ranges[4] = 200 * Constants.decimals_factor;
+		ranges[5] = 500 * Constants.decimals_factor;
+		ranges[6] = 1000 * Constants.decimals_factor;
+		ranges[7] = 2000 * Constants.decimals_factor;
+		ranges[8] = 5000 * Constants.decimals_factor;
 
 		return ranges;
 	}
