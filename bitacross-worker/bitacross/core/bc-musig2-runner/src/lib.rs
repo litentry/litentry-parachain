@@ -320,7 +320,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 				});
 			}
 
-			std::thread::sleep(Duration::from_millis(1000))
+			std::thread::sleep(Duration::from_millis(1))
 		}
 	});
 
