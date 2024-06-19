@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.18-next.7] - 2024-06-19
+
 ### Added
 
 -   `Web3Network`: add `Combo`.
--   Add `SubstrateNetwork`, `EvmNetwork`, `SolanaNetwork`, `BitcoinNetwork`, `Web2Network`, `PrimeIdentity`.
+-   Add `SubstrateNetwork`, `EvmNetwork`, `SolanaNetwork`, `BitcoinNetwork`, `Web2Network`, `PrimeIdentity` types.
 
 ## [0.9.18-next.6] - 2024-06-12
 
