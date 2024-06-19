@@ -13,6 +13,9 @@ use lc_parachain_extrinsic_task_sender::init_parachain_extrinsic_sender_storage;
 use log::*;
 use std::{format, string::String, sync::Arc, time, vec};
 
+const MAX_BATCH_SIZE: usize = 500;
+const BATCH_EXTRINSIC_INTERVAL: time::Duration = time::Duration::from_secs(6);
+
 pub fn run_parachain_extrinsic_task_receiver<ExtrinsicsFactory, OCallApi>(
 	api: Arc<OCallApi>,
 	extrinsic_factory: Arc<ExtrinsicsFactory>,
@@ -28,7 +31,7 @@ where
 
 	loop {
 		let start_time = time::Instant::now();
-		while start_time.elapsed() < time::Duration::from_secs(6) {
+		while start_time.elapsed() < BATCH_EXTRINSIC_INTERVAL && calls.len() < MAX_BATCH_SIZE {
 			if let Ok(call) = task_receiver.recv() {
 				calls.push(call);
 			}
