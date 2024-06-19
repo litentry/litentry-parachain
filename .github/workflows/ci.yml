@@ -267,6 +267,7 @@ jobs:
 
       - name: Worker common clippy
         working-directory: ./${{ matrix.type }}-worker
+        shell: bash
         run: |
           for d in . enclave-runtime; do
             pushd "$d"
@@ -287,6 +288,7 @@ jobs:
       - name: Identity-worker specific clippy
         if: matrix.type == 'tee'
         working-directory: ./tee-worker
+        shell: bash
         run: |
           for d in . enclave-runtime; do
             pushd "$d"
