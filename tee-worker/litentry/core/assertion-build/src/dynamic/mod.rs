@@ -292,21 +292,16 @@ pub mod assertion_test {
 		assert!(credential.credential_subject.values[0]);
 	}
 
-
 	#[test]
 	pub fn test_token_holding_amount_bnb_true() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		run(19530).unwrap();
 		// given
-		let address = decode_hex(
-			"0x4B04b9166f472a72e067d68560a141a1d02332Ef"
-				.as_bytes()
-				.to_vec(),
-		)
-		.unwrap()
-		.as_slice()
-		.try_into()
-		.unwrap();
+		let address = decode_hex("0x4B04b9166f472a72e067d68560a141a1d02332Ef".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 
 		let network = Web3Network::Bsc;
 		let identities = vec![(Identity::Evm(address), vec![network])];
