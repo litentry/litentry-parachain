@@ -30,7 +30,7 @@ library Cvx {
 		return "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Cvx";
+		return "cvx";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

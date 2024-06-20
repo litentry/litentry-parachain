@@ -31,7 +31,7 @@ library Inj {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Inj";
+		return "inj";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -31,7 +31,7 @@ library Trx {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Trx";
+		return "trx";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -31,7 +31,7 @@ library Fil {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Fil";
+		return "fil";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

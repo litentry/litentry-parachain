@@ -31,7 +31,7 @@ library Lit {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Lit";
+		return "lit";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

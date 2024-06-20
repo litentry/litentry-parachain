@@ -31,7 +31,7 @@ library Ton {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Ton";
+		return "ton";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -31,7 +31,7 @@ library Amp {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Amp";
+		return "amp";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

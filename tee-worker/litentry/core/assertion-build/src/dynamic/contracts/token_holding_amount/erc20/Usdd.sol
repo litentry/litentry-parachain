@@ -30,7 +30,7 @@ library Usdd {
 		return "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Usdd";
+		return "usdd";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

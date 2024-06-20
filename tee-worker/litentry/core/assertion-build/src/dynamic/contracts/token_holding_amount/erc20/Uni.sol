@@ -30,7 +30,7 @@ library Uni {
 		return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Uni";
+		return "uni";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -31,7 +31,7 @@ library Imx {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Imx";
+		return "imx";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

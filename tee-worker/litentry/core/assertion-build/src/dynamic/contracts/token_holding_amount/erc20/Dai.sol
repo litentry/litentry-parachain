@@ -31,7 +31,7 @@ library Dai {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Dai";
+		return "dai";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

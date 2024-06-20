@@ -31,7 +31,7 @@ library SpaceId {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "SpaceId";
+		return "spaceid";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

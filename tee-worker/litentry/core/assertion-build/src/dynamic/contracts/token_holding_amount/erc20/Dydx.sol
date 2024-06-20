@@ -31,7 +31,7 @@ library Dydx {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Dydx";
+		return "dydx";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

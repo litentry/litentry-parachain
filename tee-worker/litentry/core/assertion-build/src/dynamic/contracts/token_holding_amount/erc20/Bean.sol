@@ -30,7 +30,7 @@ library Bean {
 		return "0xba7b9936a965fac23bb7a8190364fa60622b3cff";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Bean";
+		return "bean";
 	}
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](5);

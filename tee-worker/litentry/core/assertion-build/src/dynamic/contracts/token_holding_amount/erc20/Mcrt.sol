@@ -30,7 +30,7 @@ library Mcrt {
 		return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Mcrt";
+		return "mcrt";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

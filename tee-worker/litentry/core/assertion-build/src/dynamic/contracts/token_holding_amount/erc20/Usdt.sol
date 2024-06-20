@@ -31,7 +31,7 @@ library Usdt {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Usdt";
+		return "usdt";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

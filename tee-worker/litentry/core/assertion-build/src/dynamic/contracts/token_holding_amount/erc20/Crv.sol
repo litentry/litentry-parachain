@@ -31,7 +31,7 @@ library Crv {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Crv";
+		return "crv";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

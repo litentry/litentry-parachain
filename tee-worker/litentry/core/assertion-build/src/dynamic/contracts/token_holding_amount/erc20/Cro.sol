@@ -31,7 +31,7 @@ library Cro {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Cro";
+		return "cro";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

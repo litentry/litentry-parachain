@@ -31,7 +31,7 @@ library Matic {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Matic";
+		return "matic";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

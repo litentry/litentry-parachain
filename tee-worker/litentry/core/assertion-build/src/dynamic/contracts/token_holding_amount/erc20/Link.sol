@@ -31,7 +31,7 @@ library Link {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Link";
+		return "link";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

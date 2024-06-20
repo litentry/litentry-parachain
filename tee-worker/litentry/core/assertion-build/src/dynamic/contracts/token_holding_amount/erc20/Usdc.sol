@@ -14,7 +14,7 @@ library Usdc {
 		return "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Usdc";
+		return "usdc";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

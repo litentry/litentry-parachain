@@ -31,7 +31,7 @@ library Etc {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Etc";
+		return "etc";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

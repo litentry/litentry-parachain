@@ -32,7 +32,7 @@ library Atom {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Atom";
+		return "atom";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

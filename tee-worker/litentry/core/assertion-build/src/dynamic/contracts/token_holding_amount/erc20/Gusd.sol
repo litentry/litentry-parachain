@@ -31,7 +31,7 @@ library Gusd {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Gusd";
+		return "gusd";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

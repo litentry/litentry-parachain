@@ -30,7 +30,7 @@ library Grt {
 	}
 
 	function getTokenName() internal pure returns (string memory) {
-		return "Grt";
+		return "grt";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
