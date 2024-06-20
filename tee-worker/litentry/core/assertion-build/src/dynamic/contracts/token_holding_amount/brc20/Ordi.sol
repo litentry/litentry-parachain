@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Ordi {
 	function getTokenName() internal pure returns (string memory) {
-		return "Ordi";
+		return "ordi";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

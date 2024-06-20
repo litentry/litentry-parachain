@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Rats {
 	function getTokenName() internal pure returns (string memory) {
-		return "Rats";
+		return "rats";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

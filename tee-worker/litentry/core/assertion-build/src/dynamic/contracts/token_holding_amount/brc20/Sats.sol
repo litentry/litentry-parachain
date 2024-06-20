@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Sats {
 	function getTokenName() internal pure returns (string memory) {
-		return "Sats";
+		return "sats";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Btcs {
 	function getTokenName() internal pure returns (string memory) {
-		return "Btcs";
+		return "btcs";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

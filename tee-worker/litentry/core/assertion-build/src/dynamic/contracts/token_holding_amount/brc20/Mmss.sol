@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Mmss {
 	function getTokenName() internal pure returns (string memory) {
-		return "Mmss";
+		return "mmss";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

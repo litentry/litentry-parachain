@@ -23,7 +23,7 @@ import "../../libraries/Constants.sol";
 
 library Cats {
 	function getTokenName() internal pure returns (string memory) {
-		return "Cats";
+		return "cats";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
