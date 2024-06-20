@@ -55,6 +55,8 @@ import { Uni } from "./Uni.sol";
 import { Usdc } from "./Usdc.sol";
 import { Usdt } from "./Usdt.sol";
 import { Wbtc } from "./Wbtc.sol";
+
+import "../../libraries/Utils.sol";
 library ERC20TokenLibrary {
 	function getAdaInfo()
 		internal
@@ -464,5 +466,283 @@ library ERC20TokenLibrary {
 		string memory bscAddress = Wbtc.getTokenBscAddress();
 		string memory ethereumAddress = Wbtc.getTokenEthereumAddress();
 		return (tokenName, ranges, bscAddress, ethereumAddress);
+	}
+
+	function getTokenInfo(
+		string memory decodedParams
+	)
+		internal
+		pure
+		returns (string memory, uint256[] memory, string memory, string memory)
+	{
+		string memory tokenName;
+		uint256[] memory ranges;
+		string memory tokenBscAddress = "";
+		string memory tokenEthereumAddress = "";
+
+		if (Utils.isStringsEqual(decodedParams, "ada")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getAdaInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "amp")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getAmpInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "atom")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getAtomInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "bch")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getBchInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "bean")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getBeanInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "bnb")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getBnbInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "comp")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getCompInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "cro")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getCroInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "crv")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getCrvInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "dai")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getDaiInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "doge")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getDogeInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "dydx")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getDydxInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "etc")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getEtcInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "eth")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getEthInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "fil")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getFilInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "grt")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getGrtInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "gtc")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getGtcInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "gusd")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getGusdInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "imx")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getImxInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "inj")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getInjInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "leo")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getLeoInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "link")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getLinkInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "lit")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getLitInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "matic")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getMaticInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "mcrt")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getMcrtInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "nfp")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getNfpInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "people")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getPeopleInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "shib")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getShibInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "sol")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getSolInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "spaceid")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getSpaceIdInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "ton")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getTonInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "trx")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getTrxInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "tusd")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getTusdInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "uni")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getUniInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "usdc")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getUsdcInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "usdt")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getUsdtInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "wbtc")) {
+			(
+				tokenName,
+				ranges,
+				tokenBscAddress,
+				tokenEthereumAddress
+			) = getWbtcInfo();
+		} else {
+			revert("Unsupported token");
+		}
+
+		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
 }

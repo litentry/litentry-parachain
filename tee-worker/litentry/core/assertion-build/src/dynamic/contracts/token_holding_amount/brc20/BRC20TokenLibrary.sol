@@ -26,7 +26,9 @@ import { Ordi } from "./Ordi.sol";
 import { Rats } from "./Rats.sol";
 import { Sats } from "./Sats.sol";
 
-library BRC0TokenLibrary {
+import "../../libraries/Utils.sol";
+
+library BRC20TokenLibrary {
 	function getBtcsInfo()
 		public
 		pure
@@ -94,6 +96,32 @@ library BRC0TokenLibrary {
 	{
 		string memory tokenName = Sats.getTokenName();
 		uint256[] memory ranges = Sats.getTokenRanges();
+		return (tokenName, ranges);
+	}
+
+	function getBrc20TokenInfo(
+		string memory decodedParams
+	) internal pure returns (string memory, uint256[] memory) {
+		string memory tokenName;
+		uint256[] memory ranges;
+		if (Utils.isStringsEqual(decodedParams, "btcs")) {
+			(tokenName, ranges) = getBtcsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "cats")) {
+			(tokenName, ranges) = getCatsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "long")) {
+			(tokenName, ranges) = getLongInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "mmss")) {
+			(tokenName, ranges) = getMmssInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "ordi")) {
+			(tokenName, ranges) = getOrdiInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "rats")) {
+			(tokenName, ranges) = getRatsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "sats")) {
+			(tokenName, ranges) = getSatsInfo();
+		} else {
+			revert("Unsupported token");
+		}
+
 		return (tokenName, ranges);
 	}
 }

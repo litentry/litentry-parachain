@@ -91,23 +91,9 @@ contract BRC20 is TokenHoldingAmount {
 		string memory tokenBscAddress = "";
 		string memory tokenEthereumAddress = "";
 
-		if (Utils.isStringsEqual(decodedParams, "btcs")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getBtcsInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "cats")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getCatsInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "long")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getLongInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "mmss")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getMmssInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "ordi")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getOrdiInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "rats")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getRatsInfo();
-		} else if (Utils.isStringsEqual(decodedParams, "sats")) {
-			(tokenName, ranges) = BRC0TokenLibrary.getSatsInfo();
-		} else {
-			revert("Unsupported token");
-		}
+		(tokenName, ranges) = BRC20TokenLibrary.getBrc20TokenInfo(
+			decodedParams
+		);
 
 		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
