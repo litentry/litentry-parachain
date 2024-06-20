@@ -25,12 +25,11 @@ import "../DynamicAssertion.sol";
 import "../libraries/Constants.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	
 	mapping(uint32 => string) tokenAddresses;
-	string tokenName;
-	uint256[] tokenRanges;
-	string tokenBscAddress;
-	string tokenEthereumAddress;
+	mapping(string => string) internal tokenNames;
+	mapping(string => uint256[]) internal tokenRanges;
+	mapping(string => string) internal tokenBscAddress;
+	mapping(string => string) internal tokenEthereumAddress;
 
 	function execute(
 		Identity[] memory identities,
@@ -54,23 +53,34 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 		string memory decodedParams = abi.decode(params, (string));
 
-		(
-			tokenName,
-			tokenRanges,
-			tokenBscAddress,
-			tokenEthereumAddress
-		) = getTokenInfo(decodedParams);
-		tokenAddresses[Web3Networks.Bsc] = tokenBscAddress;
-		tokenAddresses[Web3Networks.Ethereum] = tokenEthereumAddress;
+		if (
+			keccak256(abi.encodePacked(tokenNames[decodedParams])) ==
+			keccak256(abi.encodePacked(""))
+		) {
+			revert("Token not supported or not found");
+		}
 
-		uint256 balance = queryTotalBalance(identities, secrets);
+		tokenAddresses[Web3Networks.Bsc] = tokenBscAddress[decodedParams];
+		tokenAddresses[Web3Networks.Ethereum] = tokenEthereumAddress[
+			decodedParams
+		];
+
+		uint256 balance = queryTotalBalance(
+			identities,
+			secrets,
+			tokenNames[decodedParams]
+		);
 
 		(uint256 index, uint256 min, int256 max) = calculateRange(
 			balance,
-			tokenRanges
+			tokenRanges[decodedParams]
 		);
 
-		string[] memory assertions = assembleAssertions(min, max);
+		string[] memory assertions = assembleAssertions(
+			min,
+			max,
+			tokenNames[decodedParams]
+		);
 
 		bool result = index > 0 || balance > 0;
 
@@ -79,7 +89,8 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 	function queryTotalBalance(
 		Identity[] memory identities,
-		string[] memory secrets
+		string[] memory secrets,
+		string memory tokenName
 	) internal virtual returns (uint256) {
 		uint256 total_balance = 0;
 		uint256 identitiesLength = identities.length;
@@ -134,8 +145,9 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 	function assembleAssertions(
 		uint256 min,
-		int256 max
-	) private view returns (string[] memory) {
+		int256 max,
+		string memory tokenName
+	) private pure returns (string[] memory) {
 		string memory variable = "$holding_amount";
 		AssertionLogic.CompositeCondition memory cc = AssertionLogic
 			.CompositeCondition(
@@ -184,12 +196,4 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		string[] memory secrets,
 		string memory tokenName
 	) internal virtual returns (uint256);
-
-	function getTokenInfo(
-		string memory decodedParams
-	)
-		internal
-		pure
-		virtual
-		returns (string memory, uint256[] memory, string memory, string memory);
 }

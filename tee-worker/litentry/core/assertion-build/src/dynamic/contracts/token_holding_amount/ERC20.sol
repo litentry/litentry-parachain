@@ -22,7 +22,6 @@ import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
-import { ERC20TokenLibrary } from "./erc20/ERC20TokenLibrary.sol";
 contract ERC20 is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
@@ -99,26 +98,5 @@ contract ERC20 is TokenHoldingAmount {
 		uint32 network
 	) internal pure override returns (bool) {
 		return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
-	}
-
-	function getTokenInfo(
-		string memory decodedParams
-	)
-		internal
-		pure
-		override
-		returns (string memory, uint256[] memory, string memory, string memory)
-	{
-		string memory tokenName;
-		uint256[] memory ranges;
-		string memory tokenBscAddress;
-		string memory tokenEthereumAddress;
-		(
-			tokenName,
-			ranges,
-			tokenBscAddress,
-			tokenEthereumAddress
-		) = ERC20TokenLibrary.getTokenInfo(decodedParams);
-		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
 }

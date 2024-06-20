@@ -22,7 +22,6 @@ import "../libraries/Identities.sol";
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
-import "./brc20/BRC20TokenLibrary.sol";
 contract BRC20 is TokenHoldingAmount {
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
@@ -76,25 +75,5 @@ contract BRC20 is TokenHoldingAmount {
 		uint32 network
 	) internal pure override returns (bool) {
 		return network == Web3Networks.BitcoinP2tr;
-	}
-
-	function getTokenInfo(
-		string memory decodedParams
-	)
-		internal
-		pure
-		override
-		returns (string memory, uint256[] memory, string memory, string memory)
-	{
-		string memory tokenName;
-		uint256[] memory ranges;
-		string memory tokenBscAddress = "";
-		string memory tokenEthereumAddress = "";
-
-		(tokenName, ranges) = BRC20TokenLibrary.getBrc20TokenInfo(
-			decodedParams
-		);
-
-		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
 }
