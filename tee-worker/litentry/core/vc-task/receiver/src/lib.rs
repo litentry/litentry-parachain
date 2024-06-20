@@ -528,7 +528,11 @@ where
 
 		let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
+		let identities = get_eligible_identities(
+			id_graph.as_ref(),
+			assertion_networks,
+			assertion.skip_identity_filtering(),
+		);
 		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer_account = signer
@@ -608,10 +612,10 @@ where
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
-		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::VCBuildTime(
-			format!("{:?}", assertion),
-			start_time.elapsed(),
-		)) {
+		if let Err(e) = context
+			.ocall_api
+			.update_metric(EnclaveMetric::VCBuildTime(assertion, start_time.elapsed()))
+		{
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 

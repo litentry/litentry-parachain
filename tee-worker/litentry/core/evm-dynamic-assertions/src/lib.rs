@@ -41,7 +41,7 @@ use ethabi::{
 use evm::{
 	backend::{MemoryBackend, MemoryVicinity},
 	executor::stack::{MemoryStackState, StackExecutor, StackSubstateMetadata},
-	Config,
+	Config, ExitReason,
 };
 use lc_dynamic_assertion::{
 	AssertionExecutor, AssertionLogicRepository, AssertionResult, Identity, IdentityNetworkTuple,
@@ -65,6 +65,7 @@ pub mod mock;
 pub use itp_settings::files::ASSERTIONS_FILE;
 
 pub type AssertionId = H160;
+pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
@@ -72,12 +73,36 @@ pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
 }
 
+pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitReason, Vec<u8>) {
+	// prepare EVM runtime
+	let config = prepare_config();
+	let vicinity = prepare_memory();
+	let state = BTreeMap::new();
+	let mut backend = MemoryBackend::new(&vicinity, state);
+	let metadata = StackSubstateMetadata::new(u64::MAX, &config);
+	let state = MemoryStackState::new(metadata, &mut backend);
+	let precompiles = Precompiles {};
+	let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
+
+	// caller, just an unused account
+	let caller = hash(5); //0x05
+
+	// deploy assertion smart contract
+	let address = executor.create_address(evm::CreateScheme::Legacy { caller });
+	let _create_result =
+		executor.transact_create(caller, U256::zero(), byte_code, u64::MAX, Vec::new());
+
+	// call assertion smart contract
+	executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new())
+}
+
 impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
-	AssertionExecutor<AssertionId> for EvmAssertionExecutor<A>
+	AssertionExecutor<AssertionId, AssertionParams> for EvmAssertionExecutor<A>
 {
 	fn execute(
 		&self,
 		assertion_id: A::Id,
+		assertion_params: AssertionParams,
 		identities: &[IdentityNetworkTuple],
 	) -> Result<AssertionResult, String> {
 		let (smart_contract_byte_code, secrets) = self
@@ -85,41 +110,20 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 			.get(&assertion_id)
 			.map_err(|_| "Could not access assertion repository")?
 			.ok_or("Assertion not found")?;
-		let input = prepare_execute_call_input(identities, secrets)
+		let input = prepare_execute_call_input(identities, secrets, assertion_params)
 			.map_err(|_| "Could not prepare evm execution input")?;
 
-		// prepare EVM runtime
-		let config = prepare_config();
-		let vicinity = prepare_memory();
-		let state = BTreeMap::new();
-		let mut backend = MemoryBackend::new(&vicinity, state);
-		let metadata = StackSubstateMetadata::new(u64::MAX, &config);
-		let state = MemoryStackState::new(metadata, &mut backend);
-		let precompiles = Precompiles {};
-		let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
+		let call_result = execute_smart_contract(smart_contract_byte_code, input);
 
-		// caller, just an unused account
-		let caller = hash(5); //0x05
+		if call_result.0.is_succeed() {
+			let (description, assertion_type, assertions, schema_url, meet) =
+				decode_result(&call_result.1)
+					.map_err(|_| "Could not decode evm assertion execution result")?;
 
-		// deploy assertion smart contract
-		let address = executor.create_address(evm::CreateScheme::Legacy { caller });
-		let _create_result = executor.transact_create(
-			caller,
-			U256::zero(),
-			smart_contract_byte_code,
-			u64::MAX,
-			Vec::new(),
-		);
-
-		// call assertion smart contract
-		let call_result =
-			executor.transact_call(caller, address, U256::zero(), input, u64::MAX, Vec::new());
-
-		let (description, assertion_type, assertions, schema_url, meet) =
-			decode_result(&call_result.1)
-				.map_err(|_| "Could not decode evm assertion execution result")?;
-
-		Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+			Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+		} else {
+			Err(std::format!("Fail to execution evm dynamic assertion: {:?}", call_result.0))
+		}
 	}
 }
 
@@ -149,13 +153,15 @@ fn prepare_memory() -> MemoryVicinity {
 fn prepare_execute_call_input(
 	identities: &[IdentityNetworkTuple],
 	secrets: Vec<String>,
+	params: Vec<u8>,
 ) -> Result<Vec<u8>, ()> {
 	let identities: Vec<Token> = identities.iter().map(identity_with_networks_to_token).collect();
 	let secrets: Vec<Token> = secrets.iter().map(secret_to_token).collect();
-	let input = encode(&[Token::Array(identities), Token::Array(secrets)]);
+	let input = encode(&[Token::Array(identities), Token::Array(secrets), Token::Bytes(params)]);
 	// hash of function to be called, all assertions contracts must have a function with this hash, signature:
-	// function execute(Identity[] memory identities, string[] memory secrets)
-	let function_hash = "e2561846";
+	// function execute(Identity[] memory identities, string[] memory secrets, bytes memory params)
+	// use this string to generate function hash: execute((uint32,bytes,uint32[])[],string[],bytes)
+	let function_hash = "b4e4c685";
 	prepare_function_call_input(function_hash, input)
 }
 
@@ -178,32 +184,11 @@ pub fn secret_to_token(secret: &String) -> Token {
 }
 
 pub fn network_to_token(network: &Web3Network) -> Token {
-	Token::Uint(
-		match network {
-			Web3Network::Polkadot => 0,
-			Web3Network::Kusama => 1,
-			Web3Network::Litentry => 2,
-			Web3Network::Litmus => 3,
-			Web3Network::LitentryRococo => 4,
-			Web3Network::Khala => 5,
-			Web3Network::SubstrateTestnet => 6,
-			Web3Network::Ethereum => 7,
-			Web3Network::Bsc => 8,
-			Web3Network::BitcoinP2tr => 9,
-			Web3Network::BitcoinP2pkh => 10,
-			Web3Network::BitcoinP2sh => 11,
-			Web3Network::BitcoinP2wpkh => 12,
-			Web3Network::BitcoinP2wsh => 13,
-			Web3Network::Polygon => 14,
-			Web3Network::Arbitrum => 15,
-			Web3Network::Solana => 16,
-			Web3Network::Combo => 17,
-		}
-		.into(),
-	)
+	Token::Uint(network.get_code().into())
 }
 
-fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Result<Vec<u8>, ()> {
+#[allow(clippy::result_unit_err)]
+pub fn prepare_function_call_input(function_hash: &str, mut input: Vec<u8>) -> Result<Vec<u8>, ()> {
 	let mut call_input = hex::decode(function_hash).map_err(|_| ())?;
 	call_input.append(&mut input);
 	Ok(call_input)
@@ -239,6 +224,20 @@ fn decode_result(data: &[u8]) -> Result<(String, String, Vec<String>, String, bo
 
 fn hash(a: u64) -> H160 {
 	H160::from_low_u64_be(a)
+}
+
+pub fn success_precompile_output(token: ethabi::Token) -> evm::executor::stack::PrecompileOutput {
+	evm::executor::stack::PrecompileOutput {
+		exit_status: evm::ExitSucceed::Returned,
+		output: ethabi::encode(&[ethabi::Token::Bool(true), token]),
+	}
+}
+
+pub fn failure_precompile_output(token: ethabi::Token) -> evm::executor::stack::PrecompileOutput {
+	evm::executor::stack::PrecompileOutput {
+		exit_status: evm::ExitSucceed::Returned,
+		output: ethabi::encode(&[ethabi::Token::Bool(false), token]),
+	}
 }
 
 #[cfg(test)]

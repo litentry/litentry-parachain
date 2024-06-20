@@ -16,6 +16,9 @@
 */
 
 use crate::{error::Result, Error};
+use bc_enclave_registry::EnclaveRegistryUpdater;
+use bc_relayer_registry::RelayerRegistryUpdater;
+use bc_signer_registry::SignerRegistryUpdater;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
@@ -28,7 +31,7 @@ pub trait ExecuteIndirectCalls {
 	/// Scans blocks for extrinsics that ask the enclave to execute some actions.
 	/// Executes indirect invocation calls, including shielding and unshielding calls.
 	/// Returns all unshielding call confirmations as opaque calls and the hashes of executed shielding calls.
-	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
@@ -50,9 +53,12 @@ pub trait ExecuteIndirectCalls {
 }
 
 /// Trait that should be implemented on indirect calls to be executed.
-pub trait IndirectDispatch<E: IndirectExecutor<TCS, Error>, TCS>
+pub trait IndirectDispatch<E: IndirectExecutor<TCS, Error, RRU, SRU, ERU>, TCS, RRU, SRU, ERU>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
+	RRU: RelayerRegistryUpdater,
+	SRU: SignerRegistryUpdater,
+	ERU: EnclaveRegistryUpdater,
 {
 	type Args;
 	fn dispatch(&self, executor: &E, args: Self::Args) -> Result<()>;

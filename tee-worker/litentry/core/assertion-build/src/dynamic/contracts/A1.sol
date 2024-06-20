@@ -18,26 +18,29 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity} from "DynamicAssertion.sol";
+import "./libraries/AssertionLogic.sol";
+import "./libraries/Identities.sol";
+import "./DynamicAssertion.sol";
 
 contract A1 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-    public
-    override
-    returns (
-        string memory,
-        string memory,
-        string[] memory,
-        string memory,
-        bool
+    function execute(
+        Identity[] memory identities,
+        string[] memory /*secrets*/,
+        bytes memory /*params*/
     )
+        public
+        override
+        returns (
+            string memory,
+            string memory,
+            string[] memory,
+            string memory,
+            bool
+        )
     {
         string
-        memory description = "You've identified at least one account/address in both Web2 and Web3.";
+            memory description = "You've identified at least one account/address in both Web2 and Web3.";
         string memory assertion_type = "Basic Identity Verification";
-        assertions.push(
-            '{"and": [{ "src": "$has_web2_account", "op": "==", "dst": "true" }, { "src": "$has_web3_account", "op": "==", "dst": "true" } ] }'
-        );
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/1-basic-identity-verification/1-0-0.json";
 
         bool result;
@@ -46,13 +49,33 @@ contract A1 is DynamicAssertion {
         bool has_web2_identity = false;
 
         for (uint256 i = 0; i < identities.length; i++) {
-            if (is_web2(identities[i])) {
+            if (Identities.is_web2(identities[i])) {
                 has_web2_identity = true;
-            } else if (is_web3(identities[i])) {
+            } else if (Identities.is_web3(identities[i])) {
                 has_web3_identity = true;
             }
         }
         result = has_web2_identity && has_web3_identity;
+
+        AssertionLogic.CompositeCondition memory cc = AssertionLogic
+            .CompositeCondition(new AssertionLogic.Condition[](2), true);
+        AssertionLogic.andOp(
+            cc,
+            0,
+            "$has_web2_account",
+            AssertionLogic.Op.Equal,
+            "true"
+        );
+        AssertionLogic.andOp(
+            cc,
+            1,
+            "$has_web3_account",
+            AssertionLogic.Op.Equal,
+            "true"
+        );
+
+        string[] memory assertions = new string[](1);
+        assertions[0] = AssertionLogic.toString(cc);
 
         return (description, assertion_type, assertions, schema_url, result);
     }

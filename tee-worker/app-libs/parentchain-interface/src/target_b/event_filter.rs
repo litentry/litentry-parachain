@@ -18,7 +18,7 @@
 
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
-
+use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{events::AssertionCreated, FilterEvents},
 	H256,
@@ -27,6 +27,23 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 pub struct FilterableEvents(pub Events<H256>);
+
+impl FilterableEvents {
+	fn filter<T: StaticEvent, E>(&self) -> Result<Vec<T>, E> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<T>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+}
 
 impl ToEvents<Events<H256>> for FilterableEvents {
 	fn to_events(&self) -> &Events<H256> {
@@ -46,46 +63,52 @@ impl FilterEvents for FilterableEvents {
 	fn get_link_identity_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::LinkIdentityRequested>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_vc_requested_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::VCRequested>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_deactivate_identity_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::DeactivateIdentityRequested>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_activate_identity_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::ActivateIdentityRequested>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_scheduled_enclave_set_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_scheduled_enclave_removed_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_opaque_task_posted_events(
 		&self,
 	) -> Result<Vec<itp_types::parentchain::events::OpaqueTaskPosted>, Self::Error> {
-		Ok(Vec::new())
+		self.filter()
 	}
 
 	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_parentchain_block_proccessed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::ParentchainBlockProcessed>, Self::Error> {
 		Ok(Vec::new())
 	}
 }

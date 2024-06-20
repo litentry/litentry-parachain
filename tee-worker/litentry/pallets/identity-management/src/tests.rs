@@ -19,6 +19,7 @@ use crate::{
 	IdentityContext, IdentityStatus, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
+use litentry_primitives::all_substrate_web3networks;
 use sp_runtime::AccountId32;
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
@@ -27,30 +28,38 @@ pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
 #[test]
 fn get_eligible_identities_works() {
 	let mut id_graph = IDGraph::<Test>::default();
-	id_graph.push((
-		alice_substrate_identity(),
-		IdentityContext::new(1u64, vec![Web3Network::Litentry, Web3Network::Khala]),
-	));
-	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
-	let mut desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
-	let mut identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone());
-	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
-	assert_eq!(identities[1].1, vec![]);
-
-	// `alice_evm_identity` should be filtered out
+	id_graph.push((alice_substrate_identity(), IdentityContext::new(1u64, vec![])));
 	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![])));
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
-	assert_eq!(identities.len(), 2);
-	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
-	assert_eq!(identities[1].1, vec![]);
+	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
 
-	// `alice_substrate_identity` should be filtered out
-	desired_web3networks = all_evm_web3networks();
-	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
-	assert_eq!(identities.len(), 2);
+	// only `alice_substrate_identity` is left
+	let mut desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
+	let mut identities =
+		get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone(), false);
+	assert_eq!(identities.len(), 1);
+	assert_eq!(identities[0].1, vec![Web3Network::Polkadot, Web3Network::Litentry]);
+
+	// only `alice_evm_identity` is left
+	desired_web3networks = vec![Web3Network::Arbitrum];
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
+	assert_eq!(identities.len(), 1);
+	assert_eq!(identities[0].1, vec![Web3Network::Arbitrum]);
+
+	// only twitter identity is left
+	desired_web3networks = vec![];
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, false);
+	assert_eq!(identities.len(), 1);
 	assert_eq!(identities[0].1, vec![]);
+	assert_eq!(identities[0].0, alice_twitter_identity(1));
+
+	desired_web3networks = vec![Web3Network::Arbitrum];
+
+	// no identity is filtered out, note the networks are reset to the default networks
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks, true);
+	assert_eq!(identities.len(), 3);
+	assert_eq!(identities[0].1, all_substrate_web3networks());
 	assert_eq!(identities[1].1, all_evm_web3networks());
+	assert_eq!(identities[2].1, vec![]);
 }
 
 #[test]

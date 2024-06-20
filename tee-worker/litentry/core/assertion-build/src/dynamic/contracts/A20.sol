@@ -18,44 +18,78 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion, Identity, HttpHeader} from "DynamicAssertion.sol";
+import "./libraries/AssertionLogic.sol";
+import "./libraries/Http.sol";
+import "./libraries/Identities.sol";
+import "./libraries/Utils.sol";
+import "./DynamicAssertion.sol";
 
 contract A20 is DynamicAssertion {
-    function execute(Identity[] memory identities, string[] memory secrets)
-    public
-    override
-    returns (
-        string memory,
-        string memory,
-        string[] memory,
-        string memory,
-        bool
+    function execute(
+        Identity[] memory identities,
+        string[] memory /*secrets*/,
+        bytes memory /*params*/
     )
+        public
+        override
+        returns (
+            string memory,
+            string memory,
+            string[] memory,
+            string memory,
+            bool
+        )
     {
         string
-        memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
+            memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
-        assertions.push('{ "src": "$has_joined", "op": "==", "dst": "true" }');
         schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/12-idhub-evm-version-early-bird/1-0-0.json";
+
         bool result = false;
-
         for (uint256 i = 0; i < identities.length; i++) {
-            if (is_web3(identities[i])) {
-                string memory res = toHex(identities[i].value);
-
-                string memory url = concatenateStrings(
-                    "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
-                    res
+            if (Identities.is_web3(identities[i])) {
+                (bool success, string memory res) = Utils.toHex(
+                    identities[i].value
                 );
-                string memory jsonPointer = "/hasJoined";
-                HttpHeader[] memory headers = new HttpHeader[](0);
+                if (success) {
+                    if (!success) {
+                        continue;
+                    }
+                    string memory url = string(
+                        abi.encodePacked(
+                            "https://archive-test.litentry.io/events/does-user-joined-evm-campaign?account=",
+                            // below url is used for test against mock server
+                            // "http://localhost:19527/events/does-user-joined-evm-campaign?account=",
+                            res
+                        )
+                    );
+                    string memory jsonPointer = "/hasJoined";
+                    HttpHeader[] memory headers = new HttpHeader[](0);
 
-                result = GetBool(url, jsonPointer, headers);
+                    (bool get_success, bool get_result) = Http.GetBool(
+                        url,
+                        jsonPointer,
+                        headers
+                    );
+                    if (get_success) {
+                        result = get_result;
+                    }
+                }
+
                 if (result) {
                     break;
                 }
             }
         }
+
+        AssertionLogic.Condition memory condition = AssertionLogic.Condition(
+            "$has_joined",
+            AssertionLogic.Op.Equal,
+            "true"
+        );
+        string[] memory assertions = new string[](1);
+        assertions[0] = AssertionLogic.toString(condition);
+
         return (description, assertion_type, assertions, schema_url, result);
     }
 }

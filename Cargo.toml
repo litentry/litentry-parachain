@@ -7,7 +7,6 @@ members = [
     'pallets/bitacrossmimic',
     'pallets/bridge',
     'pallets/bridge-transfer',
-    'pallets/drop3',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',
@@ -74,7 +73,7 @@ similar-asserts = { version = "1.5.0" }
 sha3 = { version = "0.10", default-features = false }
 futures = { version = "0.3.30", features = ["compat"] }
 jsonrpsee = { version = "0.16.3", features = ["server"] }
-tokio = { version = "1.37.0", features = ["macros", "sync"] }
+tokio = { version = "1.38.0", features = ["macros", "sync"] }
 strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
 num_enum = { version = "0.7.2", default-features = false }
@@ -249,7 +248,6 @@ pallet-bitacross = { path = "pallets/bitacross", default-features = false }
 pallet-bitacross-mimic = { path = "pallets/bitacrossmimic", default-features = false }
 pallet-bridge = { path = "pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
-pallet-drop3 = { path = "pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features = false }
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }

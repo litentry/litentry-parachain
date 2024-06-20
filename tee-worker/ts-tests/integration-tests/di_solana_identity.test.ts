@@ -17,7 +17,7 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
@@ -62,7 +62,7 @@ describe('Test Identity (solana direct invocation)', function () {
             context.web3Wallets.solana.Alice,
             aliceSolanaIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -159,7 +159,7 @@ describe('Test Identity (solana direct invocation)', function () {
             context.web3Wallets.solana.Alice,
             aliceSolanaIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -252,7 +252,7 @@ describe('Test Identity (solana direct invocation)', function () {
             context.web3Wallets.solana.Alice,
             aliceSolanaIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -336,7 +336,7 @@ describe('Test Identity (solana direct invocation)', function () {
             context.web3Wallets.solana.Alice,
             aliceSolanaIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {

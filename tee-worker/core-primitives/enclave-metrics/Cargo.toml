@@ -13,16 +13,20 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 # no-std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "full"] }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", tag = "v0.5.9" }
 
 [features]
 default = ["std"]
 std = [
-    "codec/std",
-    "lc-stf-task-sender/std",
     "substrate-fixed/std",
+    "codec/std",
+    "litentry-primitives/std",
+    "lc-stf-task-sender/std",
+
 ]
 sgx = [
     "sgx_tstd",
+    "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
 ]

@@ -70,7 +70,7 @@ pub mod pallet {
 		AdminSet { new_admin: Option<T::AccountId> },
 		RelayerAdded { who: Identity },
 		RelayerRemoved { who: Identity },
-		BtcWalletGenerated { pub_key: PubKey },
+		BtcWalletGenerated { pub_key: PubKey, account_id: T::AccountId },
 		EthWalletGenerated { pub_key: PubKey },
 	}
 
@@ -152,10 +152,10 @@ pub mod pallet {
 			pub_key: PubKey,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
-			Vault::<T>::try_mutate(tee_account, |v| {
+			Vault::<T>::try_mutate(tee_account.clone(), |v| {
 				ensure!(!v.has_btc(), Error::<T>::BtcWalletAlreadyExist);
 				v.btc = Some(pub_key);
-				Self::deposit_event(Event::BtcWalletGenerated { pub_key });
+				Self::deposit_event(Event::BtcWalletGenerated { pub_key, account_id: tee_account });
 				Ok(Pays::No.into())
 			})
 		}

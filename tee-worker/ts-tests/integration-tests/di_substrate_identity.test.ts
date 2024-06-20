@@ -20,7 +20,7 @@ import {
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
+    sendRsaRequestFromGetter,
     sendRequestFromTrustedCall,
     createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCall,
@@ -75,7 +75,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -223,7 +223,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -435,7 +435,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -536,7 +536,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -564,7 +564,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // the third (last) identity in the IDGraph is eveSubstrateIdentity
@@ -622,7 +622,7 @@ describe('Test Identity (direct invocation)', function () {
             context.web3Wallets.substrate.Alice,
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.equal(
@@ -676,7 +676,7 @@ describe('Test Identity (direct invocation)', function () {
 
             aliceSubstrateIdentity
         );
-        const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
+        const res = await sendRsaRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         assert.equal(

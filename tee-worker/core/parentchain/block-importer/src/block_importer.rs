@@ -179,15 +179,16 @@ impl<
 
 			// Execute indirect calls that were found in the extrinsics of the block,
 			// incl. shielding and unshielding.
-			match self
-				.indirect_calls_executor
-				.execute_indirect_calls_in_block(&block, &raw_events)
-			{
+			match self.indirect_calls_executor.execute_indirect_calls_in_block(
+				&block,
+				&raw_events,
+				self.ocall_api.clone(),
+			) {
 				Ok(Some(confirm_processed_parentchain_block_call)) => {
 					calls.push(confirm_processed_parentchain_block_call);
 				},
 				Ok(None) => trace!("omitting confirmation call to non-integritee parentchain"),
-				Err(e) => error!("[{:?}] Error executing relevant extrinsics: {:?}", id, e),
+				Err(e) => error!("[{:?}] Error executing relevant events: {:?}", id, e),
 			};
 			if let Err(e) = self
 				.ocall_api

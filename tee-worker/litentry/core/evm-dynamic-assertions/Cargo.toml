@@ -8,8 +8,12 @@ edition = "2021"
 
 [dependencies]
 # std dependecies
+base58 = { version = "0.2", default-features = false }
+blake2-rfc = { version = "0.2.18", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 http = { version = "0.2", optional = true }
+rust_decimal = { version = "1.35.0", default-features = false }
+ss58-registry = { version = "1.40", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # sgx dependencies
@@ -29,12 +33,15 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
-
+litentry-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
 http_req = { features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
+lc-mock-server = { path = "../mock-server" }
 litentry-primitives = { path = "../../primitives" }
+litentry-hex-utils = { path = "../../../../primitives/hex" }
 
 [features]
 default = ["std"]

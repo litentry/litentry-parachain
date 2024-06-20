@@ -67,7 +67,8 @@ impl UpdateBnbDomainHoldingAmountCredential for Credential {
 		}
 
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(bnb_amount.get_index(amount) != Some(0));
+		// The credential value should be true if amount > ranges[0].
+		self.credential_subject.values.push(amount > bnb_amount.get_range()[0]);
 
 		let info = bnb_amount.get_info();
 		self.add_subject_info(info.1, info.0);

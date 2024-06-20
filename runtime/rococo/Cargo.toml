@@ -82,7 +82,6 @@ pallet-bitacross = { workspace = true }
 pallet-bitacross-mimic = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
-pallet-drop3 = { workspace = true }
 pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
@@ -155,7 +154,6 @@ runtime-benchmarks = [
     "xcm-builder/runtime-benchmarks",
     "pallet-bridge/runtime-benchmarks",
     "pallet-bridge-transfer/runtime-benchmarks",
-    "pallet-drop3/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
     "pallet-group/runtime-benchmarks",
@@ -244,7 +242,6 @@ std = [
     'runtime-common/std',
     "pallet-bridge/std",
     "pallet-bridge-transfer/std",
-    "pallet-drop3/std",
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
@@ -282,7 +279,6 @@ try-runtime = [
     "pallet-ethereum/try-runtime",
     "pallet-evm/try-runtime",
     "pallet-identity/try-runtime",
-    "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
     "pallet-group/try-runtime",
     "pallet-identity-management/try-runtime",

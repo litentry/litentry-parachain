@@ -2151,7 +2151,9 @@ dependencies = [
  "core-primitives",
  "futures 0.3.8",
  "itp-api-client-types",
+ "itp-enclave-metrics",
  "itp-node-api",
+ "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-executor",
@@ -2339,6 +2341,7 @@ name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
  "lc-stf-task-sender",
+ "litentry-primitives",
  "parity-scale-codec",
  "sgx_tstd",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
@@ -3130,6 +3133,8 @@ dependencies = [
 name = "lc-evm-dynamic-assertions"
 version = "0.1.0"
 dependencies = [
+ "base58",
+ "blake2-rfc",
  "ethabi",
  "evm 0.41.1",
  "hex",
@@ -3138,11 +3143,15 @@ dependencies = [
  "itp-settings",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
+ "itp-utils",
  "lc-dynamic-assertion",
+ "litentry-primitives",
  "log",
  "parity-scale-codec",
+ "rust_decimal",
  "serde_json 1.0.107",
  "sgx_tstd",
+ "ss58-registry",
  "thiserror",
 ]
 
@@ -4385,6 +4394,16 @@ source = "git+https://github.com/mesalock-linux/rust-base58-sgx#13fb3e0a543690e6
 dependencies = [
  "num",
  "sgx_tstd",
+]
+
+[[package]]
+name = "rust_decimal"
+version = "1.35.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1790d1c4c0ca81211399e0e0af16333276f375209e71a37b67698a373db5b47a"
+dependencies = [
+ "arrayvec 0.7.4",
+ "num-traits 0.2.16",
 ]
 
 [[package]]
