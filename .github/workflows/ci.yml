@@ -426,21 +426,13 @@ jobs:
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
-          docker save litentry/litentry-chain-aio:latest | gzip > litentry-chain-aio-dev.tar.gz
+          docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
-          if-no-files-found: error
-
-      - name: Upload chain-aio docker image
-        uses: actions/upload-artifact@v4
-        with:
-          name: litentry-chain-aio-dev
-          path: litentry-chain-aio-dev.tar.gz
           if-no-files-found: error
 
       - name: Fail early
@@ -914,16 +906,11 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-chain-aio-dev
-
-      - uses: actions/download-artifact@v4
-        with:
           name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-chain-aio-dev.tar.gz
           docker load < litentry-identity.tar.gz
           
       - name: Dockerhub login
