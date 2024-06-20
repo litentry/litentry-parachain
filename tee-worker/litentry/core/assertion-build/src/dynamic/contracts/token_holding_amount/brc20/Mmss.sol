@@ -19,7 +19,7 @@
 pragma solidity ^0.8.8;
 
 import { BRC20 } from "../BRC20.sol";
-import "../../libraries/Constants.sol";
+import "../Constants.sol";
 
 library Mmss {
 	function getTokenName() internal pure returns (string memory) {

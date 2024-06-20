@@ -22,15 +22,11 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contr
 import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
-import "../libraries/Constants.sol";
+import "./Constants.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	mapping(uint32 => string) tokenAddresses;
 	mapping(string => string) internal tokenNames;
 	mapping(string => uint256[]) internal tokenRanges;
-	mapping(string => string) internal tokenBscAddress;
-	mapping(string => string) internal tokenEthereumAddress;
-
 	function execute(
 		Identity[] memory identities,
 		string[] memory secrets,
@@ -51,35 +47,30 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		string memory assertion_type = "Token Holding Amount";
 		schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
 
-		string memory decodedParams = abi.decode(params, (string));
+		string memory tokenLowercaseName = abi.decode(params, (string));
 
 		if (
-			keccak256(abi.encodePacked(tokenNames[decodedParams])) ==
+			keccak256(abi.encodePacked(tokenNames[tokenLowercaseName])) ==
 			keccak256(abi.encodePacked(""))
 		) {
 			revert("Token not supported or not found");
 		}
 
-		tokenAddresses[Web3Networks.Bsc] = tokenBscAddress[decodedParams];
-		tokenAddresses[Web3Networks.Ethereum] = tokenEthereumAddress[
-			decodedParams
-		];
-
 		uint256 balance = queryTotalBalance(
 			identities,
 			secrets,
-			tokenNames[decodedParams]
+			tokenNames[tokenLowercaseName]
 		);
 
 		(uint256 index, uint256 min, int256 max) = calculateRange(
 			balance,
-			tokenRanges[decodedParams]
+			tokenRanges[tokenLowercaseName]
 		);
 
 		string[] memory assertions = assembleAssertions(
 			min,
 			max,
-			tokenNames[decodedParams]
+			tokenNames[tokenLowercaseName]
 		);
 
 		bool result = index > 0 || balance > 0;

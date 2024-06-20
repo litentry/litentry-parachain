@@ -18,25 +18,6 @@
 
 pragma solidity ^0.8.8;
 
-import { BRC20 } from "../BRC20.sol";
-import "../Constants.sol";
-
-library Btcs {
-	function getTokenName() internal pure returns (string memory) {
-		return "btcs";
-	}
-
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](9);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 5 * Constants.decimals_factor;
-		ranges[3] = 20 * Constants.decimals_factor;
-		ranges[4] = 50 * Constants.decimals_factor;
-		ranges[5] = 100 * Constants.decimals_factor;
-		ranges[6] = 200 * Constants.decimals_factor;
-		ranges[7] = 500 * Constants.decimals_factor;
-		ranges[8] = 800 * Constants.decimals_factor;
-		return ranges;
-	}
+library Constants {
+	uint256 constant decimals_factor = 1000;
 }

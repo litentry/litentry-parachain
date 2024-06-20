@@ -22,7 +22,7 @@ import "../libraries/Identities.sol";
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
-contract BRC20 is TokenHoldingAmount {
+abstract contract BRC20 is TokenHoldingAmount {
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
 	}

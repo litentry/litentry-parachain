@@ -19,7 +19,7 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
-import "../../libraries/Constants.sol";
+import "../Constants.sol";
 library Ada {
 	function getTokenBscAddress() internal pure returns (string memory) {
 		return "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47";

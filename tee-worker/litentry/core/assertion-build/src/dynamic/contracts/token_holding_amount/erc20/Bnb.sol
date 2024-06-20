@@ -20,7 +20,8 @@ pragma solidity ^0.8.8;
 
 import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
-import "../../libraries/Constants.sol";
+import "../Constants.sol";
+
 
 library Bnb {
 	function getTokenBscAddress() internal pure returns (string memory) {
@@ -30,7 +31,7 @@ library Bnb {
 		return "0xb8c77482e45f1f44de1745f52c74426c631bdd52";
 	}
 	function getTokenName() internal pure returns (string memory) {
-		return "Bnb";
+		return "bnb";
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -22,9 +22,12 @@ import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
-contract ERC20 is TokenHoldingAmount {
+abstract contract ERC20 is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
+	mapping(uint32 => string) tokenAddresses;
+	mapping(string => string) internal tokenBscAddress;
+	mapping(string => string) internal tokenEthereumAddress;
 
 	constructor() {
 		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/";
@@ -36,6 +39,8 @@ contract ERC20 is TokenHoldingAmount {
 		// "http://localhost:19530/nodereal_jsonrpc/v1/",
 
 		// Initialize network token addresses using Ada library
+
+		
 	}
 
 	function getTokenDecimals() internal pure override returns (uint8) {
@@ -46,11 +51,15 @@ contract ERC20 is TokenHoldingAmount {
 		Identity memory identity,
 		uint32 network,
 		string[] memory secrets,
-		string memory /*tokenName*/
+		string memory tokenName
 	) internal override returns (uint256) {
 		(bool identityToStringSuccess, string memory identityString) = Utils
 			.identityToString(network, identity.value);
 
+		tokenAddresses[Web3Networks.Bsc] = tokenBscAddress[tokenName];
+		tokenAddresses[Web3Networks.Ethereum] = tokenEthereumAddress[
+			tokenName
+		];
 		if (identityToStringSuccess) {
 			string memory url;
 			uint32[] memory networks = getTokenNetworks();
