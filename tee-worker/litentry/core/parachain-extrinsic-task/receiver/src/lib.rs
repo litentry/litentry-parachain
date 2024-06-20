@@ -31,9 +31,12 @@ where
 
 	loop {
 		let start_time = time::Instant::now();
-		while start_time.elapsed() < BATCH_EXTRINSIC_INTERVAL && calls.len() < MAX_BATCH_SIZE {
+		while start_time.elapsed() < BATCH_EXTRINSIC_INTERVAL {
 			if let Ok(call) = task_receiver.recv() {
 				calls.push(call);
+			}
+			if calls.len() == MAX_BATCH_SIZE {
+				break
 			}
 		}
 		if !calls.is_empty() {
