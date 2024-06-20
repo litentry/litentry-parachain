@@ -37,8 +37,6 @@ contract BRC20Mapping is BRC20 {
 		// cats
 		tokenNames["cats"] = Cats.getTokenName();
 		tokenRanges["cats"] = Cats.getTokenRanges();
-		tokenBscAddress["cats"] = "";
-		tokenEthereumAddress["cats"] = "";
 
 		// long
 		tokenNames["long"] = Long.getTokenName();
