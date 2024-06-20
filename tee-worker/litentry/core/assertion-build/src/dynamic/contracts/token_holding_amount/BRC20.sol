@@ -22,8 +22,7 @@ import "../libraries/Identities.sol";
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
-import { Btcs } from "./brc20/Btcs.sol";
-import { Cats } from "./brc20/Cats.sol";
+import "./brc20/BRC20TokenLibrary.sol";
 contract BRC20 is TokenHoldingAmount {
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
@@ -41,9 +40,9 @@ contract BRC20 is TokenHoldingAmount {
 			// https://geniidata.readme.io/reference/get-brc20-tick-list-copy
 			string memory url = string(
 				abi.encodePacked(
-					"https://api.geniidata.com/api/1/brc20/balance",
+					// "https://api.geniidata.com/api/1/brc20/balance",
 					// below url is used for test against mock server
-					// "http://localhost:19529/api/1/brc20/balance",
+					"http://localhost:19529/api/1/brc20/balance",
 					"?tick=",
 					tokenName,
 					"&address=",
@@ -92,15 +91,24 @@ contract BRC20 is TokenHoldingAmount {
 		string memory tokenBscAddress = "";
 		string memory tokenEthereumAddress = "";
 
-		if (Utils.isStringsEqual(decodedParams, "Btcs")) {
-			tokenName = Btcs.getTokenName();
-			ranges = Btcs.getTokenRanges();
-		} else if (Utils.isStringsEqual(decodedParams, "Cats")) {
-			tokenName = Cats.getTokenName();
-			ranges = Cats.getTokenRanges();
+		if (Utils.isStringsEqual(decodedParams, "btcs")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getBtcsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "cats")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getCatsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "long")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getLongInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "mmss")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getMmssInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "ordi")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getOrdiInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "rats")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getRatsInfo();
+		} else if (Utils.isStringsEqual(decodedParams, "sats")) {
+			(tokenName, ranges) = BRC0TokenLibrary.getSatsInfo();
 		} else {
 			revert("Unsupported token");
 		}
+
 		return (tokenName, ranges, tokenBscAddress, tokenEthereumAddress);
 	}
 }
