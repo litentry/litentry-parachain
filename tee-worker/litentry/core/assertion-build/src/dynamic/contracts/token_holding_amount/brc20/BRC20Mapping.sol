@@ -42,7 +42,7 @@ contract BRC20Mapping is BRC20 {
 		tokenNames["long"] = Long.getTokenName();
 		tokenRanges["long"] = Long.getTokenRanges();
 
-		// long
+		// mmss
 		tokenNames["mmss"] = Mmss.getTokenName();
 		tokenRanges["mmss"] = Mmss.getTokenRanges();
 
