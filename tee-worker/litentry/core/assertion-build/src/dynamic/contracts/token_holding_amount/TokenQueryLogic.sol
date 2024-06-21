@@ -23,7 +23,7 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
-abstract contract TokenQueryLogic is TokenHoldingAmount {
+abstract contract TokenLogic is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
@@ -32,10 +32,10 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => uint32[]) internal tokenNetworks;
 
 	constructor() {
-		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19527/nodereal_jsonrpc/"
+		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
 		networkUrls[
 			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19527/nodereal_jsonrpc/"
+		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
 
 		networkUrls[
 			Web3Networks.BitcoinP2tr
