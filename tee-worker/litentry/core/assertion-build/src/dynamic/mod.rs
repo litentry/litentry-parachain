@@ -305,7 +305,7 @@ pub mod assertion_test {
 
 		let network = Web3Network::Bsc;
 		let identities = vec![(Identity::Evm(address), vec![network])];
-		let smart_contract_id = hash(4);
+		let smart_contract_id = hash(3);
 		let smart_contract_params =
 			DynamicParams::truncate_from(ethabi::encode(&[ethabi::Token::String("bnb".into())]));
 
