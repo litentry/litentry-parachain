@@ -278,7 +278,32 @@ func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{
 	return map[string]interface{}{
 		"SignBitcoin": signBitcoinDirectCall,
 	}
+}
 
+func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, tweakBytes [32]byte, tweakIsXOnly bool) map[string]interface{} {
+	tweaks := []map[string]interface{}{
+		map[string]interface{}{
+			"col1": utiles.BytesToHex(tweakBytes[:]),
+			"col2": tweakIsXOnly,
+		},
+	}
+
+	payload := map[string]interface{}{
+		"WithTweaks": map[string]interface{}{
+			"col1": string(bitcoinPayload),
+			"col2": tweaks,
+		},
+	}
+
+	directCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(aesKey),
+		"col3": payload,
+	}
+
+	return map[string]interface{}{
+		"SignBitcoin": directCall,
+	}
 }
 
 func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
@@ -436,7 +461,7 @@ func read_response(c websocket.Conn) response {
 func create_conn(port string) *websocket.Conn {
 
 	dialer := *websocket.DefaultDialer
-	url := "wss://localhost:" + port
+	url := "ws://localhost:" + port
 	fmt.Println("Connecting to worker:")
 	fmt.Println(url)
 
