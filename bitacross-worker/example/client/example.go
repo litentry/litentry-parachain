@@ -288,9 +288,6 @@ func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, aesK
 		},
 	}
 
-	fmt.Println("tweaks:")
-	fmt.Println(tweaks)
-
 	payload := map[string]interface{}{
 		"WithTweaks": map[string]interface{}{
 			"col1": string(bitcoinPayload),
