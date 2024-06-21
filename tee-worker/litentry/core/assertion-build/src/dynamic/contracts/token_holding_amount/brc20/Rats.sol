@@ -18,8 +18,8 @@
 
 pragma solidity ^0.8.8;
 
-import { BRC20 } from "../BRC20.sol";
 import "../Constants.sol";
+import "../../libraries/Identities.sol";
 
 library Rats {
 	function getTokenName() internal pure returns (string memory) {
@@ -38,5 +38,10 @@ library Rats {
 		ranges[7] = 10000000 * Constants.decimals_factor;
 		ranges[8] = 2000000 * Constants.decimals_factor;
 		return ranges;
+	}
+	function getTokenNetworks() internal pure returns (uint32[] memory) {
+		uint32[] memory networks = new uint32[](1);
+		networks[0] = Web3Networks.BitcoinP2tr;
+		return networks;
 	}
 }

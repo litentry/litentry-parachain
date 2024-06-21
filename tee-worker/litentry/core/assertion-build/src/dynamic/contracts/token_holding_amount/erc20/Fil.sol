@@ -18,10 +18,8 @@
 
 pragma solidity ^0.8.8;
 
-import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
-
 
 library Fil {
 	function getTokenBscAddress() internal pure returns (string memory) {
@@ -45,5 +43,12 @@ library Fil {
 		ranges[5] = 500 * Constants.decimals_factor;
 
 		return ranges;
+	}
+	function getTokenNetworks() internal pure returns (uint32[] memory) {
+		uint32[] memory networks = new uint32[](2);
+		networks[0] = Web3Networks.Ethereum;
+		networks[1] = Web3Networks.Bsc;
+
+		return networks;
 	}
 }
