@@ -35,7 +35,7 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19527/nodereal_jsonrpc/"
 		networkUrls[
 			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "hhttp://localhost:19527/nodereal_jsonrpc/"
+		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19527/nodereal_jsonrpc/"
 
 		networkUrls[
 			Web3Networks.BitcoinP2tr
