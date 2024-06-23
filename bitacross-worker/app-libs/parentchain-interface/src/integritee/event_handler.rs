@@ -33,7 +33,6 @@ use itp_types::{
 	MrEnclave, WorkerType,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_hex_utils::hex_encode;
 use litentry_primitives::{Address32, Identity, SidechainBlockNumber};
 use log::*;
 use sp_core::{blake2_256, H256};
@@ -191,37 +190,8 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(
-		executor: &Executor,
-		events: impl FilterEvents,
-		vault_account: Option<AccountId>,
-	) -> Result<Vec<H256>, Error> {
+	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
-
-		if let Ok(events) = events.get_transfer_events() {
-			debug!(
-				"Handling transfer events to shard vault account: {}",
-				hex_encode(vault_account.encode().as_slice())
-			);
-			events
-				.iter()
-				.filter(|&event| {
-					if let Some(vault_account) = &vault_account {
-						event.to == *vault_account
-					} else {
-						false
-					}
-				})
-				.try_for_each(|event| {
-					info!("found transfer_event to vault account: {}", event);
-					//debug!("shielding from Integritee suppressed");
-					let result = Self::shield_funds(executor, &event.from, event.amount);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ShieldFundsFailure)?;
-		}
 
 		if let Ok(events) = events.get_scheduled_enclave_set_events() {
 			debug!("Handling ScheduledEnclaveSet events");

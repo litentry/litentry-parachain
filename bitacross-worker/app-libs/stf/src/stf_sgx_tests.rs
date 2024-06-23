@@ -48,8 +48,6 @@ pub fn shield_funds_increments_signer_account_nonce() {
 	let enclave_call_signer = Ed25519Pair::from_seed(b"14672678901234567890123456789012");
 	let enclave_signer_account_id: AccountId = enclave_call_signer.public().into();
 	let mut state = StfState::init_state(enclave_signer_account_id.clone());
-	let vault = AccountId::new([2u8; 32]);
-	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(

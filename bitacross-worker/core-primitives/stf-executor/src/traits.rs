@@ -52,10 +52,6 @@ where
 	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
 }
 
-pub trait StfShardVaultQuery {
-	fn get_shard_vault(&self, shard: &ShardIdentifier) -> Result<(AccountId, ParentchainId)>;
-}
-
 /// Proposes a state update to `Externalities`.
 pub trait StateUpdateProposer<TCS, G>
 where

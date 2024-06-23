@@ -128,24 +128,6 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	}
 }
 
-/// get shard vault from any of the parentchain interfaces
-/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
-pub fn shard_vault() -> Option<(AccountId, ParentchainId)> {
-	get_shard_vaults().into_iter().next()
-}
-
-/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
-pub fn get_shard_vaults() -> Vec<(AccountId, ParentchainId)> {
-	[
-		(ParentchainLitentry::shard_vault(), ParentchainId::Litentry),
-		(ParentchainTargetA::shard_vault(), ParentchainId::TargetA),
-		(ParentchainTargetB::shard_vault(), ParentchainId::TargetB),
-	]
-	.into_iter()
-	.filter_map(|vp| vp.0.map(|v| (v, vp.1)))
-	.collect()
-}
-
 pub fn shard_creation_info() -> ShardCreationInfo {
 	let maybe_litentry_info: Option<BlockMetadata> = ParentchainLitentry::creation_block_number()
 		.and_then(|number| {

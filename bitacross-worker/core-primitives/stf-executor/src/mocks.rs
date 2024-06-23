@@ -35,7 +35,6 @@ use sp_runtime::traits::Header as HeaderTrait;
 use std::sync::RwLock;
 use std::{boxed::Box, marker::PhantomData, ops::Deref, time::Duration, vec::Vec};
 
-use crate::traits::StfShardVaultQuery;
 use itp_stf_primitives::{
 	traits::{GetterAuthorization, TrustedCallVerification},
 	types::TrustedOperation,
@@ -145,12 +144,6 @@ impl<TCS: PartialEq + Encode + Debug> StfEnclaveSigning<TCS> for StfEnclaveSigne
 
 	fn sign(&self, _payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
 		Ok((self.signer.public().into(), [0u8; 32].to_vec()))
-	}
-}
-
-impl StfShardVaultQuery for StfEnclaveSignerMock {
-	fn get_shard_vault(&self, _shard: &ShardIdentifier) -> Result<(AccountId, ParentchainId)> {
-		Err(crate::error::Error::Other("shard vault undefined".into()))
 	}
 }
 

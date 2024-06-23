@@ -122,7 +122,6 @@ where
 	fn handle_events(
 		executor: &Executor,
 		events: impl FilterEvents,
-		vault_account: Option<AccountId>,
 	) -> core::result::Result<Vec<H256>, Error>;
 }
 

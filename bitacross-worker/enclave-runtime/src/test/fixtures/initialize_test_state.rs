@@ -35,9 +35,6 @@ pub fn init_state<S: HandleState<StateT = SgxExternalities>>(
 	let (lock, _) = state_handler.load_for_mutation(&shard).unwrap();
 	let mut state = TestStf::init_state(enclave_account);
 
-	let vault = AccountId::new([42u8; 32]);
-	StfState::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
-
 	state.prune_state_diff();
 
 	state_handler.write_after_mutation(state.clone(), lock, &shard).unwrap();

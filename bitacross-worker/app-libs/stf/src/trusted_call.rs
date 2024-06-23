@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, shard_vault},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account},
 	trusted_call_result::TrustedCallResult,
 	Getter,
 };
@@ -314,34 +314,6 @@ where
 					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
 					value,
 				)?;
-
-				let (vault, parentchain_id) = shard_vault().ok_or_else(|| {
-					StfError::Dispatch("shard vault key hasn't been set".to_string())
-				})?;
-				let vault_address = Address::from(vault);
-				let vault_transfer_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.transfer_keep_alive_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					Address::from(beneficiary),
-					Compact(value),
-				));
-				let proxy_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.proxy_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					vault_address,
-					None::<ProxyType>,
-					vault_transfer_call,
-				));
-				let parentchain_call = match parentchain_id {
-					ParentchainId::Litentry => ParentchainCall::Litentry(proxy_call),
-					ParentchainId::TargetA => ParentchainCall::TargetA(proxy_call),
-					ParentchainId::TargetB => ParentchainCall::TargetB(proxy_call),
-				};
-				calls.push(parentchain_call);
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_shield(enclave_account, who, value, parentchain_id) => {
@@ -353,12 +325,6 @@ where
 					account_id_to_string(&who),
 					value,
 					parentchain_id
-				);
-				let (_vault_account, vault_parentchain_id) =
-					shard_vault().ok_or(StfError::NoShardVaultAssigned)?;
-				ensure!(
-					parentchain_id == vault_parentchain_id,
-					StfError::WrongParentchainIdForShardVault
 				);
 				std::println!("⣿STF⣿ 🛡 will shield to {}", account_id_to_string(&who));
 				shield_funds(who, value)?;

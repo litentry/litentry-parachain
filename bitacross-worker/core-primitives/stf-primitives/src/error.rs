@@ -47,12 +47,4 @@ pub enum StfError {
 	InvalidStorageDiff,
 	#[codec(index = 27)]
 	InvalidMetadata,
-	#[codec(index = 28)]
-	ShardVaultOnMultipleParentchainsNotAllowed,
-	#[codec(index = 29)]
-	ChangingShardVaultAccountNotAllowed,
-	#[codec(index = 30)]
-	WrongParentchainIdForShardVault,
-	#[codec(index = 31)]
-	NoShardVaultAssigned,
 }
