@@ -97,10 +97,7 @@ mod impl_ffi {
 		HEADER_MAX_SIZE, MR_ENCLAVE_SIZE, SHIELDING_KEY_SIZE, SIGNING_KEY_SIZE,
 	};
 	use itp_stf_interface::ShardCreationInfo;
-	use itp_types::{
-		parentchain::{Balance, Header},
-		ShardIdentifier,
-	};
+	use itp_types::{parentchain::Header, ShardIdentifier};
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;

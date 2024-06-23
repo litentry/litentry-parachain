@@ -27,7 +27,7 @@ use crate::{
 };
 use ita_stf::State;
 use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::WorkerModeProvider;
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_stf_interface::InitState;
 use itp_stf_primitives::types::AccountId;

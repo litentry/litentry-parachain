@@ -18,7 +18,7 @@
 #[cfg(feature = "development")]
 use crate::initialization::global_components::GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT;
 use crate::{
-	error::{Error, Result},
+	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
@@ -55,10 +55,7 @@ use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
-use itp_types::{
-	parentchain::{ParentchainCall, ParentchainId},
-	Block, OpaqueCall, H256,
-};
+use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,
