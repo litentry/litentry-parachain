@@ -39,7 +39,7 @@ use itp_stf_primitives::{
 	traits::{GetterAuthorization, TrustedCallVerification},
 	types::TrustedOperation,
 };
-use itp_types::parentchain::ParentchainId;
+
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 

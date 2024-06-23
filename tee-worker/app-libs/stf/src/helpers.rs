@@ -19,12 +19,9 @@ use codec::{Decode, Encode};
 use frame_support::ensure;
 use ita_sgx_runtime::{ParentchainLitentry, ParentchainTargetA, ParentchainTargetB};
 use itp_stf_interface::{BlockMetadata, ShardCreationInfo};
-use itp_stf_primitives::{
-	error::{StfError, StfResult},
-	types::AccountId,
-};
+use itp_stf_primitives::error::{StfError, StfResult};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
-use itp_types::{parentchain::ParentchainId, Index};
+use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
