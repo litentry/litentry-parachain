@@ -92,8 +92,6 @@ pub fn nonce_is_computed_correctly() {
 		.public()
 		.into();
 	let mut state = TestStf::init_state(enclave_account.clone());
-	let vault = AccountId::new([2u8; 32]);
-	TestStf::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
 	// only used to create the enclave signer, the state is **not** synchronised
 	let state_observer: Arc<ObserveStateMock<SgxExternalities>> =
 		Arc::new(ObserveStateMock::new(state.clone()));

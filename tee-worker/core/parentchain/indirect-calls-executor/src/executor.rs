@@ -34,7 +34,7 @@ use itp_node_api::metadata::{
 };
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::{
 	traits::{IndirectExecutor, TrustedCallSigning, TrustedCallVerification},
 	types::AccountId,
@@ -135,7 +135,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
@@ -250,7 +250,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
