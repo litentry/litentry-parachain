@@ -15,7 +15,7 @@
 
 */
 
-use itp_types::parentchain::{AccountId, ParentchainId};
+use itp_types::parentchain::ParentchainId;
 
 /// Interface trait of the parentchain pallet.
 pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {

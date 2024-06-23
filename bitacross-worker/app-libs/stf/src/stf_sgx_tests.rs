@@ -19,8 +19,8 @@ use crate::{Getter, State, Stf, TrustedCall, TrustedCallSigned};
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInstancesInterface, sudo_pallet::SudoPalletInterface,
-	system_pallet::SystemPalletAccountInterface, InitState, StateCallInterface,
+	sudo_pallet::SudoPalletInterface, system_pallet::SystemPalletAccountInterface, InitState,
+	StateCallInterface,
 };
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::parentchain::ParentchainId;

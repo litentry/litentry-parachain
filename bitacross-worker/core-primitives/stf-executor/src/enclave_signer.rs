@@ -32,7 +32,7 @@ use itp_stf_primitives::{
 };
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{parentchain::ParentchainId, Index, ShardIdentifier};
+use itp_types::{Index, ShardIdentifier};
 use log::*;
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc, vec::Vec};

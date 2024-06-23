@@ -24,7 +24,7 @@ use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{
-	parentchain::{AccountId, FilterEvents, HandleParentchainEvents},
+	parentchain::{FilterEvents, HandleParentchainEvents},
 	H256,
 };
 use log::*;

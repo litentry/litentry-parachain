@@ -20,11 +20,11 @@ use crate::{
 	trusted_call_result::TrustedCallResult,
 	Getter,
 };
-use codec::{Compact, Decode, Encode};
+use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes};
+
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
 	error::StfError,
@@ -32,8 +32,8 @@ use itp_stf_primitives::{
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{ParentchainCall, ParentchainId, ProxyType},
-	Address, Moment, OpaqueCall, H256,
+	parentchain::{ParentchainCall, ParentchainId},
+	Moment, H256,
 };
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
@@ -197,8 +197,8 @@ where
 		self,
 		_shard: &ShardIdentifier,
 		_top_hash: H256,
-		calls: &mut Vec<ParentchainCall>,
-		node_metadata_repo: Arc<NodeMetadataRepository>,
+		_calls: &mut Vec<ParentchainCall>,
+		_node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;

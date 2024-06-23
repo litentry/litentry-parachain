@@ -320,12 +320,9 @@ mod test {
 	use bc_relayer_registry::RelayerRegistry;
 	use bc_signer_registry::SignerRegistry;
 	use codec::Encode;
-	use itc_parentchain_test::ParentchainBlockBuilder;
+
 	use itp_node_api::{
-		api_client::{
-			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
-			ParentchainUncheckedExtrinsic,
-		},
+		api_client::ExtrinsicParams,
 		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
@@ -335,9 +332,7 @@ mod test {
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, Enclave, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
-	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
+	use itp_types::Block;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;

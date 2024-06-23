@@ -25,8 +25,8 @@ use itp_sgx_crypto::{
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::{enclave_signer::StfEnclaveSigner, traits::StfEnclaveSigning};
 use itp_stf_interface::{
-	mocks::GetterExecutorMock, parentchain_pallet::ParentchainPalletInstancesInterface,
-	system_pallet::SystemPalletAccountInterface, InitState, StateCallInterface,
+	mocks::GetterExecutorMock, system_pallet::SystemPalletAccountInterface, InitState,
+	StateCallInterface,
 };
 use itp_stf_primitives::{
 	traits::TrustedCallVerification,

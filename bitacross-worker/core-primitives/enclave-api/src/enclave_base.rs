@@ -22,7 +22,7 @@ use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_stf_interface::ShardCreationInfo;
-use itp_types::{parentchain::Header, Balance, ShardIdentifier};
+use itp_types::{parentchain::Header, ShardIdentifier};
 use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
@@ -105,10 +105,7 @@ mod impl_ffi {
 		HEADER_MAX_SIZE, MR_ENCLAVE_SIZE, SHIELDING_KEY_SIZE, SIGNING_KEY_SIZE,
 	};
 	use itp_stf_interface::ShardCreationInfo;
-	use itp_types::{
-		parentchain::{Balance, Header},
-		ShardIdentifier,
-	};
+	use itp_types::{parentchain::Header, ShardIdentifier};
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;

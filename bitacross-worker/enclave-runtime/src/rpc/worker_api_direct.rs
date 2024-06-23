@@ -24,10 +24,7 @@ use crate::{
 		EnclaveBitcoinKeyRepository, EnclaveEthereumKeyRepository, EnclaveSigningKeyRepository,
 	},
 	std::string::ToString,
-	utils::{
-		get_stf_enclave_signer_from_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain,
-	},
+	utils::get_validator_accessor_from_integritee_solo_or_parachain,
 };
 use bc_musig2_ceremony::{generate_aggregated_public_key, PublicKey};
 use bc_signer_registry::SignerRegistryLookup;

@@ -17,12 +17,12 @@
 */
 
 use super::test_setup::TestStf;
-use ita_stf::{stf_sgx_tests::StfState, State};
+use ita_stf::State;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
-use itp_stf_interface::{parentchain_pallet::ParentchainPalletInstancesInterface, InitState};
+use itp_stf_interface::InitState;
 use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_types::{parentchain::ParentchainId, ShardIdentifier};
+use itp_types::ShardIdentifier;
 
 /// Returns an empty `State` with the corresponding `ShardIdentifier`.
 pub fn init_state<S: HandleState<StateT = SgxExternalities>>(
