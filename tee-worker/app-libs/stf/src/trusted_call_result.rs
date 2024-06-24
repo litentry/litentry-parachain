@@ -18,7 +18,7 @@
 // passed back to the requester of trustedCall direct invocation (DI).
 // They are mostly translated from the callback extrinsics in IMP.
 
-use crate::String;
+use crate::{Box, String};
 use codec::{Decode, Encode};
 use itp_stf_interface::StfExecutionResult;
 use itp_types::H256;
@@ -114,7 +114,7 @@ pub enum RequestVcErrorDetail {
 	NoEligibleIdentity,
 	InvalidSignerAccount,
 	UnauthorizedSigner,
-	AssertionBuildFailed(VCMPError),
+	AssertionBuildFailed(Box<VCMPError>),
 	MissingAesKey,
 	MrEnclaveRetrievalFailed,
 	EnclaveSignerRetrievalFailed,

@@ -435,7 +435,7 @@ where
 	let parachain_runtime_version = node_metadata_repo
 		.get_from_metadata(|m| {
 			m.system_version()
-				.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e).to_string()))
+				.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e)))
 		})
 		.map_err(|e| RequestVcErrorDetail::MetadataRetrievalFailed(e.to_string()))??
 		.spec_version;
@@ -533,9 +533,8 @@ where
 		);
 		ensure!(!identities.is_empty(), RequestVcErrorDetail::NoEligibleIdentity);
 
-		let signer_account = signer
-			.to_account_id()
-			.ok_or_else(|| RequestVcErrorDetail::InvalidSignerAccount)?;
+		let signer_account =
+			signer.to_account_id().ok_or(RequestVcErrorDetail::InvalidSignerAccount)?;
 
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
@@ -566,14 +565,14 @@ where
 		};
 
 		let credential_str = create_credential_str(&req, &context)
-			.map_err(|e| RequestVcErrorDetail::AssertionBuildFailed(e))?;
+			.map_err(|e| RequestVcErrorDetail::AssertionBuildFailed(Box::new(e)))?;
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
 			.map_err(|e| RequestVcErrorDetail::MetadataRetrievalFailed(e.to_string()))?
-			.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e).to_string()));
+			.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e)));
 
-		let key = maybe_key.ok_or_else(|| RequestVcErrorDetail::MissingAesKey)?;
+		let key = maybe_key.ok_or(RequestVcErrorDetail::MissingAesKey)?;
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			who.clone(),
