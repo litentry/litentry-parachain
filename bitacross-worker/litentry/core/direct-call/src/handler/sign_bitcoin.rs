@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use log::error;
 use bc_relayer_registry::RelayerRegistryLookup;
 use itp_sgx_crypto::key_repository::AccessKey;
+use log::error;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 

@@ -213,14 +213,11 @@ where
 	ERL: EnclaveRegistryLookup + 'static,
 	SRL: SignerRegistryLookup + 'static,
 {
-	let enclave_shielding_key = context
-		.shielding_key
-		.retrieve_key()
-		.map_err(|e| {
-			let err = format!("Failed to retrieve shielding key: {:?}", e);
-			error!("{}", err);
-			err
-		})?;
+	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
+		let err = format!("Failed to retrieve shielding key: {:?}", e);
+		error!("{}", err);
+		err
+	})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
