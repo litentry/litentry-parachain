@@ -53,7 +53,7 @@ use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
 use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
-use log::debug;
+use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
@@ -539,7 +539,7 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 			},
 		},
 		Ok(Err(e)) => {
-			println!("Got Ok(Err)");
+			error!("Error while processing request: {:?}", e);
 
 			Err(e)
 		},

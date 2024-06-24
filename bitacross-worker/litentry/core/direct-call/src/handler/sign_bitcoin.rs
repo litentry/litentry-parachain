@@ -16,6 +16,7 @@
 
 use bc_relayer_registry::RelayerRegistryLookup;
 use itp_sgx_crypto::key_repository::AccessKey;
+use log::error;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
@@ -82,7 +83,10 @@ pub fn handle<
 			signer_access_key,
 			ceremony_tick_to_live,
 		)
-		.map_err(|_| SignBitcoinError::CeremonyError)?;
+		.map_err(|e| {
+			error!("Could not start ceremony, error: {:?}", e);
+			SignBitcoinError::CeremonyError
+		})?;
 		registry.insert(payload, ceremony);
 
 		Ok(())

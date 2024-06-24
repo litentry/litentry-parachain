@@ -149,7 +149,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		signing_key_access: Arc<AK>,
 		ttl: u32,
 	) -> Result<Self, String> {
-		info!("Creating new ceremony with peers: {:?} and events {:?}", signers, commands);
+		info!("Creating new ceremony {:?} and events {:?}", payload, commands);
 		if signers.len() < 3 {
 			return Err(format!("Not enough signers, minimum: {:?}, actual {:?}", 3, signers.len()))
 		}
