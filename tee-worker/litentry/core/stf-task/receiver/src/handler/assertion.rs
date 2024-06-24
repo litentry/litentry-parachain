@@ -36,7 +36,7 @@ use litentry_primitives::{
 	VCMPError,
 };
 use log::*;
-use sp_core::H160;
+use sp_core::{Pair, H160};
 use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
@@ -287,8 +287,7 @@ where
 	}?;
 
 	// post-process the credential
-	let signer = context.enclave_signer.as_ref();
-	let enclave_signer_account = signer.get_enclave_account().map_err(|e| {
+	let enclave_signer_account = context.enclave_signer.get_enclave_account().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -307,20 +306,19 @@ where
 		credential.credential_schema.id = schema;
 	}
 
-	credential.issuer.id = Identity::Substrate(enclave_signer_account.clone().into())
-		.to_did()
-		.map_err(|e| {
-			VCMPError::RequestVCFailed(
-				req.assertion.clone(),
-				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-			)
-		})?;
+	let issuer_identity: Identity = context.enclave_account.public().into();
+	credential.issuer.id = issuer_identity.to_did().map_err(|e| {
+		VCMPError::RequestVCFailed(
+			req.assertion.clone(),
+			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+		)
+	})?;
 
 	let json_string = credential
 		.to_json()
 		.map_err(|_| VCMPError::RequestVCFailed(req.assertion.clone(), ErrorDetail::ParseError))?;
 	let payload = json_string.as_bytes();
-	let sig = signer.sign(payload).map_err(|e| {
+	let sig = context.enclave_signer.sign(payload).map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
