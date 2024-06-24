@@ -216,16 +216,28 @@ where
 	let enclave_shielding_key = context
 		.shielding_key
 		.retrieve_key()
-		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
+		.map_err(|e| {
+			let err = format!("Failed to retrieve shielding key: {:?}", e);
+			error!("{}", err);
+			err
+		})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
 		.and_then(|v| DirectCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| "Failed to decode payload".to_string())?;
+		.ok_or_else(|| {
+			let err = "Failed to decode payload".to_string();
+			error!("{}", err);
+			err
+		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".encode()),
+		Err(_) => {
+			let err = "Failed to get mrenclave";
+			error!("{}", err);
+			return Err(err.encode())
+		},
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	debug!("Direct call is: {:?}", dc.call);
