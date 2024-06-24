@@ -422,16 +422,19 @@ impl RequestVcCommand {
 			match send_direct_vc_request(cli, trusted_cli, &top, key) {
 				Ok(result) =>
 					for res in result {
-						if res.is_error {
-							println!("received one error: {:?}", String::from_utf8(res.payload));
-						} else {
-							let mut vc =
-								RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
-							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-							let credential_str =
-								String::from_utf8(decrypted).expect("Found invalid UTF-8");
-							println!("----Generated VC-----");
-							println!("{}", credential_str);
+						match res.result {
+							Err(err) => {
+								println!("received one error: {:?}", err);
+							},
+							Ok(payload) => {
+								let mut vc =
+									RequestVCResult::decode(&mut payload.as_slice()).unwrap();
+								let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+								let credential_str =
+									String::from_utf8(decrypted).expect("Found invalid UTF-8");
+								println!("----Generated VC-----");
+								println!("{}", credential_str);
+							},
 						}
 					},
 				Err(e) => {

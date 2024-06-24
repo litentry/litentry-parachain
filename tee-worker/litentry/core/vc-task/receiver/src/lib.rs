@@ -32,7 +32,7 @@ use ita_stf::helpers::ensure_alice;
 use ita_stf::{
 	aes_encrypt_default,
 	helpers::ensure_self,
-	trusted_call_result::{RequestVCResult, RequestVcResultOrError},
+	trusted_call_result::{RequestVCResult, RequestVcErrorDetail, RequestVcResultOrError},
 	Getter, TrustedCall, TrustedCallSigned,
 };
 use itp_enclave_metrics::EnclaveMetric;
@@ -67,7 +67,7 @@ use std::{
 	boxed::Box,
 	collections::{HashMap, HashSet},
 	format,
-	string::{String, ToString},
+	string::ToString,
 	sync::{
 		mpsc::{channel, Sender},
 		Arc,
@@ -125,7 +125,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 				send_vc_response(
 					connection_hash,
 					context.clone(),
-					Err(format!("Failed to retrieve shielding key: {:?}", e)),
+					Err(RequestVcErrorDetail::ShieldingKeyRetrievalFailed(format!("{:?}", e))),
 					0u8,
 					0u8,
 					false,
@@ -146,7 +146,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 				send_vc_response(
 					connection_hash,
 					context.clone(),
-					Err("Failed to decode request payload".to_string()),
+					Err(RequestVcErrorDetail::RequestPayloadDecodingFailed),
 					0u8,
 					0u8,
 					false,
@@ -160,7 +160,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 				send_vc_response(
 					connection_hash,
 					context.clone(),
-					Err("Failed to get mrenclave".to_string()),
+					Err(RequestVcErrorDetail::MrEnclaveRetrievalFailed),
 					0u8,
 					0u8,
 					false,
@@ -172,7 +172,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 			send_vc_response(
 				connection_hash,
 				context.clone(),
-				Err("Failed to verify sig".to_string()),
+				Err(RequestVcErrorDetail::SignatureVerificationFailed),
 				0u8,
 				0u8,
 				false,
@@ -211,7 +211,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 						send_vc_response(
 							connection_hash,
 							context_pool,
-							Err(format!("1 couldn't find connection_hash: {:?}", e)),
+							Err(RequestVcErrorDetail::ConnectionHashNotFound(e.to_string())),
 							0u8,
 							1,
 							false,
@@ -285,7 +285,9 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 								send_vc_response(
 									connection_hash,
 									context_pool,
-									Err(format!("2 couldn't find connection_hash: {:?}", e)),
+									Err(RequestVcErrorDetail::ConnectionHashNotFound(
+										e.to_string(),
+									)),
 									idx as u8,
 									assertion_len,
 									false,
@@ -300,7 +302,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 							send_vc_response(
 								connection_hash,
 								context.clone(),
-								Err("Duplicate assertion request".to_string()),
+								Err(RequestVcErrorDetail::DuplicateAssertionRequest),
 								idx as u8,
 								assertion_len,
 								do_watch,
@@ -311,7 +313,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 							send_vc_response(
 								connection_hash,
 								context.clone(),
-								Err(format!("3 couldn't find connection_hash: {:?}", e)),
+								Err(RequestVcErrorDetail::ConnectionHashNotFound(e.to_string())),
 								idx as u8,
 								assertion_len,
 								false,
@@ -324,7 +326,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 			send_vc_response(
 				connection_hash,
 				context.clone(),
-				Err("Wrong trusted call. Expect request_batch_vc ".to_string()),
+				Err(RequestVcErrorDetail::UnexpectedCall("Expected request_batch_vc ".to_string())),
 				0u8,
 				0u8,
 				false,
@@ -379,7 +381,7 @@ impl RequestRegistry {
 fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	hash: H256,
 	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
-	response: Result<Vec<u8>, String>,
+	result: Result<Vec<u8>, RequestVcErrorDetail>,
 	idx: u8,
 	len: u8,
 	do_watch: bool,
@@ -394,15 +396,11 @@ fn send_vc_response<ShieldingKeyRepository, A, S, H, O, AR>(
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
-	let vc_res: RequestVcResultOrError = match response.clone() {
-		Ok(payload) => RequestVcResultOrError { payload, is_error: false, idx, len },
-		Err(e) =>
-			RequestVcResultOrError { payload: e.as_bytes().to_vec(), is_error: true, idx, len },
-	};
+	let vc_res = RequestVcResultOrError { result: result.clone(), idx, len };
 
 	context.author_api.send_rpc_response(hash, vc_res.encode(), do_watch);
 
-	if response.is_err() {
+	if result.is_err() {
 		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::FailedVCIssuance) {
 			warn!("Failed to update metric for VC Issuance: {:?}", e);
 		}
@@ -418,7 +416,7 @@ fn process_single_request<ShieldingKeyRepository, A, S, H, O, Z, N, AR>(
 	node_metadata_repo: Arc<N>,
 	tc_sender: Sender<(ShardIdentifier, TrustedCall)>,
 	call: TrustedCall,
-) -> Result<Vec<u8>, String>
+) -> Result<Vec<u8>, RequestVcErrorDetail>
 where
 	ShieldingKeyRepository: AccessKey + core::marker::Send + core::marker::Sync,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
@@ -437,9 +435,9 @@ where
 	let parachain_runtime_version = node_metadata_repo
 		.get_from_metadata(|m| {
 			m.system_version()
-				.map_err(|_| "Failed to get version from system pallet".to_string())
+				.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e).to_string()))
 		})
-		.map_err(|_| "Failed to get metadata".to_string())??
+		.map_err(|e| RequestVcErrorDetail::MetadataRetrievalFailed(e.to_string()))??
 		.spec_version;
 	let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
 
@@ -488,7 +486,7 @@ where
 						sidechain_block_number,
 					)
 				})
-				.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+				.map_err(|e| RequestVcErrorDetail::SidechainDataRetrievalFailed(e.to_string()))?;
 
 		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
@@ -516,7 +514,7 @@ where
 			// though it's lock guarded, because: a) it intereferes with the block import on another thread, which eventually
 			// cause state mismatch before/after applying the state diff b) it's not guaranteed to be broadcasted to other workers.
 			//
-			ensure!(!is_already_linked, "Identity already exists in other IDGraph".to_string());
+			ensure!(!is_already_linked, RequestVcErrorDetail::IdentityAlreadyLinked);
 			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
 			id_graph.push((
 				who.clone(),
@@ -533,11 +531,11 @@ where
 			assertion_networks,
 			assertion.skip_identity_filtering(),
 		);
-		ensure!(!identities.is_empty(), "No eligible identity".to_string());
+		ensure!(!identities.is_empty(), RequestVcErrorDetail::NoEligibleIdentity);
 
 		let signer_account = signer
 			.to_account_id()
-			.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
+			.ok_or_else(|| RequestVcErrorDetail::InvalidSignerAccount)?;
 
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
@@ -545,9 +543,9 @@ where
 			_ => if_development_or!(
 				ensure!(
 					ensure_self(&signer, &who) || ensure_alice(&signer_account),
-					"Unauthorized signer",
+					RequestVcErrorDetail::UnauthorizedSigner,
 				),
-				ensure!(ensure_self(&signer, &who), "Unauthorized signer",)
+				ensure!(ensure_self(&signer, &who), RequestVcErrorDetail::UnauthorizedSigner)
 			),
 		}
 
@@ -568,14 +566,14 @@ where
 		};
 
 		let credential_str = create_credential_str(&req, &context)
-			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
+			.map_err(|e| RequestVcErrorDetail::AssertionBuildFailed(e))?;
 
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.map_err(|_| "Failed to get vc_issued_call_indexes".to_string())?
-			.map_err(|_| "Failed to get metadata".to_string())?;
+			.map_err(|e| RequestVcErrorDetail::MetadataRetrievalFailed(e.to_string()))?
+			.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e).to_string()));
 
-		let key = maybe_key.ok_or_else(|| "Invalid aes key".to_string())?;
+		let key = maybe_key.ok_or_else(|| RequestVcErrorDetail::MissingAesKey)?;
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			who.clone(),
@@ -596,21 +594,21 @@ where
 		let enclave_signer: AccountId = context
 			.enclave_signer
 			.get_enclave_account()
-			.map_err(|_| "Failed to get enclave signer".to_string())?;
+			.map_err(|_| RequestVcErrorDetail::EnclaveSignerRetrievalFailed)?;
 		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
 		tc_sender
 			.send((shard, c))
-			.map_err(|e| format!("Failed to send trusted call: {}", e))?;
+			.map_err(|e| RequestVcErrorDetail::TrustedCallSendingFailed(e.to_string()))?;
 
 		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
 		let xt = extrinsic_factory
 			.create_extrinsics(&[call], None)
-			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
+			.map_err(|e| RequestVcErrorDetail::ExtrinsicConstructionFailed(e.to_string()))?;
 
 		context
 			.ocall_api
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+			.map_err(|e| RequestVcErrorDetail::ExtrinsicSendingFailed(e.to_string()))?;
 
 		if let Err(e) = context
 			.ocall_api
@@ -622,6 +620,6 @@ where
 		Ok(res.encode())
 	} else {
 		// Would never come here.
-		Err("Expect request_vc trusted call".to_string())
+		Err(RequestVcErrorDetail::UnexpectedCall("Expected request_vc".to_string()))
 	}
 }
