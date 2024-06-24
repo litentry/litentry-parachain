@@ -228,6 +228,7 @@ where
 		Err(_) => return Err("Failed to get mrenclave".encode()),
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
+	debug!("Direct call is: {:?}", dc.call);
 
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
