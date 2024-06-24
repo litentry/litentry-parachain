@@ -156,17 +156,25 @@ func main() {
 	signResp := read_response(*c)
 
 	signResult, signStatus := decodeRpcReturnValue(signResp.Result)
-	resultAesOutput := decodeAesOutput(signResult)
-	decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
-
-	fmt.Println("Decrypted result")
-	fmt.Println(decryptedResult)
 
 	if _, ok := signStatus["Error"]; ok {
-		signBitcoinError := decodeSignEthereumError(decryptedResult)
-		fmt.Println("Got SignEthereumError")
-		fmt.Println(signBitcoinError)
+		directCallError := decodeBitAcrossProcessingError(utiles.HexToBytes(signResult))
+		if generalVal, ok := directCallError["General"]; ok {
+			fmt.Println("Got general error:")
+			fmt.Println(generalVal)
+		} else {
+			fmt.Println(directCallError["DirectCallError"].(map[string]interface{})["col1"])
+			resultAesOutput := decodeAesOutput(directCallError["DirectCallError"].(map[string]interface{})["col1"].(string))
+			decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
+			signBitcoinError := decodeSignEthereumError(decryptedResult)
+			fmt.Println("Got SignEthereumError")
+			fmt.Println(signBitcoinError)
+		}
 	} else {
+		resultAesOutput := decodeAesOutput(signResult)
+		decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
+		fmt.Println("Decrypted result")
+		fmt.Println(decryptedResult)
 		signature := decryptedResult
 		fmt.Println("Got signature:")
 		fmt.Println(signature)
@@ -404,6 +412,22 @@ func decodeAesOutput(hexEncoded string) aesOutput {
 	m.Init(bytes, nil)
 	var output aesOutput
 	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("AesOutput").(interface{}), &output)
+
+	if err != nil {
+		fmt.Println("Unmarshall error!")
+		fmt.Println(err)
+	}
+	return output
+}
+
+func decodeBitAcrossProcessingError(encoded []byte) map[string]interface{} {
+	bytes := scaleBytes.ScaleBytes{Data: encoded}
+	m := types.ScaleDecoder{}
+	m.Init(bytes, &types.ScaleDecoderOption{
+		SubType: "string,string",
+	})
+	var output map[string]interface{}
+	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("BitAcrossProcessingError").(interface{}), &output)
 
 	if err != nil {
 		fmt.Println("Unmarshall error!")

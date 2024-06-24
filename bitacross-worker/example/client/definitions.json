@@ -77,6 +77,13 @@
       ]
     ]
   },
+  "BitAcrossProcessingError": {
+    "type": "enum",
+    "type_mapping": [
+      ["General", "(Vec<u8>)"],
+      ["DirectCallError", "(Vec<u8>)"]
+    ]
+  },
   "SignBitcoinError": {
     "type": "enum",
     "type_mapping": [

@@ -43,7 +43,9 @@ use std::sync::SgxMutex as Mutex;
 use core::ops::Deref;
 
 use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry};
-use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
+use bc_task_sender::{
+	init_bit_across_task_sender_storage, BitAcrossProcessingError, BitAcrossProcessingResult,
+};
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use lc_direct_call::{DirectCall, DirectCallSigned};
@@ -54,7 +56,6 @@ use std::{
 	format,
 	string::{String, ToString},
 	sync::Arc,
-	vec::Vec,
 };
 use threadpool::ThreadPool;
 
@@ -186,7 +187,10 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
 		pool.execute(move || {
-			if let Err(e) = req.sender.send(handle_request(&mut req.request, context_pool)) {
+			if let Err(e) = req
+				.sender
+				.send(handle_request(&mut req.request, context_pool).map_err(|e| e.encode()))
+			{
 				warn!("Unable to submit response back to the handler: {:?}", e);
 			}
 		});
@@ -200,7 +204,7 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 pub fn handle_request<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 	request: &mut AesRequest,
 	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>>,
-) -> Result<BitAcrossProcessingResult, Vec<u8>>
+) -> Result<BitAcrossProcessingResult, BitAcrossProcessingError>
 where
 	SKR: AccessKey,
 	EKR: AccessKey<KeyType = EcdsaPair>,
@@ -216,7 +220,7 @@ where
 	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
 		let err = format!("Failed to retrieve shielding key: {:?}", e);
 		error!("{}", err);
-		err
+		BitAcrossProcessingError::General(err)
 	})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
@@ -225,19 +229,22 @@ where
 		.ok_or_else(|| {
 			let err = "Failed to decode payload".to_string();
 			error!("{}", err);
-			err
+			BitAcrossProcessingError::General(err)
 		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
 		Err(_) => {
-			let err = "Failed to get mrenclave";
+			let err = "Failed to get mrenclave".to_string();
 			error!("{}", err);
-			return Err(err.encode())
+			return Err(BitAcrossProcessingError::General(err))
 		},
 	};
 	debug!("Direct call is: {:?}", dc);
-	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
+	ensure!(
+		dc.verify_signature(&mrenclave, &request.shard),
+		BitAcrossProcessingError::General("Failed to verify sig".to_string())
+	);
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());
@@ -254,7 +261,9 @@ where
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
-				aes_encrypt_default(&aes_key, &e.encode()).encode()
+				BitAcrossProcessingError::DirectCallError(
+					aes_encrypt_default(&aes_key, &e.encode()).encode(),
+				)
 			})?;
 			Ok(BitAcrossProcessingResult::Submitted(hash))
 		},
@@ -266,7 +275,9 @@ where
 		)
 		.map_err(|e| {
 			error!("SignEthereum error: {:?}", e);
-			aes_encrypt_default(&aes_key, &e.encode()).encode()
+			BitAcrossProcessingError::DirectCallError(
+				aes_encrypt_default(&aes_key, &e.encode()).encode(),
+			)
 		})
 		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
 		DirectCall::NonceShare(signer, aes_key, message, nonce) => nonce_share::handle(
@@ -279,7 +290,9 @@ where
 		)
 		.map_err(|e| {
 			error!("NonceShare error: {:?}", e);
-			aes_encrypt_default(&aes_key, &e.encode()).encode()
+			BitAcrossProcessingError::DirectCallError(
+				aes_encrypt_default(&aes_key, &e.encode()).encode(),
+			)
 		})
 		.map(|r| {
 			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
@@ -294,7 +307,9 @@ where
 			)
 			.map_err(|e| {
 				error!("PartialSignatureShare error: {:?}", e);
-				aes_encrypt_default(&aes_key, &e.encode()).encode()
+				BitAcrossProcessingError::DirectCallError(
+					aes_encrypt_default(&aes_key, &e.encode()).encode(),
+				)
 			})
 			.map(|r| {
 				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
@@ -308,7 +323,9 @@ where
 		)
 		.map_err(|e| {
 			error!("KillCeremony error: {:?}", e);
-			aes_encrypt_default(&aes_key, &e.encode()).encode()
+			BitAcrossProcessingError::DirectCallError(
+				aes_encrypt_default(&aes_key, &e.encode()).encode(),
+			)
 		})
 		.map(|r| {
 			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())

@@ -64,6 +64,14 @@ pub enum BitAcrossProcessingResult {
 	Submitted([u8; 32]),
 }
 
+#[derive(Encode, Decode, Clone, Debug)]
+pub enum BitAcrossProcessingError {
+	// general processing error like failed to decode or wrong signature
+	General(String),
+	// something specific to direct call
+	DirectCallError(Vec<u8>),
+}
+
 #[derive(Encode, Decode, Clone)]
 pub struct BitAcrossResponse {
 	pub payload: Vec<u8>,
