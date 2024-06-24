@@ -207,7 +207,6 @@ where
 	fn handle_events(
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
-		_: Option<AccountId>,
 	) -> core::result::Result<Vec<H256>, Error> {
 		Ok(Vec::from([H256::default()]))
 	}

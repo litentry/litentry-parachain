@@ -23,7 +23,7 @@ use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{AccountId, ShardIdentifier, TrustedOperation},
 };
-use itp_types::{parentchain::ParentchainId, H256};
+use itp_types::H256;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{time::Duration, vec::Vec};
 
@@ -50,10 +50,6 @@ where
 
 	// litentry
 	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
-}
-
-pub trait StfShardVaultQuery {
-	fn get_shard_vault(&self, shard: &ShardIdentifier) -> Result<(AccountId, ParentchainId)>;
 }
 
 /// Proposes a state update to `Externalities`.

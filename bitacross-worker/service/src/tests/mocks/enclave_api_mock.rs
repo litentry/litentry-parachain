@@ -61,15 +61,6 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn init_proxied_shard_vault(
-		&self,
-		_shard: &ShardIdentifier,
-		_parentchain_id: &ParentchainId,
-		_funding_balance: Balance,
-	) -> EnclaveResult<()> {
-		unimplemented!()
-	}
-
 	fn init_shard_creation_parentchain_header(
 		&self,
 		shard: &ShardIdentifier,
@@ -96,10 +87,6 @@ impl EnclaveBase for EnclaveMock {
 	}
 
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public> {
-		unreachable!()
-	}
-
-	fn get_ecc_vault_pubkey(&self, _shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
 		unreachable!()
 	}
 

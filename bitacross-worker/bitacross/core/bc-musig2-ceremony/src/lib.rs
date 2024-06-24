@@ -437,9 +437,8 @@ fn random_seed() -> [u8; 32] {
 #[cfg(test)]
 pub mod test {
 	use crate::{
-		generate_aggregated_public_key, CeremonyCommand, CeremonyError, CeremonyEvent,
-		MuSig2Ceremony, NonceReceivingErrorReason, SignBitcoinPayload, SignaturePayload, SignerId,
-		SignersWithKeys,
+		CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason,
+		SignBitcoinPayload, SignerId, SignersWithKeys,
 	};
 	use alloc::sync::Arc;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
@@ -449,8 +448,7 @@ pub mod test {
 		sha2::digest::Mac,
 	};
 	use litentry_primitives::RequestAesKey;
-	use musig2::{secp::MaybeScalar, verify_single, PubNonce, SecNonce};
-	use signature::Verifier;
+	use musig2::{secp::MaybeScalar, SecNonce};
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
 

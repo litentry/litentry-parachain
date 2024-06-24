@@ -96,7 +96,6 @@ mod initialization;
 mod ipfs;
 mod ocall;
 mod shard_creation_info;
-mod shard_vault;
 mod stf_task_handler;
 mod utils;
 

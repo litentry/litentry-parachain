@@ -22,18 +22,14 @@ use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 use bc_signer_registry::{SignerRegistry, SignerRegistryUpdater};
 use codec::Encode;
 use core::str::from_utf8;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
+use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
-use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{
-	parentchain::{
-		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
-		ParentchainId,
-	},
+	parentchain::{FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError},
 	MrEnclave, WorkerType,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_hex_utils::hex_encode;
 use litentry_primitives::{Address32, Identity, SidechainBlockNumber};
 use log::*;
 use sp_core::{blake2_256, H256};
@@ -43,38 +39,6 @@ use std::string::ToString;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn shield_funds<
-		Executor: IndirectExecutor<
-			TrustedCallSigned,
-			Error,
-			RelayerRegistry,
-			SignerRegistry,
-			EnclaveRegistry,
-		>,
-	>(
-		executor: &Executor,
-		account: &AccountId,
-		amount: Balance,
-	) -> Result<(), Error> {
-		log::info!("shielding for {:?} amount {}", account, amount,);
-		let shard = executor.get_default_shard();
-		// todo: ensure this parentchain is assigned for the shard vault!
-		let trusted_call = TrustedCall::balance_shield(
-			executor.get_enclave_account()?.into(),
-			account.clone(),
-			amount,
-			ParentchainId::Litentry,
-		);
-		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
-		let trusted_operation =
-			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
-
-		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-		executor.submit_trusted_call(shard, encrypted_trusted_call);
-
-		Ok(())
-	}
-
 	fn set_scheduled_enclave(
 		worker_type: WorkerType,
 		sbn: SidechainBlockNumber,
@@ -191,37 +155,8 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(
-		executor: &Executor,
-		events: impl FilterEvents,
-		vault_account: Option<AccountId>,
-	) -> Result<Vec<H256>, Error> {
+	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
-
-		if let Ok(events) = events.get_transfer_events() {
-			debug!(
-				"Handling transfer events to shard vault account: {}",
-				hex_encode(vault_account.encode().as_slice())
-			);
-			events
-				.iter()
-				.filter(|&event| {
-					if let Some(vault_account) = &vault_account {
-						event.to == *vault_account
-					} else {
-						false
-					}
-				})
-				.try_for_each(|event| {
-					info!("found transfer_event to vault account: {}", event);
-					//debug!("shielding from Integritee suppressed");
-					let result = Self::shield_funds(executor, &event.from, event.amount);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ShieldFundsFailure)?;
-		}
 
 		if let Ok(events) = events.get_scheduled_enclave_set_events() {
 			debug!("Handling ScheduledEnclaveSet events");

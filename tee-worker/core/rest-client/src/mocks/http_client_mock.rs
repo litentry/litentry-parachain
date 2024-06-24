@@ -104,7 +104,7 @@ impl SendHttpRequest for HttpClientMock {
 }
 
 impl SetHttpHeader for HttpClientMock {
-	fn set_header(&mut self, name: &'static str, value: &str) -> Result<(), Error> {
+	fn set_header(&mut self, _name: &'static str, _value: &str) -> Result<(), Error> {
 		Ok(())
 	}
 }
