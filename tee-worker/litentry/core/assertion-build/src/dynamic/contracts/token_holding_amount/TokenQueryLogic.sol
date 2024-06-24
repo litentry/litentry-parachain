@@ -17,25 +17,32 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity ^0.8.8;
+
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
-abstract contract ERC20 is TokenHoldingAmount {
-	mapping(uint32 => string) internal networkTokenAddresses;
-
+import { GeniidataClient } from "./GeniidataClient.sol";
+abstract contract TokenLogic is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
+	mapping(string => mapping(uint32 => string)) tokenAddresses;
+	mapping(string => string) internal tokenBscAddress;
+	mapping(string => string) internal tokenEthereumAddress;
+	mapping(string => uint32[]) internal tokenNetworks;
+
 	constructor() {
-		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/";
+		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
 		networkUrls[
 			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1";
+		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
+
+		networkUrls[
+			Web3Networks.BitcoinP2tr
+		] = "https://api.geniidata.com/api/1/brc20/balance"; //  test against mock server => "http://localhost:19529/api/1/brc20/balance"
 		// Add more networks as needed
-		
-		// 	below url is used for test against mock server
-		// "http://localhost:19530/nodereal_jsonrpc/v1/",
 	}
+
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
 	}
@@ -43,39 +50,51 @@ abstract contract ERC20 is TokenHoldingAmount {
 	function queryBalance(
 		Identity memory identity,
 		uint32 network,
-		string[] memory secrets
-	) internal virtual override returns (uint256) {
+		string[] memory secrets,
+		string memory tokenName
+	) internal override returns (uint256) {
 		(bool identityToStringSuccess, string memory identityString) = Utils
 			.identityToString(network, identity.value);
 
 		if (identityToStringSuccess) {
 			string memory url;
-			uint32[] memory networks = getTokenNetworks();
+			uint32[] memory networks = tokenNetworks[tokenName];
 			uint256 totalBalance = 0;
 
 			for (uint32 i = 0; i < networks.length; i++) {
 				// Check if this network has been queried
-				if (!queriedNetworks[network]) {
-					string memory _tokenContractAddress = networkTokenAddresses[
-						network
-					];
+				url = networkUrls[networks[i]];
 
-					url = string(
-						abi.encodePacked(networkUrls[networks[i]], secrets[0])
-					);
-
-					(bool success, uint256 balance) = NoderealClient
-						.getTokenBalance(
+				if (!queriedNetworks[networks[i]]) {
+					string memory _tokenContractAddress = tokenAddresses[
+						tokenName
+					][networks[i]];
+					if (networks[i] == Web3Networks.BitcoinP2tr) {
+						uint256 balance = GeniidataClient.getTokenBalance(
+							secrets,
 							url,
-							_tokenContractAddress,
-							identityString
+							identityString,
+							tokenName,
+							getTokenDecimals()
 						);
-
-					if (success) {
 						totalBalance += balance;
+					} else if (
+						networks[i] == Web3Networks.Bsc ||
+						networks[i] == Web3Networks.Ethereum
+					) {
+						(bool success, uint256 balance) = NoderealClient
+							.getTokenBalance(
+								url,
+								secrets,
+								_tokenContractAddress,
+								identityString
+							);
+						if (success) {
+							totalBalance += balance;
+						}
 					}
 					// Mark this network as queried
-					queriedNetworks[network] = true;
+					queriedNetworks[networks[i]] = true;
 				}
 			}
 			return totalBalance;
@@ -83,17 +102,12 @@ abstract contract ERC20 is TokenHoldingAmount {
 		return 0;
 	}
 
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-		// Add more networks as needed
-		return networks;
-	}
-
 	function isSupportedNetwork(
 		uint32 network
 	) internal pure override returns (bool) {
-		return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
+		return
+			network == Web3Networks.Bsc ||
+			network == Web3Networks.Ethereum ||
+			network == Web3Networks.BitcoinP2tr;
 	}
 }
