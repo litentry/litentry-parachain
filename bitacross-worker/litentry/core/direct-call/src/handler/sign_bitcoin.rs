@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use log::error;
 use bc_relayer_registry::RelayerRegistryLookup;
 use itp_sgx_crypto::key_repository::AccessKey;
 use parentchain_primitives::Identity;
@@ -82,7 +83,10 @@ pub fn handle<
 			signer_access_key,
 			ceremony_tick_to_live,
 		)
-		.map_err(|_| SignBitcoinError::CeremonyError)?;
+		.map_err(|e| {
+			error!("Could not start ceremony, error: {:?}", e);
+			SignBitcoinError::CeremonyError
+		})?;
 		registry.insert(payload, ceremony);
 
 		Ok(())
