@@ -15,16 +15,20 @@
 
 */
 
-use bc_relayer_registry::RelayerRegistry;
-use bc_signer_registry::SignerRegistry;
 pub use ita_sgx_runtime::{Balance, Index};
 
 use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::parentchain::{AccountId, FilterEvents, HandleParentchainEvents};
+use itp_types::{
+	parentchain::{FilterEvents, HandleParentchainEvents},
+	H256,
+};
 use log::*;
+use std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
 
@@ -46,12 +50,8 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(
-		_executor: &Executor,
-		_events: impl FilterEvents,
-		_vault_account: &AccountId,
-	) -> Result<(), Error> {
+	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target B");
-		Ok(())
+		Ok(Vec::new())
 	}
 }

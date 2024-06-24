@@ -21,6 +21,13 @@ Typescript code related to the RPC integration and can be found in [tee-worker's
 Rust code used in CLI module can also be used as a reference and can be found [here](https://github.com/litentry/litentry-parachain/blob/a6b78ed68396280655271f9cd30e17535d54da81/bitacross-worker/cli/src/trusted_base_cli/commands/bitacross/utils.rs).
 
 
+## Local launch
+
+```bash
+make SGX_MODE=SW
+cd .. && local-setup/launch.py -w bitacross -wn 3 --parachain local-binary-standalone
+```
+
 ### Step by step guide for request preparing/sending and response handling. 
 
 1. Prepare `DirectCall`, for example `SignBitcoin` variant which will reflect bitcoin's transaction signing request. Generate 256-bit AES-GCM as request enc/dec key. The first parameter is relayer identity, second generated aes key and third is transaction payload to sign.

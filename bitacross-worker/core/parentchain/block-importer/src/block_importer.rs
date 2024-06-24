@@ -181,13 +181,13 @@ impl<
 			// incl. shielding and unshielding.
 			match self
 				.indirect_calls_executor
-				.execute_indirect_calls_in_extrinsics(&block, &raw_events)
+				.execute_indirect_calls_in_block(&block, &raw_events)
 			{
 				Ok(Some(confirm_processed_parentchain_block_call)) => {
 					calls.push(confirm_processed_parentchain_block_call);
 				},
 				Ok(None) => trace!("omitting confirmation call to non-integritee parentchain"),
-				Err(e) => error!("[{:?}] Error executing relevant extrinsics: {:?}", id, e),
+				Err(e) => error!("[{:?}] Error executing relevant events: {:?}", id, e),
 			};
 			if let Err(e) = self
 				.ocall_api

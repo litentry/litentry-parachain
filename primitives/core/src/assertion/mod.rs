@@ -51,7 +51,7 @@ use web3_nft::Web3NftType;
 pub mod web3_token;
 use web3_token::Web3TokenType;
 
-use crate::{AccountId, ParameterString};
+use crate::{AccountId, DynamicParams, ParameterString};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -138,7 +138,7 @@ pub enum Assertion {
 	NftHolder(Web3NftType),
 
 	#[codec(index = 27)]
-	Dynamic(H160) // smart contract code identifier
+	Dynamic(H160, DynamicParams) // smart contract code identifier, abi encoded smart contract params
 }
 
 impl Assertion {
@@ -186,7 +186,7 @@ impl Assertion {
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
 			Self::NftHolder(t_type) => t_type.get_supported_networks(),
-			Self::Dynamic(_) => all_web3networks(),
+			Self::Dynamic(..) => all_web3networks(),
 		}
 	}
 
@@ -195,7 +195,7 @@ impl Assertion {
 	#[allow(clippy::match_like_matches_macro)]
 	pub fn skip_identity_filtering(&self) -> bool {
 		match self {
-			Self::A1 | Self::Dynamic(_) => true,
+			Self::A1 | Self::Dynamic(..) => true,
 			_ => false,
 		}
 	}

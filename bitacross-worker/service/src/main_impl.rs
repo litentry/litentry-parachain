@@ -51,7 +51,7 @@ use substrate_api_client::{
 #[cfg(feature = "dcap")]
 use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 
-use crate::{account_funding::shard_vault_initial_funds, error::ServiceResult};
+use crate::error::ServiceResult;
 use itc_parentchain::primitives::ParentchainId;
 use itp_types::parentchain::{AccountId, Balance};
 use sp_core::crypto::{AccountId32, Ss58Codec};
@@ -612,16 +612,6 @@ fn start_worker<E, T, InitializationHandler>(
 		None
 	};
 
-	init_provided_shard_vault(
-		shard,
-		&enclave,
-		litentry_rpc_api.clone(),
-		maybe_target_a_rpc_api,
-		maybe_target_b_rpc_api,
-		run_config.shielding_target,
-		we_are_primary_validateer,
-	);
-
 	// Publish generated custiodian wallets
 	enclave.publish_wallets();
 	enclave.finish_enclave_init();
@@ -630,55 +620,6 @@ fn start_worker<E, T, InitializationHandler>(
 		&litentry_rpc_api,
 		ParentchainId::Litentry,
 	);
-}
-
-fn init_provided_shard_vault<E: EnclaveBase>(
-	shard: &ShardIdentifier,
-	enclave: &Arc<E>,
-	litentry_rpc_api: ParentchainApi,
-	maybe_target_a_rpc_api: Option<ParentchainApi>,
-	maybe_target_b_rpc_api: Option<ParentchainApi>,
-	shielding_target: Option<ParentchainId>,
-	we_are_primary_validateer: bool,
-) {
-	let shielding_target = shielding_target.unwrap_or(ParentchainId::Litentry);
-	let rpc_api = match shielding_target {
-		ParentchainId::Litentry => litentry_rpc_api,
-		ParentchainId::TargetA => maybe_target_a_rpc_api
-			.expect("target A must be initialized to be used as shielding target"),
-		ParentchainId::TargetB => maybe_target_b_rpc_api
-			.expect("target B must be initialized to be used as shielding target"),
-	};
-	let funding_balance = shard_vault_initial_funds(&rpc_api).unwrap();
-	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
-		// verify if proxy is set up on chain
-		let nonce = rpc_api.get_account_nonce(&AccountId::from(shard_vault)).unwrap();
-		println!(
-			"[{:?}] shard vault account is already initialized in state: {} with nonce {}",
-			shielding_target,
-			shard_vault.to_ss58check(),
-			nonce
-		);
-		if nonce == 0 && we_are_primary_validateer {
-			println!(
-				"[{:?}] nonce = 0 means shard vault not properly set up on chain. will retry",
-				shielding_target
-			);
-			enclave.init_proxied_shard_vault(shard, &shielding_target, 0u128).unwrap();
-		}
-	} else if we_are_primary_validateer {
-		println!("[{:?}] initializing proxied shard vault account now", shielding_target);
-		enclave
-			.init_proxied_shard_vault(shard, &shielding_target, funding_balance)
-			.unwrap();
-		println!(
-			"[{:?}] initialized shard vault account: : {}",
-			shielding_target,
-			enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
-		);
-	} else {
-		panic!("no vault account has been initialized and we are not the primary worker");
-	}
 }
 
 fn init_target_parentchain<E>(

@@ -1,6 +1,6 @@
 use crate::{
 	error::{Error, Result as ICResult},
-	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
+	filter_metadata::EventsFromMetadata,
 	IndirectDispatch,
 };
 use bc_relayer_registry::RelayerRegistry;
@@ -10,66 +10,20 @@ use core::marker::PhantomData;
 use litentry_primitives::DecryptableRequest;
 
 use bc_enclave_registry::EnclaveRegistry;
-use itp_node_api::{
-	api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4},
-	metadata::NodeMetadataTrait,
-};
+use itp_node_api::api_client::{CallIndex, PairSignature, UncheckedExtrinsicV4};
 use itp_sgx_runtime_primitives::types::{AccountId, Balance};
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
-	parentchain::{BalanceTransfer, ExtrinsicStatus, FilterEvents, HandleParentchainEvents},
+	parentchain::{
+		events::{BalanceTransfer, ScheduledEnclaveRemoved, ScheduledEnclaveSet},
+		FilterEvents, HandleParentchainEvents,
+	},
 	Address, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
 use std::vec::Vec;
 
-/// Default filter we use for the Integritee-Parachain.
-pub struct MockExtrinsicFilter<ExtrinsicParser> {
-	_phantom: PhantomData<ExtrinsicParser>,
-}
-
-impl<ExtrinsicParser, NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata>
-	for MockExtrinsicFilter<ExtrinsicParser>
-where
-	ExtrinsicParser: ParseExtrinsic,
-{
-	type Output = IndirectCall;
-	type ParseParentchainMetadata = ExtrinsicParser;
-
-	fn filter_into_from_metadata(
-		encoded_data: &[u8],
-		metadata: &NodeMetadata,
-	) -> Option<Self::Output> {
-		let call_mut = &mut &encoded_data[..];
-
-		// Todo: the filter should not need to parse, only filter. This should directly be configured
-		// in the indirect executor.
-		let xt = match Self::ParseParentchainMetadata::parse(call_mut) {
-			Ok(xt) => xt,
-			Err(e) => {
-				log::error!(
-					"[ShieldFundsAndInvokeFilter] Could not parse parentchain extrinsic: {:?}",
-					e
-				);
-				return None
-			},
-		};
-		let index = xt.call_index;
-		let call_args = &mut &xt.call_args[..];
-		log::trace!(
-			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
-			index
-		);
-		if index == metadata.post_opaque_task_call_indexes().ok()? {
-			log::debug!("executing invoke call");
-			let args = InvokeArgs::decode(call_args).unwrap();
-			Some(IndirectCall::Invoke(args))
-		} else {
-			None
-		}
-	}
-}
 pub struct ExtrinsicParser<SignedExtra> {
 	_phantom: PhantomData<SignedExtra>,
 }
@@ -179,17 +133,54 @@ pub struct MockEvents;
 
 impl FilterEvents for MockEvents {
 	type Error = ();
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(Vec::from([ExtrinsicStatus::Success]))
-	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
+	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
 		let transfer = BalanceTransfer {
 			to: [0u8; 32].into(),
 			from: [0u8; 32].into(),
 			amount: Balance::default(),
 		};
 		Ok(Vec::from([transfer]))
+	}
+
+	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_scheduled_enclave_removed_events(
+		&self,
+	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayer_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayers_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RelayerRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_added_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_removed_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_btc_wallet_generated_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::BtcWalletGenerated>, Self::Error> {
+		Ok(Vec::new())
 	}
 }
 
@@ -216,9 +207,8 @@ where
 	fn handle_events(
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
-		_: &AccountId,
-	) -> core::result::Result<(), Error> {
-		Ok(())
+	) -> core::result::Result<Vec<H256>, Error> {
+		Ok(Vec::from([H256::default()]))
 	}
 }
 

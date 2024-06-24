@@ -24,10 +24,7 @@ use crate::{
 		EnclaveBitcoinKeyRepository, EnclaveEthereumKeyRepository, EnclaveSigningKeyRepository,
 	},
 	std::string::ToString,
-	utils::{
-		get_stf_enclave_signer_from_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain,
-	},
+	utils::get_validator_accessor_from_integritee_solo_or_parachain,
 };
 use bc_musig2_ceremony::{generate_aggregated_public_key, PublicKey};
 use bc_signer_registry::SignerRegistryLookup;
@@ -46,7 +43,7 @@ use itp_sgx_crypto::{
 	key_repository::{AccessKey, AccessPubkey},
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
-use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
+use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -56,7 +53,7 @@ use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
 use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
-use log::debug;
+use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
@@ -235,27 +232,6 @@ where
 			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
 		};
 		Ok(json!(json_value))
-	});
-
-	let local_top_pool_author = top_pool_author.clone();
-	io.add_sync_method("author_getShardVault", move |_: Params| {
-		debug!("worker_api_direct rpc was called: author_getShardVault");
-		let shard =
-			local_top_pool_author.list_handled_shards().first().copied().unwrap_or_default();
-		if let Ok(stf_enclave_signer) = get_stf_enclave_signer_from_solo_or_parachain() {
-			if let Ok(vault) = stf_enclave_signer.get_shard_vault(&shard) {
-				let json_value =
-					RpcReturnValue::new(vault.encode(), false, DirectRequestStatus::Ok);
-				Ok(json!(json_value.to_hex()))
-			} else {
-				Ok(json!(compute_hex_encoded_return_error("failed to get shard vault").to_hex()))
-			}
-		} else {
-			Ok(json!(compute_hex_encoded_return_error(
-				"failed to get stf_enclave_signer to get shard vault"
-			)
-			.to_hex()))
-		}
 	});
 
 	io.add_sync_method("author_getShard", move |_: Params| {
@@ -563,7 +539,7 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 			},
 		},
 		Ok(Err(e)) => {
-			println!("Got Ok(Err)");
+			error!("Error while processing request: {:?}", e);
 
 			Err(e)
 		},
