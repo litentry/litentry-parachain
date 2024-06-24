@@ -239,9 +239,8 @@ where
 			return Err(err.encode())
 		},
 	};
+	debug!("Direct call is: {:?}", dc);
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
-	debug!("Direct call is: {:?}", dc.call);
-
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());
