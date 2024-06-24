@@ -25,6 +25,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
@@ -83,9 +84,9 @@ where
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
 		let vc_payload = result;
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_payload,
@@ -107,9 +108,9 @@ where
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				Some(self.req.who.clone()),
 				error,
 				self.req.req_ext_hash,
@@ -287,7 +288,7 @@ where
 
 	// post-process the credential
 	let signer = context.enclave_signer.as_ref();
-	let enclave_account = signer.get_enclave_account().map_err(|e| {
+	let enclave_signer_account = signer.get_enclave_account().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -306,26 +307,27 @@ where
 		credential.credential_schema.id = schema;
 	}
 
-	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
-		VCMPError::RequestVCFailed(
-			req.assertion.clone(),
-			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-		)
-	})?;
+	credential.issuer.id = Identity::Substrate(enclave_signer_account.clone().into())
+		.to_did()
+		.map_err(|e| {
+			VCMPError::RequestVCFailed(
+				req.assertion.clone(),
+				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+			)
+		})?;
 
 	let json_string = credential
 		.to_json()
 		.map_err(|_| VCMPError::RequestVCFailed(req.assertion.clone(), ErrorDetail::ParseError))?;
 	let payload = json_string.as_bytes();
-	let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
+	let sig = signer.sign(payload).map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 		)
 	})?;
-	debug!("Credential Payload signature: {:?}", sig);
 
-	credential.add_proof(&sig, &enclave_account);
+	credential.add_proof(&sig, account_id_to_string(&enclave_signer_account));
 	credential.validate().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
