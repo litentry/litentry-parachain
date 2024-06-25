@@ -23,8 +23,9 @@ import crypto from 'crypto';
 import { genesisSubstrateWallet } from './common/helpers';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { subscribeToEvents } from './common/transactions';
-import {encryptWithTeeShieldingKey} from './common/utils/crypto';
+import {decryptWithAes, encryptWithTeeShieldingKey} from './common/utils/crypto';
 import {ethers} from 'ethers';
+import { hexToU8a } from '@polkadot/util';
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -61,16 +62,14 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('deploying tokenmapping contract via parachain pallet', async function () {
-        // const encryptedSecrets = crypto.publicEncrypt(teeShieldingKey, Buffer.from('52e0fa8afe46449187d8280902ca95ef'));
-        const buffer = Buffer.from('52e0fa8afe46449187d8280902ca95ef');
-        const u8a = new Uint8Array(buffer);
-        const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, u8a);
 
-        console.log(encryptedSecrets.toString('hex'));
+        const secretValue = '52e0fa8afe46449187d8280902ca95ef';
+        const secretEncoded = context.api.createType('String', secretValue).toU8a();
+        const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, secretEncoded);
 
         const secret = '0x' + encryptedSecrets.toString('hex');
 
-        const assertionId = '0x0000000000000000000000000000000000000009';
+        const assertionId = '0x0000000000000000000000000000000000000002';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
         await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
         const event = (await createAssertionEventsPromise).map((e) => e);
@@ -132,7 +131,7 @@ describe('Test Vc (direct request)', function () {
         const encodedData = abiCoder.encode(['string'], ['bnb']);
 
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000009', 'hex')), encodedData],
+            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000002', 'hex')), encodedData],
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
@@ -152,5 +151,11 @@ describe('Test Vc (direct request)', function () {
 
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
         await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+
+        const results = context.api.createType('RequestVCResult', res.value);
+        const vcPayload = results.vc_payload;
+        const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
+        console.log(decryptVcPayload);
+        
     });
 });
