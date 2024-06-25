@@ -13,7 +13,7 @@ env:
   INSTANCE_GROUP: ${{ secrets.BENCHMARK_INSTANCE_GROUP }}
   INSTANCE_HOST: ${{ secrets.BENCHMARK_INSTANCE_HOST }}
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
-  BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
+  BENCHMARK_SSH_KEY: ${{ secrets.BENCHMARK_SSH_KEY }}
 
 jobs:
   ## run the benchmarking remotely
@@ -50,7 +50,11 @@ jobs:
         timeout-minutes: 10
         run: |
           echo "Running instances ip address: ${{ env.INSTANCE_HOST }}"
-          ssh -x -o StrictHostKeychecking=no "${{ env.INSTANCE_HOST }}" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} \
+          cat << EOF > ./benchmark-server-key.pem
+          ${{ env.BENCHMARK_SSH_KEY }}
+          EOF
+          chmod 600 ./benchmark-server-key.pem
+          ssh -x -o StrictHostKeychecking=no "${{ env.INSTANCE_HOST }}" -l ${{ env.BENCHMARK_SSH_USER }} -i ./benchmark-server-key.pem \
             docker pull litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} && \
             docker run --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} benchmark machine --allow-fail --chain=litmus-dev
 
