@@ -55,13 +55,15 @@ describe('Test Vc (direct request)', function () {
         const data = fs.readFileSync(file, 'utf8');
         // contractBytecode = JSON.parse(data).bytecode.object;
         contractBytecode = JSON.parse(data).bytecode;
-        console.log(contractBytecode);
 
         assert.isNotEmpty(contractBytecode);
     });
 
     step('deploying tokenmapping contract via parachain pallet', async function () {
-        const encryptedSecrets = crypto.publicEncrypt(teeShieldingKey, Buffer.from('c99123cec85643da879f63654f0c642f'));
+        const encryptedSecrets = crypto.publicEncrypt(teeShieldingKey, Buffer.from('52e0fa8afe46449187d8280902ca95ef'));
+
+        console.log(encryptedSecrets.toString('hex'));
+
         const secret = '0x' + encryptedSecrets.toString('hex');
 
         const assertionId = '0x0000000000000000000000000000000000000000';
@@ -124,9 +126,9 @@ describe('Test Vc (direct request)', function () {
 
         const abiCoder = new ethers.utils.AbiCoder();
         const encodedData = abiCoder.encode(['string'], ['bnb']);
-        
+
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0x0000000000000000000000000000000000000000', 'hex')), encodedData],
+            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000005', 'hex')), encodedData],
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
