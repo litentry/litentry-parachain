@@ -30,7 +30,9 @@ on:
         required: true
 
 env:
-  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }} # remote AWS host to run benchmarking
+  INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
+  INSTANCE_GROUP: ${{ secrets.INSTANCE_GROUP }}
+  INSTANCE_HOST: ${{ secrets.INSTANCE_HOST }}
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
   BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
   DOCKER_BUILDKIT: 1
@@ -77,7 +79,7 @@ jobs:
 
   ## run the benchmarking remotely
   benchmark:
-    runs-on: jumphost
+    runs-on: jumphost.azure
     needs: build-docker
     # see https://github.com/actions/runner/issues/491
     if: |
@@ -116,38 +118,36 @@ jobs:
         timeout-minutes: 10
         id: start_instance
         run: |
-          aws ec2 start-instances --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }}
+          az vm start --resource-group ${{ env.INSTANCE_GROUP }} --name ${{ env.INSTANCE_ID }}
           sleep 5
-          instance_status="aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceStatus.Status' --output text"
-          system_status="aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].SystemStatus.Status' --output text"
+          instance_status="az vm get-instance-view --resource-group ${{ env.INSTANCE_GROUP }} --name ${{ env.INSTANCE_ID }} --query instanceView.statuses[1].displayStatus"
+          system_status="az vm get-instance-view --resource-group ${{ env.INSTANCE_GROUP }} --name ${{ env.INSTANCE_ID }} --query instanceView.statuses[1].code"
           SECONDS=0
           while : ; do
-            if [ "$(eval $instance_status)" = "ok" ] && [ "$(eval $system_status)" = "ok" ]; then
+            if [ "$(eval $instance_status)" = "VM running" ] && [ "$(eval $system_status)" = "PowerState/running" ]; then
               break
             else
               sleep 20
+              SECONDS=$((SECONDS + 20))
             fi
           done
           echo "Remote instance reachable now after $SECONDS seconds"
-          remote_ip=`aws ec2 describe-instances --region ap-southeast-1 --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
-          echo "Running instances ip address: $remote_ip"
-          echo "remote_ip=$remote_ip" >> $GITHUB_OUTPUT
 
       # exit status should propagate through ssh
       - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}
         timeout-minutes: 240
         run: |
           # prepend the asterisk with \ to go through ssh
-          echo "Running instances ip address: ${{ steps.start_instance.outputs.remote_ip }}"
+          echo "Running instances ip address: ${{ env.INSTANCE_HOST }}"
           arg="${{ github.event.inputs.pallets }}"
           chain="${{ env.CHAIN }}"
           if [ "$arg" = "*" ]; then
             arg="\\$arg";
           fi
           for c in $chain; do
-            ssh -x -o StrictHostKeychecking=no ${{ secrets.BENCHMARK_INSTANCE_IP }} -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
+            ssh -x -o StrictHostKeychecking=no ${{ env.INSTANCE_HOST }} -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
             echo "copy generated weights files back ..."
-            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@"${{ secrets.BENCHMARK_INSTANCE_IP }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@"${{ env.INSTANCE_HOST }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
           echo "======================"
           git status
@@ -155,9 +155,9 @@ jobs:
       - name: Stop remote instance
         if: always()
         run: |
-          aws ec2 stop-instances --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }}
+          az vm stop --resource-group ${{ env.INSTANCE_GROUP }} --name ${{ env.INSTANCE_ID }}
           sleep 5
-          ret=`aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
+          ret=`az vm get-instance-view --resource-group ${{ env.INSTANCE_GROUP }} --name ${{ env.INSTANCE_ID }} --query instanceView.statuses[1].displayStatus`
           echo "Remote instance running state: $ret"
 
       - name: Create auto PR
