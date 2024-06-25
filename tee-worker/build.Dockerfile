@@ -147,6 +147,12 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 RUN apt update && apt install -y libssl-dev iproute2 curl protobuf-compiler
 
+# Adding default aesm user
+RUN groupadd -g 999 aesmd && \
+    useradd -u 999 -g 999 -d /var/opt/aesmd -s /sbin/nologin -c "User for aesmd" aesmd && \
+    mkdir -p /var/opt/aesmd /var/run/aesmd && \
+    chown -R aesmd:aesmd /var/opt/aesmd /var/run/aesmd
+
 # Adding default user litentry with uid 1000
 ARG UID=1000
 RUN adduser -u ${UID} --disabled-password --gecos '' litentry
@@ -154,21 +160,49 @@ RUN adduser -u ${UID} litentry sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /opt/intel /opt/intel
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+
+# aesmd conf
+RUN cat <<EOF > /etc/aesmd.conf
+#Line with comments only
+
+          #empty line with comment
+#proxy type    = direct #direct type means no proxy used
+#proxy type    = default #system default proxy
+#proxy type    = manual #aesm proxy should be specified for manual proxy type
+#aesm proxy    = http://proxy_url:proxy_port
+#whitelist url = http://sample_while_list_url/
+#default quoting type = ecdsa_256
+#default quoting type = epid_linkable
+#default quoting type = epid_unlinkable
+#qpl log level = error
+#qpl log level = info
+EOF
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm
 ENV SGX_SDK /opt/sgxsdk
 ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
 ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs:/opt/intel/sgx-aesm-service/aesm"
 
-RUN mkdir -p /origin /data
+RUN cat <<EOF > /etc/environment
+export DEBIAN_FRONTEND=noninteractive
+export TERM=xterm
+export SGX_SDK=/opt/sgxsdk
+export PATH="$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib64/:/usr/local/lib/:/usr/lib/:/usr/lib32/:/usr/lib64/:/lib/x86_64-linux-gnu/:${SGX_SDK}/sdk_libs:/opt/intel/sgx-aesm-service/aesm"
+EOF
 
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /origin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/mrenclave.txt /origin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN mkdir -p /origin /data && \
+    chown -R litentry:litentry /data /origin
 
 WORKDIR /origin
 

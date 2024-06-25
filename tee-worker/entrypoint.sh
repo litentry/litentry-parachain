@@ -11,6 +11,11 @@ check_env(){
     fi
 }
 
+# run as root
+start_aesm(){
+    sudo bash -c "source /etc/environment && /opt/intel/sgx-aesm-service/aesm/aesm_service" 2>&1 &
+}
+
 copy_files(){
     for file in key.txt key_production.txt mrenclave.txt spid.txt spid_production.txt; do
         wkdir_file="${DATA_DIR}/${file}"
@@ -34,4 +39,5 @@ runtime(){
 
 check_env
 copy_files
+start_aesm
 runtime $@ >> ${log_file} 2>&1
