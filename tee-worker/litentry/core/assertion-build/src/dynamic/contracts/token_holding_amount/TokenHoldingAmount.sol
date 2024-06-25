@@ -22,33 +22,56 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contr
 import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
+import "./Constants.sol";
+
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	uint256 constant decimals_factor = 1000;
-    function execute(
-        Identity[] memory identities,
-        string[] memory secrets,
-        bytes memory /*params*/
-    )
-        public
-        override
-        returns (
-            string memory,
-            string memory,
-            string[] memory,
-            string memory,
-            bool
-        )
-    {
-        string
-            memory description = "The amount of a particular token you are holding";
-        string memory assertion_type = "Token Holding Amount";
-        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
+	mapping(string => string) internal tokenNames;
+	mapping(string => uint256[]) internal tokenRanges;
+	function execute(
+		Identity[] memory identities,
+		string[] memory secrets,
+		bytes memory params
+	)
+		public
+		override
+		returns (
+			string memory,
+			string memory,
+			string[] memory,
+			string memory,
+			bool
+		)
+	{
+		string
+			memory description = "The amount of a particular token you are holding";
+		string memory assertion_type = "Token Holding Amount";
+		schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
 
-		uint256 balance = queryTotalBalance(identities, secrets);
+		string memory tokenLowercaseName = abi.decode(params, (string));
 
-		(uint256 index, uint256 min, int256 max) = calculateRange(balance);
+		if (
+			keccak256(abi.encodePacked(tokenNames[tokenLowercaseName])) ==
+			keccak256(abi.encodePacked(""))
+		) {
+			revert("Token not supported or not found");
+		}
 
-		string[] memory assertions = assembleAssertions(min, max);
+		uint256 balance = queryTotalBalance(
+			identities,
+			secrets,
+			tokenNames[tokenLowercaseName]
+		);
+
+		(uint256 index, uint256 min, int256 max) = calculateRange(
+			balance,
+			tokenRanges[tokenLowercaseName]
+		);
+
+		string[] memory assertions = assembleAssertions(
+			min,
+			max,
+			tokenNames[tokenLowercaseName]
+		);
 
 		bool result = index > 0 || balance > 0;
 
@@ -57,7 +80,8 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 	function queryTotalBalance(
 		Identity[] memory identities,
-		string[] memory secrets
+		string[] memory secrets,
+		string memory tokenName
 	) internal virtual returns (uint256) {
 		uint256 total_balance = 0;
 		uint256 identitiesLength = identities.length;
@@ -68,7 +92,12 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			for (uint32 j = 0; j < networksLength; j++) {
 				uint32 network = identity.networks[j];
 				if (isSupportedNetwork(network)) {
-					total_balance += queryBalance(identity, network, secrets);
+					total_balance += queryBalance(
+						identity,
+						network,
+						secrets,
+						tokenName
+					);
 				}
 			}
 		}
@@ -77,16 +106,17 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	}
 
 	function calculateRange(
-		uint256 balance
+		uint256 balance,
+		uint256[] memory ranges
 	) private pure returns (uint256, uint256, int256) {
-		uint256[] memory ranges = getTokenRanges();
 		uint256 index = ranges.length - 1;
 		uint256 min = 0;
 		int256 max = 0;
 
 		for (uint32 i = 1; i < ranges.length; i++) {
 			if (
-				balance * decimals_factor < ranges[i] * 10 ** getTokenDecimals()
+				balance * Constants.decimals_factor <
+				ranges[i] * 10 ** getTokenDecimals()
 			) {
 				index = i - 1;
 				break;
@@ -106,7 +136,8 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 	function assembleAssertions(
 		uint256 min,
-		int256 max
+		int256 max,
+		string memory tokenName
 	) private pure returns (string[] memory) {
 		string memory variable = "$holding_amount";
 		AssertionLogic.CompositeCondition memory cc = AssertionLogic
@@ -119,14 +150,14 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			0,
 			"$token",
 			AssertionLogic.Op.Equal,
-			getTokenName()
+			tokenName
 		);
 		AssertionLogic.andOp(
 			cc,
 			1,
 			variable,
 			AssertionLogic.Op.GreaterEq,
-			Strings.toString(min / decimals_factor)
+			Strings.toString(min / Constants.decimals_factor)
 		);
 		if (max > 0) {
 			AssertionLogic.andOp(
@@ -134,7 +165,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 				2,
 				variable,
 				AssertionLogic.Op.LessThan,
-				Strings.toString(uint256(max) / decimals_factor)
+				Strings.toString(uint256(max) / Constants.decimals_factor)
 			);
 		}
 
@@ -143,10 +174,6 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 		return assertions;
 	}
-
-	function getTokenName() internal pure virtual returns (string memory);
-
-	function getTokenRanges() internal pure virtual returns (uint256[] memory);
 
 	function getTokenDecimals() internal pure virtual returns (uint8);
 
@@ -157,6 +184,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	function queryBalance(
 		Identity memory identity,
 		uint32 network,
-		string[] memory secrets
+		string[] memory secrets,
+		string memory tokenName
 	) internal virtual returns (uint256);
 }

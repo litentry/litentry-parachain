@@ -32,6 +32,7 @@ itc_direct_rpc_client="debug"
 itp_top_pool_author="debug"
 bc_musig2_runner="debug"
 bc_musig2_ceremony="debug"
+bc_task_receiver="debug"
 
 [litentry-cli]
 RUST_LOG="debug"

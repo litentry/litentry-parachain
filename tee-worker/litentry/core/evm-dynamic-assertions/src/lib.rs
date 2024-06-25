@@ -29,9 +29,6 @@ pub mod sgx_reexport_prelude {
 	pub use http_sgx as http;
 }
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-
 use crate::precompiles::Precompiles;
 use ethabi::{
 	decode, encode,
