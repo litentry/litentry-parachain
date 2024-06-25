@@ -1,0 +1,4 @@
+[default]
+src='contracts'
+out='contracts-build-info'
+solc_version='0.8.11'
