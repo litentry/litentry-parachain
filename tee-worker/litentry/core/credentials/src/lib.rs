@@ -566,6 +566,7 @@ pub fn format_assertion_to_date() -> String {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use itp_types::AccountId;
 
 	#[test]
 	fn eval_simple_success() {
