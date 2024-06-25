@@ -51,9 +51,11 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('loading tokenmapping contract bytecode', async function () {
-        const file = path.resolve('./', './contracts-build-info/TokenMapping.sol/TokenMapping.json');
+        const file = path.resolve('./', './compile.json');
         const data = fs.readFileSync(file, 'utf8');
-        contractBytecode = JSON.parse(data).bytecode.object;
+        // contractBytecode = JSON.parse(data).bytecode.object;
+        const contractBytecode = JSON.parse(data).bytecode;
+        console.log(contractBytecode);
 
         assert.isNotEmpty(contractBytecode);
     });
@@ -64,7 +66,6 @@ describe('Test Vc (direct request)', function () {
 
         const assertionId = '0x0000000000000000000000000000000000000000';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
-
         await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
         const event = (await createAssertionEventsPromise).map((e) => e);
         assert.equal(event.length, 1);
