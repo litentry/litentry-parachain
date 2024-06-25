@@ -234,6 +234,8 @@ pub type CouncilInstance = pallet_collective::Instance1;
 pub type TechnicalCommitteeInstance = pallet_collective::Instance2;
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
 pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance2;
+pub type DeveloperCommitteeInstance = pallet_collective::Instance3;
+pub type DeveloperCommitteeMembershipInstance = pallet_membership::Instance3;
 
 /// Instance definition for whitelist or any other kind
 /// Instance here is supposed to control privilege of unlimited group size
@@ -271,6 +273,22 @@ pub type EnsureRootOrHalfTechnicalCommittee = EitherOfDiverse<
 pub type EnsureRootOrTwoThirdsTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
+>;
+
+/// Developer Committee
+pub type EnsureRootOrAllDeveloperCommittee = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, DeveloperCommitteeInstance, 1, 1>,
+>;
+
+pub type EnsureRootOrHalfDeveloperCommittee = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, DeveloperCommitteeInstance, 1, 2>,
+>;
+
+pub type EnsureRootOrTwoThirdsDeveloperCommittee = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, DeveloperCommitteeInstance, 2, 3>,
 >;
 
 /// A set of pallet_config that runtime must implement.

@@ -18,9 +18,9 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
-	SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
-	TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
+	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -227,6 +227,14 @@ fn generate_genesis(
 		},
 		technical_committee: Default::default(),
 		technical_committee_membership: TechnicalCommitteeMembershipConfig {
+			members: technical_committee_members
+				.clone()
+				.try_into()
+				.expect("error convert to BoundedVec"),
+			phantom: Default::default(),
+		},
+		developer_committee: Default::default(),
+		developer_committee_membership: DeveloperCommitteeMembershipConfig {
 			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
