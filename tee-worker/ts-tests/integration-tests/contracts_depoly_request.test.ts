@@ -54,7 +54,7 @@ describe('Test Vc (direct request)', function () {
         const file = path.resolve('./', './compile.json');
         const data = fs.readFileSync(file, 'utf8');
         // contractBytecode = JSON.parse(data).bytecode.object;
-        const contractBytecode = JSON.parse(data).bytecode;
+        contractBytecode = JSON.parse(data).bytecode;
         console.log(contractBytecode);
 
         assert.isNotEmpty(contractBytecode);
