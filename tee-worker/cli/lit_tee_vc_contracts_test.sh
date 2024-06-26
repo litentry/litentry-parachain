@@ -73,6 +73,7 @@ apt install -y git
 git --version
 foundryup
 pnpm install
+ls
 pnpm --filter integration-tests run cp-contracts
 pnpm --filter integration-tests run compile-contracts
 
