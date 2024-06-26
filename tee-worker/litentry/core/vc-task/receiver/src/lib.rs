@@ -591,9 +591,7 @@ where
 			.map_err(|e| RequestVcErrorDetail::TrustedCallSendingFailed(e.to_string()))?;
 
 		let extrinsic_sender = ParachainExtrinsicSender::new();
-		extrinsic_sender
-			.send(call)
-			.map_err(|e| RequestVcErrorDetail::CallSendingFailed(e))?;
+		extrinsic_sender.send(call).map_err(RequestVcErrorDetail::CallSendingFailed)?;
 
 		if let Err(e) = context
 			.ocall_api
