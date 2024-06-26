@@ -74,9 +74,9 @@ describe('Test Vc (direct request)', function () {
             } -U ${workerProtocal + workerHostname}\
                   shield-text 52e0fa8afe46449187d8280902ca95ef`;
 
-            await commandPromise;
+            const res = await commandPromise;
 
-            console.log('commandPromise', commandPromise);
+            console.log('res', res);
         } catch (error: any) {
             console.log(`Exit code: ${error.exitCode}`);
             console.log(`Error: ${error.stderr}`);
