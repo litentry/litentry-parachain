@@ -50,11 +50,9 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('loading tokenmapping contract bytecode', async function () {
-        const file = path.resolve('./', './compile.json');
+        const file = path.resolve('./', './contracts-build-info/TokenMapping.sol/TokenMapping.json');
         const data = fs.readFileSync(file, 'utf8');
-        // contractBytecode = JSON.parse(data).bytecode.object;
-        contractBytecode = JSON.parse(data).bytecode;
-
+        contractBytecode = JSON.parse(data).bytecode.object;
         assert.isNotEmpty(contractBytecode);
     });
 

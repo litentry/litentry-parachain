@@ -69,7 +69,7 @@ pnpm run build
 
 cd /
 ls assertion-contracts/
-cp assertion-contracts /ts-tests/integration-tests/contracts
+cp -r assertion-contracts /ts-tests/integration-tests/contracts
 
 cd /ts-tests
 curl -L https://foundry.paradigm.xyz | bash
