@@ -63,9 +63,11 @@ describe('Test Vc (direct request)', function () {
 
         const secret = '0x' + encryptedSecrets.toString('hex');
 
-        const assertionId = '0x0000000000000000000000000000000000000000';
+        const assertionId = '0x0000000000000000000000000000000000000001';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
+
         await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
+
         const event = (await createAssertionEventsPromise).map((e) => e);
         assert.equal(event.length, 1);
     });
@@ -125,7 +127,7 @@ describe('Test Vc (direct request)', function () {
         const encodedData = abiCoder.encode(['string'], ['bnb']);
 
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000000', 'hex')), encodedData],
+            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000001', 'hex')), encodedData],
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
