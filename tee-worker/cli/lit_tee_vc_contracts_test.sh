@@ -73,7 +73,7 @@ apt install -y git
 git --version
 foundryup
 pnpm install
-pnpm run cp-contracts
-pnpm run compile-contracts
+pnpm --filter integration-tests run cp-contracts
+pnpm --filter integration-tests run compile-contracts
 
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST
