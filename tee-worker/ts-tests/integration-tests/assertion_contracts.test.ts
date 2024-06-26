@@ -66,7 +66,7 @@ describe('Test Vc (direct request)', function () {
             port: workerPort,
         } = new URL(process.env.WORKER_ENDPOINT!);
         const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
-
+        let secretsEncryptedByCli = '';
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
             const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
@@ -75,8 +75,8 @@ describe('Test Vc (direct request)', function () {
                   shield-text 52e0fa8afe46449187d8280902ca95ef`;
 
             const res = await commandPromise;
-
-            console.log('res', res);
+            secretsEncryptedByCli = '0x' + JSON.parse(res.stdout.split(':')[1]);
+            console.log('secretsEncryptedByCli', secretsEncryptedByCli);
         } catch (error: any) {
             console.log(`Exit code: ${error.exitCode}`);
             console.log(`Error: ${error.stderr}`);
@@ -92,7 +92,9 @@ describe('Test Vc (direct request)', function () {
         const assertionId = '0x0000000000000000000000000000000000000002';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
 
-        await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
+        await context.api.tx.evmAssertions
+            .createAssertion(assertionId, contractBytecode, [secretsEncryptedByCli])
+            .signAndSend(alice);
 
         const event = (await createAssertionEventsPromise).map((e) => e);
         assert.equal(event.length, 1);
