@@ -75,9 +75,9 @@ cd /ts-tests
 curl -L https://foundry.paradigm.xyz | bash
 source /root/.bashrc
 apt install -y git
-git --version
 foundryup
+
 pnpm install
-forge build
+pnpm --filter integration-tests run compile-contracts
 
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST
