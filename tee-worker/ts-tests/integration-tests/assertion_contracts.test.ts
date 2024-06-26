@@ -60,36 +60,29 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('deploying tokenmapping contract via parachain pallet', async function () {
+        const {
+            protocol: workerProtocal,
+            hostname: workerHostname,
+            port: workerPort,
+        } = new URL(process.env.WORKER_ENDPOINT!);
+        const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
-
-          const {
-              protocol: workerProtocal,
-              hostname: workerHostname,
-              port: workerPort,
-          } = new URL(process.env.WORKER_ENDPOINT!);
-          const {
-              protocol: nodeProtocal,
-              hostname: nodeHostname,
-              port: nodePort,
-          } = new URL(process.env.NODE_ENDPOINT!);
-
-
-             try {
-                 // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-                 const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
-                     nodeProtocal + nodeHostname
-                 } -U ${workerProtocal + workerHostname}\
+        try {
+            // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
+                nodeProtocal + nodeHostname
+            } -U ${workerProtocal + workerHostname}\
                   shield-text 52e0fa8afe46449187d8280902ca95ef`;
 
-                 await commandPromise;
+            await commandPromise;
 
             console.log('commandPromise', commandPromise);
-             } catch (error: any) {
-                 console.log(`Exit code: ${error.exitCode}`);
-                 console.log(`Error: ${error.stderr}`);
-                 throw error;
-             }
-        
+        } catch (error: any) {
+            console.log(`Exit code: ${error.exitCode}`);
+            console.log(`Error: ${error.stderr}`);
+            throw error;
+        }
+
         const secretValue = '52e0fa8afe46449187d8280902ca95ef';
         const secretEncoded = context.api.createType('String', secretValue).toU8a();
         const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, secretEncoded);
