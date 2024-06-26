@@ -1,7 +1,7 @@
 services:
-    lit-dr-vc-test:
+    lit-tee-vc-contracts-test:
         image: litentry/identity-cli:latest
-        container_name: litentry-dr-vc-test
+        container_name: litentry-tee-vc-contracts-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
