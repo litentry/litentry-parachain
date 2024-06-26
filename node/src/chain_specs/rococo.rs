@@ -52,6 +52,7 @@ struct GenesisInfo {
 	endowed_accounts: Vec<(AccountId, String)>,
 	council: Vec<AccountId>,
 	technical_committee: Vec<AccountId>,
+	developer_committee: Vec<AccountId>,
 	boot_nodes: Vec<String>,
 	telemetry_endpoints: Vec<String>,
 }
@@ -91,6 +92,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
+				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				DEFAULT_PARA_ID.into(),
 			)
@@ -164,6 +166,7 @@ fn get_chain_spec_from_genesis_info(
 					.collect(),
 				genesis_info_cloned.council,
 				genesis_info_cloned.technical_committee,
+				genesis_info_cloned.developer_committee,
 				para_id,
 			)
 		},
@@ -193,6 +196,7 @@ fn generate_genesis(
 	endowed_accounts: Vec<(AccountId, Balance)>,
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,
+	developer_committee_members: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -227,15 +231,12 @@ fn generate_genesis(
 		},
 		technical_committee: Default::default(),
 		technical_committee_membership: TechnicalCommitteeMembershipConfig {
-			members: technical_committee_members
-				.clone()
-				.try_into()
-				.expect("error convert to BoundedVec"),
+			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
 		developer_committee: Default::default(),
 		developer_committee_membership: DeveloperCommitteeMembershipConfig {
-			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
+			members: developer_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
 		treasury: Default::default(),
