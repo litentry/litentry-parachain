@@ -68,7 +68,8 @@ pnpm run build
 
 
 cd /
-ls
+ls assertion-contracts/
+cp assertion-contracts /ts-tests/integration-tests/contracts
 
 cd /ts-tests
 curl -L https://foundry.paradigm.xyz | bash
@@ -77,7 +78,6 @@ apt install -y git
 git --version
 foundryup
 pnpm install
-pnpm --filter integration-tests run cp-contracts
-pnpm --filter integration-tests run compile-contracts
+forge build
 
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST
