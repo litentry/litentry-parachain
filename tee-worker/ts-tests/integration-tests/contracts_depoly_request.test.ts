@@ -21,8 +21,8 @@ import { assert } from 'chai';
 import { genesisSubstrateWallet } from './common/helpers';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { subscribeToEvents } from './common/transactions';
-import { encryptWithTeeShieldingKey} from './common/utils/crypto';
-import {ethers} from 'ethers';
+import { encryptWithTeeShieldingKey } from './common/utils/crypto';
+import { ethers } from 'ethers';
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -59,7 +59,6 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('deploying tokenmapping contract via parachain pallet', async function () {
-
         const secretValue = '52e0fa8afe46449187d8280902ca95ef';
         const secretEncoded = context.api.createType('String', secretValue).toU8a();
         const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, secretEncoded);
@@ -149,6 +148,5 @@ describe('Test Vc (direct request)', function () {
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
         await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
         assertVc(context, aliceSubstrateIdentity, res.value);
-
     });
 });
