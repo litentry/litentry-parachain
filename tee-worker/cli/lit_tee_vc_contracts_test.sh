@@ -66,6 +66,9 @@ cd /client-api
 pnpm install
 pnpm run build
 
+
+ls
+
 cd /ts-tests
 curl -L https://foundry.paradigm.xyz | bash
 source /root/.bashrc
@@ -73,7 +76,6 @@ apt install -y git
 git --version
 foundryup
 pnpm install
-ls
 pnpm --filter integration-tests run cp-contracts
 pnpm --filter integration-tests run compile-contracts
 
