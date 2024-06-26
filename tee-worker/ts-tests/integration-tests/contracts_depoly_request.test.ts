@@ -1,6 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { buildWeb2Validation, initIntegrationTestContext } from './common/utils';
+import { initIntegrationTestContext } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -8,24 +8,21 @@ import {
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
-    createSignedTrustedCallRequestBatchVc,
 } from './common/di-utils'; // @fixme move to a better place
-import { buildIdentityHelper, buildValidations } from './common/utils';
+import { buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import type { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
+import type { CorePrimitivesIdentity } from 'parachain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
 import fs from 'fs';
 import path from 'path';
 import { assert } from 'chai';
-import crypto from 'crypto';
 import { genesisSubstrateWallet } from './common/helpers';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { subscribeToEvents } from './common/transactions';
-import {decryptWithAes, encryptWithTeeShieldingKey} from './common/utils/crypto';
+import { encryptWithTeeShieldingKey} from './common/utils/crypto';
 import {ethers} from 'ethers';
-import { hexToU8a } from '@polkadot/util';
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -69,7 +66,7 @@ describe('Test Vc (direct request)', function () {
 
         const secret = '0x' + encryptedSecrets.toString('hex');
 
-        const assertionId = '0x0000000000000000000000000000000000000002';
+        const assertionId = '0x0000000000000000000000000000000000000000';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
         await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
         const event = (await createAssertionEventsPromise).map((e) => e);
@@ -131,7 +128,7 @@ describe('Test Vc (direct request)', function () {
         const encodedData = abiCoder.encode(['string'], ['bnb']);
 
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000002', 'hex')), encodedData],
+            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000000', 'hex')), encodedData],
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
@@ -151,11 +148,7 @@ describe('Test Vc (direct request)', function () {
 
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
         await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+        assertVc(context, aliceSubstrateIdentity, res.value);
 
-        const results = context.api.createType('RequestVCResult', res.value);
-        const vcPayload = results.vc_payload;
-        const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
-        console.log(decryptVcPayload);
-        
     });
 });
