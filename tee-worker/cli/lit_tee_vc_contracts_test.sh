@@ -69,6 +69,8 @@ pnpm run build
 cd /ts-tests
 curl -L https://foundry.paradigm.xyz | bash
 source /root/.bashrc
+sudo apt install -y git
+git --version
 foundryup
 pnpm install
 pnpm run cp-contracts
