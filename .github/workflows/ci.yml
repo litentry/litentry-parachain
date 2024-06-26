@@ -649,6 +649,8 @@ jobs:
           - test_name: lit-scheduled-enclave-test
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
+          - test_name: lit-tee-vc-contracts-test
+
     steps:
       - uses: actions/checkout@v4
 
