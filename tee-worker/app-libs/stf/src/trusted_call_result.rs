@@ -123,9 +123,9 @@ pub enum RequestVcErrorDetail {
 	MetadataRetrievalFailed(String), // Stringified itp_node_api_metadata_provider::Error
 	InvalidMetadata(String),         // Stringified itp_node_api_metadata::Error
 	TrustedCallSendingFailed(String), // Stringified mpsc::SendError<(H256, TrustedCall)>
-	CallSendingFailed(String),       // Stringified sgx_status_t
+	CallSendingFailed(String),
 	ExtrinsicConstructionFailed(String), // Stringified itp_extrinsics_factory::Error
-	ExtrinsicSendingFailed(String),  // Stringified sgx_status_t
+	ExtrinsicSendingFailed(String),      // Stringified sgx_status_t
 }
 
 #[derive(Debug, Encode, Decode, Clone)]

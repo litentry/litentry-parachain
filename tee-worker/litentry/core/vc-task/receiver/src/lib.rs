@@ -590,15 +590,10 @@ where
 			.send((shard, c))
 			.map_err(|e| RequestVcErrorDetail::TrustedCallSendingFailed(e.to_string()))?;
 
-		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
-		let xt = extrinsic_factory
-			.create_extrinsics(&[call], None)
-			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
-
-		context
-			.ocall_api
-			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-			.map_err(|e| RequestVcErrorDetail::CallSendingFailed(e.to_string()))?;
+		let extrinsic_sender = ParachainExtrinsicSender::new();
+		extrinsic_sender
+			.send(call)
+			.map_err(|e| RequestVcErrorDetail::CallSendingFailed(e))?;
 
 		if let Err(e) = context
 			.ocall_api
