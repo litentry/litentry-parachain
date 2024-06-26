@@ -67,6 +67,7 @@ pnpm install
 pnpm run build
 
 
+cd /
 ls
 
 cd /ts-tests
