@@ -23,7 +23,6 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { subscribeToEvents } from './common/transactions';
 import { encryptWithTeeShieldingKey } from './common/utils/crypto';
 import { ethers } from 'ethers';
-import { $ as zx } from 'zx';
 import { sleep } from './common/utils';
 
 describe('Test Vc (direct request)', function () {
@@ -33,7 +32,6 @@ describe('Test Vc (direct request)', function () {
 
     let alice: KeyringPair = undefined as any;
     let contractBytecode = undefined as any;
-    const clientDir = process.env.LITENTRY_CLI_DIR;
 
     const linkIdentityRequestParams: {
         nonce: number;
@@ -61,29 +59,6 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('deploying tokenmapping contract via parachain pallet', async function () {
-        const {
-            protocol: workerProtocal,
-            hostname: workerHostname,
-            port: workerPort,
-        } = new URL(process.env.WORKER_ENDPOINT!);
-        const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
-        let secretsEncryptedByCli = '';
-        try {
-            // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
-                nodeProtocal + nodeHostname
-            } -U ${workerProtocal + workerHostname}\
-                  shield-text my-secrets-value`;
-
-            const res = await commandPromise;
-            secretsEncryptedByCli = '0x' + JSON.parse(res.stdout.split(':')[1]);
-            console.log('secretsEncryptedByCli', secretsEncryptedByCli);
-        } catch (error: any) {
-            console.log(`Exit code: ${error.exitCode}`);
-            console.log(`Error: ${error.stderr}`);
-            throw error;
-        }
-
         const secretValue = 'my-secrets-value';
         const secretEncoded = context.api.createType('String', secretValue).toU8a();
         const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, secretEncoded);
@@ -92,12 +67,10 @@ describe('Test Vc (direct request)', function () {
 
         console.log('secret', secret);
 
-        const assertionId = '0x0000000000000000000000000000000000000002';
+        const assertionId = '0x0000000000000000000000000000000000000001';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
 
-        await context.api.tx.evmAssertions
-            .createAssertion(assertionId, contractBytecode, [secretsEncryptedByCli])
-            .signAndSend(alice);
+        await context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]).signAndSend(alice);
 
         const event = (await createAssertionEventsPromise).map((e) => e);
         assert.equal(event.length, 1);
@@ -159,7 +132,7 @@ describe('Test Vc (direct request)', function () {
         const encodedData = abiCoder.encode(['string'], ['bnb']);
 
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000002', 'hex')), encodedData],
+            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000001', 'hex')), encodedData],
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
