@@ -72,7 +72,7 @@ describe('Test Vc (direct request)', function () {
             const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
-                  shield-text 52e0fa8afe46449187d8280902ca95ef`;
+                  shield-text my-secrets-value`;
 
             const res = await commandPromise;
             secretsEncryptedByCli = '0x' + JSON.parse(res.stdout.split(':')[1]);
@@ -83,11 +83,13 @@ describe('Test Vc (direct request)', function () {
             throw error;
         }
 
-        const secretValue = '52e0fa8afe46449187d8280902ca95ef';
+        const secretValue = 'my-secrets-value';
         const secretEncoded = context.api.createType('String', secretValue).toU8a();
         const encryptedSecrets = encryptWithTeeShieldingKey(teeShieldingKey, secretEncoded);
 
         const secret = '0x' + encryptedSecrets.toString('hex');
+
+        console.log('secret', secret);
 
         const assertionId = '0x0000000000000000000000000000000000000002';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
