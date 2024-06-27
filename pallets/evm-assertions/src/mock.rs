@@ -103,6 +103,7 @@ parameter_types! {
 impl pallet_evm_assertions::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AssertionId = H160;
+	type ContractDevOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 parameter_types! {
