@@ -14,24 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use bc_musig2_ceremony::{
+	get_current_timestamp, CeremonyCommand, CeremonyRegistry, MuSig2Ceremony, PublicKey,
+	SignBitcoinPayload, SignersWithKeys,
+};
 use bc_relayer_registry::RelayerRegistryLookup;
-use itp_sgx_crypto::key_repository::AccessKey;
+use bc_signer_registry::SignerRegistryLookup;
+use codec::Encode;
+use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
+use log::warn;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
 #[cfg(feature = "std")]
-use std::sync::Mutex;
+use std::sync::RwLock;
 
-use bc_musig2_ceremony::{
-	CeremonyCommandsRegistry, CeremonyRegistry, MuSig2Ceremony, PublicKey, SignBitcoinError,
-	SignersWithKeys,
-};
-use bc_signer_registry::SignerRegistryLookup;
-use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
-
-use bc_musig2_ceremony::SignBitcoinPayload;
 #[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
+use std::sync::SgxRwLock as RwLock;
+
+#[derive(Encode, Debug)]
+pub enum SignBitcoinError {
+	InvalidSigner,
+	CeremonyError,
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle<
@@ -43,16 +48,18 @@ pub fn handle<
 	payload: SignBitcoinPayload,
 	aes_key: [u8; 32],
 	relayer_registry: &RRL,
-	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
+	ceremony_registry: Arc<RwLock<CeremonyRegistry<AK>>>,
 	signer_registry: Arc<SR>,
 	enclave_key_pub: &[u8; 32],
 	signer_access_key: Arc<AK>,
-) -> Result<(), SignBitcoinError> {
+) -> Result<CeremonyCommand, SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
-		let mut registry = ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
-		// ~1 minute (1 tick ~ 1 ms)
-		let ceremony_tick_to_live = 60_000;
+		{
+			let registry_read = ceremony_registry.read().unwrap();
+			if registry_read.contains_key(&payload) {
+				return Err(SignBitcoinError::CeremonyError)
+			}
+		}
 
 		let signers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
@@ -64,28 +71,27 @@ pub fn handle<
 			})
 			.collect();
 
-		if registry.contains_key(&payload) {
-			return Err(SignBitcoinError::CeremonyError)
-		}
-
-		let pending_commands = ceremony_commands
-			.lock()
-			.map_err(|_| SignBitcoinError::CeremonyError)?
-			.remove(&payload)
-			.unwrap_or_default();
 		let ceremony = MuSig2Ceremony::new(
 			*enclave_key_pub,
 			aes_key,
 			signers?,
 			payload.clone(),
-			pending_commands.into_iter().map(|c| c.command).collect(),
 			signer_access_key,
-			ceremony_tick_to_live,
 		)
 		.map_err(|_| SignBitcoinError::CeremonyError)?;
-		registry.insert(payload, ceremony);
 
-		Ok(())
+		{
+			let mut registry_write = ceremony_registry.write().unwrap();
+			registry_write
+				.insert(payload, (Arc::new(RwLock::new(ceremony)), get_current_timestamp()));
+			warn!(
+				"!!!!!!! Insert Ceremony, len: {}, {:?}",
+				registry_write.len(),
+				registry_write.keys()
+			);
+		}
+
+		Ok(CeremonyCommand::Init)
 	} else {
 		Err(SignBitcoinError::InvalidSigner)
 	}
@@ -95,10 +101,10 @@ pub fn handle<
 pub mod test {
 	use crate::handler::sign_bitcoin::{handle, SignBitcoinError};
 	use alloc::sync::Arc;
-	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
+	use bc_musig2_ceremony::{CeremonyRegistry, SignBitcoinPayload};
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
-	use codec::alloc::sync::Mutex;
+	use codec::alloc::sync::RwLock;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
 	use parentchain_primitives::{Address32, Identity};
 	use sp_core::{sr25519, Pair};
@@ -154,8 +160,7 @@ pub mod test {
 		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
 		let relayer_account = Identity::Substrate(alice_key_pair.public().into());
 		relayer_registry.update(relayer_account.clone()).unwrap();
-		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
-		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let ceremony_registry = Arc::new(RwLock::new(CeremonyRegistry::new()));
 		let signers_registry = Arc::new(SignersRegistryMock {});
 		let signer_access_key = Arc::new(SignerAccess {});
 
@@ -166,7 +171,6 @@ pub mod test {
 			[0u8; 32],
 			&relayer_registry,
 			ceremony_registry,
-			ceremony_commands_registry,
 			signers_registry,
 			&[0u8; 32],
 			signer_access_key,
@@ -182,8 +186,7 @@ pub mod test {
 		let relayer_registry = RelayerRegistry::default();
 		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
 		let non_relayer_account = Identity::Substrate(alice_key_pair.public().into());
-		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
-		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let ceremony_registry = Arc::new(RwLock::new(CeremonyRegistry::new()));
 		let signers_registry = Arc::new(SignersRegistryMock {});
 		let signer_access_key = Arc::new(SignerAccess {});
 
@@ -194,7 +197,6 @@ pub mod test {
 			[0u8; 32],
 			&relayer_registry,
 			ceremony_registry,
-			ceremony_commands_registry,
 			signers_registry,
 			&alice_key_pair.public().0,
 			signer_access_key,
@@ -211,8 +213,7 @@ pub mod test {
 		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
 		let relayer_account = Identity::Substrate(alice_key_pair.public().into());
 		relayer_registry.update(relayer_account.clone()).unwrap();
-		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
-		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let ceremony_registry = Arc::new(RwLock::new(CeremonyRegistry::new()));
 		let signers_registry = Arc::new(SignersRegistryMock {});
 		let signer_access_key = Arc::new(SignerAccess {});
 
@@ -223,7 +224,6 @@ pub mod test {
 			[0u8; 32],
 			&relayer_registry,
 			ceremony_registry.clone(),
-			ceremony_commands_registry.clone(),
 			signers_registry.clone(),
 			&[0u8; 32],
 			signer_access_key.clone(),
@@ -236,7 +236,6 @@ pub mod test {
 			[0u8; 32],
 			&relayer_registry,
 			ceremony_registry,
-			ceremony_commands_registry,
 			signers_registry,
 			&[0u8; 32],
 			signer_access_key,

@@ -35,44 +35,54 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub use crate::sgx_reexport_prelude::*;
 
 #[cfg(feature = "std")]
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 #[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
+use std::sync::SgxRwLock as RwLock;
 
-use core::ops::Deref;
-
-use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry};
+use bc_enclave_registry::EnclaveRegistryLookup;
+use bc_musig2_ceremony::{
+	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyEvent, CeremonyId,
+	CeremonyRegistry,
+};
+use bc_musig2_runner::process_event;
+use bc_relayer_registry::RelayerRegistryLookup;
+use bc_signer_registry::SignerRegistryLookup;
 use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
 use codec::{Decode, Encode};
+use core::{ops::Deref, time::Duration};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
-use lc_direct_call::{DirectCall, DirectCallSigned};
-use litentry_primitives::{aes_encrypt_default, AesRequest};
+use ita_stf::TrustedCallSigned;
+use itc_direct_rpc_client::Response;
+use itc_direct_rpc_server::SendRpcResponse;
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_crypto::{
+	ecdsa::Pair as EcdsaPair,
+	key_repository::{AccessKey, AccessPubkey},
+	schnorr::Pair as SchnorrPair,
+	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
+};
+use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_state_handler::handle_state::HandleState;
+use itp_types::DirectRequestStatus;
+use lc_direct_call::{
+	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
+	DirectCall, DirectCallSigned,
+};
+use litentry_primitives::{aes_encrypt_default, AesRequest, DecryptableRequest};
 use log::*;
+use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_core::{ed25519, H256};
 use std::{
 	boxed::Box,
 	format,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::sync_channel, Arc},
+	vec,
 	vec::Vec,
 };
 use threadpool::ThreadPool;
-
-use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_state_handler::handle_state::HandleState;
-
-use bc_enclave_registry::EnclaveRegistryLookup;
-use bc_relayer_registry::RelayerRegistryLookup;
-use bc_signer_registry::SignerRegistryLookup;
-use ita_stf::TrustedCallSigned;
-use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, schnorr::Pair as SchnorrPair};
-use lc_direct_call::handler::{
-	kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum,
-};
-use litentry_primitives::DecryptableRequest;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -85,6 +95,7 @@ pub enum Error {
 
 pub struct BitAcrossTaskContext<
 	SKR,
+	SIGNINGAK,
 	EKR,
 	BKR,
 	S: StfEnclaveSigning<TrustedCallSigned>,
@@ -93,28 +104,34 @@ pub struct BitAcrossTaskContext<
 	RRL: RelayerRegistryLookup,
 	ERL: EnclaveRegistryLookup,
 	SRL: SignerRegistryLookup,
+	Responder,
 > where
-	SKR: AccessKey,
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+	Responder: SendRpcResponse<Hash = H256>,
 {
 	pub shielding_key: Arc<SKR>,
+	pub signing_key_access: Arc<SIGNINGAK>,
 	pub ethereum_key_repository: Arc<EKR>,
 	pub bitcoin_key_repository: Arc<BKR>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 	pub relayer_registry_lookup: Arc<RRL>,
-	pub musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<BKR>>>,
 	pub enclave_registry_lookup: Arc<ERL>,
 	pub signer_registry_lookup: Arc<SRL>,
-	pub musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	pub signing_key_pub: [u8; 32],
+	pub responder: Arc<Responder>,
+	pub musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
+	pub musig2_ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
 }
 
 impl<
 		SKR,
+		SIGNINGAK,
 		EKR,
 		BKR,
 		S: StfEnclaveSigning<TrustedCallSigned>,
@@ -123,51 +140,59 @@ impl<
 		RRL: RelayerRegistryLookup,
 		ERL: EnclaveRegistryLookup,
 		SRL: SignerRegistryLookup,
-	> BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>
+		Responder,
+	> BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>
 where
-	SKR: AccessKey,
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
+	Responder: SendRpcResponse<Hash = H256>,
 {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		shielding_key: Arc<SKR>,
+		signing_key_access: Arc<SIGNINGAK>,
 		ethereum_key_repository: Arc<EKR>,
 		bitcoin_key_repository: Arc<BKR>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
 		relayer_registry_lookup: Arc<RRL>,
-		musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<BKR>>>,
 		enclave_registry_lookup: Arc<ERL>,
 		signer_registry_lookup: Arc<SRL>,
-		musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 		signing_key_pub: [u8; 32],
+		musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
+		musig2_ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
+		responder: Arc<Responder>,
 	) -> Self {
 		Self {
 			shielding_key,
+			signing_key_access,
 			ethereum_key_repository,
 			bitcoin_key_repository,
 			enclave_signer,
 			state_handler,
 			ocall_api,
 			relayer_registry_lookup,
-			musig2_ceremony_registry,
 			enclave_registry_lookup,
 			signer_registry_lookup,
-			musig2_ceremony_pending_commands,
 			signing_key_pub,
+			musig2_ceremony_registry,
+			musig2_ceremony_command_tmp,
+			responder,
 		}
 	}
 }
 
 #[allow(clippy::type_complexity)]
-pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
-	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>>,
+pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) where
-	SKR: AccessKey + Send + Sync + 'static,
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
 	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
@@ -178,16 +203,162 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 	RRL: RelayerRegistryLookup + Send + Sync + 'static,
 	ERL: EnclaveRegistryLookup + Send + Sync + 'static,
 	SRL: SignerRegistryLookup + Send + Sync + 'static,
+	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
-	let n_workers = 2;
+	let n_workers = 16;
 	let pool = ThreadPool::new(n_workers);
+
+	let (responses_sender, responses_receiver) = sync_channel::<Response>(1000);
+	// here we will process all responses
+	std::thread::spawn(move || {
+		while let Ok((_id, rpc_return_value)) = responses_receiver.recv() {
+			info!("Got RPC return value: {:?}", rpc_return_value);
+			if rpc_return_value.status == DirectRequestStatus::Error {
+				error!("Got unexpected direct request status: {:?}", rpc_return_value.status);
+			}
+		}
+	});
+
+	// timeout tick
+	let musig2_ceremony_registry = context.musig2_ceremony_registry.clone();
+	let musig2_ceremony_command_tmp = context.musig2_ceremony_command_tmp.clone();
+	let time_to_live = 120u64;
+	std::thread::spawn(move || loop {
+		std::thread::sleep(Duration::from_secs(20));
+		let now = get_current_timestamp();
+		{
+			musig2_ceremony_registry
+				.write()
+				.unwrap()
+				.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
+		}
+		{
+			musig2_ceremony_command_tmp
+				.write()
+				.unwrap()
+				.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
+		}
+	});
 
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
+		let responses_sender = responses_sender.clone();
 		pool.execute(move || {
-			if let Err(e) = req.sender.send(handle_request(&mut req.request, context_pool)) {
-				warn!("Unable to submit response back to the handler: {:?}", e);
+			let (ceremony_id, command) =
+				match handle_request(&mut req.request, context_pool.clone()) {
+					Ok((processing_ret, to_process)) => {
+						if let Err(e) = req.sender.send(Ok(processing_ret)) {
+							warn!("Unable to submit response back to the handler: {:?}", e);
+						}
+						let Some((ceremony_id, command)) = to_process else {
+						return
+					};
+						(ceremony_id, command)
+					},
+					Err(e) => {
+						if let Err(e) = req.sender.send(Err(e)) {
+							warn!("Unable to submit response back to the handler: {:?}", e);
+						}
+						return
+					},
+				};
+
+			// check if store command to tmp
+			let is_first_round = {
+				context_pool
+					.musig2_ceremony_registry
+					.read()
+					.unwrap()
+					.get(&ceremony_id)
+					.map(|(c, _)| c.read().unwrap().is_first_round())
+			};
+			match (is_first_round, &command) {
+				(None, CeremonyCommand::SaveNonce(_, _))
+				| (Some(true), CeremonyCommand::SavePartialSignature(_, _)) => {
+					context_pool
+						.musig2_ceremony_command_tmp
+						.write()
+						.unwrap()
+						.entry(ceremony_id.clone())
+						.and_modify(|(command_tmp, _)| {
+							command_tmp.write().unwrap().push(command.clone())
+						})
+						.or_insert((Arc::new(RwLock::new(vec![command])), get_current_timestamp()));
+					return
+				},
+				_ => {},
+			}
+
+			// process commands and events
+			let mut commands_to_process = vec![command];
+			while !commands_to_process.is_empty() {
+				let command = commands_to_process.pop().unwrap();
+				let event = {
+					let ceremony_rwlock = {
+						context_pool
+							.musig2_ceremony_registry
+							.read()
+							.unwrap()
+							.get(&ceremony_id)
+							.unwrap()
+							.0
+							.clone()
+					};
+
+					let mut ceremony = ceremony_rwlock.write().unwrap();
+					ceremony.process_command(command)
+				};
+
+				if let Some(event) = event {
+					match event {
+						CeremonyEvent::FirstRoundStarted(_, _, _)
+						| CeremonyEvent::SecondRoundStarted(_, _, _) => {
+							let has_command_tmp = {
+								let command_tmp_read =
+									context_pool.musig2_ceremony_command_tmp.read().unwrap();
+								command_tmp_read.contains_key(&ceremony_id)
+							};
+							if has_command_tmp {
+								let ceremony_command_tmp = context_pool
+									.musig2_ceremony_command_tmp
+									.write()
+									.unwrap()
+									.remove(&ceremony_id)
+									.unwrap()
+									.0;
+								commands_to_process = ceremony_command_tmp.read().unwrap().clone();
+							}
+						},
+						CeremonyEvent::CeremonyEnded(_, _)
+						| CeremonyEvent::CeremonyError(_, _, _) => {
+							// remove ceremony
+							{
+								let mut registry_write =
+									context_pool.musig2_ceremony_registry.write().unwrap();
+								registry_write.remove(&ceremony_id);
+							}
+							{
+								context_pool
+									.musig2_ceremony_command_tmp
+									.write()
+									.unwrap()
+									.remove(&ceremony_id);
+							}
+						},
+					}
+
+					process_event(
+						context_pool.signing_key_access.clone(),
+						context_pool.shielding_key.clone(),
+						context_pool.enclave_registry_lookup.clone(),
+						context_pool.ocall_api.clone(),
+						context_pool.responder.clone(),
+						&responses_sender,
+						&event,
+						&ceremony_id,
+					);
+				}
 			}
 		});
 	}
@@ -197,12 +368,13 @@ pub fn run_bit_across_handler_runner<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
 }
 
 #[allow(clippy::type_complexity)]
-pub fn handle_request<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>(
+pub fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: &mut AesRequest,
-	context: Arc<BitAcrossTaskContext<SKR, EKR, BKR, S, H, O, RRL, ERL, SRL>>,
-) -> Result<BitAcrossProcessingResult, Vec<u8>>
+	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+) -> Result<(BitAcrossProcessingResult, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
 where
-	SKR: AccessKey,
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
@@ -212,6 +384,7 @@ where
 	RRL: RelayerRegistryLookup + 'static,
 	ERL: EnclaveRegistryLookup + 'static,
 	SRL: SignerRegistryLookup + 'static,
+	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	let enclave_shielding_key = context
 		.shielding_key
@@ -232,13 +405,12 @@ where
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());
-			sign_bitcoin::handle(
+			let command = sign_bitcoin::handle(
 				signer,
-				payload,
+				payload.clone(),
 				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.musig2_ceremony_registry.clone(),
-				context.musig2_ceremony_pending_commands.clone(),
 				context.signer_registry_lookup.clone(),
 				&context.signing_key_pub,
 				context.bitcoin_key_repository.clone(),
@@ -247,7 +419,8 @@ where
 				error!("SignBitcoin error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})?;
-			Ok(BitAcrossProcessingResult::Submitted(hash))
+			let ret = BitAcrossProcessingResult::Submitted(hash);
+			Ok((ret, Some((payload, command))))
 		},
 		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
 			signer,
@@ -259,42 +432,45 @@ where
 			error!("SignEthereum error: {:?}", e);
 			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
-		.map(|r| BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())),
-		DirectCall::NonceShare(signer, aes_key, message, nonce) => nonce_share::handle(
-			signer,
-			message,
-			nonce,
-			context.musig2_ceremony_registry.clone(),
-			context.musig2_ceremony_pending_commands.clone(),
-			context.enclave_registry_lookup.clone(),
-		)
-		.map_err(|e| {
-			error!("NonceShare error: {:?}", e);
-			aes_encrypt_default(&aes_key, &e.encode()).encode()
-		})
-		.map(|r| {
-			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
-		}),
+		.map(|r| (BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode()), None)),
+		DirectCall::NonceShare(signer, aes_key, message, nonce) =>
+			nonce_share::handle(signer, &message, nonce, context.enclave_registry_lookup.clone())
+				.map_err(|e| {
+					error!("NonceShare error: {:?}", e);
+					aes_encrypt_default(&aes_key, &e.encode()).encode()
+				})
+				.map(|command| {
+					(
+						BitAcrossProcessingResult::Ok(
+							aes_encrypt_default(&aes_key, &().encode()).encode(),
+						),
+						Some((message, command)),
+					)
+				}),
 		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
 			partial_signature_share::handle(
 				signer,
-				message,
+				&message,
 				signature,
-				context.musig2_ceremony_registry.clone(),
 				context.enclave_registry_lookup.clone(),
 			)
 			.map_err(|e| {
 				error!("PartialSignatureShare error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})
-			.map(|r| {
-				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
+			.map(|command| {
+				(
+					BitAcrossProcessingResult::Ok(
+						aes_encrypt_default(&aes_key, &().encode()).encode(),
+					),
+					Some((message, command)),
+				)
 			}),
 		DirectCall::KillCeremony(signer, aes_key, message) => kill_ceremony::handle(
 			signer,
 			message,
 			context.musig2_ceremony_registry.clone(),
-			context.musig2_ceremony_pending_commands.clone(),
+			context.musig2_ceremony_command_tmp.clone(),
 			context.enclave_registry_lookup.clone(),
 		)
 		.map_err(|e| {
@@ -302,7 +478,10 @@ where
 			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
 		.map(|r| {
-			BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode())
+			(
+				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode()),
+				None,
+			)
 		}),
 	}
 }

@@ -15,17 +15,17 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_enclave_registry::EnclaveRegistryLookup;
+use bc_musig2_ceremony::{CeremonyCommandTmp, CeremonyId, CeremonyRegistry};
+use codec::Encode;
+use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
 #[cfg(feature = "std")]
-use std::sync::Mutex;
+use std::sync::RwLock;
 
-use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId, CeremonyRegistry};
-use codec::Encode;
-use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 #[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
+use std::sync::SgxRwLock as RwLock;
 
 #[derive(Encode, Debug)]
 pub enum KillCeremonyError {
@@ -35,8 +35,8 @@ pub enum KillCeremonyError {
 pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	signer: Identity,
 	ceremony_id: CeremonyId,
-	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
+	ceremony_registry: Arc<RwLock<CeremonyRegistry<AK>>>,
+	ceremony_commands: Arc<RwLock<CeremonyCommandTmp>>,
 	enclave_registry: Arc<ER>,
 ) -> Result<(), KillCeremonyError> {
 	let is_valid_signer = match signer {
@@ -49,8 +49,12 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 
 	match signer {
 		Identity::Substrate(_) => {
-			ceremony_registry.lock().unwrap().remove(&ceremony_id);
-			ceremony_commands.lock().unwrap().remove(&ceremony_id);
+			{
+				ceremony_registry.write().unwrap().remove(&ceremony_id);
+			}
+			{
+				ceremony_commands.write().unwrap().remove(&ceremony_id);
+			}
 		},
 		_ => return Err(KillCeremonyError::InvalidSigner),
 	}

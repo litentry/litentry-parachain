@@ -45,20 +45,16 @@ use crate::{
 };
 use base58::ToBase58;
 use bc_enclave_registry::EnclaveRegistryUpdater;
-use bc_musig2_ceremony::{CeremonyRegistry, MuSig2Ceremony};
-use bc_musig2_runner::init_ceremonies_thread;
+use bc_musig2_ceremony::{CeremonyCommandTmp, CeremonyId, CeremonyRegistry, MuSig2Ceremony};
 use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 use bc_signer_registry::SignerRegistryUpdater;
 use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use ita_stf::{Getter, TrustedCallSigned};
-use itc_direct_rpc_client::DirectRpcClientFactory;
 use itc_direct_rpc_server::{
-	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
-	rpc_ws_handler::RpcWsHandler,
+	create_determine_watch, rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder, rpc_ws_handler::RpcWsHandler
 };
 
-use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyId};
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate,
@@ -98,10 +94,10 @@ use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_development_or;
 use log::*;
-use sp_core::crypto::Pair;
+use sp_core::{crypto::Pair, H256};
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
 
-use std::sync::SgxMutex as Mutex;
+use std::sync::SgxRwLock as RwLock;
 
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
@@ -217,12 +213,12 @@ pub(crate) fn init_enclave(
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 
-	let ceremony_registry = Arc::new(Mutex::new(HashMap::<
+	let ceremony_registry = Arc::new(RwLock::new(HashMap::<
 		CeremonyId,
-		MuSig2Ceremony<KeyRepository<SchnorrPair, Seal>>,
+		(Arc<RwLock<MuSig2Ceremony<KeyRepository<SchnorrPair, Seal>>>>, u64),
 	>::new()));
 
-	let pending_ceremony_commands = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+	let ceremony_command_tmp = Arc::new(RwLock::new(CeremonyCommandTmp::new()));
 
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api.clone(), signing_key_repository.clone()));
@@ -253,25 +249,16 @@ pub(crate) fn init_enclave(
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
-	let ceremony_registry_cloned = ceremony_registry.clone();
-	let pending_ceremony_commands_cloned = pending_ceremony_commands.clone();
-
 	std::thread::spawn(move || {
-		run_bit_across_handler(ceremony_registry, pending_ceremony_commands, signer.public().0)
-			.unwrap()
+		run_bit_across_handler(
+			ceremony_registry,
+			ceremony_command_tmp,
+			signer.public().0,
+			rpc_responder,
+		)
+		.unwrap()
 	});
 
-	let client_factory = DirectRpcClientFactory {};
-	init_ceremonies_thread(
-		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?,
-		Arc::new(client_factory),
-		enclave_registry,
-		ceremony_registry_cloned,
-		pending_ceremony_commands_cloned,
-		ocall_api,
-		rpc_responder,
-	);
 	Ok(())
 }
 
@@ -375,11 +362,15 @@ fn initialize_state_observer(
 }
 
 fn run_bit_across_handler(
-	musig2_ceremony_registry: Arc<Mutex<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
-	musig2_ceremony_pending_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
+	musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
+	musig2_ceremony_pending_commands: Arc<RwLock<CeremonyCommandTmp>>,
 	signing_key_pub: [u8; 32],
+	responder: Arc<
+		RpcResponder<ConnectionRegistry<H256, ConnectionToken>, H256, RpcResponseChannel>,
+	>,
 ) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let signing_key = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let relayer_registry_lookup = GLOBAL_RELAYER_REGISTRY.get()?;
@@ -401,17 +392,19 @@ fn run_bit_across_handler(
 
 	let stf_task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
+		signing_key,
 		ethereum_key_repository,
 		bitcoin_key_repository,
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,
 		relayer_registry_lookup,
-		musig2_ceremony_registry,
 		enclave_registry_lookup,
 		signer_registry_lookup,
-		musig2_ceremony_pending_commands,
 		signing_key_pub,
+		musig2_ceremony_registry,
+		musig2_ceremony_pending_commands,
+		responder,
 	);
 	run_bit_across_handler_runner(Arc::new(stf_task_context));
 	Ok(())
