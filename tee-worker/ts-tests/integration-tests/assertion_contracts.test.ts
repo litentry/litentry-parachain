@@ -4,12 +4,10 @@ import { initIntegrationTestContext } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
-    createSignedTrustedCallLinkIdentity,
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
 } from './common/di-utils'; // @fixme move to a better place
-import { buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import type { CorePrimitivesIdentity } from 'parachain-api';
@@ -35,12 +33,6 @@ describe('Test Vc (direct request)', function () {
     let contractBytecode = undefined as any;
     const clientDir = process.env.LITENTRY_CLI_DIR;
 
-    const linkIdentityRequestParams: {
-        nonce: number;
-        identity: CorePrimitivesIdentity;
-        validation: LitentryValidationData;
-        networks: Bytes | Vec<Web3Network>;
-    }[] = [];
     this.timeout(6000000);
 
     before(async () => {
