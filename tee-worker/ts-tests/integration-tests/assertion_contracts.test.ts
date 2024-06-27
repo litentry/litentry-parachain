@@ -24,6 +24,7 @@ import { subscribeToEvents } from './common/transactions';
 import { encryptWithTeeShieldingKey } from './common/utils/crypto';
 import { ethers } from 'ethers';
 import { $ as zx } from 'zx';
+import { sleep } from './common/utils';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -150,6 +151,7 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('requesting VC for deployed contract', async function () {
+        await sleep(30);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
 
