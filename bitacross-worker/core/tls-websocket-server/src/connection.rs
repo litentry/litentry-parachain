@@ -131,7 +131,7 @@ where
 	/// Read from a web-socket, or initiate handshake if websocket is not initialized yet.
 	///
 	/// Returns a boolean 'connection should be closed'.
-	fn read_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
+	fn read_or_initialize_websocket(&mut self) -> WebSocketResult<(bool, bool)> {
 		if let StreamState::Established(web_socket) = &mut self.stream_state {
 			trace!(
 				"Read is possible for connection {}: {}",
@@ -147,12 +147,15 @@ where
 						);
 					},
 				Err(e) => match e {
-					tungstenite::Error::ConnectionClosed => return Ok(true),
-					tungstenite::Error::AlreadyClosed => return Ok(true),
-					_ => error!(
+					tungstenite::Error::ConnectionClosed => return Ok((true, false)),
+					tungstenite::Error::AlreadyClosed => return Ok((true, false)),
+					_ => {
+						error!(
 						"Failed to read message from web-socket (connection {}): {:?}",
 						self.connection_token.0, e
-					),
+						);
+						return Ok((false , false))
+					}
 				},
 			}
 			trace!("Read successful for connection {}", self.connection_token.0);
@@ -161,12 +164,11 @@ where
 			self.stream_state = std::mem::take(&mut self.stream_state).attempt_handshake();
 			if self.stream_state.is_invalid() {
 				warn!("Web-socket connection ({:?}) failed, closing", self.connection_token);
-				return Ok(true)
+				return Ok((true, false))
 			}
 			debug!("Initialized connection {} successfully", self.connection_token.0);
 		}
-
-		Ok(false)
+		Ok((false, true))
 	}
 
 	fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
@@ -276,6 +278,7 @@ where
 
 	fn on_ready(&mut self, poll: &mut Poll, event: &Event) -> WebSocketResult<()> {
 		let mut is_closing = false;
+		let mut read = true;
 
 		if event.readiness().is_readable() {
 			trace!("Connection ({:?}) is readable", self.token());
@@ -283,7 +286,12 @@ where
 			let connection_state = self.maybe_do_tls_read();
 
 			if connection_state.is_alive() {
-				is_closing = self.read_or_initialize_websocket()?;
+				loop {
+					if !read {
+						break;
+					}
+					(is_closing, read) = self.read_or_initialize_websocket()?;
+				}
 			} else {
 				is_closing = connection_state.is_closing();
 			}
