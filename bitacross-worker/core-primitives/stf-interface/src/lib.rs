@@ -29,7 +29,7 @@ use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
-	parentchain::{AccountId, BlockHash, BlockNumber, ParentchainCall, ParentchainId},
+	parentchain::{BlockHash, BlockNumber, ParentchainCall, ParentchainId},
 	ShardIdentifier, H256,
 };
 
@@ -46,11 +46,6 @@ pub const SHARD_CREATION_HEADER_KEY: &str = "ShardCreationHeaderKey";
 pub trait InitState<State, AccountId> {
 	/// Initialize a new state for a given enclave account.
 	fn init_state(enclave_account: AccountId) -> State;
-}
-
-/// Interface to query shard vault account for shard
-pub trait ShardVaultQuery<S> {
-	fn get_vault(state: &mut S) -> Option<(AccountId, ParentchainId)>;
 }
 
 /// Interface to query shard creation block information for shard on a specified parentchain

@@ -4693,6 +4693,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-parachain-extrinsic-task-receiver"
+version = "0.1.0"
+dependencies = [
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-types",
+ "lc-parachain-extrinsic-task-sender",
+ "log 0.4.20",
+ "sgx_tstd",
+ "sp-runtime",
+]
+
+[[package]]
+name = "lc-parachain-extrinsic-task-sender"
+version = "0.1.0"
+dependencies = [
+ "itp-types",
+ "lazy_static",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-runtime",
+]
+
+[[package]]
 name = "lc-scheduled-enclave"
 version = "0.8.0"
 dependencies = [
@@ -4825,6 +4850,7 @@ dependencies = [
  "lc-data-providers",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
+ "lc-parachain-extrinsic-task-sender",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
