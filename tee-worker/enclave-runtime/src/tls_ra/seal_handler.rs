@@ -34,6 +34,7 @@ use lc_evm_dynamic_assertions::sealing::UnsealedAssertions;
 use lc_scheduled_enclave::ScheduledEnclaveMap;
 use log::*;
 use sgx_crypto::rsa::Rsa3072KeyPair;
+use sgx_types::types::Rsa3072Param;
 use std::{sync::Arc, vec::Vec};
 
 /// Handles the sealing and unsealing of the shielding key, state key and the state.
@@ -136,8 +137,11 @@ impl<
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key_str = std::str::from_utf8(bytes)
 			.map_err(|_| EnclaveError::Other("RSA key seal error".into()))?;
-		let key: Rsa3072KeyPair = sgx_serialize::json::decode(key_str)
+		// TODO: the usage of Rsa3072Param is temporary and should be removed after the migration to
+		// the new sgx sdk is done. Then we can directly use Rsa3072KeyPair
+		let rsa_param: Rsa3072Param = sgx_serialize::json::decode(key_str)
 			.map_err(|_| EnclaveError::Other("RSA key seal error".into()))?;
+		let key: Rsa3072KeyPair = rsa_param.into();
 		self.shielding_key_repository.update_key(key)?;
 		info!("Successfully stored a new shielding key");
 		Ok(())
