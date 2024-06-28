@@ -213,22 +213,31 @@ where
 	ERL: EnclaveRegistryLookup + 'static,
 	SRL: SignerRegistryLookup + 'static,
 {
-	let enclave_shielding_key = context
-		.shielding_key
-		.retrieve_key()
-		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
+	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
+		let err = format!("Failed to retrieve shielding key: {:?}", e);
+		error!("{}", err);
+		err
+	})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
 		.and_then(|v| DirectCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| "Failed to decode payload".to_string())?;
+		.ok_or_else(|| {
+			let err = "Failed to decode payload".to_string();
+			error!("{}", err);
+			err
+		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".encode()),
+		Err(_) => {
+			let err = "Failed to get mrenclave";
+			error!("{}", err);
+			return Err(err.encode())
+		},
 	};
+	debug!("Direct call is: {:?}", dc);
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
-
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());

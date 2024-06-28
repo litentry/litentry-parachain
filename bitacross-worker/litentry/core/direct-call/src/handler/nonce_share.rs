@@ -67,7 +67,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 				debug!("Ceremony {:?} not found, saving events...", ceremony_id);
 				let mut commands = ceremony_commands.lock().unwrap();
 				// ~1 minute (1 tick ~ 1 s)
-				let ceremony_tick_to_live = 60;
+				let ceremony_tick_to_live = 60_000;
 				let command = PendingCeremonyCommand {
 					ticks_left: ceremony_tick_to_live,
 					command: CeremonyCommand::SaveNonce(*address.as_ref(), nonce),
@@ -90,11 +90,11 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 pub mod test {
 	use crate::handler::nonce_share::{handle, NonceShareError, SchnorrPair};
 	use alloc::sync::Arc;
-	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryLookup, EnclaveRegistryUpdater};
+	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
 	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
 	use codec::alloc::sync::Mutex;
 	use itp_sgx_crypto::{key_repository::AccessKey, Error};
-	use parentchain_primitives::{Address32, Identity};
+	use parentchain_primitives::Identity;
 	use sp_core::{sr25519, Pair};
 
 	struct SignerAccess {}
@@ -116,7 +116,8 @@ pub mod test {
 		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
 		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
 		let enclave_registry = Arc::new(EnclaveRegistry::default());
-		enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
+		let _ =
+			enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
 
 		// when
 		let result = handle(
