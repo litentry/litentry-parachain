@@ -300,8 +300,6 @@ where
 	credential.credential_subject.endpoint =
 		context.data_provider_config.credential_endpoint.to_string();
 
-	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
-
 	if let Some(schema) = credential_schema::get_schema_url(&req.assertion) {
 		credential.credential_schema.id = schema;
 	}
