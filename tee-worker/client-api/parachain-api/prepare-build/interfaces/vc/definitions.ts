@@ -42,6 +42,7 @@ export default {
         },
         RequestVCResult: {
             vc_payload: "AesOutput",
+            vc_logs: "AesOutput",
             pre_mutated_id_graph: "AesOutput",
             pre_id_graph_hash: "H256",
         },

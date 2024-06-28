@@ -18,7 +18,7 @@ use crate::{dynamic::repository::SmartContractByteCode, *};
 use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
 use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
-use lc_evm_dynamic_assertions::EvmAssertionExecutor;
+use lc_evm_dynamic_assertions::{EvmAssertionExecutor, DYNAMIC_ASSERTION_LOGS};
 use lc_stf_task_sender::AssertionBuildRequest;
 use log::error;
 use primitive_types::H160;
@@ -29,16 +29,20 @@ pub fn build<
 	SC: AssertionLogicRepository<Id = H160, Item = (SmartContractByteCode, Vec<String>)>,
 >(
 	req: &AssertionBuildRequest,
-	smart_contract_id: SC::Id,
-	smart_contract_params: DynamicParams,
+	params: DynamicParams,
 	repository: Arc<SC>,
-) -> Result<Credential> {
+) -> Result<(Credential, Vec<String>)> {
 	let executor = EvmAssertionExecutor { assertion_repository: repository };
+	let execution_params = params.clone();
 	let result = executor
-		.execute(smart_contract_id, smart_contract_params.clone().into(), &req.identities)
+		.execute(
+			execution_params.smart_contract_id,
+			execution_params.smart_contract_params.map(|v| v.into()).unwrap_or(vec![]),
+			&req.identities,
+		)
 		.map_err(|e| {
 			Error::RequestVCFailed(
-				Assertion::Dynamic(smart_contract_id, smart_contract_params.clone()),
+				Assertion::Dynamic(params.clone()),
 				ErrorDetail::StfError(ErrorString::truncate_from(e.into())),
 			)
 		})?;
@@ -54,7 +58,7 @@ pub fn build<
 			for assertion in result.assertions {
 				let logic: AssertionLogic = serde_json::from_str(&assertion).map_err(|e| {
 					Error::RequestVCFailed(
-						Assertion::Dynamic(smart_contract_id, smart_contract_params.clone()),
+						Assertion::Dynamic(params.clone()),
 						ErrorDetail::StfError(ErrorString::truncate_from(format!("{}", e).into())),
 					)
 				})?;
@@ -68,14 +72,16 @@ pub fn build<
 				result.schema_url,
 				result.meet,
 			);
-			Ok(credential_unsigned)
+
+			let logs: Vec<String> = match params.clone().return_log {
+				Some(true) => DYNAMIC_ASSERTION_LOGS.with(|v| v.borrow().iter().cloned().collect()),
+				_ => vec![],
+			};
+			Ok((credential_unsigned, logs))
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Dynamic(smart_contract_id, smart_contract_params),
-				e.into_error_detail(),
-			))
+			Err(Error::RequestVCFailed(Assertion::Dynamic(params), e.into_error_detail()))
 		},
 	}
 }
@@ -87,7 +93,9 @@ pub mod assertion_test {
 	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
 	use litentry_hex_utils::decode_hex;
-	use litentry_primitives::{DynamicParams, Identity, IdentityString, Web3Network};
+	use litentry_primitives::{
+		DynamicContractParams, DynamicParams, Identity, IdentityString, Web3Network,
+	};
 	use sp_core::{crypto::AccountId32, H160};
 
 	#[test]
@@ -105,11 +113,16 @@ pub mod assertion_test {
 			.into(),
 		);
 
+		let dynamic_params = DynamicParams {
+			smart_contract_id: hash(1),
+			smart_contract_params: None,
+			return_log: None,
+		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
 			signer: AccountId32::new([0; 32]),
 			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(1), DynamicParams::truncate_from(vec![])),
+			assertion: Assertion::Dynamic(dynamic_params.clone()),
 			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
@@ -124,14 +137,13 @@ pub mod assertion_test {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, hash(1), DynamicParams::truncate_from(vec![]), repository.into())
-				.unwrap();
+		let (credential, vc_logs) = build(&request, dynamic_params, repository.into()).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
 		// then
 		assert!(credential.credential_subject.values[0]);
+		assert!(vc_logs.len() == 0);
 	}
 
 	#[test]
@@ -141,11 +153,16 @@ pub mod assertion_test {
 		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
+		let dynamic_params = DynamicParams {
+			smart_contract_id: hash(0),
+			smart_contract_params: None,
+			return_log: None,
+		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
 			signer: AccountId32::new([0; 32]),
 			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(0), DynamicParams::truncate_from(vec![])),
+			assertion: Assertion::Dynamic(dynamic_params.clone()),
 			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
@@ -160,9 +177,7 @@ pub mod assertion_test {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, hash(0), DynamicParams::truncate_from(vec![]), repository.into())
-				.unwrap();
+		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -179,11 +194,16 @@ pub mod assertion_test {
 			Identity::Twitter(IdentityString::new("twitterdev".as_bytes().to_vec()));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
+		let dynamic_params = DynamicParams {
+			smart_contract_id: hash(2),
+			smart_contract_params: None,
+			return_log: None,
+		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
 			signer: AccountId32::new([0; 32]),
 			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(2), DynamicParams::truncate_from(vec![])),
+			assertion: Assertion::Dynamic(dynamic_params.clone()),
 			identities: vec![(twitter_identity, vec![]), (substrate_identity, vec![])],
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
@@ -198,9 +218,7 @@ pub mod assertion_test {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, hash(2), DynamicParams::truncate_from(vec![]), repository.into())
-				.unwrap();
+		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -214,11 +232,16 @@ pub mod assertion_test {
 		// given
 		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
 
+		let dynamic_params = DynamicParams {
+			smart_contract_id: hash(0),
+			smart_contract_params: None,
+			return_log: None,
+		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
 			signer: AccountId32::new([0; 32]),
 			who: Identity::Twitter(IdentityString::new(vec![])),
-			assertion: Assertion::Dynamic(hash(0), DynamicParams::truncate_from(vec![])),
+			assertion: Assertion::Dynamic(dynamic_params.clone()),
 			identities: vec![(twitter_identity, vec![])],
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
@@ -233,9 +256,7 @@ pub mod assertion_test {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, hash(0), DynamicParams::truncate_from(vec![]), repository.into())
-				.unwrap();
+		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);
@@ -259,15 +280,19 @@ pub mod assertion_test {
 
 		let network = Web3Network::BitcoinP2tr;
 		let identities = vec![(Identity::Bitcoin(address), vec![network])];
-		let smart_contract_id = hash(3);
-		let smart_contract_params =
-			DynamicParams::truncate_from(ethabi::encode(&[ethabi::Token::String("ordi".into())]));
 
+		let dynamic_params = DynamicParams {
+			smart_contract_id: hash(3),
+			smart_contract_params: Some(DynamicContractParams::truncate_from(ethabi::encode(&[
+				ethabi::Token::String("ordi".into()),
+			]))),
+			return_log: None,
+		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
 			signer: AccountId32::new([0; 32]),
 			who: Identity::Substrate(AccountId32::new([0; 32]).into()),
-			assertion: Assertion::Dynamic(smart_contract_id, smart_contract_params.clone()),
+			assertion: Assertion::Dynamic(dynamic_params.clone()),
 			identities,
 			top_hash: Default::default(),
 			parachain_block_number: Default::default(),
@@ -282,9 +307,7 @@ pub mod assertion_test {
 		let repository = InMemorySmartContractRepo::new();
 
 		// when
-		let credential =
-			build(&request, smart_contract_id, smart_contract_params.clone(), repository.into())
-				.unwrap();
+		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
 
 		println!("Credential is: {:?}", credential);
 

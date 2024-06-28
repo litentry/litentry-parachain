@@ -23,9 +23,13 @@ extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+// #[cfg(all(not(feature = "std"), feature = "sgx"))]
+// extern crate chrono_sgx as chrono;
+
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use chrono_sgx as chrono;
 	pub use http_sgx as http;
 }
 
@@ -45,10 +49,11 @@ use lc_dynamic_assertion::{
 	Web3Network,
 };
 use std::{
+	cell::RefCell,
 	collections::BTreeMap,
 	string::{String, ToString},
 	sync::Arc,
-	vec,
+	thread_local, vec,
 	vec::Vec,
 };
 
@@ -65,6 +70,10 @@ pub type AssertionId = H160;
 pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
+
+thread_local! {
+	pub static DYNAMIC_ASSERTION_LOGS: RefCell<Vec<String>> = RefCell::new(Vec::new());
+}
 
 pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,

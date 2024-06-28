@@ -133,7 +133,15 @@ pub enum TrustedCall {
 		H256,
 	),
 	#[codec(index = 21)]
-	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, bool, H256),
+	request_vc_callback(
+		Identity,
+		Identity,
+		Assertion,
+		(Vec<u8>, Vec<u8>),
+		Option<RequestAesKey>,
+		bool,
+		H256,
+	),
 	#[codec(index = 22)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	#[codec(index = 23)]
@@ -826,7 +834,7 @@ where
 				signer,
 				who,
 				assertion,
-				vc_payload,
+				(vc_payload, vc_logs),
 				maybe_key,
 				should_create_id_graph,
 				req_ext_hash,
@@ -876,6 +884,7 @@ where
 				if let Some(key) = maybe_key {
 					Ok(TrustedCallResult::RequestVC(RequestVCResult {
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
+						vc_logs: aes_encrypt_default(&key, &vc_logs),
 						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 						pre_id_graph_hash: id_graph_hash,
 					}))
