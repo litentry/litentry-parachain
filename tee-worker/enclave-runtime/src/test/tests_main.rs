@@ -57,7 +57,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{parentchain::ParentchainId, AccountId, Balance, Block, Header};
+use itp_types::{AccountId, Balance, Block, Header};
 use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
