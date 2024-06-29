@@ -87,6 +87,7 @@ use its_sidechain::{
 };
 use lc_data_providers::DataProviderConfig;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
@@ -310,12 +311,18 @@ fn run_vc_issuance() -> Result<(), Error> {
 		data_provider_config,
 		evm_assertion_repository,
 	);
-	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	run_vc_handler_runner(Arc::new(stf_task_context), node_metadata_repo);
 
 	Ok(())
+}
+
+fn run_parachain_extrinsic_sender() -> Result<(), Error> {
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+
+	run_parachain_extrinsic_task_receiver(ocall_api, extrinsics_factory).map_err(|e| e.into())
 }
 
 pub(crate) fn init_enclave_sidechain_components(
@@ -395,6 +402,12 @@ pub(crate) fn init_enclave_sidechain_components(
 		println!("running vc issuance");
 		#[allow(clippy::unwrap_used)]
 		run_vc_issuance().unwrap();
+	});
+
+	std::thread::spawn(move || {
+		println!("running parentchain extrinsic sender");
+		#[allow(clippy::unwrap_used)]
+		run_parachain_extrinsic_sender().unwrap();
 	});
 
 	Ok(())
