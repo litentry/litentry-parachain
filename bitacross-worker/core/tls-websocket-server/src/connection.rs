@@ -151,11 +151,11 @@ where
 					tungstenite::Error::AlreadyClosed => return Ok((true, false)),
 					_ => {
 						error!(
-						"Failed to read message from web-socket (connection {}): {:?}",
-						self.connection_token.0, e
+							"Failed to read message from web-socket (connection {}): {:?}",
+							self.connection_token.0, e
 						);
-						return Ok((false , false))
-					}
+						return Ok((false, false))
+					},
 				},
 			}
 			trace!("Read successful for connection {}", self.connection_token.0);
@@ -288,7 +288,7 @@ where
 			if connection_state.is_alive() {
 				loop {
 					if !read {
-						break;
+						break
 					}
 					(is_closing, read) = self.read_or_initialize_websocket()?;
 				}
