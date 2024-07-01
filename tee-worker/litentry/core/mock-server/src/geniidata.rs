@@ -20,14 +20,32 @@ use lc_data_providers::geniidata::{GeniidataResponse, ResponseData, ResponseItem
 use std::{collections::HashMap, vec::Vec};
 use warp::{http::Response, Filter};
 
+const EMPTY_RESPONSE: &str = r#"
+{
+	"code": 0,
+	"message": "success",
+	"data": {
+		"count": 1,
+		"limit": "20",
+		"offset": "0",
+		"list": []
+	}
+}
+"#;
+
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
 		.and(warp::path!("api" / "1" / "brc20" / "balance"))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(|params: HashMap<String, String>| {
 			let default = String::default();
+			let offset = params.get("offset").unwrap_or(&default).as_str();
 			let tick = params.get("tick").unwrap_or(&default).as_str();
 			let address = params.get("address").unwrap_or(&default).as_str();
+
+			if offset != "0" {
+				return Response::builder().body(EMPTY_RESPONSE.to_string())
+			}
 
 			let _expected_address =
 				"bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0";
@@ -88,7 +106,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						code: 0,
 						message: "success".to_string(),
 						data: ResponseData {
-							count: 16435,
+							count: 3,
 							limit: "20".to_string(),
 							offset: "0".to_string(),
 							list,
