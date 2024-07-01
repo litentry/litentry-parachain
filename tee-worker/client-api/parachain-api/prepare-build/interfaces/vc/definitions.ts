@@ -40,6 +40,11 @@ export default {
         AssertionSupportedNetwork: {
             _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
+        RequestVCResult: {
+            vc_payload: "AesOutput",
+            pre_mutated_id_graph: "AesOutput",
+            pre_id_graph_hash: "H256",
+        },
         VCMPError: {
             _enum: {
                 RequestVCFailed: "(Assertion, ErrorDetail)",
