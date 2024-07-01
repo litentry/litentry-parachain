@@ -70,9 +70,11 @@ pub use core_primitives::{
 	HOURS, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
+
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
+	DeveloperCommitteeMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
@@ -641,6 +643,32 @@ impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
+impl pallet_collective::Config<DeveloperCommitteeInstance> for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type MotionDuration = TechnicalMotionDuration;
+	type MaxProposals = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+impl pallet_membership::Config<DeveloperCommitteeMembershipInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
+	type MembershipInitialized = DeveloperCommittee;
+	type MembershipChanged = DeveloperCommittee;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
@@ -1003,6 +1031,7 @@ impl pallet_bitacross::Config for Runtime {
 impl pallet_evm_assertions::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AssertionId = H160;
+	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
 }
 
 // Temporary for bitacross team to test
@@ -1231,6 +1260,10 @@ construct_runtime! {
 		// Temporary for bitacross team to test
 		BitacrossMimic: pallet_bitacross_mimic = 71,
 		EvmAssertions: pallet_evm_assertions = 72,
+
+		// Developer council
+		DeveloperCommittee: pallet_collective::<Instance3> = 73,
+		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
