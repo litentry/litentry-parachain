@@ -98,7 +98,7 @@ pub struct SetIdentityNetworksResult {
 pub struct RequestVCResult {
 	pub vc_payload: AesOutput,
 	// Mainly used to returning logs in dynamic contract VC.
-	pub vc_logs: AesOutput,
+	pub vc_logs: Option<AesOutput>,
 	// see comments in `lc-vc-task-receiver` why it's prefixed with `pre...`
 	// they should be referenced/used only when the client's local IDGraph is empty
 	pub pre_mutated_id_graph: AesOutput,

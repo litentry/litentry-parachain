@@ -363,6 +363,21 @@ AchainableCommandArgs!(TokenArg, {
 	token: String,
 });
 
+fn print_vc(key: &RequestAesKey, mut vc: RequestVCResult) {
+	let decrypted = aes_decrypt(key, &mut vc.vc_payload).unwrap();
+	let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+	println!("----Generated VC-----");
+	println!("{}", credential_str);
+	if let Some(mut vc_logs) = vc.vc_logs {
+		let decrypted_logs = aes_decrypt(&key, &mut vc_logs).unwrap();
+		if decrypted_logs.len() > 0 {
+			let logs_str = String::from_utf8(decrypted_logs).expect("Found invalid UTF-8");
+			println!("----VC Logging-----");
+			println!("{}", logs_str);
+		}
+	}
+}
+
 impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
@@ -399,19 +414,8 @@ impl RequestVcCommand {
 				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
 				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-					Ok(mut vc) => {
-						let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-						let credential_str =
-							String::from_utf8(decrypted).expect("Found invalid UTF-8");
-						println!("----Generated VC-----");
-						println!("{}", credential_str);
-						let decrypted_logs = aes_decrypt(&key, &mut vc.vc_logs).unwrap();
-						if decrypted_logs.len() > 0 {
-							let logs_str =
-								String::from_utf8(decrypted_logs).expect("Found invalid UTF-8");
-							println!("----VC Logging-----");
-							println!("{}", logs_str);
-						}
+					Ok(vc) => {
+						print_vc(&key, vc);
 					},
 					Err(e) => {
 						println!("{:?}", e);
@@ -438,19 +442,9 @@ impl RequestVcCommand {
 								println!("received one error: {:?}", err);
 							},
 							Ok(payload) => {
-								let mut vc = RequestVCResult::decode(&mut payload.as_slice()).unwrap();
-								let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-								let credential_str =
-									String::from_utf8(decrypted).expect("Found invalid UTF-8");
-								println!("----Generated VC-----");
-								println!("{}", credential_str);
-								let decrypted_logs = aes_decrypt(&key, &mut vc.vc_logs).unwrap();
-								if decrypted_logs.len() > 0 {
-									let logs_str =
-										String::from_utf8(decrypted_logs).expect("Found invalid UTF-8");
-									println!("----VC Logging-----");
-									println!("{}", logs_str);
-								}
+								let vc =
+									RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
+								print_vc(&key, vc);
 							},
 						}
 					},

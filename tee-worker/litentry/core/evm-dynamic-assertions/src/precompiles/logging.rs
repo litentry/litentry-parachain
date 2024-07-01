@@ -32,11 +32,11 @@ use chrono::{offset::Utc as TzUtc, DateTime, SecondsFormat};
 
 use std::{format, string::String, vec::Vec};
 
-const LOGGING_LEVEL_DEBUG: u8 = 0;
-const LOGGING_LEVEL_INFO: u8 = 1;
-const LOGGING_LEVEL_WARN: u8 = 2;
-const LOGGING_LEVEL_ERROR: u8 = 3;
-const LOGGING_LEVEL_FATAL: u8 = 4;
+pub const LOGGING_LEVEL_DEBUG: u8 = 0;
+pub const LOGGING_LEVEL_INFO: u8 = 1;
+pub const LOGGING_LEVEL_WARN: u8 = 2;
+pub const LOGGING_LEVEL_ERROR: u8 = 3;
+pub const LOGGING_LEVEL_FATAL: u8 = 4;
 
 pub fn logging(input: Vec<u8>) -> PrecompileResult {
 	let decoded =
@@ -63,6 +63,12 @@ pub fn logging(input: Vec<u8>) -> PrecompileResult {
 		},
 	};
 
+	contract_logging(level, message);
+
+	Ok(success_precompile_output(ethabi::Token::Bool(true)))
+}
+
+pub fn contract_logging(level: u8, message: String) {
 	DYNAMIC_ASSERTION_LOGS.with(|logs| {
 		logs.borrow_mut().push(format!(
 			"[{} {}] {}",
@@ -71,8 +77,6 @@ pub fn logging(input: Vec<u8>) -> PrecompileResult {
 			message
 		));
 	});
-
-	Ok(success_precompile_output(ethabi::Token::Bool(true)))
 }
 
 fn loggin_level_to_string(level: u8) -> String {

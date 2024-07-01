@@ -137,7 +137,7 @@ pub enum TrustedCall {
 		Identity,
 		Identity,
 		Assertion,
-		(Vec<u8>, Vec<u8>),
+		(Vec<u8>, Option<Vec<u8>>),
 		Option<RequestAesKey>,
 		bool,
 		H256,
@@ -884,7 +884,7 @@ where
 				if let Some(key) = maybe_key {
 					Ok(TrustedCallResult::RequestVC(RequestVCResult {
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
-						vc_logs: aes_encrypt_default(&key, &vc_logs),
+						vc_logs: vc_logs.map(|v| aes_encrypt_default(&key, &v)),
 						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 						pre_id_graph_hash: id_graph_hash,
 					}))

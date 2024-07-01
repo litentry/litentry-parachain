@@ -74,7 +74,7 @@ where
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	type Error = VCMPError;
-	type Result = (Vec<u8>, Vec<u8>); // (vc_byte_array, vc_log_byte_array)
+	type Result = (Vec<u8>, Option<Vec<u8>>); // (vc_byte_array, optional vc_log_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -150,12 +150,12 @@ pub fn create_credential_str<
 >(
 	req: &AssertionBuildRequest,
 	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
-) -> Result<(Vec<u8>, Vec<u8>), VCMPError>
+) -> Result<(Vec<u8>, Option<Vec<u8>>), VCMPError>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
-	let mut vc_logs: Vec<String> = vec![];
+	let mut vc_logs: Option<Vec<String>> = None;
 	let mut credential = match req.assertion.clone() {
 		Assertion::A1 => {
 			#[cfg(test)]
@@ -291,7 +291,7 @@ where
 				params,
 				context.assertion_repository.clone(),
 			)?;
-			vc_logs = result.1;
+			vc_logs = Some(result.1);
 			Ok(result.0)
 		},
 	}?;
@@ -348,9 +348,8 @@ where
 
 	Ok((
 		credential_str.as_bytes().to_vec(),
-		vc_logs
-			.iter()
-			.flat_map(|s| s.as_bytes().iter().cloned().chain(once(b'\n')))
-			.collect(),
+		vc_logs.map(|v| {
+			v.iter().flat_map(|s| s.as_bytes().iter().cloned().chain(once(b'\n'))).collect()
+		}),
 	))
 }
