@@ -43,7 +43,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			let tick = params.get("tick").unwrap_or(&default).as_str();
 			let address = params.get("address").unwrap_or(&default).as_str();
 
-			if offset != "0" {
+			if !offset.is_empty() && offset != "0" {
 				return Response::builder().body(EMPTY_RESPONSE.to_string())
 			}
 
