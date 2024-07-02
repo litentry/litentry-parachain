@@ -37,7 +37,7 @@ pub fn build<
 	let result = executor
 		.execute(
 			execution_params.smart_contract_id,
-			execution_params.smart_contract_params.map(|v| v.into()).unwrap_or(vec![]),
+			execution_params.smart_contract_params.map(|v| v.into()).unwrap_or_default(),
 			&req.identities,
 		)
 		.map_err(|e| {
@@ -73,7 +73,7 @@ pub fn build<
 				result.meet,
 			);
 
-			let logs: Vec<String> = match params.clone().return_log {
+			let logs: Vec<String> = match params.return_log {
 				Some(true) => DYNAMIC_ASSERTION_LOGS.with(|v| v.borrow().iter().cloned().collect()),
 				_ => vec![],
 			};

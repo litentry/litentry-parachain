@@ -369,8 +369,8 @@ fn print_vc(key: &RequestAesKey, mut vc: RequestVCResult) {
 	println!("----Generated VC-----");
 	println!("{}", credential_str);
 	if let Some(mut vc_logs) = vc.vc_logs {
-		let decrypted_logs = aes_decrypt(&key, &mut vc_logs).unwrap();
-		if decrypted_logs.len() > 0 {
+		let decrypted_logs = aes_decrypt(key, &mut vc_logs).unwrap();
+		if !decrypted_logs.is_empty() {
 			let logs_str = String::from_utf8(decrypted_logs).expect("Found invalid UTF-8");
 			println!("----VC Logging-----");
 			println!("{}", logs_str);

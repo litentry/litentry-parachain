@@ -42,7 +42,6 @@ use std::{
 	iter::once,
 	string::{String, ToString},
 	sync::Arc,
-	vec,
 	vec::Vec,
 };
 
