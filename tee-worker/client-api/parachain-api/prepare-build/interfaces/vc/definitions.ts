@@ -45,9 +45,39 @@ export default {
             pre_mutated_id_graph: "AesOutput",
             pre_id_graph_hash: "H256",
         },
+        VCMPError: {
+            _enum: {
+                RequestVCFailed: "(Assertion, ErrorDetail)",
+                UnclassifiedError: "(ErrorDetail)",
+            },
+        },
+        RequestVcErrorDetail: {
+            _enum: {
+                UnexpectedCall: "String",
+                DuplicateAssertionRequest: "Null",
+                ShieldingKeyRetrievalFailed: "String", // Stringified itp_sgx_crypto::Error
+                RequestPayloadDecodingFailed: "Null",
+                SidechainDataRetrievalFailed: "String", // Stringified itp_stf_state_handler::Error
+                IdentityAlreadyLinked: "Null",
+                NoEligibleIdentity: "Null",
+                InvalidSignerAccount: "Null",
+                UnauthorizedSigner: "Null",
+                AssertionBuildFailed: "VCMPError",
+                MissingAesKey: "Null",
+                MrEnclaveRetrievalFailed: "Null",
+                EnclaveSignerRetrievalFailed: "Null",
+                SignatureVerificationFailed: "Null",
+                ConnectionHashNotFound: "String",
+                MetadataRetrievalFailed: "String", // Stringified itp_node_api_metadata_provider::Error
+                InvalidMetadata: "String", // Stringified itp_node_api_metadata::Error
+                TrustedCallSendingFailed: "String", // Stringified mpsc::SendError<(H256, TrustedCall)>
+                CallSendingFailed: "String",
+                ExtrinsicConstructionFailed: "String", // Stringified itp_extrinsics_factory::Error
+                ExtrinsicSendingFailed: "String", // Stringified sgx_status_t
+            },
+        },
         RequestVcResultOrError: {
-            payload: "Vec<u8>",
-            is_error: "bool",
+            result: "Result<Vec<u8>, RequestVcErrorDetail>",
             idx: "u8",
             len: "u8",
         },
