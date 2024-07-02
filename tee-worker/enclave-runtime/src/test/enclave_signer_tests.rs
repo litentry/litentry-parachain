@@ -35,7 +35,7 @@ use itp_stf_primitives::{
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use itp_types::{parentchain::ParentchainId, RsaRequest};
+use itp_types::RsaRequest;
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;

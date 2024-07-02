@@ -20,7 +20,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use frame_system::ensure_signed;
 pub use pallet::*;
 use sp_std::vec::Vec;
 
@@ -56,6 +55,9 @@ pub mod pallet {
 			+ core::fmt::Debug
 			+ parity_scale_codec::FullCodec
 			+ TypeInfo;
+
+		/// Only a member of the Developers Collective can deploy the contract
+		type ContractDevOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	/// Map for storing assertion smart contract bytecode alongside with additional secrets
@@ -86,7 +88,7 @@ pub mod pallet {
 			byte_code: Vec<u8>,
 			secrets: Vec<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
-			ensure_signed(origin)?;
+			let _ = T::ContractDevOrigin::ensure_origin(origin)?;
 			ensure!(!Assertions::<T>::contains_key(id), Error::<T>::AssertionExists);
 			Assertions::<T>::insert(
 				id,
