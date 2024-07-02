@@ -266,10 +266,13 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,
@@ -296,10 +299,13 @@ fn run_vc_issuance() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,

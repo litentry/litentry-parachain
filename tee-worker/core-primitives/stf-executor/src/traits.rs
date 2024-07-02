@@ -48,8 +48,8 @@ where
 		shard: &ShardIdentifier,
 	) -> Result<TCS>;
 
-	// litentry
-	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
+	// litentry: sign an opaque payload
+	fn sign(&self, payload: &[u8]) -> Result<Vec<u8>>;
 }
 
 /// Proposes a state update to `Externalities`.
