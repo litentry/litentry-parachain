@@ -28,5 +28,5 @@ pub struct DynamicParams {
 	// abi encoded smart contract params
 	pub smart_contract_params: Option<DynamicContractParams>,
 	// true to return contract log
-	pub return_log: Option<bool>,
+	pub return_log: bool,
 }

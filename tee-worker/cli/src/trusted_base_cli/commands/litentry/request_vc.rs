@@ -673,7 +673,7 @@ impl Command {
 				Ok(Assertion::Dynamic(DynamicParams {
 					smart_contract_id: H160::from(id_bytes),
 					smart_contract_params,
-					return_log: arg.return_log,
+					return_log: arg.return_log.unwrap_or_default(),
 				}))
 			},
 		}

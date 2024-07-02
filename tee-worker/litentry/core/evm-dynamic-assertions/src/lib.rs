@@ -49,11 +49,10 @@ use lc_dynamic_assertion::{
 	Web3Network,
 };
 use std::{
-	cell::RefCell,
 	collections::BTreeMap,
 	string::{String, ToString},
 	sync::Arc,
-	thread_local, vec,
+	vec,
 	vec::Vec,
 };
 
@@ -71,15 +70,14 @@ pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
-thread_local! {
-	pub static DYNAMIC_ASSERTION_LOGS: RefCell<Vec<String>> = RefCell::new(Vec::new());
-}
-
 pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
 }
 
-pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitReason, Vec<u8>) {
+pub fn execute_smart_contract(
+	byte_code: Vec<u8>,
+	input_data: Vec<u8>,
+) -> (ExitReason, Vec<u8>, Vec<String>) {
 	// prepare EVM runtime
 	let config = prepare_config();
 	let vicinity = prepare_memory();
@@ -87,7 +85,7 @@ pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitR
 	let mut backend = MemoryBackend::new(&vicinity, state);
 	let metadata = StackSubstateMetadata::new(u64::MAX, &config);
 	let state = MemoryStackState::new(metadata, &mut backend);
-	let precompiles = Precompiles {};
+	let precompiles = Precompiles { contract_logs: Vec::new().into() };
 	let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
 	// caller, just an unused account
@@ -99,7 +97,10 @@ pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitR
 		executor.transact_create(caller, U256::zero(), byte_code, u64::MAX, Vec::new());
 
 	// call assertion smart contract
-	executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new())
+	let (reason, data) =
+		executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new());
+
+	(reason, data, precompiles.contract_logs.take())
 }
 
 impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
@@ -126,7 +127,14 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 				decode_result(&call_result.1)
 					.map_err(|_| "Could not decode evm assertion execution result")?;
 
-			Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+			Ok(AssertionResult {
+				description,
+				assertion_type,
+				assertions,
+				schema_url,
+				meet,
+				contract_logs: call_result.2,
+			})
 		} else {
 			Err(std::format!("Fail to execution evm dynamic assertion: {:?}", call_result.0))
 		}

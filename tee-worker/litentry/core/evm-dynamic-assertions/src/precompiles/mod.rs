@@ -35,7 +35,7 @@ use evm::executor::stack::{
 	IsPrecompileResult, PrecompileFailure, PrecompileHandle, PrecompileOutput, PrecompileSet,
 };
 use itc_rest_client::http_client::HttpClient;
-use std::result::Result as StdResult;
+use std::{cell::RefCell, result::Result as StdResult, string::String, vec::Vec};
 
 mod hex_to_number;
 mod http_get;
@@ -53,7 +53,9 @@ mod mocks;
 
 pub type PrecompileResult = StdResult<PrecompileOutput, PrecompileFailure>;
 
-pub struct Precompiles();
+pub struct Precompiles {
+	pub contract_logs: RefCell<Vec<String>>,
+}
 
 impl PrecompileSet for Precompiles {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
@@ -76,7 +78,7 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1005) => Some(http_post_string(handle.input().to_vec(), client)),
 			a if a == hash(1006) => Some(http_get(handle.input().to_vec(), client)),
 			a if a == hash(1007) => Some(http_post(handle.input().to_vec(), client)),
-			a if a == hash(1050) => Some(logging(handle.input().to_vec())),
+			a if a == hash(1050) => Some(logging(handle.input().to_vec(), self)),
 			a if a == hash(1051) => Some(to_hex(handle.input().to_vec())),
 			a if a == hash(1052) => Some(identity_to_string(handle.input().to_vec())),
 			a if a == hash(1053) => Some(hex_to_number(handle.input().to_vec())),

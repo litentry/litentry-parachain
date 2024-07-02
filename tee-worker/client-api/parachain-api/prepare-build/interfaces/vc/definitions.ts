@@ -43,7 +43,7 @@ export default {
         DynamicParams: {
             smart_contract_id: "[u8;20]",
             smart_contract_params: "Option<Bytes>",
-            return_log: "Option<bool>",
+            return_log: "bool",
         },
         RequestVCResult: {
             vc_payload: "AesOutput",

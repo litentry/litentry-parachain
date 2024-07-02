@@ -89,13 +89,13 @@ where
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
-		let vc_result = result;
+		let vc_payload = result.0;
 		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
 				enclave_signer_account.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
-				vc_result,
+				vc_payload,
 				self.req.maybe_key,
 				self.req.should_create_id_graph,
 				self.req.req_ext_hash,

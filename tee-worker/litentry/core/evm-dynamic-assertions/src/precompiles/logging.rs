@@ -16,7 +16,7 @@
 
 use crate::{
 	failure_precompile_output, precompiles::PrecompileResult, success_precompile_output,
-	DYNAMIC_ASSERTION_LOGS,
+	Precompiles,
 };
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -39,7 +39,7 @@ pub const LOGGING_LEVEL_WARN: u8 = 2;
 pub const LOGGING_LEVEL_ERROR: u8 = 3;
 pub const LOGGING_LEVEL_FATAL: u8 = 4;
 
-pub fn logging(input: Vec<u8>) -> PrecompileResult {
+pub fn logging(input: Vec<u8>, precompiles: &Precompiles) -> PrecompileResult {
 	let decoded =
 		match ethabi::decode(&[ethabi::ParamType::Uint(8), ethabi::ParamType::String], &input) {
 			Ok(d) => d,
@@ -64,20 +64,18 @@ pub fn logging(input: Vec<u8>) -> PrecompileResult {
 		},
 	};
 
-	contract_logging(level, message);
+	contract_logging(precompiles, level, message);
 
 	Ok(success_precompile_output(ethabi::Token::Bool(true)))
 }
 
-pub fn contract_logging(level: u8, message: String) {
-	DYNAMIC_ASSERTION_LOGS.with(|logs| {
-		logs.borrow_mut().push(format!(
-			"[{} {}] {}",
-			now().to_rfc3339_opts(SecondsFormat::Micros, true),
-			loggin_level_to_string(level),
-			message
-		));
-	});
+pub fn contract_logging(precompiles: &Precompiles, level: u8, message: String) {
+	precompiles.contract_logs.borrow_mut().push(format!(
+		"[{} {}] {}",
+		now().to_rfc3339_opts(SecondsFormat::Micros, true),
+		loggin_level_to_string(level),
+		message
+	));
 }
 
 fn loggin_level_to_string(level: u8) -> String {
@@ -115,7 +113,7 @@ pub mod test {
 	use crate::{
 		failure_precompile_output,
 		precompiles::logging::{logging, LOGGING_LEVEL_INFO},
-		success_precompile_output, DYNAMIC_ASSERTION_LOGS,
+		success_precompile_output, Precompiles,
 	};
 	use ethabi::{encode, Token};
 
@@ -128,13 +126,12 @@ pub mod test {
 		]);
 
 		// when
-		let result = logging(encoded).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = logging(encoded, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::Bool(true)), result);
-		DYNAMIC_ASSERTION_LOGS.with(|logs| {
-			assert_eq!(logs.borrow_mut().len(), 1);
-		});
+		assert_eq!(precompiles.contract_logs.borrow_mut().len(), 1);
 	}
 
 	#[test]
@@ -143,13 +140,12 @@ pub mod test {
 		let encoded = encode(&[Token::String("This is an info message".into())]);
 
 		// when
-		let result = logging(encoded).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = logging(encoded, &precompiles).unwrap();
 
 		// then
 		assert_eq!(failure_precompile_output(Token::Bool(Default::default())), result);
-		DYNAMIC_ASSERTION_LOGS.with(|logs| {
-			assert_eq!(logs.borrow_mut().len(), 0);
-		});
+		assert_eq!(precompiles.contract_logs.borrow_mut().len(), 0);
 	}
 }
 
@@ -166,7 +162,7 @@ pub mod integration_test {
 	pub fn test_logging() {
 		let byte_code = hex::decode(BYTE_CODE).unwrap();
 
-		execute_smart_contract(
+		let result = execute_smart_contract(
 			byte_code.clone(),
 			prepare_function_call_input(
 				FUNCTION_HASH,
@@ -177,8 +173,9 @@ pub mod integration_test {
 			)
 			.unwrap(),
 		);
+		assert_eq!(&result.2[0][29..], "DEBUG] This is a debug message");
 
-		execute_smart_contract(
+		let result = execute_smart_contract(
 			byte_code.clone(),
 			prepare_function_call_input(
 				FUNCTION_HASH,
@@ -189,8 +186,9 @@ pub mod integration_test {
 			)
 			.unwrap(),
 		);
+		assert_eq!(&result.2[0][29..], "INFO] This is an info message");
 
-		execute_smart_contract(
+		let result = execute_smart_contract(
 			byte_code.clone(),
 			prepare_function_call_input(
 				FUNCTION_HASH,
@@ -201,8 +199,9 @@ pub mod integration_test {
 			)
 			.unwrap(),
 		);
+		assert_eq!(&result.2[0][29..], "WARN] This is a warn message");
 
-		execute_smart_contract(
+		let result = execute_smart_contract(
 			byte_code.clone(),
 			prepare_function_call_input(
 				FUNCTION_HASH,
@@ -213,8 +212,9 @@ pub mod integration_test {
 			)
 			.unwrap(),
 		);
+		assert_eq!(&result.2[0][29..], "ERROR] This is a error message");
 
-		execute_smart_contract(
+		let result = execute_smart_contract(
 			byte_code,
 			prepare_function_call_input(
 				FUNCTION_HASH,
@@ -225,14 +225,6 @@ pub mod integration_test {
 			)
 			.unwrap(),
 		);
-
-		DYNAMIC_ASSERTION_LOGS.with(|logs| {
-			assert_eq!(logs.borrow_mut().len(), 5);
-			assert_eq!(&logs.borrow_mut()[0][29..], "DEBUG] This is a debug message");
-			assert_eq!(&logs.borrow_mut()[1][29..], "INFO] This is an info message");
-			assert_eq!(&logs.borrow_mut()[2][29..], "WARN] This is a warn message");
-			assert_eq!(&logs.borrow_mut()[3][29..], "ERROR] This is a error message");
-			assert_eq!(&logs.borrow_mut()[4][29..], "FATAL] This is a fatal message");
-		});
+		assert_eq!(&result.2[0][29..], "FATAL] This is a fatal message");
 	}
 }

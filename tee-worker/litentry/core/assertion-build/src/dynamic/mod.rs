@@ -18,7 +18,7 @@ use crate::{dynamic::repository::SmartContractByteCode, *};
 use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
 use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
-use lc_evm_dynamic_assertions::{EvmAssertionExecutor, DYNAMIC_ASSERTION_LOGS};
+use lc_evm_dynamic_assertions::EvmAssertionExecutor;
 use lc_stf_task_sender::AssertionBuildRequest;
 use log::error;
 use primitive_types::H160;
@@ -73,11 +73,7 @@ pub fn build<
 				result.meet,
 			);
 
-			let logs: Vec<String> = match params.return_log {
-				Some(true) => DYNAMIC_ASSERTION_LOGS.with(|v| v.borrow().iter().cloned().collect()),
-				_ => vec![],
-			};
-			Ok((credential_unsigned, logs))
+			Ok((credential_unsigned, if params.return_log { result.contract_logs } else { vec![] }))
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
@@ -116,7 +112,7 @@ pub mod assertion_test {
 		let dynamic_params = DynamicParams {
 			smart_contract_id: hash(1),
 			smart_contract_params: None,
-			return_log: None,
+			return_log: false,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -156,7 +152,7 @@ pub mod assertion_test {
 		let dynamic_params = DynamicParams {
 			smart_contract_id: hash(0),
 			smart_contract_params: None,
-			return_log: None,
+			return_log: false,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -197,7 +193,7 @@ pub mod assertion_test {
 		let dynamic_params = DynamicParams {
 			smart_contract_id: hash(2),
 			smart_contract_params: None,
-			return_log: None,
+			return_log: false,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -235,7 +231,7 @@ pub mod assertion_test {
 		let dynamic_params = DynamicParams {
 			smart_contract_id: hash(0),
 			smart_contract_params: None,
-			return_log: None,
+			return_log: false,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -286,7 +282,7 @@ pub mod assertion_test {
 			smart_contract_params: Some(DynamicContractParams::truncate_from(ethabi::encode(&[
 				ethabi::Token::String("ordi".into()),
 			]))),
-			return_log: None,
+			return_log: false,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
