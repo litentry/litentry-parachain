@@ -89,6 +89,14 @@ pub mod pallet {
 		EnclaveRemoved {
 			who: T::AccountId,
 		},
+		EnclaveAuthorized {
+			worker_type: WorkerType,
+			mrenclave: MrEnclave,
+		},
+		EnclaveUnauthorized {
+			worker_type: WorkerType,
+			mrenclave: MrEnclave,
+		},
 		OpaqueTaskPosted {
 			request: RsaRequest,
 		},
@@ -100,15 +108,6 @@ pub mod pallet {
 		},
 		SidechainBlockFinalized {
 			who: T::AccountId,
-			sidechain_block_number: SidechainBlockNumber,
-		},
-		ScheduledEnclaveSet {
-			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
-			mrenclave: MrEnclave,
-		},
-		ScheduledEnclaveRemoved {
-			worker_type: WorkerType,
 			sidechain_block_number: SidechainBlockNumber,
 		},
 	}
@@ -147,10 +146,12 @@ pub mod pallet {
 		/// The worker mode is unexpected, because e.g. a non-sidechain worker calls
 		/// sidechain specific extrinsic
 		UnexpectedWorkerMode,
-		/// Can not found the desired scheduled enclave.
-		ScheduledEnclaveNotExist,
-		/// Enclave not in the scheduled list, therefore unexpected.
-		EnclaveNotInSchedule,
+		/// The authorized enclave doesn't exist.
+		AuthorizedEnclaveNotExist,
+		/// The authorized enclave already exists.
+		AuthorizedEnclaveAlreadyExist,
+		/// Enclave not authorized upon registration.
+		EnclaveNotAuthorized,
 		/// The provided collateral data is invalid.
 		CollateralInvalid,
 		/// MaxEnclaveIdentifier overflow.
@@ -219,10 +220,38 @@ pub mod pallet {
 	// Theorectically we could always push the enclave in `register_enclave`, but we want to
 	// limit the mrenclave that can be registered, as the parachain is supposed to process enclaves
 	// with specific mrenclaves.
+	//
+	// Update:
+	// this storage is deprecated and will be removed (discarded) once we move to litentry-parachain
+	// see https://linear.app/litentry/issue/P-882/simplify-scheduledenclave-usage
+	//
+	// use `AuthorizedEnclave` instead
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
 		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave, OptionQuery>;
+
+	// Keep trace of a list of authorized (mr-)enclaves, enclave registration with non-authorized
+	// mrenclave will be rejected
+	//
+	// `T::MaxEnclaveIdentifier` is used to bound the size as it makes sense to keep pace with the
+	// enclave registry.
+	//
+	// Removing an mrenclave within `AuthorizedEnclave`` will cause the enclave to be removed from
+	// the EnclaveRegistry too, which stops the sidechain from producing blocks as it will never be
+	// able to claim the slot. Additionally, the vc-task-runner is informed to stop operating too.
+	//
+	// In this case, restarting the worker won't help, as the mrenclave is not authorized anymore,
+	// so the registration will fail in the first place.
+	#[pallet::storage]
+	#[pallet::getter(fn authorized_enclave)]
+	pub type AuthorizedEnclave<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		WorkerType,
+		BoundedVec<MrEnclave, T::MaxEnclaveIdentifier>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn latest_sidechain_block_confirmation)]
@@ -372,39 +401,41 @@ pub mod pallet {
 
 		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn set_scheduled_enclave(
+		pub fn force_add_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
 			mrenclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
-			ScheduledEnclave::<T>::insert((worker_type, sidechain_block_number), mrenclave);
-			Self::deposit_event(Event::ScheduledEnclaveSet {
-				worker_type,
-				sidechain_block_number,
-				mrenclave,
-			});
+
+			AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+				ensure!(!v.contains(&mrenclave), Error::<T>::AuthorizedEnclaveAlreadyExist);
+				v.try_push(mrenclave.clone())
+					.map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
+			})?;
+
+			Self::deposit_event(Event::EnclaveAuthorized { worker_type, mrenclave });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(7)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn remove_scheduled_enclave(
+		pub fn force_remove_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
+			mrenclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
-			Self::ensure_admin_or_root(origin)?;
-			ensure!(
-				ScheduledEnclave::<T>::contains_key((worker_type, sidechain_block_number)),
-				Error::<T>::ScheduledEnclaveNotExist
-			);
-			ScheduledEnclave::<T>::remove((worker_type, sidechain_block_number));
-			Self::deposit_event(Event::ScheduledEnclaveRemoved {
-				worker_type,
-				sidechain_block_number,
-			});
+			Self::ensure_admin_or_root(origin.clone())?;
+
+			AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+				ensure!(v.contains(&mrenclave), Error::<T>::AuthorizedEnclaveNotExist);
+				v.retain(|e| e != &mrenclave);
+				Ok::<(), DispatchErrorWithPostInfo>(())
+			})?;
+
+			Self::force_remove_enclave_by_mrenclave(origin, mrenclave.clone())?;
+
+			Self::deposit_event(Event::EnclaveUnauthorized { worker_type, mrenclave });
 			Ok(Pays::No.into())
 		}
 
@@ -464,15 +495,19 @@ pub mod pallet {
 						return Err(Error::<T>::InvalidSgxMode.into())
 					}
 					ensure!(
-						ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
-						Error::<T>::EnclaveNotInSchedule
+						AuthorizedEnclave::<T>::get(worker_type).contains(&enclave.mrenclave),
+						Error::<T>::EnclaveNotAuthorized
 					);
 				},
 				OperationalMode::Development => {
-					// populate the registry if the entry doesn't exist
-					if !ScheduledEnclave::<T>::contains_key((worker_type, 0)) {
-						ScheduledEnclave::<T>::insert((worker_type, 0), enclave.mrenclave);
-					}
+					AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+						if !v.contains(&enclave.mrenclave) {
+							v.try_push(enclave.mrenclave.clone())
+								.map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
+						} else {
+							Ok(())
+						}
+					})?;
 				},
 			};
 			Self::add_enclave(&sender, &enclave)?;
