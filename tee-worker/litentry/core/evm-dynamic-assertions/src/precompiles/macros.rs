@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::precompiles::logging::{contract_logging, LOGGING_LEVEL_DEBUG};
 use ethabi::Token;
 use itc_rest_client::http_client::SendHttpRequest;
 #[macro_export]
@@ -236,11 +235,7 @@ pub fn do_get<T: SendHttpRequest>(
 		},
 	};
 	match serde_json::from_slice(&resp.1) {
-		Ok(v) => {
-			// For debug purpose
-			contract_logging(LOGGING_LEVEL_DEBUG, std::format!("GET response body: {:?}", v));
-			Ok(v)
-		},
+		Ok(v) => Ok(v),
 		Err(e) => {
 			log::debug!("Could not parse json {:?}, reason: {:?}", resp.1, e);
 			Err(())
@@ -276,11 +271,7 @@ pub fn do_post<T: SendHttpRequest>(
 		},
 	};
 	match serde_json::from_slice(&resp.1) {
-		Ok(v) => {
-			// For debug purpose
-			contract_logging(LOGGING_LEVEL_DEBUG, std::format!("POST response body: {:?}", v));
-			Ok(v)
-		},
+		Ok(v) => Ok(v),
 		Err(e) => {
 			log::debug!("Could not parse json {:?}, reason: {:?}", resp.1, e);
 			Err(())
