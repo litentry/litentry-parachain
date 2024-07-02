@@ -65,10 +65,12 @@ pub mod pallet {
 		type MomentsPerDay: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		/// Maximum number of enclave identifiers allowed to be registered for a specific
-		/// `worker_type`
+		/// Maximum number of enclave identifiers allowed to be registered for a given `worker_type`
 		#[pallet::constant]
 		type MaxEnclaveIdentifier: Get<u32>;
+		/// Maximum number of authorized enclave for a given `worker_type`
+		#[pallet::constant]
+		type MaxAuthorizedEnclave: Get<u32>;
 	}
 
 	// TODO: maybe add more sidechain lifecycle events
@@ -156,6 +158,8 @@ pub mod pallet {
 		CollateralInvalid,
 		/// MaxEnclaveIdentifier overflow.
 		MaxEnclaveIdentifierOverflow,
+		/// MaxAuthorizedEnclave overflow.
+		MaxAuthorizedEnclaveOverflow,
 		/// A proposed block is unexpected.
 		ReceivedUnexpectedSidechainBlock,
 		/// The value for the next finalization candidate is invalid.
@@ -234,9 +238,6 @@ pub mod pallet {
 	// Keep trace of a list of authorized (mr-)enclaves, enclave registration with non-authorized
 	// mrenclave will be rejected
 	//
-	// `T::MaxEnclaveIdentifier` is used to bound the size as it makes sense to keep pace with the
-	// enclave registry.
-	//
 	// Removing an mrenclave within `AuthorizedEnclave`` will cause the enclave to be removed from
 	// the EnclaveRegistry too, which stops the sidechain from producing blocks as it will never be
 	// able to claim the slot. Additionally, the vc-task-runner is informed to stop operating too.
@@ -249,7 +250,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		WorkerType,
-		BoundedVec<MrEnclave, T::MaxEnclaveIdentifier>,
+		BoundedVec<MrEnclave, T::MaxAuthorizedEnclave>,
 		ValueQuery,
 	>;
 
@@ -410,8 +411,7 @@ pub mod pallet {
 
 			AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
 				ensure!(!v.contains(&mrenclave), Error::<T>::AuthorizedEnclaveAlreadyExist);
-				v.try_push(mrenclave.clone())
-					.map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
+				v.try_push(mrenclave).map_err(|_| Error::<T>::MaxAuthorizedEnclaveOverflow)
 			})?;
 
 			Self::deposit_event(Event::EnclaveAuthorized { worker_type, mrenclave });
@@ -433,7 +433,7 @@ pub mod pallet {
 				Ok::<(), DispatchErrorWithPostInfo>(())
 			})?;
 
-			Self::force_remove_enclave_by_mrenclave(origin, mrenclave.clone())?;
+			Self::force_remove_enclave_by_mrenclave(origin, mrenclave)?;
 
 			Self::deposit_event(Event::EnclaveUnauthorized { worker_type, mrenclave });
 			Ok(Pays::No.into())
@@ -502,8 +502,8 @@ pub mod pallet {
 				OperationalMode::Development => {
 					AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
 						if !v.contains(&enclave.mrenclave) {
-							v.try_push(enclave.mrenclave.clone())
-								.map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
+							v.try_push(enclave.mrenclave)
+								.map_err(|_| Error::<T>::MaxAuthorizedEnclaveOverflow)
 						} else {
 							Ok(())
 						}

@@ -1012,6 +1012,7 @@ impl pallet_teebag::Config for Runtime {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<5>;
 }
 
 impl pallet_identity_management::Config for Runtime {
