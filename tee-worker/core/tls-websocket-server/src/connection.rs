@@ -146,21 +146,19 @@ where
 							self.connection_token.0, e
 						);
 					},
-				Err(e) => match e {
-					tungstenite::Error::ConnectionClosed => return Ok(true),
-					tungstenite::Error::AlreadyClosed => return Ok(true),
-					tungstenite::Error::Io(e) => match e.kind() {
-						io::ErrorKind::BrokenPipe => return Ok(true),
-						_ => error!(
-							"Failed to read message from web-socket (connection {}): {:?}",
-							self.connection_token.0, e
-						),
+				Err(e) =>
+					return match e {
+						tungstenite::Error::Io(e) if e.kind() == io::ErrorKind::WouldBlock =>
+							Ok(false),
+						_ => {
+							trace!(
+								"Error while reading web-socket message (connection {}): {:?}",
+								self.connection_token.0,
+								e
+							);
+							Ok(true)
+						},
 					},
-					_ => error!(
-						"Failed to read message from web-socket (connection {}): {:?}",
-						self.connection_token.0, e
-					),
-				},
 			}
 			trace!("Read successful for connection {}", self.connection_token.0);
 		} else {
