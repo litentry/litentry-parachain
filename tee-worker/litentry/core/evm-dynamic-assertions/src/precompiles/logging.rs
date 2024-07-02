@@ -33,6 +33,7 @@ use chrono::{offset::Utc as TzUtc, DateTime, SecondsFormat};
 use std::{format, string::String, vec::Vec};
 
 pub const LOGGING_LEVEL_DEBUG: u8 = 0;
+#[allow(dead_code)]
 pub const LOGGING_LEVEL_INFO: u8 = 1;
 pub const LOGGING_LEVEL_WARN: u8 = 2;
 pub const LOGGING_LEVEL_ERROR: u8 = 3;
