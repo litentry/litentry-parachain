@@ -143,6 +143,9 @@ where
 
 			let mut messages = vec![];
 			let mut is_closing = false;
+
+			// Looping over 'read_message' is merely a workaround for the unexpected behavior of mio event triggering.
+			// Final solution will be applied in P-907.
 			loop {
 				match web_socket.read_message() {
 					Ok(m) => messages.push(m),
@@ -157,6 +160,7 @@ where
 									"Failed to read message from web-socket (connection {}): {:?}",
 									self.connection_token.0, e
 								);
+								is_closing = true;
 							},
 						}
 						break
