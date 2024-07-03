@@ -466,7 +466,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 
 		if is_single_worker {
-			warn!("Running as single worker, skipping timestamp within slot check")
+			debug!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
@@ -476,19 +476,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			return None
 		}
 
-		if last_imported_integritee_header.is_some() {
-			println!(
-				"Syncing Parentchains: Litentry: {:?} TargetA: {:?}, TargetB: {:?}, Sidechain: {:?}",
-				latest_integritee_parentchain_header.number(),
-				maybe_latest_target_a_parentchain_header.map(|h| *h.number()),
-				maybe_latest_target_b_parentchain_header.map(|h| *h.number()),
-				proposing.block.block().header().block_number()
-			);
-		}
-
-		info!("Proposing sidechain block (number: {}, hash: {}) based on integritee parentchain block (number: {:?}, hash: {:?})",
-			proposing.block.block().header().block_number(), proposing.block.hash(),
-			latest_integritee_parentchain_header.number(), latest_integritee_parentchain_header.hash()
+		info!(
+			"Proposed sidechain block {} based on parentchain block {:?}",
+			proposing.block.block().header().block_number(),
+			latest_integritee_parentchain_header.number()
 		);
 
 		Some(SlotResult {

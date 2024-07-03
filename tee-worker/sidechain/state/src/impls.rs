@@ -34,7 +34,7 @@ where
 	type StateUpdate = StateUpdate;
 
 	fn apply_state_update(&mut self, state_payload: &Self::StateUpdate) -> Result<(), Error> {
-		info!("Current state size: {}", self.state().encoded_size());
+		debug!("Current state size: {}", self.state().encoded_size());
 		debug!("Current hash: {}", self.hash());
 		debug!("State_payload hash: {}", state_payload.state_hash_apriori());
 		debug!("self is: {:?}", &self);
