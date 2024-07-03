@@ -151,14 +151,13 @@ where
 					Ok(m) => messages.push(m),
 					Err(e) => {
 						match e {
-							tungstenite::Error::ConnectionClosed
-							| tungstenite::Error::AlreadyClosed => is_closing = true,
 							tungstenite::Error::Io(e)
 								if matches!(e.kind(), ErrorKind::WouldBlock) => {}, // no message to read
 							_ => {
-								error!(
+								trace!(
 									"Failed to read message from web-socket (connection {}): {:?}",
-									self.connection_token.0, e
+									self.connection_token.0,
+									e
 								);
 								is_closing = true;
 							},
