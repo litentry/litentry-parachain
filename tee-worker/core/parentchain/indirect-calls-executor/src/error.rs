@@ -51,8 +51,6 @@ pub enum Error {
 	VCMPHandlingError(VCMPError),
 	#[error("BatchAll handling error")]
 	BatchAllHandlingError,
-	#[error("EnclaveUnauthorized handling error")]
-	EnclaveUnauthorizedHandlingError,
 	#[error("AssertionCreated handling error: {0:?}")]
 	AssertionCreatedHandling(String),
 }

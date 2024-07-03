@@ -28,13 +28,9 @@ use itp_types::{
 	},
 	RsaRequest, H256,
 };
-use itp_utils::hex::ToHexPrefixed;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-use lc_vc_task_sender::pause_vc_task_sender;
-use litentry_primitives::{
-	Assertion, Identity, MrEnclave, ValidationData, Web3Network, WorkerType,
-};
+use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
@@ -45,27 +41,6 @@ pub struct ParentchainEventHandler {
 }
 
 impl ParentchainEventHandler {
-	fn unauthorize_enclave<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
-		executor: &Executor,
-		worker_type: WorkerType,
-		mrenclave: MrEnclave,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::Identity {
-			warn!("Ignore EnclaveAuthorized event due for non-identity worker");
-			return Ok(())
-		}
-
-		if mrenclave != executor.get_mrenclave()? {
-			warn!(
-				"Ignore EnclaveAuthorized event due for some other mrenclave: {}",
-				mrenclave.to_hex()
-			);
-			return Ok(())
-		}
-
-		pause_vc_task_sender().map_err(|_| Error::EnclaveUnauthorizedHandlingError)
-	}
-
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
 		account: &AccountId,
@@ -308,21 +283,6 @@ where
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
-		}
-
-		if let Ok(events) = events.get_enclave_unauthorized_events() {
-			debug!("Handling EnclaveUnauthorized events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found EnclaveUnauthorized event: {:?}", event);
-					let result =
-						Self::unauthorize_enclave(executor, event.worker_type, event.mrenclave);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::EnclaveUnauthorizedFailure)?;
 		}
 
 		if let Ok(events) = events.get_opaque_task_posted_events() {
