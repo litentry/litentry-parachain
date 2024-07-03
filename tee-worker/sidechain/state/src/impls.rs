@@ -23,7 +23,7 @@ use core::fmt::Debug;
 use frame_support::ensure;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_storage::keys::storage_value_key;
-use log::{debug, error, info};
+use log::*;
 use sp_io::{storage, KillStorageResult};
 
 impl<T: SgxExternalitiesTrait + Clone + StateHash + Debug> SidechainState for T

@@ -433,7 +433,11 @@ where
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
-		info!("Processing vc request for {}, assertion: {:?}", who.to_did(), assertion);
+		info!(
+			"Processing vc request for {}, assertion: {:?}",
+			who.to_did().unwrap_or_default(),
+			assertion
+		);
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
 			context
 				.state_handler
@@ -585,7 +589,7 @@ where
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|_| RequestVcErrorDetail::EnclaveSignerRetrievalFailed)?;
-		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
+		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who.clone());
 		tc_sender
 			.send((shard, c))
 			.map_err(|e| RequestVcErrorDetail::TrustedCallSendingFailed(e.to_string()))?;
@@ -595,12 +599,12 @@ where
 
 		if let Err(e) = context
 			.ocall_api
-			.update_metric(EnclaveMetric::VCBuildTime(assertion, start_time.elapsed()))
+			.update_metric(EnclaveMetric::VCBuildTime(assertion.clone(), start_time.elapsed()))
 		{
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
-		info!("Vc issued for {}, assertion: {:?}", who.to_did(), assertion);
+		info!("Vc issued for {}, assertion: {:?}", who.to_did().unwrap_or_default(), assertion);
 		Ok(res.encode())
 	} else {
 		// Would never come here.
