@@ -25,6 +25,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
@@ -35,7 +36,7 @@ use litentry_primitives::{
 	VCMPError,
 };
 use log::*;
-use sp_core::H160;
+use sp_core::{Pair, H160};
 use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
@@ -83,9 +84,9 @@ where
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
 		let vc_payload = result;
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_payload,
@@ -107,9 +108,9 @@ where
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				Some(self.req.who.clone()),
 				error,
 				self.req.req_ext_hash,
@@ -276,16 +277,17 @@ where
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 
-		Assertion::Dynamic(smart_contract_id) => lc_assertion_build::dynamic::build(
-			req,
-			smart_contract_id,
-			context.assertion_repository.clone(),
-		),
+		Assertion::Dynamic(smart_contract_id, smart_contract_params) =>
+			lc_assertion_build::dynamic::build(
+				req,
+				smart_contract_id,
+				smart_contract_params,
+				context.assertion_repository.clone(),
+			),
 	}?;
 
 	// post-process the credential
-	let signer = context.enclave_signer.as_ref();
-	let enclave_account = signer.get_enclave_account().map_err(|e| {
+	let enclave_signer_account = context.enclave_signer.get_enclave_account().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -298,13 +300,12 @@ where
 	credential.credential_subject.endpoint =
 		context.data_provider_config.credential_endpoint.to_string();
 
-	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
-
 	if let Some(schema) = credential_schema::get_schema_url(&req.assertion) {
 		credential.credential_schema.id = schema;
 	}
 
-	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
+	let issuer_identity: Identity = context.enclave_account.public().into();
+	credential.issuer.id = issuer_identity.to_did().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -315,15 +316,14 @@ where
 		.to_json()
 		.map_err(|_| VCMPError::RequestVCFailed(req.assertion.clone(), ErrorDetail::ParseError))?;
 	let payload = json_string.as_bytes();
-	let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
+	let sig = context.enclave_signer.sign(payload).map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 		)
 	})?;
-	debug!("Credential Payload signature: {:?}", sig);
 
-	credential.add_proof(&sig, &enclave_account);
+	credential.add_proof(&sig, account_id_to_string(&enclave_signer_account));
 	credential.validate().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),

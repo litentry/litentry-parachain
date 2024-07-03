@@ -23,7 +23,6 @@ use crate::{
 			direct_call_sign_ethereum::RequestDirectCallSignEthereumCommand,
 		},
 		get_shard::GetShardCommand,
-		get_shard_vault::GetShardVaultCommand,
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
@@ -67,9 +66,6 @@ pub enum TrustedBaseCommand {
 	/// get shard for this worker
 	GetShard(GetShardCommand),
 
-	/// get shard vault for shielding (if defined for this worker)
-	GetShardVault(GetShardVaultCommand),
-
 	/// sign bitcoin transaction using custodian wallet
 	RequestDirectCallSignBitcoin(RequestDirectCallSignBitcoinCommand),
 
@@ -88,7 +84,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShard(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::GetShardVault(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestDirectCallSignBitcoin(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestDirectCallSignEthereum(cmd) => cmd.run(cli, trusted_cli),
 		}

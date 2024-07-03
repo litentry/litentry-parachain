@@ -99,6 +99,10 @@ impl NodeMetadata {
 		}
 	}
 
+	pub fn get_metadata(&self) -> Option<&Metadata> {
+		self.node_metadata.as_ref()
+	}
+
 	/// Return the substrate chain runtime version.
 	pub fn get_runtime_version(&self) -> u32 {
 		self.runtime_spec_version

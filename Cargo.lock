@@ -1208,7 +1208,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "strum 0.26.2",
+ "strum 0.26.3",
  "strum_macros 0.26.4",
 ]
 
@@ -2272,15 +2272,15 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "0.99.17"
+version = "0.99.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
+checksum = "5f33878137e4dafd7fa914ad4e259e18a4e8e532b9617a2d0150262bf53abfce"
 dependencies = [
  "convert_case",
  "proc-macro2",
  "quote",
  "rustc_version",
- "syn 1.0.109",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -5513,7 +5513,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -5612,7 +5611,6 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
@@ -7141,22 +7139,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-drop3"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -9924,9 +9906,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.85"
+version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22244ce15aa966053a896d1accb3a6e68469b97c7f33f284b99f0d576879fc23"
+checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
 ]
@@ -10556,7 +10538,6 @@ dependencies = [
  "pallet-bridge-transfer",
  "pallet-collective",
  "pallet-democracy",
- "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-assertions",
@@ -13512,9 +13493,9 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.26.2"
+version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
+checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
 
 [[package]]
 name = "strum_macros"

@@ -34,7 +34,7 @@ use itp_node_api::metadata::{
 };
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::{
 	traits::{IndirectExecutor, TrustedCallSigning, TrustedCallVerification},
 	types::AccountId,
@@ -135,7 +135,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
@@ -250,7 +250,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
@@ -333,13 +333,13 @@ mod test {
 	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 	#[test]
-	fn ensure_empty_extrinsic_vec_triggers_zero_filled_merkle_root() {
+	fn ensure_empty_events_vec_triggers_zero_filled_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([38u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = Vec::new();
+		let events = Vec::new();
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 		let expected_call =
@@ -347,7 +347,7 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then
@@ -355,13 +355,13 @@ mod test {
 	}
 
 	#[test]
-	fn ensure_non_empty_extrinsic_vec_triggers_non_zero_merkle_root() {
+	fn ensure_non_empty_events_vec_triggers_non_zero_merkle_root() {
 		// given
 		let dummy_metadata = NodeMetadataMock::new();
 		let (indirect_calls_executor, _, _) = test_fixtures([39u8; 32], dummy_metadata.clone());
 
 		let block_hash = H256::from([1; 32]);
-		let extrinsics = vec![H256::from([4; 32]), H256::from([9; 32])];
+		let events = vec![H256::from([4; 32]), H256::from([9; 32])];
 		let parentchain_block_processed_call_indexes =
 			dummy_metadata.parentchain_block_processed_call_indexes().unwrap();
 
@@ -370,7 +370,7 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
+			.create_processed_parentchain_block_call::<Block>(block_hash, events, 1u32)
 			.unwrap();
 
 		// then

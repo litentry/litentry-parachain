@@ -18,21 +18,18 @@
 #[cfg(feature = "development")]
 use crate::initialization::global_components::GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT;
 use crate::{
-	error::{Error, Result},
+	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
-	shard_vault::get_shard_vault_internal,
 	sync::{EnclaveLock, EnclaveStateRWLock},
 	utils::{
 		get_extrinsic_factory_from_integritee_solo_or_parachain,
 		get_extrinsic_factory_from_target_a_solo_or_parachain,
 		get_extrinsic_factory_from_target_b_solo_or_parachain,
 		get_stf_executor_from_integritee_solo_or_parachain,
-		get_stf_executor_from_target_a_solo_or_parachain,
-		get_stf_executor_from_target_b_solo_or_parachain,
 		get_triggered_dispatcher_from_integritee_solo_or_parachain,
 		get_triggered_dispatcher_from_target_a_solo_or_parachain,
 		get_triggered_dispatcher_from_target_b_solo_or_parachain,
@@ -58,10 +55,7 @@ use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
-use itp_types::{
-	parentchain::{ParentchainCall, ParentchainId},
-	Block, OpaqueCall, H256,
-};
+use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,
@@ -171,14 +165,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let shards = state_handler.list_shards()?;
 
-	let (_, vault_target) =
-		get_shard_vault_internal(*shards.get(0).ok_or(Error::NoShardAssigned)?)?;
-	trace!("using StfExecutor from {:?} parentchain", vault_target);
-	let stf_executor = match vault_target {
-		ParentchainId::Litentry => get_stf_executor_from_integritee_solo_or_parachain()?,
-		ParentchainId::TargetA => get_stf_executor_from_target_a_solo_or_parachain()?,
-		ParentchainId::TargetB => get_stf_executor_from_target_b_solo_or_parachain()?,
-	};
+	let stf_executor = get_stf_executor_from_integritee_solo_or_parachain()?;
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 

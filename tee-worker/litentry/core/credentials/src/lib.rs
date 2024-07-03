@@ -38,8 +38,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::{from_iso8601, now_as_iso8601};
-use itp_types::{AccountId, BlockNumber as SidechainBlockNumber};
-use itp_utils::stringify::account_id_to_string;
+use itp_types::BlockNumber as SidechainBlockNumber;
 use litentry_primitives::{Identity, ParentchainBlockNumber, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
@@ -123,7 +122,6 @@ pub struct IssuerRuntimeVersion {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
-	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
 	pub mrenclave: String,
@@ -133,10 +131,6 @@ pub struct Issuer {
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
 		self.mrenclave.is_empty() || self.mrenclave.is_empty()
-	}
-
-	pub fn set_id(&mut self, id: &AccountId) {
-		self.id = account_id_to_string(id);
 	}
 }
 
@@ -191,19 +185,20 @@ pub struct Proof {
 	/// Purpose of this proof, generally it is expected as a fixed value, such as 'assertionMethod'
 	pub proof_purpose: String,
 	/// The digital signature value(signature of hash)
+	/// TODO: it should be base-encoded value according to https://www.w3.org/TR/vc-data-integrity/#proofs
 	pub proof_value: String,
-	/// The public key from Issuer
+	/// Verification method, here it's the public key of the VC signer
 	pub verification_method: String,
 }
 
 impl Proof {
-	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
+	pub fn new(sig: &Vec<u8>, verification_method: String) -> Self {
 		Proof {
 			created: now_as_iso8601(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
-			verification_method: account_id_to_string(issuer),
+			verification_method,
 		}
 	}
 
@@ -274,8 +269,8 @@ impl Credential {
 		Ok(vc)
 	}
 
-	pub fn add_proof(&mut self, sig: &Vec<u8>, issuer: &AccountId) {
-		self.proof = Some(Proof::new(sig, issuer));
+	pub fn add_proof(&mut self, sig: &Vec<u8>, verification_method: String) {
+		self.proof = Some(Proof::new(sig, verification_method));
 	}
 
 	fn generate_id(&mut self) {
@@ -432,7 +427,7 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_assertion_a6(&mut self, min: u32, max: u32) {
+	pub fn add_assertion_a6(&mut self, value: bool, min: u32, max: u32) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
@@ -441,7 +436,7 @@ impl Credential {
 
 		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {
@@ -571,6 +566,7 @@ pub fn format_assertion_to_date() -> String {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use itp_types::AccountId;
 
 	#[test]
 	fn eval_simple_success() {

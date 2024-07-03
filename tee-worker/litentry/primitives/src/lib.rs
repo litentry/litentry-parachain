@@ -72,10 +72,10 @@ pub use parentchain_primitives::{
 	},
 	identity::*,
 	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
-	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
-	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
-	VCMPError, MINUTES,
+	BlockNumber as ParentchainBlockNumber, DynamicParams, ErrorDetail, ErrorString,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
+	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, VCMPError, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

@@ -43,4 +43,12 @@ impl CreateExtrinsics for ExtrinsicsFactoryMock {
 		// 	.collect())
 		Ok(Vec::new())
 	}
+
+	fn create_batch_extrinsic(
+		&self,
+		calls: Vec<OpaqueCall>,
+		extrinsics_params: Option<ParentchainAdditionalParams>,
+	) -> Result<OpaqueExtrinsic> {
+		Ok(OpaqueExtrinsic::from_bytes(Vec::new().as_slice()).unwrap())
+	}
 }

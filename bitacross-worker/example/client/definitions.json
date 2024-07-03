@@ -57,6 +57,10 @@
       [
         "TaprootSpendable",
         "(Vec<u8>, [u8; 32])"
+      ],
+      [
+        "WithTweaks",
+        "(Vec<u8>, Vec<([u8; 32], bool)>)"
       ]
     ]
   },

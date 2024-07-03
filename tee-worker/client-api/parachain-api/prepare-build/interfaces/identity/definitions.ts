@@ -49,6 +49,7 @@ export default {
                 "Polygon",
                 "Arbitrum",
                 "Solana",
+                "Combo",
             ],
         },
         LitentryValidationData: {

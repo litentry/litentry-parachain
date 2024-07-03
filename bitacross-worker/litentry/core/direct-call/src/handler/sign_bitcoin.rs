@@ -16,6 +16,7 @@
 
 use bc_relayer_registry::RelayerRegistryLookup;
 use itp_sgx_crypto::key_repository::AccessKey;
+use log::error;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
@@ -51,8 +52,8 @@ pub fn handle<
 ) -> Result<(), SignBitcoinError> {
 	if relayer_registry.contains_key(signer) {
 		let mut registry = ceremony_registry.lock().map_err(|_| SignBitcoinError::CeremonyError)?;
-		// ~1 minute (1 tick ~ 1 s)
-		let ceremony_tick_to_live = 60;
+		// ~1 minute (1 tick ~ 1 ms)
+		let ceremony_tick_to_live = 60_000;
 
 		let signers: Result<SignersWithKeys, SignBitcoinError> = signer_registry
 			.get_all()
@@ -82,7 +83,10 @@ pub fn handle<
 			signer_access_key,
 			ceremony_tick_to_live,
 		)
-		.map_err(|_| SignBitcoinError::CeremonyError)?;
+		.map_err(|e| {
+			error!("Could not start ceremony, error: {:?}", e);
+			SignBitcoinError::CeremonyError
+		})?;
 		registry.insert(payload, ceremony);
 
 		Ok(())
@@ -99,17 +103,14 @@ pub mod test {
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
 	use codec::alloc::sync::Mutex;
-	use itp_sgx_crypto::{
-		key_repository::AccessKey, mocks::KeyRepositoryMock, schnorr::Pair as SchnorrPair, Error,
-	};
-	use k256::elliptic_curve::{rand_core, PublicKey};
+	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
 	use parentchain_primitives::{Address32, Identity};
 	use sp_core::{sr25519, Pair};
 
 	struct SignersRegistryMock {}
 
 	impl SignerRegistryLookup for SignersRegistryMock {
-		fn contains_key(&self, account: &Address32) -> bool {
+		fn contains_key(&self, _account: &Address32) -> bool {
 			true
 		}
 

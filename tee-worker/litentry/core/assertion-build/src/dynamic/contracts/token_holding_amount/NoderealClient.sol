@@ -20,58 +20,54 @@ pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
-
 library NoderealClient {
-    function getEthBalance(string memory url, string memory account)
-        internal
-        returns (bool, uint256)
-    {
-        HttpHeader[] memory headers = new HttpHeader[](0);
-        string memory request = string(
-            abi.encodePacked(
-                '{"jsonrpc": "2.0", "method": "eth_getBalance", "id": 1, "params": ["',
-                account,
-                '", "latest"]}'
-            )
-        );
-        (bool result, string memory balance) = Http.PostString(
-            url,
-            "/result",
-            request,
-            headers
-        );
-        if (result) {
-            return Utils.hexToNumber(balance);
-        } else {
-            return (false, 0);
-        }
-    }
+	function getTokenBalance(
+		string memory url,
+		string[] memory secrets,
+		string memory tokenContractAddress,
+		string memory account
+	) internal returns (bool, uint256) {
+		HttpHeader[] memory headers = new HttpHeader[](0);
+		string memory request;
 
-    function getErc20Balance(
-        string memory url,
-        string memory tokenContractAddress,
-        string memory account
-    ) internal returns (bool, uint256) {
-        HttpHeader[] memory headers = new HttpHeader[](0);
-        string memory request = string(
-            abi.encodePacked(
-                '{"jsonrpc": "2.0", "method": "nr_getTokenBalance20", "id": 1, "params": ["',
-                tokenContractAddress,
-                '","',
-                account,
-                '", "latest"]}'
-            )
-        );
-        (bool result, string memory balance) = Http.PostString(
-            url,
-            "/result",
-            request,
-            headers
-        );
-        if (result) {
-            return Utils.hexToNumber(balance);
-        } else {
-            return (false, 0);
-        }
-    }
+		string memory encodePackedUrl = string(
+			abi.encodePacked(url, secrets[0])
+		);
+		if (
+			keccak256(bytes(tokenContractAddress)) == keccak256("Native Token")
+		) {
+			// Use eth_getBalance method
+			request = string(
+				abi.encodePacked(
+					'{"jsonrpc": "2.0", "method": "eth_getBalance", "id": 1, "params": ["',
+					account,
+					'", "latest"]}'
+				)
+			);
+		} else if (bytes(tokenContractAddress).length == 42) {
+			// Use nr_getTokenBalance20 method
+			request = string(
+				abi.encodePacked(
+					'{"jsonrpc": "2.0", "method": "nr_getTokenBalance20", "id": 1, "params": ["',
+					tokenContractAddress,
+					'","',
+					account,
+					'", "latest"]}'
+				)
+			);
+		} else {
+			return (false, 0);
+		}
+		(bool result, string memory balance) = Http.PostString(
+			encodePackedUrl,
+			"/result",
+			request,
+			headers
+		);
+		if (result) {
+			return Utils.hexToNumber(balance);
+		} else {
+			return (false, 0);
+		}
+	}
 }
