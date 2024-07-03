@@ -32,6 +32,8 @@ Versions in the pattern of `x.x.x-next.x` feature the most recent code version t
 
 1. [Update your published package version number](https://docs.npmjs.com/updating-your-published-package-version-number)
 
+1. Update the `CHANGELOG.md` file.
+
 1. Build the package
 
     ```s
