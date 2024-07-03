@@ -23,7 +23,7 @@ use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{AccountId, ShardIdentifier, TrustedOperation},
 };
-use itp_types::H256;
+use itp_types::{MrEnclave, H256};
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{time::Duration, vec::Vec};
 
@@ -41,6 +41,8 @@ where
 	TCS: PartialEq + Encode + Debug,
 {
 	fn get_enclave_account(&self) -> Result<AccountId>;
+
+	fn get_mrenclave(&self) -> Result<MrEnclave>;
 
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
 		&self,

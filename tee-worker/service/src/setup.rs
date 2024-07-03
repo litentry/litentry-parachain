@@ -18,8 +18,8 @@
 
 use crate::error::{Error, ServiceResult};
 use itp_settings::files::{
-	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE,
-	SHARDS_PATH, SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SHARDS_PATH,
+	SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 	TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use std::{fs, path::Path};
@@ -145,7 +145,6 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_dir_if_it_exists(root_directory, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 	remove_dir_if_it_exists(root_directory, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 
-	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
 	remove_file_if_it_exists(root_directory, ASSERTIONS_FILE)?;
 	Ok(())
 }

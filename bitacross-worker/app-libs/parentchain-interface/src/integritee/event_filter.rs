@@ -23,8 +23,8 @@ use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{
 		events::{
-			BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, RelayerAdded,
-			RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+			BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, EnclaveUnauthorized,
+			RelayerAdded, RelayerRemoved,
 		},
 		FilterEvents,
 	},
@@ -72,13 +72,7 @@ impl FilterEvents for FilterableEvents {
 		self.filter()
 	}
 
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
-		self.filter()
-	}
-
-	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error> {
 		self.filter()
 	}
 

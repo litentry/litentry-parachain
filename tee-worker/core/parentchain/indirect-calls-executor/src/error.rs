@@ -20,7 +20,6 @@ use crate::sgx_reexport_prelude::*;
 pub use litentry_primitives::{ErrorDetail, IMPError, VCMPError};
 
 use itp_types::parentchain::ParentchainEventProcessingError;
-use lc_scheduled_enclave::error::Error as ScheduledEnclaveError;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format, string::String};
@@ -52,8 +51,8 @@ pub enum Error {
 	VCMPHandlingError(VCMPError),
 	#[error("BatchAll handling error")]
 	BatchAllHandlingError,
-	#[error("ScheduledEnclave Error: {0:?}")]
-	ImportScheduledEnclave(ScheduledEnclaveError),
+	#[error("EnclaveUnauthorized handling error")]
+	EnclaveUnauthorizedHandlingError,
 	#[error("AssertionCreated handling error: {0:?}")]
 	AssertionCreatedHandling(String),
 }
@@ -103,11 +102,5 @@ impl From<IMPError> for Error {
 impl From<VCMPError> for Error {
 	fn from(e: VCMPError) -> Self {
 		Self::VCMPHandlingError(e)
-	}
-}
-
-impl From<ScheduledEnclaveError> for Error {
-	fn from(e: ScheduledEnclaveError) -> Self {
-		Self::ImportScheduledEnclave(e)
 	}
 }

@@ -63,7 +63,7 @@ use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
-use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
+use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
@@ -88,7 +88,6 @@ use its_sidechain::{
 use lc_data_providers::DataProviderConfig;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
 use litentry_primitives::BroadcastedRequest;
@@ -215,6 +214,7 @@ pub(crate) fn init_enclave(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
+		ocall_api.clone(),
 		Some(state_handler),
 		data_provider_config,
 	);
@@ -335,11 +335,6 @@ pub(crate) fn init_enclave_sidechain_components(
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
-
-	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	let parentchain_block_import_dispatcher =
 		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;

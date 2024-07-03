@@ -28,7 +28,7 @@ use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperationOrHash},
 };
-use itp_types::H256;
+use itp_types::{MrEnclave, H256};
 use sp_core::Pair;
 use sp_runtime::traits::Header as HeaderTrait;
 #[cfg(feature = "std")]
@@ -132,6 +132,10 @@ impl Default for StfEnclaveSignerMock {
 impl<TCS: PartialEq + Encode + Debug> StfEnclaveSigning<TCS> for StfEnclaveSignerMock {
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		Ok(self.signer.public().into())
+	}
+
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.mr_enclave)
 	}
 
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(

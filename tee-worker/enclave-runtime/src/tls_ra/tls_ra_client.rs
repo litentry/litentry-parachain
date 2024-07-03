@@ -31,8 +31,6 @@ use crate::{
 };
 use codec::Encode;
 
-use lc_scheduled_enclave::{ScheduledEnclaveSeal, GLOBAL_SCHEDULED_ENCLAVE};
-
 use itp_attestation_handler::{RemoteAttestationType, DEV_HOSTNAME};
 use itp_component_container::ComponentGetter;
 
@@ -140,7 +138,6 @@ where
 			Opcode::StateKey => self.seal_handler.seal_state_key(&bytes)?,
 			Opcode::State => self.seal_handler.seal_state(&bytes, &self.shard)?,
 			Opcode::LightClient => self.seal_handler.seal_light_client_state(&bytes)?,
-			Opcode::ScheduledEnclave => self.seal_handler.seal_scheduled_enclave_state(&bytes)?,
 			Opcode::Assertions => self.seal_handler.seal_assertions_state(&bytes)?,
 		};
 		Ok(Some(header.opcode))
@@ -216,9 +213,6 @@ pub unsafe extern "C" fn request_state_provisioning(
 		},
 	};
 
-	let scheduled_enclave_seal =
-		Arc::new(ScheduledEnclaveSeal::new(GLOBAL_SCHEDULED_ENCLAVE.seal_path.clone()));
-
 	let assertions_seal = Arc::new(AssertionsSeal::new(ASSERTIONS_FILE.into()));
 
 	let seal_handler = EnclaveSealHandler::new(
@@ -226,7 +220,6 @@ pub unsafe extern "C" fn request_state_provisioning(
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
-		scheduled_enclave_seal,
 		assertions_seal,
 	);
 

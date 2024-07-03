@@ -28,12 +28,12 @@ use itp_types::{
 	},
 	RsaRequest, H256,
 };
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-
+use itp_utils::hex::ToHexPrefixed;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_vc_task_sender::pause_vc_task_sender;
 use litentry_primitives::{
-	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, Web3Network, WorkerType,
+	Assertion, Identity, MrEnclave, ValidationData, Web3Network, WorkerType,
 };
 use log::*;
 use sp_core::{blake2_256, H160};
@@ -45,6 +45,27 @@ pub struct ParentchainEventHandler {
 }
 
 impl ParentchainEventHandler {
+	fn unauthorize_enclave<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		executor: &Executor,
+		worker_type: WorkerType,
+		mrenclave: MrEnclave,
+	) -> Result<(), Error> {
+		if worker_type != WorkerType::Identity {
+			warn!("Ignore EnclaveAuthorized event due for non-identity worker");
+			return Ok(())
+		}
+
+		if mrenclave != executor.get_mrenclave()? {
+			warn!(
+				"Ignore EnclaveAuthorized event due for some other mrenclave: {}",
+				mrenclave.to_hex()
+			);
+			return Ok(())
+		}
+
+		pause_vc_task_sender().map_err(|_| Error::EnclaveUnauthorizedHandlingError)
+	}
+
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
 		account: &AccountId,
@@ -159,33 +180,6 @@ impl ParentchainEventHandler {
 
 		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 		executor.submit_trusted_call(shard, encrypted_trusted_call);
-
-		Ok(())
-	}
-
-	fn set_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-		mrenclave: MrEnclave,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::Identity {
-			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
-
-		Ok(())
-	}
-
-	fn remove_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::Identity {
-			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
 
 		Ok(())
 	}
@@ -316,39 +310,19 @@ where
 				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
 		}
 
-		if let Ok(events) = events.get_scheduled_enclave_set_events() {
-			debug!("Handling ScheduledEnclaveSet events");
+		if let Ok(events) = events.get_enclave_unauthorized_events() {
+			debug!("Handling EnclaveUnauthorized events");
 			events
 				.iter()
 				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveSet event: {:?}", event);
-					let result = Self::set_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-						event.mrenclave,
-					);
+					debug!("found EnclaveUnauthorized event: {:?}", event);
+					let result =
+						Self::unauthorize_enclave(executor, event.worker_type, event.mrenclave);
 					handled_events.push(hash_of(&event));
 
 					result
 				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_removed_events() {
-			debug!("Handling ScheduledEnclaveRemoved events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
-					let result = Self::remove_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
+				.map_err(|_| ParentchainEventProcessingError::EnclaveUnauthorizedFailure)?;
 		}
 
 		if let Ok(events) = events.get_opaque_task_posted_events() {
