@@ -220,7 +220,7 @@ where
 					id, curr_block_number, until_synced_header.number, immediate_import, format_duration(remaining_time_estimate)
 				);
 			}
-			debug!(
+			trace!(
 				"[{:?}] Found {} block(s) to sync in this chunk. immediate import={} ",
 				id,
 				block_chunk_to_sync.len(),
@@ -252,7 +252,7 @@ where
 						self.parentchain_api.get_events_for_block(Some(block.block.header.hash()))
 					})
 					.collect::<Result<Vec<_>, _>>()?;
-				debug!("[{:?}] Found {} event vector(s) to sync in this chunk", id, evs.len());
+				trace!("[{:?}] Found {} event vector(s) to sync in this chunk", id, evs.len());
 				evs
 			};
 

@@ -433,6 +433,7 @@ where
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
+		info!("Processing vc request for {}, assertion: {:?}", who.to_did(), assertion);
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
 			context
 				.state_handler
@@ -480,7 +481,7 @@ where
 
 		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
-			info!("IDGraph is empty, will pre-create one");
+			debug!("IDGraph is empty, will pre-create one");
 			// To create IDGraph upon first vc request (see P-410), there're two options:
 			//
 			// 1. synchronous creation:
@@ -599,6 +600,7 @@ where
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
+		info!("Vc issued for {}, assertion: {:?}", who.to_did(), assertion);
 		Ok(res.encode())
 	} else {
 		// Would never come here.
