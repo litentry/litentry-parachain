@@ -17,7 +17,7 @@
 
 use clap::ArgMatches;
 use itc_rest_client::rest_client::Url;
-use itp_types::parentchain::ParentchainId;
+use itp_types::{parentchain::ParentchainId, ShardIdentifier};
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -318,6 +318,8 @@ pub struct RunConfig {
 	marblerun_base_url: Option<String>,
 	/// parentchain which should be used for shielding/unshielding the stf's native token
 	pub shielding_target: Option<ParentchainId>,
+	/// Whether to migrate the shard before initializing the enclave
+	pub force_migrate_shard: bool,
 }
 
 impl RunConfig {
@@ -362,7 +364,10 @@ impl From<&ArgMatches<'_>> for RunConfig {
 				i
 			),
 		});
-		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target }
+
+		let force_migrate_shard = m.is_present("force-migrate-shard");
+
+		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target, force_migrate_shard }
 	}
 }
 
