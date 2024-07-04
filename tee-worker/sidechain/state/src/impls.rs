@@ -23,7 +23,7 @@ use core::fmt::Debug;
 use frame_support::ensure;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_storage::keys::storage_value_key;
-use log::{debug, error, info};
+use log::*;
 use sp_io::{storage, KillStorageResult};
 
 impl<T: SgxExternalitiesTrait + Clone + StateHash + Debug> SidechainState for T
@@ -34,7 +34,7 @@ where
 	type StateUpdate = StateUpdate;
 
 	fn apply_state_update(&mut self, state_payload: &Self::StateUpdate) -> Result<(), Error> {
-		info!("Current state size: {}", self.state().encoded_size());
+		debug!("Current state size: {}", self.state().encoded_size());
 		debug!("Current hash: {}", self.hash());
 		debug!("State_payload hash: {}", state_payload.state_hash_apriori());
 		debug!("self is: {:?}", &self);
