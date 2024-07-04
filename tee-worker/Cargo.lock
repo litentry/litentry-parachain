@@ -2963,7 +2963,7 @@ dependencies = [
  "itp-utils",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
- "lc-scheduled-enclave",
+ "lc-vc-task-sender",
  "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
@@ -3175,7 +3175,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-evm-dynamic-assertions",
- "lc-scheduled-enclave",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -3990,7 +3989,6 @@ dependencies = [
  "its-state",
  "its-test",
  "its-validateer-fetch",
- "lc-scheduled-enclave",
  "litentry-hex-utils",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4055,7 +4053,6 @@ dependencies = [
  "its-state",
  "its-test",
  "lazy_static",
- "lc-scheduled-enclave",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -4715,22 +4712,6 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-runtime",
-]
-
-[[package]]
-name = "lc-scheduled-enclave"
-version = "0.8.0"
-dependencies = [
- "itp-settings",
- "itp-sgx-io",
- "itp-types",
- "lazy_static",
- "log 0.4.20",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-std 5.0.0",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
 ]
 
 [[package]]

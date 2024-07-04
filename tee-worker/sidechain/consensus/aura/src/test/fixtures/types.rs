@@ -26,7 +26,6 @@ use its_primitives::{
 	},
 	types::block::SignedBlock as SignedSidechainBlock,
 };
-use lc_scheduled_enclave::ScheduledEnclaveMock;
 use sp_runtime::{app_crypto::ed25519, generic::SignedBlock};
 
 type AuthorityPair = ed25519::Pair;
@@ -43,6 +42,4 @@ pub type TestAura<E> = Aura<
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
-	ScheduledEnclaveMock,
-	HandleStateMock,
 >;

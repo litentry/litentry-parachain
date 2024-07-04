@@ -84,15 +84,9 @@ impl FilterEvents for FilterableEvents {
 		self.filter()
 	}
 
-	fn get_scheduled_enclave_set_events(
+	fn get_enclave_unauthorized_events(
 		&self,
-	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveSet>, Self::Error> {
-		self.filter()
-	}
-
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<itp_types::parentchain::events::ScheduledEnclaveRemoved>, Self::Error> {
+	) -> Result<Vec<itp_types::parentchain::events::EnclaveUnauthorized>, Self::Error> {
 		self.filter()
 	}
 

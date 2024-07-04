@@ -42,7 +42,7 @@ use itp_stf_primitives::{
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::{events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId},
-	OpaqueCall, RsaRequest, ShardIdentifier, H256,
+	MrEnclave, OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -275,6 +275,10 @@ impl<
 
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		Ok(self.stf_enclave_signer.get_enclave_account()?)
+	}
+
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.stf_enclave_signer.get_mrenclave()?)
 	}
 
 	fn get_default_shard(&self) -> ShardIdentifier {
