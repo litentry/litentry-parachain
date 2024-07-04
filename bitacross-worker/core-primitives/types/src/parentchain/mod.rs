@@ -22,8 +22,8 @@ use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
-	BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, RelayerAdded,
-	RelayerRemoved, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
+	BalanceTransfer, BtcWalletGenerated, EnclaveAdded, EnclaveRemoved, EnclaveUnauthorized,
+	RelayerAdded, RelayerRemoved,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
@@ -97,11 +97,7 @@ pub trait FilterEvents {
 
 	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error>;
 
-	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error>;
-
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error>;
 
 	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
 
@@ -129,8 +125,7 @@ where
 pub enum ParentchainEventProcessingError {
 	ShieldFundsFailure,
 	FunctionalityDisabled,
-	ScheduledEnclaveSetFailure,
-	ScheduledEnclaveRemovedFailure,
+	EnclaveUnauthorizedFailure,
 	RelayerAddFailure,
 	RelayerRemoveFailure,
 	EnclaveAddFailure,
@@ -145,10 +140,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: ShieldFundsFailure",
 			ParentchainEventProcessingError::FunctionalityDisabled =>
 				"Parentchain Event Processing Error: FunctionalityDisabled",
-			ParentchainEventProcessingError::ScheduledEnclaveSetFailure =>
-				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
-			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
-				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
+			ParentchainEventProcessingError::EnclaveUnauthorizedFailure =>
+				"Parentchain Event Processing Error: EnclaveUnauthorizedFailure",
 			ParentchainEventProcessingError::RelayerAddFailure =>
 				"Parentchain Event Processing Error: RelayerAddFailure",
 			ParentchainEventProcessingError::RelayerRemoveFailure =>

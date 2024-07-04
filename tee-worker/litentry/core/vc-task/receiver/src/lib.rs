@@ -56,7 +56,7 @@ use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::init_vc_task_sender_storage;
+use lc_vc_task_sender::init_vc_task_sender;
 use litentry_macros::if_development_or;
 use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
 use log::*;
@@ -92,7 +92,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 	N::MetadataType: NodeMetadataTrait,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem> + Send + Sync + 'static,
 {
-	let vc_task_receiver = init_vc_task_sender_storage();
+	let vc_task_receiver = init_vc_task_sender();
 	let n_workers = 960;
 	let pool = ThreadPoolBuilder::new().pool_size(n_workers).create().unwrap();
 

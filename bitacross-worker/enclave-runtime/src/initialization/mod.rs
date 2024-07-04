@@ -65,7 +65,7 @@ use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
-use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
+use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api_metadata::pallet_bitacross::BitAcrossCallIndexes;
@@ -95,7 +95,6 @@ use itp_stf_state_handler::{
 use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::if_development_or;
 use log::*;
 use sp_core::crypto::Pair;
@@ -276,10 +275,8 @@ pub(crate) fn init_enclave(
 }
 
 pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
-
+	// TODO: it's not required after ScheduledEnclave is removed
+	//       however, it's not bad to leave a placeholder as post-init hook
 	Ok(())
 }
 
@@ -350,11 +347,6 @@ pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 	validator_accessor
 		.execute_mut_on_validator(|v| v.send_extrinsics(xts))
 		.map_err(|e| Error::Other(e.into()))?;
-
-	//todo: this should be called as late as possible P-727
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
 }

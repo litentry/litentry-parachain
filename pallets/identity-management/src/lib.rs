@@ -141,7 +141,6 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		ImportScheduledEnclaveFailed,
 		UnclassifiedError {
 			prime_identity: Option<Identity>,
 			detail: ErrorDetail,
@@ -361,8 +360,6 @@ pub mod pallet {
 						detail,
 						req_ext_hash,
 					}),
-				IMPError::ImportScheduledEnclaveFailed =>
-					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
 				IMPError::UnclassifiedError(detail) =>
 					Self::deposit_event(Event::UnclassifiedError {
 						prime_identity,
