@@ -22,19 +22,14 @@ use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 use bc_signer_registry::{SignerRegistry, SignerRegistryUpdater};
 use codec::Encode;
 use core::str::from_utf8;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
+use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
-use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{
-	parentchain::{
-		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
-		ParentchainId,
-	},
-	MrEnclave, WorkerType,
+	parentchain::{FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError},
+	WorkerType,
 };
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_hex_utils::hex_encode;
-use litentry_primitives::{Address32, Identity, SidechainBlockNumber};
+use litentry_primitives::{Address32, Identity};
 use log::*;
 use sp_core::{blake2_256, H256};
 use sp_std::vec::Vec;
@@ -43,65 +38,6 @@ use std::string::ToString;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn shield_funds<
-		Executor: IndirectExecutor<
-			TrustedCallSigned,
-			Error,
-			RelayerRegistry,
-			SignerRegistry,
-			EnclaveRegistry,
-		>,
-	>(
-		executor: &Executor,
-		account: &AccountId,
-		amount: Balance,
-	) -> Result<(), Error> {
-		log::info!("shielding for {:?} amount {}", account, amount,);
-		let shard = executor.get_default_shard();
-		// todo: ensure this parentchain is assigned for the shard vault!
-		let trusted_call = TrustedCall::balance_shield(
-			executor.get_enclave_account()?.into(),
-			account.clone(),
-			amount,
-			ParentchainId::Litentry,
-		);
-		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
-		let trusted_operation =
-			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
-
-		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-		executor.submit_trusted_call(shard, encrypted_trusted_call);
-
-		Ok(())
-	}
-
-	fn set_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-		mrenclave: MrEnclave,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::BitAcross {
-			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
-
-		Ok(())
-	}
-
-	fn remove_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::BitAcross {
-			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
-
-		Ok(())
-	}
-
 	fn add_relayer(relayer_registry: &RelayerRegistry, account: Identity) -> Result<(), Error> {
 		info!("Adding Relayer Account to Registry: {:?}", account);
 		relayer_registry.update(account).map_err(|e| {
@@ -191,72 +127,8 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(
-		executor: &Executor,
-		events: impl FilterEvents,
-		vault_account: Option<AccountId>,
-	) -> Result<Vec<H256>, Error> {
+	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
-
-		if let Ok(events) = events.get_transfer_events() {
-			debug!(
-				"Handling transfer events to shard vault account: {}",
-				hex_encode(vault_account.encode().as_slice())
-			);
-			events
-				.iter()
-				.filter(|&event| {
-					if let Some(vault_account) = &vault_account {
-						event.to == *vault_account
-					} else {
-						false
-					}
-				})
-				.try_for_each(|event| {
-					info!("found transfer_event to vault account: {}", event);
-					//debug!("shielding from Integritee suppressed");
-					let result = Self::shield_funds(executor, &event.from, event.amount);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ShieldFundsFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_set_events() {
-			debug!("Handling ScheduledEnclaveSet events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveSet event: {:?}", event);
-					let result = Self::set_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-						event.mrenclave,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_removed_events() {
-			debug!("Handling ScheduledEnclaveRemoved events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
-					let result = Self::remove_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
-		}
 
 		if let Ok(events) = events.get_relayer_added_events() {
 			debug!("Handling RelayerAdded events");

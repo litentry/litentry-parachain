@@ -28,19 +28,18 @@ use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperationOrHash},
 };
-use itp_types::H256;
+use itp_types::{MrEnclave, H256};
 use sp_core::Pair;
 use sp_runtime::traits::Header as HeaderTrait;
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 use std::{boxed::Box, marker::PhantomData, ops::Deref, time::Duration, vec::Vec};
 
-use crate::traits::StfShardVaultQuery;
 use itp_stf_primitives::{
 	traits::{GetterAuthorization, TrustedCallVerification},
 	types::TrustedOperation,
 };
-use itp_types::parentchain::ParentchainId;
+
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
@@ -135,6 +134,10 @@ impl<TCS: PartialEq + Encode + Debug> StfEnclaveSigning<TCS> for StfEnclaveSigne
 		Ok(self.signer.public().into())
 	}
 
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.mr_enclave)
+	}
+
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
 		&self,
 		trusted_call: &TC,
@@ -143,14 +146,8 @@ impl<TCS: PartialEq + Encode + Debug> StfEnclaveSigning<TCS> for StfEnclaveSigne
 		Ok(trusted_call.sign(&KeyPair::Ed25519(Box::new(self.signer)), 1, &self.mr_enclave, shard))
 	}
 
-	fn sign(&self, _payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
-		Ok((self.signer.public().into(), [0u8; 32].to_vec()))
-	}
-}
-
-impl StfShardVaultQuery for StfEnclaveSignerMock {
-	fn get_shard_vault(&self, _shard: &ShardIdentifier) -> Result<(AccountId, ParentchainId)> {
-		Err(crate::error::Error::Other("shard vault undefined".into()))
+	fn sign(&self, _payload: &[u8]) -> Result<Vec<u8>> {
+		Ok([0u8; 32].to_vec())
 	}
 }
 

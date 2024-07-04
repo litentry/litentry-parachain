@@ -1,7 +1,6 @@
 pub mod balance;
 pub mod bitacross;
 pub mod get_shard;
-pub mod get_shard_vault;
 pub mod nonce;
 pub mod set_balance;
 pub mod transfer;

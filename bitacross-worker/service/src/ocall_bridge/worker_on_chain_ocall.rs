@@ -83,7 +83,7 @@ where
 		request: Vec<u8>,
 		parentchain_id: Vec<u8>,
 	) -> OCallBridgeResult<Vec<u8>> {
-		debug!("    Entering ocall_worker_request");
+		trace!("    Entering ocall_worker_request");
 
 		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice())?;
 		if requests.is_empty() {

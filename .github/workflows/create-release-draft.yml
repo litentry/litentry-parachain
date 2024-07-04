@@ -182,10 +182,11 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
+      # the key for identity worker enclave shall be renewed when switching to sdk-v2.0.0
       - name: Write enclave signing key
         run: |
           cat << EOF > tee-worker/enclave_key.pem
-          ${{ secrets.IDENTITY_ENCLAVE_SIGNING_KEY }}
+          ${{ secrets.IDENTITY_ENCLAVE_STAGING_SIGNING_KEY }}
           EOF
 
       - name: Build local builder
@@ -253,7 +254,7 @@ jobs:
       - name: Write enclave signing key
         run: |
           cat << EOF > bitacross-worker/enclave_key.pem
-          ${{ secrets.BITACROSS_ENCLAVE_SIGNING_KEY }}
+          ${{ secrets.BITACROSS_ENCLAVE_PROD_SIGNING_KEY }}
           EOF
 
       - name: Build local builder

@@ -152,7 +152,7 @@ where
 			let encrypted_state_diff =
 				block_import_params.block().block_data().encrypted_state_diff();
 
-			info!(
+			debug!(
 				"Applying state diff for block {} of size {} bytes",
 				block_number,
 				encrypted_state_diff.len()
@@ -166,7 +166,7 @@ where
 
 			Ok(state)
 		})?;
-		info!(
+		debug!(
 			"Applying state update from block {} took {} ms",
 			block_number,
 			state_update_start_time.elapsed().as_millis()
@@ -178,7 +178,7 @@ where
 		self.get_context().store_sidechain_blocks(vec![signed_sidechain_block])?;
 
 		let import_duration = start_time.elapsed();
-		info!("Importing block {} took {} ms", block_number, import_duration.as_millis());
+		debug!("Importing block {} took {} ms", block_number, import_duration.as_millis());
 		if let Err(e) = self
 			.get_context()
 			.update_metric(EnclaveMetric::SidechainBlockImportTime(import_duration))

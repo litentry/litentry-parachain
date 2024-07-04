@@ -330,7 +330,7 @@ impl<
 					}) {
 						error!("Could not send broadcasted request, reason: {:?}", e);
 					} else {
-						info!("Broadcast request OK, hash = {}", hash);
+						debug!("Broadcast request OK, hash = {}", hash);
 					}
 				}
 				result

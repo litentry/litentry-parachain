@@ -147,6 +147,11 @@ ARG UID=1000
 RUN adduser -u ${UID} --disabled-password --gecos '' litentry
 RUN adduser -u ${UID} litentry sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# to fix Multi-node distributed worker encounters SGX permission errors.
+RUN groupadd -g 121 sgx_prv && \
+    groupadd -g 108 sgx && \
+    usermod -aG sgx litentry && \
+    usermod -aG sgx_prv litentry
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/

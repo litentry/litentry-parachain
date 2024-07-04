@@ -41,8 +41,8 @@ use itp_nonce_cache::{MutateNonce, Nonce};
 use itp_types::{parentchain::AccountId, OpaqueCall};
 use sp_core::H256;
 use sp_runtime::{generic::Era, OpaqueExtrinsic};
-use std::{sync::Arc, vec::Vec};
-use substrate_api_client::ac_compose_macros::compose_extrinsic_offline;
+use std::{borrow::ToOwned, sync::Arc, vec::Vec};
+use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic_offline};
 
 pub mod error;
 
@@ -58,6 +58,12 @@ pub trait CreateExtrinsics {
 		calls: &[OpaqueCall],
 		extrinsics_params: Option<ParentchainAdditionalParams>,
 	) -> Result<Vec<OpaqueExtrinsic>>;
+
+	fn create_batch_extrinsic(
+		&self,
+		calls: Vec<OpaqueCall>,
+		extrinsics_params: Option<ParentchainAdditionalParams>,
+	) -> Result<OpaqueExtrinsic>;
 }
 
 /// Extrinsics factory
@@ -147,6 +153,41 @@ where
 		*nonce_lock = Nonce(nonce_value);
 
 		Ok(extrinsics_buffer)
+	}
+
+	fn create_batch_extrinsic(
+		&self,
+		calls: Vec<OpaqueCall>,
+		extrinsics_params: Option<ParentchainAdditionalParams>,
+	) -> Result<OpaqueExtrinsic> {
+		let (node_metadata, runtime_spec_version, runtime_transaction_version) =
+			self.node_metadata_repository.get_from_metadata(|m| {
+				let metadata = m.get_metadata().expect("Metadata not set");
+				(metadata.clone(), m.get_runtime_version(), m.get_runtime_transaction_version())
+			})?;
+		let batch_call =
+			OpaqueCall::from_tuple(&compose_call!(node_metadata, "Utility", "batch", calls));
+
+		let mut nonce_lock = self.nonce_cache.load_for_mutation()?;
+		let mut nonce_value = nonce_lock.0;
+
+		let additional_extrinsic_params = extrinsics_params.unwrap_or_else(|| {
+			ParentchainAdditionalParams::new().era(Era::Immortal, self.genesis_hash).tip(0)
+		});
+
+		let extrinsic_params = ParentchainExtrinsicParams::new(
+			runtime_spec_version,
+			runtime_transaction_version,
+			nonce_value,
+			self.genesis_hash,
+			additional_extrinsic_params,
+		);
+		let xt = compose_extrinsic_offline!(&self.signer, batch_call, extrinsic_params).encode();
+		nonce_value += 1;
+
+		*nonce_lock = Nonce(nonce_value);
+
+		OpaqueExtrinsic::from_bytes(&xt).map_err(|e| e.into())
 	}
 }
 

@@ -21,9 +21,9 @@ pub const TEEBAG: &str = "Teebag";
 
 // we only list the extrinsics that we care
 pub trait TeebagCallIndexes {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
@@ -41,11 +41,11 @@ pub trait TeebagCallIndexes {
 }
 
 impl TeebagCallIndexes for NodeMetadata {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEBAG, "set_scheduled_enclave")
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEBAG, "force_add_authorized_enclave")
 	}
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEBAG, "remove_scheduled_enclave")
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEBAG, "force_remove_authorized_enclave")
 	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEBAG, "register_enclave")

@@ -100,7 +100,6 @@ fn estimate_funds_needed_to_run_for_a_while(
 	info!("[{:?}] Existential deposit is = {:?}", parentchain_id, existential_deposit);
 
 	let mut min_required_funds: Balance = existential_deposit;
-	min_required_funds += shard_vault_initial_funds(api)?;
 
 	let transfer_fee = estimate_transfer_fee(api)?;
 	info!("[{:?}] a single transfer costs {:?}", parentchain_id, transfer_fee);
@@ -169,16 +168,6 @@ fn bootstrap_funds_from_alice(
 	trace!("TEE's NEW free balance = {:?}", free_balance);
 
 	Ok(())
-}
-
-/// precise estimation of necessary funds to register a hardcoded number of proxies
-pub fn shard_vault_initial_funds(api: &ParentchainApi) -> Result<Balance, Error> {
-	let proxy_deposit_base: Balance = api.get_constant("Proxy", "ProxyDepositBase")?;
-	let proxy_deposit_factor: Balance = api.get_constant("Proxy", "ProxyDepositFactor")?;
-	let transfer_fee = estimate_transfer_fee(api)?;
-	let existential_deposit = api.get_existential_deposit()?;
-	info!("Proxy Deposit is {:?} base + {:?} per proxy", proxy_deposit_base, proxy_deposit_factor);
-	Ok(proxy_deposit_base + 10 * proxy_deposit_factor + 500 * transfer_fee + existential_deposit)
 }
 
 /// precise estimation of a single transfer fee

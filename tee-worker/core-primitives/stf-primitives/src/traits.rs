@@ -19,7 +19,7 @@ use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_sgx_runtime_primitives::types::Index;
-use litentry_primitives::Identity;
+use litentry_primitives::{Identity, MrEnclave};
 use sp_runtime::transaction_validity::{TransactionValidityError, ValidTransaction};
 
 /// checks authorization of stf getters
@@ -68,6 +68,8 @@ where
 	fn encrypt(&self, value: &[u8]) -> Result<Vec<u8>, Error>;
 
 	fn get_enclave_account(&self) -> Result<AccountId, Error>;
+
+	fn get_mrenclave(&self) -> Result<MrEnclave, Error>;
 
 	fn get_default_shard(&self) -> ShardIdentifier;
 
