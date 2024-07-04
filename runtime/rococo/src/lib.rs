@@ -399,7 +399,8 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::Democracy(..) |
 					RuntimeCall::Council(..) |
 					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..)
+					RuntimeCall::Treasury(..) |
+					RuntimeCall::DeveloperCommittee(..)
 			),
 		}
 	}
@@ -1290,7 +1291,8 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::ExtrinsicFilter(_) |
 				RuntimeCall::Multisig(_) |
 				RuntimeCall::Council(_) |
-				RuntimeCall::TechnicalCommittee(_)
+				RuntimeCall::TechnicalCommittee(_) |
+				RuntimeCall::DeveloperCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -1325,6 +1327,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
+			RuntimeCall::DeveloperCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			RuntimeCall::Democracy(_) |
 			// Preimage
