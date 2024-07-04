@@ -401,7 +401,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 		trace!(
 			"on_slot: a posteriori latest Litentry block number (if there is a new one): {:?}",
-			last_imported_integritee_header.clone().map(|h| *h.number())
+			last_imported_integritee_header.map(|h| *h.number())
 		);
 
 		let maybe_last_imported_target_a_header =
