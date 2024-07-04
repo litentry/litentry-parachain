@@ -47,8 +47,8 @@ use musig2::{
 };
 pub use musig2::{PartialSignature, PubNonce};
 use std::{
-	cmp::Ordering,
 	collections::HashMap,
+	fmt::Display,
 	time::{SystemTime, UNIX_EPOCH},
 	vec::Vec,
 };
@@ -87,25 +87,13 @@ pub enum CeremonyCommand {
 	SavePartialSignature(SignerId, PartialSignature),
 }
 
-impl CeremonyCommand {
-	fn to_u8(&self) -> u8 {
+impl Display for CeremonyCommand {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		match self {
-			CeremonyCommand::Init => 0,
-			CeremonyCommand::SaveNonce(_, _) => 1,
-			CeremonyCommand::SavePartialSignature(_, _) => 2,
+			CeremonyCommand::Init => write!(f, "Init"),
+			CeremonyCommand::SaveNonce(_, _) => write!(f, "SaveNonce"),
+			CeremonyCommand::SavePartialSignature(_, _) => write!(f, "SavePartialSignature"),
 		}
-	}
-}
-
-impl PartialOrd for CeremonyCommand {
-	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		Some(self.cmp(other))
-	}
-}
-
-impl Ord for CeremonyCommand {
-	fn cmp(&self, other: &Self) -> Ordering {
-		self.to_u8().cmp(&other.to_u8())
 	}
 }
 
@@ -116,6 +104,17 @@ pub enum CeremonyEvent {
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
 	CeremonyEnded([u8; 64], RequestAesKey),
 	CeremonyError(Signers, CeremonyError, RequestAesKey),
+}
+
+impl Display for CeremonyEvent {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		match self {
+			CeremonyEvent::FirstRoundStarted(_, _, _) => write!(f, "FirstRoundStarted"),
+			CeremonyEvent::SecondRoundStarted(_, _, _) => write!(f, "SecondRoundStarted"),
+			CeremonyEvent::CeremonyEnded(_, _) => write!(f, "CeremonyEnded"),
+			CeremonyEvent::CeremonyError(_, _, _) => write!(f, "CeremonyError"),
+		}
+	}
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]

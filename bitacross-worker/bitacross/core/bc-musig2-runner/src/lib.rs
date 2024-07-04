@@ -23,6 +23,12 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+#[cfg(feature = "std")]
+use threadpool::ThreadPool;
+
+#[cfg(feature = "sgx")]
+use threadpool_sgx::ThreadPool;
+
 use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::{CeremonyEvent, CeremonyId, SignerId};
 use codec::Encode;
@@ -38,7 +44,7 @@ use itp_types::{DirectRequestStatus, Hash};
 use itp_utils::hex::ToHexPrefixed;
 use lc_direct_call::DirectCall;
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, ShardIdentifier};
-use log::{debug, error, trace};
+use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
 use std::{
@@ -55,9 +61,10 @@ pub fn process_event<ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	enclave_registry: Arc<ER>,
 	ocall_api: Arc<OCallApi>,
 	responder: Arc<Responder>,
-	responses_sender: &SyncSender<Response>,
-	event: &CeremonyEvent,
-	ceremony_id: &CeremonyId,
+	responses_sender: SyncSender<Response>,
+	event: CeremonyEvent,
+	ceremony_id: CeremonyId,
+	event_thread_pool: ThreadPool,
 ) where
 	// AK: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
 	ER: EnclaveRegistryLookup + Send + Sync + 'static,
@@ -94,13 +101,21 @@ pub fn process_event<ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					mr_enclave,
 					direct_call,
 				);
-				send_to_all_signers(
-					&client_factory,
-					&enclave_registry,
-					&responses_sender,
-					signer_id,
-					&request,
-				);
+
+				let client_factory = client_factory.clone();
+				let enclave_registry = enclave_registry.clone();
+				let responses_sender = responses_sender.clone();
+				let signer_id = signer_id.clone();
+				event_thread_pool.execute(move || {
+					send_to_all_signers(
+						&client_factory,
+						&enclave_registry,
+						&responses_sender,
+						&signer_id,
+						&request,
+					);
+				});
+				warn!("event_thread_pool: {}", event_thread_pool.queued_count());
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -125,13 +140,21 @@ pub fn process_event<ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					mr_enclave,
 					direct_call,
 				);
-				send_to_all_signers(
-					&client_factory,
-					&enclave_registry,
-					&responses_sender,
-					signer_id,
-					&request,
-				);
+
+				let client_factory = client_factory.clone();
+				let enclave_registry = enclave_registry.clone();
+				let responses_sender = responses_sender.clone();
+				let signer_id = signer_id.clone();
+				event_thread_pool.execute(move || {
+					send_to_all_signers(
+						&client_factory,
+						&enclave_registry,
+						&responses_sender,
+						&signer_id,
+						&request,
+					);
+				});
+				warn!("event_thread_pool: {}", event_thread_pool.queued_count());
 			});
 		},
 		CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
@@ -177,19 +200,27 @@ pub fn process_event<ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					mr_enclave,
 					direct_call,
 				);
-				send_to_all_signers(
-					&client_factory,
-					&enclave_registry,
-					&responses_sender,
-					signer_id,
-					&request,
-				);
+
+				let client_factory = client_factory.clone();
+				let enclave_registry = enclave_registry.clone();
+				let responses_sender = responses_sender.clone();
+				let signer_id = signer_id.clone();
+				event_thread_pool.execute(move || {
+					send_to_all_signers(
+						&client_factory,
+						&enclave_registry,
+						&responses_sender,
+						&signer_id,
+						&request,
+					);
+				});
+				warn!("event_thread_pool: {}", event_thread_pool.queued_count());
 			});
 		},
 	}
 }
 
-fn send_to_all_signers<ClientFactory, ER>(
+fn 	send_to_all_signers<ClientFactory, ER>(
 	client_factory: &Arc<ClientFactory>,
 	enclave_registry: &Arc<ER>,
 	responses_sender: &SyncSender<Response>,

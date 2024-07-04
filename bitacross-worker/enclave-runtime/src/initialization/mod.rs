@@ -52,7 +52,8 @@ use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_direct_rpc_server::{
-	create_determine_watch, rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder, rpc_ws_handler::RpcWsHandler
+	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
+	rpc_responder::RpcResponder, rpc_ws_handler::RpcWsHandler,
 };
 
 use itc_parentchain_light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
@@ -362,7 +363,7 @@ fn initialize_state_observer(
 }
 
 fn run_bit_across_handler(
-	musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
+	ceremony_registry: Arc<RwLock<CeremonyRegistry<KeyRepository<SchnorrPair, Seal>>>>,
 	musig2_ceremony_pending_commands: Arc<RwLock<CeremonyCommandTmp>>,
 	signing_key_pub: [u8; 32],
 	responder: Arc<
@@ -402,7 +403,7 @@ fn run_bit_across_handler(
 		enclave_registry_lookup,
 		signer_registry_lookup,
 		signing_key_pub,
-		musig2_ceremony_registry,
+		ceremony_registry,
 		musig2_ceremony_pending_commands,
 		responder,
 	);

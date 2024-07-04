@@ -125,8 +125,8 @@ pub struct BitAcrossTaskContext<
 	pub signer_registry_lookup: Arc<SRL>,
 	pub signing_key_pub: [u8; 32],
 	pub responder: Arc<Responder>,
-	pub musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
-	pub musig2_ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
+	pub ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
+	pub ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
 }
 
 impl<
@@ -164,8 +164,8 @@ where
 		enclave_registry_lookup: Arc<ERL>,
 		signer_registry_lookup: Arc<SRL>,
 		signing_key_pub: [u8; 32],
-		musig2_ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
-		musig2_ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
+		ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
+		ceremony_command_tmp: Arc<RwLock<CeremonyCommandTmp>>,
 		responder: Arc<Responder>,
 	) -> Self {
 		Self {
@@ -180,8 +180,8 @@ where
 			enclave_registry_lookup,
 			signer_registry_lookup,
 			signing_key_pub,
-			musig2_ceremony_registry,
-			musig2_ceremony_command_tmp,
+			ceremony_registry,
+			ceremony_command_tmp,
 			responder,
 		}
 	}
@@ -205,10 +205,6 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	SRL: SignerRegistryLookup + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let bit_across_task_receiver = init_bit_across_task_sender_storage();
-	let n_workers = 16;
-	let pool = ThreadPool::new(n_workers);
-
 	let (responses_sender, responses_receiver) = sync_channel::<Response>(1000);
 	// here we will process all responses
 	std::thread::spawn(move || {
@@ -221,30 +217,45 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	});
 
 	// timeout tick
-	let musig2_ceremony_registry = context.musig2_ceremony_registry.clone();
-	let musig2_ceremony_command_tmp = context.musig2_ceremony_command_tmp.clone();
-	let time_to_live = 120u64;
+	let ceremony_registry = context.ceremony_registry.clone();
+	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
+	let time_to_live = 60u64;
 	std::thread::spawn(move || loop {
-		std::thread::sleep(Duration::from_secs(20));
+		std::thread::sleep(Duration::from_secs(10));
 		let now = get_current_timestamp();
 		{
-			musig2_ceremony_registry
-				.write()
-				.unwrap()
+			let mut ceremony_registry_write = ceremony_registry.write().unwrap();
+			ceremony_registry_write
 				.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
 		}
 		{
-			musig2_ceremony_command_tmp
-				.write()
-				.unwrap()
-				.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
+			let mut command_tmp_write = ceremony_command_tmp.write().unwrap();
+			command_tmp_write.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
 		}
 	});
 
+	let bit_across_task_receiver = init_bit_across_task_sender_storage();
+	let n_workers = {
+		match std::env::var("worker_threads") {
+			Ok(val) => {
+				let worker_threads = val.parse::<usize>().unwrap();
+				info!("start {} task worker threads", val);
+				worker_threads
+			},
+			Err(_) => {
+				let worker_threads = 8;
+				info!("start default {} task worker threads", worker_threads);
+				worker_threads
+			},
+		}
+	};
+	let command_thread_pool = ThreadPool::new(n_workers);
+	let event_thread_pool = ThreadPool::new(n_workers);
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
 		let responses_sender = responses_sender.clone();
-		pool.execute(move || {
+		let event_thread_pool = event_thread_pool.clone();
+		command_thread_pool.execute(move || {
 			let (ceremony_id, command) =
 				match handle_request(&mut req.request, context_pool.clone()) {
 					Ok((processing_ret, to_process)) => {
@@ -267,7 +278,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 			// check if store command to tmp
 			let is_first_round = {
 				context_pool
-					.musig2_ceremony_registry
+					.ceremony_registry
 					.read()
 					.unwrap()
 					.get(&ceremony_id)
@@ -277,7 +288,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 				(None, CeremonyCommand::SaveNonce(_, _))
 				| (Some(true), CeremonyCommand::SavePartialSignature(_, _)) => {
 					context_pool
-						.musig2_ceremony_command_tmp
+						.ceremony_command_tmp
 						.write()
 						.unwrap()
 						.entry(ceremony_id.clone())
@@ -287,7 +298,16 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						.or_insert((Arc::new(RwLock::new(vec![command])), get_current_timestamp()));
 					return
 				},
-				_ => {},
+				(Some(true), CeremonyCommand::SaveNonce(_, _))
+				| (Some(true), CeremonyCommand::Init)
+				| (Some(false), CeremonyCommand::SavePartialSignature(_, _)) => {},
+				(is_first_round, command) => {
+					error!(
+						"receive wrong command: is_first_round: {:?}, command: {}, drop it",
+						is_first_round, command
+					);
+					return
+				},
 			}
 
 			// process commands and events
@@ -297,7 +317,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 				let event = {
 					let ceremony_rwlock = {
 						context_pool
-							.musig2_ceremony_registry
+							.ceremony_registry
 							.read()
 							.unwrap()
 							.get(&ceremony_id)
@@ -316,12 +336,12 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						| CeremonyEvent::SecondRoundStarted(_, _, _) => {
 							let has_command_tmp = {
 								let command_tmp_read =
-									context_pool.musig2_ceremony_command_tmp.read().unwrap();
+									context_pool.ceremony_command_tmp.read().unwrap();
 								command_tmp_read.contains_key(&ceremony_id)
 							};
 							if has_command_tmp {
 								let ceremony_command_tmp = context_pool
-									.musig2_ceremony_command_tmp
+									.ceremony_command_tmp
 									.write()
 									.unwrap()
 									.remove(&ceremony_id)
@@ -335,12 +355,12 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 							// remove ceremony
 							{
 								let mut registry_write =
-									context_pool.musig2_ceremony_registry.write().unwrap();
+									context_pool.ceremony_registry.write().unwrap();
 								registry_write.remove(&ceremony_id);
 							}
 							{
 								context_pool
-									.musig2_ceremony_command_tmp
+									.ceremony_command_tmp
 									.write()
 									.unwrap()
 									.remove(&ceremony_id);
@@ -354,16 +374,19 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						context_pool.enclave_registry_lookup.clone(),
 						context_pool.ocall_api.clone(),
 						context_pool.responder.clone(),
-						&responses_sender,
-						&event,
-						&ceremony_id,
+						responses_sender.clone(),
+						event,
+						ceremony_id.clone(),
+						event_thread_pool.clone(),
 					);
 				}
 			}
 		});
+		warn!("command_thread_pool: {}", command_thread_pool.queued_count());
 	}
 
-	pool.join();
+	command_thread_pool.join();
+	event_thread_pool.join();
 	warn!("bit_across_task_receiver loop terminated");
 }
 
@@ -410,7 +433,7 @@ where
 				payload.clone(),
 				aes_key,
 				context.relayer_registry_lookup.deref(),
-				context.musig2_ceremony_registry.clone(),
+				context.ceremony_registry.clone(),
 				context.signer_registry_lookup.clone(),
 				&context.signing_key_pub,
 				context.bitcoin_key_repository.clone(),
@@ -469,8 +492,8 @@ where
 		DirectCall::KillCeremony(signer, aes_key, message) => kill_ceremony::handle(
 			signer,
 			message,
-			context.musig2_ceremony_registry.clone(),
-			context.musig2_ceremony_command_tmp.clone(),
+			context.ceremony_registry.clone(),
+			context.ceremony_command_tmp.clone(),
 			context.enclave_registry_lookup.clone(),
 		)
 		.map_err(|e| {

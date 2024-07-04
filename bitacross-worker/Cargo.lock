@@ -408,6 +408,8 @@ dependencies = [
  "sgx_rand",
  "sgx_tstd",
  "sp-core",
+ "threadpool 1.8.0",
+ "threadpool 1.8.1",
 ]
 
 [[package]]

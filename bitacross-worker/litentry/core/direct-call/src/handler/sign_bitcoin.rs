@@ -22,7 +22,6 @@ use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use codec::Encode;
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
-use log::warn;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
@@ -84,11 +83,6 @@ pub fn handle<
 			let mut registry_write = ceremony_registry.write().unwrap();
 			registry_write
 				.insert(payload, (Arc::new(RwLock::new(ceremony)), get_current_timestamp()));
-			warn!(
-				"!!!!!!! Insert Ceremony, len: {}, {:?}",
-				registry_write.len(),
-				registry_write.keys()
-			);
 		}
 
 		Ok(CeremonyCommand::Init)

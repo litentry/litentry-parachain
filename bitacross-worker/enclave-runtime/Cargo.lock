@@ -316,6 +316,7 @@ dependencies = [
  "sgx_rand",
  "sgx_tstd",
  "sp-core",
+ "threadpool",
 ]
 
 [[package]]
