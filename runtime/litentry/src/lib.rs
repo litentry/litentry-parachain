@@ -847,7 +847,7 @@ impl pallet_extrinsic_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
 }
 
 impl pallet_teebag::Config for Runtime {
@@ -855,6 +855,7 @@ impl pallet_teebag::Config for Runtime {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<5>;
 }
 
 impl pallet_bitacross::Config for Runtime {
