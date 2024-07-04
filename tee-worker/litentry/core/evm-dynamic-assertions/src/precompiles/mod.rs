@@ -84,10 +84,11 @@ impl PrecompileSet for Precompiles {
 			a if a == hash(1053) => Some(hex_to_number(handle.input().to_vec())),
 			a if a == hash(1054) => Some(parse_decimal(handle.input().to_vec())),
 			a if a == hash(1055) => Some(parse_int(handle.input().to_vec())),
-			a if a == hash(1100) => Some(json_utils::json_get_string(handle.input().to_vec())),
-			a if a == hash(1101) => Some(json_utils::json_get_i64(handle.input().to_vec())),
-			a if a == hash(1102) => Some(json_utils::json_get_bool(handle.input().to_vec())),
-			a if a == hash(1103) => Some(json_utils::get_array_len(handle.input().to_vec())),
+			a if a == hash(1100) =>
+				Some(json_utils::json_get_string(handle.input().to_vec(), self)),
+			a if a == hash(1101) => Some(json_utils::json_get_i64(handle.input().to_vec(), self)),
+			a if a == hash(1102) => Some(json_utils::json_get_bool(handle.input().to_vec(), self)),
+			a if a == hash(1103) => Some(json_utils::get_array_len(handle.input().to_vec(), self)),
 			_ => None,
 		}
 	}

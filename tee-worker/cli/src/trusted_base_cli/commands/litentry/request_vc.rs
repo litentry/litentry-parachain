@@ -394,7 +394,7 @@ impl RequestVcCommand {
 			.map(|a| {
 				let mut s = vec!["placeholder"];
 				s.extend(a.as_str().split(' '));
-				AssertionCommand::parse_from(s).command.to_assertion()
+				AssertionCommand::parse_from(s).command.to_assertion(self.stf)
 			})
 			.collect::<Result<Vec<_>, _>>()?;
 
@@ -442,8 +442,7 @@ impl RequestVcCommand {
 								println!("received one error: {:?}", err);
 							},
 							Ok(payload) => {
-								let vc =
-									RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
+								let vc = RequestVCResult::decode(&mut payload.as_slice()).unwrap();
 								print_vc(&key, vc);
 							},
 						}
@@ -465,7 +464,7 @@ impl RequestVcCommand {
 
 impl Command {
 	// helper fn to convert a `Command` to `Assertion`
-	pub fn to_assertion(&self) -> Result<Assertion, CliError> {
+	pub fn to_assertion(&self, stf: bool) -> Result<Assertion, CliError> {
 		use Assertion::*;
 		match self {
 			Command::A1 => Ok(A1),
@@ -673,7 +672,8 @@ impl Command {
 				Ok(Assertion::Dynamic(DynamicParams {
 					smart_contract_id: H160::from(id_bytes),
 					smart_contract_params,
-					return_log: arg.return_log.unwrap_or_default(),
+					// always not return log if stf is true.
+					return_log: if stf { false } else { arg.return_log.unwrap_or_default() },
 				}))
 			},
 		}
