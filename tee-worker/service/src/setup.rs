@@ -138,9 +138,9 @@ mod needs_enclave {
 }
 
 /// backs up shard directory and restores it after cleaning shards directory
-pub(crate) fn remove_old_shards(root_dir: &Path, shard_name: &str) -> ServiceResult<()> {
+pub(crate) fn remove_old_shards(root_dir: &Path, new_shard_name: &str) -> ServiceResult<()> {
 	let shard_backup = root_dir.join("shard_backup");
-	let shard_dir = root_dir.join(SHARDS_PATH).join(shard_name);
+	let shard_dir = root_dir.join(SHARDS_PATH).join(new_shard_name);
 
 	fs::rename(shard_dir.clone(), shard_backup.clone()).expect("Failed to backup shard");
 	remove_dir_if_it_exists(root_dir, SHARDS_PATH)?;
