@@ -169,7 +169,7 @@ pub mod storage {
 	pub fn clear(key: &[u8]) {
 		with_externalities(|ext| {
 			if ext.remove(key).is_none() {
-				info!("Tried to clear storage that was not existing");
+				debug!("Tried to clear storage that was not existing");
 			}
 		});
 	}
@@ -272,7 +272,7 @@ pub mod storage {
 	/// in unbalanced transactions. For example, FRAME users should use high level storage
 	/// abstractions.
 	pub fn start_transaction() {
-		warn!("storage::start_transaction unimplemented");
+		debug!("storage::start_transaction unimplemented");
 	}
 
 	/// Rollback the last transaction started by `start_transaction`.
@@ -283,7 +283,7 @@ pub mod storage {
 	///
 	/// Will panic if there is no open transaction.
 	pub fn rollback_transaction() {
-		warn!("storage::rollback_transaction unimplemented");
+		debug!("storage::rollback_transaction unimplemented");
 	}
 
 	/// Commit the last transaction started by `start_transaction`.
@@ -294,7 +294,7 @@ pub mod storage {
 	///
 	/// Will panic if there is no open transaction.
 	pub fn commit_transaction() {
-		warn!("storage::commit_transaction unimplemented");
+		debug!("storage::commit_transaction unimplemented");
 	}
 }
 

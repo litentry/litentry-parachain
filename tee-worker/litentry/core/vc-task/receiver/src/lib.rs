@@ -103,7 +103,6 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
 		if let Ok((shard, call)) = tc_receiver.recv() {
-			info!("Submitting trusted call to the pool");
 			if let Err(e) = context_cloned.submit_trusted_call(&shard, None, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
@@ -434,6 +433,11 @@ where
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
+		info!(
+			"Processing vc request for {}, assertion: {:?}",
+			who.to_did().unwrap_or_default(),
+			assertion
+		);
 		let (mut id_graph, is_already_linked, parachain_block_number, sidechain_block_number) =
 			context
 				.state_handler
@@ -481,7 +485,7 @@ where
 
 		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
-			info!("IDGraph is empty, will pre-create one");
+			debug!("IDGraph is empty, will pre-create one");
 			// To create IDGraph upon first vc request (see P-410), there're two options:
 			//
 			// 1. synchronous creation:
@@ -585,7 +589,7 @@ where
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|_| RequestVcErrorDetail::EnclaveSignerRetrievalFailed)?;
-		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
+		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who.clone());
 		tc_sender
 			.send((shard, c))
 			.map_err(|e| RequestVcErrorDetail::TrustedCallSendingFailed(e.to_string()))?;
@@ -595,11 +599,12 @@ where
 
 		if let Err(e) = context
 			.ocall_api
-			.update_metric(EnclaveMetric::VCBuildTime(assertion, start_time.elapsed()))
+			.update_metric(EnclaveMetric::VCBuildTime(assertion.clone(), start_time.elapsed()))
 		{
 			warn!("Failed to update metric for vc build time: {:?}", e);
 		}
 
+		info!("Vc issued for {}, assertion: {:?}", who.to_did().unwrap_or_default(), assertion);
 		Ok(res.encode())
 	} else {
 		// Would never come here.
