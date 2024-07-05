@@ -297,7 +297,7 @@ pub mod integration_test {
 			.unwrap();
 
 			// when
-			let (_, return_data) = execute_smart_contract(byte_code.clone(), input_data);
+			let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
 
 			// then
 			let decoded = decode(&return_types, &return_data).unwrap();
@@ -334,7 +334,7 @@ pub mod integration_test {
 			.unwrap();
 
 			// when
-			let (_, return_data) = execute_smart_contract(byte_code.clone(), input_data);
+			let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
 
 			// then
 			let decoded = decode(&return_types, &return_data).unwrap();
@@ -358,7 +358,7 @@ pub mod integration_test {
 			]),
 		)
 		.unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
 
 		// when
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -388,7 +388,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();

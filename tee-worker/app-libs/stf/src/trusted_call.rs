@@ -876,6 +876,7 @@ where
 				if let Some(key) = maybe_key {
 					Ok(TrustedCallResult::RequestVC(RequestVCResult {
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
+						vc_logs: None,
 						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 						pre_id_graph_hash: id_graph_hash,
 					}))
