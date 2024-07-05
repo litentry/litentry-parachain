@@ -21,7 +21,6 @@ import { subscribeToEvents } from './common/transactions';
 import { encryptWithTeeShieldingKey } from './common/utils/crypto';
 import { ethers } from 'ethers';
 import { sleep } from './common/utils';
-import { $ as zx } from 'zx';
 import { Bytes, Vec } from '@polkadot/types-codec';
 
 describe('Test Vc (direct request)', function () {
@@ -128,9 +127,12 @@ describe('Test Vc (direct request)', function () {
 
         const abiCoder = new ethers.utils.AbiCoder();
         const encodedData = abiCoder.encode(['string'], ['bnb']);
-
         const assertion = {
-            dynamic: [Uint8Array.from(Buffer.from('0000000000000000000000000000000000000003', 'hex')), encodedData],
+            dynamic: context.api.createType('DynamicParams', [
+                Uint8Array.from(Buffer.from('0000000000000000000000000000000000000003', 'hex')),
+                encodedData,
+                false,
+            ]),
         };
 
         const requestVcCall = await createSignedTrustedCallRequestVc(
