@@ -648,6 +648,8 @@ jobs:
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
+          - test_name: lit-assertion-contracts-test
+
     steps:
       - uses: actions/checkout@v4
 

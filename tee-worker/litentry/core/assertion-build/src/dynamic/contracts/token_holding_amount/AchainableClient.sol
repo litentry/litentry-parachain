@@ -20,7 +20,8 @@ pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
 import "../libraries/Json.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/utils/Strings.sol";
+import "../openzeppelin/Strings.sol";
+
 
 struct DisplayItem {
     string text;

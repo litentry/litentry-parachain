@@ -76,10 +76,12 @@ frame-system-benchmarking = { workspace = true, optional = true }
 core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
 pallet-asset-manager = { workspace = true }
+pallet-bitacross = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-parachain-staking = { workspace = true }
+pallet-teebag = { workspace = true }
 runtime-common = { workspace = true }
 
 fp-rpc = { workspace = true }
@@ -124,6 +126,7 @@ runtime-benchmarks = [
     "pallet-preimage/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
     "pallet-scheduler/runtime-benchmarks",
+    "pallet-teebag/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "pallet-treasury/runtime-benchmarks",
     "pallet-utility/runtime-benchmarks",
@@ -208,6 +211,8 @@ std = [
     "pallet-bridge/std",
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
+    "pallet-bitacross/std",
+    "pallet-teebag/std",
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
