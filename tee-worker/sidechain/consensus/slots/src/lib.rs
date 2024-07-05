@@ -34,8 +34,6 @@ extern crate sgx_tstd as std;
 use codec::Encode;
 use core::str::FromStr;
 use derive_more::From;
-use itp_sgx_externalities::SgxExternalities;
-use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::{duration_difference, duration_now};
 
 use its_consensus_common::{Error as ConsensusError, Proposer};
@@ -43,12 +41,10 @@ use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
-use its_state::SidechainSystemExt;
-use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
+use std::{fmt::Debug, time::Duration, vec::Vec};
 
 #[cfg(feature = "std")]
 mod slot_stream;
@@ -188,18 +184,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 	/// Output generated after a slot
 	type Output: SignedSidechainBlockTrait + Send + 'static;
-
-	/// Scheduled enclave context for authoring
-	type ScheduledEnclave: ScheduledEnclaveUpdater;
-
-	/// State handler context for authoring
-	type StateHandler: HandleState<StateT = SgxExternalities>;
-
-	/// Get scheduled enclave
-	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave>;
-
-	/// Get state handler for query and mutation
-	fn get_state_handler(&mut self) -> Arc<Self::StateHandler>;
 
 	/// Returns the epoch data necessary for authoring. For time-dependent epochs,
 	/// use the provided slot number as a canonical source of time.
@@ -347,35 +331,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			debug!("Skipping proposal slot. Authorities len {:?}", authorities_len);
 		}
 
-		// Return early if MRENCLAVE doesn't match - it implies that the enclave should be updated
-		let scheduled_enclave = self.get_scheduled_enclave();
-		let state_handler = self.get_state_handler();
-		// TODO: is this always consistent? Reference: `propose_state_update` in slot_proposer.rs
-		let (state, _) = state_handler.load_cloned(&shard.into()).ok()?;
-		let next_sidechain_number = state.get_block_number().map_or(1, |n| n + 1);
-
-		if !scheduled_enclave.is_mrenclave_matching(next_sidechain_number) {
-			warn!(
-				"Skipping sidechain block {} due to mismatch MRENCLAVE, current: {:?}, expect: {:?}",
-				next_sidechain_number,
-				scheduled_enclave.get_current_mrenclave().map(hex::encode),
-				scheduled_enclave.get_expected_mrenclave(next_sidechain_number).map(hex::encode),
-			);
-			if let Ok(false) = scheduled_enclave.is_block_production_paused() {
-				let _ = scheduled_enclave.set_block_production_paused(true);
-				info!("Pause sidechain block production");
-			}
-			return None
-		} else {
-			// TODO: this block production pause/unpause is not strictly needed but I add it here as placeholder.
-			//       Maybe we should add a field to describe the reason for pausing/unpausing, as
-			//       it's possible that we want to manually/focibly pause the sidechain
-			if let Ok(true) = scheduled_enclave.is_block_production_paused() {
-				info!("Resume sidechain block production");
-				let _ = scheduled_enclave.set_block_production_paused(false);
-			}
-		}
-
 		// TODO: about the shard migration and state migration
 		//       - the shard migration(copy-over) is done manually by the subcommand "migrate-shard".
 		//       - the state migration is done via conditionally calling on_runtime_upgrade() by comparing
@@ -401,7 +356,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 		trace!(
 			"on_slot: a posteriori latest Litentry block number (if there is a new one): {:?}",
-			last_imported_integritee_header.clone().map(|h| *h.number())
+			last_imported_integritee_header.map(|h| *h.number())
 		);
 
 		let maybe_last_imported_target_a_header =
@@ -466,7 +421,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 
 		if is_single_worker {
-			warn!("Running as single worker, skipping timestamp within slot check")
+			debug!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
@@ -476,19 +431,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			return None
 		}
 
-		if last_imported_integritee_header.is_some() {
-			println!(
-				"Syncing Parentchains: Litentry: {:?} TargetA: {:?}, TargetB: {:?}, Sidechain: {:?}",
-				latest_integritee_parentchain_header.number(),
-				maybe_latest_target_a_parentchain_header.map(|h| *h.number()),
-				maybe_latest_target_b_parentchain_header.map(|h| *h.number()),
-				proposing.block.block().header().block_number()
-			);
-		}
-
-		info!("Proposing sidechain block (number: {}, hash: {}) based on integritee parentchain block (number: {:?}, hash: {:?})",
-			proposing.block.block().header().block_number(), proposing.block.hash(),
-			latest_integritee_parentchain_header.number(), latest_integritee_parentchain_header.hash()
+		info!(
+			"Proposed sidechain block {} based on parentchain block {:?}",
+			proposing.block.block().header().block_number(),
+			latest_integritee_parentchain_header.number()
 		);
 
 		Some(SlotResult {

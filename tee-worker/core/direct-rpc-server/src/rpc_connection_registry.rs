@@ -76,7 +76,7 @@ where
 		rpc_response: RpcResponse,
 		force_wait: ForceWait,
 	) {
-		log::info!("Store hash {:?} to connection registry, force_wait: {}", hash, force_wait);
+		log::debug!("Store hash {:?} to connection registry, force_wait: {}", hash, force_wait);
 		let mut map = self.connection_map.write().expect("Lock poisoning");
 		map.insert(hash, (connection, rpc_response, force_wait));
 	}

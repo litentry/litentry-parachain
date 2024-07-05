@@ -18,7 +18,7 @@
 
 pragma solidity ^0.8.8;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.0/contracts/utils/Strings.sol";
+import "../openzeppelin/Strings.sol";
 import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";

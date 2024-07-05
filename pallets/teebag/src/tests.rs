@@ -18,8 +18,8 @@
 
 #![allow(dead_code, unused_imports)]
 use crate::{
-	mock::*, test_util::*, AttestationType, DcapProvider, Enclave, EnclaveRegistry, Error,
-	Event as TeebagEvent, ScheduledEnclave, SgxBuildMode, WorkerType, H256,
+	mock::*, test_util::*, AttestationType, AuthorizedEnclave, DcapProvider, Enclave,
+	EnclaveRegistry, Error, Event as TeebagEvent, SgxBuildMode, WorkerType, H256,
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
@@ -78,14 +78,14 @@ fn register_tcb_info() {
 // =====================================================
 // Unittest in `Development` mode, where:
 // - AttestationType::Ignore is possible
-// - No scheduled enclave check
+// - No authorized enclave check
 // - No sgx_build_mode check
 // =====================================================
 
 #[test]
-fn register_enclave_dev_works_with_no_scheduled_enclave() {
+fn register_enclave_dev_works_with_no_authorized_enclave() {
 	new_test_ext(true).execute_with(|| {
-		// it works with no entry in scheduled_enclave
+		// it works with no entry in authorized_enclave
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(alice()),
 			Default::default(),
@@ -102,10 +102,9 @@ fn register_enclave_dev_works_with_no_scheduled_enclave() {
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_count(WorkerType::BitAcross), 0);
 		assert_eq!(EnclaveRegistry::<Test>::get(alice()).unwrap(), enclave);
-		assert_eq!(
-			ScheduledEnclave::<Test>::get((WorkerType::default(), 0)).unwrap().to_vec(),
-			TEST4_MRENCLAVE.to_vec()
-		);
+		let authorized_enclave = AuthorizedEnclave::<Test>::get(WorkerType::default());
+		assert_eq!(authorized_enclave.len(), 1);
+		assert_eq!(authorized_enclave.first().unwrap(), TEST4_MRENCLAVE.as_ref());
 	})
 }
 
@@ -222,10 +221,9 @@ fn register_dcap_enclave_works() {
 #[test]
 fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 	new_test_ext(false).execute_with(|| {
-		assert_ok!(Teebag::set_scheduled_enclave(
+		assert_ok!(Teebag::force_add_authorized_enclave(
 			RuntimeOrigin::signed(alice()),
 			WorkerType::Identity,
-			0,
 			TEST4_MRENCLAVE
 		));
 
@@ -257,10 +255,9 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 #[test]
 fn register_enclave_prod_works_with_sgx_build_mode_production() {
 	new_test_ext(false).execute_with(|| {
-		assert_ok!(Teebag::set_scheduled_enclave(
+		assert_ok!(Teebag::force_add_authorized_enclave(
 			RuntimeOrigin::signed(alice()),
 			WorkerType::Identity,
-			0,
 			TEST8_MRENCLAVE
 		));
 
@@ -286,6 +283,15 @@ fn register_enclave_prod_works_with_sgx_build_mode_production() {
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_count(WorkerType::BitAcross), 0);
 		assert_eq!(EnclaveRegistry::<Test>::get(signer8).unwrap(), enclave);
+
+		// remove authorized enclave should remove enclave too
+		assert_ok!(Teebag::force_remove_authorized_enclave(
+			RuntimeOrigin::signed(alice()),
+			WorkerType::Identity,
+			TEST8_MRENCLAVE
+		));
+		assert_eq!(Teebag::authorized_enclave(WorkerType::Identity).len(), 0);
+		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 0);
 	})
 }
 
@@ -309,7 +315,7 @@ fn register_enclave_prod_fails_with_wrong_attestation_type() {
 }
 
 #[test]
-fn register_enclave_prod_fails_with_no_scheduled_enclave() {
+fn register_enclave_prod_fails_with_no_authorized_enclave() {
 	new_test_ext(false).execute_with(|| {
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		let signer = get_signer(TEST4_SIGNER_PUB);
@@ -324,7 +330,7 @@ fn register_enclave_prod_fails_with_no_scheduled_enclave() {
 				None,
 				AttestationType::Ias,
 			),
-			Error::<Test>::EnclaveNotInSchedule
+			Error::<Test>::EnclaveNotAuthorized
 		);
 	})
 }
@@ -332,25 +338,42 @@ fn register_enclave_prod_fails_with_no_scheduled_enclave() {
 #[test]
 fn register_enclave_prod_fails_with_max_limit_reached() {
 	new_test_ext(false).execute_with(|| {
-		ScheduledEnclave::<Test>::insert((WorkerType::BitAcross, 0), TEST5_MRENCLAVE);
-		ScheduledEnclave::<Test>::insert((WorkerType::BitAcross, 1), TEST6_MRENCLAVE);
-		ScheduledEnclave::<Test>::insert((WorkerType::Identity, 0), TEST5_MRENCLAVE);
-		ScheduledEnclave::<Test>::insert((WorkerType::Identity, 1), TEST6_MRENCLAVE);
+		assert_ok!(Teebag::force_add_authorized_enclave(
+			RuntimeOrigin::signed(alice()),
+			WorkerType::Identity,
+			TEST4_MRENCLAVE
+		));
+		assert_ok!(Teebag::force_add_authorized_enclave(
+			RuntimeOrigin::signed(alice()),
+			WorkerType::Identity,
+			TEST6_MRENCLAVE
+		));
+		assert_ok!(Teebag::force_add_authorized_enclave(
+			RuntimeOrigin::signed(alice()),
+			WorkerType::BitAcross,
+			TEST4_MRENCLAVE
+		));
+		assert_ok!(Teebag::force_add_authorized_enclave(
+			RuntimeOrigin::signed(alice()),
+			WorkerType::BitAcross,
+			TEST6_MRENCLAVE
+		));
 
-		let signer5: AccountId32 = get_signer(TEST5_SIGNER_PUB);
+		let signer4: AccountId32 = get_signer(TEST4_SIGNER_PUB);
 		let signer6: AccountId32 = get_signer(TEST6_SIGNER_PUB);
 
-		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(signer5.clone()),
+			RuntimeOrigin::signed(signer4.clone()),
 			WorkerType::BitAcross,
 			Default::default(),
-			TEST5_CERT.to_vec(),
+			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
 			None,
 			AttestationType::Ias,
 		));
+
 		Timestamp::set_timestamp(TEST6_TIMESTAMP);
 		assert_noop!(
 			Teebag::register_enclave(
@@ -367,13 +390,13 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 		);
 
 		// re-register them as WorkerType::Identity is not allowed
-		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		assert_noop!(
 			Teebag::register_enclave(
-				RuntimeOrigin::signed(signer5.clone()),
+				RuntimeOrigin::signed(signer4.clone()),
 				WorkerType::Identity,
 				Default::default(),
-				TEST5_CERT.to_vec(),
+				TEST4_CERT.to_vec(),
 				URL.to_vec(),
 				None,
 				None,
@@ -383,13 +406,13 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 		);
 
 		// remove and re-register it should work
-		assert_ok!(Teebag::force_remove_enclave(RuntimeOrigin::signed(alice()), signer5.clone(),));
+		assert_ok!(Teebag::force_remove_enclave(RuntimeOrigin::signed(alice()), signer4.clone(),));
 
 		assert_ok!(Teebag::register_enclave(
-			RuntimeOrigin::signed(signer5),
+			RuntimeOrigin::signed(signer4),
 			WorkerType::Identity,
 			Default::default(),
-			TEST5_CERT.to_vec(),
+			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
 			None,

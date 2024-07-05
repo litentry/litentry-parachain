@@ -104,7 +104,7 @@ pub mod sgx_tests {
 	use ethabi::ethereum_types::H160;
 	use itp_sgx_temp_dir::TempDir;
 	use lc_dynamic_assertion::AssertionLogicRepository;
-	use sgx_tstd::{path::Path, string::ToString, vec, vec::Vec};
+	use sgx_tstd::{string::ToString, vec, vec::Vec};
 
 	pub fn restores_state_from_seal() {
 		let seal_file_name = "test_sealed_assertion.bin";
