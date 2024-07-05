@@ -145,8 +145,7 @@ pub(crate) fn remove_old_shards(root_dir: &Path, new_shard_name: &str) -> Servic
 	fs::rename(shard_dir.clone(), shard_backup.clone()).expect("Failed to backup shard");
 	remove_dir_if_it_exists(root_dir, SHARDS_PATH)?;
 	fs::create_dir_all(root_dir.join(SHARDS_PATH)).expect("Failed to create shards directory");
-	fs::rename(shard_backup, root_dir.join(SHARDS_PATH).join(shard_dir))
-		.expect("Failed to restore shard");
+	fs::rename(shard_backup, shard_dir).expect("Failed to restore shard");
 
 	Ok(())
 }
