@@ -210,8 +210,7 @@ pub(crate) fn main() {
 		} else if run_config.force_migrate_shard {
 			setup::force_migrate_shard(enclave.as_ref(), &shard);
 			let new_shard_name = shard.encode().to_base58();
-			setup::remove_old_shards(config.data_dir(), &new_shard_name)
-				.expect("Failed to remove old shards");
+			setup::remove_old_shards(config.data_dir(), &new_shard_name);
 		}
 
 		let node_api =

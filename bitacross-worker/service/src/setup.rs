@@ -138,16 +138,14 @@ mod needs_enclave {
 }
 
 /// backs up shard directory and restores it after cleaning shards directory
-pub(crate) fn remove_old_shards(root_dir: &Path, new_shard_name: &str) -> ServiceResult<()> {
+pub(crate) fn remove_old_shards(root_dir: &Path, new_shard_name: &str) {
 	let shard_backup = root_dir.join("shard_backup");
 	let shard_dir = root_dir.join(SHARDS_PATH).join(new_shard_name);
 
 	fs::rename(shard_dir.clone(), shard_backup.clone()).expect("Failed to backup shard");
-	remove_dir_if_it_exists(root_dir, SHARDS_PATH)?;
+	remove_dir_if_it_exists(root_dir, SHARDS_PATH).expect("Failed to remove shards directory");
 	fs::create_dir_all(root_dir.join(SHARDS_PATH)).expect("Failed to create shards directory");
 	fs::rename(shard_backup, shard_dir).expect("Failed to restore shard");
-
-	Ok(())
 }
 
 /// Purge all worker files from `dir`.
@@ -259,7 +257,7 @@ mod tests {
 
 		assert!(root_directory.join(SHARDS_PATH).join(shard_2_name).exists());
 
-		remove_old_shards(root_directory, shard_1_name).expect("Failed to backup shard");
+		remove_old_shards(root_directory, shard_1_name);
 
 		assert!(root_directory.join(SHARDS_PATH).join(shard_1_name).exists());
 		assert_eq!(
