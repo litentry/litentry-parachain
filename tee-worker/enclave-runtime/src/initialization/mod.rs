@@ -461,6 +461,12 @@ pub(crate) fn migrate_shard(
 	Ok(())
 }
 
+pub(crate) fn force_migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let _ = state_handler.force_migrate_shard(new_shard)?;
+	Ok(())
+}
+
 /// Initialize the TOP pool author component.
 pub fn create_top_pool_author(
 	rpc_responder: Arc<EnclaveRpcResponder>,

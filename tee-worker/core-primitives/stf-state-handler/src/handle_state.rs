@@ -80,4 +80,7 @@ pub trait HandleState {
 		old_shard: ShardIdentifier,
 		new_shard: ShardIdentifier,
 	) -> Result<Self::HashType>;
+
+	/// Force migrate state to new shard
+	fn force_migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType>;
 }
