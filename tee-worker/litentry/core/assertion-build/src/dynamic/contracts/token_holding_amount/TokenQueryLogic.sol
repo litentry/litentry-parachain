@@ -23,7 +23,7 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
-abstract contract TokenLogic is TokenHoldingAmount {
+abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(uint32 => string) internal networkUrls;
 	mapping(uint32 => bool) private queriedNetworks;
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
