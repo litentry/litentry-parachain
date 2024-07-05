@@ -26,8 +26,8 @@ use std::{fs, path::Path};
 
 #[cfg(feature = "link-binary")]
 pub(crate) use needs_enclave::{
-	generate_shielding_key_file, generate_signing_key_file, init_shard, initialize_shard_and_keys,
-	migrate_shard,
+	force_migrate_shard, generate_shielding_key_file, generate_signing_key_file, init_shard,
+	initialize_shard_and_keys, migrate_shard,
 };
 
 #[cfg(feature = "link-binary")]
@@ -97,6 +97,17 @@ mod needs_enclave {
 		}
 	}
 
+	pub(crate) fn force_migrate_shard(enclave: &Enclave, &new_shard: &ShardIdentifier) {
+		match enclave.force_migrate_shard(new_shard.encode()) {
+			Err(e) => {
+				panic!("Failed to force migrate shard {:?}. {:?}", new_shard, e);
+			},
+			Ok(_) => {
+				println!("Successfully force migrate shard {:?}", new_shard);
+			},
+		}
+	}
+
 	pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
 		info!("*** Get the signing key from the TEE\n");
 		let pubkey = enclave.get_ecc_signing_pubkey().unwrap();
@@ -124,6 +135,17 @@ mod needs_enclave {
 			},
 		}
 	}
+}
+
+/// backs up shard directory and restores it after cleaning shards directory
+pub(crate) fn remove_old_shards(root_dir: &Path, new_shard_name: &str) {
+	let shard_backup = root_dir.join("shard_backup");
+	let shard_dir = root_dir.join(SHARDS_PATH).join(new_shard_name);
+
+	fs::rename(shard_dir.clone(), shard_backup.clone()).expect("Failed to backup shard");
+	remove_dir_if_it_exists(root_dir, SHARDS_PATH).expect("Failed to remove shards directory");
+	fs::create_dir_all(root_dir.join(SHARDS_PATH)).expect("Failed to create shards directory");
+	fs::rename(shard_backup, shard_dir).expect("Failed to restore shard");
 }
 
 /// Purge all worker files from `dir`.
@@ -216,6 +238,36 @@ mod tests {
 		let root_directory = test_directory_handle.path();
 
 		assert!(purge_files(&root_directory).is_ok());
+	}
+
+	#[test]
+	fn test_remove_old_shards() {
+		let test_directory_handle = TestDirectoryHandle::new(PathBuf::from("test_backup_shard"));
+		let root_directory = test_directory_handle.path();
+		let new_shard_name = "new_shard";
+		let old_shard_name = "old_shard";
+
+		let shard_1_dir = root_directory.join(SHARDS_PATH).join(new_shard_name);
+		fs::create_dir_all(&shard_1_dir).unwrap();
+		fs::File::create(shard_1_dir.join("test_state.bin")).unwrap();
+		fs::File::create(shard_1_dir.join("test_state_2.bin")).unwrap();
+
+		let shard_2_dir = root_directory.join(SHARDS_PATH).join(old_shard_name);
+		fs::create_dir_all(&shard_2_dir).unwrap();
+		fs::File::create(shard_2_dir.join("test_state.bin")).unwrap();
+
+		assert!(root_directory.join(SHARDS_PATH).join(old_shard_name).exists());
+
+		remove_old_shards(root_directory, new_shard_name);
+
+		assert!(root_directory.join(SHARDS_PATH).join(new_shard_name).exists());
+		assert_eq!(
+			fs::read_dir(root_directory.join(SHARDS_PATH).join(new_shard_name))
+				.expect("Failed to read shard directory")
+				.count(),
+			2
+		);
+		assert!(!root_directory.join(SHARDS_PATH).join(old_shard_name).exists());
 	}
 
 	/// Directory handle to automatically initialize a directory
