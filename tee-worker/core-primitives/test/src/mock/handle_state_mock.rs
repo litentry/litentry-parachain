@@ -66,7 +66,7 @@ impl HandleState for HandleStateMock {
 	}
 
 	fn force_migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
-		let old_shard = self.state_map.read().unwrap().keys().next().unwrap().clone();
+		let old_shard = *self.state_map.read().unwrap().keys().next().unwrap();
 		self.migrate_shard(old_shard, new_shard)
 	}
 
