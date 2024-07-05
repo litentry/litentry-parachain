@@ -525,6 +525,22 @@ pub unsafe extern "C" fn migrate_shard(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn force_migrate_shard(
+	new_shard: *const u8,
+	shard_size: u32,
+) -> sgx_status_t {
+	let shard_identifier =
+		ShardIdentifier::from_slice(slice::from_raw_parts(new_shard, shard_size as usize));
+
+	if let Err(e) = initialization::force_migrate_shard(shard_identifier) {
+		error!("Failed to (force) migrate shard ({:?}): {:?}", shard_identifier, e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn sync_parentchain(
 	blocks_to_sync: *const u8,
 	blocks_to_sync_size: usize,
