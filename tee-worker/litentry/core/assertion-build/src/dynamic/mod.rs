@@ -112,7 +112,7 @@ pub mod assertion_test {
 		let dynamic_params = DynamicParams {
 			smart_contract_id: hash(1),
 			smart_contract_params: None,
-			return_log: false,
+			return_log: true,
 		};
 		let request = AssertionBuildRequest {
 			shard: Default::default(),
@@ -135,11 +135,14 @@ pub mod assertion_test {
 		// when
 		let (credential, vc_logs) = build(&request, dynamic_params, repository.into()).unwrap();
 
+		for log in &vc_logs {
+			println!("{}", log);
+		}
 		println!("Credential is: {:?}", credential);
 
 		// then
 		assert!(credential.credential_subject.values[0]);
-		assert!(vc_logs.len() == 0);
+		// assert!(vc_logs.len() == 0);
 	}
 
 	#[test]

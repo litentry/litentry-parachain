@@ -21,6 +21,7 @@ pragma solidity ^0.8.8;
 import "./libraries/AssertionLogic.sol";
 import "./libraries/Http.sol";
 import "./libraries/Identities.sol";
+import "./libraries/Logging.sol";
 import "./libraries/Utils.sol";
 import "./DynamicAssertion.sol";
 
@@ -40,6 +41,7 @@ contract A20 is DynamicAssertion {
             bool
         )
     {
+        Logging.info("begin generate VC for A20");
         string
             memory description = "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.";
         string memory assertion_type = "IDHub EVM Version Early Bird";
@@ -82,6 +84,7 @@ contract A20 is DynamicAssertion {
             }
         }
 
+        Logging.info("begin create assertion for A20");
         AssertionLogic.Condition memory condition = AssertionLogic.Condition(
             "$has_joined",
             AssertionLogic.Op.Equal,
