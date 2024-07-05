@@ -38,8 +38,6 @@ pub use types::*;
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
-pub type DynamicParams = BoundedVec<u8, ConstU32<1024>>;
-
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{

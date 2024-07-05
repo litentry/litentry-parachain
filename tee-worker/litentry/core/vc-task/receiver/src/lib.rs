@@ -559,7 +559,7 @@ where
 			req_ext_hash,
 		};
 
-		let credential_str = create_credential_str(&req, &context)
+		let (vc_payload, vc_logs) = create_credential_str(&req, &context)
 			.map_err(|e| RequestVcErrorDetail::AssertionBuildFailed(Box::new(e)))?;
 
 		let call_index = node_metadata_repo
@@ -579,7 +579,8 @@ where
 		let mutated_id_graph = if should_create_id_graph { id_graph } else { Default::default() };
 
 		let res = RequestVCResult {
-			vc_payload: aes_encrypt_default(&key, &credential_str),
+			vc_payload: aes_encrypt_default(&key, &vc_payload),
+			vc_logs: vc_logs.map(|v| aes_encrypt_default(&key, &v)),
 			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 			pre_id_graph_hash: id_graph_hash,
 		};
