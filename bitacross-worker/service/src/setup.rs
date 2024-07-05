@@ -100,7 +100,7 @@ mod needs_enclave {
 	pub(crate) fn force_migrate_shard(enclave: &Enclave, &new_shard: &ShardIdentifier) {
 		match enclave.force_migrate_shard(new_shard.encode()) {
 			Err(e) => {
-				println!("Failed to force migrate shard {:?}. {:?}", new_shard, e);
+				panic!("Failed to force migrate shard {:?}. {:?}", new_shard, e);
 			},
 			Ok(_) => {
 				println!("Successfully force migrate shard {:?}", new_shard);
