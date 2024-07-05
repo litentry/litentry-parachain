@@ -72,6 +72,7 @@ pub mod pallet {
 		RelayerRemoved { who: Identity },
 		BtcWalletGenerated { pub_key: PubKey, account_id: T::AccountId },
 		EthWalletGenerated { pub_key: PubKey },
+		VaultRemoved { who: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -81,6 +82,7 @@ pub mod pallet {
 		UnsupportedRelayerType,
 		BtcWalletAlreadyExist,
 		EthWalletAlreadyExist,
+		VaultNotExist,
 	}
 
 	#[pallet::genesis_config]
@@ -139,6 +141,16 @@ pub mod pallet {
 			ensure!(Relayer::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
 			Relayer::<T>::remove(account.clone());
 			Self::deposit_event(Event::RelayerRemoved { who: account });
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight({195_000_000})]
+		pub fn remove_vault(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(Vault::<T>::contains_key(&account), Error::<T>::VaultNotExist);
+			Vault::<T>::remove(account.clone());
+			Self::deposit_event(Event::VaultRemoved { who: account });
 			Ok(())
 		}
 
