@@ -18,7 +18,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo},
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure,
 	pallet_prelude::*,
 	traits::Get,
@@ -511,7 +511,7 @@ pub mod pallet {
 				},
 			};
 			Self::add_enclave(&sender, &enclave)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(9)]
@@ -519,7 +519,7 @@ pub mod pallet {
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			Self::remove_enclave(&sender)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(10)]
@@ -560,10 +560,13 @@ pub mod pallet {
 
 		#[pallet::call_index(20)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
+		pub fn post_opaque_task(
+			origin: OriginFor<T>,
+			request: RsaRequest,
+		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::OpaqueTaskPosted { request });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(21)]

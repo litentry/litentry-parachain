@@ -125,33 +125,39 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight({195_000_000})]
-		pub fn add_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+		pub fn add_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(account.is_substrate() || account.is_evm(), Error::<T>::UnsupportedRelayerType);
 			// we don't care if `account` already exists
 			Relayer::<T>::insert(account.clone(), ());
 			Self::deposit_event(Event::RelayerAdded { who: account });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(2)]
 		#[pallet::weight({195_000_000})]
-		pub fn remove_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+		pub fn remove_relayer(
+			origin: OriginFor<T>,
+			account: Identity,
+		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(Relayer::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
 			Relayer::<T>::remove(account.clone());
 			Self::deposit_event(Event::RelayerRemoved { who: account });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(3)]
 		#[pallet::weight({195_000_000})]
-		pub fn remove_vault(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+		pub fn remove_vault(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(Vault::<T>::contains_key(&account), Error::<T>::VaultNotExist);
 			Vault::<T>::remove(account.clone());
 			Self::deposit_event(Event::VaultRemoved { who: account });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		/// ---------------------------------------------------
