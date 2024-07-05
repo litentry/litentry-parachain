@@ -247,30 +247,30 @@ mod tests {
 	fn test_remove_old_shards() {
 		let test_directory_handle = TestDirectoryHandle::new(PathBuf::from("test_backup_shard"));
 		let root_directory = test_directory_handle.path();
-		let shard_1_name = "test_shard_1";
-		let shard_2_name = "test_shard_2";
+		let new_shard_name = "new_shard";
+		let old_shard_name = "old_shard";
 
-		let shard_1_dir = root_directory.join(SHARDS_PATH).join(shard_1_name);
+		let shard_1_dir = root_directory.join(SHARDS_PATH).join(new_shard_name);
 		fs::create_dir_all(&shard_1_dir).unwrap();
 		fs::File::create(shard_1_dir.join("test_state.bin")).unwrap();
 		fs::File::create(shard_1_dir.join("test_state_2.bin")).unwrap();
 
-		let shard_2_dir = root_directory.join(SHARDS_PATH).join(shard_2_name);
+		let shard_2_dir = root_directory.join(SHARDS_PATH).join(old_shard_name);
 		fs::create_dir_all(&shard_2_dir).unwrap();
 		fs::File::create(shard_2_dir.join("test_state.bin")).unwrap();
 
-		assert!(root_directory.join(SHARDS_PATH).join(shard_2_name).exists());
+		assert!(root_directory.join(SHARDS_PATH).join(old_shard_name).exists());
 
-		remove_old_shards(root_directory, shard_1_name).expect("Failed to backup shard");
+		remove_old_shards(root_directory, new_shard_name).expect("Failed to backup shard");
 
-		assert!(root_directory.join(SHARDS_PATH).join(shard_1_name).exists());
+		assert!(root_directory.join(SHARDS_PATH).join(new_shard_name).exists());
 		assert_eq!(
-			fs::read_dir(root_directory.join(SHARDS_PATH).join(shard_1_name))
+			fs::read_dir(root_directory.join(SHARDS_PATH).join(new_shard_name))
 				.expect("Failed to read shard directory")
 				.count(),
 			2
 		);
-		assert!(!root_directory.join(SHARDS_PATH).join(shard_2_name).exists());
+		assert!(!root_directory.join(SHARDS_PATH).join(old_shard_name).exists());
 	}
 
 	/// Directory handle to automatically initialize a directory
