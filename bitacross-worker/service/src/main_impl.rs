@@ -164,6 +164,10 @@ pub(crate) fn main() {
 
 		if clean_reset {
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();
+		} else if run_config.force_migrate_shard {
+			setup::force_migrate_shard(enclave.as_ref(), &shard);
+			let new_shard_name = shard.encode().to_base58();
+			setup::remove_old_shards(config.data_dir(), &new_shard_name);
 		}
 
 		let node_api =

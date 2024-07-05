@@ -104,6 +104,10 @@ impl EnclaveBase for EnclaveMock {
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn force_migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {

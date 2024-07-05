@@ -117,6 +117,10 @@ impl EnclaveBase for EnclaveMock {
 	fn init_wallets(&self, _base_dir: &str) -> EnclaveResult<()> {
 		unimplemented!()
 	}
+
+	fn force_migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		unimplemented!()
+	}
 }
 
 impl Sidechain for EnclaveMock {

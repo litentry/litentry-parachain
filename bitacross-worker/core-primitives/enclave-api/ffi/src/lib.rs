@@ -242,6 +242,13 @@ extern "C" {
 		shard_size: u32,
 	) -> sgx_status_t;
 
+	pub fn force_migrate_shard(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		new_shard: *const u8,
+		shard_size: u32,
+	) -> sgx_status_t;
+
 	pub fn ignore_parentchain_block_import_validation_until(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
