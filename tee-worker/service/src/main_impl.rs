@@ -207,10 +207,6 @@ pub(crate) fn main() {
 
 		if clean_reset {
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();
-		} else if run_config.force_migrate_shard {
-			setup::force_migrate_shard(enclave.as_ref(), &shard);
-			let new_shard_name = shard.encode().to_base58();
-			setup::remove_old_shards(config.data_dir(), &new_shard_name);
 		}
 
 		let node_api =
@@ -290,32 +286,10 @@ pub(crate) fn main() {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
-		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
-		let old_shard = sub_matches
-			.value_of("old-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		let new_shard: ShardIdentifier = sub_matches
-			.value_of("new-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		if old_shard == new_shard {
-			info!("old_shard should not be the same as new_shard");
-		} else {
-			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
-		}
+		let new_shard = extract_shard(None, enclave.as_ref());
+		setup::migrate_shard(enclave.as_ref(), &new_shard);
+		let new_shard_name = new_shard.encode().to_base58();
+		setup::remove_old_shards(config.data_dir(), &new_shard_name);
 	} else {
 		info!("For options: use --help");
 	}

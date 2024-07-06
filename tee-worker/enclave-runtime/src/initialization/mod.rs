@@ -452,18 +452,9 @@ pub(crate) fn init_shard(shard: ShardIdentifier) -> EnclaveResult<()> {
 	Ok(())
 }
 
-pub(crate) fn migrate_shard(
-	old_shard: ShardIdentifier,
-	new_shard: ShardIdentifier,
-) -> EnclaveResult<()> {
+pub(crate) fn migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let _ = state_handler.migrate_shard(old_shard, new_shard)?;
-	Ok(())
-}
-
-pub(crate) fn force_migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let _ = state_handler.force_migrate_shard(new_shard)?;
+	let _ = state_handler.migrate_shard(new_shard)?;
 	Ok(())
 }
 

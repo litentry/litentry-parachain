@@ -157,10 +157,6 @@ subcommands:
                     short: s
                     help: set parentchain target for shielding / unshielding. only relevant for primary worker upon first start for shard. can't be changed later for a shard
                     takes_value: true
-              - force-migrate-shard:
-                    long: force-migrate-shard
-                    help: Force migrate the shard before starting the worker
-                    required: false
     - request-state:
           about: (DEPRECATED) join a shard by requesting key provisioning from another worker
           args:

@@ -318,8 +318,6 @@ pub struct RunConfig {
 	marblerun_base_url: Option<String>,
 	/// parentchain which should be used for shielding/unshielding the stf's native token
 	pub shielding_target: Option<ParentchainId>,
-	/// Whether to migrate the shard before initializing the enclave
-	pub force_migrate_shard: bool,
 }
 
 impl RunConfig {
@@ -365,9 +363,7 @@ impl From<&ArgMatches<'_>> for RunConfig {
 			),
 		});
 
-		let force_migrate_shard = m.is_present("force-migrate-shard");
-
-		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target, force_migrate_shard }
+		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target }
 	}
 }
 
