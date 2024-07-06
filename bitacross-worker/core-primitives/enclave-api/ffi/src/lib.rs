@@ -237,14 +237,6 @@ extern "C" {
 	pub fn migrate_shard(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		old_shard: *const u8,
-		new_shard: *const u8,
-		shard_size: u32,
-	) -> sgx_status_t;
-
-	pub fn force_migrate_shard(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
 		new_shard: *const u8,
 		shard_size: u32,
 	) -> sgx_status_t;

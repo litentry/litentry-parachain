@@ -102,10 +102,6 @@ impl EnclaveBase for EnclaveMock {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 
-	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
-		unimplemented!()
-	}
-
 	fn publish_wallets(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}
@@ -118,7 +114,7 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn force_migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 }

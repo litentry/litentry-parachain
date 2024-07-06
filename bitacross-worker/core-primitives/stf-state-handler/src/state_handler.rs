@@ -228,16 +228,7 @@ where
 		self.write_after_mutation(state, state_write_lock, shard)
 	}
 
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType> {
-		let (state, _) = self.load_cloned(&old_shard)?;
-		self.reset(state, &new_shard)
-	}
-
-	fn force_migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
 		if self.shard_exists(&new_shard)? {
 			let (_, state_hash) = self.load_cloned(&new_shard)?;
 			return Ok(state_hash)
@@ -246,10 +237,11 @@ where
 			shards if shards.len() == 1 => shards[0],
 			_ =>
 				return Err(Error::Other(
-					"Cannot force migrate shard if there is more than one shard".into(),
+					"Cannot migrate shard if there is more than one shard".into(),
 				)),
 		};
-		self.migrate_shard(old_shard, new_shard)
+		let (state, _) = self.load_cloned(&old_shard)?;
+		self.reset(state, &new_shard)
 	}
 }
 

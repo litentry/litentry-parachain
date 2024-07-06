@@ -26,8 +26,8 @@ use std::{fs, path::Path};
 
 #[cfg(feature = "link-binary")]
 pub(crate) use needs_enclave::{
-	force_migrate_shard, generate_shielding_key_file, generate_signing_key_file, init_shard,
-	initialize_shard_and_keys, migrate_shard,
+	generate_shielding_key_file, generate_signing_key_file, init_shard, initialize_shard_and_keys,
+	migrate_shard,
 };
 
 #[cfg(feature = "link-binary")]
@@ -76,34 +76,13 @@ mod needs_enclave {
 		}
 	}
 
-	pub(crate) fn migrate_shard(
-		enclave: &Enclave,
-		old_shard: &ShardIdentifier,
-		new_shard: &ShardIdentifier,
-	) {
-		match enclave.migrate_shard(old_shard.encode(), new_shard.encode()) {
+	pub(crate) fn migrate_shard(enclave: &Enclave, &new_shard: &ShardIdentifier) {
+		match enclave.migrate_shard(new_shard.encode()) {
 			Err(e) => {
-				println!(
-					"Failed to migrate old shard {:?} to new shard{:?}. {:?}",
-					old_shard, new_shard, e
-				);
+				panic!("Failed to migrate shard {:?}. {:?}", new_shard, e);
 			},
 			Ok(_) => {
-				println!(
-					"Successfully migrate old shard {:?} to new shard{:?}",
-					old_shard, new_shard
-				);
-			},
-		}
-	}
-
-	pub(crate) fn force_migrate_shard(enclave: &Enclave, &new_shard: &ShardIdentifier) {
-		match enclave.force_migrate_shard(new_shard.encode()) {
-			Err(e) => {
-				panic!("Failed to force migrate shard {:?}. {:?}", new_shard, e);
-			},
-			Ok(_) => {
-				println!("Successfully force migrate shard {:?}", new_shard);
+				println!("Shard {:?} migrated Successfully", new_shard);
 			},
 		}
 	}

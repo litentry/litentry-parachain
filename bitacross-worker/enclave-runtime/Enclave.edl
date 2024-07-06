@@ -173,12 +173,6 @@ enclave {
 		public size_t test_main_entrance();
 
 		public sgx_status_t migrate_shard(
-			[in, size=shard_size] uint8_t* old_shard,
-			[in, size=shard_size] uint8_t* new_shard,
-			uint32_t shard_size
-		);
-
-		public sgx_status_t force_migrate_shard(
 			[in, size=shard_size] uint8_t* new_shard,
 			uint32_t shard_size
 		);

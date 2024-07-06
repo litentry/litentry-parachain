@@ -56,18 +56,10 @@ impl HandleState for HandleStateMock {
 		self.reset(StfState::default(), &shard)
 	}
 
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType> {
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
+		let old_shard = *self.state_map.read().unwrap().keys().next().unwrap();
 		let (state, _) = self.load_cloned(&old_shard)?;
 		self.reset(state, &new_shard)
-	}
-
-	fn force_migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
-		let old_shard = *self.state_map.read().unwrap().keys().next().unwrap();
-		self.migrate_shard(old_shard, new_shard)
 	}
 
 	fn execute_on_current<E, R>(&self, shard: &ShardIdentifier, executing_function: E) -> Result<R>
@@ -233,27 +225,7 @@ pub mod tests {
 		state.insert(key.encode(), value.encode());
 		state_handler.write_after_mutation(state, lock, &old_shard).unwrap();
 
-		state_handler.migrate_shard(old_shard, new_shard).unwrap();
-		let (new_state, _) = state_handler.load_cloned(&new_shard).unwrap();
-		let inserted_value =
-			new_state.get(key.encode().as_slice()).expect("value for key should exist");
-		assert_eq!(*inserted_value, value.encode());
-	}
-
-	pub fn force_migrate_shard_works() {
-		let state_handler = HandleStateMock::default();
-		let old_shard = ShardIdentifier::default();
-		let bytes = hex::decode("91de6f606be264f089b155256385470f5395969386894ffba38775442f508ee2")
-			.unwrap();
-		let new_shard = ShardIdentifier::from_slice(&bytes);
-		state_handler.initialize_shard(old_shard).unwrap();
-
-		let (lock, mut state) = state_handler.load_for_mutation(&old_shard).unwrap();
-		let (key, value) = ("my_key", "my_value");
-		state.insert(key.encode(), value.encode());
-		state_handler.write_after_mutation(state, lock, &old_shard).unwrap();
-
-		state_handler.force_migrate_shard(new_shard).unwrap();
+		state_handler.migrate_shard(new_shard).unwrap();
 		let (new_state, _) = state_handler.load_cloned(&new_shard).unwrap();
 		let inserted_value =
 			new_state.get(key.encode().as_slice()).expect("value for key should exist");

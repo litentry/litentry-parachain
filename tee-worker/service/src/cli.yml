@@ -157,10 +157,6 @@ subcommands:
                     short: s
                     help: set parentchain target for shielding / unshielding. only relevant for primary worker upon first start for shard. can't be changed later for a shard
                     takes_value: true
-              - force-migrate-shard:
-                    long: force-migrate-shard
-                    help: Force migrate the shard before starting the worker
-                    required: false
     - request-state:
           about: (DEPRECATED) join a shard by requesting key provisioning from another worker
           args:
@@ -188,16 +184,7 @@ subcommands:
                     index: 1
                     help: shard identifier base58 encoded
     - migrate-shard:
-          about: Migrate shard
-          args:
-              - old-shard:
-                    long: old-shard
-                    help: shard identifier hex encoded
-                    takes_value: true
-              - new-shard:
-                    long: new-shard
-                    help: shard identifier hex encoded
-                    takes_value: true
+          about: Migrate state from old shards to the new(current) shard, which is identical to mrenclave
     - test:
           about: Run tests involving the enclave
           takes_value: true
