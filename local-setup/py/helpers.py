@@ -34,7 +34,7 @@ def setup_working_dir(source_dir: str, target_dir: str, worker_bin: str):
         target_dir: the working directory of the worker to be run.
     """
 
-    optional = ["key.txt", "spid.txt"]
+    optional = ["key.txt", "spid.txt", "key_production.txt", "spid_production.txt"]
 
     for file in optional:
         source = f"{source_dir}/{file}"
