@@ -125,7 +125,27 @@ pub(crate) fn main() {
 	);
 	let node_api_factory =
 		Arc::new(NodeApiFactory::new(config.litentry_rpc_endpoint(), AccountKeyring::Alice.pair()));
-	let enclave = Arc::new(enclave_init(&config).unwrap());
+	let mut enclave = Arc::new(enclave_init(&config).unwrap());
+
+	let run_config = match config.run_config() {
+		Some(run_config) => {
+			if run_config.force_migrate_shard.is_some() {
+				debug!("*** Force migrating shard");
+				let shard_hex = run_config.force_migrate_shard.clone().unwrap();
+				let new_shard = ShardIdentifier::from_slice(&hex::decode(shard_hex).unwrap());
+
+				setup::force_migrate_shard(enclave.as_ref(), &new_shard);
+				let new_shard_name = new_shard.encode().to_base58();
+				setup::remove_old_shards(config.data_dir(), &new_shard_name);
+
+				debug!("*** Re-initializing enclave");
+				enclave = Arc::new(enclave_init(&config).unwrap());
+			}
+			Some(run_config)
+		},
+		None => None,
+	};
+
 	let initialization_handler = Arc::new(InitializationHandler::default());
 	let worker = Arc::new(EnclaveWorker::new(
 		config.clone(),
@@ -186,7 +206,8 @@ pub(crate) fn main() {
 	#[cfg(not(feature = "dcap"))]
 	let quote_size = None;
 
-	if let Some(run_config) = config.run_config() {
+	if run_config.is_some() {
+		let run_config = run_config.unwrap();
 		let shard = extract_shard(run_config.shard(), enclave.as_ref());
 
 		info!("Worker Config: {:?}", config);
@@ -207,10 +228,6 @@ pub(crate) fn main() {
 
 		if clean_reset {
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();
-		} else if run_config.force_migrate_shard {
-			setup::force_migrate_shard(enclave.as_ref(), &shard);
-			let new_shard_name = shard.encode().to_base58();
-			setup::remove_old_shards(config.data_dir(), &new_shard_name);
 		}
 
 		let node_api =
@@ -256,7 +273,10 @@ pub(crate) fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		println!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		let hex_value = hex::encode(mrenclave);
+		println!("MRENCLAVE hex: {}", hex_value);
+		println!("MRENCLAVE base58: {}", mrenclave.encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),

@@ -161,6 +161,7 @@ subcommands:
                     long: force-migrate-shard
                     help: Force migrate the shard before starting the worker
                     required: false
+                    takes_value: true
     - request-state:
           about: (DEPRECATED) join a shard by requesting key provisioning from another worker
           args:
