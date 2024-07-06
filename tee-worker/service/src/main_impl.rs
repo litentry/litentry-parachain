@@ -252,7 +252,10 @@ pub(crate) fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		println!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		let hex_value = hex::encode(mrenclave);
+		println!("MRENCLAVE hex: {}", hex_value);
+		println!("MRENCLAVE base58: {}", mrenclave.encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
