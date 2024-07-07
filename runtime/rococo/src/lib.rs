@@ -1034,6 +1034,7 @@ impl pallet_evm_assertions::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AssertionId = H160;
 	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 // Temporary for bitacross team to test

@@ -27,7 +27,7 @@ use sp_std::vec::Vec;
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::pallet_prelude::OriginFor;
 	use scale_info::TypeInfo;
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -39,8 +39,8 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Clone, Default, Debug, PartialEq, Eq, TypeInfo)]
 	pub struct Assertion {
-		byte_code: Vec<u8>,
-		secrets: Vec<Vec<u8>>,
+		pub byte_code: Vec<u8>,
+		pub secrets: Vec<Vec<u8>>,
 	}
 
 	#[pallet::config]
@@ -58,6 +58,9 @@ pub mod pallet {
 
 		/// Only a member of the Developers Collective can deploy the contract
 		type ContractDevOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		/// Only TEE-Workers can call some extrinsics
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	/// Map for storing assertion smart contract bytecode alongside with additional secrets
@@ -102,24 +105,24 @@ pub mod pallet {
 
 		/// Only called by the Identity-Worker
 		#[pallet::call_index(1)]
-		#[pallet::weight(10000)]
+		#[pallet::weight((T::DbWeight::get().read, DispatchClass::Normal, Pays::No))]
 		pub fn store_assertion(
 			origin: OriginFor<T>,
 			id: T::AssertionId,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::AssertionStored { id });
 			Ok(Pays::No.into())
 		}
 
 		/// Only called by the Identity-Worker
 		#[pallet::call_index(2)]
-		#[pallet::weight(10000)]
+		#[pallet::weight((T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
 		pub fn void_assertion(
 			origin: OriginFor<T>,
 			id: T::AssertionId,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Assertions::<T>::remove(id);
 			Self::deposit_event(Event::AssertionVoided { id });
 			Ok(Pays::No.into())
