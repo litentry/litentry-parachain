@@ -54,8 +54,8 @@ pub enum OperationalMode {
 #[derive(Encode, Decode, Default, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum DcapProvider {
 	#[default]
-	MAA,
 	Intel,
+	MAA,
 	Local,
 	Integritee,
 }

@@ -205,7 +205,7 @@ fn register_dcap_enclave_works() {
 			URL.to_vec(),
 			None,
 			None,
-			AttestationType::Dcap(DcapProvider::Integritee)
+			AttestationType::Dcap(DcapProvider::Intel)
 		));
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_registry(&signer).unwrap().last_seen_timestamp, VALID_TIMESTAMP);
@@ -257,7 +257,7 @@ fn register_dcap_enclave2_works() {
 			URL.to_vec(),
 			None,
 			None,
-			AttestationType::Dcap(DcapProvider::Integritee)
+			AttestationType::Dcap(DcapProvider::Intel)
 		));
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
 		assert_eq!(Teebag::enclave_registry(&signer).unwrap().last_seen_timestamp, 1720308602000);
