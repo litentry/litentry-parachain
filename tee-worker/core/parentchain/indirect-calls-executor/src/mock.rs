@@ -11,6 +11,7 @@ use itp_types::{
 	},
 	RsaRequest, H256,
 };
+use sp_core::H160;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -78,7 +79,15 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
 {
-	fn handle_events(&self, _: &Executor, _: impl FilterEvents) -> Result<Vec<H256>, Error> {
-		Ok(Vec::from([H256::default()]))
+	fn handle_events(
+		&self,
+		_: &Executor,
+		_: impl FilterEvents,
+	) -> Result<(Vec<H256>, Vec<H160>, Vec<H160>), Error> {
+		Ok((
+			Vec::from([H256::default()]),
+			Vec::from([H160::default()]),
+			Vec::from([H160::default()]),
+		))
 	}
 }

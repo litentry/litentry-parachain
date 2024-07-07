@@ -22,7 +22,7 @@ use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::parentchain::{FilterEvents, HandleParentchainEvents};
 use log::*;
-use sp_core::H256;
+use sp_core::{H160, H256};
 use sp_std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
@@ -36,8 +36,8 @@ where
 		&self,
 		_executor: &Executor,
 		_events: impl FilterEvents,
-	) -> Result<Vec<H256>, Error> {
+	) -> Result<(Vec<H256>, Vec<H160>, Vec<H160>), Error> {
 		debug!("not handling any events for target B");
-		Ok(Vec::new())
+		Ok((Vec::new(), Vec::new(), Vec::new()))
 	}
 }

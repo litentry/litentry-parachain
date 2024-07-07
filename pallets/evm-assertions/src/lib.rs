@@ -27,7 +27,7 @@ use sp_std::vec::Vec;
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::OriginFor;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -71,6 +71,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		AssertionCreated { id: T::AssertionId, byte_code: Vec<u8>, secrets: Vec<Vec<u8>> },
+		AssertionStored { id: T::AssertionId },
+		AssertionVoided { id: T::AssertionId },
 	}
 
 	#[pallet::error]
@@ -95,6 +97,31 @@ pub mod pallet {
 				Assertion { byte_code: byte_code.clone(), secrets: secrets.clone() },
 			);
 			Self::deposit_event(Event::AssertionCreated { id, byte_code, secrets });
+			Ok(Pays::No.into())
+		}
+
+		/// Only called by the Identity-Worker
+		#[pallet::call_index(1)]
+		#[pallet::weight(10000)]
+		pub fn store_assertion(
+			origin: OriginFor<T>,
+			id: T::AssertionId,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin)?;
+			Self::deposit_event(Event::AssertionStored { id });
+			Ok(Pays::No.into())
+		}
+
+		/// Only called by the Identity-Worker
+		#[pallet::call_index(2)]
+		#[pallet::weight(10000)]
+		pub fn void_assertion(
+			origin: OriginFor<T>,
+			id: T::AssertionId,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin)?;
+			Assertions::<T>::remove(id);
+			Self::deposit_event(Event::AssertionVoided { id });
 			Ok(Pays::No.into())
 		}
 	}
