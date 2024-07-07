@@ -95,7 +95,12 @@ impl TcbLevelFull {
 	pub fn is_valid(&self) -> bool {
 		// A possible extension would be to also verify that the advisory_ids list is empty,
 		// but I think this could also lead to all TcbLevels being invalid
-		self.tcb_status == "UpToDate" || self.tcb_status == "SWHardeningNeeded"
+		//
+		// Litentry: be more lenient with it
+		self.tcb_status == "UpToDate" ||
+			self.tcb_status == "SWHardeningNeeded" ||
+			self.tcb_status == "ConfigurationNeeded" ||
+			self.tcb_status == "ConfigurationAndSWHardeningNeeded"
 	}
 }
 
