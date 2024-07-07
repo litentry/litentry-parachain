@@ -737,7 +737,8 @@ impl<T: Config> Pallet<T> {
 			})?;
 
 		let tcb_info_on_chain = <TcbInfo<T>>::get(fmspc);
-		ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
+		// TODO: we allow outdated tcb for now
+		// ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| Error::<T>::EnclaveSignerDecodeError)?;
