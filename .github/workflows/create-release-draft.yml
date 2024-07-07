@@ -191,6 +191,8 @@ jobs:
 
       - name: Build local builder
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
           file: tee-worker/build.Dockerfile
@@ -206,6 +208,8 @@ jobs:
 
       - name: Build worker
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
           file: tee-worker/build.Dockerfile
@@ -259,6 +263,8 @@ jobs:
 
       - name: Build local builder
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
@@ -274,6 +280,8 @@ jobs:
 
       - name: Build worker
         uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
           file: bitacross-worker/build.Dockerfile
