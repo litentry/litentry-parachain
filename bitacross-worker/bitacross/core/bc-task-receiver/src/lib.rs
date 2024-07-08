@@ -219,9 +219,9 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	// timeout tick
 	let ceremony_registry = context.ceremony_registry.clone();
 	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
-	let time_to_live = 60u64;
+	let time_to_live = 30u64;
 	std::thread::spawn(move || loop {
-		std::thread::sleep(Duration::from_secs(10));
+		std::thread::sleep(Duration::from_secs(3));
 		let now = get_current_timestamp();
 		{
 			let mut ceremony_registry_write = ceremony_registry.write().unwrap();
