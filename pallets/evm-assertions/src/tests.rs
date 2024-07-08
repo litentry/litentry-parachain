@@ -78,17 +78,9 @@ fn should_remove_assertion_if_failed_to_store() {
 			secrets.clone()
 		));
 
-		assert_eq!(
-			EvmAssertions::assertions(assertion_id),
-			Some(Assertion { byte_code: byte_code.clone(), secrets: secrets.clone() })
-		);
+		assert_eq!(EvmAssertions::assertions(assertion_id), Some(Assertion { byte_code, secrets }));
 
-		assert_ok!(EvmAssertions::void_assertion(
-			RuntimeOrigin::root(),
-			assertion_id,
-			byte_code.clone(),
-			secrets.clone()
-		));
+		assert_ok!(EvmAssertions::void_assertion(RuntimeOrigin::root(), assertion_id,));
 
 		assert_eq!(EvmAssertions::assertions(assertion_id), None);
 	});
