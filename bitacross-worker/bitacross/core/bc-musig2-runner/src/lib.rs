@@ -189,19 +189,27 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									);
 								});
 							},
-							CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
+							CeremonyEvent::CeremonyEnded(
+								signature,
+								request_aes_key,
+								is_check,
+								verification_result,
+							) => {
 								debug!(
 									"Ceremony {:?} ended, signature {:?}",
 									ceremony_id_to_process, signature
 								);
 								let hash = blake2_256(&ceremony_id_to_process.encode());
-								let result = signature;
-								let encrypted_result =
-									aes_encrypt_default(&request_aes_key, &result.encode())
-										.encode();
+								let result = if is_check {
+									verification_result.encode()
+								} else {
+									let result = signature;
+
+									aes_encrypt_default(&request_aes_key, &result.encode()).encode()
+								};
 								if let Err(e) = responder.send_state_with_status(
 									Hash::from_slice(&hash),
-									encrypted_result,
+									result,
 									DirectRequestStatus::Ok,
 								) {
 									error!(
@@ -209,6 +217,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										&hash, e
 									);
 								}
+
 								ceremonies_to_remove.push(ceremony_id_to_process.clone());
 							},
 							CeremonyEvent::CeremonyError(signers, error, request_aes_key) => {

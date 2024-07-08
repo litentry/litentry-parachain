@@ -106,7 +106,7 @@ pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
 	CeremonyError(Signers, CeremonyError, RequestAesKey),
-	CeremonyEnded([u8; 64], RequestAesKey),
+	CeremonyEnded([u8; 64], RequestAesKey, bool, bool),
 	CeremonyTimedOut(Signers, RequestAesKey),
 }
 
@@ -136,10 +136,13 @@ pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	second_round: Option<musig2::SecondRound<SignaturePayload>>,
 	ticks_left: u32,
 	agg_key: Option<PublicKey>,
+	// indicates whether it's check run - signature verification result is returned instead of signature
+	check: bool,
 }
 
 impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 	// Creates new ceremony and starts first round
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		me: SignerId,
 		aes_key: RequestAesKey,
@@ -148,6 +151,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		commands: Vec<CeremonyCommand>,
 		signing_key_access: Arc<AK>,
 		ttl: u32,
+		check: bool,
 	) -> Result<Self, String> {
 		info!("Creating new ceremony {:?} and events {:?}", payload, commands);
 		if signers.len() < 3 {
@@ -216,6 +220,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			second_round: None,
 			ticks_left: ttl,
 			agg_key: Some(agg_key_copy),
+			check,
 		})
 	}
 
@@ -392,11 +397,22 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					info!("Message {:?}", message);
 
 					info!("Verification result: ");
-					match verify_single(self.agg_key.unwrap(), signature, message) {
-						Ok(_) => info!("OK!"),
-						Err(_) => info!("NOK!"),
+					let result = match verify_single(self.agg_key.unwrap(), signature, message) {
+						Ok(_) => {
+							info!("OK!");
+							true
+						},
+						Err(_) => {
+							info!("NOK!");
+							false
+						},
 					};
-					self.events.push(CeremonyEnded(signature.to_bytes(), self.aes_key));
+					self.events.push(CeremonyEnded(
+						signature.to_bytes(),
+						self.aes_key,
+						self.check,
+						result,
+					));
 				}
 			}
 			Ok(())
@@ -555,6 +571,7 @@ pub mod test {
 			vec![],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		);
 
 		// then
@@ -575,6 +592,7 @@ pub mod test {
 			vec![],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		);
 
 		// then
@@ -595,6 +613,7 @@ pub mod test {
 			vec![],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -623,6 +642,7 @@ pub mod test {
 			vec![],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -649,6 +669,7 @@ pub mod test {
 			vec![save_signer1_nonce_cmd()],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -679,6 +700,7 @@ pub mod test {
 			],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -708,6 +730,7 @@ pub mod test {
 			vec![unknown_signer_nonce_cmd()],
 			Arc::new(signing_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -770,6 +793,7 @@ pub mod sgx_tests {
 			vec![],
 			Arc::new(my_signer_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 		// signer 1
@@ -782,6 +806,7 @@ pub mod sgx_tests {
 			vec![],
 			Arc::new(signer1_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 		// signer 2
@@ -794,6 +819,7 @@ pub mod sgx_tests {
 			vec![],
 			Arc::new(signer2_key_access),
 			10,
+			false,
 		)
 		.unwrap();
 
@@ -883,21 +909,21 @@ pub mod sgx_tests {
 		let signer2_ceremony_ceremony_ended_ev = signer2_ceremony_events.get(0).unwrap();
 
 		let my_ceremony_final_signature = match my_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _, _, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},
 		};
 
 		let signer1_ceremony_final_signature = match signer1_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _, _, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},
 		};
 
 		let signer2_ceremony_final_signature = match signer2_ceremony_ceremony_ended_ev {
-			CeremonyEvent::CeremonyEnded(signature, _) => signature.clone(),
+			CeremonyEvent::CeremonyEnded(signature, _, _, _) => signature.clone(),
 			_ => {
 				panic!("Ceremony should be ended")
 			},
