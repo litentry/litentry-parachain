@@ -124,6 +124,8 @@ pub enum ExtrinsicStatus {
 	Failed,
 }
 
+pub type ProcessedEventsArtifacts = (Vec<H256>, Vec<H160>, Vec<H160>);
+
 pub trait HandleParentchainEvents<Executor, TCS, Error>
 where
 	Executor: IndirectExecutor<TCS, Error>,
@@ -133,7 +135,7 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<(Vec<H256>, Vec<H160>, Vec<H160>), Error>;
+	) -> Result<ProcessedEventsArtifacts, Error>;
 }
 
 #[derive(Debug)]

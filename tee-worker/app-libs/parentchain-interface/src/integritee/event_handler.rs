@@ -24,7 +24,7 @@ use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError,
+		ParentchainEventProcessingError, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
@@ -212,7 +212,7 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<(Vec<H256>, Vec<H160>, Vec<H160>), Error> {
+	) -> Result<ProcessedEventsArtifacts, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 		let mut successful_assertion_ids: Vec<H160> = Vec::new();
 		let mut failed_assertion_ids: Vec<H160> = Vec::new();

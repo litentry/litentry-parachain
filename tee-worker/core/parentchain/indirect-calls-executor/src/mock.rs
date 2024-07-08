@@ -7,7 +7,7 @@ use itp_types::{
 			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
 			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
 		},
-		FilterEvents, HandleParentchainEvents,
+		FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
@@ -83,7 +83,7 @@ where
 		&self,
 		_: &Executor,
 		_: impl FilterEvents,
-	) -> Result<(Vec<H256>, Vec<H160>, Vec<H160>), Error> {
+	) -> Result<ProcessedEventsArtifacts, Error> {
 		Ok((
 			Vec::from([H256::default()]),
 			Vec::from([H160::default()]),
