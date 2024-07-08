@@ -109,7 +109,7 @@ pub fn handle<
 pub mod test {
 	use crate::handler::sign_bitcoin::{handle, SignBitcoinError};
 	use alloc::sync::Arc;
-	use bc_enclave_registry::EnclaveRegistry;
+	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
 	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
@@ -195,7 +195,39 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn it_should_return_err_for_non_relayer_signer() {
+	pub fn it_should_return_ok_for_enclave_signer() {
+		// given
+		let relayer_registry = RelayerRegistry::default();
+		let mut enclave_registry = EnclaveRegistry::default();
+		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
+		let enclave_account = Identity::Substrate(alice_key_pair.public().into());
+		enclave_registry.update(alice_key_pair.public().into(), "".to_string()).unwrap();
+		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::new()));
+		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
+		let signers_registry = Arc::new(SignersRegistryMock {});
+		let signer_access_key = Arc::new(SignerAccess {});
+
+		// when
+		let result = handle(
+			enclave_account,
+			SignBitcoinPayload::Derived(vec![]),
+			[0u8; 32],
+			false,
+			&relayer_registry,
+			ceremony_registry,
+			ceremony_commands_registry,
+			signers_registry,
+			&enclave_registry,
+			&[0u8; 32],
+			signer_access_key,
+		);
+
+		// then
+		assert!(result.is_ok())
+	}
+
+	#[test]
+	pub fn it_should_return_err_for_non_relayer_and_non_enclave_signer() {
 		//given
 		let relayer_registry = RelayerRegistry::default();
 		let enclave_registry = EnclaveRegistry::default();
