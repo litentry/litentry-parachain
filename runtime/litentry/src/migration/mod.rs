@@ -138,33 +138,41 @@ where
 }
 
 #[cfg(feature = "try-runtime")]
-impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
+impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T>
+where
+	BalanceOf<T>: From<u128>,
+{
 	pub fn pre_upgrade_delegator_state_storage() -> Result<Vec<u8>, &'static str> {
 		// get DelegatorState to check consistency
 		let result: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
-			<DelegatorState<T>>::iter().map(|(account, state)| {
-				let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-				new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
-				new_delegator.less_total =
-					new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
-				let mut sorted_inner_vector = new_delegator.delegations.0;
-				for elem in sorted_inner_vector.iter_mut() {
-					elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
-				}
-				new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
+			<DelegatorState<T>>::iter()
+				.map(|(account, state)| {
+					let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
+					new_delegator.total =
+						new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_delegator.less_total =
+						new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
+					let mut sorted_inner_vector = new_delegator.delegations.0;
+					for elem in sorted_inner_vector.iter_mut() {
+						elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+					}
+					new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
-				(account, new_delegator)
-			});
+					(account, new_delegator)
+				})
+				.collect();
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_delegator_state_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state =
-			BTreeMap::<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>>::decode(&mut &state)
-				.map_err(|_| "Failed to decode Delegator")?;
+			BTreeMap::<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>>::decode(
+				&mut &state[..],
+			)
+			.map_err(|_| "Failed to decode Delegator")?;
 		// check DelegatorState are the same as the expected
 		for (account, actual_result) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
-				expected_state.get(&account).ok_or("Not Expected Delegator")?;
+				*(expected_state.get(&account).ok_or("Not Expected Delegator")?);
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
@@ -172,32 +180,34 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 	pub fn pre_upgrade_candidate_info_storage() -> Result<Vec<u8>, &'static str> {
 		// get DelegatorState to check consistency
 		let result: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
-			<CandidateInfo<T>>::iter().map(|(account, state)| {
-				let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-				new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
-				new_metadata.total_counted =
-					new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
-				new_metadata.lowest_top_delegation_amount = new_metadata
-					.lowest_top_delegation_amount
-					.saturating_mul(DECIMAL_CONVERTOR.into());
-				new_metadata.highest_bottom_delegation_amount = new_metadata
-					.highest_bottom_delegation_amount
-					.saturating_mul(DECIMAL_CONVERTOR.into());
-				new_metadata.lowest_bottom_delegation_amount = new_metadata
-					.lowest_bottom_delegation_amount
-					.saturating_mul(DECIMAL_CONVERTOR.into());
+			<CandidateInfo<T>>::iter()
+				.map(|(account, state)| {
+					let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
+					new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_metadata.total_counted =
+						new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_metadata.lowest_top_delegation_amount = new_metadata
+						.lowest_top_delegation_amount
+						.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_metadata.highest_bottom_delegation_amount = new_metadata
+						.highest_bottom_delegation_amount
+						.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_metadata.lowest_bottom_delegation_amount = new_metadata
+						.lowest_bottom_delegation_amount
+						.saturating_mul(DECIMAL_CONVERTOR.into());
 
-				if let Some(mut i) = new_metadata.request {
-					i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
-				}
+					if let Some(mut i) = new_metadata.request {
+						i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+					}
 
-				(account, new_metadata)
-			});
+					(account, new_metadata)
+				})
+				.collect();
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_candidate_info_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state =
-			BTreeMap::<T::AccountId, CandidateMetadata<BalanceOf<T>>>::decode(&mut &state)
+			BTreeMap::<T::AccountId, CandidateMetadata<BalanceOf<T>>>::decode(&mut &state[..])
 				.map_err(|_| "Failed to decode CandidateMetadata")?;
 		// check CandidateInfo are the same as the expected
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
@@ -212,6 +222,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 impl<T> OnRuntimeUpgrade for ReplaceParachainStakingStorage<T>
 where
 	T: frame_system::Config + pallet_parachain_staking::Config,
+	BalanceOf<T>: From<u128>,
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
@@ -232,7 +243,7 @@ where
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
 		// let pre_vec = (Vec<u8>, Vec<u8>)::decode(&mut &state);
 		let pre_vec: (Vec<u8>, Vec<u8>) =
-			Decode::decode(&mut &state).map_err(|_| "Failed to decode Tuple")?;
+			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
 		// let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
 		let _ = Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
 		let _ = Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
