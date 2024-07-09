@@ -21,7 +21,6 @@ use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
 		get_shard::GetShardCommand,
-		get_shard_vault::GetShardVaultCommand,
 		litentry::{
 			get_storage::GetStorageCommand, link_identity::LinkIdentityCommand,
 			request_vc::RequestVcCommand,
@@ -68,9 +67,6 @@ pub enum TrustedBaseCommand {
 	/// get shard for this worker
 	GetShard(GetShardCommand),
 
-	/// get shard vault for shielding (if defined for this worker)
-	GetShardVault(GetShardVaultCommand),
-
 	// Litentry's commands below
 	/// retrieve the sidechain's raw storage - should only work for non-prod
 	GetStorage(GetStorageCommand),
@@ -102,7 +98,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetShard(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::GetShardVault(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),

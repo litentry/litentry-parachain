@@ -20,16 +20,14 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
-	utils::{
-		get_stf_enclave_signer_from_solo_or_parachain,
-		get_validator_accessor_from_integritee_solo_or_parachain,
-	},
+	utils::get_validator_accessor_from_integritee_solo_or_parachain,
 };
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
+use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
@@ -38,7 +36,7 @@ use itp_sgx_crypto::{
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
+use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
@@ -50,7 +48,6 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::twitter;
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_macros::{if_development, if_development_or};
 use litentry_primitives::{aes_decrypt, AesRequest, DecryptableRequest, Identity};
 use log::debug;
@@ -73,10 +70,11 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>(
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi, State>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
+	ocall_api: Arc<OcallApi>,
 	state: Option<Arc<State>>,
 	data_provider_config: Arc<DataProviderConfig>,
 ) -> IoHandler
@@ -87,6 +85,7 @@ where
 		AccessPubkey<KeyType = Rsa3072PublicKey> + AccessKey + Send + Sync + 'static,
 	<AccessShieldingKey as AccessKey>::KeyType:
 		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
+	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
 	State: HandleState + Send + Sync + 'static,
 	State::StateT: SgxExternalitiesTrait,
 {
@@ -213,27 +212,6 @@ where
 					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
 				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 			},
-		}
-	});
-
-	let local_top_pool_author = top_pool_author.clone();
-	io.add_sync_method("author_getShardVault", move |_: Params| {
-		debug!("worker_api_direct rpc was called: author_getShardVault");
-		let shard =
-			local_top_pool_author.list_handled_shards().first().copied().unwrap_or_default();
-		if let Ok(stf_enclave_signer) = get_stf_enclave_signer_from_solo_or_parachain() {
-			if let Ok(vault) = stf_enclave_signer.get_shard_vault(&shard) {
-				let json_value =
-					RpcReturnValue::new(vault.encode(), false, DirectRequestStatus::Ok);
-				Ok(json!(json_value.to_hex()))
-			} else {
-				Ok(json!(compute_hex_encoded_return_error("failed to get shard vault").to_hex()))
-			}
-		} else {
-			Ok(json!(compute_hex_encoded_return_error(
-				"failed to get stf_enclave_signer to get shard vault"
-			)
-			.to_hex()))
 		}
 	});
 
@@ -381,17 +359,16 @@ where
 	});
 
 	// state_getMrenclave
-	io.add_sync_method("state_getMrenclave", |_: Params| {
-		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
-			Ok(mrenclave) => RpcReturnValue {
+	io.add_sync_method("state_getMrenclave", move |_: Params| {
+		let json_value = match ocall_api.get_mrenclave_of_self() {
+			Ok(m) => RpcReturnValue {
 				do_watch: false,
-				value: mrenclave.encode(),
+				value: m.m.encode(),
 				status: DirectRequestStatus::Ok,
 			}
 			.to_hex(),
-			Err(error) => {
-				let error_msg: String =
-					format!("Could not get current mrenclave due to: {}", error);
+			Err(e) => {
+				let error_msg: String = format!("Could not get current mrenclave due to: {}", e);
 				compute_hex_encoded_return_error(error_msg.as_str())
 			},
 		};
@@ -399,43 +376,6 @@ where
 	});
 
 	if_development!({
-		use itp_types::{MrEnclave, SidechainBlockNumber};
-		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
-		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
-			match params.parse::<(SidechainBlockNumber, String)>() {
-				Ok((bn, mrenclave)) => match hex::decode(mrenclave) {
-					Ok(mrenclave) => {
-						let mut enclave_to_set: MrEnclave = [0u8; 32];
-						if mrenclave.len() != enclave_to_set.len() {
-							return Ok(json!(compute_hex_encoded_return_error(
-								"mrenclave len mismatch, expected 32 bytes long"
-							)))
-						}
-
-						enclave_to_set.copy_from_slice(&mrenclave);
-						match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
-							Ok(()) => Ok(json!(RpcReturnValue::new(
-								vec![],
-								false,
-								DirectRequestStatus::Ok
-							)
-							.to_hex())),
-							Err(e) => {
-								let error_msg =
-									format!("Failed to set scheduled mrenclave {:?}", e);
-								Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-							},
-						}
-					},
-					Err(e) => {
-						let error_msg = format!("Failed to decode mrenclave {:?}", e);
-						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				},
-				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-			}
-		});
-
 		// state_getStorage
 		io.add_sync_method("state_getStorage", move |params: Params| {
 			let local_state = match state.clone() {
@@ -485,22 +425,6 @@ where
 				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
-	});
-
-	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
-		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
-		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
-			Ok(registry) => {
-				let mut serialized_registry = vec![];
-				for (block_number, mrenclave) in registry.iter() {
-					serialized_registry.push((*block_number, *mrenclave));
-				}
-				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
-					.to_hex()
-			},
-			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
-		};
-		Ok(json!(json_value))
 	});
 
 	// system_health

@@ -196,8 +196,8 @@ impl<
 			warn!("Failed to update metric for sidechain slot block composition time: {:?}", e);
 		};
 
-		println!(
-			"[Sidechain] propose block {} summary: executed {}, failed {}, from {} in queue in {}ms",
+		info!(
+			"Proposing sidechain block {} summary: executed {}, failed {}, from {} in queue in {}ms",
 			sidechain_block.block().header().block_number(),
 			number_executed_transactions,
 			nr_failed_operations,

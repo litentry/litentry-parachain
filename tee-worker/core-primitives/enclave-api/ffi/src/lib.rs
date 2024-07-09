@@ -59,17 +59,6 @@ extern "C" {
 		shard_size: u32,
 	) -> SgxStatus;
 
-	pub fn init_proxied_shard_vault(
-		eid: EnclaveId,
-		retval: *mut SgxStatus,
-		shard: *const u8,
-		shard_size: u32,
-		parentchain_id: *const u8,
-		parentchain_id_size: u32,
-		funding_balance: *const u8,
-		funding_balance_size: u32,
-	) -> SgxStatus;
-
 	pub fn init_shard_creation_parentchain_header(
 		eid: EnclaveId,
 		retval: *mut SgxStatus,
@@ -133,15 +122,6 @@ extern "C" {
 	pub fn get_ecc_signing_pubkey(
 		eid: EnclaveId,
 		retval: *mut SgxStatus,
-		pubkey: *mut u8,
-		pubkey_size: u32,
-	) -> SgxStatus;
-
-	pub fn get_ecc_vault_pubkey(
-		eid: EnclaveId,
-		retval: *mut SgxStatus,
-		shard: *const u8,
-		shard_size: u32,
 		pubkey: *mut u8,
 		pubkey_size: u32,
 	) -> SgxStatus;
@@ -257,7 +237,6 @@ extern "C" {
 	pub fn migrate_shard(
 		eid: EnclaveId,
 		retval: *mut SgxStatus,
-		old_shard: *const u8,
 		new_shard: *const u8,
 		shard_size: u32,
 	) -> SgxStatus;

@@ -15,7 +15,7 @@
 
 */
 
-use itp_types::parentchain::{AccountId, ParentchainId};
+use itp_types::parentchain::ParentchainId;
 
 /// Interface trait of the parentchain pallet.
 pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {
@@ -39,19 +39,9 @@ pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {
 		header: ParentchainHeader,
 	) -> Result<(), Self::Error>;
 
-	fn init_shard_vault_account(
-		state: &mut State,
-		vault: AccountId,
-		parentchain_id: ParentchainId,
-	) -> Result<(), Self::Error>;
-
 	fn set_creation_block(
 		state: &mut State,
 		header: ParentchainHeader,
 		parentchain_id: ParentchainId,
 	) -> Result<(), Self::Error>;
-
-	fn get_shard_vault_ensure_single_parentchain(
-		state: &mut State,
-	) -> Result<Option<(AccountId, ParentchainId)>, Self::Error>;
 }

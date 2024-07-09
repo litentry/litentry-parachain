@@ -930,7 +930,7 @@ dependencies = [
  "lc-data-providers",
  "lc-evm-dynamic-assertions",
  "lc-identity-verification",
- "lc-scheduled-enclave",
+ "lc-parachain-extrinsic-task-receiver",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
  "litentry-hex-utils",
@@ -1944,7 +1944,7 @@ dependencies = [
  "itp-utils",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
- "lc-scheduled-enclave",
+ "lc-vc-task-sender",
  "litentry-hex-utils",
  "litentry-primitives",
  "log",
@@ -2137,7 +2137,6 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "lc-scheduled-enclave",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2768,7 +2767,6 @@ dependencies = [
  "its-primitives",
  "its-state",
  "its-validateer-fetch",
- "lc-scheduled-enclave",
  "litentry-hex-utils",
  "log",
  "parity-scale-codec",
@@ -2821,7 +2819,6 @@ dependencies = [
  "its-primitives",
  "its-state",
  "lazy_static",
- "lc-scheduled-enclave",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -3102,6 +3099,7 @@ version = "0.1.0"
 dependencies = [
  "base58",
  "blake2-rfc",
+ "chrono 0.4.11",
  "ethabi",
  "evm 0.41.1",
  "hex",
@@ -3149,19 +3147,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc-scheduled-enclave"
-version = "0.8.0"
+name = "lc-parachain-extrinsic-task-receiver"
+version = "0.1.0"
 dependencies = [
- "itp-settings",
- "itp-sgx-io",
+ "itp-extrinsics-factory",
+ "itp-ocall-api",
+ "itp-types",
+ "lc-parachain-extrinsic-task-sender",
+ "log",
+ "sgx_tstd",
+ "sp-runtime",
+]
+
+[[package]]
+name = "lc-parachain-extrinsic-task-sender"
+version = "0.1.0"
+dependencies = [
  "itp-types",
  "lazy_static",
  "log",
  "parity-scale-codec",
- "sgx_tprotected_fs",
  "sgx_tstd",
- "sp-std",
- "thiserror",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -3270,6 +3277,7 @@ dependencies = [
  "lc-data-providers",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
+ "lc-parachain-extrinsic-task-sender",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",

@@ -23,7 +23,7 @@ use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{AccountId, ShardIdentifier, TrustedOperation},
 };
-use itp_types::{parentchain::ParentchainId, H256};
+use itp_types::{MrEnclave, H256};
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{time::Duration, vec::Vec};
 
@@ -42,6 +42,8 @@ where
 {
 	fn get_enclave_account(&self) -> Result<AccountId>;
 
+	fn get_mrenclave(&self) -> Result<MrEnclave>;
+
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
 		&self,
 		trusted_call: &TC,
@@ -50,10 +52,6 @@ where
 
 	// litentry
 	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
-}
-
-pub trait StfShardVaultQuery {
-	fn get_shard_vault(&self, shard: &ShardIdentifier) -> Result<(AccountId, ParentchainId)>;
 }
 
 /// Proposes a state update to `Externalities`.

@@ -18,39 +18,38 @@
 
 pragma solidity ^0.8.8;
 
-import { ERC20 } from "../ERC20.sol";
 import "../../libraries/Identities.sol";
+import "../Constants.sol";
 
-contract Atom is ERC20 {
-	constructor() {
-		// Initialize network token addresses
-		networkTokenAddresses[
-			Web3Networks.Ethereum
-		] = "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB";
-		networkTokenAddresses[
-			Web3Networks.Bsc
-		] = "0x0eb3a705fc54725037cc9e008bdede697f62f335";
-		// Add more addresses as needed
+library Atom {
+	function getTokenBscAddress() internal pure returns (string memory) {
+		return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
 	}
 
-	function getTokenName() internal pure override returns (string memory) {
+	function getTokenEthereumAddress() internal pure returns (string memory) {
+		return "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB";
+	}
+
+	function getTokenName() internal pure returns (string memory) {
 		return "atom";
 	}
 
-	function getTokenRanges()
-		internal
-		pure
-		override
-		returns (uint256[] memory)
-	{
+	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * decimals_factor;
-		ranges[1] = 1 * decimals_factor;
-		ranges[2] = 5 * decimals_factor;
-		ranges[3] = 20 * decimals_factor;
-		ranges[4] = 50 * decimals_factor;
-		ranges[5] = 80 * decimals_factor;
+		ranges[0] = 0 * Constants.decimals_factor;
+		ranges[1] = 1 * Constants.decimals_factor;
+		ranges[2] = 5 * Constants.decimals_factor;
+		ranges[3] = 20 * Constants.decimals_factor;
+		ranges[4] = 50 * Constants.decimals_factor;
+		ranges[5] = 80 * Constants.decimals_factor;
 
 		return ranges;
+	}
+	function getTokenNetworks() internal pure returns (uint32[] memory) {
+		uint32[] memory networks = new uint32[](2);
+		networks[0] = Web3Networks.Ethereum;
+		networks[1] = Web3Networks.Bsc;
+
+		return networks;
 	}
 }

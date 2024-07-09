@@ -19,14 +19,16 @@ use itc_rest_client::http_client::SendHttpRequest;
 #[macro_export]
 macro_rules! json_get_fn {
 	($name:ident, $token:ident, $parse_fn_name:ident) => {
-		pub fn $name(input: Vec<u8>) -> $crate::precompiles::PrecompileResult {
+		pub fn $name(input: Vec<u8>, precompiles: &Precompiles) -> $crate::precompiles::PrecompileResult {
 			let decoded = match ethabi::decode(
 				&[ethabi::ParamType::String, ethabi::ParamType::String],
 				&input,
 			) {
 				Ok(d) => d,
 				Err(e) => {
-					log::debug!("Could not decode bytes {:?}, reason: {:?}", input, e);
+					let message = std::format!("Could not decode bytes {:?}, reason: {:?}", input, e);
+					log::debug!("{}", message);
+					contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
@@ -37,14 +39,18 @@ macro_rules! json_get_fn {
 			let value: serde_json::Value = match serde_json::from_str(&json) {
 				Ok(v) => v,
 				Err(e) => {
-					log::debug!("Could not parse json {:?}, reason: {:?}", json, e);
+					let message = std::format!("Could not parse json {:?}, reason: {:?}", json, e);
+					log::debug!("{}", message);
+					contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
 			let result = match value.pointer(&pointer) {
 				Some(v) => v,
 				None => {
-					log::debug!("No value under given pointer: :{:?}", pointer);
+					let message = std::format!("No value under given pointer: :{:?}", pointer);
+					log::debug!("{}", message);
+					contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};
@@ -52,10 +58,12 @@ macro_rules! json_get_fn {
 			let encoded = match result.$parse_fn_name() {
 				Some(v) => ethabi::Token::$token(v.into()),
 				None => {
-					log::debug!(
+					let message = std::format!(
 						"There is no value or it might be of different type, pointer: ${:?}",
 						pointer
 					);
+					log::debug!("{}", message);
+					contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 					return Ok(failure_precompile_output(ethabi::Token::$token(Default::default())))
 				},
 			};

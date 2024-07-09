@@ -56,11 +56,8 @@ impl HandleState for HandleStateMock {
 		self.reset(StfState::default(), &shard)
 	}
 
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType> {
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
+		let old_shard = *self.state_map.read().unwrap().keys().next().unwrap();
 		let (state, _) = self.load_cloned(&old_shard)?;
 		self.reset(state, &new_shard)
 	}
@@ -228,7 +225,7 @@ pub mod tests {
 		state.insert(key.encode(), value.encode());
 		state_handler.write_after_mutation(state, lock, &old_shard).unwrap();
 
-		state_handler.migrate_shard(old_shard, new_shard).unwrap();
+		state_handler.migrate_shard(new_shard).unwrap();
 		let (new_state, _) = state_handler.load_cloned(&new_shard).unwrap();
 		let inserted_value =
 			new_state.get(key.encode().as_slice()).expect("value for key should exist");

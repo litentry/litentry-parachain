@@ -30,12 +30,12 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType, DynamicParams,
-	EVMTokenType, GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString,
-	PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
-	Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
+	AchainableToken, Assertion, BnbDigitDomainType, BoundedWeb3Network, ContestType,
+	DynamicContractParams, DynamicParams, EVMTokenType, GenericDiscordRoleType, Identity,
+	OneBlockCourseType, ParameterString, PlatformUserType, RequestAesKey, SoraQuizType,
+	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
-use sp_core::{Pair, H160};
+use sp_core::{Pair, H160, H256};
 
 // usage example below
 //
@@ -160,7 +160,8 @@ pub struct DynamicArg {
 	pub smart_contract_id: String,
 	// hex encoded smart contract params
 	// can use this online tool to encode params: https://abi.hashex.org/
-	pub smart_contract_param: String,
+	pub smart_contract_param: Option<String>,
+	pub return_log: Option<bool>,
 }
 
 #[derive(Args, Debug)]
@@ -289,6 +290,7 @@ pub enum PlatformUserCommand {
 pub enum NftHolderCommand {
 	WeirdoGhostGang,
 	Club3Sbt,
+	MFan,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -362,6 +364,21 @@ AchainableCommandArgs!(TokenArg, {
 	token: String,
 });
 
+fn print_vc(key: &RequestAesKey, mut vc: RequestVCResult) {
+	let decrypted = aes_decrypt(key, &mut vc.vc_payload).unwrap();
+	let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
+	println!("----Generated VC-----");
+	println!("{}", credential_str);
+	if let Some(mut vc_logs) = vc.vc_logs {
+		let decrypted_logs = aes_decrypt(key, &mut vc_logs).unwrap();
+		if !decrypted_logs.is_empty() {
+			let logs_str = String::from_utf8(decrypted_logs).expect("Found invalid UTF-8");
+			println!("----VC Logging-----");
+			println!("{}", logs_str);
+		}
+	}
+}
+
 impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
@@ -397,19 +414,28 @@ impl RequestVcCommand {
 				)
 				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
+
+			if trusted_cli.direct {
 				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-					Ok(mut vc) => {
-						let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-						let credential_str =
-							String::from_utf8(decrypted).expect("Found invalid UTF-8");
-						println!("----Generated VC-----");
-						println!("{}", credential_str);
+					Ok(vc) => {
+						print_vc(&key, vc);
 					},
 					Err(e) => {
 						println!("{:?}", e);
 					},
 				}
-				nonce += 1;
+			} else {
+				println!("WARNING: This method does not support printing VC, Please use -d for direct invocation to print the VC");
+				match perform_trusted_operation::<H256>(cli, trusted_cli, &top) {
+					Ok(block_hash) => {
+						println!("Request VC Event included in block hash: {:?}", block_hash)
+					},
+					Err(e) => {
+						println!("{:?}", e);
+					},
+				}
+			}
+			nonce += 1;
 			});
 		} else {
 			let top = TrustedCall::request_batch_vc(
@@ -425,16 +451,14 @@ impl RequestVcCommand {
 			match send_direct_vc_request(cli, trusted_cli, &top, key) {
 				Ok(result) =>
 					for res in result {
-						if res.is_error {
-							println!("received one error: {:?}", String::from_utf8(res.payload));
-						} else {
-							let mut vc =
-								RequestVCResult::decode(&mut res.payload.as_slice()).unwrap();
-							let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-							let credential_str =
-								String::from_utf8(decrypted).expect("Found invalid UTF-8");
-							println!("----Generated VC-----");
-							println!("{}", credential_str);
+						match res.result {
+							Err(err) => {
+								println!("received one error: {:?}", err);
+							},
+							Ok(payload) => {
+								let vc = RequestVCResult::decode(&mut payload.as_slice()).unwrap();
+								print_vc(&key, vc);
+							},
 						}
 					},
 				Err(e) => {
@@ -630,28 +654,41 @@ impl Command {
 			Command::NftHolder(arg) => Ok(match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
+				NftHolderCommand::MFan => NftHolder(Web3NftType::MFan),
 			}),
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(arg.smart_contract_id.clone()).unwrap();
 				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
-				let params = hex::decode(arg.smart_contract_param.clone()).unwrap();
-				let params_len = params.len();
-				let truncated_params = DynamicParams::truncate_from(params);
-				let truncated_params_len = truncated_params.len();
-				if params_len > truncated_params_len {
-					println!(
-						"The dynamic params length {} is over the maximum value {}",
-						params_len, truncated_params_len
-					);
-					Err(CliError::Extrinsic {
-						msg: format!(
-							"The dynamic params length {} is over the maximum value {}",
-							params_len, truncated_params_len
-						),
-					})
-				} else {
-					Ok(Assertion::Dynamic(H160::from(id_bytes), truncated_params))
-				}
+
+				let smart_contract_params = match &arg.smart_contract_param {
+					Some(p) => {
+						let params = hex::decode(p).unwrap();
+						let params_len = params.len();
+						let truncated_params = DynamicContractParams::truncate_from(params);
+						let truncated_params_len = truncated_params.len();
+						if params_len > truncated_params_len {
+							println!(
+								"The dynamic params length {} is over the maximum value {}",
+								params_len, truncated_params_len
+							);
+							Err(CliError::Extrinsic {
+								msg: format!(
+									"The dynamic params length {} is over the maximum value {}",
+									params_len, truncated_params_len
+								),
+							})
+						} else {
+							Ok(Some(truncated_params))
+						}
+					},
+					None => Ok(None),
+				}?;
+
+				Ok(Assertion::Dynamic(DynamicParams {
+					smart_contract_id: H160::from(id_bytes),
+					smart_contract_params,
+					return_log: arg.return_log.unwrap_or_default(),
+				}))
 			},
 		}
 	}

@@ -7,7 +7,9 @@
         "format": "prettier --write .",
         "pretest": "eslint .",
         "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm",
-        "check-types": "tsc --noEmit"
+        "check-types": "tsc --noEmit",
+        "copy-contracts": "cp -r ../../litentry/core/assertion-build/src/dynamic/contracts ./contracts",
+        "compile-contracts": "forge build"
     },
     "dependencies": {
         "@litentry/vc-schema-validator": "^0.0.1",
@@ -43,7 +45,7 @@
         "tiny-secp256k1": "^2.2.3",
         "tweetnacl": "^1.0.3",
         "websocket-as-promised": "^2.0.1",
-        "ws": "^8.8.1",
+        "ws": "^8.17.1",
         "zx": "^7.2.3"
     },
     "devDependencies": {

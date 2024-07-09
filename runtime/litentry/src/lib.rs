@@ -59,10 +59,11 @@ pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
 	HOURS, MINUTES, SLOT_DURATION,
 };
+use pallet_ethereum::TransactionStatus;
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
@@ -70,7 +71,10 @@ use runtime_common::{
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
-use pallet_ethereum::TransactionStatus;
+// for TEE
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
+
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
@@ -143,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9181,
+	spec_version: 9182,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -842,6 +846,24 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
+}
+
+impl pallet_teebag::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MomentsPerDay = MomentsPerDay;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<5>;
+}
+
+impl pallet_bitacross::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+}
+
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -912,6 +934,8 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		AssetManager: pallet_asset_manager = 64,
+		Teebag: pallet_teebag = 65,
+		Bitacross: pallet_bitacross = 66,
 
 		// TMP
 		AccountFix: pallet_account_fix = 254,
@@ -977,7 +1001,11 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Balance
 			RuntimeCall::Balances(_) |
 			// AccountFix
-			RuntimeCall::AccountFix(_)
+			RuntimeCall::AccountFix(_) |
+			// TEE enclave management
+			RuntimeCall::Teebag(_) |
+			// Bitacross
+			RuntimeCall::Bitacross(_)
 		)
 	}
 }

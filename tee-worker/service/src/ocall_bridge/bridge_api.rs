@@ -43,7 +43,7 @@ pub struct Bridge;
 
 impl Bridge {
 	pub fn get_ra_api() -> Arc<dyn RemoteAttestationBridge> {
-		debug!("Requesting RemoteAttestation OCall API instance");
+		trace!("Requesting RemoteAttestation OCall API instance");
 
 		COMPONENT_FACTORY
 			.read()
@@ -61,7 +61,7 @@ impl Bridge {
 	}
 
 	pub fn get_oc_api() -> Arc<dyn WorkerOnChainBridge> {
-		debug!("Requesting WorkerOnChain OCall API instance");
+		trace!("Requesting WorkerOnChain OCall API instance");
 
 		COMPONENT_FACTORY
 			.read()
@@ -71,7 +71,7 @@ impl Bridge {
 	}
 
 	pub fn get_ipfs_api() -> Arc<dyn IpfsBridge> {
-		debug!("Requesting IPFS OCall API instance");
+		trace!("Requesting IPFS OCall API instance");
 
 		COMPONENT_FACTORY
 			.read()
@@ -89,7 +89,7 @@ impl Bridge {
 	}
 
 	pub fn initialize(component_factory: Arc<dyn GetOCallBridgeComponents + Send + Sync>) {
-		debug!("Initializing OCall bridge with component factory");
+		trace!("Initializing OCall bridge with component factory");
 
 		*COMPONENT_FACTORY.write() = Some(component_factory);
 	}

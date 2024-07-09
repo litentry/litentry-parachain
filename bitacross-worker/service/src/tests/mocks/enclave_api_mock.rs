@@ -61,15 +61,6 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn init_proxied_shard_vault(
-		&self,
-		_shard: &ShardIdentifier,
-		_parentchain_id: &ParentchainId,
-		_funding_balance: Balance,
-	) -> EnclaveResult<()> {
-		unimplemented!()
-	}
-
 	fn init_shard_creation_parentchain_header(
 		&self,
 		shard: &ShardIdentifier,
@@ -99,10 +90,6 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
-	fn get_ecc_vault_pubkey(&self, _shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
-		unreachable!()
-	}
-
 	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
 		unreachable!()
 	}
@@ -115,10 +102,6 @@ impl EnclaveBase for EnclaveMock {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 
-	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
-		unimplemented!()
-	}
-
 	fn publish_wallets(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}
@@ -128,6 +111,10 @@ impl EnclaveBase for EnclaveMock {
 	}
 
 	fn init_wallets(&self, _base_dir: &str) -> EnclaveResult<()> {
+		unimplemented!()
+	}
+
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 }

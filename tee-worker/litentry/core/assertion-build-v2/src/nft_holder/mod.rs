@@ -197,6 +197,28 @@ mod tests {
 		})
 	}
 
+	fn create_mfan_assertion_logic() -> Box<AssertionLogic> {
+		Box::new(AssertionLogic::Or {
+			items: vec![Box::new(AssertionLogic::And {
+				items: vec![
+					Box::new(AssertionLogic::Item {
+						src: "$network".into(),
+						op: Op::Equal,
+						dst: "polygon".into(),
+					}),
+					Box::new(AssertionLogic::Item {
+						src: "$address".into(),
+						op: Op::Equal,
+						dst: Web3NftType::MFan
+							.get_nft_address(Web3Network::Polygon)
+							.unwrap()
+							.into(),
+					}),
+				],
+			})],
+		})
+	}
+
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
@@ -304,6 +326,66 @@ mod tests {
 			},
 			Err(e) => {
 				panic!("build Club3Sbt holder failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_mfan_holder_works() {
+		let data_provider_config = init();
+		let mut address =
+			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap();
+		let mut identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Polygon])];
+
+		let mut req = crate_assertion_build_request(Web3NftType::MFan, identities);
+		match build(&req, Web3NftType::MFan, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build MFan holder done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3NftType::MFan),
+							create_mfan_assertion_logic(),
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build MFan holder failed with error {:?}", e);
+			},
+		}
+
+		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Polygon])];
+
+		req = crate_assertion_build_request(Web3NftType::MFan, identities);
+		match build(&req, Web3NftType::MFan, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build MFan holder done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3NftType::MFan),
+							create_mfan_assertion_logic(),
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+			},
+			Err(e) => {
+				panic!("build MFan holder failed with error {:?}", e);
 			},
 		}
 	}

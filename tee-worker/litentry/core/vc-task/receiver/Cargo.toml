@@ -44,6 +44,7 @@ lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
 lc-dynamic-assertion = { path = "../../dynamic-assertion", default-features = false }
 lc-evm-dynamic-assertions = { path = "../../evm-dynamic-assertions", default-features = false }
+lc-parachain-extrinsic-task-sender = { path = "../../parachain-extrinsic-task/sender", default-features = false }
 lc-stf-task-receiver = { path = "../../stf-task/receiver", default-features = false }
 lc-stf-task-sender = { path = "../../stf-task/sender", default-features = false }
 lc-vc-task-sender = { path = "../sender", default-features = false }

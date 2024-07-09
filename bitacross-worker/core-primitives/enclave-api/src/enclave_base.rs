@@ -22,7 +22,7 @@ use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_sgx_crypto::{ecdsa, schnorr};
 use itp_stf_interface::ShardCreationInfo;
-use itp_types::{parentchain::Header, Balance, ShardIdentifier};
+use itp_types::{parentchain::Header, ShardIdentifier};
 use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
@@ -48,14 +48,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// Initialize a new shard.
 	fn init_shard(&self, shard: Vec<u8>) -> EnclaveResult<()>;
 
-	/// Initialize a new shard vault account and register enclave signer as its proxy.
-	fn init_proxied_shard_vault(
-		&self,
-		shard: &ShardIdentifier,
-		parentchain_id: &ParentchainId,
-		funding_balance: Balance,
-	) -> EnclaveResult<()>;
-
 	/// Initialize parentchain checkpoint after which invocations will be processed
 	fn init_shard_creation_parentchain_header(
 		&self,
@@ -78,9 +70,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public>;
 
-	/// retrieve vault account from shard state
-	fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public>;
-
 	/// retrieve the btc wallet key pair, only works in non-prod
 	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair>;
 
@@ -90,7 +79,7 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 
 	// litentry
-	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()>;
 
 	/// Publish generated wallets on parachain
 	fn publish_wallets(&self) -> EnclaveResult<()>;
@@ -116,10 +105,7 @@ mod impl_ffi {
 		HEADER_MAX_SIZE, MR_ENCLAVE_SIZE, SHIELDING_KEY_SIZE, SIGNING_KEY_SIZE,
 	};
 	use itp_stf_interface::ShardCreationInfo;
-	use itp_types::{
-		parentchain::{Balance, Header},
-		ShardIdentifier,
-	};
+	use itp_types::{parentchain::Header, ShardIdentifier};
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -195,35 +181,6 @@ mod impl_ffi {
 
 			let result = unsafe {
 				ffi::init_shard(self.eid, &mut retval, shard.as_ptr(), shard.len() as u32)
-			};
-
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
-			Ok(())
-		}
-
-		fn init_proxied_shard_vault(
-			&self,
-			shard: &ShardIdentifier,
-			parentchain_id: &ParentchainId,
-			funding_balance: Balance,
-		) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let parentchain_id_enc = parentchain_id.encode();
-			let funding_balance_enc = funding_balance.encode();
-			let shard_bytes = shard.encode();
-			let result = unsafe {
-				ffi::init_proxied_shard_vault(
-					self.eid,
-					&mut retval,
-					shard_bytes.as_ptr(),
-					shard_bytes.len() as u32,
-					parentchain_id_enc.as_ptr(),
-					parentchain_id_enc.len() as u32,
-					funding_balance_enc.as_ptr(),
-					funding_balance_enc.len() as u32,
-				)
 			};
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
@@ -375,28 +332,6 @@ mod impl_ffi {
 			Ok(ed25519::Public::from_raw(pubkey))
 		}
 
-		fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let mut pubkey = [0u8; SIGNING_KEY_SIZE];
-			let shard_bytes = shard.encode();
-
-			let result = unsafe {
-				ffi::get_ecc_vault_pubkey(
-					self.eid,
-					&mut retval,
-					shard_bytes.as_ptr(),
-					shard_bytes.len() as u32,
-					pubkey.as_mut_ptr(),
-					pubkey.len() as u32,
-				)
-			};
-
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
-			Ok(ed25519::Public::from_raw(pubkey))
-		}
-
 		fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 			let mut private_key = [0u8; 32];
@@ -456,16 +391,15 @@ mod impl_ffi {
 			Ok(mr_enclave.into())
 		}
 
-		fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let result = unsafe {
 				ffi::migrate_shard(
 					self.eid,
 					&mut retval,
-					old_shard.as_ptr(),
 					new_shard.as_ptr(),
-					old_shard.len() as u32,
+					new_shard.len() as u32,
 				)
 			};
 

@@ -110,8 +110,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       ws:
-        specifier: ^8.8.1
-        version: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^8.17.1
+        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       zx:
         specifier: ^7.2.3
         version: 7.2.3
@@ -198,8 +198,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       ws:
-        specifier: ^8.8.1
-        version: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^8.17.1
+        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       zod:
         specifier: ^3.22.3
         version: 3.22.3
@@ -340,8 +340,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       ws:
-        specifier: ^8.8.1
-        version: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^8.17.1
+        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     devDependencies:
       '@ethersproject/providers':
         specifier: ^5.7.2
@@ -1260,7 +1260,7 @@ packages:
     dependencies:
       '@polkadot/x-global': 12.5.1
       tslib: 2.6.2
-      ws: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -1309,6 +1309,7 @@ packages:
 
   /@substrate/connect@0.7.26:
     resolution: {integrity: sha512-uuGSiroGuKWj1+38n1kY5HReer5iL9bRwPCzuoLtqAOmI1fGI0hsSI2LlNQMAbfRgr7VRHXOk5MTuQf5ulsFRw==}
+    deprecated: versions below 1.x are no longer maintained
     requiresBuild: true
     dependencies:
       '@substrate/connect-extension-protocol': 1.0.1
@@ -3457,7 +3458,7 @@ packages:
       '@babel/runtime': 7.24.4
       eventemitter3: 4.0.7
       uuid: 8.3.2
-      ws: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     optionalDependencies:
       bufferutil: 4.0.8
       utf-8-validate: 5.0.10
@@ -3583,7 +3584,7 @@ packages:
     requiresBuild: true
     dependencies:
       pako: 2.1.0
-      ws: 8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -3985,8 +3986,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  /ws@8.14.2(bufferutil@4.0.8)(utf-8-validate@5.0.10):
-    resolution: {integrity: sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==}
+  /ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10):
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1

@@ -34,7 +34,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 # litentry
 lc-dynamic-assertion = { path = "../../litentry/core/dynamic-assertion", default-features = false }
 lc-evm-dynamic-assertions = { path = "../../litentry/core/evm-dynamic-assertions", default-features = false }
-lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false, optional = true }
+lc-vc-task-sender = { path = "../../litentry/core/vc-task/sender", default-features = false }
 litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
@@ -73,9 +73,9 @@ std = [
     "sp-runtime/std",
     "substrate-api-client",
     "litentry-primitives/std",
-    "lc-scheduled-enclave/std",
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
+    "lc-vc-task-sender/std",
     "sp-std/std",
 ]
 sgx = [
@@ -87,7 +87,7 @@ sgx = [
     "itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
-    "lc-scheduled-enclave/sgx",
     "lc-dynamic-assertion/sgx",
     "lc-evm-dynamic-assertions/sgx",
+    "lc-vc-task-sender/sgx",
 ]

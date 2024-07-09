@@ -26,7 +26,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use bc_enclave_registry::EnclaveRegistryLookup;
 use codec::Encode;
 use core::time::Duration;
-use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
+use itc_direct_rpc_client::{RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
@@ -55,11 +55,9 @@ use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, 
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 use std::{
+	collections::HashMap,
 	string::ToString,
-	sync::{
-		mpsc::{sync_channel, SyncSender},
-		Arc,
-	},
+	sync::{mpsc::channel, Arc},
 	vec,
 };
 
@@ -82,27 +80,45 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 	SHIELDAK: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + 'static,
 {
-	let (responses_sender, responses_receiver) = sync_channel(1000);
+	let (responses_sender, responses_receiver) = channel();
 	std::thread::spawn(move || {
 		let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
 		let identity = Identity::Substrate(my_identity);
+		let mut peers_map = HashMap::new();
+		let mut ceremonies_to_remove = vec![];
 		loop {
+			enclave_registry.get_all().iter().for_each(|(identity, address)| {
+				if my_identity != *identity && !peers_map.contains_key(identity.as_ref()) {
+					info!("creating new connection to peer: {:?}", address);
+					match client_factory.create(address, responses_sender.clone()) {
+						Ok(client) => {
+							peers_map.insert(*identity.as_ref(), client);
+						},
+						Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
+					}
+				}
+			});
 			{
-				let mut ceremonies_to_remove = vec![];
-
 				// do not hold lock for too long
 				let ceremonies_to_process: Vec<CeremonyId> =
-					ceremony_registry.lock().unwrap().keys().cloned().collect();
+					if let Ok(ceremonies) = ceremony_registry.try_lock() {
+						ceremonies.keys().cloned().collect()
+					} else {
+						warn!("Could not determine ceremonies to process");
+						vec![]
+					};
 
 				for ceremony_id_to_process in ceremonies_to_process {
 					// do not hold lock for too long as logic below includes I/O
-					let events = if let Some(ceremony) =
-						ceremony_registry.lock().unwrap().get_mut(&ceremony_id_to_process)
-					{
-						ceremony.tick()
+					let events = if let Ok(mut ceremonies) = ceremony_registry.try_lock() {
+						if let Some(ceremony) = ceremonies.get_mut(&ceremony_id_to_process) {
+							ceremony.tick()
+						} else {
+							warn!("Could not find ceremony with id: {:?}", ceremony_id_to_process);
+							vec![]
+						}
 					} else {
-						warn!("Could not find ceremony with id: {:?}", ceremony_id_to_process);
-						continue
+						vec![]
 					};
 
 					trace!("Got ceremony {:?} events {:?}", ceremony_id_to_process, events);
@@ -136,12 +152,10 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers(
-										&client_factory,
-										&enclave_registry,
-										&responses_sender,
-										signer_id,
+									send_to_signer::<ClientFactory>(
 										&request,
+										signer_id,
+										&mut peers_map,
 									);
 								});
 							},
@@ -168,12 +182,10 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers(
-										&client_factory,
-										&enclave_registry,
-										&responses_sender,
-										signer_id,
+									send_to_signer::<ClientFactory>(
 										&request,
+										signer_id,
+										&mut peers_map,
 									);
 								});
 							},
@@ -240,13 +252,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers(
-										&client_factory,
-										&enclave_registry,
-										&responses_sender,
-										signer_id,
-										&request,
-									);
+									send_to_all_signers::<ClientFactory>(&request, &mut peers_map);
 								});
 							},
 							CeremonyEvent::CeremonyTimedOut(signers, request_aes_key) => {
@@ -290,40 +296,43 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers(
-										&client_factory,
-										&enclave_registry,
-										&responses_sender,
-										signer_id,
-										&request,
-									);
+									send_to_all_signers::<ClientFactory>(&request, &mut peers_map);
 								});
 							},
 						}
 					}
 				}
 
-				let mut ceremony_commands = ceremony_commands.lock().unwrap();
-				let mut ceremony_registry = ceremony_registry.lock().unwrap();
-				ceremony_commands.retain(|_, ceremony_pending_commands| {
-					ceremony_pending_commands.retain_mut(|c| {
-						c.tick();
-						c.ticks_left > 0
-					});
-					!ceremony_pending_commands.is_empty()
-				});
+				let ceremony_commands = ceremony_commands.try_lock();
+				let ceremony_registry = ceremony_registry.try_lock();
 
-				ceremonies_to_remove.iter().for_each(|ceremony_id| {
-					debug!("Removing ceremony {:?}", ceremony_id);
-					let _ = ceremony_registry.remove_entry(ceremony_id);
-					let _ = ceremony_commands.remove_entry(ceremony_id);
-				});
+				if let Ok(mut ceremony_commands) = ceremony_commands {
+					ceremony_commands.retain(|_, ceremony_pending_commands| {
+						ceremony_pending_commands.retain_mut(|c| {
+							c.tick();
+							c.ticks_left > 0
+						});
+						!ceremony_pending_commands.is_empty()
+					});
+
+					if let Ok(mut ceremonies) = ceremony_registry {
+						ceremonies_to_remove.iter().for_each(|ceremony_id| {
+							debug!("Removing ceremony {:?}", ceremony_id);
+							let _ = ceremonies.remove_entry(ceremony_id);
+							let _ = ceremony_commands.remove_entry(ceremony_id);
+						});
+						ceremonies_to_remove = vec![];
+					} else {
+						warn!("Could not get ceremonies lock");
+					}
+				} else {
+					warn!("Could not get ceremony commands lock");
+				}
 			}
 
-			std::thread::sleep(Duration::from_millis(1000))
+			std::thread::sleep(Duration::from_millis(1))
 		}
 	});
-
 	// here we will process all responses
 	std::thread::spawn(move || {
 		while let Ok((_id, rpc_return_value)) = responses_receiver.recv() {
@@ -335,28 +344,31 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 	});
 }
 
-fn send_to_all_signers<ClientFactory, ER>(
-	client_factory: &Arc<ClientFactory>,
-	enclave_registry: &Arc<ER>,
-	responses_sender: &SyncSender<Response>,
-	signer_id: &SignerId,
+fn send_to_signer<ClientFactory>(
 	request: &RpcRequest,
+	signer_id: &SignerId,
+	peers: &mut HashMap<SignerId, ClientFactory::Client>,
 ) where
-	ClientFactory: RpcClientFactory + Send + Sync + 'static,
-	ER: EnclaveRegistryLookup + Send + Sync + 'static,
+	ClientFactory: RpcClientFactory,
 {
-	enclave_registry.get_all().iter().for_each(|(identity, address)| {
-		if signer_id == identity.as_ref() {
-			trace!("creating new connection to peer: {:?}", address);
-			match client_factory.create(address, responses_sender.clone()) {
-				Ok(mut client) =>
-					if let Err(e) = client.send(address, request) {
-						error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
-					},
-				Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
-			}
+	if let Some(client) = peers.get_mut(signer_id) {
+		if let Err(e) = client.send(request) {
+			error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
 		}
-	});
+	}
+}
+
+fn send_to_all_signers<ClientFactory>(
+	request: &RpcRequest,
+	peers: &mut HashMap<SignerId, ClientFactory::Client>,
+) where
+	ClientFactory: RpcClientFactory,
+{
+	for (signer_id, client) in peers.iter_mut() {
+		if let Err(e) = client.send(request) {
+			error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
+		}
+	}
 }
 
 fn prepare_request<SHIELDAK, SIGNINGAK>(

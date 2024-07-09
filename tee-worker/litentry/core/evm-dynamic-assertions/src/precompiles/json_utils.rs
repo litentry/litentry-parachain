@@ -1,6 +1,10 @@
 use crate::{
-	failure_precompile_output, json_get_fn, precompiles::PrecompileResult,
-	success_precompile_output,
+	failure_precompile_output, json_get_fn,
+	precompiles::{
+		logging::{contract_logging, LOGGING_LEVEL_WARN},
+		PrecompileResult,
+	},
+	success_precompile_output, Precompiles,
 };
 use ethabi::Token;
 use serde_json::Value;
@@ -10,12 +14,14 @@ json_get_fn!(json_get_string, String, as_str);
 json_get_fn!(json_get_bool, Bool, as_bool);
 json_get_fn!(json_get_i64, Uint, as_i64);
 
-pub fn get_array_len(input: Vec<u8>) -> PrecompileResult {
+pub fn get_array_len(input: Vec<u8>, precompiles: &Precompiles) -> PrecompileResult {
 	let decoded =
 		match ethabi::decode(&[ethabi::ParamType::String, ethabi::ParamType::String], &input) {
 			Ok(d) => d,
 			Err(e) => {
-				log::debug!("Could not decode bytes {:?}, reason: {:?}", input, e);
+				let message = std::format!("Could not decode bytes {:?}, reason: {:?}", input, e);
+				log::debug!("{}", message);
+				contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 				return Ok(failure_precompile_output(ethabi::Token::String(Default::default())))
 			},
 		};
@@ -26,7 +32,9 @@ pub fn get_array_len(input: Vec<u8>) -> PrecompileResult {
 	let value: Value = match serde_json::from_str(&json) {
 		Ok(v) => v,
 		Err(e) => {
-			log::debug!("Could not parse json {:?}, reason: {:?}", json, e);
+			let message = std::format!("Could not parse json {:?}, reason: {:?}", json, e);
+			log::debug!("{}", message);
+			contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 			return Ok(failure_precompile_output(Token::Int(Default::default())))
 		},
 	};
@@ -35,15 +43,19 @@ pub fn get_array_len(input: Vec<u8>) -> PrecompileResult {
 		Some(v) => match v.as_array() {
 			Some(arr) => arr.len(),
 			None => {
-				log::debug!(
+				let message = std::format!(
 					"There is no value or it might be of different type, pointer: ${:?}",
 					pointer
 				);
+				log::debug!("{}", message);
+				contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 				return Ok(failure_precompile_output(Token::Int(Default::default())))
 			},
 		},
 		None => {
-			log::debug!("No value under given pointer: :{:?}", pointer);
+			let message = std::format!("No value under given pointer: :{:?}", pointer);
+			log::debug!("{}", message);
+			contract_logging(precompiles, LOGGING_LEVEL_WARN, message);
 			return Ok(failure_precompile_output(Token::Int(Default::default())))
 		},
 	};
@@ -55,7 +67,7 @@ pub fn get_array_len(input: Vec<u8>) -> PrecompileResult {
 pub mod test {
 	use crate::{
 		precompiles::json_utils::{get_array_len, json_get_bool, json_get_i64, json_get_string},
-		success_precompile_output,
+		success_precompile_output, Precompiles,
 	};
 	use ethabi::{encode, Token};
 	use serde_json::json;
@@ -71,7 +83,8 @@ pub mod test {
 		let data = prepare_input_data(&json.to_string(), "/key");
 
 		// when:
-		let result = json_get_string(data).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = json_get_string(data, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::String("value".into())), result)
@@ -88,7 +101,8 @@ pub mod test {
 		let data = prepare_input_data(&json.to_string(), "/key");
 
 		// when:
-		let result = json_get_i64(data).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = json_get_i64(data, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::Int(14.into())), result)
@@ -105,7 +119,8 @@ pub mod test {
 		let data = prepare_input_data(&json.to_string(), "/key");
 
 		// when:
-		let result = json_get_bool(data).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = json_get_bool(data, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::Bool(true)), result)
@@ -118,7 +133,8 @@ pub mod test {
 		let data = prepare_input_data(&json.to_string(), "");
 
 		// when:
-		let result = get_array_len(data).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = get_array_len(data, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::Int(3.into())), result)
@@ -137,7 +153,8 @@ pub mod test {
 		let data = prepare_input_data(&json.to_string(), "/nested");
 
 		// when:
-		let result = get_array_len(data).unwrap();
+		let precompiles = Precompiles { contract_logs: Vec::new().into() };
+		let result = get_array_len(data, &precompiles).unwrap();
 
 		// then
 		assert_eq!(success_precompile_output(Token::Int(3.into())), result)
@@ -182,7 +199,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -211,7 +228,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -240,7 +257,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -273,7 +290,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();

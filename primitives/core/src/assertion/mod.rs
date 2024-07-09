@@ -51,11 +51,13 @@ use web3_nft::Web3NftType;
 pub mod web3_token;
 use web3_token::Web3TokenType;
 
-use crate::{AccountId, DynamicParams, ParameterString};
+pub mod dynamic;
+use dynamic::DynamicParams;
+
+use crate::{AccountId, ParameterString};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::H160;
 use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
@@ -138,7 +140,7 @@ pub enum Assertion {
 	NftHolder(Web3NftType),
 
 	#[codec(index = 27)]
-	Dynamic(H160, DynamicParams) // smart contract code identifier, abi encoded smart contract params
+	Dynamic(DynamicParams)
 }
 
 impl Assertion {

@@ -56,7 +56,7 @@ use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
-use sp_core::H160;
+use sp_core::{ed25519::Pair as Ed25519Pair, H160};
 use std::{
 	boxed::Box,
 	format,
@@ -99,6 +99,7 @@ pub struct StfTaskContext<
 	pub shielding_key: Arc<ShieldingKeyRepository>,
 	pub author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
+	pub enclave_account: Arc<Ed25519Pair>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 	pub data_provider_config: Arc<DataProviderConfig>,
@@ -118,10 +119,12 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		shielding_key: Arc<ShieldingKeyRepository>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
+		enclave_account: Arc<Ed25519Pair>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
 		data_provider_config: Arc<DataProviderConfig>,
@@ -131,6 +134,7 @@ where
 			shielding_key,
 			author_api,
 			enclave_signer,
+			enclave_account,
 			state_handler,
 			ocall_api,
 			data_provider_config,
@@ -232,7 +236,6 @@ where
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
 		if let Ok((shard, hash, call)) = receiver.recv() {
-			info!("Submitting trusted call to the pool");
 			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
