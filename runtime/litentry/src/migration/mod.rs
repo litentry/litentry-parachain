@@ -21,7 +21,7 @@ use sp_std::marker::PhantomData;
 #[cfg(feature = "try-runtime")]
 use sp_std::vec::Vec;
 
-use pallet_parachain_staking::{BalanceOf, Delegator};
+use pallet_parachain_staking::{BalanceOf, CandidateMetadata, Delegator};
 pub const DECIMAL_CONVERTOR: Balance = 1_000_000;
 
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
@@ -56,7 +56,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		.is_none());
 		for (account, state) in stored_data {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR); 
+			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR);
 			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
@@ -90,20 +90,23 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		// https://crates.parity.io/frame_support/storage/migration/fn.remove_storage_prefix.html
 		remove_storage_prefix(pallet_prefix, storage_item_prefix, &[]);
 		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			CandidateMetadata<BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
+		assert!(storage_key_iter::<T::AccountId, CandidateMetadata<BalanceOf<T>>, Twox64Concat>(
+			pallet_prefix,
+			storage_item_prefix
+		)
 		.next()
 		.is_none());
 		for (account, state) in stored_data {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR); 
-			new_metadata.total_counted = new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_top_delegation_amount = new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.highest_bottom_delegation_amount = new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_bottom_delegation_amount = new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.total_counted =
+				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.lowest_top_delegation_amount =
+				new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.highest_bottom_delegation_amount =
+				new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.lowest_bottom_delegation_amount =
+				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
 
 			if let Some(i) = new_metadata.request {
 				new_metadata.request.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
@@ -113,7 +116,6 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
 	}
-
 }
 
 #[cfg(feature = "try-runtime")]
@@ -122,7 +124,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		// get DelegatorState to check consistency
 		for (account, state) in <DelegatorState<T>>::iter() {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR); 
+			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR);
 			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
@@ -152,11 +154,15 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		// get DelegatorState to check consistency
 		for (account, state) in <CandidateInfo<T>>::iter() {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR); 
-			new_metadata.total_counted = new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_top_delegation_amount = new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.highest_bottom_delegation_amount = new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_bottom_delegation_amount = new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.total_counted =
+				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.lowest_top_delegation_amount =
+				new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.highest_bottom_delegation_amount =
+				new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.lowest_bottom_delegation_amount =
+				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
 
 			if let Some(i) = new_metadata.request {
 				new_metadata.request.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
@@ -197,7 +203,7 @@ where
 		let mut weight = frame_support::weights::Weight;
 		weight += replace_delegator_state_storage();
 		weight += replace_candidate_info_storage();
-		
+
 		weight
 	}
 
