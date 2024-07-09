@@ -39,8 +39,8 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, Clone, Default, Debug, PartialEq, Eq, TypeInfo)]
 	pub struct Assertion {
-		byte_code: Vec<u8>,
-		secrets: Vec<Vec<u8>>,
+		pub byte_code: Vec<u8>,
+		pub secrets: Vec<Vec<u8>>,
 	}
 
 	#[pallet::config]
@@ -58,6 +58,9 @@ pub mod pallet {
 
 		/// Only a member of the Developers Collective can deploy the contract
 		type ContractDevOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		/// Only TEE-Workers can call some extrinsics
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	/// Map for storing assertion smart contract bytecode alongside with additional secrets
@@ -71,6 +74,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		AssertionCreated { id: T::AssertionId, byte_code: Vec<u8>, secrets: Vec<Vec<u8>> },
+		AssertionStored { id: T::AssertionId },
+		AssertionVoided { id: T::AssertionId },
 	}
 
 	#[pallet::error]
@@ -95,6 +100,31 @@ pub mod pallet {
 				Assertion { byte_code: byte_code.clone(), secrets: secrets.clone() },
 			);
 			Self::deposit_event(Event::AssertionCreated { id, byte_code, secrets });
+			Ok(Pays::No.into())
+		}
+
+		/// Only called by the Identity-Worker
+		#[pallet::call_index(1)]
+		#[pallet::weight((T::DbWeight::get().read, DispatchClass::Normal, Pays::No))]
+		pub fn store_assertion(
+			origin: OriginFor<T>,
+			id: T::AssertionId,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::AssertionStored { id });
+			Ok(Pays::No.into())
+		}
+
+		/// Only called by the Identity-Worker
+		#[pallet::call_index(2)]
+		#[pallet::weight((T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
+		pub fn void_assertion(
+			origin: OriginFor<T>,
+			id: T::AssertionId,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Assertions::<T>::remove(id);
+			Self::deposit_event(Event::AssertionVoided { id });
 			Ok(Pays::No.into())
 		}
 	}
