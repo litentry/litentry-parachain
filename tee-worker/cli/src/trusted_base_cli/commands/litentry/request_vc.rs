@@ -290,6 +290,7 @@ pub enum PlatformUserCommand {
 pub enum NftHolderCommand {
 	WeirdoGhostGang,
 	Club3Sbt,
+	MFan,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -640,6 +641,7 @@ impl Command {
 			Command::NftHolder(arg) => Ok(match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
+				NftHolderCommand::MFan => NftHolder(Web3NftType::MFan),
 			}),
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();

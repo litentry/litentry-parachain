@@ -33,6 +33,7 @@ impl NftName for Web3NftType {
 		match self {
 			Self::WeirdoGhostGang => "Weirdo Ghost Gang",
 			Self::Club3Sbt => "Club3 SBT",
+			Self::MFan => "MFAN",
 		}
 	}
 }
@@ -54,6 +55,9 @@ impl NftAddress for Web3NftType {
 				Some("0xAc2e4e67cffa5E82bfA1e169e5F9aa405114C982"),
 			(Self::Club3Sbt, Web3Network::Arbitrum) =>
 				Some("0xcccFF19FB8a4a2A206d07842b8F8c8c0A11904C2"),
+			// MFan
+			(Self::MFan, Web3Network::Polygon) =>
+				Some("0x9aBc7C604C27622f9CD56bd1628F6321c32bBBf6"),
 			_ => None,
 		}
 	}
