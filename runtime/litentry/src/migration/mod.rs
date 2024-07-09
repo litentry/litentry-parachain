@@ -17,6 +17,7 @@ use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
 	StorageHasher, Twox128,
 };
+use sp_runtime::Saturating;
 use sp_std::marker::PhantomData;
 #[cfg(feature = "try-runtime")]
 use sp_std::vec::Vec;
@@ -27,7 +28,7 @@ pub const DECIMAL_CONVERTOR: Balance = 1_000_000;
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
 pub struct ReplaceParachainStakingStorage<T>(PhantomData<T>);
 impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
-	fn replace_delegator_state_storage() -> frame_support::weights::Weight {
+	pub fn replace_delegator_state_storage() -> frame_support::weights::Weight {
 		// DelegatorState
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegatorState";
@@ -70,7 +71,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		migrated_count.saturating_mul(weight.write + weight.read)
 	}
 
-	fn replace_candidate_info_storage() -> frame_support::weights::Weight {
+	pub fn replace_candidate_info_storage() -> frame_support::weights::Weight {
 		// CandidateInfo
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"CandidateInfo";
@@ -120,7 +121,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 
 #[cfg(feature = "try-runtime")]
 impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
-	fn pre_upgrade_delegator_state_storage() -> Result<(), &'static str> {
+	pub fn pre_upgrade_delegator_state_storage() -> Result<(), &'static str> {
 		// get DelegatorState to check consistency
 		for (account, state) in <DelegatorState<T>>::iter() {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
@@ -139,7 +140,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		}
 		Ok(())
 	}
-	fn post_upgrade_delegator_state_storage() -> Result<(), &'static str> {
+	pub fn post_upgrade_delegator_state_storage() -> Result<(), &'static str> {
 		// check DelegatorState are the same as the expected
 		for (account, state) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
@@ -150,7 +151,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		}
 		Ok(())
 	}
-	fn pre_upgrade_candidate_info_storage() -> Result<(), &'static str> {
+	pub fn pre_upgrade_candidate_info_storage() -> Result<(), &'static str> {
 		// get DelegatorState to check consistency
 		for (account, state) in <CandidateInfo<T>>::iter() {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
@@ -175,7 +176,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		}
 		Ok(())
 	}
-	fn post_upgrade_candidate_info_storage() -> Result<(), &'static str> {
+	pub fn post_upgrade_candidate_info_storage() -> Result<(), &'static str> {
 		// check CandidateInfo are the same as the expected
 		for (account, state) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
