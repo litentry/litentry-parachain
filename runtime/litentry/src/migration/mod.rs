@@ -129,69 +129,74 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 
 #[cfg(feature = "try-runtime")]
 impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
-	pub fn pre_upgrade_delegator_state_storage() -> Result<(), &'static str> {
+	pub fn pre_upgrade_delegator_state_storage() -> Result<Vec<u8>, &'static str> {
+		use codec::Encode;
+		use sp_std::collections::btree_set::BTreeSet;
 		// get DelegatorState to check consistency
-		for (account, state) in <DelegatorState<T>>::iter() {
-			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_delegator.less_total =
-				new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
-			let mut sorted_inner_vector = new_delegator.delegations.0;
-			for elem in sorted_inner_vector.iter_mut() {
-				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
-			}
-			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
+		let result: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
+			<DelegatorState<T>>::iter().map(|(account, state)| {
+				let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
+				new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_delegator.less_total =
+					new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
+				let mut sorted_inner_vector = new_delegator.delegations.0;
+				for elem in sorted_inner_vector.iter_mut() {
+					elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+				}
+				new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
-			Self::set_temp_storage(
-				new_delegator,
-				&format!("Delegator{}DelegatorState", account)[..],
-			);
-		}
-		Ok(())
+				(account, new_delegator)
+			});
+		Ok(result.encode())
 	}
-	pub fn post_upgrade_delegator_state_storage() -> Result<(), &'static str> {
+	pub fn post_upgrade_delegator_state_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		use codec::Decode;
+		let expected_state: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
+			state.decode();
 		// check DelegatorState are the same as the expected
-		for (account, state) in <DelegatorState<T>>::iter() {
+		for (account, actual_result) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
-				Self::get_temp_storage(&format!("Delegator{}DelegatorState", account)[..])
-					.expect("qed");
-			let actual_result = state;
+				expected_state.get(&account).ok_or("Not Expected Delegator")?;
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
 	}
-	pub fn pre_upgrade_candidate_info_storage() -> Result<(), &'static str> {
+	pub fn pre_upgrade_candidate_info_storage() -> Result<Vec<u8>, &'static str> {
+		use codec::Encode;
+		use sp_std::collections::btree_set::BTreeSet;
 		// get DelegatorState to check consistency
-		for (account, state) in <CandidateInfo<T>>::iter() {
-			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.total_counted =
-				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.lowest_top_delegation_amount = new_metadata
-				.lowest_top_delegation_amount
-				.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.highest_bottom_delegation_amount = new_metadata
-				.highest_bottom_delegation_amount
-				.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.lowest_bottom_delegation_amount = new_metadata
-				.lowest_bottom_delegation_amount
-				.saturating_mul(DECIMAL_CONVERTOR.into());
+		let result: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
+			<CandidateInfo<T>>::iter().map(|(account, state)| {
+				let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
+				new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_metadata.total_counted =
+					new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_metadata.lowest_top_delegation_amount = new_metadata
+					.lowest_top_delegation_amount
+					.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_metadata.highest_bottom_delegation_amount = new_metadata
+					.highest_bottom_delegation_amount
+					.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_metadata.lowest_bottom_delegation_amount = new_metadata
+					.lowest_bottom_delegation_amount
+					.saturating_mul(DECIMAL_CONVERTOR.into());
 
-			if let Some(i) = new_metadata.request {
-				i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
-			}
+				if let Some(mut i) = new_metadata.request {
+					i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+				}
 
-			Self::set_temp_storage(new_metadata, &format!("Candidate{}CandidateInfo", account)[..]);
-		}
-		Ok(())
+				(account, new_metadata)
+			});
+		Ok(result.encode())
 	}
-	pub fn post_upgrade_candidate_info_storage() -> Result<(), &'static str> {
+	pub fn post_upgrade_candidate_info_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		use codec::Decode;
+		let expected_state: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
+			state.decode();
 		// check CandidateInfo are the same as the expected
-		for (account, state) in <CandidateInfo<T>>::iter() {
+		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
-				Self::get_temp_storage(&format!("Candidate{}CandidateInfo", account)[..])
-					.expect("qed");
-			let actual_result = state;
+				expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?;
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
@@ -204,9 +209,9 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		let _ = Self::pre_upgrade_delegator_state_storage()?;
-		let _ = Self::pre_upgrade_candidate_info_storage()?;
-		Ok(Vec::<u8>::new())
+		let delegator_state_vec = Self::pre_upgrade_delegator_state_storage()?;
+		let candidate_info_vec = Self::pre_upgrade_candidate_info_storage()?;
+		Ok((delegator_state_vec, candidate_info_vec).encode())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -218,9 +223,11 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
-		let _ = Self::post_upgrade_delegator_state_storage()?;
-		let _ = Self::post_upgrade_candidate_info_storage()?;
+	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		use codec::Decode;
+		let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
+		let _ = Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
+		let _ = Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
 		Ok(())
 	}
 }
