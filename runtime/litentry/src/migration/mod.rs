@@ -54,10 +54,13 @@ where
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
 		.collect();
-		let migrated_count: frame_support::weights::Weight = stored_data
-			.len()
-			.try_into()
-			.expect("There are between 0 and 2**64 mappings stored.");
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
@@ -98,10 +101,13 @@ where
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
 		.collect();
-		let migrated_count: frame_support::weights::Weight = stored_data
-			.len()
-			.try_into()
-			.expect("There are between 0 and 2**64 mappings stored.");
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
@@ -212,7 +218,7 @@ where
 		// check CandidateInfo are the same as the expected
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
-				expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?;
+				*(expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?);
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
@@ -232,7 +238,7 @@ where
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let mut weight = frame_support::weights::Weight::new();
+		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
 		weight += Self::replace_delegator_state_storage();
 		weight += Self::replace_candidate_info_storage();
 
