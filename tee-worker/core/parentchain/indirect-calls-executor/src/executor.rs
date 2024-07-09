@@ -34,7 +34,7 @@ use itp_node_api::metadata::{
 };
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::{
 	traits::{IndirectExecutor, TrustedCallSigning, TrustedCallVerification},
 	types::AccountId,
@@ -42,7 +42,7 @@ use itp_stf_primitives::{
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::{events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId},
-	OpaqueCall, RsaRequest, ShardIdentifier, H256,
+	MrEnclave, OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -135,7 +135,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
@@ -250,7 +250,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
@@ -275,6 +275,10 @@ impl<
 
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		Ok(self.stf_enclave_signer.get_enclave_account()?)
+	}
+
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.stf_enclave_signer.get_mrenclave()?)
 	}
 
 	fn get_default_shard(&self) -> ShardIdentifier {

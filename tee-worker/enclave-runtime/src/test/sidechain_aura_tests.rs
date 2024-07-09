@@ -60,7 +60,6 @@ use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
 use its_sidechain::{aura::proposer_factory::ProposerFactory, slots::SlotInfo};
 use jsonrpc_core::futures::executor;
-use lc_scheduled_enclave::ScheduledEnclaveMock;
 use litentry_primitives::Identity;
 use log::*;
 use primitive_types::H256;
@@ -188,11 +187,10 @@ pub fn produce_sidechain_block_and_import_it() {
 	info!("Test setup is done.");
 
 	let state_hash_before_block_production = get_state_hash(state_handler.as_ref(), &shard_id);
-	let scheduled_enclave = Arc::new(ScheduledEnclaveMock::default());
 
 	info!("Executing AURA on slot..");
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _>(
 			slot_info,
 			signer,
 			ocall_api,
@@ -201,8 +199,6 @@ pub fn produce_sidechain_block_and_import_it() {
 			None::<Arc<TestParentchainBlockImportTrigger>>,
 			proposer_environment,
 			shards,
-			scheduled_enclave,
-			state_handler.clone(),
 		)
 		.unwrap();
 

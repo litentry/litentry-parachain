@@ -63,7 +63,7 @@ use substrate_api_client::{
 #[cfg(feature = "dcap")]
 use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 
-use crate::{account_funding::shard_vault_initial_funds, error::ServiceResult};
+use crate::error::ServiceResult;
 use itc_parentchain::primitives::ParentchainId;
 use itp_types::parentchain::{AccountId, Balance};
 use sp_core::crypto::{AccountId32, Ss58Codec};
@@ -238,7 +238,7 @@ pub(crate) fn main() {
 	} else if matches.is_present("signing-key") {
 		setup::generate_signing_key_file(enclave.as_ref());
 		let tee_accountid = enclave_account(enclave.as_ref());
-		info!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
+		println!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]
@@ -252,7 +252,10 @@ pub(crate) fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		info!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		let hex_value = hex::encode(mrenclave);
+		println!("MRENCLAVE hex: {}", hex_value);
+		println!("MRENCLAVE base58: {}", mrenclave.encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
@@ -286,32 +289,10 @@ pub(crate) fn main() {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
-		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
-		let old_shard = sub_matches
-			.value_of("old-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		let new_shard: ShardIdentifier = sub_matches
-			.value_of("new-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		if old_shard == new_shard {
-			info!("old_shard should not be the same as new_shard");
-		} else {
-			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
-		}
+		let new_shard = extract_shard(None, enclave.as_ref());
+		setup::migrate_shard(enclave.as_ref(), &new_shard);
+		let new_shard_name = new_shard.encode().to_base58();
+		setup::remove_old_shards(config.data_dir(), &new_shard_name);
 	} else {
 		info!("For options: use --help");
 	}
@@ -707,16 +688,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		None
 	};
 
-	init_provided_shard_vault(
-		shard,
-		&enclave,
-		litentry_rpc_api.clone(),
-		maybe_target_a_rpc_api,
-		maybe_target_b_rpc_api,
-		run_config.shielding_target,
-		we_are_primary_validateer,
-	);
-
 	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 		info!("[Litentry:SCV] starting block production");
 		let last_synced_header = sidechain_init_block_production(
@@ -732,55 +703,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		&litentry_rpc_api,
 		ParentchainId::Litentry,
 	);
-}
-
-fn init_provided_shard_vault<E: EnclaveBase>(
-	shard: &ShardIdentifier,
-	enclave: &Arc<E>,
-	litentry_rpc_api: ParentchainApi,
-	maybe_target_a_rpc_api: Option<ParentchainApi>,
-	maybe_target_b_rpc_api: Option<ParentchainApi>,
-	shielding_target: Option<ParentchainId>,
-	we_are_primary_validateer: bool,
-) {
-	let shielding_target = shielding_target.unwrap_or(ParentchainId::Litentry);
-	let rpc_api = match shielding_target {
-		ParentchainId::Litentry => litentry_rpc_api,
-		ParentchainId::TargetA => maybe_target_a_rpc_api
-			.expect("target A must be initialized to be used as shielding target"),
-		ParentchainId::TargetB => maybe_target_b_rpc_api
-			.expect("target B must be initialized to be used as shielding target"),
-	};
-	let funding_balance = shard_vault_initial_funds(&rpc_api).unwrap();
-	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
-		// verify if proxy is set up on chain
-		let nonce = rpc_api.get_account_nonce(&AccountId::from(shard_vault)).unwrap();
-		info!(
-			"[{:?}] shard vault account is already initialized in state: {} with nonce {}",
-			shielding_target,
-			shard_vault.to_ss58check(),
-			nonce
-		);
-		if nonce == 0 && we_are_primary_validateer {
-			info!(
-				"[{:?}] nonce = 0 means shard vault not properly set up on chain. will retry",
-				shielding_target
-			);
-			enclave.init_proxied_shard_vault(shard, &shielding_target, 0u128).unwrap();
-		}
-	} else if we_are_primary_validateer {
-		info!("[{:?}] initializing proxied shard vault account now", shielding_target);
-		enclave
-			.init_proxied_shard_vault(shard, &shielding_target, funding_balance)
-			.unwrap();
-		info!(
-			"[{:?}] initialized shard vault account: : {}",
-			shielding_target,
-			enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
-		);
-	} else {
-		panic!("no vault account has been initialized and we are not the primary worker");
-	}
 }
 
 fn init_target_parentchain<E>(

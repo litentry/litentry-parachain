@@ -22,6 +22,7 @@ use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use codec::Encode;
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
+use log::error;
 use parentchain_primitives::Identity;
 use std::sync::Arc;
 
@@ -77,7 +78,10 @@ pub fn handle<
 			payload.clone(),
 			signer_access_key,
 		)
-		.map_err(|_| SignBitcoinError::CeremonyError)?;
+		.map_err(|e| {
+			error!("Could not start ceremony, error: {:?}", e);
+			SignBitcoinError::CeremonyError
+		})?;
 
 		{
 			let mut registry_write = ceremony_registry.write().unwrap();

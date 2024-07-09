@@ -40,6 +40,12 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
+
 use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyEvent, CeremonyId,
@@ -53,7 +59,7 @@ use codec::{Decode, Encode};
 use core::{ops::Deref, time::Duration};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use ita_stf::TrustedCallSigned;
-use itc_direct_rpc_client::Response;
+use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{
@@ -70,15 +76,16 @@ use lc_direct_call::{
 	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
 	DirectCall, DirectCallSigned,
 };
-use litentry_primitives::{aes_encrypt_default, AesRequest, DecryptableRequest};
+use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, DecryptableRequest};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::{ed25519, H256};
+use sp_core::{ed25519, Pair, H256};
 use std::{
 	boxed::Box,
+	collections::HashMap,
 	format,
 	string::{String, ToString},
-	sync::{mpsc::sync_channel, Arc},
+	sync::{mpsc::channel, Arc},
 	vec,
 	vec::Vec,
 };
@@ -205,7 +212,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	SRL: SignerRegistryLookup + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let (responses_sender, responses_receiver) = sync_channel::<Response>(1000);
+	let (responses_sender, responses_receiver) = channel::<Response>();
 	// here we will process all responses
 	std::thread::spawn(move || {
 		while let Ok((_id, rpc_return_value)) = responses_receiver.recv() {
@@ -235,26 +242,43 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
-	let n_workers = {
-		match std::env::var("worker_threads") {
+	let command_threads = {
+		match std::env::var("command") {
 			Ok(val) => {
-				let worker_threads = val.parse::<usize>().unwrap();
-				info!("start {} task worker threads", val);
-				worker_threads
+				let command_threads = val.parse::<usize>().unwrap();
+				info!("start {} command_threads", val);
+				command_threads
 			},
 			Err(_) => {
-				let worker_threads = 8;
-				info!("start default {} task worker threads", worker_threads);
-				worker_threads
+				let command_threads = 8;
+				info!("start default {} command_threads", command_threads);
+				command_threads
 			},
 		}
 	};
-	let command_thread_pool = ThreadPool::new(n_workers);
-	let event_thread_pool = ThreadPool::new(n_workers);
+	let event_threads = {
+		match std::env::var("event") {
+			Ok(val) => {
+				let event_threads = val.parse::<usize>().unwrap();
+				info!("start {} event_threads", val);
+				event_threads
+			},
+			Err(_) => {
+				let event_threads = 8;
+				info!("start default {} event_threads", event_threads);
+				event_threads
+			},
+		}
+	};
+	let command_thread_pool = ThreadPool::new(command_threads);
+	let event_thread_pool = ThreadPool::new(event_threads);
+	let peers_map = Arc::new(Mutex::new(HashMap::new()));
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
 		let responses_sender = responses_sender.clone();
 		let event_thread_pool = event_thread_pool.clone();
+		let peers_map = peers_map.clone();
+		warn!("receive task");
 		command_thread_pool.execute(move || {
 			let (ceremony_id, command) =
 				match handle_request(&mut req.request, context_pool.clone()) {
@@ -309,6 +333,27 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					return
 				},
 			}
+
+			// try to udpate peers_map
+			let my_identity: Address32 =
+				context_pool.signing_key_access.retrieve_key().unwrap().public().0.into();
+			context_pool.enclave_registry_lookup.get_all().iter().for_each(
+				|(identity, address)| {
+					if my_identity != *identity
+						&& !peers_map.lock().unwrap().contains_key(identity.as_ref())
+					{
+						info!("creating new connection to peer: {:?}", address);
+						match (DirectRpcClientFactory {}).create(address, responses_sender.clone())
+						{
+							Ok(client) => {
+								peers_map.lock().unwrap().insert(*identity.as_ref(), client);
+							},
+							Err(e) =>
+								error!("Could not connect to peer {}, reason: {:?}", address, e),
+						}
+					}
+				},
+			);
 
 			// process commands and events
 			let mut commands_to_process = vec![command];
@@ -371,13 +416,12 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					process_event(
 						context_pool.signing_key_access.clone(),
 						context_pool.shielding_key.clone(),
-						context_pool.enclave_registry_lookup.clone(),
 						context_pool.ocall_api.clone(),
 						context_pool.responder.clone(),
-						responses_sender.clone(),
 						event,
 						ceremony_id.clone(),
 						event_thread_pool.clone(),
+						peers_map.clone(),
 					);
 				}
 			}
@@ -409,22 +453,31 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let enclave_shielding_key = context
-		.shielding_key
-		.retrieve_key()
-		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
+	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
+		let err = format!("Failed to retrieve shielding key: {:?}", e);
+		error!("{}", err);
+		err
+	})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
 		.and_then(|v| DirectCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| "Failed to decode payload".to_string())?;
+		.ok_or_else(|| {
+			let err = "Failed to decode payload".to_string();
+			error!("{}", err);
+			err
+		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".encode()),
+		Err(_) => {
+			let err = "Failed to get mrenclave";
+			error!("{}", err);
+			return Err(err.encode())
+		},
 	};
+	debug!("Direct call is: {:?}", dc);
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
-
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());

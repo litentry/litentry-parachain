@@ -23,14 +23,15 @@ extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+// #[cfg(all(not(feature = "std"), feature = "sgx"))]
+// extern crate chrono_sgx as chrono;
+
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use chrono_sgx as chrono;
 	pub use http_sgx as http;
 }
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
 
 use crate::precompiles::Precompiles;
 use ethabi::{
@@ -73,7 +74,10 @@ pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
 }
 
-pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitReason, Vec<u8>) {
+pub fn execute_smart_contract(
+	byte_code: Vec<u8>,
+	input_data: Vec<u8>,
+) -> (ExitReason, Vec<u8>, Vec<String>) {
 	// prepare EVM runtime
 	let config = prepare_config();
 	let vicinity = prepare_memory();
@@ -81,7 +85,7 @@ pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitR
 	let mut backend = MemoryBackend::new(&vicinity, state);
 	let metadata = StackSubstateMetadata::new(u64::MAX, &config);
 	let state = MemoryStackState::new(metadata, &mut backend);
-	let precompiles = Precompiles {};
+	let precompiles = Precompiles { contract_logs: Vec::new().into() };
 	let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
 	// caller, just an unused account
@@ -93,7 +97,10 @@ pub fn execute_smart_contract(byte_code: Vec<u8>, input_data: Vec<u8>) -> (ExitR
 		executor.transact_create(caller, U256::zero(), byte_code, u64::MAX, Vec::new());
 
 	// call assertion smart contract
-	executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new())
+	let (reason, data) =
+		executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new());
+
+	(reason, data, precompiles.contract_logs.take())
 }
 
 impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
@@ -120,7 +127,14 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 				decode_result(&call_result.1)
 					.map_err(|_| "Could not decode evm assertion execution result")?;
 
-			Ok(AssertionResult { description, assertion_type, assertions, schema_url, meet })
+			Ok(AssertionResult {
+				description,
+				assertion_type,
+				assertions,
+				schema_url,
+				meet,
+				contract_logs: call_result.2,
+			})
 		} else {
 			Err(std::format!("Fail to execution evm dynamic assertion: {:?}", call_result.0))
 		}

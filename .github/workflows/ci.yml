@@ -342,12 +342,13 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
+          docker pull litentry/litentry-chain-aio:latest
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
 
-      - name: Upload docker image
+      - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
@@ -645,9 +646,10 @@ jobs:
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
-          - test_name: lit-scheduled-enclave-test
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
+          - test_name: lit-assertion-contracts-test
+
     steps:
       - uses: actions/checkout@v4
 
@@ -731,7 +733,6 @@ jobs:
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
-          - test_name: lit-scheduled-enclave-multiworker-test
     steps:
       - uses: actions/checkout@v4
 
@@ -831,7 +832,7 @@ jobs:
         run: |
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-identity.tar.gz
-
+          
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:
@@ -843,6 +844,7 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
+          docker push litentry/litentry-chain-aio
 
       # only push TEE images if we rebuilt them
       - name: Push tee-worker image

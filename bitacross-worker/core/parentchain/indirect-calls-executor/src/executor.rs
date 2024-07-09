@@ -34,7 +34,7 @@ use itp_node_api::metadata::{
 	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
+use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::{
 	traits::{IndirectExecutor, TrustedCallSigning, TrustedCallVerification},
 	types::AccountId,
@@ -159,7 +159,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
@@ -191,12 +191,7 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let shard = self.get_default_shard();
-		let maybe_vault = match self.stf_enclave_signer.get_shard_vault(&shard) {
-			Ok(vault) => Some(vault.0),
-			Err(_) => None,
-		};
-		let processed_events = ParentchainEventHandler::handle_events(self, events, maybe_vault)?;
+		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
 
 		debug!("successfully processed {} indirect invocations", processed_events.len());
 
@@ -262,7 +257,7 @@ impl<
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning<TCS> + StfShardVaultQuery,
+	StfEnclaveSigner: StfEnclaveSigning<TCS>,
 	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
@@ -325,12 +320,9 @@ mod test {
 	use bc_relayer_registry::RelayerRegistry;
 	use bc_signer_registry::SignerRegistry;
 	use codec::Encode;
-	use itc_parentchain_test::ParentchainBlockBuilder;
+
 	use itp_node_api::{
-		api_client::{
-			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
-			ParentchainUncheckedExtrinsic,
-		},
+		api_client::ExtrinsicParams,
 		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
@@ -340,9 +332,7 @@ mod test {
 		stf_mock::{GetterMock, TrustedCallSignedMock},
 	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, Enclave, PostOpaqueTaskFn, RsaRequest, ShardIdentifier};
-	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
+	use itp_types::Block;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;

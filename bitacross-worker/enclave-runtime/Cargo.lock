@@ -1080,7 +1080,6 @@ dependencies = [
  "itp-utils",
  "jsonrpc-core",
  "lazy_static",
- "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-macros",
  "litentry-primitives",
@@ -1963,7 +1962,6 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
- "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
  "log",
@@ -2149,7 +2147,6 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
- "lc-scheduled-enclave",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2744,21 +2741,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-io",
-]
-
-[[package]]
-name = "lc-scheduled-enclave"
-version = "0.8.0"
-dependencies = [
- "itp-settings",
- "itp-sgx-io",
- "itp-types",
- "lazy_static",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-std",
- "thiserror",
 ]
 
 [[package]]

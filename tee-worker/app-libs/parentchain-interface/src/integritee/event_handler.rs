@@ -28,13 +28,9 @@ use itp_types::{
 	},
 	RsaRequest, H256,
 };
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-use litentry_primitives::{
-	Assertion, Identity, MrEnclave, SidechainBlockNumber, ValidationData, Web3Network, WorkerType,
-};
+use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
@@ -163,33 +159,6 @@ impl ParentchainEventHandler {
 		Ok(())
 	}
 
-	fn set_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-		mrenclave: MrEnclave,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::Identity {
-			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
-
-		Ok(())
-	}
-
-	fn remove_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::Identity {
-			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
-
-		Ok(())
-	}
-
 	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
 		request: &RsaRequest,
@@ -314,41 +283,6 @@ where
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::VCRequestedFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_set_events() {
-			debug!("Handling ScheduledEnclaveSet events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveSet event: {:?}", event);
-					let result = Self::set_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-						event.mrenclave,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_removed_events() {
-			debug!("Handling ScheduledEnclaveRemoved events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
-					let result = Self::remove_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
 		}
 
 		if let Ok(events) = events.get_opaque_task_posted_events() {

@@ -49,7 +49,7 @@ pub struct ResponseItem {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseData {
-	pub count: u64,
+	pub count: u32,
 	pub limit: String,
 	pub offset: String,
 	pub list: Vec<ResponseItem>,
@@ -68,8 +68,8 @@ impl RestPath<String> for GeniidataResponse {
 	}
 }
 
-// According to https://geniidata.readme.io/reference/get-brc20-tick-list-copy, the maximum limit is i32::MAX
-const GENIIDATA_QUERY_LIMIT: &str = "2147483647";
+// According to https://geniidata.readme.io/reference/get-brc20-tick-list-copy, the maximum limit is 100
+const GENIIDATA_QUERY_LIMIT: u32 = 100;
 
 pub struct GeniidataClient {
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
@@ -98,18 +98,30 @@ impl GeniidataClient {
 		loop_with_abort_strategy::<fn(&_) -> bool, String, DataProviderError>(
 			addresses,
 			|address| {
-				let query =
-					vec![("limit", GENIIDATA_QUERY_LIMIT), ("offset", "0"), ("address", address)];
-				let response = self
-					.client
-					.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
-					.map_err(|e| {
-						DataProviderError::GeniiDataError(format!(
-							"GeniiData response error: {}",
-							e
-						))
-					})?;
-				all_items.extend(response.data.list);
+				let mut offset: u32 = 0;
+				loop {
+					let limit_str = GENIIDATA_QUERY_LIMIT.to_string();
+					let offset_str = offset.to_string();
+					let query = vec![
+						("limit", limit_str.as_str()),
+						("offset", offset_str.as_str()),
+						("address", address),
+					];
+					let response = self
+						.client
+						.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
+						.map_err(|e| {
+							DataProviderError::GeniiDataError(format!(
+								"GeniiData response error: {}",
+								e
+							))
+						})?;
+					all_items.extend(response.data.list);
+					if offset >= response.data.count {
+						break
+					}
+					offset += GENIIDATA_QUERY_LIMIT;
+				}
 
 				Ok(LoopControls::Continue)
 			},

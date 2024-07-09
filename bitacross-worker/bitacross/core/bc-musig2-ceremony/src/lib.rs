@@ -40,9 +40,10 @@ use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use k256::SecretKey;
 pub use k256::{elliptic_curve::sec1::FromEncodedPoint, PublicKey};
 use litentry_primitives::RequestAesKey;
-use log::{error, info};
+use log::*;
 use musig2::{
-	secp::Point, verify_single, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature,
+	secp::{Point, Scalar},
+	verify_single, BinaryEncoding, CompactSignature, KeyAggContext, LiftedSignature,
 	SecNonceSpices,
 };
 pub use musig2::{PartialSignature, PubNonce};
@@ -50,6 +51,7 @@ use std::{
 	collections::HashMap,
 	fmt::Display,
 	time::{SystemTime, UNIX_EPOCH},
+	vec,
 	vec::Vec,
 };
 
@@ -122,6 +124,7 @@ pub enum SignBitcoinPayload {
 	Derived(SignaturePayload),
 	TaprootUnspendable(SignaturePayload),
 	TaprootSpendable(SignaturePayload, [u8; 32]),
+	WithTweaks(SignaturePayload, Vec<([u8; 32], bool)>),
 }
 
 pub fn generate_aggregated_public_key(mut public_keys: Vec<PublicKey>) -> PublicKey {
@@ -158,7 +161,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		payload: SignBitcoinPayload,
 		signing_key_access: Arc<AK>,
 	) -> Result<Self, String> {
-		info!("Creating new ceremony with peers: {:?}", signers);
+		info!("Creating new ceremony {:?}", payload);
 		if signers.len() < 3 {
 			return Err(format!("Not enough signers, minimum: {:?}, actual {:?}", 3, signers.len()))
 		}
@@ -181,6 +184,19 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			SignBitcoinPayload::Derived(_) =>
 				KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
 					.map_err(|e| format!("Key context creation error: {:?}", e))?,
+			SignBitcoinPayload::WithTweaks(_, tweaks) => {
+				let mut prepared_tweaks = vec![];
+				for (tweak_bytes, is_x_only) in tweaks.iter() {
+					let scalar: Scalar = tweak_bytes.try_into().map_err(|e| {
+						format!("Key context creation error, could not parse scalar: {:?}", e)
+					})?;
+					prepared_tweaks.push((scalar, *is_x_only));
+				}
+				KeyAggContext::new(all_keys.iter().map(|p| Point::from(*p)))
+					.map_err(|e| format!("Key context creation error: {:?}", e))?
+					.with_tweaks(prepared_tweaks)
+					.map_err(|e| format!("Key context creation error: {:?}", e))?
+			},
 		};
 
 		info!(
@@ -309,6 +325,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			SignBitcoinPayload::TaprootSpendable(message, _) => message.clone(),
 			SignBitcoinPayload::Derived(message) => message.clone(),
 			SignBitcoinPayload::TaprootUnspendable(message) => message.clone(),
+			SignBitcoinPayload::WithTweaks(message, _) => message.clone(),
 		};
 		let second_round = first_round.finalize(private_key, message).map_err(|e| {
 			error!("Could not start second round: {:?}", e);
@@ -361,7 +378,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						})?
 						.compact();
 
-					info!("Ceremony {:?} has ended", self.get_id_ref());
+					info!("Ceremony {:?} `has ended`", self.get_id_ref());
 					info!("Aggregated public key {:?}", self.ceremony_data.agg_key.to_sec1_bytes());
 					info!("Signature {:?}", signature.to_bytes());
 
@@ -369,6 +386,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						SignBitcoinPayload::Derived(p) => p,
 						SignBitcoinPayload::TaprootUnspendable(p) => p,
 						SignBitcoinPayload::TaprootSpendable(p, _) => p,
+						SignBitcoinPayload::WithTweaks(p, _) => p,
 					};
 
 					info!("Message {:?}", message);
@@ -431,9 +449,8 @@ fn random_seed() -> [u8; 32] {
 // #[cfg(test)]
 // pub mod test {
 // 	use crate::{
-// 		generate_aggregated_public_key, CeremonyCommand, CeremonyError, CeremonyErrorReason,
-// 		CeremonyEvent, MuSig2Ceremony, SignBitcoinPayload, SignaturePayload, SignerId,
-// 		SignersWithKeys,
+// 		CeremonyCommand, CeremonyError, CeremonyEvent, MuSig2Ceremony, NonceReceivingErrorReason,
+// 		SignBitcoinPayload, SignerId, SignersWithKeys,
 // 	};
 // 	use alloc::sync::Arc;
 // 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
@@ -443,8 +460,7 @@ fn random_seed() -> [u8; 32] {
 // 		sha2::digest::Mac,
 // 	};
 // 	use litentry_primitives::RequestAesKey;
-// 	use musig2::{secp::MaybeScalar, verify_single, PubNonce, SecNonce};
-// 	use signature::Verifier;
+// 	use musig2::{secp::MaybeScalar, SecNonce};
 
 // 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
 
@@ -548,7 +564,9 @@ fn random_seed() -> [u8; 32] {
 // 			SAMPLE_REQUEST_AES_KEY.clone(),
 // 			signers_with_keys(),
 // 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
+// 			vec![],
 // 			Arc::new(signing_key_access),
+// 			10,
 // 		);
 
 // 		// then
@@ -566,11 +584,41 @@ fn random_seed() -> [u8; 32] {
 // 			SAMPLE_REQUEST_AES_KEY.clone(),
 // 			signers_with_keys()[0..1].to_vec(),
 // 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
+// 			vec![],
 // 			Arc::new(signing_key_access),
+// 			10,
 // 		);
 
 // 		// then
 // 		assert!(result.is_err());
+// 	}
+
+// 	#[test]
+// 	fn it_should_timeout_after_certain_ticks() {
+// 		// given
+// 		let signing_key_access = MockedSigningKeyAccess { signing_key: my_priv_key() };
+
+// 		let ceremony_id = SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec());
+// 		let mut ceremony = MuSig2Ceremony::new(
+// 			MY_SIGNER_ID,
+// 			SAMPLE_REQUEST_AES_KEY.clone(),
+// 			signers_with_keys(),
+// 			ceremony_id.clone(),
+// 			vec![],
+// 			Arc::new(signing_key_access),
+// 			10,
+// 		)
+// 		.unwrap();
+
+// 		// when
+// 		(0..9).for_each(|_| {
+// 			ceremony.tick();
+// 		});
+// 		let events = ceremony.tick();
+
+// 		// then
+// 		assert!(matches!(events.get(0), Some(CeremonyEvent::CeremonyTimedOut(_, _))));
+// 		assert_eq!(events.len(), 1)
 // 	}
 
 // 	#[test]
@@ -685,7 +733,7 @@ fn random_seed() -> [u8; 32] {
 // 			events.get(1),
 // 			Some(CeremonyEvent::CeremonyError(
 // 				_,
-// 				CeremonyError::NonceReceivingError(CeremonyErrorReason::SignerNotFound),
+// 				CeremonyError::NonceReceivingError(NonceReceivingErrorReason::SignerNotFound),
 // 				_
 // 			))
 // 		));

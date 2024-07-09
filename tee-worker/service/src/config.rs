@@ -17,7 +17,7 @@
 
 use clap::ArgMatches;
 use itc_rest_client::rest_client::Url;
-use itp_types::parentchain::ParentchainId;
+use itp_types::{parentchain::ParentchainId, ShardIdentifier};
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -362,6 +362,7 @@ impl From<&ArgMatches<'_>> for RunConfig {
 				i
 			),
 		});
+
 		Self { skip_ra, dev, shard, marblerun_base_url, shielding_target }
 	}
 }

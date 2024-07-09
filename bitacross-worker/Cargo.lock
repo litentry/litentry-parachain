@@ -2901,7 +2901,6 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "lc-scheduled-enclave",
  "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
@@ -3104,7 +3103,6 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
- "lc-scheduled-enclave",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4027,22 +4025,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
-]
-
-[[package]]
-name = "lc-scheduled-enclave"
-version = "0.8.0"
-dependencies = [
- "itp-settings",
- "itp-sgx-io",
- "itp-types",
- "lazy_static",
- "log 0.4.20",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-std",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
 ]
 
 [[package]]

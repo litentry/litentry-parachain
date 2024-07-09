@@ -24,7 +24,7 @@ use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{
-	parentchain::{AccountId, FilterEvents, HandleParentchainEvents},
+	parentchain::{FilterEvents, HandleParentchainEvents},
 	H256,
 };
 use log::*;
@@ -50,11 +50,7 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(
-		_executor: &Executor,
-		_events: impl FilterEvents,
-		_vault_account: Option<AccountId>,
-	) -> Result<Vec<H256>, Error> {
+	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target B");
 		Ok(Vec::new())
 	}
