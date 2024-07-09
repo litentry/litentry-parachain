@@ -23,7 +23,7 @@ use sp_runtime::Saturating;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_parachain_staking::{
-	BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState, OrderedSet,
+	set::OrderedSet, BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -36,7 +36,7 @@ use sp_std::collections::btree_map::BTreeMap;
 pub struct ReplaceParachainStakingStorage<T>(PhantomData<T>);
 impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T>
 where
-	BalanceOf<T>: u128,
+	BalanceOf<T>: From<u128>,
 {
 	pub fn replace_delegator_state_storage() -> frame_support::weights::Weight {
 		// DelegatorState
