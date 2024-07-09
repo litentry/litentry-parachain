@@ -313,6 +313,7 @@ jobs:
 
       - name: Cargo test
         working-directory: ./bitacross-worker
+        shell: bash
         run: |
           cargo test --release
           for d in . enclave-runtime; do
