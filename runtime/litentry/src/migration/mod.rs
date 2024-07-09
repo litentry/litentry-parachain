@@ -158,8 +158,9 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_delegator_state_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_state: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
-			state.decode();
+		let expected_state =
+			BTreeMap::<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>>::decode(&mut &state)
+				.map_err(|_| "Failed to decode Delegator")?;
 		// check DelegatorState are the same as the expected
 		for (account, actual_result) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
@@ -195,8 +196,9 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_candidate_info_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_state: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
-			state.decode();
+		let expected_state =
+			BTreeMap::<T::AccountId, CandidateMetadata<BalanceOf<T>>>::decode(&mut &state)
+				.map_err(|_| "Failed to decode CandidateMetadata")?;
 		// check CandidateInfo are the same as the expected
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
@@ -228,7 +230,10 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
+		// let pre_vec = (Vec<u8>, Vec<u8>)::decode(&mut &state);
+		let pre_vec: (Vec<u8>, Vec<u8>) =
+			Decode::decode(&mut &state).map_err(|_| "Failed to decode Tuple")?;
+		// let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
 		let _ = Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
 		let _ = Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
 		Ok(())
