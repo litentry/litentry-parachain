@@ -35,7 +35,7 @@ use litentry_primitives::{
 	OneBlockCourseType, ParameterString, PlatformUserType, RequestAesKey, SoraQuizType,
 	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
-use sp_core::{Pair, H160};
+use sp_core::{Pair, H160, H256};
 
 // usage example below
 //
@@ -414,6 +414,8 @@ impl RequestVcCommand {
 				)
 				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
+
+			if trusted_cli.direct {
 				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
 					Ok(vc) => {
 						print_vc(&key, vc);
@@ -422,7 +424,18 @@ impl RequestVcCommand {
 						println!("{:?}", e);
 					},
 				}
-				nonce += 1;
+			} else {
+				println!("WARNING: This method does not support printing VC, Please use -d for direct invocation to print the VC");
+				match perform_trusted_operation::<H256>(cli, trusted_cli, &top) {
+					Ok(block_hash) => {
+						println!("Request VC Event included in block hash: {:?}", block_hash)
+					},
+					Err(e) => {
+						println!("{:?}", e);
+					},
+				}
+			}
+			nonce += 1;
 			});
 		} else {
 			let top = TrustedCall::request_batch_vc(
