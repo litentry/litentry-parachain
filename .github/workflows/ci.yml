@@ -55,6 +55,11 @@ on:
         description: rebuild-tee-docker
         required: true
         default: true
+      rebuild-bitacross-docker:
+        type: boolean
+        description: rebuild-bitacross-docker
+        required: true
+        default: true
       push-docker:
         type: boolean
         description: push-docker
@@ -140,7 +145,7 @@ jobs:
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
-          echo "run_bitacross_test=$$run_tee_test" | tee -a $GITHUB_OUTPUT
+          echo "run_bitacross_test=$run_bitacross_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
@@ -922,6 +927,83 @@ jobs:
         if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+
+      - name: Collect docker logs if test fails
+        continue-on-error: true
+        uses: jwalton/gh-docker-logs@v2
+        if: failure()
+        with:
+          tail: all
+          dest: docker-logs
+
+      - name: Upload docker logs if test fails
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ${{ matrix.test_name }}-docker-logs
+          path: docker-logs
+          if-no-files-found: ignore
+          retention-days: 3
+
+  bitacross-worker-test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs:
+      - set-condition
+      - parachain-build-dev
+      - bitacross-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: lit-sign-bitcoin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-parachain-dev
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-bitacross
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-bitacross.tar.gz
+          docker images
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l bitacross-worker/docker/litentry/
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+
+      - name: Integration bitacross worker test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_bitacross_test == 'true'
+        timeout-minutes: 40
+        run: |
+          cd bitacross-worker/docker
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
+
+      - name: Stop integration multi worker docker containers
+        if: needs.set-condition.outputs.run_bitacross_test == 'true'
+        run: |
+          cd bitacross-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails

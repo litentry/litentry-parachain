@@ -2,23 +2,39 @@ import WebSocket from 'ws';
 import { assert } from 'chai';
 import dotenv from 'dotenv';
 
+function getWorkerUrls(env: String): String[] {
+    if (env == 'local') {
+        let workerEndpoint = process.env.WORKER_ENDPOINT!;
+        const workerEndpointParts = workerEndpoint.split(':');
+        let url = workerEndpointParts[0] + ':' + workerEndpointParts[1];
+        let port = parseInt(workerEndpointParts[2]);
+        return [url + ':' + port, url + ':' + (port + 10), url + ':' + (port + 20)];
+    } else {
+        return ['wss://bitacross-worker-1:2101', 'wss://bitacross-worker-2:2101', 'wss://bitacross-worker-3:2101'];
+    }
+}
+
+function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 describe('test-bitcoin', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
     dotenv.config({ path: `.env.${process.env.NODE_ENV || 'local'}` });
 
-    let workerEndpoint = process.env.WORKER_ENDPOINT!;
-    const workerEndpointParts = workerEndpoint.split(':');
-    let url = workerEndpointParts[0] + ':' + workerEndpointParts[1];
-    let port = parseInt(workerEndpointParts[2]);
+    const workerUrls = getWorkerUrls(process.env.NODE_ENV as string);
+    console.log('Using worker urls: ' + workerUrls);
+    sleep(1000);
+    console.log('Run');
 
     it('should pass on all workers', async () => {
-        const worker1 = new WebSocket(url + ':' + port, {
+        const worker1 = new WebSocket(workerUrls[0], {
             perMessageDeflate: false,
         });
-        const worker2 = new WebSocket(url + ':' + (port + 10), {
+        const worker2 = new WebSocket(workerUrls[1], {
             perMessageDeflate: false,
         });
-        const worker3 = new WebSocket(url + ':' + (port + 20), {
+        const worker3 = new WebSocket(workerUrls[2], {
             perMessageDeflate: false,
         });
 
