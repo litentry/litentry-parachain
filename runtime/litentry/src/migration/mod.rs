@@ -16,7 +16,8 @@
 #[cfg(feature = "try-runtime")]
 use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 use frame_support::{
-	migration::{remove_storage_prefix, storage_key_iter},
+	migration::{clear_storage_prefix, storage_key_iter},
+	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Twox64Concat,
 };
@@ -26,7 +27,7 @@ use sp_std::{marker::PhantomData, vec::Vec};
 use pallet_parachain_staking::{
 	BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
 };
-pub const DECIMAL_CONVERTOR: Balance = 1_000_000;
+pub const DECIMAL_CONVERTOR: u64 = 1_000_000u64;
 
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
 pub struct ReplaceParachainStakingStorage<T>(PhantomData<T>);
@@ -48,8 +49,8 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 			.try_into()
 			.expect("There are between 0 and 2**64 mappings stored.");
 		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.remove_storage_prefix.html
-		remove_storage_prefix(pallet_prefix, storage_item_prefix, &[]);
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
 			T::AccountId,
@@ -60,11 +61,12 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		.is_none());
 		for (account, state) in stored_data {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR);
-			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
+			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_delegator.less_total =
+				new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
-				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
+				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
@@ -91,8 +93,8 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 			.try_into()
 			.expect("There are between 0 and 2**64 mappings stored.");
 		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.remove_storage_prefix.html
-		remove_storage_prefix(pallet_prefix, storage_item_prefix, &[]);
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<T::AccountId, CandidateMetadata<BalanceOf<T>>, Twox64Concat>(
 			pallet_prefix,
@@ -102,18 +104,21 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		.is_none());
 		for (account, state) in stored_data {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
 			new_metadata.total_counted =
-				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_top_delegation_amount =
-				new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.highest_bottom_delegation_amount =
-				new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_bottom_delegation_amount =
-				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.lowest_top_delegation_amount = new_metadata
+				.lowest_top_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.highest_bottom_delegation_amount = new_metadata
+				.highest_bottom_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.lowest_bottom_delegation_amount = new_metadata
+				.lowest_bottom_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
 
 			if let Some(mut i) = new_metadata.request {
-				*i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
+				i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 			<CandidateInfo<T>>::insert(&account, new_metadata)
 		}
@@ -128,11 +133,12 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		// get DelegatorState to check consistency
 		for (account, state) in <DelegatorState<T>>::iter() {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR);
-			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
+			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_delegator.less_total =
+				new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
-				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
+				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
@@ -158,18 +164,21 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		// get DelegatorState to check consistency
 		for (account, state) in <CandidateInfo<T>>::iter() {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR);
+			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
 			new_metadata.total_counted =
-				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_top_delegation_amount =
-				new_metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.highest_bottom_delegation_amount =
-				new_metadata.highest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
-			new_metadata.lowest_bottom_delegation_amount =
-				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
+				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.lowest_top_delegation_amount = new_metadata
+				.lowest_top_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.highest_bottom_delegation_amount = new_metadata
+				.highest_bottom_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_metadata.lowest_bottom_delegation_amount = new_metadata
+				.lowest_bottom_delegation_amount
+				.saturating_mul(DECIMAL_CONVERTOR.into());
 
 			if let Some(i) = new_metadata.request {
-				*i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
+				i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 
 			Self::set_temp_storage(new_metadata, &format!("Candidate{}CandidateInfo", account)[..]);
@@ -194,14 +203,14 @@ where
 	T: frame_system::Config + pallet_parachain_staking::Config,
 {
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
+	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		let _ = Self::pre_upgrade_delegator_state_storage()?;
 		let _ = Self::pre_upgrade_candidate_info_storage()?;
-		Ok(())
+		Ok(Vec::<u8>::new())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let mut weight = frame_support::weights::Weight;
+		let mut weight = frame_support::weights::Weight::new();
 		weight += Self::replace_delegator_state_storage();
 		weight += Self::replace_candidate_info_storage();
 
@@ -209,7 +218,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 		let _ = Self::post_upgrade_delegator_state_storage()?;
 		let _ = Self::post_upgrade_candidate_info_storage()?;
 		Ok(())
