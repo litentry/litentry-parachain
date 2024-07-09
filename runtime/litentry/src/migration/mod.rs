@@ -13,16 +13,19 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#[cfg(feature = "try-runtime")]
+use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 use frame_support::{
+	migration::{remove_storage_prefix, storage_key_iter},
 	traits::{Get, OnRuntimeUpgrade},
-	StorageHasher, Twox128,
+	Twox64Concat,
 };
 use sp_runtime::Saturating;
-use sp_std::marker::PhantomData;
-#[cfg(feature = "try-runtime")]
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
-use pallet_parachain_staking::{BalanceOf, CandidateMetadata, Delegator};
+use pallet_parachain_staking::{
+	BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
+};
 pub const DECIMAL_CONVERTOR: Balance = 1_000_000;
 
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
@@ -61,7 +64,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
-				*elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
+				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
@@ -109,8 +112,8 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 			new_metadata.lowest_bottom_delegation_amount =
 				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
 
-			if let Some(i) = new_metadata.request {
-				new_metadata.request.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
+			if let Some(mut i) = new_metadata.request {
+				*i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 			<CandidateInfo<T>>::insert(&account, new_metadata)
 		}
@@ -129,7 +132,7 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 			new_delegator.less_total = new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR);
 			let mut sorted_inner_vector = new_delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
-				*elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
+				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
@@ -166,13 +169,10 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 				new_metadata.lowest_bottom_delegation_amount.saturating_mul(DECIMAL_CONVERTOR);
 
 			if let Some(i) = new_metadata.request {
-				new_metadata.request.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
+				*i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 
-			Self::set_temp_storage(
-				new_delegator,
-				&format!("Candidate{}CandidateInfo", account)[..],
-			);
+			Self::set_temp_storage(new_metadata, &format!("Candidate{}CandidateInfo", account)[..]);
 		}
 		Ok(())
 	}
@@ -195,23 +195,23 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		let _ = pre_upgrade_delegator_state_storage()?;
-		let _ = pre_upgrade_candidate_info_storage()?;
+		let _ = Self::pre_upgrade_delegator_state_storage()?;
+		let _ = Self::pre_upgrade_candidate_info_storage()?;
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		let mut weight = frame_support::weights::Weight;
-		weight += replace_delegator_state_storage();
-		weight += replace_candidate_info_storage();
+		weight += Self::replace_delegator_state_storage();
+		weight += Self::replace_candidate_info_storage();
 
 		weight
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
-		let _ = post_upgrade_delegator_state_storage()?;
-		let _ = post_upgrade_candidate_info_storage()?;
+	fn post_upgrade() -> Result<(), &'static str> {
+		let _ = Self::post_upgrade_delegator_state_storage()?;
+		let _ = Self::post_upgrade_candidate_info_storage()?;
 		Ok(())
 	}
 }
