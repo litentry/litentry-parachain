@@ -23,10 +23,7 @@ use crate::{
 };
 use clap::Parser;
 use codec::Decode;
-use ita_stf::{
-	trusted_call_result::{RequestVCResult, TrustedCallResult},
-	Index, TrustedCall,
-};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall};
 use itp_stf_primitives::{traits::TrustedCallSigning, types::KeyPair};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
