@@ -1,1 +1,4 @@
 .env.local
+contracts/
+contracts-build-info/
+cache/

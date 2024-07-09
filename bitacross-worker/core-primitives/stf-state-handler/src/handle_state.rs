@@ -74,10 +74,5 @@ pub trait HandleState {
 	fn reset(&self, state: Self::StateT, shard: &ShardIdentifier) -> Result<Self::HashType>;
 
 	// litentry
-	/// Migrate state from old shard to new shard
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType>;
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType>;
 }

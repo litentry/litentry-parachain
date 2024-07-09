@@ -152,6 +152,7 @@ impl pallet_teebag::Config for Test {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<3>;
 }
 
 impl pallet_identity_management::Config for Test {

@@ -22,8 +22,8 @@ use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
-	ActivateIdentityRequested, DeactivateIdentityRequested, LinkIdentityRequested,
-	OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet, VCRequested,
+	ActivateIdentityRequested, DeactivateIdentityRequested, EnclaveUnauthorized,
+	LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
@@ -107,11 +107,7 @@ pub trait FilterEvents {
 
 	fn get_activate_identity_events(&self) -> Result<Vec<ActivateIdentityRequested>, Self::Error>;
 
-	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error>;
-
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error>;
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error>;
 
 	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error>;
 
@@ -147,8 +143,7 @@ pub enum ParentchainEventProcessingError {
 	DeactivateIdentityFailure,
 	ActivateIdentityFailure,
 	VCRequestedFailure,
-	ScheduledEnclaveSetFailure,
-	ScheduledEnclaveRemovedFailure,
+	EnclaveUnauthorizedFailure,
 	OpaqueTaskPostedFailure,
 	AssertionCreatedFailure,
 	ParentchainBlockProcessedFailure,
@@ -167,10 +162,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: ActivateIdentityFailure",
 			ParentchainEventProcessingError::VCRequestedFailure =>
 				"Parentchain Event Processing Error: VCRequestedFailure",
-			ParentchainEventProcessingError::ScheduledEnclaveSetFailure =>
-				"Parentchain Event Processing Error: ScheduledEnclaveSetFailure",
-			ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure =>
-				"Parentchain Event Processing Error: ScheduledEnclaveRemovedFailure",
+			ParentchainEventProcessingError::EnclaveUnauthorizedFailure =>
+				"Parentchain Event Processing Error: EnclaveUnauthorizedFailure",
 			ParentchainEventProcessingError::OpaqueTaskPostedFailure =>
 				"Parentchain Event Processing Error: OpaqueTaskPostedFailure",
 			ParentchainEventProcessingError::AssertionCreatedFailure =>

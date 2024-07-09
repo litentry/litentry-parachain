@@ -245,7 +245,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9181,
+	spec_version: 9182,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -399,7 +399,8 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 				RuntimeCall::Democracy(..) |
 					RuntimeCall::Council(..) |
 					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..)
+					RuntimeCall::Treasury(..) |
+					RuntimeCall::DeveloperCommittee(..)
 			),
 		}
 	}
@@ -1012,6 +1013,7 @@ impl pallet_teebag::Config for Runtime {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<5>;
 }
 
 impl pallet_identity_management::Config for Runtime {
@@ -1290,7 +1292,8 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::ExtrinsicFilter(_) |
 				RuntimeCall::Multisig(_) |
 				RuntimeCall::Council(_) |
-				RuntimeCall::TechnicalCommittee(_)
+				RuntimeCall::TechnicalCommittee(_) |
+				RuntimeCall::DeveloperCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -1325,6 +1328,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
+			RuntimeCall::DeveloperCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			RuntimeCall::Democracy(_) |
 			// Preimage

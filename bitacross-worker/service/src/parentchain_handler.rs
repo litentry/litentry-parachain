@@ -290,7 +290,7 @@ where
 					.expect("Can decode previously encoded header; qed");
 
 			start_block = until_synced_header.number + 1;
-			println!(
+			info!(
 				"[{:?}] Synced {} out of {} finalized parentchain blocks",
 				id, until_synced_header.number, curr_block_number,
 			);
@@ -321,7 +321,7 @@ where
 				shard,
 				true,
 			)?;
-			println!("[{:?}] synced block number: #{}", id, last_synced_header.number);
+			info!("[{:?}] synced block number: #{}", id, last_synced_header.number);
 			std::thread::sleep(std::time::Duration::from_secs(1));
 		}
 		Ok(last_synced_header)

@@ -16,7 +16,7 @@ use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
 	parentchain::{
-		events::{BalanceTransfer, ScheduledEnclaveRemoved, ScheduledEnclaveSet},
+		events::{BalanceTransfer, EnclaveUnauthorized},
 		FilterEvents, HandleParentchainEvents,
 	},
 	Address, RsaRequest, ShardIdentifier, H256,
@@ -143,13 +143,7 @@ impl FilterEvents for MockEvents {
 		Ok(Vec::from([transfer]))
 	}
 
-	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
-		Ok(Vec::new())
-	}
-
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error> {
 		Ok(Vec::new())
 	}
 

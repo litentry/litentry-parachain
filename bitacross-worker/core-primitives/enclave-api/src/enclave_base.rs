@@ -79,7 +79,7 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 
 	// litentry
-	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()>;
 
 	/// Publish generated wallets on parachain
 	fn publish_wallets(&self) -> EnclaveResult<()>;
@@ -391,16 +391,15 @@ mod impl_ffi {
 			Ok(mr_enclave.into())
 		}
 
-		fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let result = unsafe {
 				ffi::migrate_shard(
 					self.eid,
 					&mut retval,
-					old_shard.as_ptr(),
 					new_shard.as_ptr(),
-					old_shard.len() as u32,
+					new_shard.len() as u32,
 				)
 			};
 

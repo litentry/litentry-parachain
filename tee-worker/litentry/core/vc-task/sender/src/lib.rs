@@ -25,7 +25,7 @@ use std::sync::Mutex;
 use std::sync::SgxMutex as Mutex;
 use std::{
 	format,
-	string::String,
+	string::{String, ToString},
 	sync::{
 		mpsc::{channel, Receiver, Sender as MpscSender},
 		Arc,
@@ -62,7 +62,7 @@ impl VcRequestSender {
 	pub fn send(&self, request: VCRequest) -> Result<(), String> {
 		debug!("send vc request: {:?}", request);
 
-		// Acquire lock on extrinsic sender
+		// Acquire lock on vc task sender
 		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().map_err(|_| "Could not access Mutex")?;
 		let vc_task_sender = mutex_guard.clone().ok_or("Daemon sender was not initialized")?;
 		// Release mutex lock, so we don't block the lock longer than necessary.
@@ -75,30 +75,47 @@ impl VcRequestSender {
 	}
 }
 
-/// Initialization of the extrinsic sender. Needs to be called before any sender access.
-pub fn init_vc_task_sender_storage() -> Receiver<VCRequest> {
+/// Initialization of the vc task sender. Needs to be called before any sender access.
+pub fn init_vc_task_sender() -> Receiver<VCRequest> {
 	let (sender, receiver) = channel();
 	// It makes no sense to handle the unwrap, as this statement fails only if the lock has been poisoned
 	// I believe at that point it is an unrecoverable error
-	let mut vc_task_storage = GLOBAL_VC_TASK_SENDER.lock().unwrap();
-	*vc_task_storage = Some(VcTaskSender::new(sender));
+	let mut vc_task_sender = GLOBAL_VC_TASK_SENDER.lock().unwrap();
+	*vc_task_sender = Some(VcTaskSender::new(sender, false));
 	receiver
+}
+
+pub fn pause_vc_task_sender() -> Result<(), String> {
+	info!("Pause vc task sender");
+	let mut mutex_guard = GLOBAL_VC_TASK_SENDER.lock().map_err(|_| "Could not access Mutex")?;
+	let sender = mutex_guard.as_mut().ok_or("Daemon sender was not initialized")?;
+	sender.set_paused(true);
+	Ok(())
 }
 
 /// Wrapping struct around the actual sender. Should not be accessed directly. (unnecessary)
 #[derive(Clone, Debug)]
 struct VcTaskSender {
 	sender: VcSender,
+	paused: bool,
 }
 
 impl VcTaskSender {
-	pub fn new(sender: VcSender) -> Self {
-		Self { sender }
+	pub fn new(sender: VcSender, paused: bool) -> Self {
+		Self { sender, paused }
+	}
+
+	pub fn set_paused(&mut self, paused: bool) {
+		self.paused = paused;
 	}
 
 	fn send(&self, request: VCRequest) -> Result<(), String> {
+		if self.paused {
+			return Err("Failed to send vc task: sender is paused".to_string())
+		}
+
 		self.sender
 			.send(request)
-			.map_err(|e| format!("Failed to send message to VC Handler: {:?}", e))
+			.map_err(|e| format!("Failed to send vc task: {:?}", e))
 	}
 }

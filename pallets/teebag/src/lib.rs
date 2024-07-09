@@ -18,7 +18,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo},
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure,
 	pallet_prelude::*,
 	traits::Get,
@@ -65,10 +65,12 @@ pub mod pallet {
 		type MomentsPerDay: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		/// Maximum number of enclave identifiers allowed to be registered for a specific
-		/// `worker_type`
+		/// Maximum number of enclave identifiers allowed to be registered for a given `worker_type`
 		#[pallet::constant]
 		type MaxEnclaveIdentifier: Get<u32>;
+		/// Maximum number of authorized enclave for a given `worker_type`
+		#[pallet::constant]
+		type MaxAuthorizedEnclave: Get<u32>;
 	}
 
 	// TODO: maybe add more sidechain lifecycle events
@@ -89,6 +91,14 @@ pub mod pallet {
 		EnclaveRemoved {
 			who: T::AccountId,
 		},
+		EnclaveAuthorized {
+			worker_type: WorkerType,
+			mrenclave: MrEnclave,
+		},
+		EnclaveUnauthorized {
+			worker_type: WorkerType,
+			mrenclave: MrEnclave,
+		},
 		OpaqueTaskPosted {
 			request: RsaRequest,
 		},
@@ -100,15 +110,6 @@ pub mod pallet {
 		},
 		SidechainBlockFinalized {
 			who: T::AccountId,
-			sidechain_block_number: SidechainBlockNumber,
-		},
-		ScheduledEnclaveSet {
-			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
-			mrenclave: MrEnclave,
-		},
-		ScheduledEnclaveRemoved {
-			worker_type: WorkerType,
 			sidechain_block_number: SidechainBlockNumber,
 		},
 	}
@@ -147,14 +148,18 @@ pub mod pallet {
 		/// The worker mode is unexpected, because e.g. a non-sidechain worker calls
 		/// sidechain specific extrinsic
 		UnexpectedWorkerMode,
-		/// Can not found the desired scheduled enclave.
-		ScheduledEnclaveNotExist,
-		/// Enclave not in the scheduled list, therefore unexpected.
-		EnclaveNotInSchedule,
+		/// The authorized enclave doesn't exist.
+		AuthorizedEnclaveNotExist,
+		/// The authorized enclave already exists.
+		AuthorizedEnclaveAlreadyExist,
+		/// Enclave not authorized upon registration.
+		EnclaveNotAuthorized,
 		/// The provided collateral data is invalid.
 		CollateralInvalid,
 		/// MaxEnclaveIdentifier overflow.
 		MaxEnclaveIdentifierOverflow,
+		/// MaxAuthorizedEnclave overflow.
+		MaxAuthorizedEnclaveOverflow,
 		/// A proposed block is unexpected.
 		ReceivedUnexpectedSidechainBlock,
 		/// The value for the next finalization candidate is invalid.
@@ -219,10 +224,35 @@ pub mod pallet {
 	// Theorectically we could always push the enclave in `register_enclave`, but we want to
 	// limit the mrenclave that can be registered, as the parachain is supposed to process enclaves
 	// with specific mrenclaves.
+	//
+	// Update:
+	// this storage is deprecated and will be removed (discarded) once we move to litentry-parachain
+	// see https://linear.app/litentry/issue/P-882/simplify-scheduledenclave-usage
+	//
+	// use `AuthorizedEnclave` instead
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
 		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave, OptionQuery>;
+
+	// Keep trace of a list of authorized (mr-)enclaves, enclave registration with non-authorized
+	// mrenclave will be rejected
+	//
+	// Removing an mrenclave within `AuthorizedEnclave`` will cause the enclave to be removed from
+	// the EnclaveRegistry too, which stops the sidechain from producing blocks as it will never be
+	// able to claim the slot. Additionally, the vc-task-runner is informed to stop operating too.
+	//
+	// In this case, restarting the worker won't help, as the mrenclave is not authorized anymore,
+	// so the registration will fail in the first place.
+	#[pallet::storage]
+	#[pallet::getter(fn authorized_enclave)]
+	pub type AuthorizedEnclave<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		WorkerType,
+		BoundedVec<MrEnclave, T::MaxAuthorizedEnclave>,
+		ValueQuery,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn latest_sidechain_block_confirmation)]
@@ -372,39 +402,40 @@ pub mod pallet {
 
 		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn set_scheduled_enclave(
+		pub fn force_add_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
 			mrenclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
-			ScheduledEnclave::<T>::insert((worker_type, sidechain_block_number), mrenclave);
-			Self::deposit_event(Event::ScheduledEnclaveSet {
-				worker_type,
-				sidechain_block_number,
-				mrenclave,
-			});
+
+			AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+				ensure!(!v.contains(&mrenclave), Error::<T>::AuthorizedEnclaveAlreadyExist);
+				v.try_push(mrenclave).map_err(|_| Error::<T>::MaxAuthorizedEnclaveOverflow)
+			})?;
+
+			Self::deposit_event(Event::EnclaveAuthorized { worker_type, mrenclave });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(7)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn remove_scheduled_enclave(
+		pub fn force_remove_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
-			sidechain_block_number: SidechainBlockNumber,
+			mrenclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
-			Self::ensure_admin_or_root(origin)?;
-			ensure!(
-				ScheduledEnclave::<T>::contains_key((worker_type, sidechain_block_number)),
-				Error::<T>::ScheduledEnclaveNotExist
-			);
-			ScheduledEnclave::<T>::remove((worker_type, sidechain_block_number));
-			Self::deposit_event(Event::ScheduledEnclaveRemoved {
-				worker_type,
-				sidechain_block_number,
-			});
+			Self::ensure_admin_or_root(origin.clone())?;
+
+			AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+				ensure!(v.contains(&mrenclave), Error::<T>::AuthorizedEnclaveNotExist);
+				v.retain(|e| e != &mrenclave);
+				Ok::<(), DispatchErrorWithPostInfo>(())
+			})?;
+
+			Self::force_remove_enclave_by_mrenclave(origin, mrenclave)?;
+
+			Self::deposit_event(Event::EnclaveUnauthorized { worker_type, mrenclave });
 			Ok(Pays::No.into())
 		}
 
@@ -464,19 +495,23 @@ pub mod pallet {
 						return Err(Error::<T>::InvalidSgxMode.into())
 					}
 					ensure!(
-						ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
-						Error::<T>::EnclaveNotInSchedule
+						AuthorizedEnclave::<T>::get(worker_type).contains(&enclave.mrenclave),
+						Error::<T>::EnclaveNotAuthorized
 					);
 				},
 				OperationalMode::Development => {
-					// populate the registry if the entry doesn't exist
-					if !ScheduledEnclave::<T>::contains_key((worker_type, 0)) {
-						ScheduledEnclave::<T>::insert((worker_type, 0), enclave.mrenclave);
-					}
+					AuthorizedEnclave::<T>::try_mutate(worker_type, |v| {
+						if !v.contains(&enclave.mrenclave) {
+							v.try_push(enclave.mrenclave)
+								.map_err(|_| Error::<T>::MaxAuthorizedEnclaveOverflow)
+						} else {
+							Ok(())
+						}
+					})?;
 				},
 			};
 			Self::add_enclave(&sender, &enclave)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(9)]
@@ -484,7 +519,7 @@ pub mod pallet {
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			Self::remove_enclave(&sender)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(10)]
@@ -525,10 +560,13 @@ pub mod pallet {
 
 		#[pallet::call_index(20)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
+		pub fn post_opaque_task(
+			origin: OriginFor<T>,
+			request: RsaRequest,
+		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::OpaqueTaskPosted { request });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(21)]
