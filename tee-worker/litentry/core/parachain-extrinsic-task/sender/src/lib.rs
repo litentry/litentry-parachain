@@ -20,7 +20,7 @@ use std::{
 	string::String,
 	sync::{
 		mpsc::{channel, Receiver, Sender},
-		Arc,
+		Arc, Mutex,
 	},
 };
 
