@@ -33,7 +33,6 @@ itp-types = { path = "../types", default-features = false, features = ["test"] }
 
 # litentry
 hex = { version = "0.4.3", default-features = false }
-lc-rsa-wrapper = { path = "../../litentry/core/rsa-wrapper", optional = true }
 lc-teebag-storage = { path = "../../litentry/core/teebag-storage", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
@@ -57,7 +56,6 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "litentry-primitives/std",
-    "lc-rsa-wrapper",
     "lc-teebag-storage/std",
 ]
 sgx = [

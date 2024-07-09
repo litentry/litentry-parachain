@@ -378,7 +378,7 @@ dependencies = [
  "musig2 0.0.8 (git+https://github.com/kailai-wang/musig2.git?branch=use-sha2-0.8)",
  "parity-scale-codec",
  "rand 0.8.5",
- "sgx_rand 1.1.6",
+ "sgx_rand",
  "sgx_tstd",
  "signature 2.1.0",
 ]
@@ -405,7 +405,7 @@ dependencies = [
  "parity-scale-codec",
  "rand 0.8.5",
  "sgx_crypto_helper",
- "sgx_rand 1.1.6",
+ "sgx_rand",
  "sgx_tstd",
  "sp-core",
 ]
@@ -618,7 +618,7 @@ dependencies = [
  "serde_derive 1.0.193",
  "serde_json 1.0.103",
  "sgx_crypto_helper",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
@@ -1271,7 +1271,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fffa369a668c8af7dbf8b5e56c9f744fbd399949ed171606040001947de40b1c"
 dependencies = [
  "const-oid",
- "pem-rfc7468",
  "zeroize",
 ]
 
@@ -1423,7 +1422,7 @@ dependencies = [
  "elliptic-curve",
  "rfc6979",
  "signature 2.1.0",
- "spki 0.7.3",
+ "spki 0.7.2",
 ]
 
 [[package]]
@@ -3047,7 +3046,7 @@ dependencies = [
  "itp-import-queue",
  "log 0.4.20",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
 ]
@@ -3068,7 +3067,7 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-runtime",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -3100,7 +3099,7 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "sp-runtime",
  "thiserror 1.0.44",
@@ -3122,7 +3121,7 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-consensus-grandpa",
  "sp-runtime",
  "thiserror 1.0.44",
@@ -3288,11 +3287,11 @@ dependencies = [
  "rustls 0.19.1",
  "serde_json 1.0.103",
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
- "sgx_rand 1.1.6",
+ "sgx_rand",
  "sgx_tcrypto",
  "sgx_tse",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -3329,7 +3328,7 @@ dependencies = [
  "parity-scale-codec",
  "serde_json 1.0.103",
  "sgx_crypto_helper",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sgx_urts",
  "sp-core",
  "sp-runtime",
@@ -3340,7 +3339,7 @@ dependencies = [
 name = "itp-enclave-api-ffi"
 version = "0.9.0"
 dependencies = [
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -3361,7 +3360,7 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "sp-runtime",
  "substrate-api-client",
@@ -3381,7 +3380,7 @@ name = "itp-import-queue"
 version = "0.8.0"
 dependencies = [
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
 ]
@@ -3452,7 +3451,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "parity-scale-codec",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -3500,9 +3499,9 @@ dependencies = [
  "serde_json 1.0.103",
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
  "sgx_crypto_helper",
- "sgx_rand 1.1.6",
+ "sgx_rand",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
 ]
 
@@ -3570,7 +3569,7 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "sp-runtime",
  "thiserror 1.0.44",
@@ -3620,7 +3619,7 @@ dependencies = [
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -3673,14 +3672,13 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
- "lc-rsa-wrapper",
  "lc-teebag-storage",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_crypto_helper",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sp-core",
  "sp-io 7.0.0",
  "sp-runtime",
@@ -4022,17 +4020,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc-rsa-wrapper"
-version = "0.1.0"
-dependencies = [
- "num-traits 0.2.16",
- "rand 0.8.5",
- "rsa",
- "sgx_crypto",
- "sgx_types 2.0.0",
-]
-
-[[package]]
 name = "lc-teebag-storage"
 version = "0.1.0"
 dependencies = [
@@ -4274,7 +4261,7 @@ source = "git+https://github.com/mesalock-linux/rust-memchr-sgx#fb51ee32766cb9a2
 dependencies = [
  "sgx_libc",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -4434,7 +4421,7 @@ dependencies = [
  "mio 0.6.21",
  "mio 0.6.23",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "slab 0.4.8",
 ]
 
@@ -4721,23 +4708,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-bigint-dig"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc84195820f291c7697304f3cbdadd1cb7199c0efc917ff5eafd71225c136151"
-dependencies = [
- "byteorder 1.4.3",
- "lazy_static",
- "libm",
- "num-integer 0.1.45",
- "num-iter 0.1.43",
- "num-traits 0.2.16",
- "rand 0.8.5",
- "smallvec 1.11.0",
- "zeroize",
-]
-
-[[package]]
 name = "num-complex"
 version = "0.2.3"
 source = "git+https://github.com/mesalock-linux/num-complex-sgx#19700ad6de079ebc5560db472c282d1591e0d84f"
@@ -4880,7 +4850,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
 dependencies = [
  "autocfg 1.1.0",
- "libm",
 ]
 
 [[package]]
@@ -5345,15 +5314,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pem-rfc7468"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
-dependencies = [
- "base64ct",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "git+https://github.com/mesalock-linux/rust-url-sgx?tag=sgx_1.1.3#23832f3191456c2d4a0faab10952e1747be58ca8"
@@ -5446,24 +5406,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "pkcs1"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8ffb9f10fa047879315e6625af03c164b16962a5368d724ed16323b68ace47f"
-dependencies = [
- "der 0.7.8",
- "pkcs8",
- "spki 0.7.3",
-]
-
-[[package]]
 name = "pkcs8"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
  "der 0.7.8",
- "spki 0.7.3",
+ "spki 0.7.2",
 ]
 
 [[package]]
@@ -5852,15 +5801,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rdrand"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d92195228612ac8eed47adbc2ed0f04e513a4ccb98175b6f2bd04d963b533655"
-dependencies = [
- "rand_core 0.6.4",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6099,27 +6039,6 @@ dependencies = [
  "base64 0.13.1",
  "bitflags 1.3.2",
  "serde 1.0.193",
-]
-
-[[package]]
-name = "rsa"
-version = "0.9.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d0e5124fcb30e76a7e79bfee683a2746db83784b86289f6251b54b7950a0dfc"
-dependencies = [
- "const-oid",
- "digest 0.10.7",
- "num-bigint-dig",
- "num-integer 0.1.45",
- "num-traits 0.2.16",
- "pkcs1",
- "pkcs8",
- "rand_core 0.6.4",
- "sha2 0.10.8",
- "signature 2.1.0",
- "spki 0.7.3",
- "subtle 2.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "zeroize",
 ]
 
 [[package]]
@@ -6777,7 +6696,7 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "cc",
- "sgx_build_helper 1.1.6",
+ "sgx_build_helper",
  "sgx_libc",
 ]
 
@@ -6785,21 +6704,6 @@ dependencies = [
 name = "sgx_build_helper"
 version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
-
-[[package]]
-name = "sgx_build_helper"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-
-[[package]]
-name = "sgx_crypto"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-dependencies = [
- "sgx_crypto_sys",
- "sgx_rand 2.0.0",
- "sgx_types 2.0.0",
-]
 
 [[package]]
 name = "sgx_crypto_helper"
@@ -6816,20 +6720,8 @@ dependencies = [
  "serde_derive 1.0.193",
  "sgx_tcrypto",
  "sgx_tstd",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sgx_ucrypto",
-]
-
-[[package]]
-name = "sgx_crypto_sys"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-dependencies = [
- "rand_core 0.6.4",
- "rdrand 0.8.3",
- "sgx_build_helper 2.0.0",
- "sgx_download_prebuilt",
- "sgx_types 2.0.0",
 ]
 
 [[package]]
@@ -6838,19 +6730,11 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
-name = "sgx_download_prebuilt"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-dependencies = [
- "sgx_build_helper 2.0.0",
-]
-
-[[package]]
 name = "sgx_libc"
 version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6860,16 +6744,7 @@ source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master
 dependencies = [
  "sgx_trts",
  "sgx_tstd",
- "sgx_types 1.1.6",
-]
-
-[[package]]
-name = "sgx_rand"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-dependencies = [
- "rand_core 0.6.4",
- "rdrand 0.8.3",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6877,7 +6752,7 @@ name = "sgx_tcrypto"
 version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6886,7 +6761,7 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_trts",
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6895,7 +6770,7 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_libc",
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6903,7 +6778,7 @@ name = "sgx_tse"
 version = "1.1.6"
 source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6918,7 +6793,7 @@ dependencies = [
  "sgx_libc",
  "sgx_tprotected_fs",
  "sgx_trts",
- "sgx_types 1.1.6",
+ "sgx_types",
  "sgx_unwind",
 ]
 
@@ -6928,19 +6803,14 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
-name = "sgx_types"
-version = "2.0.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=v2.0.0-preview#2d1e0a43e996dff95d0b33010496536704d58e85"
-
-[[package]]
 name = "sgx_ucrypto"
 version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "libc",
  "rand_core 0.3.1",
- "rdrand 0.6.0",
- "sgx_types 1.1.6",
+ "rdrand",
+ "sgx_types",
 ]
 
 [[package]]
@@ -6948,7 +6818,7 @@ name = "sgx_unwind"
 version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
- "sgx_build_helper 1.1.6",
+ "sgx_build_helper",
 ]
 
 [[package]]
@@ -6957,7 +6827,7 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "libc",
- "sgx_types 1.1.6",
+ "sgx_types",
 ]
 
 [[package]]
@@ -7708,9 +7578,9 @@ dependencies = [
 
 [[package]]
 name = "spki"
-version = "0.7.3"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
+checksum = "9d1e996ef02c474957d681f1b05213dfb0abab947b446a62d37770b23500184a"
 dependencies = [
  "base64ct",
  "der 0.7.8",
