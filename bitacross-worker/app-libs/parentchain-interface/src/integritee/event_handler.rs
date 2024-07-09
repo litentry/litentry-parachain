@@ -27,10 +27,9 @@ use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{
 	parentchain::{FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError},
-	MrEnclave, WorkerType,
+	WorkerType,
 };
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::{Address32, Identity, SidechainBlockNumber};
+use litentry_primitives::{Address32, Identity};
 use log::*;
 use sp_core::{blake2_256, H256};
 use sp_std::vec::Vec;
@@ -39,33 +38,6 @@ use std::string::ToString;
 pub struct ParentchainEventHandler {}
 
 impl ParentchainEventHandler {
-	fn set_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-		mrenclave: MrEnclave,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::BitAcross {
-			warn!("Ignore SetScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
-
-		Ok(())
-	}
-
-	fn remove_scheduled_enclave(
-		worker_type: WorkerType,
-		sbn: SidechainBlockNumber,
-	) -> Result<(), Error> {
-		if worker_type != WorkerType::BitAcross {
-			warn!("Ignore RemoveScheduledEnclave due to wrong worker_type");
-			return Ok(())
-		}
-		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
-
-		Ok(())
-	}
-
 	fn add_relayer(relayer_registry: &RelayerRegistry, account: Identity) -> Result<(), Error> {
 		info!("Adding Relayer Account to Registry: {:?}", account);
 		relayer_registry.update(account).map_err(|e| {
@@ -157,41 +129,6 @@ where
 {
 	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
-
-		if let Ok(events) = events.get_scheduled_enclave_set_events() {
-			debug!("Handling ScheduledEnclaveSet events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveSet event: {:?}", event);
-					let result = Self::set_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-						event.mrenclave,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveSetFailure)?;
-		}
-
-		if let Ok(events) = events.get_scheduled_enclave_removed_events() {
-			debug!("Handling ScheduledEnclaveRemoved events");
-			events
-				.iter()
-				.try_for_each(|event| {
-					debug!("found ScheduledEnclaveRemoved event: {:?}", event);
-					let result = Self::remove_scheduled_enclave(
-						event.worker_type,
-						event.sidechain_block_number,
-					);
-					handled_events.push(hash_of(&event));
-
-					result
-				})
-				.map_err(|_| ParentchainEventProcessingError::ScheduledEnclaveRemovedFailure)?;
-		}
 
 		if let Ok(events) = events.get_relayer_added_events() {
 			debug!("Handling RelayerAdded events");

@@ -73,11 +73,6 @@ pub trait HandleState {
 	/// Use in cases where the previous state is of no interest. Otherwise use `load_for_mutation` and `write_after_mutation`.
 	fn reset(&self, state: Self::StateT, shard: &ShardIdentifier) -> Result<Self::HashType>;
 
-	// litentry
-	/// Migrate state from old shard to new shard
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType>;
+	/// Force migrate state to new shard
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType>;
 }

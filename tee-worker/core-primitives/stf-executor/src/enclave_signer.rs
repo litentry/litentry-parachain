@@ -32,7 +32,7 @@ use itp_stf_primitives::{
 };
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{Index, ShardIdentifier};
+use itp_types::{Index, MrEnclave, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
@@ -115,12 +115,16 @@ where
 		self.get_enclave_call_signing_key().map(|key| key.public().into())
 	}
 
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.ocall_api.get_mrenclave_of_self().map(|m| m.m)?)
+	}
+
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
 		&self,
 		trusted_call: &TC,
 		shard: &ShardIdentifier,
 	) -> Result<TCS> {
-		let mr_enclave = self.ocall_api.get_mrenclave_of_self()?;
+		let mrenclave = self.get_mrenclave()?;
 		let enclave_account = self.get_enclave_account()?;
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
 
@@ -136,7 +140,7 @@ where
 		Ok(trusted_call.sign(
 			&KeyPair::Ed25519(Box::new(enclave_call_signing_key)),
 			adjusted_nonce,
-			&mr_enclave.m,
+			&mrenclave,
 			shard,
 		))
 	}

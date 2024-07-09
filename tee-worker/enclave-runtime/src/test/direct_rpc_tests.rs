@@ -16,7 +16,9 @@
 
 */
 
-use crate::{rpc::worker_api_direct::public_api_rpc_handler, Hash};
+use crate::{
+	rpc::worker_api_direct::public_api_rpc_handler, test::mocks::types::TestOCallApi, Hash,
+};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, PublicGetter};
 use itc_direct_rpc_server::{
@@ -46,6 +48,8 @@ pub fn get_state_request_works() {
 	let watch_extractor = Arc::new(create_determine_watch::<Hash>());
 	let rsa_repository = get_rsa3072_repository(temp_dir.path().to_path_buf()).unwrap();
 
+	let ocall_api = TestOCallApi::default().with_mr_enclave([1u8; 32]);
+
 	let state: TestState = 78234u64;
 	let state_observer = Arc::new(ObserveStateMock::<TestState>::new(state));
 	let getter_executor =
@@ -58,6 +62,7 @@ pub fn get_state_request_works() {
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
+		ocall_api.into(),
 		None::<Arc<HandleStateMock>>,
 		Arc::new(data_provider_config),
 	);

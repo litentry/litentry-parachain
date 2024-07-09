@@ -19,7 +19,6 @@
 use crate::sgx_reexport_prelude::*;
 
 use itp_types::parentchain::ParentchainEventProcessingError;
-use lc_scheduled_enclave::error::Error as ScheduledEnclaveError;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
@@ -43,8 +42,6 @@ pub enum Error {
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 	#[error("AccountId lookup error")]
 	AccountIdLookup,
-	#[error("ScheduledEnclave Error: {0:?}")]
-	ImportScheduledEnclave(ScheduledEnclaveError),
 }
 
 impl From<ParentchainEventProcessingError> for Error {
@@ -80,11 +77,5 @@ impl From<itp_node_api::metadata::Error> for Error {
 impl From<LookupError> for Error {
 	fn from(_: LookupError) -> Self {
 		Self::AccountIdLookup
-	}
-}
-
-impl From<ScheduledEnclaveError> for Error {
-	fn from(e: ScheduledEnclaveError) -> Self {
-		Self::ImportScheduledEnclave(e)
 	}
 }

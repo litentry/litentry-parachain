@@ -208,7 +208,10 @@ pub(crate) fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		println!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		let hex_value = hex::encode(mrenclave);
+		println!("MRENCLAVE hex: {}", hex_value);
+		println!("MRENCLAVE base58: {}", mrenclave.encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
@@ -242,32 +245,10 @@ pub(crate) fn main() {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
-		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
-		let old_shard = sub_matches
-			.value_of("old-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		let new_shard: ShardIdentifier = sub_matches
-			.value_of("new-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		if old_shard == new_shard {
-			println!("old_shard should not be the same as new_shard");
-		} else {
-			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
-		}
+		let new_shard = extract_shard(None, enclave.as_ref());
+		setup::migrate_shard(enclave.as_ref(), &new_shard);
+		let new_shard_name = new_shard.encode().to_base58();
+		setup::remove_old_shards(config.data_dir(), &new_shard_name);
 	} else if let Some(sub_matches) = matches.subcommand_matches("wallet") {
 		println!("Bitcoin wallet:");
 		let bitcoin_keypair = enclave.get_bitcoin_wallet_pair().unwrap();

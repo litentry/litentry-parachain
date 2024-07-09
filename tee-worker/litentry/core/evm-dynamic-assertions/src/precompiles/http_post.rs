@@ -215,7 +215,7 @@ pub mod integration_test {
 															 Token::String("/runningCost".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Int(2)];
 
 		// when
@@ -237,7 +237,7 @@ pub mod integration_test {
 															 Token::String("/runningCost".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Int(2)];
 
 		// when
@@ -267,7 +267,7 @@ pub mod integration_test {
 														 ]
 													 )
 		).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Int(2)];
 
 		// when
@@ -291,7 +291,7 @@ pub mod integration_test {
 															 Token::String("/result".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Bool];
 
 		// when
@@ -313,7 +313,7 @@ pub mod integration_test {
 															 Token::String("/result".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Bool];
 
 		// when
@@ -343,7 +343,7 @@ pub mod integration_test {
 														 ]
 													 )
 		).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::Bool];
 
 		// when
@@ -367,7 +367,7 @@ pub mod integration_test {
 															 Token::String("/display/0/text".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 
 		// when
@@ -392,7 +392,7 @@ pub mod integration_test {
 															 Token::String("/display/0/text".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 
 		// when
@@ -422,7 +422,7 @@ pub mod integration_test {
 														 ]
 													 )
 		).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 
 		// when
@@ -447,7 +447,7 @@ pub mod integration_test {
 															 Token::String(format!("{}/v1/run/system-labels", url)),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 		let expected_value: Value = serde_json::from_str("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}").unwrap();
 
@@ -473,7 +473,7 @@ pub mod integration_test {
 															 Token::String("http://localhost:1/v1/run/system-labels".to_string()),
 															 Token::String(r#"{"name": "Account total transactions under {amount}", "address": "test", "params": {"chain": "ChainName"}, "includeMetadata": false }"#.to_string())
 														 ])).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 
 		// when
@@ -500,7 +500,7 @@ pub mod integration_test {
 														 ]
 													 )
 		).unwrap();
-		let (_, return_data) = execute_smart_contract(byte_code, input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 		let types = vec![ethabi::ParamType::Bool, ethabi::ParamType::String];
 		let expected_value: Value = serde_json::from_str("{\"result\":true,\"display\":[{\"text\":\"Total transactions under 1 (Transactions: 41)\",\"result\":true}],\"runningCost\":1}").unwrap();
 

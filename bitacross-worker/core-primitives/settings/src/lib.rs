@@ -36,9 +36,6 @@ pub mod files {
 	/// Path to the light-client db for the Target B parentchain.
 	pub const TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_b_lcdb";
 
-	// litentry
-	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
-
 	// bitacross
 	pub const RELAYER_REGISTRY_FILE: &str = "relayer_registry_sealed.bin";
 
