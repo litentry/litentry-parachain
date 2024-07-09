@@ -13,8 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-#[cfg(feature = "try-runtime")]
-use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 use frame_support::{
 	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
@@ -25,13 +23,21 @@ use sp_runtime::Saturating;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_parachain_staking::{
-	BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
+	BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState, OrderedSet,
 };
-pub const DECIMAL_CONVERTOR: u64 = 1_000_000u64;
+pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
+
+#[cfg(feature = "try-runtime")]
+use parity_scale_codec::Encode;
+#[cfg(feature = "try-runtime")]
+use sp_std::collections::btree_map::BTreeMap;
 
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
 pub struct ReplaceParachainStakingStorage<T>(PhantomData<T>);
-impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
+impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T>
+where
+	BalanceOf<T>: u128,
+{
 	pub fn replace_delegator_state_storage() -> frame_support::weights::Weight {
 		// DelegatorState
 		let pallet_prefix: &[u8] = b"ParachainStaking";
@@ -130,8 +136,6 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 #[cfg(feature = "try-runtime")]
 impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 	pub fn pre_upgrade_delegator_state_storage() -> Result<Vec<u8>, &'static str> {
-		use codec::Encode;
-		use sp_std::collections::btree_set::BTreeSet;
 		// get DelegatorState to check consistency
 		let result: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
 			<DelegatorState<T>>::iter().map(|(account, state)| {
@@ -150,7 +154,6 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_delegator_state_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		use codec::Decode;
 		let expected_state: BTreeMap<T::AccountId, Delegator<T::AccountId, BalanceOf<T>>> =
 			state.decode();
 		// check DelegatorState are the same as the expected
@@ -162,8 +165,6 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		Ok(())
 	}
 	pub fn pre_upgrade_candidate_info_storage() -> Result<Vec<u8>, &'static str> {
-		use codec::Encode;
-		use sp_std::collections::btree_set::BTreeSet;
 		// get DelegatorState to check consistency
 		let result: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
 			<CandidateInfo<T>>::iter().map(|(account, state)| {
@@ -190,7 +191,6 @@ impl<T: pallet_parachain_staking::Config> ReplaceParachainStakingStorage<T> {
 		Ok(result.encode())
 	}
 	pub fn post_upgrade_candidate_info_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		use codec::Decode;
 		let expected_state: BTreeMap<T::AccountId, CandidateMetadata<BalanceOf<T>>> =
 			state.decode();
 		// check CandidateInfo are the same as the expected
@@ -224,7 +224,6 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		use codec::Decode;
 		let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
 		let _ = Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
 		let _ = Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
