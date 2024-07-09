@@ -1,0 +1,11 @@
+[package]
+name = "lc-rsa-wrapper"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+num-traits = "0.2.9"
+rand = "0.8.5"
+rsa = { version = "0.9.6", features = ["sha2"] }
+sgx_crypto = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview", default-features = false, features = ["ucrypto"] }
+sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v2.0.0-preview" }
