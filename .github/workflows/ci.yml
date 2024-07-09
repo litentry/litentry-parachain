@@ -247,11 +247,6 @@ jobs:
       - set-condition
       - sequentialise
     container: "litentry/litentry-tee-dev:intel-sgx-sdk-2.21"
-    strategy:
-      matrix:
-        type:
-          - tee # TODO: switch to identity
-          - bitacross
     steps:
       - uses: actions/checkout@v4
 
@@ -261,12 +256,12 @@ jobs:
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Cargo test
-        working-directory: ./${{ matrix.type }}-worker
+        working-directory: ./tee-worker
         run: |
           cargo test --release
 
       - name: Worker common clippy
-        working-directory: ./${{ matrix.type }}-worker
+        working-directory: ./tee-worker
         shell: bash
         run: |
           for d in . enclave-runtime; do
@@ -282,16 +277,6 @@ jobs:
             echo "::group::cargo clippy offchain-worker,development"
             cargo clippy --release --features offchain-worker,development -- -D warnings
             echo "::endgroup::"
-            popd
-          done
-
-      - name: Identity-worker specific clippy
-        if: matrix.type == 'tee'
-        working-directory: ./tee-worker
-        shell: bash
-        run: |
-          for d in . enclave-runtime; do
-            pushd "$d"
             echo "::group::cargo clippy sidechain"
             cargo clippy --release --features sidechain -- -D warnings
             echo "::endgroup::"
@@ -303,6 +288,45 @@ jobs:
             echo "::endgroup::"
             echo "::group::cargo clippy evm development"
             cargo clippy --release --features evm,development -- -D warnings
+            echo "::endgroup::"
+            popd
+          done
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.5
+
+  bitacross-check:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    container: "litentry/litentry-tee-dev:latest" # still the 2.17 container
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Cargo test
+        working-directory: ./bitacross-worker
+        run: |
+          cargo test --release
+          for d in . enclave-runtime; do
+            pushd "$d"
+            echo "::group::cargo clippy all"
+            cargo clippy --release -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy development"
+            cargo clippy --release --features development -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy offchain-worker"
+            cargo clippy --release --features offchain-worker -- -D warnings
+            echo "::group::cargo clippy offchain-worker,development"
+            cargo clippy --release --features offchain-worker,development -- -D warnings
             echo "::endgroup::"
             popd
           done
