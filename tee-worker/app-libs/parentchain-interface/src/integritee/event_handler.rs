@@ -24,7 +24,7 @@ use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError,
+		ParentchainEventProcessingError, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
@@ -212,8 +212,10 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<Vec<H256>, Error> {
+	) -> Result<ProcessedEventsArtifacts, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
+		let mut successful_assertion_ids: Vec<H160> = Vec::new();
+		let mut failed_assertion_ids: Vec<H160> = Vec::new();
 		if let Ok(events) = events.get_link_identity_events() {
 			debug!("Handling link_identity events");
 			events
@@ -309,6 +311,11 @@ where
 					let result =
 						self.store_assertion(executor, event.id, event.byte_code, event.secrets);
 					handled_events.push(event_hash);
+					if result.is_ok() {
+						successful_assertion_ids.push(event.id);
+					} else {
+						failed_assertion_ids.push(event.id)
+					}
 					result
 				})
 				.map_err(|_| ParentchainEventProcessingError::AssertionCreatedFailure)?;
@@ -323,7 +330,7 @@ where
 			});
 		}
 
-		Ok(handled_events)
+		Ok((handled_events, successful_assertion_ids, failed_assertion_ids))
 	}
 }
 
