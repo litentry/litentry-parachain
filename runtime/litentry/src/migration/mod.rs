@@ -20,7 +20,11 @@ use frame_support::{
 	Twox64Concat,
 };
 use sp_runtime::Saturating;
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::{
+	convert::{From, TryInto},
+	marker::PhantomData,
+	vec::Vec,
+};
 
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
