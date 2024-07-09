@@ -80,6 +80,8 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 
