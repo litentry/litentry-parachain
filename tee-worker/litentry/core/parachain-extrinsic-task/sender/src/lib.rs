@@ -9,11 +9,6 @@ extern crate sgx_tstd as std;
 use lazy_static::lazy_static;
 use log::*;
 
-#[cfg(feature = "std")]
-use std::sync::Mutex;
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
-
 use itp_types::OpaqueCall;
 use std::{
 	format,
