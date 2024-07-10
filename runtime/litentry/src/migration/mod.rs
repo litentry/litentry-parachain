@@ -39,6 +39,7 @@ pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 use parity_scale_codec::Encode;
 #[cfg(feature = "try-runtime")]
 use sp_std::collections::btree_map::BTreeMap;
+use storage::migration::get_storage_value;
 
 // Replace Parachain Staking Storage for Decimal Change from 12 to 18
 pub struct ReplaceParachainStakingStorage<T>(PhantomData<T>);
@@ -299,6 +300,23 @@ where
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
 	}
+
+	pub fn replace_total_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking Total"
+		);
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"Total";
+		// Read all the data into memory.
+		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
+		let stored_data =
+			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
+				.expect("Storage query fails: ParachainStaking Total");
+		<Total<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
+		let weight = T::DbWeight::get();
+		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
+	}
 }
 
 #[cfg(feature = "try-runtime")]
@@ -423,6 +441,75 @@ where
 		}
 		Ok(())
 	}
+	pub fn pre_upgrade_top_delegations_storage() -> Result<Vec<u8>, &'static str> {
+		let result: BTreeMap<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>> =
+			<TopDelegations<T>>::iter()
+				.map(|(account, state)| {
+					let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
+
+					for delegation_bond in new_delegations.delegations.iter_mut() {
+						delegation_bond.amount =
+							delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+					}
+
+					(account, new_delegations)
+				})
+				.collect();
+		Ok(result.encode())
+	}
+	pub fn post_upgrade_top_delegations_storage(state: Vec<u8>) -> Result<Vec<u8>, &'static str> {
+		let expected_state =
+			BTreeMap::<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>>::decode(
+				&mut &state[..],
+			)
+			.map_err(|_| "Failed to decode Delegations")?;
+		for (account, actual_result) in <TopDelegations<T>>::iter() {
+			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
+				expected_state.get(&account).ok_or("Not Expected Delegations")?.clone();
+			assert_eq!(expected_result, actual_result);
+		}
+		Ok(())
+	}
+	pub fn pre_upgrade_bottom_delegations_storage() -> Result<Vec<u8>, &'static str> {
+		let result: BTreeMap<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>> =
+			<BottomDelegations<T>>::iter()
+				.map(|(account, state)| {
+					let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
+
+					for delegation_bond in new_delegations.delegations.iter_mut() {
+						delegation_bond.amount =
+							delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+					}
+
+					(account, new_delegations)
+				})
+				.collect();
+		Ok(result.encode())
+	}
+	pub fn post_upgrade_bottom_delegations_storage(
+		state: Vec<u8>,
+	) -> Result<Vec<u8>, &'static str> {
+		let expected_state =
+			BTreeMap::<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>>::decode(
+				&mut &state[..],
+			)
+			.map_err(|_| "Failed to decode Delegations")?;
+		for (account, actual_result) in <BottomDelegations<T>>::iter() {
+			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
+				expected_state.get(&account).ok_or("Not Expected Delegations")?.clone();
+			assert_eq!(expected_result, actual_result);
+		}
+		Ok(())
+	}
+	pub fn pre_upgrade_total_storage() -> Result<Vec<u8>, &'static str> {
+		Ok(<Total<T>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
+	}
+	pub fn post_upgrade_total_storage(state: Vec<u8>) -> Result<Vec<u8>, &'static str> {
+		let expected_state = BalanceOf::<T>::decode(&mut &state[..]);
+		let actual_state = <Total<T>>::get();
+		assert_eq!(expected_state, actual_state);
+		Ok(())
+	}
 }
 
 impl<T> OnRuntimeUpgrade for ReplaceParachainStakingStorage<T>
@@ -434,23 +521,44 @@ where
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		let delegator_state_vec = Self::pre_upgrade_delegator_state_storage()?;
 		let candidate_info_vec = Self::pre_upgrade_candidate_info_storage()?;
-		Ok((delegator_state_vec, candidate_info_vec).encode())
+		let delegation_scheduled_requests_vec =
+			Self::pre_upgrade_delegation_scheduled_requests_storage()?;
+		let top_delegations_vec = Self::pre_upgrade_top_delegations_storage()?;
+		let bottom_delegations_vec = Self::pre_upgrade_bottom_delegations_storage()?;
+		let total_vec = Self::pre_upgrade_total_storage()?;
+		Ok((
+			delegator_state_vec,
+			candidate_info_vec,
+			delegation_scheduled_requests_vec,
+			top_delegations_vec,
+			bottom_delegations_vec,
+			total_vec,
+		)
+			.encode())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
 		weight += Self::replace_delegator_state_storage();
 		weight += Self::replace_candidate_info_storage();
+		weight += Self::replace_delegation_scheduled_requests_storage();
+		weight += Self::replace_top_delegations_storage();
+		weight += Self::replace_bottom_delegations_storage();
+		weight += Self::replace_total_storage();
 
 		weight
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let pre_vec: (Vec<u8>, Vec<u8>) =
+		let pre_vec: (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) =
 			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
 		Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
 		Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
+		Self::post_upgrade_delegation_scheduled_requests_storage(pre_vec.2)?;
+		Self::post_upgrade_top_delegations_storage(pre_vec.3)?;
+		Self::post_upgrade_bottom_delegations_storage(pre_vec.4)?;
+		Self::post_upgrade_total_storage(pre_vec.5)?;
 		Ok(())
 	}
 }
