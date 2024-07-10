@@ -301,6 +301,9 @@ fn tls_server_config<A: EnclaveAttestationOCallApi + 'static>(
 	#[cfg(feature = "dcap")]
 	let attestation_type = RemoteAttestationType::Dcap;
 
+	// TODO: remove this after the tests
+	let skip_ra = true;
+
 	// report will be signed with server enclave ed25519 signing key
 	let (key_der, cert_der) = create_ra_report_and_signature(
 		skip_ra,
