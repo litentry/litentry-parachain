@@ -150,10 +150,10 @@ pub fn verify_web3_identity(
 	raw_msg: &[u8],
 	data: &Web3ValidationData,
 ) -> StfResult<()> {
-	ensure!(
-		raw_msg == data.message().as_slice(),
-		StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
-	);
+	// ensure!(
+	// 	raw_msg == data.message().as_slice(),
+	// 	StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+	// );
 
 	ensure!(
 		data.signature().verify(raw_msg, identity),
