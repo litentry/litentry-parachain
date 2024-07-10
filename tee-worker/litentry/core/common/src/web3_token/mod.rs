@@ -78,6 +78,7 @@ impl TokenName for Web3TokenType {
 			Self::Inj => "INJ",
 			Self::Bean => "BEAN",
 			Self::An => "AN",
+			Self::Tuna => "TUNA",
 		}
 	}
 }
@@ -255,6 +256,10 @@ impl TokenAddress for Web3TokenType {
 			// An
 			(Self::An, Web3Network::Bsc) => Some("0x68d806380ce01e994f7583d796d0aea9ab470219"),
 
+			// Tuna
+			(Self::Tuna, Web3Network::Ethereum) =>
+				Some("0xadd353fb2e2c563383ff3272a500f3e7134dafe4"),
+
 			_ => None,
 		}
 	}
@@ -333,6 +338,9 @@ impl TokenHoldingAmountRange for Web3TokenType {
 
 			// An
 			Self::An => AN_AMOUNT_RANGE.to_vec(),
+
+			// Tuna
+			Self::Tuna => TUNA_AMOUNT_RANGE.to_vec(),
 
 			_ => [0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0].to_vec(),
 		}

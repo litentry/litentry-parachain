@@ -237,6 +237,7 @@ export default {
                 "Inj",
                 "Bean",
                 "An",
+                "Tuna",
             ],
         },
         // PlatformUserType

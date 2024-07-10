@@ -120,6 +120,8 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						"0x75438d34c9125839c8b08d21b7f3167281659e3c" => "0x10f0cf064dd59200000",
 						// 120_000 * 10^18
 						"0x75438d34c9125839c8b08d21b7f3167281659e4c" => "0x1969368974c05b000000",
+						// 1_500 * 10 ^ 18
+						"0x75438d34c9125839c8b08d21b7f3167281659e5c" => "0x5150ae84a8cdf00000",
 						_ => "0x320",
 					};
 					let body = RpcResponse {

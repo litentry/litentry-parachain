@@ -104,6 +104,8 @@ pub enum Web3TokenType {
 	Bean,
 	#[codec(index = 40)]
 	An,
+	#[codec(index = 41)]
+	Tuna,
 }
 
 impl Web3TokenType {
