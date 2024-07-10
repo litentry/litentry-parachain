@@ -286,9 +286,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						if let Err(e) = req.sender.send(Ok(processing_ret)) {
 							warn!("Unable to submit response back to the handler: {:?}", e);
 						}
-						let Some((ceremony_id, command)) = to_process else {
-						return
-					};
+						let Some((ceremony_id, command)) = to_process else { return };
 						(ceremony_id, command)
 					},
 					Err(e) => {

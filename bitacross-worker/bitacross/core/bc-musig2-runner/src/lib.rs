@@ -92,10 +92,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			);
 
 			signers.iter().for_each(|signer_id| {
-				warn!(
-					"Sharing nonce with signer: {:?} for ceremony: {:?}",
-					signer_id, ceremony_id
-				);
+				warn!("Sharing nonce with signer: {:?} for ceremony: {:?}", signer_id, ceremony_id);
 
 				let signer_id = signer_id.clone();
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();

@@ -452,13 +452,10 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 	error!("got payload");
 	let request = AesRequest::from_hex(&payload)
 		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
-	error!("got request");
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
-	error!("create sender");
 	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
-	error!("task ready to send");
 	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
 
 	// we only expect one response, hence no loop
