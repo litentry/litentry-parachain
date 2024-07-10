@@ -23,6 +23,7 @@ import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 import "./Constants.sol";
+import "../libraries/StringShift.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
 	mapping(string => string) internal tokenNames;
@@ -108,7 +109,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	function calculateRange(
 		uint256 balance,
 		uint256[] memory ranges
-	) private pure returns (uint256, uint256, int256) {
+	) internal pure returns (uint256, uint256, int256) {
 		uint256 index = ranges.length - 1;
 		uint256 min = 0;
 		int256 max = 0;
@@ -138,7 +139,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		uint256 min,
 		int256 max,
 		string memory tokenName
-	) private pure returns (string[] memory) {
+	) internal pure returns (string[] memory) {
 		string memory variable = "$holding_amount";
 		AssertionLogic.CompositeCondition memory cc = AssertionLogic
 			.CompositeCondition(
@@ -157,7 +158,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			1,
 			variable,
 			AssertionLogic.Op.GreaterEq,
-			Strings.toString(min / Constants.decimals_factor)
+			StringShift.toShiftedString(min, Constants.decimals_factor)
 		);
 		if (max > 0) {
 			AssertionLogic.andOp(
@@ -165,7 +166,10 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 				2,
 				variable,
 				AssertionLogic.Op.LessThan,
-				Strings.toString(uint256(max) / Constants.decimals_factor)
+				StringShift.toShiftedString(
+					uint256(max),
+					Constants.decimals_factor
+				)
 			);
 		}
 
