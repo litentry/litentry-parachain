@@ -41,7 +41,7 @@ where
 		}
 		if !calls.is_empty() {
 			let extrinsic =
-				match extrinsic_factory.create_batch_extrinsic(calls.drain(..).collect(), None) {
+				match extrinsic_factory.create_batch_extrinsic(std::mem::take(&mut calls), None) {
 					Ok(extrinsic) => extrinsic,
 					Err(e) => {
 						error!("Failed to create extrinsic: {:?}", e);
