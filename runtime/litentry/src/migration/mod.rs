@@ -17,7 +17,7 @@ use frame_support::{
 	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
-	Twox64Concat,
+	Blake2_128Concat, Twox64Concat,
 };
 use sp_runtime::Saturating;
 use sp_std::{
@@ -141,6 +141,57 @@ where
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
 	}
+
+	pub fn replace_delegation_scheduled_requests_storage() -> frame_support::weights::Weight {
+		// DelegationScheduledRequests
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"DelegationScheduledRequests";
+		// Read all the data into memory.
+		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
+		let stored_data: Vec<_> = storage_key_iter::<
+			T::AccountId,
+			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
+			Blake2_128Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
+		// Now remove the old storage
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		// Assert that old storage is empty
+		assert!(storage_key_iter::<
+			T::AccountId,
+			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
+			Blake2_128Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.next()
+		.is_none());
+		for (account, state) in stored_data {
+			let mut new_scheduled_requests: Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>> =
+				state;
+			for scheduled_request in new_scheduled_requests.iter_mut() {
+				match scheduled_request.action {
+					DelegationAction::Revoke(n) => {
+						scheduled_request.action =
+							DelegationAction::Revoke(n.saturating_mul(DECIMAL_CONVERTOR.into()));
+					},
+					DelegationAction::Decrease(n) => {
+						scheduled_request.action =
+							DelegationAction::Decrease(n.saturating_mul(DECIMAL_CONVERTOR.into()));
+					},
+				}
+			}
+			<CandidateInfo<T>>::insert(&account, new_scheduled_requests)
+		}
+		let weight = T::DbWeight::get();
+		migrated_count.saturating_mul(weight.write + weight.read)
+	}
 }
 
 #[cfg(feature = "try-runtime")]
@@ -178,7 +229,7 @@ where
 		// check DelegatorState are the same as the expected
 		for (account, actual_result) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
-				*(expected_state.get(&account).ok_or("Not Expected Delegator")?);
+				expected_state.get(&account).ok_or("Not Expected Delegator")?;
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
@@ -218,7 +269,7 @@ where
 		// check CandidateInfo are the same as the expected
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
-				*(expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?);
+				expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?;
 			// Can not compare CandidateMetadata so compare its encode
 			assert_eq!(expected_result.encode(), actual_result.encode());
 		}

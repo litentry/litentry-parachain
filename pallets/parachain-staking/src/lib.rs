@@ -58,7 +58,7 @@
 #![allow(clippy::needless_borrow)]
 
 mod auto_compound;
-mod delegation_requests;
+pub mod delegation_requests;
 pub mod inflation;
 pub mod traits;
 pub mod types;
