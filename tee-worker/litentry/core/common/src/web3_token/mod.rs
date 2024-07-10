@@ -77,6 +77,7 @@ impl TokenName for Web3TokenType {
 			Self::Cro => "CRO",
 			Self::Inj => "INJ",
 			Self::Bean => "BEAN",
+			Self::An => "AN",
 		}
 	}
 }
@@ -251,6 +252,9 @@ impl TokenAddress for Web3TokenType {
 			(Self::Bean, Web3Network::Bsc) => Some("0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c"),
 			(Self::Bean, Web3Network::Combo) => Some("0xba7b9936a965fac23bb7a8190364fa60622b3cff"),
 
+			// An
+			(Self::An, Web3Network::Bsc) => Some("0x68d806380ce01e994f7583d796d0aea9ab470219"),
+
 			_ => None,
 		}
 	}
@@ -326,6 +330,9 @@ impl TokenHoldingAmountRange for Web3TokenType {
 
 			// Bean
 			Self::Bean => BEAN_AMOUNT_RANGE.to_vec(),
+
+			// An
+			Self::An => AN_AMOUNT_RANGE.to_vec(),
 
 			_ => [0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0].to_vec(),
 		}

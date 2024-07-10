@@ -236,6 +236,7 @@ export default {
                 "Cro",
                 "Inj",
                 "Bean",
+                "An",
             ],
         },
         // PlatformUserType

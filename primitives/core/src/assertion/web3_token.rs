@@ -102,6 +102,8 @@ pub enum Web3TokenType {
 	Inj,
 	#[codec(index = 39)]
 	Bean,
+	#[codec(index = 40)]
+	An,
 }
 
 impl Web3TokenType {
@@ -137,6 +139,7 @@ impl Web3TokenType {
 			Self::Atom => vec![Web3Network::Ethereum, Web3Network::Bsc, Web3Network::Polygon],
 			Self::Cro => vec![Web3Network::Ethereum, Web3Network::Solana],
 			Self::Bean => vec![Web3Network::Bsc, Web3Network::Combo],
+			Self::An => vec![Web3Network::Bsc],
 			_ => vec![Web3Network::Ethereum],
 		}
 	}
