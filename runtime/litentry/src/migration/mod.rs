@@ -27,7 +27,9 @@ use sp_std::{
 };
 
 use pallet_parachain_staking::{
-	set::OrderedSet, BalanceOf, CandidateInfo, CandidateMetadata, Delegator, DelegatorState,
+	set::OrderedSet, BalanceOf, CandidateInfo, CandidateMetadata, DelegationAction,
+	DelegationScheduledRequests, Delegations, Delegator, DelegatorState, ScheduledRequest,
+	TopDelegations,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -187,7 +189,51 @@ where
 					},
 				}
 			}
-			<CandidateInfo<T>>::insert(&account, new_scheduled_requests)
+			<DelegationScheduledRequests<T>>::insert(&account, new_scheduled_requests)
+		}
+		let weight = T::DbWeight::get();
+		migrated_count.saturating_mul(weight.write + weight.read)
+	}
+
+	pub fn replace_top_delegations_storage() -> frame_support::weights::Weight {
+		// DelegationScheduledRequests
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"TopDelegations";
+		// Read all the data into memory.
+		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
+		let stored_data: Vec<_> = storage_key_iter::<
+			T::AccountId,
+			Delegations<T::AccountId, BalanceOf<T>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
+		// Now remove the old storage
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		// Assert that old storage is empty
+		assert!(storage_key_iter::<
+			T::AccountId,
+			Delegations<T::AccountId, BalanceOf<T>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.next()
+		.is_none());
+		for (account, state) in stored_data {
+			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
+
+			for delegation_bond in new_delegations.delegation.iter_mut() {
+				delegation_bond.amount =
+					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+			}
+
+			<TopDelegations<T>>::insert(&account, new_delegations)
 		}
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
@@ -229,7 +275,7 @@ where
 		// check DelegatorState are the same as the expected
 		for (account, actual_result) in <DelegatorState<T>>::iter() {
 			let expected_result: Delegator<T::AccountId, BalanceOf<T>> =
-				expected_state.get(&account).ok_or("Not Expected Delegator")?;
+				expected_state.get(&account).ok_or("Not Expected Delegator")?.clone();
 			assert_eq!(expected_result, actual_result);
 		}
 		Ok(())
@@ -269,7 +315,7 @@ where
 		// check CandidateInfo are the same as the expected
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
-				expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?;
+				expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?.clone();
 			// Can not compare CandidateMetadata so compare its encode
 			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
