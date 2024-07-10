@@ -47,6 +47,10 @@ where
 	BalanceOf<T>: From<u128>,
 {
 	pub fn replace_delegator_state_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking DelegatorState"
+		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegatorState";
 		// Read all the data into memory.
@@ -93,6 +97,10 @@ where
 	}
 
 	pub fn replace_candidate_info_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking CandidateInfo"
+		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"CandidateInfo";
 		// Read all the data into memory.
@@ -145,6 +153,10 @@ where
 	}
 
 	pub fn replace_delegation_scheduled_requests_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking DelegationScheduledRequests"
+		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegationScheduledRequests";
 		// Read all the data into memory.
@@ -195,6 +207,10 @@ where
 	}
 
 	pub fn replace_top_delegations_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking TopDelegations"
+		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"TopDelegations";
 		// Read all the data into memory.
@@ -238,6 +254,10 @@ where
 	}
 
 	pub fn replace_bottom_delegations_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking BottomDelegations"
+		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"BottomDelegations";
 		// Read all the data into memory.
