@@ -64,7 +64,7 @@ where
 		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
 			T::AccountId,
@@ -110,7 +110,7 @@ where
 		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<T::AccountId, CandidateMetadata<BalanceOf<T>>, Twox64Concat>(
 			pallet_prefix,
@@ -162,7 +162,7 @@ where
 		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
 			T::AccountId,
@@ -212,7 +212,7 @@ where
 		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
 			T::AccountId,
@@ -255,7 +255,7 @@ where
 		);
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
 			T::AccountId,
@@ -425,12 +425,10 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		// let pre_vec = (Vec<u8>, Vec<u8>)::decode(&mut &state);
 		let pre_vec: (Vec<u8>, Vec<u8>) =
 			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
-		// let pre_vec: (Vec<u8>, Vec<u8>) = state.decode();
-		let _ = Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
-		let _ = Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
+		Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
+		Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
 		Ok(())
 	}
 }
