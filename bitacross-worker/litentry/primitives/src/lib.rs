@@ -44,7 +44,7 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_hex_utils::hex_encode;
 use log::error;
 pub use pallet_teebag::{
-	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
+	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, DcapProvider, Enclave,
 	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
 };
 pub use parentchain_primitives::{
