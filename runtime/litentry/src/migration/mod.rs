@@ -267,7 +267,7 @@ where
 		for (account, state) in stored_data {
 			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
 
-			for delegation_bond in new_delegations.delegation.iter_mut() {
+			for delegation_bond in new_delegations.delegations.iter_mut() {
 				delegation_bond.amount =
 					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
