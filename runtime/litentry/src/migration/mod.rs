@@ -219,7 +219,8 @@ where
 		for (account, actual_result) in <CandidateInfo<T>>::iter() {
 			let expected_result: CandidateMetadata<BalanceOf<T>> =
 				*(expected_state.get(&account).ok_or("Not Expected CandidateMetadata")?);
-			assert_eq!(expected_result, actual_result);
+			// Can not compare CandidateMetadata so compare its encode
+			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
 		Ok(())
 	}
