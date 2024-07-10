@@ -30,7 +30,8 @@ use core::marker::PhantomData;
 use itp_api_client_types::StaticEvent;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{
-	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_teebag::TeebagCallIndexes,
+	provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -149,7 +150,7 @@ impl<
 		block: &ParentchainBlock,
 		events: &[u8],
 		metrics_api: Arc<OCallApi>,
-	) -> Result<Option<OpaqueCall>>
+	) -> Result<Option<Vec<OpaqueCall>>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 		OCallApi: EnclaveMetricsOCallApi,
@@ -166,7 +167,15 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
+		let (processed_events, successful_assertion_ids, failed_assertion_ids) =
+			self.parentchain_event_handler.handle_events(self, events)?;
+		let mut calls: Vec<OpaqueCall> = Vec::new();
+		if !successful_assertion_ids.is_empty() {
+			calls.extend(self.create_assertion_stored_call(successful_assertion_ids)?);
+		}
+		if !failed_assertion_ids.is_empty() {
+			calls.extend(self.create_assertion_voided_call(failed_assertion_ids)?);
+		}
 
 		update_parentchain_events_processed_metrics(metrics_api, &processed_events);
 
@@ -174,11 +183,12 @@ impl<
 
 		if self.parentchain_id == ParentchainId::Litentry {
 			// Include a processed parentchain block confirmation for each block.
-			Ok(Some(self.create_processed_parentchain_block_call::<ParentchainBlock>(
+			calls.push(self.create_processed_parentchain_block_call::<ParentchainBlock>(
 				block_hash,
 				processed_events,
 				block_number,
-			)?))
+			)?);
+			Ok(Some(calls))
 		} else {
 			// fixme: send other type of confirmation here:  https://github.com/integritee-network/worker/issues/1567
 			Ok(None)
@@ -202,6 +212,34 @@ impl<
 		// Litentry: we don't include `shard` in the extrinsic parameter to be backwards compatible,
 		//           however, we should not forget it in case we need it later
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
+	}
+
+	fn create_assertion_stored_call(
+		&self,
+		assertion_ids: Vec<sp_core::H160>,
+	) -> Result<Vec<OpaqueCall>> {
+		let call = self
+			.node_meta_data_provider
+			.get_from_metadata(|meta_data| meta_data.store_assertion_call_indexes())??;
+		let calls: Vec<OpaqueCall> = assertion_ids
+			.into_iter()
+			.map(|id| OpaqueCall::from_tuple(&(call, id)))
+			.collect();
+		Ok(calls)
+	}
+
+	fn create_assertion_voided_call(
+		&self,
+		assertion_ids: Vec<sp_core::H160>,
+	) -> Result<Vec<OpaqueCall>> {
+		let call = self
+			.node_meta_data_provider
+			.get_from_metadata(|meta_data| meta_data.void_assertion_call_indexes())??;
+		let calls: Vec<OpaqueCall> = assertion_ids
+			.into_iter()
+			.map(|id| OpaqueCall::from_tuple(&(call, id)))
+			.collect();
+		Ok(calls)
 	}
 }
 

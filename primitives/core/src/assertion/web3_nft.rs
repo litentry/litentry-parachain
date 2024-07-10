@@ -26,6 +26,8 @@ pub enum Web3NftType {
 	WeirdoGhostGang,
 	#[codec(index = 1)]
 	Club3Sbt,
+	#[codec(index = 2)]
+	MFan,
 }
 
 impl Web3NftType {
@@ -33,6 +35,7 @@ impl Web3NftType {
 		match self {
 			Self::WeirdoGhostGang => vec![Web3Network::Ethereum],
 			Self::Club3Sbt => vec![Web3Network::Bsc, Web3Network::Polygon, Web3Network::Arbitrum],
+			Self::MFan => vec![Web3Network::Polygon],
 		}
 	}
 }
