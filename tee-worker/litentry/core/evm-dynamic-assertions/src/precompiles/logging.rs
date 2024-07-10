@@ -48,7 +48,7 @@ pub fn logging(input: Vec<u8>, precompiles: &Precompiles) -> PrecompileResult {
 				return Ok(failure_precompile_output(ethabi::Token::Bool(Default::default())))
 			},
 		};
-	let level = match decoded.get(0).and_then(|v| v.clone().into_uint()) {
+	let level = match decoded.first().and_then(|v| v.clone().into_uint()) {
 		Some(v) => v,
 		None => {
 			log::debug!("Could not convert decoded[0] to uint");
