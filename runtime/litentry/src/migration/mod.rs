@@ -13,6 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![allow(clippy::type_complexity)]
+
 use frame_support::{
 	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
