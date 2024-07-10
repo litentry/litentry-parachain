@@ -84,7 +84,7 @@ pub fn enclave_request_state_provisioning<E: TlsRemoteAttestation + RemoteAttest
 	#[cfg(not(feature = "dcap"))]
 	let get_quote_data = false;
 	#[cfg(feature = "dcap")]
-	let get_quote_data = true;
+	let get_quote_data = !skip_ra;
 
 	let quoting_enclave_target_info = if get_quote_data {
 		match enclave_api.qe_get_target_info() {
