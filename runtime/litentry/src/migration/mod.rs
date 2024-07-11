@@ -365,7 +365,7 @@ where
 			new_delayed_payout.total_staking_reward =
 				new_delayed_payout.total_staking_reward.saturating_mul(DECIMAL_CONVERTOR.into());
 
-			<DelayedPayouts<T>>::insert(&round, new_delayed_payout)
+			<DelayedPayouts<T>>::insert(round, new_delayed_payout)
 		}
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
@@ -400,7 +400,7 @@ where
 		.is_none());
 		for (round, state) in stored_data {
 			let new_staked: BalanceOf<T> = state;
-			<Staked<T>>::insert(&round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
+			<Staked<T>>::insert(round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
 		}
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
@@ -660,7 +660,7 @@ where
 			.map_err(|_| "Failed to decode Staked")?;
 		for (round, actual_result) in <Staked<T>>::iter() {
 			let expected_result: BalanceOf<T> =
-				expected_state.get(&round).ok_or("Not Expected DelayedPayout")?.clone();
+				*expected_state.get(&round).ok_or("Not Expected DelayedPayout")?;
 			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
 		Ok(())
