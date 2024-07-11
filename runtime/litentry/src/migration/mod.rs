@@ -30,8 +30,8 @@ use sp_std::{
 
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
-	CandidatePool, DelegationAction, DelegationScheduledRequests, Delegations, Delegator,
-	DelegatorState, ScheduledRequest, TopDelegations, Total,
+	CandidatePool, DelayedPayout, DelayedPayouts, DelegationAction, DelegationScheduledRequests,
+	Delegations, Delegator, DelegatorState, ScheduledRequest, Staked, TopDelegations, Total,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -319,7 +319,7 @@ where
 			b"",
 		)
 		.expect("Storage query fails: ParachainStaking CandidatePool");
-		for bond in stored_data.0.iter_mut {
+		for bond in stored_data.0.iter_mut() {
 			bond.amount = bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 		}
 		<CandidatePool<T>>::put(stored_data);
@@ -602,7 +602,7 @@ where
 			.0
 			.iter()
 			.map(|bond| {
-				let mut new_bond: Bond<T::AccountId, BalanceOf<T>> = bond;
+				let mut new_bond: Bond<T::AccountId, BalanceOf<T>> = bond.clone();
 				new_bond.amount = new_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 				(new_bond.owner, new_bond.amount)
 			})
@@ -612,7 +612,7 @@ where
 	pub fn post_upgrade_candidate_pool_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state = BTreeMap::<T::AccountId, BalanceOf<T>>::decode(&mut &state[..])
 			.map_err(|_| "Failed to decode Candidate Pool Bond (owner, amount)")?;
-		let actual_state = <CandidatePool<T>>::get()
+		let actual_state: BTreeMap<T::AccountId, BalanceOf<T>> = <CandidatePool<T>>::get()
 			.0
 			.iter()
 			.map(|bond| (bond.owner, bond.amount))
@@ -655,7 +655,7 @@ where
 			.collect();
 		Ok(result.encode())
 	}
-	pub fn post_upgrade_staked_storage() -> Result<Vec<u8>, &'static str> {
+	pub fn post_upgrade_staked_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state = BTreeMap::<u32, BalanceOf<T>>::decode(&mut &state[..])
 			.map_err(|_| "Failed to decode Staked")?;
 		for (round, actual_result) in <Staked<T>>::iter() {
