@@ -195,6 +195,7 @@ assertion_vec=(
     "platform-user karat-dao-user"
     "nft-holder weirdo-ghost-gang"
     "nft-holder club3-sbt"
+    "nft-holder mfan"
 )
 
 assertions=()

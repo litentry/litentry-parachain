@@ -35,7 +35,7 @@ use litentry_primitives::{
 	OneBlockCourseType, ParameterString, PlatformUserType, RequestAesKey, SoraQuizType,
 	VIP3MembershipCardLevel, Web3Network, Web3NftType, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
-use sp_core::{Pair, H160};
+use sp_core::{Pair, H160, H256};
 
 // usage example below
 //
@@ -278,6 +278,8 @@ pub enum TokenHoldingAmountCommand {
 	Mcrt,
 	Btc,
 	Bean,
+	An,
+	Tuna,
 }
 
 #[derive(Subcommand, Debug)]
@@ -290,6 +292,7 @@ pub enum PlatformUserCommand {
 pub enum NftHolderCommand {
 	WeirdoGhostGang,
 	Club3Sbt,
+	MFan,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -413,6 +416,8 @@ impl RequestVcCommand {
 				)
 				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
+
+			if trusted_cli.direct {
 				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
 					Ok(vc) => {
 						print_vc(&key, vc);
@@ -421,7 +426,18 @@ impl RequestVcCommand {
 						println!("{:?}", e);
 					},
 				}
-				nonce += 1;
+			} else {
+				println!("WARNING: This method does not support printing VC, Please use -d for direct invocation to print the VC");
+				match perform_trusted_operation::<H256>(cli, trusted_cli, &top) {
+					Ok(block_hash) => {
+						println!("Request VC Event included in block hash: {:?}", block_hash)
+					},
+					Err(e) => {
+						println!("{:?}", e);
+					},
+				}
+			}
+			nonce += 1;
 			});
 		} else {
 			let top = TrustedCall::request_batch_vc(
@@ -631,6 +647,8 @@ impl Command {
 				TokenHoldingAmountCommand::Mcrt => TokenHoldingAmount(Web3TokenType::Mcrt),
 				TokenHoldingAmountCommand::Btc => TokenHoldingAmount(Web3TokenType::Btc),
 				TokenHoldingAmountCommand::Bean => TokenHoldingAmount(Web3TokenType::Bean),
+				TokenHoldingAmountCommand::An => TokenHoldingAmount(Web3TokenType::An),
+				TokenHoldingAmountCommand::Tuna => TokenHoldingAmount(Web3TokenType::Tuna),
 			}),
 			Command::PlatformUser(arg) => Ok(match arg {
 				PlatformUserCommand::KaratDaoUser => PlatformUser(PlatformUserType::KaratDaoUser),
@@ -640,6 +658,7 @@ impl Command {
 			Command::NftHolder(arg) => Ok(match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
+				NftHolderCommand::MFan => NftHolder(Web3NftType::MFan),
 			}),
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();

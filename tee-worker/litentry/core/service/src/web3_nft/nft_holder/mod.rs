@@ -35,5 +35,6 @@ pub fn has_nft(
 		Web3NftType::WeirdoGhostGang =>
 			common::has_nft_721(addresses, nft_type, data_provider_config),
 		Web3NftType::Club3Sbt => common::has_nft_1155(addresses, nft_type, data_provider_config),
+		Web3NftType::MFan => common::has_nft_721(addresses, nft_type, data_provider_config),
 	}
 }
