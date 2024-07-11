@@ -640,7 +640,7 @@ where
 		let expected_state = BTreeMap::<u32, DelayedPayout<BalanceOf<T>>>::decode(&mut &state[..])
 			.map_err(|_| "Failed to decode Delayed Payouts")?;
 		for (round, actual_result) in <DelayedPayouts<T>>::iter() {
-			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
+			let expected_result: DelayedPayout<BalanceOf<T>> =
 				expected_state.get(&round).ok_or("Not Expected DelayedPayout")?.clone();
 			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
