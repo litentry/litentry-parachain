@@ -147,6 +147,12 @@ pub fn get_expected_raw_message(
 	blake2_256(payload.as_slice()).to_vec()
 }
 
+// [P-923] Verify a web3 identity
+// This function validates the signature with both the raw message and its prettified format. Any of them is valid.
+// The prettified version was introduced to extend the support for utf-8 signatures for browser wallets that
+// do not play well with raw bytes signing, like Solana's Phantom and OKX wallets.
+//
+// The prettified format is the raw message with a prefix "Token: ".
 pub fn verify_web3_identity(
 	identity: &Identity,
 	expected_raw_msg: &[u8],
