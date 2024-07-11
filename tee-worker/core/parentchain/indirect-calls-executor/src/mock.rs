@@ -7,10 +7,11 @@ use itp_types::{
 			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
 			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
 		},
-		FilterEvents, HandleParentchainEvents,
+		FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
+use sp_core::H160;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -78,7 +79,15 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
 {
-	fn handle_events(&self, _: &Executor, _: impl FilterEvents) -> Result<Vec<H256>, Error> {
-		Ok(Vec::from([H256::default()]))
+	fn handle_events(
+		&self,
+		_: &Executor,
+		_: impl FilterEvents,
+	) -> Result<ProcessedEventsArtifacts, Error> {
+		Ok((
+			Vec::from([H256::default()]),
+			Vec::from([H160::default()]),
+			Vec::from([H160::default()]),
+		))
 	}
 }

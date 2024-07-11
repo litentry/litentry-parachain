@@ -184,8 +184,8 @@ impl<
 				&raw_events,
 				self.ocall_api.clone(),
 			) {
-				Ok(Some(confirm_processed_parentchain_block_call)) => {
-					calls.push(confirm_processed_parentchain_block_call);
+				Ok(Some(opaque_calls)) => {
+					calls.extend(opaque_calls);
 				},
 				Ok(None) => trace!("omitting confirmation call to non-integritee parentchain"),
 				Err(e) => error!("[{:?}] Error executing relevant events: {:?}", id, e),
