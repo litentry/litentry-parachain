@@ -64,12 +64,16 @@ describe('Test Vc (direct request)', function () {
 
         const assertionId = '0x0000000000000000000000000000000000000003';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
+        const storedAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionStored', context.api);
 
         const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]);
         await context.api.tx.developerCommittee.execute(proposal, proposal.encodedLength).signAndSend(alice);
 
-        const event = (await createAssertionEventsPromise).map((e) => e);
-        assert.equal(event.length, 1);
+        const assrtion_created_event = (await createAssertionEventsPromise).map((e) => e);
+        assert.equal(assrtion_created_event.length, 1);
+
+        const assertion_stored_event = (await storedAssertionEventsPromise).map((e) => e);
+        assert.equal(assertion_stored_event.length, 1);
     });
 
     step('linking identities (alice)', async function () {
