@@ -31,7 +31,7 @@ use sp_std::{
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, BottomDelegations, CandidateInfo, CandidateMetadata,
 	DelegationAction, DelegationScheduledRequests, Delegations, Delegator, DelegatorState,
-	ScheduledRequest, TopDelegations,
+	ScheduledRequest, TopDelegations, Total,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -457,7 +457,7 @@ where
 				.collect();
 		Ok(result.encode())
 	}
-	pub fn post_upgrade_top_delegations_storage(state: Vec<u8>) -> Result<Vec<u8>, &'static str> {
+	pub fn post_upgrade_top_delegations_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state =
 			BTreeMap::<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>>::decode(
 				&mut &state[..],
@@ -466,7 +466,7 @@ where
 		for (account, actual_result) in <TopDelegations<T>>::iter() {
 			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
 				expected_state.get(&account).ok_or("Not Expected Delegations")?.clone();
-			assert_eq!(expected_result, actual_result);
+			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
 		Ok(())
 	}
@@ -486,9 +486,7 @@ where
 				.collect();
 		Ok(result.encode())
 	}
-	pub fn post_upgrade_bottom_delegations_storage(
-		state: Vec<u8>,
-	) -> Result<Vec<u8>, &'static str> {
+	pub fn post_upgrade_bottom_delegations_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state =
 			BTreeMap::<T::AccountId, Delegations<T::AccountId, BalanceOf<T>>>::decode(
 				&mut &state[..],
@@ -497,14 +495,14 @@ where
 		for (account, actual_result) in <BottomDelegations<T>>::iter() {
 			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
 				expected_state.get(&account).ok_or("Not Expected Delegations")?.clone();
-			assert_eq!(expected_result, actual_result);
+			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
 		Ok(())
 	}
 	pub fn pre_upgrade_total_storage() -> Result<Vec<u8>, &'static str> {
 		Ok(<Total<T>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
 	}
-	pub fn post_upgrade_total_storage(state: Vec<u8>) -> Result<Vec<u8>, &'static str> {
+	pub fn post_upgrade_total_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state = BalanceOf::<T>::decode(&mut &state[..]);
 		let actual_state = <Total<T>>::get();
 		assert_eq!(expected_state, actual_state);
