@@ -54,7 +54,7 @@ use itp_settings::{
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
-use itp_types::{AttestationType, OpaqueCall, WorkerType};
+use itp_types::{AttestationType, DcapProvider, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::*;
@@ -330,7 +330,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
-	let attestation_type = AttestationType::Dcap(Default::default()); // skip_ra should be false here already
+	let attestation_type = AttestationType::Dcap(DcapProvider::Intel); // skip_ra should be false here already
 
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,

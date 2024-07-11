@@ -695,4 +695,84 @@ mod tests {
 			},
 		};
 	}
+
+	#[test]
+	fn build_an_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e4c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
+		let req = crate_assertion_build_request(Web3TokenType::An, identities);
+		match build(&req, Web3TokenType::An, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build an TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::An),
+							create_network_address_assertion_logics(Web3TokenType::An),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "100000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "900000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build an TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+	}
+
+	#[test]
+	fn build_tuna_holding_amount_works() {
+		let data_provider_config: DataProviderConfig = init();
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e5c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities = vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
+		let req = crate_assertion_build_request(Web3TokenType::Tuna, identities);
+		match build(&req, Web3TokenType::Tuna, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build tuna TokenHoldingAmount done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3TokenType::Tuna),
+							create_network_address_assertion_logics(Web3TokenType::Tuna),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "1000".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "2000".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build tuna TokenHoldingAmount failed with error {:?}", e);
+			},
+		};
+	}
 }
