@@ -26,7 +26,7 @@ library StringShift {
 	 */
 	function toShiftedString(
 		uint256 value,
-		uint32 decimal
+		uint256 decimal
 	) internal pure returns (string memory) {
 		// Convert uint256 to string
 
@@ -141,7 +141,7 @@ library StringShift {
 	 * @param x The input number.
 	 * @return The base-10 logarithm of the number.
 	 */
-	function log10(uint32 x) internal pure returns (uint32) {
+	function log10(uint256 x) internal pure returns (uint32) {
 		uint32 result = 0;
 		while (x >= 10) {
 			x /= 10;
