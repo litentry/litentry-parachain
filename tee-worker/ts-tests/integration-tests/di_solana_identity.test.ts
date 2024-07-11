@@ -77,7 +77,8 @@ describe('Test Identity (solana direct invocation)', function () {
             bobSolanaIdentity,
             bobSolanaNonce,
             'solana',
-            context.web3Wallets.solana.Bob
+            context.web3Wallets.solana.Bob,
+            { prettifiedMessage: true }
         );
         const bobSolanaNetworks = context.api.createType('Vec<Web3Network>', ['Solana']);
         linkIdentityRequestParams.push({

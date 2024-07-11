@@ -107,7 +107,8 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             bobBitcoinIdentity,
             bobBitcoinNonce,
             'bitcoin',
-            context.web3Wallets.bitcoin.Bob
+            context.web3Wallets.bitcoin.Bob,
+            { prettifiedMessage: true }
         );
         const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
