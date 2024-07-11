@@ -130,6 +130,8 @@ pub mod pallet {
 		InvalidAttestationType,
 		/// The enclave cannot attest, because its building mode is not allowed.
 		InvalidSgxMode,
+		/// The specified dcap provider is not yet supported
+		DcapProviderNotSupported,
 		/// The enclave doesn't exist.
 		EnclaveNotExist,
 		/// The enclave identifier doesn't exist.
@@ -479,7 +481,8 @@ pub mod pallet {
 					enclave.last_seen_timestamp = report.timestamp;
 					enclave.sgx_build_mode = report.build_mode;
 				},
-				AttestationType::Dcap(_) => {
+				AttestationType::Dcap(provider) => {
+					ensure!(provider == DcapProvider::Intel, Error::<T>::DcapProviderNotSupported);
 					let report = Self::verify_dcap(&sender, attestation)?;
 					enclave.mrenclave = report.mr_enclave;
 					enclave.last_seen_timestamp = report.timestamp;
