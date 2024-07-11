@@ -103,12 +103,14 @@ impl TrustedCallSigned {
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))?;
 				Ok(false)
 			},
-			ValidationData::Web3(data) => {
+			ValidationData::Web3(validation_data) => {
 				ensure!(
 					identity.is_web3(),
 					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
 				);
-				verify_web3_identity(&identity, &raw_msg, &data)?;
+
+				verify_web3_identity(&identity, &raw_msg, &validation_data)?;
+
 				Ok(true)
 			},
 		}
