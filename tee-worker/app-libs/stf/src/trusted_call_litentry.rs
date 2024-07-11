@@ -45,7 +45,6 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, RequestType, SendStfRequest, StfRequestSender,
 	Web2IdentityVerificationRequest,
 };
-use litentry_hex_utils::hex_encode;
 use litentry_macros::if_development_or;
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
@@ -80,7 +79,6 @@ impl TrustedCallSigned {
 		let sidechain_nonce = System::account_nonce(&signer) - 1;
 
 		let raw_msg = get_expected_raw_message(&who, &identity, sidechain_nonce);
-		let prettified_msg: String = "Token: ".to_string() + &hex_encode(&raw_msg);
 
 		match validation_data {
 			ValidationData::Web2(data) => {
@@ -105,13 +103,14 @@ impl TrustedCallSigned {
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))?;
 				Ok(false)
 			},
-			ValidationData::Web3(data) => {
+			ValidationData::Web3(validation_data) => {
 				ensure!(
 					identity.is_web3(),
 					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
 				);
 
-				verify_web3_identity(&identity, prettified_msg.as_bytes(), &data)?;
+				verify_web3_identity(&identity, &raw_msg, &validation_data)?;
+
 				Ok(true)
 			},
 		}
