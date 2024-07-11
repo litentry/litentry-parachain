@@ -41,19 +41,6 @@ pub struct IdentityContext<T: Config> {
 	pub status: IdentityStatus,
 }
 
-// The context associated with the (litentry-account, did) pair
-#[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound())]
-pub struct OldIdentityContext<T: Config> {
-	// the sidechain block number at which the identity is linked
-	pub link_block: BlockNumberOf<T>,
-	// a list of web3 networks on which the identity should be used
-	pub web3networks: Vec<Web3Network>,
-	// the identity status
-	pub status: IdentityStatus,
-}
-
 impl<T: Config> IdentityContext<T> {
 	pub fn new(link_block: BlockNumberOf<T>) -> Self {
 		Self { link_block, status: IdentityStatus::Active }

@@ -118,18 +118,6 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn old_id_graphs)]
-	pub type OldIDGraphs<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Identity,
-		Blake2_128Concat,
-		Identity,
-		OldIdentityContext<T>,
-		OptionQuery,
-	>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn id_graph_lens)]
 	pub type IDGraphLens<T: Config> = StorageMap<_, Blake2_128Concat, Identity, u32, ValueQuery>;
 
