@@ -29,9 +29,9 @@ use sp_std::{
 };
 
 use pallet_parachain_staking::{
-	set::OrderedSet, BalanceOf, BottomDelegations, CandidateInfo, CandidateMetadata,
-	DelegationAction, DelegationScheduledRequests, Delegations, Delegator, DelegatorState,
-	ScheduledRequest, TopDelegations, Total,
+	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
+	CandidatePool, DelegationAction, DelegationScheduledRequests, Delegations, Delegator,
+	DelegatorState, ScheduledRequest, TopDelegations, Total,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -54,8 +54,6 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegatorState";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data: Vec<_> = storage_key_iter::<
 			T::AccountId,
 			Delegator<T::AccountId, BalanceOf<T>>,
@@ -104,8 +102,6 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"CandidateInfo";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data: Vec<_> = storage_key_iter::<
 			T::AccountId,
 			CandidateMetadata<BalanceOf<T>>,
@@ -160,8 +156,6 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegationScheduledRequests";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data: Vec<_> = storage_key_iter::<
 			T::AccountId,
 			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
@@ -214,8 +208,6 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"TopDelegations";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data: Vec<_> = storage_key_iter::<
 			T::AccountId,
 			Delegations<T::AccountId, BalanceOf<T>>,
@@ -261,8 +253,6 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"BottomDelegations";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data: Vec<_> = storage_key_iter::<
 			T::AccountId,
 			Delegations<T::AccountId, BalanceOf<T>>,
@@ -308,14 +298,112 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"Total";
-		// Read all the data into memory.
-		// https://crates.parity.io/frame_support/storage/migration/fn.storage_key_iter.html
 		let stored_data =
 			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
 				.expect("Storage query fails: ParachainStaking Total");
 		<Total<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
+	}
+
+	pub fn replace_candidate_pool_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking CandidatePool"
+		);
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"CandidatePool";
+		let stored_data = get_storage_value::<OrderedSet<Bond<T::AccountId, BalanceOf<T>>>>(
+			pallet_prefix,
+			storage_item_prefix,
+			b"",
+		)
+		.expect("Storage query fails: ParachainStaking CandidatePool");
+		for bond in stored_data.0.iter_mut {
+			bond.amount = bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+		}
+		<CandidatePool<T>>::put(stored_data);
+		let weight = T::DbWeight::get();
+		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
+	}
+
+	pub fn repalce_delayed_payouts_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking DelayedPayouts"
+		);
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"DelayedPayouts";
+		let stored_data: Vec<_> =
+			storage_key_iter::<u32, DelayedPayout<BalanceOf<T>>, Twox64Concat>(
+				pallet_prefix,
+				storage_item_prefix,
+			)
+			.collect();
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
+		// Now remove the old storage
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		// Assert that old storage is empty
+		assert!(storage_key_iter::<u32, DelayedPayout<BalanceOf<T>>, Twox64Concat>(
+			pallet_prefix,
+			storage_item_prefix
+		)
+		.next()
+		.is_none());
+		for (round, state) in stored_data {
+			let mut new_delayed_payout: DelayedPayout<BalanceOf<T>> = state;
+
+			new_delayed_payout.round_issuance =
+				new_delayed_payout.round_issuance.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_delayed_payout.total_staking_reward =
+				new_delayed_payout.total_staking_reward.saturating_mul(DECIMAL_CONVERTOR.into());
+
+			<DelayedPayouts<T>>::insert(&round, new_delayed_payout)
+		}
+		let weight = T::DbWeight::get();
+		migrated_count.saturating_mul(weight.write + weight.read)
+	}
+
+	pub fn repalce_staked_storage() -> frame_support::weights::Weight {
+		log::info!(
+			target: "ReplaceParachainStakingStorage",
+			"running migration to ParachainStaking Staked"
+		);
+		let pallet_prefix: &[u8] = b"ParachainStaking";
+		let storage_item_prefix: &[u8] = b"Staked";
+		let stored_data: Vec<_> =
+			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
+				.collect();
+		let migrated_count = frame_support::weights::Weight::from_parts(
+			0,
+			stored_data
+				.len()
+				.try_into()
+				.expect("There are between 0 and 2**64 mappings stored."),
+		);
+		// Now remove the old storage
+		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+		// Assert that old storage is empty
+		assert!(storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(
+			pallet_prefix,
+			storage_item_prefix
+		)
+		.next()
+		.is_none());
+		for (round, state) in stored_data {
+			let mut new_staked: BalanceOf<T> = state;
+			<Staked<T>>::insert(&round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
+		}
+		let weight = T::DbWeight::get();
+		migrated_count.saturating_mul(weight.write + weight.read)
 	}
 }
 
@@ -503,9 +591,78 @@ where
 		Ok(<Total<T>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
 	}
 	pub fn post_upgrade_total_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_state = BalanceOf::<T>::decode(&mut &state[..]);
+		let expected_state = BalanceOf::<T>::decode(&mut &state[..])
+			.map_err(|_| "Failed to decode Total Balance")?;
 		let actual_state = <Total<T>>::get();
 		assert_eq!(expected_state, actual_state);
+		Ok(())
+	}
+	pub fn pre_upgrade_candidate_pool_storage() -> Result<Vec<u8>, &'static str> {
+		let result: BTreeMap<T::AccountId, BalanceOf<T>> = <CandidatePool<T>>::get()
+			.0
+			.iter()
+			.map(|bond| {
+				let mut new_bond: Bond<T::AccountId, BalanceOf<T>> = bond;
+				new_bond.amount = new_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+				(new_bond.owner, new_bond.amount)
+			})
+			.collect();
+		Ok(result.encode())
+	}
+	pub fn post_upgrade_candidate_pool_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_state = BTreeMap::<T::AccountId, BalanceOf<T>>::decode(&mut &state[..])
+			.map_err(|_| "Failed to decode Candidate Pool Bond (owner, amount)")?;
+		let actual_state = <CandidatePool<T>>::get()
+			.0
+			.iter()
+			.map(|bond| (bond.owner, bond.amount))
+			.collect();
+		assert_eq!(expected_state.encode(), actual_state.encode());
+		Ok(())
+	}
+	pub fn pre_upgrade_delayed_payouts_storage() -> Result<Vec<u8>, &'static str> {
+		let result: BTreeMap<u32, DelayedPayout<BalanceOf<T>>> = <DelayedPayouts<T>>::iter()
+			.map(|(round, state)| {
+				let mut new_delayed_payout: DelayedPayout<BalanceOf<T>> = state;
+
+				new_delayed_payout.round_issuance =
+					new_delayed_payout.round_issuance.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_delayed_payout.total_staking_reward = new_delayed_payout
+					.total_staking_reward
+					.saturating_mul(DECIMAL_CONVERTOR.into());
+
+				(round, new_delayed_payout)
+			})
+			.collect();
+		Ok(result.encode())
+	}
+	pub fn post_upgrade_delayed_payouts_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_state = BTreeMap::<u32, DelayedPayout<BalanceOf<T>>>::decode(&mut &state[..])
+			.map_err(|_| "Failed to decode Delayed Payouts")?;
+		for (round, actual_result) in <DelayedPayouts<T>>::iter() {
+			let expected_result: Delegations<T::AccountId, BalanceOf<T>> =
+				expected_state.get(&round).ok_or("Not Expected DelayedPayout")?.clone();
+			assert_eq!(expected_result.encode(), actual_result.encode());
+		}
+		Ok(())
+	}
+	pub fn pre_upgrade_staked_storage() -> Result<Vec<u8>, &'static str> {
+		let result: BTreeMap<u32, BalanceOf<T>> = <Staked<T>>::iter()
+			.map(|(round, state)| {
+				let mut new_staked: BalanceOf<T> = state;
+				(round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
+			})
+			.collect();
+		Ok(result.encode())
+	}
+	pub fn post_upgrade_staked_storage() -> Result<Vec<u8>, &'static str> {
+		let expected_state = BTreeMap::<u32, BalanceOf<T>>::decode(&mut &state[..])
+			.map_err(|_| "Failed to decode Staked")?;
+		for (round, actual_result) in <Staked<T>>::iter() {
+			let expected_result: BalanceOf<T> =
+				expected_state.get(&round).ok_or("Not Expected DelayedPayout")?.clone();
+			assert_eq!(expected_result.encode(), actual_result.encode());
+		}
 		Ok(())
 	}
 }
@@ -524,6 +681,9 @@ where
 		let top_delegations_vec = Self::pre_upgrade_top_delegations_storage()?;
 		let bottom_delegations_vec = Self::pre_upgrade_bottom_delegations_storage()?;
 		let total_vec = Self::pre_upgrade_total_storage()?;
+		let candidate_pool_vec = Self::pre_upgrade_candidate_pool_storage()?;
+		let delayed_payouts_vec = Self::pre_upgrade_delayed_payouts_storage()?;
+		let staked_vec = Self::pre_upgrade_staked_storage()?;
 		Ok((
 			delegator_state_vec,
 			candidate_info_vec,
@@ -531,6 +691,9 @@ where
 			top_delegations_vec,
 			bottom_delegations_vec,
 			total_vec,
+			candidate_pool_vec,
+			delayed_payouts_vec,
+			staked_vec,
 		)
 			.encode())
 	}
@@ -543,20 +706,43 @@ where
 		weight += Self::replace_top_delegations_storage();
 		weight += Self::replace_bottom_delegations_storage();
 		weight += Self::replace_total_storage();
+		weight += Self::replace_candidate_pool_storage();
+
+		// No need for AtStake Migration since this is a snapshot, everything is good as long as it
+		// will not change proportion AtStake
+
+		weight += Self::repalce_delayed_payouts_storage();
+		// Staked Storage holds limited amount of recent rounds only, should not cause large PoV
+		weight += Self::repalce_staked_storage();
+
+		// No need since all balance related config is Zero
+		// InflationConfig
 
 		weight
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let pre_vec: (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) =
-			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
+		let pre_vec: (
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+			Vec<u8>,
+		) = Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
 		Self::post_upgrade_delegator_state_storage(pre_vec.0)?;
 		Self::post_upgrade_candidate_info_storage(pre_vec.1)?;
 		Self::post_upgrade_delegation_scheduled_requests_storage(pre_vec.2)?;
 		Self::post_upgrade_top_delegations_storage(pre_vec.3)?;
 		Self::post_upgrade_bottom_delegations_storage(pre_vec.4)?;
 		Self::post_upgrade_total_storage(pre_vec.5)?;
+		Self::post_upgrade_candidate_pool_storage(pre_vec.6)?;
+		Self::post_upgrade_delayed_payouts_storage(pre_vec.7)?;
+		Self::post_upgrade_staked_storage(pre_vec.8)?;
 		Ok(())
 	}
 }
