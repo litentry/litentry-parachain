@@ -313,7 +313,7 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"CandidatePool";
-		let stored_data = get_storage_value::<OrderedSet<Bond<T::AccountId, BalanceOf<T>>>>(
+		let mut stored_data = get_storage_value::<OrderedSet<Bond<T::AccountId, BalanceOf<T>>>>(
 			pallet_prefix,
 			storage_item_prefix,
 			b"",
@@ -399,7 +399,7 @@ where
 		.next()
 		.is_none());
 		for (round, state) in stored_data {
-			let mut new_staked: BalanceOf<T> = state;
+			let new_staked: BalanceOf<T> = state;
 			<Staked<T>>::insert(&round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
 		}
 		let weight = T::DbWeight::get();
@@ -615,7 +615,7 @@ where
 		let actual_state: BTreeMap<T::AccountId, BalanceOf<T>> = <CandidatePool<T>>::get()
 			.0
 			.iter()
-			.map(|bond| (bond.owner, bond.amount))
+			.map(|bond| (bond.owner.clone(), bond.amount))
 			.collect();
 		assert_eq!(expected_state.encode(), actual_state.encode());
 		Ok(())
@@ -649,7 +649,7 @@ where
 	pub fn pre_upgrade_staked_storage() -> Result<Vec<u8>, &'static str> {
 		let result: BTreeMap<u32, BalanceOf<T>> = <Staked<T>>::iter()
 			.map(|(round, state)| {
-				let mut new_staked: BalanceOf<T> = state;
+				let new_staked: BalanceOf<T> = state;
 				(round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
 			})
 			.collect();
