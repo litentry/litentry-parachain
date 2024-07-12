@@ -13,6 +13,7 @@ members = [
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',
+    'pallets/score-staking',
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
@@ -252,6 +253,7 @@ pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features 
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }
 pallet-parachain-staking = { path = "pallets/parachain-staking", default-features = false }
+pallet-score-staking = { path = "pallets/score-staking", default-features = false }
 pallet-teebag = { path = "pallets/teebag", default-features = false }
 pallet-vc-management = { path = "pallets/vc-management", default-features = false }
 precompile-utils = { path = "precompiles/utils", default-features = false }
