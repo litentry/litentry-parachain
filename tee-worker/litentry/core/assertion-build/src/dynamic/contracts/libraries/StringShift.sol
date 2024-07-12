@@ -17,6 +17,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity ^0.8.0;
+import "../openzeppelin/Strings.sol";
+import "../openzeppelin/math/Math.sol";
 library StringShift {
 	/**
 	 * @dev Converts a uint256 input to a string and shifts the decimal point to the left by the specified number of places.
@@ -33,11 +35,11 @@ library StringShift {
 		if (value == 0) {
 			return "0";
 		} else {
-			string memory str = uintToString(value);
+			string memory str = Strings.toString(value);
 
 			// Calculate the position to insert the decimal point
 			uint256 len = bytes(str).length;
-			uint32 digit = log10(decimal);
+			uint256 digit = Math.log10(decimal);
 
 			if (len <= digit) {
 				// If the length is less than or equal to the number of digits, pad with leading zeros and add '0.'
@@ -62,27 +64,6 @@ library StringShift {
 
 			return str;
 		}
-	}
-
-	/**
-	 * @dev Converts a uint256 to a string.
-	 * @param v The uint256 value to convert.
-	 * @return The converted string.
-	 */
-	function uintToString(uint256 v) internal pure returns (string memory) {
-		uint256 maxLength = 78; // 78 is a safe upper bound for 256-bit numbers in base 10
-		bytes memory reversed = new bytes(maxLength);
-		uint256 length = 0;
-		while (v != 0) {
-			uint256 remainder = v % 10;
-			v = v / 10;
-			reversed[length++] = bytes1(uint8(48 + remainder));
-		}
-		bytes memory result = new bytes(length);
-		for (uint256 i = 0; i < length; i++) {
-			result[i] = reversed[length - 1 - i];
-		}
-		return string(result);
 	}
 
 	/**
@@ -134,19 +115,5 @@ library StringShift {
 		}
 
 		return string(trimmedBytes);
-	}
-
-	/**
-	 * @dev Calculates the base-10 logarithm of a number (floor value).
-	 * @param x The input number.
-	 * @return The base-10 logarithm of the number.
-	 */
-	function log10(uint256 x) internal pure returns (uint32) {
-		uint32 result = 0;
-		while (x >= 10) {
-			x /= 10;
-			result++;
-		}
-		return result;
 	}
 }
