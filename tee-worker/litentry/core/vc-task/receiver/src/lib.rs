@@ -565,7 +565,7 @@ where
 		let call_index = node_metadata_repo
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
 			.map_err(|e| RequestVcErrorDetail::MetadataRetrievalFailed(e.to_string()))?
-			.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e)));
+			.map_err(|e| RequestVcErrorDetail::InvalidMetadata(format!("{:?}", e)))?;
 
 		let key = maybe_key.ok_or(RequestVcErrorDetail::MissingAesKey)?;
 		let call = OpaqueCall::from_tuple(&(
