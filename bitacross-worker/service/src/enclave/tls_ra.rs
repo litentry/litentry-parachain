@@ -83,7 +83,12 @@ pub fn enclave_request_state_provisioning<E: TlsRemoteAttestation + RemoteAttest
 
 	let stream = TcpStream::connect(addr).map_err(|e| Error::Other(Box::new(e)))?;
 
-	let quoting_enclave_target_info = if !skip_ra {
+	#[cfg(not(feature = "dcap"))]
+	let get_quote_data = false;
+	#[cfg(feature = "dcap")]
+	let get_quote_data = !skip_ra;
+
+	let quoting_enclave_target_info = if get_quote_data {
 		match enclave_api.qe_get_target_info() {
 			Ok(quote_size) => Some(quote_size),
 			Err(e) => return Err(e),
@@ -92,7 +97,7 @@ pub fn enclave_request_state_provisioning<E: TlsRemoteAttestation + RemoteAttest
 		None
 	};
 
-	let quote_size = if !skip_ra {
+	let quote_size = if get_quote_data {
 		match enclave_api.qe_get_quote_size() {
 			Ok(quote_size) => Some(quote_size),
 			Err(e) => return Err(e),

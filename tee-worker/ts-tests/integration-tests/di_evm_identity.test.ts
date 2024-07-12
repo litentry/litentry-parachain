@@ -79,7 +79,8 @@ describe('Test Identity (evm direct invocation)', function () {
             bobEvmIdentity,
             bobEvmNonce,
             'ethereum',
-            context.web3Wallets.evm.Bob
+            context.web3Wallets.evm.Bob,
+            { prettifiedMessage: true }
         );
         const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({

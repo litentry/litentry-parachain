@@ -222,6 +222,12 @@ export const mockAssertions = [
             NftHolder: 'MFan',
         },
     },
+    {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'Mvp',
+        },
+    },
 
     // TokenHoldingAmount
     {
