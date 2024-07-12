@@ -34,14 +34,20 @@ export default {
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
-                Dynamic: "([u8;20],Bytes)",
+                Dynamic: "DynamicParams",
             },
         },
         AssertionSupportedNetwork: {
             _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
+        DynamicParams: {
+            smart_contract_id: "[u8;20]",
+            smart_contract_params: "Option<Bytes>",
+            return_log: "bool",
+        },
         RequestVCResult: {
             vc_payload: "AesOutput",
+            vc_logs: "Option<AesOutput>",
             pre_mutated_id_graph: "AesOutput",
             pre_id_graph_hash: "H256",
         },
@@ -230,6 +236,8 @@ export default {
                 "Cro",
                 "Inj",
                 "Bean",
+                "An",
+                "Tuna",
             ],
         },
         // PlatformUserType
@@ -238,7 +246,7 @@ export default {
         },
         // Web3NftType
         Web3NftType: {
-            _enum: ["WeirdoGhostGang", "Club3Sbt"],
+            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan"],
         },
     },
 };

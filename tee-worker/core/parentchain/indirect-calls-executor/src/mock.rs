@@ -5,13 +5,13 @@ use itp_types::{
 	parentchain::{
 		events::{
 			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
-			LinkIdentityRequested, OpaqueTaskPosted, ScheduledEnclaveRemoved, ScheduledEnclaveSet,
-			VCRequested,
+			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
 		},
-		FilterEvents, HandleParentchainEvents,
+		FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts,
 	},
 	RsaRequest, H256,
 };
+use sp_core::H160;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -57,13 +57,7 @@ impl FilterEvents for MockEvents {
 		Ok(Vec::new())
 	}
 
-	fn get_scheduled_enclave_set_events(&self) -> Result<Vec<ScheduledEnclaveSet>, Self::Error> {
-		Ok(Vec::new())
-	}
-
-	fn get_scheduled_enclave_removed_events(
-		&self,
-	) -> Result<Vec<ScheduledEnclaveRemoved>, Self::Error> {
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error> {
 		Ok(Vec::new())
 	}
 
@@ -85,7 +79,15 @@ impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
 where
 	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
 {
-	fn handle_events(&self, _: &Executor, _: impl FilterEvents) -> Result<Vec<H256>, Error> {
-		Ok(Vec::from([H256::default()]))
+	fn handle_events(
+		&self,
+		_: &Executor,
+		_: impl FilterEvents,
+	) -> Result<ProcessedEventsArtifacts, Error> {
+		Ok((
+			Vec::from([H256::default()]),
+			Vec::from([H160::default()]),
+			Vec::from([H160::default()]),
+		))
 	}
 }

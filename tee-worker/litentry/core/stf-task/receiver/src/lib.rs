@@ -236,7 +236,6 @@ where
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
 		if let Ok((shard, hash, call)) = receiver.recv() {
-			info!("Submitting trusted call to the pool");
 			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}

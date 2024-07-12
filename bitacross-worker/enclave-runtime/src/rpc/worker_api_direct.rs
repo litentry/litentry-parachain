@@ -48,10 +48,6 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-#[cfg(feature = "development")]
-use lc_scheduled_enclave::ScheduledEnclaveUpdater;
-use lc_scheduled_enclave::GLOBAL_SCHEDULED_ENCLAVE;
-use litentry_macros::if_development;
 use litentry_primitives::{AesRequest, DecryptableRequest};
 use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -218,22 +214,6 @@ where
 		Ok(json!(keys))
 	});
 
-	io.add_sync_method("state_getScheduledEnclave", move |_: Params| {
-		debug!("worker_api_direct rpc was called: state_getScheduledEnclave");
-		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.registry.read() {
-			Ok(registry) => {
-				let mut serialized_registry = vec![];
-				for (block_number, mrenclave) in registry.iter() {
-					serialized_registry.push((*block_number, *mrenclave));
-				}
-				RpcReturnValue::new(serialized_registry.encode(), false, DirectRequestStatus::Ok)
-					.to_hex()
-			},
-			Err(_err) => compute_hex_encoded_return_error("Poisoned registry storage"),
-		};
-		Ok(json!(json_value))
-	});
-
 	io.add_sync_method("author_getShard", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShard");
 		let shard = top_pool_author.list_handled_shards().first().copied().unwrap_or_default();
@@ -346,46 +326,6 @@ where
 			},
 		};
 		Ok(json!(json_value))
-	});
-
-	if_development!({
-		use itp_types::{MrEnclave, SidechainBlockNumber};
-		// state_setScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
-		io.add_sync_method("state_setScheduledEnclave", move |params: Params| {
-			match params.parse::<(SidechainBlockNumber, String)>() {
-				Ok((bn, mrenclave)) =>
-					return match hex::decode(&mrenclave) {
-						Ok(mrenclave) => {
-							let mut enclave_to_set: MrEnclave = [0u8; 32];
-							if mrenclave.len() != enclave_to_set.len() {
-								return Ok(json!(compute_hex_encoded_return_error(
-									"mrenclave len mismatch, expected 32 bytes long"
-								)))
-							}
-
-							enclave_to_set.copy_from_slice(&mrenclave);
-							return match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
-								Ok(()) => Ok(json!(RpcReturnValue::new(
-									vec![],
-									false,
-									DirectRequestStatus::Ok
-								)
-								.to_hex())),
-								Err(e) => {
-									let error_msg =
-										format!("Failed to set scheduled mrenclave {:?}", e);
-									Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-								},
-							}
-						},
-						Err(e) => {
-							let error_msg = format!("Failed to decode mrenclave {:?}", e);
-							Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					},
-				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-			}
-		});
 	});
 
 	// system_health
