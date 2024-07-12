@@ -34,6 +34,7 @@ impl NftName for Web3NftType {
 			Self::WeirdoGhostGang => "Weirdo Ghost Gang",
 			Self::Club3Sbt => "Club3 SBT",
 			Self::MFan => "MFAN",
+			Self::Mvp => "MEME VIP PASS",
 		}
 	}
 }
@@ -58,6 +59,9 @@ impl NftAddress for Web3NftType {
 			// MFan
 			(Self::MFan, Web3Network::Polygon) =>
 				Some("0x9aBc7C604C27622f9CD56bd1628F6321c32bBBf6"),
+			// Mvp
+			(Self::Mvp, Web3Network::Ethereum) =>
+				Some("0xAA813F8691B10Dc62bd616ae90b05A52f0C40C1D"),
 			_ => None,
 		}
 	}

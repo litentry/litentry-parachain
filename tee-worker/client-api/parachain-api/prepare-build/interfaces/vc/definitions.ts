@@ -246,7 +246,7 @@ export default {
         },
         // Web3NftType
         Web3NftType: {
-            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan"],
+            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan", "Mvp"],
         },
     },
 };

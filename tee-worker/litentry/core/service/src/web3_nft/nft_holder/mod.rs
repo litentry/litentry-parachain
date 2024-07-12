@@ -31,10 +31,9 @@ pub fn has_nft(
 	addresses: Vec<(Web3Network, String)>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
-	match nft_type {
-		Web3NftType::WeirdoGhostGang =>
-			common::has_nft_721(addresses, nft_type, data_provider_config),
-		Web3NftType::Club3Sbt => common::has_nft_1155(addresses, nft_type, data_provider_config),
-		Web3NftType::MFan => common::has_nft_721(addresses, nft_type, data_provider_config),
+	if nft_type == Web3NftType::Club3Sbt {
+		common::has_nft_1155(addresses, nft_type, data_provider_config)
+	} else {
+		common::has_nft_721(addresses, nft_type, data_provider_config)
 	}
 }
