@@ -14,12 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::{Perbill, DAYS};
 use frame_support::pallet_prelude::*;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 pub type RoundIndex = u32;
+pub type RoundDuration = u32;
 pub type Score = u32;
+
+pub const DEFAULT_ROUND_INTERVAL: RoundDuration = 7 * DAYS;
+pub const DEFAULT_SCORE_COEFFICIENT: Perbill = Perbill::from_percent(80);
+pub const DEFAULT_STAKE_COEFFICIENT: Perbill = Perbill::from_percent(20);
 
 /// an on/off flag
 #[derive(
@@ -53,7 +59,29 @@ pub struct RoundInfo<BlockNumber> {
 	pub start_block: BlockNumber,
 	/// The length of the current round in number of blocks
 	/// we force u32 type, BlockNumberFor<T> implements `AtLeast32BitUnsigned` so it's safe
-	pub duration: u32,
+	pub duration: RoundDuration,
+}
+
+#[derive(
+	Copy,
+	Clone,
+	Default,
+	PartialEq,
+	Eq,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	TypeInfo,
+	Deserialize,
+	Serialize,
+)]
+pub struct RoundSetting {
+	/// Interval of rounds in block number
+	pub interval: RoundDuration,
+	/// Coeffient applied to the score when calculating the reward proportion
+	pub score_coefficient: Perbill,
+	/// Coeffient applied to the stake amount when calculating the reward proportion
+	pub stake_coefficient: Perbill,
 }
 
 #[derive(

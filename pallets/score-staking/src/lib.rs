@@ -14,9 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+//! A pallet served as a staking pool separated from `pallet-parachain-staking`
+//!
+//! Once started, the reward is calculated every `RoundInterval` blocks, the
+//! snapshot of user state at that time will be used to calculate rewards.
+//!
+//! The yearly total issuance of this pool = YearlyIssuance * YearlyInflation,
+//! based on it and `RoundInterval`, the reward per round can be calculated.
+//!
+//! The scores come from external origin (e.g. IDHub), upon updating the scores
+//! the staked amount in pallet-parachain-staking is checked: users without any
+//! staking will **NOT** be recorded.
+//!
+//! Then the round reward for a specific user is calculated by:
+//!
+//! total_round_rewards *
+//!     (score_coefficient * S(i) + stake_coefficient * T(i))
+//!  /  (score_coefficient * S(a) + stake_coefficient * T(a))
+//!
+//! , where
+//! S(i): the score of this user
+//! T(i): the staked amount of this user
+//! S(a): the total scores of all accounts in `Scores` storage
+//! T(a): the total staked amount of all users, not only those in `Scores` storage
+
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
+use core_primitives::{DAYS, YEARS};
 use frame_support::traits::Currency;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{traits::CheckedSub, Perbill};
@@ -39,10 +64,10 @@ pub trait AccountIdConvert<T: Config> {
 pub mod pallet {
 	use super::*;
 
-	use core_primitives::{Identity, YEARS};
+	use core_primitives::Identity;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*,
+		pallet_prelude::{ValueQuery, *},
 		traits::{Imbalance, ReservableCurrency, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
@@ -63,8 +88,6 @@ pub mod pallet {
 		type YearlyIssuance: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		type YearlyInflation: Get<Perbill>;
-		#[pallet::constant]
-		type DefaultRoundInterval: Get<u32>;
 		/// The origin who manages this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The origin to feed scores
@@ -93,6 +116,8 @@ pub mod pallet {
 		InsufficientBalance,
 		// balance underflow
 		BalanceUnderflow,
+		// block number can't be converted to u32
+		BlockNumberConvertError,
 	}
 
 	#[pallet::event]
@@ -114,13 +139,18 @@ pub mod pallet {
 	pub type Round<T: Config> = StorageValue<_, RoundInfo<BlockNumberFor<T>>, ValueQuery>;
 
 	#[pallet::type_value]
-	pub fn DefaultRoundInterval<T: Config>() -> u32 {
-		T::DefaultRoundInterval::get()
+	pub fn DefaultRoundSetting<T: Config>() -> RoundSetting {
+		RoundSetting {
+			interval: DEFAULT_ROUND_INTERVAL,
+			score_coefficient: DEFAULT_SCORE_COEFFICIENT,
+			stake_coefficient: DEFAULT_STAKE_COEFFICIENT,
+		}
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn round_interval)]
-	pub type RoundInterval<T: Config> = StorageValue<_, u32, ValueQuery, DefaultRoundInterval<T>>;
+	#[pallet::getter(fn round_config)]
+	pub type RoundConfig<T: Config> =
+		StorageValue<_, RoundSetting, ValueQuery, DefaultRoundSetting<T>>;
 
 	// use `Twox64Concat` and `T::AccountId` for faster and shorter storage
 	// we might have tens of thousands of entries
@@ -175,7 +205,7 @@ pub mod pallet {
 			// 1. update round info
 			r.index = r.index.saturating_add(1);
 			r.start_block = now;
-			r.duration = RoundInterval::<T>::get();
+			r.duration = Self::round_config().interval;
 			Round::<T>::put(r);
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
 
@@ -213,7 +243,7 @@ pub mod pallet {
 			let start_block = frame_system::Pallet::<T>::block_number();
 			let mut r = Round::<T>::take();
 			r.start_block = start_block;
-			r.duration = Self::round_interval();
+			r.duration = Self::round_config().interval;
 			Round::<T>::put(r);
 			Self::deposit_event(Event::PoolStarted { start_block });
 			Ok(Pays::No.into())
@@ -230,7 +260,9 @@ pub mod pallet {
 			State::<T>::put(PoolState::Stopped);
 			// terminate the current round, advance the round index
 			let mut r = Round::<T>::take();
-			r.duration = (frame_system::Pallet::<T>::block_number() - r.start_block).into();
+			r.duration = (frame_system::Pallet::<T>::block_number() - r.start_block)
+				.try_into()
+				.map_err(|_| Error::<T>::BlockNumberConvertError)?;
 			r.index = r.index.checked_add(1).ok_or(Error::<T>::RoundIndexOverflow)?;
 			Round::<T>::put(r);
 			Self::deposit_event(Event::PoolStopped {});
