@@ -449,7 +449,6 @@ pub enum BitacrossRequestError {
 
 async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
 	let payload = get_request_payload(params)?;
-	error!("got payload");
 	let request = AesRequest::from_hex(&payload)
 		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
 

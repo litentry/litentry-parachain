@@ -62,7 +62,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	responder: Arc<Responder>,
 	event: CeremonyEvent,
 	ceremony_id: CeremonyId,
-	event_thread_pool: ThreadPool,
+	event_threads_pool: ThreadPool,
 	peers_map: Arc<Mutex<HashMap<[u8; 32], DirectRpcClient>>>,
 ) where
 	OCallApi: EnclaveAttestationOCallApi + 'static,
@@ -98,7 +98,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();
-					event_thread_pool.execute(move || {
+					event_threads_pool.execute(move || {
 						if let Err(e) = client.send(&request) {
 							error!(
 								"Could not send request to signer: {:?}, reason: {:?}",
@@ -109,7 +109,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share nonce, unknown signer: {:?}", signer_id);
 				}
-				warn!("nonce event_thread_pool: {}", event_thread_pool.queued_count());
+				warn!("nonce event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -138,7 +138,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();
-					event_thread_pool.execute(move || {
+					event_threads_pool.execute(move || {
 						if let Err(e) = client.send(&request) {
 							error!(
 								"Could not send request to signer: {:?}, reason: {:?}",
@@ -149,7 +149,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share partial signature, unknown signer: {:?}", signer_id);
 				}
-				warn!("sig event_thread_pool: {}", event_thread_pool.queued_count());
+				warn!("sig event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 		CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
@@ -199,7 +199,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();
-					event_thread_pool.execute(move || {
+					event_threads_pool.execute(move || {
 						if let Err(e) = client.send(&request) {
 							error!(
 								"Could not send request to signer: {:?}, reason: {:?}",
@@ -210,7 +210,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share killing info, unknown signer: {:?}", signer_id);
 				}
-				warn!("event_thread_pool: {}", event_thread_pool.queued_count());
+				warn!("event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 	}

@@ -242,44 +242,18 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
-	let command_threads = {
-		match std::env::var("command") {
-			Ok(val) => {
-				let command_threads = val.parse::<usize>().unwrap();
-				info!("start {} command_threads", val);
-				command_threads
-			},
-			Err(_) => {
-				let command_threads = 8;
-				info!("start default {} command_threads", command_threads);
-				command_threads
-			},
-		}
-	};
-	let event_threads = {
-		match std::env::var("event") {
-			Ok(val) => {
-				let event_threads = val.parse::<usize>().unwrap();
-				info!("start {} event_threads", val);
-				event_threads
-			},
-			Err(_) => {
-				let event_threads = 8;
-				info!("start default {} event_threads", event_threads);
-				event_threads
-			},
-		}
-	};
-	let command_thread_pool = ThreadPool::new(command_threads);
-	let event_thread_pool = ThreadPool::new(event_threads);
+	let command_threads_count = 2;
+	let event_threads_count = 2;
+	let command_threads_pool = ThreadPool::new(command_threads_count);
+	let event_threads_pool = ThreadPool::new(event_threads_count);
+	info!("start {} command threads, {} event threads", command_threads_count, event_threads_count);
 	let peers_map = Arc::new(Mutex::new(HashMap::new()));
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
 		let responses_sender = responses_sender.clone();
-		let event_thread_pool = event_thread_pool.clone();
+		let event_threads_pool = event_threads_pool.clone();
 		let peers_map = peers_map.clone();
-		warn!("receive task");
-		command_thread_pool.execute(move || {
+		command_threads_pool.execute(move || {
 			let (ceremony_id, command) =
 				match handle_request(&mut req.request, context_pool.clone()) {
 					Ok((processing_ret, to_process)) => {
@@ -418,17 +392,17 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						context_pool.responder.clone(),
 						event,
 						ceremony_id.clone(),
-						event_thread_pool.clone(),
+						event_threads_pool.clone(),
 						peers_map.clone(),
 					);
 				}
 			}
 		});
-		warn!("command_thread_pool: {}", command_thread_pool.queued_count());
+		warn!("command_threads_pool: {}", command_threads_pool.queued_count());
 	}
 
-	command_thread_pool.join();
-	event_thread_pool.join();
+	command_threads_pool.join();
+	event_threads_pool.join();
 	warn!("bit_across_task_receiver loop terminated");
 }
 

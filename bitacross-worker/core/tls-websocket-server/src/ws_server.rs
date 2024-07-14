@@ -250,9 +250,8 @@ where
 
 		// Run the event loop.
 		'outer_event_loop: loop {
-			error!("waiting for polling...");
 			let num_events = poll.poll(&mut events, None)?;
-			error!("Number of readiness events: {}", num_events);
+			debug!("Number of readiness events: {}", num_events);
 
 			for event in events.iter() {
 				match event.token() {
