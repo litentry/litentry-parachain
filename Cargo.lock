@@ -10583,6 +10583,7 @@ dependencies = [
  "pallet-preimage",
  "pallet-proxy",
  "pallet-scheduler",
+ "pallet-score-staking",
  "pallet-session",
  "pallet-sudo",
  "pallet-teebag",

@@ -60,19 +60,7 @@ pub struct RoundInfo<BlockNumber> {
 	pub start_block: BlockNumber,
 }
 
-#[derive(
-	Copy,
-	Clone,
-	Default,
-	PartialEq,
-	Eq,
-	Encode,
-	Decode,
-	RuntimeDebug,
-	TypeInfo,
-	Deserialize,
-	Serialize,
-)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RoundSetting {
 	/// Interval of rounds in block number
 	pub interval: RoundDuration,

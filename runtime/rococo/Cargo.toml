@@ -87,6 +87,7 @@ pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
 pallet-parachain-staking = { workspace = true }
+pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
 pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
@@ -161,6 +162,7 @@ runtime-benchmarks = [
     "pallet-teebag/runtime-benchmarks",
     "pallet-vc-management/runtime-benchmarks",
     "pallet-account-fix/runtime-benchmarks",
+    "pallet-score-staking/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -245,6 +247,7 @@ std = [
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
+    "pallet-score-staking/std",
     "pallet-teebag/std",
     "pallet-vc-management/std",
     "pallet-account-fix/std",
@@ -303,4 +306,5 @@ try-runtime = [
     "pallet-account-fix/try-runtime",
     "pallet-bitacross/try-runtime",
     "pallet-bitacross-mimic/try-runtime",
+    "pallet-score-staking/try-runtime",
 ]

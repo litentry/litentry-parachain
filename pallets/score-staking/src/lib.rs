@@ -46,7 +46,6 @@ use frame_support::traits::Currency;
 use pallet_parachain_staking as ParaStaking;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{traits::CheckedSub, Perbill};
-use sp_std::marker::PhantomData;
 
 pub use pallet::*;
 
