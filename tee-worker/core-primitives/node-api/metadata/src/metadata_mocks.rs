@@ -16,7 +16,8 @@
 */
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes,
+	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
@@ -64,6 +65,10 @@ pub struct NodeMetadataMock {
 	vcmp_request_vc: u8,
 	vcmp_vc_issued: u8,
 	vcmp_some_error: u8,
+	// EVM Assertion
+	evm_assertions_module: u8,
+	evm_assertions_store_assertion: u8,
+	evm_assertions_void_assertion: u8,
 
 	utility_module: u8,
 	utility_batch: u8,
@@ -115,6 +120,10 @@ impl NodeMetadataMock {
 			vcmp_request_vc: 0u8,
 			vcmp_vc_issued: 3u8,
 			vcmp_some_error: 9u8,
+
+			evm_assertions_module: 76u8,
+			evm_assertions_store_assertion: 77u8,
+			evm_assertions_void_assertion: 78u8,
 
 			utility_module: 80u8,
 			utility_batch: 0u8,
@@ -289,5 +298,15 @@ impl BalancesCallIndexes for NodeMetadataMock {
 impl TimestampCallIndexes for NodeMetadataMock {
 	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.timestamp_module, self.timestamp_set])
+	}
+}
+
+impl EvmAssertionsCallIndexes for NodeMetadataMock {
+	fn store_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_store_assertion])
+	}
+
+	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
 	}
 }

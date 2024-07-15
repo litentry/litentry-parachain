@@ -28,7 +28,7 @@ use events::{
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::{bounded::alloc, H256};
+use sp_core::{bounded::alloc, H160, H256};
 use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 
 use self::events::ParentchainBlockProcessed;
@@ -124,6 +124,8 @@ pub enum ExtrinsicStatus {
 	Failed,
 }
 
+pub type ProcessedEventsArtifacts = (Vec<H256>, Vec<H160>, Vec<H160>);
+
 pub trait HandleParentchainEvents<Executor, TCS, Error>
 where
 	Executor: IndirectExecutor<TCS, Error>,
@@ -133,7 +135,7 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<Vec<H256>, Error>;
+	) -> Result<ProcessedEventsArtifacts, Error>;
 }
 
 #[derive(Debug)]
