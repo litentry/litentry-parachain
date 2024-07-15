@@ -17,7 +17,6 @@ members = [
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
     'precompiles/*',
-    'precompiles/utils/macro',
     'primitives/core',
     'primitives/core/proc-macros',
     'primitives/core/macros',
@@ -259,7 +258,6 @@ pallet-identity-management = { path = "pallets/identity-management", default-fea
 pallet-parachain-staking = { path = "pallets/parachain-staking", default-features = false }
 pallet-teebag = { path = "pallets/teebag", default-features = false }
 pallet-vc-management = { path = "pallets/vc-management", default-features = false }
-precompile-utils = { path = "precompiles/utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "precompiles/assets-erc20", default-features = false }
 pallet-evm-precompile-bridge-transfer = { path = "precompiles/bridge-transfer", default-features = false }
 pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-staking", default-features = false }
