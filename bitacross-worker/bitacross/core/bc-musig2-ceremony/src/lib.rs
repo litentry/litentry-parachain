@@ -137,7 +137,7 @@ pub struct MuSig2Ceremony<AK: AccessKey<KeyType = SchnorrPair>> {
 	ticks_left: u32,
 	agg_key: Option<PublicKey>,
 	// indicates whether it's check run - signature verification result is returned instead of signature
-	check: bool,
+	check_run: bool,
 }
 
 impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
@@ -151,7 +151,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		commands: Vec<CeremonyCommand>,
 		signing_key_access: Arc<AK>,
 		ttl: u32,
-		check: bool,
+		check_run: bool,
 	) -> Result<Self, String> {
 		info!("Creating new ceremony {:?} and events {:?}", payload, commands);
 		if signers.len() < 3 {
@@ -220,7 +220,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			second_round: None,
 			ticks_left: ttl,
 			agg_key: Some(agg_key_copy),
-			check,
+			check_run,
 		})
 	}
 
@@ -393,24 +393,11 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						SignBitcoinPayload::TaprootSpendable(p, _) => p,
 						SignBitcoinPayload::WithTweaks(p, _) => p,
 					};
-
-					info!("Message {:?}", message);
-
-					info!("Verification result: ");
-					let result = match verify_single(self.agg_key.unwrap(), signature, message) {
-						Ok(_) => {
-							info!("OK!");
-							true
-						},
-						Err(_) => {
-							info!("NOK!");
-							false
-						},
-					};
+					let result = verify_single(self.agg_key.unwrap(), signature, message).is_ok();
 					self.events.push(CeremonyEnded(
 						signature.to_bytes(),
 						self.aes_key,
-						self.check,
+						self.check_run,
 						result,
 					));
 				}

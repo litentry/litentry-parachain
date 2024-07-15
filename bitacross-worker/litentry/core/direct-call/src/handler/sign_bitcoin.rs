@@ -45,7 +45,7 @@ pub fn handle<
 	signer: Identity,
 	payload: SignBitcoinPayload,
 	aes_key: [u8; 32],
-	check: bool,
+	check_run: bool,
 	relayer_registry: &RRL,
 	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
 	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
@@ -91,7 +91,7 @@ pub fn handle<
 			pending_commands.into_iter().map(|c| c.command).collect(),
 			signer_access_key,
 			ceremony_tick_to_live,
-			check,
+			check_run,
 		)
 		.map_err(|e| {
 			error!("Could not start ceremony, error: {:?}", e);

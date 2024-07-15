@@ -192,7 +192,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 							CeremonyEvent::CeremonyEnded(
 								signature,
 								request_aes_key,
-								is_check,
+								is_check_run,
 								verification_result,
 							) => {
 								debug!(
@@ -200,7 +200,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 									ceremony_id_to_process, signature
 								);
 								let hash = blake2_256(&ceremony_id_to_process.encode());
-								let result = if is_check {
+								let result = if is_check_run {
 									verification_result.encode()
 								} else {
 									let result = signature;
