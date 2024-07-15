@@ -17,7 +17,7 @@
 // Copyright 2019-2022 PureStake Inc.
 // Copyright 2022      Stake Technologies
 // This file is part of AssetsERC20 package, originally developed by Purestake Inc.
-// AssetsERC20 package used in Astar Network in terms of GPLv3.
+// AssetsERC20 package used in Litentry Network in terms of GPLv3.
 //
 // AssetsERC20 is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -85,8 +85,8 @@ pub trait AddressToAssetId<AssetId> {
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
-/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Astar specific
-/// 2048-4095 Astar specific precompiles
+/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Litentry specific
+/// 2048-4095 Litentry specific precompiles
 /// Asset precompiles can only fall between
 ///     0xFFFFFFFF00000000000000000000000000000000 - 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 /// The precompile for AssetId X, where X is a u128 (i.e.16 bytes), if 0XFFFFFFFF + Bytes(AssetId)
