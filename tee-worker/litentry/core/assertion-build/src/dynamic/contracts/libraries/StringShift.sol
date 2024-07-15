@@ -69,8 +69,8 @@ library StringShift {
 	/**
 	 * @dev Extracts a substring from a given string.
 	 * @param str The original string.
-	 * @param start The starting position of the substring.
-	 * @param end The ending position of the substring.
+	 * @param start The starting position of the original string.
+	 * @param end The ending position of the original string.
 	 * @return The extracted substring.
 	 */
 	function substring(
