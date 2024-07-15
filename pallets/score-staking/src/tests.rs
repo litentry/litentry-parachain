@@ -156,9 +156,9 @@ fn score_staking_works() {
 		run_to_block(3);
 		pallet_parachain_staking::DelegatorState::<Test>::insert(
 			alice(),
-			Delegator::new(bob(), bob(), 1000),
+			Delegator::new(bob(), bob(), 1000 * UNIT),
 		);
-		pallet_parachain_staking::Total::<Test>::put(1000);
+		pallet_parachain_staking::Total::<Test>::put(1000 * UNIT);
 
 		assert_ok!(ScoreStaking::update_score(
 			RuntimeOrigin::signed(alice()),
@@ -186,7 +186,7 @@ fn score_staking_works() {
 
 		// increase the total staked amount, alice should win less
 		run_to_block(13);
-		pallet_parachain_staking::Total::<Test>::put(2000);
+		pallet_parachain_staking::Total::<Test>::put(2000 * UNIT);
 
 		run_to_block(17);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
@@ -202,10 +202,10 @@ fn score_staking_works() {
 		run_to_block(18);
 		pallet_parachain_staking::DelegatorState::<Test>::insert(
 			bob(),
-			Delegator::new(alice(), alice(), 7000),
+			Delegator::new(alice(), alice(), 7000 * UNIT),
 		);
 		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), bob().into(), 1000));
-		pallet_parachain_staking::Total::<Test>::put(8000);
+		pallet_parachain_staking::Total::<Test>::put(8000 * UNIT);
 
 		run_to_block(22);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {

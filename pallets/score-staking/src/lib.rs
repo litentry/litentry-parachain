@@ -98,6 +98,12 @@ pub mod pallet {
 		type YearlyIssuance: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		type YearlyInflation: Get<Perbill>;
+		/// The amplifier applied to the score calculation, so that
+		/// it's of the same magnitutude as stake balance
+		#[pallet::constant]
+		// TODO: here `ParaStaking::BalanceOf` is used for easy type cohesion,
+		//       can we use `BalanceOf<Self>` everywhere?
+		type ScoreAmplifier: Get<ParaStaking::BalanceOf<Self>>;
 		/// The origin who manages this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
@@ -228,7 +234,7 @@ pub mod pallet {
 			let total_stake = ParaStaking::Pallet::<T>::total();
 			let total_score =
 				Scores::<T>::iter_values().fold(0u32, |a, b| a.checked_add(b.score).unwrap_or(a));
-			let score_coef = Self::round_config().score_coefficient;
+			let score_coef = Self::round_config().score_coefficient * T::ScoreAmplifier::get();
 			let stake_coef = Self::round_config().stake_coefficient;
 
 			let mut total_user_reward = BalanceOf::<T>::zero();

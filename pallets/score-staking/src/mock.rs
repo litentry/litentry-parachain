@@ -177,6 +177,7 @@ impl pallet_score_staking::Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
+	type ScoreAmplifier = ConstU128<{ UNIT }>;
 }
 
 pub fn alice() -> AccountId {
