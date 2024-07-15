@@ -43,15 +43,22 @@ xcm = { workspace = true }
 [features]
 default = ["std"]
 std = [
-	"environmental/std",
-	"fp-evm/std",
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-evm/std",
-	"parity-scale-codec/std",
-	"sp-core/std",
-	"sp-io/std",
-	"sp-std/std",
+    "environmental/std",
+    "fp-evm/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-evm/std",
+    "parity-scale-codec/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-std/std",
 ]
 codec-xcm = ["xcm"]
-testing = ["derive_more", "hex-literal", "scale-info", "serde", "similar-asserts", "std"]
+testing = [
+    "derive_more",
+    "hex-literal",
+    "scale-info",
+    "serde",
+    "similar-asserts",
+    "std",
+]
