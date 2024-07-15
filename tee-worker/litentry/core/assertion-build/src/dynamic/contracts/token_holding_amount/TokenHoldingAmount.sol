@@ -23,6 +23,7 @@ import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 import "./Constants.sol";
+import "../libraries/StringShift.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
 	mapping(string => string) internal tokenNames;
@@ -157,7 +158,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			1,
 			variable,
 			AssertionLogic.Op.GreaterEq,
-			Strings.toString(min / Constants.decimals_factor)
+			StringShift.toShiftedString(min, Constants.decimals_factor)
 		);
 		if (max > 0) {
 			AssertionLogic.andOp(
@@ -165,7 +166,10 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 				2,
 				variable,
 				AssertionLogic.Op.LessThan,
-				Strings.toString(uint256(max) / Constants.decimals_factor)
+				StringShift.toShiftedString(
+					uint256(max),
+					Constants.decimals_factor
+				)
 			);
 		}
 
