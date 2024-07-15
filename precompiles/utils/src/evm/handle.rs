@@ -33,7 +33,7 @@ pub trait PrecompileHandleExt: PrecompileHandle {
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,
-	) -> Result<(), evm::ExitError>;
+	) -> Result<(), fp_evm::ExitError>;
 
 	/// Record cost of a log manually.
 	/// This can be useful to record log costs early when their content have static size.

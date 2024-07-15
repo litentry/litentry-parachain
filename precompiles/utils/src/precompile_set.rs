@@ -418,10 +418,10 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		target_gas: Option<u64>,
 		is_static: bool,
 		context: &fp_evm::Context,
-	) -> (evm::ExitReason, Vec<u8>) {
+	) -> (fp_evm::ExitReason, Vec<u8>) {
 		if !self.allow_subcalls {
 			return (
-				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
+				fp_evm::ExitReason::Revert(fp_evm::ExitRevert::Reverted),
 				crate::solidity::revert::revert_as_bytes("subcalls disabled for this precompile"),
 			)
 		}
