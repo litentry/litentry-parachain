@@ -42,7 +42,7 @@ use std::sync::SgxMutex as Mutex;
 
 use core::ops::Deref;
 
-use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry};
+use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
 use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
@@ -213,22 +213,31 @@ where
 	ERL: EnclaveRegistryLookup + 'static,
 	SRL: SignerRegistryLookup + 'static,
 {
-	let enclave_shielding_key = context
-		.shielding_key
-		.retrieve_key()
-		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
+	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
+		let err = format!("Failed to retrieve shielding key: {:?}", e);
+		error!("{}", err);
+		err
+	})?;
 	let dc = request
 		.decrypt(Box::new(enclave_shielding_key))
 		.ok()
 		.and_then(|v| DirectCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| "Failed to decode payload".to_string())?;
+		.ok_or_else(|| {
+			let err = "Failed to decode payload".to_string();
+			error!("{}", err);
+			err
+		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
-		Err(_) => return Err("Failed to get mrenclave".encode()),
+		Err(_) => {
+			let err = "Failed to get mrenclave";
+			error!("{}", err);
+			return Err(err.encode())
+		},
 	};
+	debug!("Direct call is: {:?}", dc);
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
-
 	match dc.call {
 		DirectCall::SignBitcoin(signer, aes_key, payload) => {
 			let hash = blake2_256(&payload.encode());
@@ -236,15 +245,40 @@ where
 				signer,
 				payload,
 				aes_key,
+				false,
 				context.relayer_registry_lookup.deref(),
 				context.musig2_ceremony_registry.clone(),
 				context.musig2_ceremony_pending_commands.clone(),
 				context.signer_registry_lookup.clone(),
+				context.enclave_registry_lookup.as_ref(),
 				&context.signing_key_pub,
 				context.bitcoin_key_repository.clone(),
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
+				aes_encrypt_default(&aes_key, &e.encode()).encode()
+			})?;
+			Ok(BitAcrossProcessingResult::Submitted(hash))
+		},
+		DirectCall::CheckSignBitcoin(signer) => {
+			let payload = SignBitcoinPayload::Derived([0u8; 32].to_vec());
+			let aes_key = [0u8; 32];
+			let hash = blake2_256(&payload.encode());
+			sign_bitcoin::handle(
+				signer,
+				payload,
+				aes_key,
+				true,
+				context.relayer_registry_lookup.deref(),
+				context.musig2_ceremony_registry.clone(),
+				context.musig2_ceremony_pending_commands.clone(),
+				context.signer_registry_lookup.clone(),
+				context.enclave_registry_lookup.as_ref(),
+				&context.signing_key_pub,
+				context.bitcoin_key_repository.clone(),
+			)
+			.map_err(|e| {
+				error!("SignBitcoinCheck error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})?;
 			Ok(BitAcrossProcessingResult::Submitted(hash))

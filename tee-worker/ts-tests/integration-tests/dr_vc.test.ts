@@ -168,7 +168,7 @@ describe('Test Vc (direct request)', function () {
                 // if response is a A1 or A2, etc....
                 const vcresponse = context.api.createType('RequestVcResultOrError', res.value);
                 console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`);
-                if (!vcresponse.is_error) await assertVc(context, aliceSubstrateIdentity, vcresponse.payload);
+                if (vcresponse.result.isOk) await assertVc(context, aliceSubstrateIdentity, vcresponse.result.asOk);
             };
 
             // the +res+ below is the last message with "do_watch: false" property and we may not need it at all

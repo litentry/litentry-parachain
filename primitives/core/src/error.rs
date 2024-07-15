@@ -131,13 +131,9 @@ pub enum IMPError {
 	DeactivateIdentityFailed(ErrorDetail),
 	#[codec(index = 2)]
 	ActivateIdentityFailed(ErrorDetail),
-	// scheduled encalve import error
-	#[codec(index = 3)]
-	ImportScheduledEnclaveFailed,
-
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	UnclassifiedError(ErrorDetail),
 }
 

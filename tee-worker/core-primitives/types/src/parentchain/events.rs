@@ -1,16 +1,16 @@
 use super::alloc::{format, vec::Vec};
 use crate::{
 	AccountId, Assertion, Balance, BlockNumber, Hash, MrEnclave, RsaRequest, ShardIdentifier,
-	SidechainBlockNumber, WorkerType,
+	WorkerType,
 };
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{hex::ToHexPrefixed, stringify::account_id_to_string};
+
 use sp_core::H160;
 use substrate_api_client::ac_node_api::StaticEvent;
 
 // System pallet events
-
 #[derive(Encode, Decode, Debug)]
 pub struct ExtrinsicSuccess;
 
@@ -79,50 +79,25 @@ impl StaticEvent for ParentchainBlockProcessed {
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct ScheduledEnclaveSet {
+pub struct EnclaveUnauthorized {
 	pub worker_type: WorkerType,
-	pub sidechain_block_number: SidechainBlockNumber,
 	pub mrenclave: MrEnclave,
 }
 
-impl core::fmt::Display for ScheduledEnclaveSet {
+impl core::fmt::Display for EnclaveUnauthorized {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
 		let message = format!(
-			"[{}:{}] :: worker_type: {:?}, sidechain_block_number: {}, mrenclave: {:?}",
-			ScheduledEnclaveSet::PALLET,
-			ScheduledEnclaveSet::EVENT,
+			"EnclaveUnauthorized :: worker_type: {:?}, mrenclave: {}",
 			self.worker_type,
-			self.sidechain_block_number,
-			self.mrenclave
+			self.mrenclave.to_hex()
 		);
 		write!(f, "{}", message)
 	}
 }
 
-impl StaticEvent for ScheduledEnclaveSet {
+impl StaticEvent for EnclaveUnauthorized {
 	const PALLET: &'static str = "Teebag";
-	const EVENT: &'static str = "ScheduledEnclaveSet";
-}
-
-#[derive(Encode, Decode, Debug)]
-pub struct ScheduledEnclaveRemoved {
-	pub worker_type: WorkerType,
-	pub sidechain_block_number: SidechainBlockNumber,
-}
-
-impl core::fmt::Display for ScheduledEnclaveRemoved {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message = format!(
-			"ScheduledEnclaveRemoved :: worker_type: {:?}, sidechain_block_number: {}",
-			self.worker_type, self.sidechain_block_number
-		);
-		write!(f, "{}", message)
-	}
-}
-
-impl StaticEvent for ScheduledEnclaveRemoved {
-	const PALLET: &'static str = "Teebag";
-	const EVENT: &'static str = "ScheduledEnclaveRemoved";
+	const EVENT: &'static str = "EnclaveUnauthorized";
 }
 
 // IdentityManagement events

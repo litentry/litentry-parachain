@@ -25,8 +25,8 @@ use itp_sgx_crypto::{
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::{enclave_signer::StfEnclaveSigner, traits::StfEnclaveSigning};
 use itp_stf_interface::{
-	mocks::GetterExecutorMock, parentchain_pallet::ParentchainPalletInstancesInterface,
-	system_pallet::SystemPalletAccountInterface, InitState, StateCallInterface,
+	mocks::GetterExecutorMock, system_pallet::SystemPalletAccountInterface, InitState,
+	StateCallInterface,
 };
 use itp_stf_primitives::{
 	traits::TrustedCallVerification,
@@ -35,7 +35,7 @@ use itp_stf_primitives::{
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use itp_types::{parentchain::ParentchainId, RsaRequest};
+use itp_types::RsaRequest;
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
@@ -92,8 +92,6 @@ pub fn nonce_is_computed_correctly() {
 		.public()
 		.into();
 	let mut state = TestStf::init_state(enclave_account.clone());
-	let vault = AccountId::new([2u8; 32]);
-	TestStf::init_shard_vault_account(&mut state, vault, ParentchainId::Litentry).unwrap();
 	// only used to create the enclave signer, the state is **not** synchronised
 	let state_observer: Arc<ObserveStateMock<SgxExternalities>> =
 		Arc::new(ObserveStateMock::new(state.clone()));

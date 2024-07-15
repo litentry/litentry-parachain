@@ -14,18 +14,17 @@
 	limitations under the License.
 
 */
+
 use crate::{Vec, ENCLAVE_ACCOUNT_KEY};
 use codec::{Decode, Encode};
 use frame_support::ensure;
 use ita_sgx_runtime::{ParentchainLitentry, ParentchainTargetA, ParentchainTargetB};
 use itp_stf_interface::{BlockMetadata, ShardCreationInfo};
-use itp_stf_primitives::{
-	error::{StfError, StfResult},
-	types::AccountId,
-};
+use itp_stf_primitives::error::{StfError, StfResult};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
-use itp_types::{parentchain::ParentchainId, Index};
+use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
+use litentry_hex_utils::hex_encode;
 use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;
@@ -148,40 +147,38 @@ pub fn get_expected_raw_message(
 	blake2_256(payload.as_slice()).to_vec()
 }
 
+// [P-923] Verify a web3 identity
+// This function validates the signature with both the raw message and its prettified format. Any of them is valid.
+// The prettified version was introduced to extend the support for utf-8 signatures for browser wallets that
+// do not play well with raw bytes signing, like Solana's Phantom and OKX wallets.
+//
+// The prettified format is the raw message with a prefix "Token: ".
 pub fn verify_web3_identity(
 	identity: &Identity,
-	raw_msg: &[u8],
-	data: &Web3ValidationData,
+	expected_raw_msg: &[u8],
+	validation_data: &Web3ValidationData,
 ) -> StfResult<()> {
+	let mut expected_prettified_msg = hex_encode(expected_raw_msg);
+	expected_prettified_msg.insert_str(0, "Token: ");
+
+	let expected_prettified_msg = expected_prettified_msg.as_bytes();
+
+	let received_message = validation_data.message().as_slice();
+
 	ensure!(
-		raw_msg == data.message().as_slice(),
+		expected_raw_msg == received_message || expected_prettified_msg == received_message,
 		StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
 
+	let signature = validation_data.signature();
+
 	ensure!(
-		data.signature().verify(raw_msg, identity),
+		signature.verify(expected_raw_msg, identity)
+			|| signature.verify(expected_prettified_msg, identity),
 		StfError::LinkIdentityFailed(ErrorDetail::VerifyWeb3SignatureFailed)
 	);
 
 	Ok(())
-}
-
-/// get shard vault from any of the parentchain interfaces
-/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
-pub fn shard_vault() -> Option<(AccountId, ParentchainId)> {
-	get_shard_vaults().into_iter().next()
-}
-
-/// We assume it has been ensured elsewhere that there can't be multiple shard vaults on multiple parentchains
-pub fn get_shard_vaults() -> Vec<(AccountId, ParentchainId)> {
-	[
-		(ParentchainLitentry::shard_vault(), ParentchainId::Litentry),
-		(ParentchainTargetA::shard_vault(), ParentchainId::TargetA),
-		(ParentchainTargetB::shard_vault(), ParentchainId::TargetB),
-	]
-	.into_iter()
-	.filter_map(|vp| vp.0.map(|v| (v, vp.1)))
-	.collect()
 }
 
 pub fn shard_creation_info() -> ShardCreationInfo {

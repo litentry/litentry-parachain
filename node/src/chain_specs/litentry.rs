@@ -17,9 +17,10 @@
 use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
-	AccountId, AuraId, Balance, BalancesConfig, CouncilMembershipConfig, GenesisConfig,
-	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
+	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
+	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, UNIT,
+	WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -230,5 +231,11 @@ fn generate_genesis(
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
+		teebag: TeebagConfig {
+			allow_sgx_debug_mode: true,
+			admin: None,
+			mode: TeebagOperationalMode::Development,
+		},
+		bitacross: BitacrossConfig { admin: None },
 	}
 }

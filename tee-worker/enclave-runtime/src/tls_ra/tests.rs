@@ -27,7 +27,7 @@ use crate::{
 };
 use ita_stf::State;
 use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::WorkerModeProvider;
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_stf_interface::InitState;
 use itp_stf_primitives::types::AccountId;
@@ -35,7 +35,6 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_types::ShardIdentifier;
 use lc_evm_dynamic_assertions::mock::AssertionsSealMock;
-use lc_scheduled_enclave::mock::ScheduledEnclaveSealMock;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sgx_types::{sgx_quote_sign_type_t, sgx_target_info_t};
 use std::{
@@ -79,10 +78,6 @@ pub fn test_tls_ra_server_client_networking() {
 	let state_key_encoded = vec![5, 2, 3, 7];
 	let state_encoded = Vec::from([1u8; 26000]); // Have a decently sized state, so read() must be called multiple times.
 	let light_client_state_encoded = Vec::from([1u8; 10000]); // Have a decently sized state, so read() must be called multiple times.
-	let scheduled_enclave_state_encoded = vec![
-		4, 0, 0, 0, 0, 0, 0, 0, 0, 51, 162, 48, 234, 94, 231, 35, 92, 167, 183, 221, 185, 208, 147,
-		215, 100, 27, 7, 66, 47, 78, 248, 110, 91, 83, 225, 121, 14, 125, 180, 231, 175,
-	];
 	let assertions_state_encoded = vec![];
 
 	let server_seal_handler = SealHandlerMock::new(
@@ -90,7 +85,6 @@ pub fn test_tls_ra_server_client_networking() {
 		Arc::new(RwLock::new(state_key_encoded.clone())),
 		Arc::new(RwLock::new(state_encoded.clone())),
 		Arc::new(RwLock::new(light_client_state_encoded.clone())),
-		Arc::new(RwLock::new(scheduled_enclave_state_encoded.clone())),
 		Arc::new(RwLock::new(assertions_state_encoded.clone())),
 	);
 	let initial_client_state = vec![0, 0, 1];
@@ -100,7 +94,6 @@ pub fn test_tls_ra_server_client_networking() {
 	let client_state_key = Arc::new(RwLock::new(initial_client_state_key.clone()));
 	let client_state = Arc::new(RwLock::new(initial_client_state.clone()));
 	let client_light_client_state = Arc::new(RwLock::new(initial_client_light_client_state));
-	let scheduled_enclave_state = Arc::new(RwLock::new(Vec::new()));
 	let assertions_state = Arc::new(RwLock::new(Vec::new()));
 
 	let client_seal_handler = SealHandlerMock::new(
@@ -108,7 +101,6 @@ pub fn test_tls_ra_server_client_networking() {
 		client_state_key.clone(),
 		client_state.clone(),
 		client_light_client_state.clone(),
-		scheduled_enclave_state.clone(),
 		assertions_state.clone(),
 	);
 
@@ -200,7 +192,6 @@ fn create_seal_handler(
 	let state_handler = Arc::new(HandleStateMock::default());
 	state_handler.reset(state, shard).unwrap();
 	let seal = Arc::new(LightValidationStateSealMock::new());
-	let scheduled_enclave_seal = Arc::new(ScheduledEnclaveSealMock::new());
 	let assertions_seal = Arc::new(AssertionsSealMock::new());
 
 	SealHandler::new(
@@ -208,7 +199,6 @@ fn create_seal_handler(
 		state_key_repository,
 		shielding_key_repository,
 		seal,
-		scheduled_enclave_seal,
 		assertions_seal,
 	)
 }

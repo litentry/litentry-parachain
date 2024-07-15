@@ -27,7 +27,6 @@ use crate::{
 		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
-	shard_vault::add_shard_vault_proxy,
 	tls_ra::seal_handler::UnsealStateAndKeys,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -94,20 +93,7 @@ where
 		let request = self.await_shard_request_from_client()?;
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, await_shard_request_from_client() OK");
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, write_all()");
-		self.write_provisioning_payloads(&request.shard)?;
-
-		info!(
-			"will make client account 0x{} a proxy of vault for shard {:?}",
-			hex::encode(request.account.clone()),
-			request.shard
-		);
-		if let Err(e) = add_shard_vault_proxy(request.shard, &request.account) {
-			// we can't be sure that registering the proxy will succeed onchain at this point,
-			// therefore we can accept an error here as the client has to verify anyway and
-			// retry if it failed
-			error!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
-		};
-		Ok(())
+		self.write_provisioning_payloads(&request.shard)
 	}
 
 	/// Read the shard of the state the client wants to receive.

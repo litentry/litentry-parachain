@@ -17,7 +17,7 @@ fn get_trusted_peers_urls(
 	peers_size: u32,
 	sidechain_api: Arc<dyn SidechainBridge>,
 ) -> sgx_status_t {
-	debug!("    Entering ocall_get_trusted_peers_urls");
+	trace!("    Entering ocall_get_trusted_peers_urls");
 
 	let peers_encoded = match sidechain_api.get_trusted_peers_urls() {
 		Ok(r) => r,

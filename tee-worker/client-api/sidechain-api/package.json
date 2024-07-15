@@ -3,7 +3,9 @@
     "type": "module",
     "license": "ISC",
     "main": "dist/src/index.js",
-    "version": "0.0.1-1",
+    "module": "dist/src/index.js",
+    "sideEffects": false,
+    "version": "0.0.2-next.8",
     "scripts": {
         "clean": "rm -rf dist build node_modules",
         "update-metadata": "../../bin/litentry-cli print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json",
