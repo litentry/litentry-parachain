@@ -57,7 +57,7 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,
-	) -> Result<(), evm::ExitError> {
+	) -> Result<(), fp_evm::ExitError> {
 		self.record_cost(crate::prelude::RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		// TODO: record ref time when precompile will be benchmarked
 		self.record_external_cost(None, Some(data_max_encoded_len as u64))

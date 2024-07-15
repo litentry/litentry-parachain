@@ -18,8 +18,9 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::testing::PrettyLog;
-use evm::{ExitRevert, ExitSucceed};
-use fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer};
+use fp_evm::{
+	Context, ExitError, ExitReason, ExitRevert, ExitSucceed, Log, PrecompileHandle, Transfer,
+};
 use sp_core::{H160, H256};
 use sp_std::boxed::Box;
 

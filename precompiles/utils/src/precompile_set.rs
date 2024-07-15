@@ -315,7 +315,7 @@ pub enum AddressType {
 pub fn get_address_type<R: pallet_evm::Config>(
 	handle: &mut impl PrecompileHandle,
 	address: H160,
-) -> Result<AddressType, ExitError> {
+) -> Result<AddressType, fp_evm::ExitError> {
 	// AccountCodesMetadata:
 	// Blake2128(16) + H160(20) + CodeMetadata(40)
 	handle.record_db_read::<R>(76)?;
@@ -413,11 +413,11 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 	fn call(
 		&mut self,
 		address: H160,
-		transfer: Option<evm::Transfer>,
+		transfer: Option<fp_evm::Transfer>,
 		input: Vec<u8>,
 		target_gas: Option<u64>,
 		is_static: bool,
-		context: &evm::Context,
+		context: &fp_evm::Context,
 	) -> (evm::ExitReason, Vec<u8>) {
 		if !self.allow_subcalls {
 			return (
@@ -429,7 +429,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		self.handle.call(address, transfer, input, target_gas, is_static, context)
 	}
 
-	fn record_cost(&mut self, cost: u64) -> Result<(), evm::ExitError> {
+	fn record_cost(&mut self, cost: u64) -> Result<(), fp_evm::ExitError> {
 		self.handle.record_cost(cost)
 	}
 
@@ -442,7 +442,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		address: H160,
 		topics: Vec<H256>,
 		data: Vec<u8>,
-	) -> Result<(), evm::ExitError> {
+	) -> Result<(), fp_evm::ExitError> {
 		self.handle.log(address, topics, data)
 	}
 
@@ -454,7 +454,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		self.handle.input()
 	}
 
-	fn context(&self) -> &evm::Context {
+	fn context(&self) -> &fp_evm::Context {
 		self.handle.context()
 	}
 
@@ -470,7 +470,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		&mut self,
 		ref_time: Option<u64>,
 		proof_size: Option<u64>,
-	) -> Result<(), ExitError> {
+	) -> Result<(), fp_evm::ExitError> {
 		self.handle.record_external_cost(ref_time, proof_size)
 	}
 
