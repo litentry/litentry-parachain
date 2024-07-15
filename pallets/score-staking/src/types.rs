@@ -20,6 +20,7 @@ use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 pub type RoundIndex = u32;
+/// we force u32 type, BlockNumberFor<T> implements `AtLeast32BitUnsigned` so it's safe
 pub type RoundDuration = u32;
 pub type Score = u32;
 
@@ -57,9 +58,6 @@ pub struct RoundInfo<BlockNumber> {
 	pub index: RoundIndex,
 	/// The start block of the current round
 	pub start_block: BlockNumber,
-	/// The length of the current round in number of blocks
-	/// we force u32 type, BlockNumberFor<T> implements `AtLeast32BitUnsigned` so it's safe
-	pub duration: RoundDuration,
 }
 
 #[derive(

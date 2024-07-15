@@ -53,6 +53,12 @@ pub use pallet::*;
 mod types;
 pub use types::*;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -94,14 +100,14 @@ pub mod pallet {
 		type YearlyInflation: Get<Perbill>;
 		/// The origin who manages this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		/// The origin to feed scores
-		type ScoreFeedOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
 		type AccountIdConvert: AccountIdConvert<Self>;
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		// unthorized origin
+		UnauthorizedOrigin,
 		// the user account doesn't have an entry in parachain-staking
 		UserNotStaked,
 		// the user account has an entry but the total staked amount is (somehow) zero
@@ -174,7 +180,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub state: PoolState,
-		marker: PhantomData<T>,
+		pub marker: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
@@ -203,8 +209,7 @@ pub mod pallet {
 			let mut r = Round::<T>::get();
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 0));
 
-			let previous_duration = r.duration;
-			if (now - r.start_block) < previous_duration.into() {
+			if !is_modulo(now - r.start_block, Self::round_config().interval.into()) {
 				// nothing to do there
 				return weight
 			}
@@ -213,13 +218,12 @@ pub mod pallet {
 			// 1. update round info
 			r.index = r.index.saturating_add(1);
 			r.start_block = now;
-			r.duration = Self::round_config().interval;
 			Round::<T>::put(r);
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
 
 			// 2. calculate payout
 			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get() /
-				YEARS.into()) * previous_duration.into();
+				YEARS.into()) * Self::round_config().interval.into();
 
 			let total_stake = ParaStaking::Pallet::<T>::total();
 			let total_score =
@@ -239,6 +243,7 @@ pub mod pallet {
 					stake_coef * total_stake +
 						score_coef * <u32 as Into<ParaStaking::BalanceOf<T>>>::into(total_score),
 				) * round_reward;
+
 				p.unpaid += user_reward;
 				total_user_reward += user_reward;
 				Scores::<T>::insert(&a, p);
@@ -270,7 +275,9 @@ pub mod pallet {
 
 		/// Start (or restart) a currently stopped pool
 		///
-		/// It sets the RoundInfo.start_block to the current block number
+		/// It:
+		/// - sets the RoundInfo.start_block to the current block number
+		/// - advances the round index
 		#[pallet::call_index(1)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn start_pool(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -279,29 +286,20 @@ pub mod pallet {
 			State::<T>::put(PoolState::Running);
 			let start_block = frame_system::Pallet::<T>::block_number();
 			let mut r = Round::<T>::take();
+			r.index = r.index.checked_add(1).ok_or(Error::<T>::RoundIndexOverflow)?;
 			r.start_block = start_block;
-			r.duration = Self::round_config().interval;
 			Round::<T>::put(r);
 			Self::deposit_event(Event::PoolStarted { start_block });
 			Ok(Pays::No.into())
 		}
 
-		/// Stop a currently running pool, should be called as caution, as it will cause
-		/// the current round to pause and eventually have a different duration than round
-		/// interval
+		/// Stop a currently running pool, should be called as caution
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn stop_pool(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::AdminOrigin::ensure_origin(origin)?;
 			ensure!(Self::state() == PoolState::Running, Error::<T>::PoolNotRun);
 			State::<T>::put(PoolState::Stopped);
-			// terminate the current round, advance the round index
-			let mut r = Round::<T>::take();
-			r.duration = (frame_system::Pallet::<T>::block_number() - r.start_block)
-				.try_into()
-				.map_err(|_| Error::<T>::BlockNumberConvertError)?;
-			r.index = r.index.checked_add(1).ok_or(Error::<T>::RoundIndexOverflow)?;
-			Round::<T>::put(r);
 			Self::deposit_event(Event::PoolStopped {});
 			Ok(Pays::No.into())
 		}
@@ -318,6 +316,10 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// Intentionally use `Identity` type to lower the hurdle of mapping to the
+		// desired substrate account as it's handled on-chain instead of by client.
+		//
+		// Subject to requirement change though
 		#[pallet::call_index(4)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn update_score(
@@ -325,7 +327,10 @@ pub mod pallet {
 			user: Identity,
 			score: Score,
 		) -> DispatchResultWithPostInfo {
-			T::ScoreFeedOrigin::ensure_origin(origin)?;
+			ensure!(
+				Some(ensure_signed(origin)?) == Self::score_feeder(),
+				Error::<T>::UnauthorizedOrigin
+			);
 			let account = T::AccountIdConvert::convert(
 				user.to_account_id().ok_or(Error::<T>::ConvertIdentityFailed)?,
 			);
@@ -399,4 +404,11 @@ pub mod pallet {
 			Self::claim(origin, payment.unpaid)
 		}
 	}
+}
+
+fn is_modulo<BlockNumber: PartialEq + From<u32> + sp_std::ops::Rem<Output = BlockNumber>>(
+	dividend: BlockNumber,
+	divisor: BlockNumber,
+) -> bool {
+	dividend % divisor == BlockNumber::from(0u32)
 }

@@ -23,6 +23,7 @@ pallet-parachain-staking = { workspace = true }
 [dev-dependencies]
 sp-io = { workspace = true }
 pallet-balances = { workspace = true }
+sp-keyring = { workspace = true }
 
 [features]
 default = ["std"]
