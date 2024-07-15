@@ -1878,9 +1878,4 @@ pub mod pallet {
 			)
 		}
 	}
-
-	// #[cfg(test)]
-	// impl<T: Config> Pallet<T> {
-	// 	pub fn set_total_in_test(total: Balance)
-	// }
 }
