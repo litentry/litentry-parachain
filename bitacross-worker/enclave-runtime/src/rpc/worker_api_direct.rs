@@ -44,16 +44,18 @@ use itp_sgx_crypto::{
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_stf_executor::getter_executor::ExecuteGetter;
+use itp_stf_primitives::types::KeyPair;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use litentry_primitives::{AesRequest, DecryptableRequest};
+use lc_direct_call::DirectCall;
+use litentry_primitives::{aes_encrypt_default, AesRequest, DecryptableRequest, Identity};
 use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
-use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -93,6 +95,9 @@ where
 
 	let signer_lookup_cloned = signer_lookup.clone();
 	let shielding_key_cloned = shielding_key.clone();
+	let shielding_key_cloned_2 = shielding_key.clone();
+	let signing_key_repository_cloned = signing_key_repository.clone();
+	let ocall_api_cloned = ocall_api.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
 		let rsa_pubkey = match shielding_key_cloned.retrieve_pubkey() {
@@ -154,6 +159,37 @@ where
 				.to_hex(),
 			};
 			Ok(json!(json_value))
+		}
+	});
+
+	io.add_method("bitacross_checkSignBitcoin", move |_params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_checkSignBitcoin");
+		let request = prepare_check_sign_bitcoin_request(
+			signing_key_repository_cloned.as_ref(),
+			shielding_key_cloned_2.as_ref(),
+			ocall_api_cloned.as_ref(),
+		);
+		async move {
+			if let Ok(request) = request {
+				let params = Params::Array(vec![jsonrpc_core::Value::String(request.to_hex())]);
+				let json_value = match request_bit_across_inner(params).await {
+					Ok(value) => value.to_hex(),
+					Err(error) => RpcReturnValue {
+						value: error,
+						do_watch: false,
+						status: DirectRequestStatus::Error,
+					}
+					.to_hex(),
+				};
+				Ok(json!(json_value))
+			} else {
+				Ok(json!(RpcReturnValue {
+					value: vec![],
+					do_watch: false,
+					status: DirectRequestStatus::Error,
+				}
+				.to_hex()))
+			}
 		}
 	});
 
@@ -354,6 +390,35 @@ where
 	});
 
 	io
+}
+
+fn prepare_check_sign_bitcoin_request<AccessShieldingKey, OcallApi>(
+	signing_key_repository: &EnclaveSigningKeyRepository,
+	shielding_key: &AccessShieldingKey,
+	ocall_api: &OcallApi,
+) -> Result<AesRequest, ()>
+where
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
+	<AccessShieldingKey as AccessKey>::KeyType:
+		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
+	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
+{
+	let aes_key = [0u8; 32];
+	let signer = signing_key_repository.retrieve_key().map_err(|_| ())?;
+	let shielding_key = shielding_key.retrieve_pubkey().map_err(|_| ())?;
+	let identity = Identity::Substrate(signer.public().into());
+	let mrenclave = ocall_api.get_mrenclave_of_self().map_err(|_| ())?.m;
+	let call = DirectCall::CheckSignBitcoin(identity).sign(
+		&KeyPair::Ed25519(Box::new(signer)),
+		&mrenclave,
+		&mrenclave.into(),
+	);
+	let encrypted = aes_encrypt_default(&aes_key, &call.encode());
+	Ok(AesRequest {
+		shard: mrenclave.into(),
+		key: shielding_key.encrypt(&aes_key).map_err(|_| ())?,
+		payload: encrypted,
+	})
 }
 
 // Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
