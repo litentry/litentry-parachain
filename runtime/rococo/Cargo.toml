@@ -67,7 +67,6 @@ xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 
-orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
@@ -77,6 +76,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 
 core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
+pallet-assets = { workspace = true }
 pallet-asset-manager = { workspace = true }
 pallet-bitacross = { workspace = true }
 pallet-bitacross-mimic = { workspace = true }
@@ -95,6 +95,7 @@ fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
+pallet-evm-precompile-assets-erc20 = { workspace = true }
 pallet-evm-precompile-blake2 = { workspace = true }
 pallet-evm-precompile-bn128 = { workspace = true }
 pallet-evm-precompile-dispatch = { workspace = true }
@@ -183,10 +184,10 @@ std = [
     "frame-system/std",
     "frame-try-runtime?/std",
     "frame-system-rpc-runtime-api/std",
-    "orml-tokens/std",
     "orml-traits/std",
     "orml-xtokens/std",
     "pallet-asset-manager/std",
+    "pallet-assets/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -195,6 +196,7 @@ std = [
     "pallet-democracy/std",
     "pallet-ethereum/std",
     "pallet-evm/std",
+    "pallet-evm-precompile-assets-erc20/std",
     "pallet-evm-precompile-blake2/std",
     "pallet-evm-precompile-simple/std",
     "pallet-evm-precompile-bn128/std",
@@ -265,9 +267,9 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
-    "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
+    "pallet-assets/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",

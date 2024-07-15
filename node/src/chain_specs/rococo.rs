@@ -247,7 +247,7 @@ fn generate_genesis(
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
-		tokens: Default::default(),
+		assets: Default::default(),
 		ethereum: Default::default(),
 		evm: Default::default(),
 		teebag: TeebagConfig {

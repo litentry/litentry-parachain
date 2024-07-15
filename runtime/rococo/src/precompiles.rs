@@ -1,109 +1,138 @@
-// Copyright 2020-2024 Trust Computing GmbH.
-// This file is part of Litentry.
-//
-// Litentry is free software: you can redistribute it and/or modify
+// This file is part of Astar.
+
+// Copyright (C) 2019-2023 Stake Technologies Pte.Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+// Astar is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-//
-// Litentry is distributed in the hope that it will be useful,
+
+// Astar is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use pallet_evm::{
-	ExitRevert, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
-	PrecompileResult, PrecompileSet,
-};
+// You should have received a copy of the GNU General Public License
+// along with Astar. If not, see <http://www.gnu.org/licenses/>.
+
+//! The Astar Network EVM precompiles. This can be compiled with ``#[no_std]`, ready for Wasm.
+
+use crate::RuntimeCall;
+use frame_support::{parameter_types, traits::Contains};
+use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
-use pallet_evm_precompile_bridge_transfer::BridgeTransferPrecompile;
 use pallet_evm_precompile_dispatch::Dispatch;
 use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
-use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-use sp_core::H160;
-use sp_std::{fmt::Debug, marker::PhantomData};
+use pallet_evm_precompile_sr25519::Sr25519Precompile;
+use pallet_evm_precompile_xcm::XcmPrecompile;
+use precompile_utils::precompile_set::*;
+use sp_std::fmt::Debug;
 
-/// The PrecompileSet installed in the Litentry Rococo runtime.
-#[derive(Debug, Default, Clone, Copy)]
-pub struct RococoNetworkPrecompiles<R>(PhantomData<R>);
-
-impl<R> RococoNetworkPrecompiles<R> {
-	pub fn new() -> Self {
-		Self(Default::default())
-	}
-
-	/// Return all addresses that contain precompiles. This can be used to populate dummy code
-	/// under the precompile.
-	pub fn used_addresses() -> impl Iterator<Item = H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 1024, 1025, 1026, 1027, 20480 + 45, 20480 + 61]
-			.into_iter()
-			.map(hash)
-	}
+/// The asset precompile address prefix. Addresses that match against this prefix will be routed
+/// to Erc20AssetsPrecompileSet
+pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
+parameter_types! {
+	pub AssetPrefix: &'static [u8] = ASSET_PRECOMPILE_ADDRESS_PREFIX;
 }
 
-/// The following distribution has been decided for the precompiles
-/// 0-1023: Ethereum Mainnet Precompiles
-/// 1024-2047 Precompiles that are not in Ethereum Mainnet
-impl<R> PrecompileSet for RococoNetworkPrecompiles<R>
-where
-	ParachainStakingPrecompile<R>: Precompile,
-	BridgeTransferPrecompile<R>: Precompile,
-	Dispatch<R>: Precompile,
-	R: pallet_evm::Config,
+pub struct DispatchFilterValidate<RuntimeCall, Filter: Contains<RuntimeCall>>(
+	PhantomData<(RuntimeCall, Filter)>,
+);
+
+impl<AccountId, RuntimeCall: GetDispatchInfo, Filter: Contains<RuntimeCall>>
+	DispatchValidateT<AccountId, RuntimeCall> for DispatchFilterValidate<RuntimeCall, Filter>
 {
-	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
-		let address = handle.code_address();
-		if let IsPrecompileResult::Answer { is_precompile, .. } =
-			self.is_precompile(address, u64::MAX)
-		{
-			if is_precompile && address > hash(9) && handle.context().address != address {
-				return Some(Err(PrecompileFailure::Revert {
-					exit_status: ExitRevert::Reverted,
-					output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
-				}))
-			}
+	fn validate_before_dispatch(
+		_origin: &AccountId,
+		call: &RuntimeCall,
+	) -> Option<PrecompileFailure> {
+		let info = call.get_dispatch_info();
+		let paid_normal_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
+		if !paid_normal_call {
+			return Some(PrecompileFailure::Error {
+				exit_status: ExitError::Other("invalid call".into()),
+			})
 		}
-		match address {
-			// Ethereum precompiles :
-			a if a == hash(1) => Some(ECRecover::execute(handle)),
-			a if a == hash(2) => Some(Sha256::execute(handle)),
-			a if a == hash(3) => Some(Ripemd160::execute(handle)),
-			a if a == hash(4) => Some(Identity::execute(handle)),
-			a if a == hash(5) => Some(Modexp::execute(handle)),
-			a if a == hash(6) => Some(Bn128Add::execute(handle)),
-			a if a == hash(7) => Some(Bn128Mul::execute(handle)),
-			a if a == hash(8) => Some(Bn128Pairing::execute(handle)),
-			a if a == hash(9) => Some(Blake2F::execute(handle)),
-			// nor Ethereum precompiles :
-			a if a == hash(1024) => Some(Sha3FIPS256::execute(handle)),
-			a if a == hash(1025) => Some(Dispatch::<R>::execute(handle)),
-			a if a == hash(1026) => Some(ECRecoverPublicKey::execute(handle)),
-			a if a == hash(1027) => Some(Ed25519Verify::execute(handle)),
-			// Litentry precompiles (starts from 0x5000):
-			// ParachainStaking: pallet_parachain_staking = 45
-			a if a == hash(20480 + 45) => Some(ParachainStakingPrecompile::<R>::execute(handle)),
-			// BridgeTransfer: pallet_bridge_transfer = 61
-			a if a == hash(20480 + 61) => Some(BridgeTransferPrecompile::<R>::execute(handle)),
-			// Default
-			_ => None,
-		}
-	}
-
-	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: Self::used_addresses().any(|x| x == address),
-			extra_cost: 0,
+		if Filter::contains(call) {
+			None
+		} else {
+			Some(PrecompileFailure::Error {
+				exit_status: ExitError::Other("call filtered out".into()),
+			})
 		}
 	}
 }
 
-fn hash(a: u64) -> H160 {
-	H160::from_low_u64_be(a)
+/// Precompile checks for ethereum spec precompiles
+/// We allow DELEGATECALL to stay compliant with Ethereum behavior.
+type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
+
+/// Filter that only allows whitelisted runtime call to pass through dispatch precompile
+pub struct WhitelistedCalls;
+
+impl Contains<RuntimeCall> for WhitelistedCalls {
+	fn contains(t: &RuntimeCall) -> bool {
+		match t {
+			RuntimeCall::Assets(pallet_assets::Call::transfer { .. }) => true,
+			_ => false,
+		}
+	}
 }
+/// The PrecompileSet installed in the rococo runtime.
+#[precompile_utils::precompile_name_from_address]
+pub type PrecompilesSetAt<R, C> = (
+	// Ethereum precompiles:
+	// We allow DELEGATECALL to stay compliant with Ethereum behavior.
+	PrecompileAt<AddressU64<1>, ECRecover, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<2>, Sha256, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<3>, Ripemd160, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<4>, Identity, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<5>, Modexp, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<6>, Bn128Add, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<7>, Bn128Mul, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<8>, Bn128Pairing, EthereumPrecompilesChecks>,
+	PrecompileAt<AddressU64<9>, Blake2F, EthereumPrecompilesChecks>,
+	// Non-Litentry specific nor Ethereum precompiles :
+	PrecompileAt<AddressU64<1024>, Sha3FIPS256, (CallableByContract, CallableByPrecompile)>,
+	PrecompileAt<
+		AddressU64<1025>,
+		Dispatch<R, DispatchFilterValidate<RuntimeCall, WhitelistedCalls>>,
+		// Not callable from smart contract nor precompiles, only EOA accounts
+		// TODO: test this without the gensis hack for blacklisted
+		(),
+	>,
+	PrecompileAt<AddressU64<1026>, ECRecoverPublicKey, (CallableByContract, CallableByPrecompile)>,
+	PrecompileAt<AddressU64<1027>, Ed25519Verify, (CallableByContract, CallableByPrecompile)>,
+	// Litentry precompiles (starts from 0x5000):
+	// ParachainStaking: pallet_parachain_staking = 45 + 20480
+	PrecompileAt<
+		AddressU64<20525>,
+		ParachainStakingPrecompile<R>,
+		(CallableByContract, CallableByPrecompile),
+	>,
+	// BridgeTransfer: pallet_bridge_transfer = 61 + 20480
+	PrecompileAt<
+		AddressU64<20541>,
+		BridgeTransferPrecompile<R>,
+		(CallableByContract, CallableByPrecompile),
+	>,
+);
+
+pub type RococoNetworkPrecompiles<R, C> = PrecompileSetBuilder<
+	R,
+	(
+		// Skip precompiles if out of range.
+		PrecompilesInRangeInclusive<
+			// We take range as last precompile index, UPDATE this once new prcompile is added
+			(AddressU64<1>, AddressU64<20484>),
+			PrecompilesSetAt<R, C>,
+		>,
+		// Prefixed precompile sets (XC20)
+		PrecompileSetStartingWith<AssetPrefix, Erc20AssetsPrecompileSet<R>, CallableByContract>,
+	),
+>;

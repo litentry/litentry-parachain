@@ -55,7 +55,7 @@ pub const RELAY_UNIT: u128 = 1;
 type XTokens<R> = orml_xtokens::Pallet<R>;
 type ExtrinsicFilter<R> = pallet_extrinsic_filter::Pallet<R>;
 type Balances<R> = pallet_balances::Pallet<R>;
-type Tokens<R> = orml_tokens::Pallet<R>;
+type Assets<R> = pallet_assets::Pallet<R>;
 type AssetManager<R> = pallet_asset_manager::Pallet<R>;
 type ParachainSystem<R> = cumulus_pallet_parachain_system::Pallet<R>;
 type PolkadotXcm<R> = pallet_xcm::Pallet<R>;
@@ -94,7 +94,7 @@ pub trait TestXCMRequirements {
 	type ParaRuntime: ParaRuntimeRequirements
 		+ frame_system::Config<AccountId = AccountId, RuntimeOrigin = Self::ParaOrigin>
 		+ orml_xtokens::Config<Balance = Balance, CurrencyId = CurrencyId<Self::ParaRuntime>>
-		+ orml_tokens::Config<Balance = Balance, CurrencyId = AssetId>
+		+ pallet_assets::Config<Balance = Balance, AssetId = AssetId>
 		+ pallet_asset_manager::Config<ForeignAssetType = CurrencyId<Self::ParaRuntime>>
 		+ pallet_treasury::Config
 		+ cumulus_pallet_parachain_system::Config;
@@ -154,7 +154,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -162,7 +162,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
+			Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
 			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 
@@ -221,14 +221,14 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 	});
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
 			0
 		);
 		// Check the treasury of remote chain's asset XCM
-		assert_eq!(Tokens::<R::ParaRuntime>::free_balance(0, &xcm_fees_account), 0);
+		assert_eq!(Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account), 0);
 	});
 
 	R::ParaA::execute_with(|| {
@@ -256,7 +256,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -264,7 +264,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
+			Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
 			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 	});
@@ -357,7 +357,7 @@ where
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -515,7 +515,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token: ParaA Token in Para B
 				&bob()
 			),
@@ -664,7 +664,7 @@ where
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token: ParaA Token in Para B
 				&bob()
 			),
@@ -795,7 +795,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 	R::ParaB::execute_with(|| {
 		// The remote received and ignored
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -838,7 +838,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 	R::ParaB::execute_with(|| {
 		// The remote received and handled exactly same result as normal transaction
 		assert_eq!(
-			Tokens::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::free_balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -991,7 +991,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	});
 	R::ParaA::execute_with(|| {
 		// Message ignored
-		assert_eq!(Tokens::<R::ParaRuntime>::free_balance(1, &bob()), 0);
+		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 0);
 	});
 
 	// Relay root manipulate the soveregin account of Relay on Parachain A succeed
@@ -1029,7 +1029,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	});
 	R::ParaA::execute_with(|| {
 		// Relay root is similar Sibling root
-		assert_eq!(Tokens::<R::ParaRuntime>::free_balance(1, &bob()), 10_000 * RELAY_UNIT);
+		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 10_000 * RELAY_UNIT);
 	});
 
 	// But as relay, Xcm without Buy execution is also fine
@@ -1060,7 +1060,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	R::ParaA::execute_with(|| {
 		// We trust Relay root with even more power than Sibling root. They can easily manipulate
 		// thei R::ParaRuntime asset on our chain
-		assert_eq!(Tokens::<R::ParaRuntime>::free_balance(1, &bob()), 30_000 * RELAY_UNIT);
+		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 30_000 * RELAY_UNIT);
 	});
 
 	// Relay root manipulate LIT on Parachain A failed
@@ -1316,6 +1316,16 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		register_channel_info::<R::ParaRuntime>(2, 1);
 	});
 	R::ParaA::execute_with(|| {
+		// normal create is wrong
+		// need to set asset is_frozen to True, otherwise no existing account (i.e. no native token)
+		// is not allowed to proccessing assets token
+		assert_ok!(Assets::force_create(
+			RawOrigin::Root.into(),
+			0,
+			R::ParaOrigin::signed(alice()),
+			true,
+			1
+		));
 		assert_ok!(AssetManager::<R::ParaRuntime>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			CurrencyId::<R::ParaRuntime>::ParachainReserve(Box::new(
