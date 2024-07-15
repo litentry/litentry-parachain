@@ -137,6 +137,7 @@ pub trait EnclaveRegistryUpdater {
 pub trait EnclaveRegistryLookup {
 	fn contains_key(&self, account: &Address32) -> bool;
 	fn get_all(&self) -> Vec<(Address32, String)>;
+	fn get_worker_url(&self, account: &Address32) -> Option<String>;
 }
 
 impl EnclaveRegistrySealer for EnclaveRegistry {
@@ -238,6 +239,12 @@ impl EnclaveRegistryLookup for EnclaveRegistry {
 		registry.iter().map(|(k, v)| (*k, v.clone())).collect()
 	}
 
+	#[cfg(feature = "std")]
+	fn get_worker_url(&self, account: &Address32) -> Option<String> {
+		let registry = self.registry.read().unwrap();
+		registry.get(account).cloned()
+	}
+
 	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: &Address32) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
@@ -250,5 +257,12 @@ impl EnclaveRegistryLookup for EnclaveRegistry {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
 		let registry = self.registry.read().unwrap();
 		registry.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
+	}
+
+	#[cfg(feature = "sgx")]
+	fn get_worker_url(&self, account: &Address32) -> Option<String> {
+		// Using unwrap becaused poisoned locks are unrecoverable errors
+		let registry = self.registry.read().unwrap();
+		registry.get(account).cloned()
 	}
 }

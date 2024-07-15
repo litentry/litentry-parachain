@@ -16,6 +16,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod peers;
+
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
@@ -26,7 +28,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use bc_enclave_registry::EnclaveRegistryLookup;
 use codec::Encode;
 use core::time::Duration;
-use itc_direct_rpc_client::{RpcClient, RpcClientFactory};
+use itc_direct_rpc_client::RpcClientFactory;
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
@@ -37,7 +39,7 @@ use itp_utils::hex::ToHexPrefixed;
 use log::{debug, error, info, trace, warn};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
-use std::vec::Vec;
+use std::{collections::LinkedList, vec::Vec};
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -47,6 +49,7 @@ use bc_musig2_ceremony::{
 	SignerId,
 };
 
+use crate::peers::Musig2Peers;
 use itp_rpc::{Id, RpcRequest};
 use itp_sgx_crypto::schnorr::Pair as SchnorrPair;
 use itp_types::{DirectRequestStatus, Hash};
@@ -60,6 +63,8 @@ use std::{
 	sync::{mpsc::channel, Arc},
 	vec,
 };
+
+type CeremonyPendingCommandsRegistry = HashMap<CeremonyId, LinkedList<(SignerId, RpcRequest)>>;
 
 #[allow(clippy::too_many_arguments)]
 pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELDAK, Responder>(
@@ -84,20 +89,10 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 	std::thread::spawn(move || {
 		let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
 		let identity = Identity::Substrate(my_identity);
-		let mut peers_map = HashMap::new();
 		let mut ceremonies_to_remove = vec![];
+		let mut peers = Musig2Peers::new(enclave_registry.clone(), client_factory.clone());
+		let mut pending_ceremony_requests: CeremonyPendingCommandsRegistry = Default::default();
 		loop {
-			enclave_registry.get_all().iter().for_each(|(identity, address)| {
-				if my_identity != *identity && !peers_map.contains_key(identity.as_ref()) {
-					info!("creating new connection to peer: {:?}", address);
-					match client_factory.create(address, responses_sender.clone()) {
-						Ok(client) => {
-							peers_map.insert(*identity.as_ref(), client);
-						},
-						Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
-					}
-				}
-			});
 			{
 				// do not hold lock for too long
 				let ceremonies_to_process: Vec<CeremonyId> =
@@ -109,6 +104,38 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 					};
 
 				for ceremony_id_to_process in ceremonies_to_process {
+					// try to push all pending requests first ...
+					if let Some(ceremony_pending_requests) =
+						pending_ceremony_requests.get_mut(&ceremony_id_to_process)
+					{
+						debug!(
+							"Got pending request for ceremony: {:?}, requests len: {:?}",
+							ceremony_id_to_process,
+							ceremony_pending_requests.len()
+						);
+						let mut retained_pending_requests = LinkedList::new();
+						while let Some((signer_id, request)) = ceremony_pending_requests.pop_front()
+						{
+							debug!(
+								"Trying to send pending request: {:?}, to signer: {:?}",
+								request, signer_id
+							);
+
+							// recreate connections if needed
+							let _ = peers.connect(&signer_id, &responses_sender);
+							if peers.send(&signer_id, &request).is_err() {
+								// could not send request again, schedule for next round
+								retained_pending_requests.push_back((signer_id, request));
+							}
+						}
+						if retained_pending_requests.is_empty() {
+							pending_ceremony_requests.remove(&ceremony_id_to_process);
+						} else {
+							pending_ceremony_requests
+								.insert(ceremony_id_to_process.clone(), retained_pending_requests);
+						}
+					}
+
 					// do not hold lock for too long as logic below includes I/O
 					let events = if let Ok(mut ceremonies) = ceremony_registry.try_lock() {
 						if let Some(ceremony) = ceremonies.get_mut(&ceremony_id_to_process) {
@@ -140,6 +167,17 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										nonce.serialize(),
 									);
 
+									//create connections to peers if needed
+									for signer_id in signers.iter() {
+										if let Err(e) = peers.connect(signer_id, &responses_sender)
+										{
+											error!(
+												"Could not connect to signer {:?}, reason: {:?}",
+												signer_id, e
+											);
+										}
+									}
+
 									debug!(
 										"Sharing nonce with signer: {:?} for ceremony: {:?}",
 										signer_id, ceremony_id_to_process
@@ -152,11 +190,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_signer::<ClientFactory>(
-										&request,
+									send_to_signer_or_store::<ClientFactory, ER>(
+										&mut peers,
+										&mut pending_ceremony_requests,
+										&ceremony_id_to_process,
 										signer_id,
-										&mut peers_map,
-									);
+										request,
+									)
 								});
 							},
 							CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -182,11 +222,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_signer::<ClientFactory>(
-										&request,
+									send_to_signer_or_store::<ClientFactory, ER>(
+										&mut peers,
+										&mut pending_ceremony_requests,
+										&ceremony_id_to_process,
 										signer_id,
-										&mut peers_map,
-									);
+										request,
+									)
 								});
 							},
 							CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
@@ -252,7 +294,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers::<ClientFactory>(&request, &mut peers_map);
+									send_to_signer_or_store::<ClientFactory, ER>(
+										&mut peers,
+										&mut pending_ceremony_requests,
+										&ceremony_id_to_process,
+										signer_id,
+										request,
+									);
 								});
 							},
 							CeremonyEvent::CeremonyTimedOut(signers, request_aes_key) => {
@@ -296,7 +344,13 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 										mr_enclave,
 										direct_call,
 									);
-									send_to_all_signers::<ClientFactory>(&request, &mut peers_map);
+									send_to_signer_or_store::<ClientFactory, ER>(
+										&mut peers,
+										&mut pending_ceremony_requests,
+										&ceremony_id_to_process,
+										signer_id,
+										request,
+									)
 								});
 							},
 						}
@@ -320,6 +374,7 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 							debug!("Removing ceremony {:?}", ceremony_id);
 							let _ = ceremonies.remove_entry(ceremony_id);
 							let _ = ceremony_commands.remove_entry(ceremony_id);
+							pending_ceremony_requests.remove_entry(ceremony_id);
 						});
 						ceremonies_to_remove = vec![];
 					} else {
@@ -344,30 +399,21 @@ pub fn init_ceremonies_thread<ClientFactory, AK, ER, OCallApi, SIGNINGAK, SHIELD
 	});
 }
 
-fn send_to_signer<ClientFactory>(
-	request: &RpcRequest,
+fn send_to_signer_or_store<ClientFactory: RpcClientFactory, ER: EnclaveRegistryLookup>(
+	peers: &mut Musig2Peers<ER, ClientFactory, ClientFactory::Client>,
+	pending_ceremony_requests: &mut CeremonyPendingCommandsRegistry,
+	ceremony_id_to_process: &CeremonyId,
 	signer_id: &SignerId,
-	peers: &mut HashMap<SignerId, ClientFactory::Client>,
-) where
-	ClientFactory: RpcClientFactory,
-{
-	if let Some(client) = peers.get_mut(signer_id) {
-		if let Err(e) = client.send(request) {
-			error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
+	request: RpcRequest,
+) {
+	if peers.send(signer_id, &request).is_err() {
+		peers.remove(signer_id);
+		if !pending_ceremony_requests.contains_key(ceremony_id_to_process) {
+			pending_ceremony_requests.insert(ceremony_id_to_process.clone(), LinkedList::new());
 		}
-	}
-}
-
-fn send_to_all_signers<ClientFactory>(
-	request: &RpcRequest,
-	peers: &mut HashMap<SignerId, ClientFactory::Client>,
-) where
-	ClientFactory: RpcClientFactory,
-{
-	for (signer_id, client) in peers.iter_mut() {
-		if let Err(e) = client.send(request) {
-			error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e)
-		}
+		// it was present or just added
+		let pending_requests = pending_ceremony_requests.get_mut(ceremony_id_to_process).unwrap();
+		pending_requests.push_back((*signer_id, request))
 	}
 }
 
