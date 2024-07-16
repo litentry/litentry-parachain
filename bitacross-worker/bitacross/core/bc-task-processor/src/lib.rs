@@ -51,7 +51,7 @@ use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyEvent, CeremonyId,
 	CeremonyRegistry, SignBitcoinPayload,
 };
-use bc_musig2_runner::process_event;
+use bc_musig2_event::process_event;
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};

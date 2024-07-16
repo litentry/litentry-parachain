@@ -48,7 +48,7 @@ use bc_enclave_registry::EnclaveRegistryUpdater;
 use bc_musig2_ceremony::{CeremonyCommandTmp, CeremonyId, CeremonyRegistry, MuSig2Ceremony};
 use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 use bc_signer_registry::SignerRegistryUpdater;
-use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
+use bc_task_processor::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_direct_rpc_server::{
@@ -234,13 +234,13 @@ pub(crate) fn init_enclave(
 
 	let enclave_registry = Arc::new(EnclaveRegistry::new(base_dir));
 	enclave_registry.init().map_err(|e| Error::Other(e.into()))?;
-	GLOBAL_ENCLAVE_REGISTRY.initialize(enclave_registry.clone());
+	GLOBAL_ENCLAVE_REGISTRY.initialize(enclave_registry);
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
-		ocall_api.clone(),
+		ocall_api,
 		signing_key_repository,
 		bitcoin_key_repository,
 		ethereum_key_repository,

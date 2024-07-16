@@ -1,5 +1,5 @@
 [package]
-name = "bc-task-receiver"
+name = "bc-task-processor"
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
@@ -38,7 +38,7 @@ itp-utils = { path = "../../../core-primitives/utils", default-features = false 
 # litentry primities
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
 bc-musig2-ceremony = { path = "../bc-musig2-ceremony", default-features = false }
-bc-musig2-runner = { path = "../bc-musig2-runner", default-features = false }
+bc-musig2-event = { path = "../bc-musig2-event", default-features = false }
 bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 bc-signer-registry = { path = "../bc-signer-registry", default-features = false }
 itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
@@ -56,7 +56,7 @@ sgx = [
     "threadpool_sgx",
     "sgx_tstd",
     "bc-musig2-ceremony/sgx",
-    "bc-musig2-runner/sgx",
+    "bc-musig2-event/sgx",
     "bc-task-sender/sgx",
     "bc-enclave-registry/sgx",
     "bc-relayer-registry/sgx",
@@ -78,7 +78,7 @@ std = [
     "threadpool",
     "log/std",
     "bc-musig2-ceremony/std",
-    "bc-musig2-runner/std",
+    "bc-musig2-event/std",
     "bc-task-sender/std",
     "bc-enclave-registry/std",
     "bc-relayer-registry/std",

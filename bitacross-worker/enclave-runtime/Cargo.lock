@@ -294,7 +294,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bc-musig2-runner"
+name = "bc-musig2-event"
 version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
@@ -350,12 +350,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bc-task-receiver"
+name = "bc-task-processor"
 version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
  "bc-musig2-ceremony",
- "bc-musig2-runner",
+ "bc-musig2-event",
  "bc-relayer-registry",
  "bc-signer-registry",
  "bc-task-sender",
@@ -1029,7 +1029,7 @@ dependencies = [
  "bc-musig2-ceremony",
  "bc-relayer-registry",
  "bc-signer-registry",
- "bc-task-receiver",
+ "bc-task-processor",
  "bc-task-sender",
  "cid",
  "derive_more",

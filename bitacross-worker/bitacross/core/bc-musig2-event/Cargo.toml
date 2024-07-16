@@ -1,5 +1,5 @@
 [package]
-name = "bc-musig2-runner"
+name = "bc-musig2-event"
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
