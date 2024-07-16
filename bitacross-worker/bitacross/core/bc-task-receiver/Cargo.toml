@@ -37,16 +37,16 @@ itp-utils = { path = "../../../core-primitives/utils", default-features = false 
 
 # litentry primities
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
-bc-musig2-runner = { path = "../bc-musig2-runner", default-features = false }
 bc-musig2-ceremony = { path = "../bc-musig2-ceremony", default-features = false }
+bc-musig2-runner = { path = "../bc-musig2-runner", default-features = false }
 bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 bc-signer-registry = { path = "../bc-signer-registry", default-features = false }
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", default-features = false }
-itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
-itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
 

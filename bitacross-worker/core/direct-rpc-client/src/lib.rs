@@ -111,6 +111,7 @@ impl RpcClientFactory for DirectRpcClientFactory {
 pub trait RpcClient {
 	fn send(&mut self, request: &RpcRequest) -> Result<(), Box<dyn Error>>;
 }
+
 #[derive(Clone)]
 pub struct DirectRpcClient {
 	request_sink: Sender<String>,
