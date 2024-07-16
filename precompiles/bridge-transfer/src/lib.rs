@@ -32,7 +32,7 @@ where
 	fn transfer_native(
 		handle: &mut impl PrecompileHandle,
 		amount: U256,
-		recipient: UnboundedBytes,
+		receipt: UnboundedBytes,
 		dest_id: u8,
 	) -> EvmResult {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -40,10 +40,10 @@ where
 		let amount: BalanceOf<Runtime> = amount.try_into().map_err(|_| {
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
-		let recipient: Vec<u8> = recipient.into();
+		let receipt: Vec<u8> = receipt.into();
 
 		let call =
-			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, recipient, dest_id };
+			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, receipt, dest_id };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
