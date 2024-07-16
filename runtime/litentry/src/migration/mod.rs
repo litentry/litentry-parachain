@@ -327,7 +327,7 @@ where
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
 	}
 
-	pub fn repalce_delayed_payouts_storage() -> frame_support::weights::Weight {
+	pub fn replace_delayed_payouts_storage() -> frame_support::weights::Weight {
 		log::info!(
 			target: "ReplaceParachainStakingStorage",
 			"running migration to ParachainStaking DelayedPayouts"
