@@ -59,7 +59,7 @@ use codec::{Decode, Encode};
 use core::{ops::Deref, time::Duration};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use ita_stf::TrustedCallSigned;
-use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClientFactory};
+use itc_direct_rpc_client::{DirectRpcClientFactory, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{
@@ -71,7 +71,6 @@ use itp_sgx_crypto::{
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_types::DirectRequestStatus;
 use lc_direct_call::{
 	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
 	DirectCall, DirectCallSigned,
@@ -85,7 +84,7 @@ use std::{
 	collections::HashMap,
 	format,
 	string::{String, ToString},
-	sync::{mpsc::channel, Arc},
+	sync::Arc,
 	vec,
 	vec::Vec,
 };
@@ -212,17 +211,6 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	SRL: SignerRegistryLookup + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let (responses_sender, responses_receiver) = channel::<Response>();
-	// here we will process all responses
-	std::thread::spawn(move || {
-		while let Ok((_id, rpc_return_value)) = responses_receiver.recv() {
-			info!("Got RPC return value: {:?}", rpc_return_value);
-			if rpc_return_value.status == DirectRequestStatus::Error {
-				error!("Got unexpected direct request status: {:?}", rpc_return_value.status);
-			}
-		}
-	});
-
 	// timeout tick
 	let ceremony_registry = context.ceremony_registry.clone();
 	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
@@ -242,36 +230,40 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
-	let command_threads_count = 2;
-	let event_threads_count = 2;
+	let command_threads_count = 4;
+	let event_threads_count = 20;
 	let command_threads_pool = ThreadPool::new(command_threads_count);
 	let event_threads_pool = ThreadPool::new(event_threads_count);
 	info!("start {} command threads, {} event threads", command_threads_count, event_threads_count);
 	let peers_map = Arc::new(Mutex::new(HashMap::new()));
 	while let Ok(mut req) = bit_across_task_receiver.recv() {
 		let context_pool = context.clone();
-		let responses_sender = responses_sender.clone();
 		let event_threads_pool = event_threads_pool.clone();
 		let peers_map = peers_map.clone();
 		command_threads_pool.execute(move || {
 			let (ceremony_id, command) =
-				match handle_request(&mut req.request, context_pool.clone()) {
+				match handle_request(req.get_aes_request_mut_ref(), context_pool.clone()) {
 					Ok((processing_ret, to_process)) => {
-						if let Err(e) = req.sender.send(Ok(processing_ret)) {
-							warn!("Unable to submit response back to the handler: {:?}", e);
+						if let Some(processing_ret) = processing_ret {
+							if let Err(e) = req.try_send_result(Ok(processing_ret)) {
+								warn!("Unable to submit response back to the handler: {:?}", e);
+							}
 						}
-						let Some((ceremony_id, command)) = to_process else { return };
-						(ceremony_id, command)
+						if let Some((ceremony_id, command)) = to_process {
+							(ceremony_id, command)
+						} else {
+							return
+						}
 					},
 					Err(e) => {
-						if let Err(e) = req.sender.send(Err(e)) {
+						if let Err(e) = req.try_send_result(Err(e)) {
 							warn!("Unable to submit response back to the handler: {:?}", e);
 						}
 						return
 					},
 				};
 
-			// check if store command to tmp
+			// check whether to store command to tmp
 			let is_first_round = {
 				context_pool
 					.ceremony_registry
@@ -315,8 +307,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						&& !peers_map.lock().unwrap().contains_key(identity.as_ref())
 					{
 						info!("creating new connection to peer: {:?}", address);
-						match (DirectRpcClientFactory {}).create(address, responses_sender.clone())
-						{
+						match (DirectRpcClientFactory {}).create(address) {
 							Ok(client) => {
 								peers_map.lock().unwrap().insert(*identity.as_ref(), client);
 							},
@@ -351,19 +342,12 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					match event {
 						CeremonyEvent::FirstRoundStarted(_, _, _)
 						| CeremonyEvent::SecondRoundStarted(_, _, _) => {
-							let has_command_tmp = {
-								let command_tmp_read =
-									context_pool.ceremony_command_tmp.read().unwrap();
-								command_tmp_read.contains_key(&ceremony_id)
-							};
-							if has_command_tmp {
-								let ceremony_command_tmp = context_pool
-									.ceremony_command_tmp
-									.write()
-									.unwrap()
-									.remove(&ceremony_id)
-									.unwrap()
-									.0;
+							// get all ceremony_command_tmp
+							let mut ceremony_command_tmp_write =
+								context_pool.ceremony_command_tmp.write().unwrap();
+							if let Some((ceremony_command_tmp, _)) =
+								ceremony_command_tmp_write.remove(&ceremony_id)
+							{
 								commands_to_process = ceremony_command_tmp.read().unwrap().clone();
 							}
 						},
@@ -398,7 +382,6 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 				}
 			}
 		});
-		warn!("command_threads_pool: {}", command_threads_pool.queued_count());
 	}
 
 	command_threads_pool.join();
@@ -410,7 +393,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 pub fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: &mut AesRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
-) -> Result<(BitAcrossProcessingResult, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
+) -> Result<(Option<BitAcrossProcessingResult>, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
@@ -468,7 +451,7 @@ where
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})?;
 			let ret = BitAcrossProcessingResult::Submitted(hash);
-			Ok((ret, Some((payload, command))))
+			Ok((Some(ret), Some((payload, command))))
 		},
 		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
 			signer,
@@ -480,21 +463,16 @@ where
 			error!("SignEthereum error: {:?}", e);
 			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
-		.map(|r| (BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode()), None)),
+		.map(|r| {
+			(Some(BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())), None)
+		}),
 		DirectCall::NonceShare(signer, aes_key, message, nonce) =>
 			nonce_share::handle(signer, &message, nonce, context.enclave_registry_lookup.clone())
 				.map_err(|e| {
 					error!("NonceShare error: {:?}", e);
 					aes_encrypt_default(&aes_key, &e.encode()).encode()
 				})
-				.map(|command| {
-					(
-						BitAcrossProcessingResult::Ok(
-							aes_encrypt_default(&aes_key, &().encode()).encode(),
-						),
-						Some((message, command)),
-					)
-				}),
+				.map(|command| (None, Some((message, command)))),
 		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
 			partial_signature_share::handle(
 				signer,
@@ -506,14 +484,7 @@ where
 				error!("PartialSignatureShare error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})
-			.map(|command| {
-				(
-					BitAcrossProcessingResult::Ok(
-						aes_encrypt_default(&aes_key, &().encode()).encode(),
-					),
-					Some((message, command)),
-				)
-			}),
+			.map(|command| (None, Some((message, command)))),
 		DirectCall::KillCeremony(signer, aes_key, message) => kill_ceremony::handle(
 			signer,
 			message,
@@ -525,11 +496,6 @@ where
 			error!("KillCeremony error: {:?}", e);
 			aes_encrypt_default(&aes_key, &e.encode()).encode()
 		})
-		.map(|r| {
-			(
-				BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r.encode()).encode()),
-				None,
-			)
-		}),
+		.map(|_| (None, None)),
 	}
 }

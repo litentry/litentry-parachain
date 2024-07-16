@@ -467,7 +467,6 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
- "itp-types",
  "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
@@ -2977,7 +2976,6 @@ version = "0.1.0"
 dependencies = [
  "itp-rpc",
  "itp-types",
- "itp-utils",
  "log 0.4.20",
  "parity-scale-codec",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",

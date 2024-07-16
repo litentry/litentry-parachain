@@ -51,9 +51,33 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct BitAcrossRequest {
-	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>,
-	pub request: AesRequest,
+pub enum BitAcrossRequest {
+	CreateSignTask(AesRequest, oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>),
+	ShareCeremonyData(AesRequest),
+}
+
+impl BitAcrossRequest {
+	pub fn get_aes_request_mut_ref(&mut self) -> &mut AesRequest {
+		match self {
+			BitAcrossRequest::CreateSignTask(req, _) => req,
+			BitAcrossRequest::ShareCeremonyData(req) => req,
+		}
+	}
+
+	pub fn try_send_result(
+		self,
+		result: Result<BitAcrossProcessingResult, Vec<u8>>,
+	) -> Result<(), Result<BitAcrossProcessingResult, Vec<u8>>> {
+		let sender = match self {
+			BitAcrossRequest::CreateSignTask(_, sender) => sender,
+			BitAcrossRequest::ShareCeremonyData(_) => {
+				// ShareCeremonyData don't need to send result back
+				return Ok(())
+			},
+		};
+		sender.send(result)?;
+		Ok(())
+	}
 }
 
 #[derive(Encode, Decode, Clone, Debug)]

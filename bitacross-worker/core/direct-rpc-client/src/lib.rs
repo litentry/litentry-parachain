@@ -41,11 +41,7 @@ use core::str::FromStr;
 
 use log::{debug, error};
 
-use serde_json::from_str;
-
-use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
-
-use itp_utils::FromHexPrefixed;
+use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 
 use std::{
 	boxed::Box,
@@ -99,11 +95,7 @@ impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 
 pub trait RpcClientFactory {
 	type Client: RpcClient + Send + Clone;
-	fn create(
-		&self,
-		url: &str,
-		response_sink: Sender<Response>,
-	) -> Result<Self::Client, Box<dyn Error>>;
+	fn create(&self, url: &str) -> Result<Self::Client, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClientFactory {}
@@ -111,12 +103,8 @@ pub struct DirectRpcClientFactory {}
 impl RpcClientFactory for DirectRpcClientFactory {
 	type Client = DirectRpcClient;
 
-	fn create(
-		&self,
-		url: &str,
-		response_sink: Sender<Response>,
-	) -> Result<Self::Client, Box<dyn Error>> {
-		DirectRpcClient::new(url, response_sink)
+	fn create(&self, url: &str) -> Result<Self::Client, Box<dyn Error>> {
+		DirectRpcClient::new(url)
 	}
 }
 
@@ -129,7 +117,7 @@ pub struct DirectRpcClient {
 }
 
 impl DirectRpcClient {
-	pub fn new(url: &str, response_sink: Sender<Response>) -> Result<Self, Box<dyn Error>> {
+	pub fn new(url: &str) -> Result<Self, Box<dyn Error>> {
 		let server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
@@ -157,14 +145,6 @@ impl DirectRpcClient {
 						error!("Could not write message to socket, reason: {:?}", e)
 					}
 				}
-
-				if let Ok(message) = socket.read_message() {
-					if let Ok(Some(response)) = Self::handle_ws_message(message) {
-						if let Err(e) = response_sink.send(response) {
-							log::error!("Could not forward response, reason: {:?}", e)
-						};
-					}
-				}
 				std::thread::sleep(Duration::from_millis(1))
 			}
 		});
@@ -190,23 +170,6 @@ impl DirectRpcClient {
 			_ => {},
 		}
 	}
-
-	fn handle_ws_message(message: Message) -> Result<Option<Response>, Box<dyn Error>> {
-		match message {
-			Message::Text(text) => {
-				let rpc_response: RpcResponse = from_str(&text)
-					.map_err(|e| format!("Could not deserialize RpcResponse, reason: {:?}", e))?;
-				let return_value: RpcReturnValue =
-					RpcReturnValue::from_hex(&rpc_response.result)
-						.map_err(|e| format!("Could not deserialize value , reason: {:?}", e))?;
-				Ok(Some((rpc_response.id, return_value)))
-			},
-			_ => {
-				log::warn!("Only text messages are supported");
-				Ok(None)
-			},
-		}
-	}
 }
 
 #[derive(Clone)]
@@ -222,41 +185,5 @@ impl RpcClient for DirectRpcClient {
 		self.request_sink
 			.send(request)
 			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use crate::DirectRpcClient;
-	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
-	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-	use itp_utils::ToHexPrefixed;
-	use tungstenite::Message;
-
-	#[test]
-	fn test_response_handling() {
-		let id = Id::Text(
-			"0x0000000000000000000000000000000000000000000000000000000000000000".to_owned(),
-		);
-		let return_value: RpcReturnValue = RpcReturnValue::new(
-			vec![],
-			false,
-			DirectRequestStatus::TrustedOperationStatus(
-				TrustedOperationStatus::TopExecuted(vec![], true),
-				H256::random(),
-			),
-		);
-		let rpc_response: RpcResponse = RpcResponse {
-			jsonrpc: "2.0".to_owned(),
-			result: return_value.to_hex(),
-			id: id.clone(),
-		};
-		let serialized_rpc_response = serde_json::to_string(&rpc_response).unwrap();
-		let message = Message::text(serialized_rpc_response);
-
-		let (result_id, result) = DirectRpcClient::handle_ws_message(message).unwrap().unwrap();
-
-		assert_eq!(id, result_id);
-		assert_eq!(return_value, result);
 	}
 }

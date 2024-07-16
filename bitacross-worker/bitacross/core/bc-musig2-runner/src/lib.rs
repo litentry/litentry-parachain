@@ -92,7 +92,10 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			);
 
 			signers.iter().for_each(|signer_id| {
-				warn!("Sharing nonce with signer: {:?} for ceremony: {:?}", signer_id, ceremony_id);
+				debug!(
+					"Sharing nonce with signer: {:?} for ceremony: {:?}",
+					signer_id, ceremony_id
+				);
 
 				let signer_id = signer_id.clone();
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
@@ -109,7 +112,6 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share nonce, unknown signer: {:?}", signer_id);
 				}
-				warn!("nonce event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -129,7 +131,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			);
 
 			signers.iter().for_each(|signer_id| {
-				warn!(
+				debug!(
 					"Sharing partial signature with signer: {:?} for ceremony: {:?}",
 					signer_id, ceremony_id
 				);
@@ -149,7 +151,6 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share partial signature, unknown signer: {:?}", signer_id);
 				}
-				warn!("sig event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 		CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
@@ -157,25 +158,29 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			let hash = blake2_256(&ceremony_id.encode());
 			let result = signature;
 			let encrypted_result = aes_encrypt_default(&request_aes_key, &result.encode()).encode();
-			if let Err(e) = responder.send_state_with_status(
-				Hash::from_slice(&hash),
-				encrypted_result,
-				DirectRequestStatus::Ok,
-			) {
-				error!("Could not send response to {:?}, reason: {:?}", &hash, e);
-			}
+			event_threads_pool.execute(move || {
+				if let Err(e) = responder.send_state_with_status(
+					Hash::from_slice(&hash),
+					encrypted_result,
+					DirectRequestStatus::Ok,
+				) {
+					error!("Could not send response to {:?}, reason: {:?}", &hash, e);
+				}
+			});
 		},
 		CeremonyEvent::CeremonyError(signers, error, request_aes_key) => {
 			debug!("Ceremony {:?} error {:?}", ceremony_id, error);
 			let hash = blake2_256(&ceremony_id.encode());
 			let encrypted_result = aes_encrypt_default(&request_aes_key, &error.encode()).encode();
-			if let Err(e) = responder.send_state_with_status(
-				Hash::from_slice(&hash),
-				encrypted_result,
-				DirectRequestStatus::Error,
-			) {
-				error!("Could not send response to {:?}, reason: {:?}", &hash, e);
-			}
+			event_threads_pool.execute(move || {
+				if let Err(e) = responder.send_state_with_status(
+					Hash::from_slice(&hash),
+					encrypted_result,
+					DirectRequestStatus::Error,
+				) {
+					error!("Could not send response to {:?}, reason: {:?}", &hash, e);
+				}
+			});
 
 			let aes_key = random_aes_key();
 			let direct_call =
@@ -210,7 +215,6 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				} else {
 					error!("Fail to share killing info, unknown signer: {:?}", signer_id);
 				}
-				warn!("event_threads_pool: {}", event_threads_pool.queued_count());
 			});
 		},
 	}
@@ -239,7 +243,7 @@ where
 	let request = AesRequest { shard, key: aes_key_encrypted, payload: encrypted_dc };
 	RpcRequest {
 		jsonrpc: "2.0".to_string(),
-		method: "bitacross_submitRequest".to_string(),
+		method: "bitacross_btcDataShare".to_string(),
 		params: vec![request.to_hex()],
 		id: Id::Number(1),
 	}
