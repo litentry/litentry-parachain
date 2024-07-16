@@ -211,7 +211,7 @@ impl From<U8Wrapper> for AccountId {
 }
 
 parameter_types! {
-	pub PrecompilesValue: BridgeTransferMockPrecompile<Test> = BridgeTransferMockPrecompile(Default::default());
+	pub PrecompilesValue: BridgeTransferMockPrecompile<Test> = BridgeTransferMockPrecompile::new();
 	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
 }
 
@@ -225,7 +225,7 @@ impl pallet_evm::Config for Test {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = BridgeTransferMockPrecompile<Test>;
+	type PrecompilesType = BridgeTransferMockPrecompile<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type Timestamp = Timestamp;
 	type ChainId = ();

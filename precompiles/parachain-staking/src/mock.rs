@@ -194,7 +194,7 @@ impl From<U8Wrapper> for AccountId {
 }
 
 parameter_types! {
-	pub PrecompilesValue: ParachainStakingMockPrecompile<Test> = ParachainStakingMockPrecompile(Default::default());
+	pub PrecompilesValue: ParachainStakingMockPrecompile<Test> = ParachainStakingMockPrecompile::new();
 	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
 }
 
@@ -208,7 +208,7 @@ impl pallet_evm::Config for Test {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = ParachainStakingMockPrecompile<Test>;
+	type PrecompilesType = ParachainStakingMockPrecompile<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type Timestamp = Timestamp;
 	type ChainId = ();
