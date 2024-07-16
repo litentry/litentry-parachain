@@ -291,7 +291,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 				| (Some(false), CeremonyCommand::SavePartialSignature(_, _)) => {},
 				(is_first_round, command) => {
 					error!(
-						"receive wrong command: is_first_round: {:?}, command: {}, drop it",
+						"receive wrong command: is_first_round: {:?}, command: {:?}, drop it",
 						is_first_round, command
 					);
 					return

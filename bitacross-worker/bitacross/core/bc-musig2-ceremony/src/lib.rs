@@ -49,7 +49,6 @@ use musig2::{
 pub use musig2::{PartialSignature, PubNonce};
 use std::{
 	collections::HashMap,
-	fmt::Display,
 	time::{SystemTime, UNIX_EPOCH},
 	vec,
 	vec::Vec,
@@ -87,16 +86,6 @@ pub enum CeremonyCommand {
 	SavePartialSignature(SignerId, PartialSignature),
 }
 
-impl Display for CeremonyCommand {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		match self {
-			CeremonyCommand::Init => write!(f, "Init"),
-			CeremonyCommand::SaveNonce(_, _) => write!(f, "SaveNonce"),
-			CeremonyCommand::SavePartialSignature(_, _) => write!(f, "SavePartialSignature"),
-		}
-	}
-}
-
 // commands are created by ceremony and executed by runner
 #[derive(Debug, Eq, PartialEq)]
 pub enum CeremonyEvent {
@@ -104,17 +93,6 @@ pub enum CeremonyEvent {
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
 	CeremonyEnded([u8; 64], RequestAesKey, bool, bool),
 	CeremonyError(Signers, CeremonyError, RequestAesKey),
-}
-
-impl Display for CeremonyEvent {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		match self {
-			CeremonyEvent::FirstRoundStarted(_, _, _) => write!(f, "FirstRoundStarted"),
-			CeremonyEvent::SecondRoundStarted(_, _, _) => write!(f, "SecondRoundStarted"),
-			CeremonyEvent::CeremonyEnded(_, _, _, _) => write!(f, "CeremonyEnded"),
-			CeremonyEvent::CeremonyError(_, _, _) => write!(f, "CeremonyError"),
-		}
-	}
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]
