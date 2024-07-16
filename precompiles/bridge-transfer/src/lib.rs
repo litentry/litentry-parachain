@@ -42,8 +42,11 @@ where
 		})?;
 		let receipt: Vec<u8> = receipt.into();
 
-		let call =
-			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, receipt, dest_id };
+		let call = pallet_bridge_transfer::Call::<Runtime>::transfer_native {
+			amount,
+			recipient: receipt,
+			dest_id,
+		};
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())

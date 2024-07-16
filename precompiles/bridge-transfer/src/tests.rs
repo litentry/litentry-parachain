@@ -47,7 +47,7 @@ fn transfer_native_is_ok() {
 				precompile_address(),
 				PCall::<Test>::transfer_native {
 					amount: 100u128.into(),
-					recipient: dest_account.into(),
+					receipt: dest_account.into(),
 					dest_id: dest_bridge_id.into(),
 				},
 			)
