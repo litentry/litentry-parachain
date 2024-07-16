@@ -36,7 +36,7 @@ fn test_delegate_with_auto_compound_is_ok() {
 				.prepare_test(
 					U8Wrapper(2u8),
 					precompile_address(),
-					PCall::delegate_with_auto_compound {
+					PCall::<Test>::delegate_with_auto_compound {
 						candidate: H256::from(U8Wrapper(1u8)).into(),
 						amount: 10u128.into(),
 						autoCompound: 50u8.into(),
@@ -85,7 +85,7 @@ fn delegation_request_is_pending_works() {
 				.prepare_test(
 					U8Wrapper(1u8),
 					precompile_address(),
-					PCall::delegation_request_is_pending {
+					PCall::<Test>::delegation_request_is_pending {
 						delegator: H256::from(U8Wrapper(2u8)).into(),
 						candidate: H256::from(U8Wrapper(1u8)).into(),
 					},
@@ -98,7 +98,7 @@ fn delegation_request_is_pending_works() {
 				.prepare_test(
 					U8Wrapper(2u8),
 					precompile_address(),
-					PCall::schedule_revoke_delegation {
+					PCall::<Test>::schedule_revoke_delegation {
 						candidate: H256::from(U8Wrapper(1u8)).into(),
 					},
 				)
@@ -110,7 +110,7 @@ fn delegation_request_is_pending_works() {
 				.prepare_test(
 					U8Wrapper(1u8),
 					precompile_address(),
-					PCall::delegation_request_is_pending {
+					PCall::<Test>::delegation_request_is_pending {
 						delegator: H256::from(U8Wrapper(2u8)).into(),
 						candidate: H256::from(U8Wrapper(1u8)).into(),
 					},

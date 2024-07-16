@@ -25,6 +25,7 @@ use hex_literal::hex;
 use pallet_evm::{
 	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
 };
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -177,7 +178,7 @@ pub fn precompile_address() -> H160 {
 pub type BridgeTransferMockPrecompile<R> =
 	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<20525>, BridgeTransferPrecompile<R>>,)>;
 
-pub type PCall = BridgeTransferPrecompileCall<Runtime>;
+pub type PCall<Runtime> = BridgeTransferPrecompileCall<Runtime>;
 
 pub struct TruncatedAddressMapping;
 impl AddressMapping<AccountId> for TruncatedAddressMapping {

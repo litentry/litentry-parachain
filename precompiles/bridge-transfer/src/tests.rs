@@ -17,7 +17,6 @@
 extern crate alloc;
 use crate::{mock::*, *};
 use frame_support::assert_ok;
-use precompile_utils::testing::*;
 
 fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 	PrecompilesValue::get()
@@ -28,7 +27,9 @@ fn transfer_native_is_ok() {
 	new_test_ext().execute_with(|| {
 		let dest_bridge_id: pallet_bridge::BridgeChainId = 0;
 		let resource_id = NativeTokenResourceId::get();
-		let dest_account: [u8; 64] = vec![1].into();
+		let mut dest_account: [u8; 64] = [0; 64];
+		dest_account[63] = 1u8;
+
 		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
 			RuntimeOrigin::root(),
 			dest_bridge_id,
@@ -43,7 +44,7 @@ fn transfer_native_is_ok() {
 			.prepare_test(
 				U8Wrapper(1u8),
 				precompile_address(),
-				PCall::transfer_native {
+				PCall::<Test>::transfer_native {
 					amount: 100u128.into(),
 					receipt: dest_account.into(),
 					dest_id: dest_bridge_id.into(),
@@ -70,7 +71,7 @@ fn transfer_native_is_ok() {
 				1,
 				resource_id,
 				100 - 10,
-				dest_account,
+				dest_account.to_vec(),
 			)),
 		]);
 	})

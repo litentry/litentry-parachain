@@ -25,6 +25,7 @@ use pallet_evm::{
 	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
 };
 use pallet_parachain_staking::{InflationInfo, Range};
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -160,7 +161,7 @@ pub fn precompile_address() -> H160 {
 pub type ParachainStakingMockPrecompile<R> =
 	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<20525>, ParachainStakingPrecompile<R>>,)>;
 
-pub type PCall = ParachainStakingPrecompileCall<Runtime>;
+pub type PCall<Runtime> = ParachainStakingPrecompileCall<Runtime>;
 
 pub struct TruncatedAddressMapping;
 impl AddressMapping<AccountId> for TruncatedAddressMapping {

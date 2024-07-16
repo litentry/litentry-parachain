@@ -41,10 +41,9 @@ where
 			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
 		})?;
 		let recipient: Vec<u8> = recipient.into();
-		let resource_id = resource_id.into();
 
 		let call =
-			pallet_bridge_transfer::Call::<Runtime>::transfer_assets { amount, recipient, dest_id };
+			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, recipient, dest_id };
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
 		Ok(())
