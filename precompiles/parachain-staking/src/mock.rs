@@ -157,26 +157,10 @@ pub fn precompile_address() -> H160 {
 	H160::from_low_u64_be(20480 + 45)
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct ParachainStakingMockPrecompile<R>(PhantomData<R>);
+pub type ParachainStakingMockPrecompile<R> =
+	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<20525>, ParachainStakingPrecompile<R>>,)>;
 
-impl<R> PrecompileSet for ParachainStakingMockPrecompile<R>
-where
-	R: pallet_evm::Config,
-	ParachainStakingPrecompile<R>: Precompile,
-{
-	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
-		match handle.code_address() {
-			a if a == precompile_address() =>
-				Some(ParachainStakingPrecompile::<R>::execute(handle)),
-			_ => None,
-		}
-	}
-
-	fn is_precompile(&self, address: sp_core::H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer { is_precompile: address == precompile_address(), extra_cost: 0 }
-	}
-}
+pub type PCall = ParachainStakingPrecompileCall<Runtime>;
 
 pub struct TruncatedAddressMapping;
 impl AddressMapping<AccountId> for TruncatedAddressMapping {
