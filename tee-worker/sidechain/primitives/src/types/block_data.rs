@@ -35,6 +35,8 @@ pub struct BlockData {
 	pub block_author: ed25519::Public,
 	/// Hashes of signed trusted operations.
 	pub signed_top_hashes: Vec<H256>,
+	/// Hashes of failed trusted operations
+	pub failed_top_hashes: Vec<H256>,
 	/// Encrypted state payload.
 	pub encrypted_state_diff: Vec<u8>,
 }
@@ -58,6 +60,12 @@ impl BlockDataTrait for BlockData {
 	fn signed_top_hashes(&self) -> &[H256] {
 		&self.signed_top_hashes
 	}
+
+	/// Get reference of failed extrinsics of block
+	fn failed_top_hashes(&self) -> &[H256] {
+		&self.failed_top_hashes
+	}
+
 	/// Get encrypted payload.
 	fn encrypted_state_diff(&self) -> &Vec<u8> {
 		&self.encrypted_state_diff
@@ -67,6 +75,7 @@ impl BlockDataTrait for BlockData {
 		block_author: Self::Public,
 		layer_one_head: H256,
 		signed_top_hashes: Vec<H256>,
+		failed_top_hashes: Vec<H256>,
 		encrypted_state_diff: Vec<u8>,
 		timestamp: Timestamp,
 	) -> BlockData {
@@ -75,6 +84,7 @@ impl BlockDataTrait for BlockData {
 			timestamp,
 			layer_one_head,
 			signed_top_hashes,
+			failed_top_hashes,
 			block_author,
 			encrypted_state_diff,
 		}

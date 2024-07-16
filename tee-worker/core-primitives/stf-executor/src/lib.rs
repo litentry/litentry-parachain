@@ -180,6 +180,7 @@ where
 	pub state_hash_before_execution: H256,
 	pub executed_operations: Vec<ExecutedOperation<TCS, G>>,
 	pub state_after_execution: Externalities,
+	pub failed_operations: Vec<(H256, Vec<ParentchainCall>, RpcResponseValue)>,
 }
 
 impl<Externalities, TCS, G> BatchExecutionResult<Externalities, TCS, G>
@@ -195,6 +196,10 @@ where
 			.collect()
 	}
 
+	pub fn get_failed_operations_extrinsic_callbacks(&self) -> Vec<ParentchainCall> {
+		self.failed_operations.clone().into_iter().flat_map(|f| f.1).collect()
+	}
+
 	/// Returns all successfully exectued operation hashes.
 	pub fn get_executed_operation_hashes(&self) -> Vec<H256> {
 		self.executed_operations
@@ -203,9 +208,18 @@ where
 			.collect()
 	}
 
+	// Returns all failed operation hashes
+	pub fn get_failed_operation_hashes(&self) -> Vec<H256> {
+		self.failed_operations.clone().into_iter().map(|e| e.0).collect()
+	}
+
 	/// Returns all operations that were not executed.
 	pub fn get_failed_operations(&self) -> Vec<ExecutedOperation<TCS, G>> {
-		self.executed_operations.iter().filter(|ec| !ec.is_success()).cloned().collect()
+		self.executed_operations
+			.iter()
+			.filter(|ec: &&ExecutedOperation<TCS, G>| !ec.is_success())
+			.cloned()
+			.collect()
 	}
 
 	// Litentry: returns all (top_hash, (rpc_response_value, force_wait) tuples

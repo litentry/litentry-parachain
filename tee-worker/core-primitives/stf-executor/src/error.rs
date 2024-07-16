@@ -17,13 +17,17 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
+use crate::RpcResponseValue;
 
 use itp_stf_primitives::error::StfError;
+use itp_types::parentchain::ParentchainCall;
 use sgx_types::sgx_status_t;
-use std::{boxed::Box, format};
+use sp_core::H256;
+use std::{boxed::Box, format, vec::Vec};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// TODO: Add new error type with extrinsic callbacks
 /// STF-Executor error
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -49,6 +53,8 @@ pub enum Error {
 	Crypto(itp_sgx_crypto::error::Error),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+	#[error("Stf Execution Error: {0}")]
+	StfExecutionError(H256, Vec<ParentchainCall>, RpcResponseValue),
 }
 
 impl From<sgx_status_t> for Error {

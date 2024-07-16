@@ -127,6 +127,7 @@ mod tests {
 			H256::random(),
 			Default::default(),
 			Default::default(),
+			Default::default(),
 			timestamp_now(),
 		);
 

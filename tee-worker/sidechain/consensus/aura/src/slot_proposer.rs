@@ -23,6 +23,7 @@ use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_executor::traits::StateUpdateProposer;
+use itp_stf_primitives::types::TrustedOperationOrHash;
 use itp_time_utils::now_as_millis;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::H256;
@@ -144,14 +145,21 @@ impl<
 			)
 			.map_err(|e| ConsensusError::Other(e.to_string().into()))?;
 
-		let parentchain_extrinsics = batch_execution_result.get_extrinsic_callbacks();
+		let mut parentchain_extrinsics = batch_execution_result.get_extrinsic_callbacks();
+		parentchain_extrinsics
+			.extend(batch_execution_result.get_failed_operations_extrinsic_callbacks());
 
 		let executed_operation_hashes: Vec<_> =
 			batch_execution_result.get_executed_operation_hashes().to_vec();
 		let number_executed_transactions = executed_operation_hashes.len();
 
+		let failed_operation_hashes: Vec<_> =
+			batch_execution_result.get_failed_operation_hashes().to_vec();
+		let number_failed_transactions = failed_operation_hashes.len();
+
 		// store the rpc response value to top pool
-		let rpc_responses_values = batch_execution_result.get_connection_updates();
+		let rpc_responses_values: Vec<(H256, (Vec<u8>, bool))> =
+			batch_execution_result.get_connection_updates();
 		self.top_pool_author.update_connection_state(rpc_responses_values);
 
 		// Remove all not successfully executed operations from the top pool.
@@ -183,6 +191,7 @@ impl<
 			.compose_block(
 				latest_parentchain_header,
 				executed_operation_hashes,
+				failed_operation_hashes,
 				self.shard,
 				batch_execution_result.state_hash_before_execution,
 				&batch_execution_result.state_after_execution,

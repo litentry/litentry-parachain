@@ -104,6 +104,7 @@ where
 			executed_operations,
 			state_hash_before_execution: H256::default(),
 			state_after_execution: updated_state,
+			failed_operations: std::vec![],
 		})
 	}
 }

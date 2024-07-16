@@ -66,6 +66,8 @@ pub trait BlockData: Encode + Decode + Send + Sync + Debug + Clone {
 	fn block_author(&self) -> &Self::Public;
 	/// get reference of extrinsics of block
 	fn signed_top_hashes(&self) -> &[H256];
+	/// get reference of failed extrinsics of block
+	fn failed_top_hashes(&self) -> &[H256];
 	/// get encrypted payload
 	fn encrypted_state_diff(&self) -> &Vec<u8>;
 	/// get the `blake2_256` hash of the block
@@ -77,6 +79,7 @@ pub trait BlockData: Encode + Decode + Send + Sync + Debug + Clone {
 		author: Self::Public,
 		layer_one_head: H256,
 		signed_top_hashes: Vec<H256>,
+		failed_top_hashes: Vec<H256>,
 		encrypted_payload: Vec<u8>,
 		timestamp: u64,
 	) -> Self;

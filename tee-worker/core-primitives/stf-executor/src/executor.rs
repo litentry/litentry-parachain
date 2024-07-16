@@ -18,7 +18,7 @@
 use crate::{
 	error::{Error, Result},
 	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
-	BatchExecutionResult, ExecutedOperation,
+	BatchExecutionResult, ExecutedOperation, RpcResponseValue,
 };
 use codec::{Decode, Encode};
 use itp_enclave_metrics::EnclaveMetric;
@@ -142,9 +142,8 @@ where
 				}
 				error!("Stf execute failed: {:?}", e);
 				let rpc_response_value: Vec<u8> = e.encode();
-				Ok(ExecutedOperation::failed(
+				Err(Error::StfExecutionError(
 					operation_hash,
-					top_or_hash,
 					extrinsic_call_backs,
 					rpc_response_value,
 				))
@@ -339,6 +338,7 @@ where
 		// Execute any pre-processing steps.
 		let mut state = prepare_state_function(state);
 		let mut executed_and_failed_calls = Vec::<ExecutedOperation<TCS, G>>::new();
+		let mut failed_operations: Vec<(H256, Vec<ParentchainCall>, RpcResponseValue)> = Vec::new();
 
 		// TODO: maybe we can move it to `prepare_state_function`. It seems more reasonable.
 		let _ = Stf::on_runtime_upgrade(&mut state);
@@ -361,9 +361,11 @@ where
 				Ok(executed_or_failed_call) => {
 					executed_and_failed_calls.push(executed_or_failed_call);
 				},
-				Err(e) => {
-					error!("Fatal Error. Failed to attempt call execution: {:?}", e);
-				},
+				Err(e) =>
+					if let Error::StfExecutionError(top_hash, calls, value) = e {
+						failed_operations.push((top_hash, calls, value));
+						error!("Fatal Error. Failed to attempt call execution");
+					},
 			};
 		}
 
@@ -371,6 +373,7 @@ where
 			executed_operations: executed_and_failed_calls,
 			state_hash_before_execution,
 			state_after_execution: state,
+			failed_operations,
 		})
 	}
 }

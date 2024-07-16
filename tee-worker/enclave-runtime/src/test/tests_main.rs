@@ -204,6 +204,7 @@ fn test_compose_block() {
 		.compose_block(
 			&latest_parentchain_header(),
 			signed_top_hashes,
+			Default::default(),
 			shard,
 			state_hash_before_execution,
 			&state,
@@ -365,6 +366,7 @@ fn test_create_block_and_confirmation_works() {
 		.compose_block(
 			&latest_parentchain_header(),
 			executed_operation_hashes,
+			Default::default(),
 			shard,
 			execution_result.state_hash_before_execution,
 			&execution_result.state_after_execution,
@@ -415,6 +417,7 @@ fn test_create_state_diff() {
 		.compose_block(
 			&latest_parentchain_header(),
 			executed_operation_hashes,
+			Default::default(),
 			shard,
 			execution_result.state_hash_before_execution,
 			&execution_result.state_after_execution,

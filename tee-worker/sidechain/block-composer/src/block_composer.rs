@@ -45,6 +45,7 @@ pub trait ComposeBlock<Externalities, ParentchainBlock: ParentchainBlockTrait> {
 		&self,
 		latest_parentchain_header: &<ParentchainBlock as ParentchainBlockTrait>::Header,
 		top_call_hashes: Vec<H256>,
+		failed_top_call_hashes: Vec<H256>,
 		shard: ShardIdentifier,
 		state_hash_apriori: H256,
 		aposteriori_state: &Externalities,
@@ -112,6 +113,7 @@ where
 		&self,
 		latest_parentchain_header: &ParentchainBlock::Header,
 		top_call_hashes: Vec<H256>,
+		failed_top_call_hashes: Vec<H256>,
 		shard: ShardIdentifier,
 		state_hash_apriori: H256,
 		aposteriori_state: &Externalities,
@@ -155,6 +157,7 @@ where
 			author_public,
 			latest_parentchain_header.hash(),
 			top_call_hashes,
+			failed_top_call_hashes,
 			payload,
 			now_as_millis(),
 		);
