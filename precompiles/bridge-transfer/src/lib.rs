@@ -28,8 +28,8 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256>,
 {
-	#[precompile::public("transferAssets(uint256,bytes,uint8)")]
-	fn transfer_assets(
+	#[precompile::public("transferNative(uint256,bytes,uint8)")]
+	fn transfer_native(
 		handle: &mut impl PrecompileHandle,
 		amount: U256,
 		recipient: UnboundedBytes,
