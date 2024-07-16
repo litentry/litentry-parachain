@@ -133,6 +133,10 @@ pub mod pallet {
 		BalanceUnderflow,
 		// block number can't be converted to u32
 		BlockNumberConvertError,
+		// total score overflow
+		TotalScoreOverflow,
+		// total score underflow
+		TotalScoreUnderflow,
 	}
 
 	#[pallet::event]
@@ -177,6 +181,10 @@ pub mod pallet {
 	#[pallet::getter(fn scores)]
 	pub type Scores<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, ScorePayment<BalanceOf<T>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_score)]
+	pub type TotalScore<T: Config> = StorageValue<_, Score, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn state)]
@@ -231,8 +239,7 @@ pub mod pallet {
 				YEARS.into()) * Self::round_config().interval.into();
 
 			let total_stake = ParaStaking::Pallet::<T>::total();
-			let total_score =
-				Scores::<T>::iter_values().fold(0u32, |a, b| a.checked_add(b.score).unwrap_or(a));
+			let total_score = Self::total_score();
 			let score_coef = Self::round_config().score_coefficient * T::ScoreAmplifier::get();
 			let stake_coef = Self::round_config().stake_coefficient;
 
@@ -346,10 +353,22 @@ pub mod pallet {
 
 				match payment {
 					Some(s) => {
+						let mut total_score = Self::total_score()
+							.checked_sub(s.score)
+							.ok_or(Error::<T>::TotalScoreUnderflow)?;
+						total_score =
+							total_score.checked_add(score).ok_or(Error::<T>::TotalScoreOverflow)?;
 						s.score = score;
 						*payment = Some(*s);
+						TotalScore::<T>::put(total_score);
 					},
-					None => *payment = Some(ScorePayment { score, unpaid: 0u32.into() }),
+					None => {
+						let total_score = Self::total_score()
+							.checked_add(score)
+							.ok_or(Error::<T>::TotalScoreOverflow)?;
+						*payment = Some(ScorePayment { score, unpaid: 0u32.into() });
+						TotalScore::<T>::put(total_score);
+					},
 				}
 				Ok::<(), Error<T>>(())
 			})?;
@@ -365,7 +384,11 @@ pub mod pallet {
 			let account = T::AccountIdConvert::convert(
 				user.to_account_id().ok_or(Error::<T>::ConvertIdentityFailed)?,
 			);
-			ensure!(Scores::<T>::contains_key(&account), Error::<T>::UserNotExist);
+			let user_score = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?.score;
+			let total_score = Self::total_score()
+				.checked_sub(user_score)
+				.ok_or(Error::<T>::TotalScoreUnderflow)?;
+			TotalScore::<T>::put(total_score);
 			Scores::<T>::remove(&account);
 			Self::deposit_event(Event::ScoreRemoved { who: user });
 			Ok(Pays::No.into())
@@ -377,6 +400,7 @@ pub mod pallet {
 			// only admin can clear all entries in `Scores`
 			T::AdminOrigin::ensure_origin(origin)?;
 			let _ = Scores::<T>::clear(u32::MAX, None);
+			TotalScore::<T>::put(0u32);
 			Self::deposit_event(Event::ScoreCleared {});
 			Ok(Pays::No.into())
 		}

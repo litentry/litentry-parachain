@@ -160,13 +160,18 @@ fn score_staking_works() {
 		);
 		pallet_parachain_staking::Total::<Test>::put(1000 * UNIT);
 
+		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), alice().into(), 500));
+		assert_eq!(ScoreStaking::scores(alice()).unwrap().score, 500);
+		assert_eq!(ScoreStaking::scores(alice()).unwrap().unpaid, 0);
+		assert_eq!(ScoreStaking::total_score(), 500);
+
 		assert_ok!(ScoreStaking::update_score(
 			RuntimeOrigin::signed(alice()),
 			alice().into(),
 			2000
 		));
 		assert_eq!(ScoreStaking::scores(alice()).unwrap().score, 2000);
-		assert_eq!(ScoreStaking::scores(alice()).unwrap().unpaid, 0);
+		assert_eq!(ScoreStaking::total_score(), 2000);
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
@@ -206,6 +211,7 @@ fn score_staking_works() {
 		);
 		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), bob().into(), 1000));
 		pallet_parachain_staking::Total::<Test>::put(8000 * UNIT);
+		assert_eq!(ScoreStaking::total_score(), 3000);
 
 		run_to_block(22);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
