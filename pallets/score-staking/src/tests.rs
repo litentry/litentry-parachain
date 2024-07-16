@@ -164,6 +164,7 @@ fn score_staking_works() {
 		assert_eq!(ScoreStaking::scores(alice()).unwrap().score, 500);
 		assert_eq!(ScoreStaking::scores(alice()).unwrap().unpaid, 0);
 		assert_eq!(ScoreStaking::total_score(), 500);
+		assert_eq!(ScoreStaking::score_user_count(), 1);
 
 		assert_ok!(ScoreStaking::update_score(
 			RuntimeOrigin::signed(alice()),
@@ -172,6 +173,7 @@ fn score_staking_works() {
 		));
 		assert_eq!(ScoreStaking::scores(alice()).unwrap().score, 2000);
 		assert_eq!(ScoreStaking::total_score(), 2000);
+		assert_eq!(ScoreStaking::score_user_count(), 1);
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
@@ -212,6 +214,7 @@ fn score_staking_works() {
 		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), bob().into(), 1000));
 		pallet_parachain_staking::Total::<Test>::put(8000 * UNIT);
 		assert_eq!(ScoreStaking::total_score(), 3000);
+		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
@@ -229,6 +232,16 @@ fn score_staking_works() {
 		assert_eq!(
 			ScoreStaking::scores(bob()).unwrap().unpaid,
 			round_reward() * (800 + 1400) / (2400 + 1600)
+		);
+
+		// update more scores will error out
+		pallet_parachain_staking::DelegatorState::<Test>::insert(
+			charlie(),
+			Delegator::new(alice(), alice(), 7000 * UNIT),
+		);
+		assert_err!(
+			ScoreStaking::update_score(RuntimeOrigin::signed(alice()), charlie().into(), 1000),
+			Error::<Test>::MaxScoreUserCountReached
 		);
 	});
 }

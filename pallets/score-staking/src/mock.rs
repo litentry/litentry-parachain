@@ -178,6 +178,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type ScoreAmplifier = ConstU128<{ UNIT }>;
+	type MaxScoreUserCount = ConstU32<2>;
 }
 
 pub fn alice() -> AccountId {
@@ -186,6 +187,10 @@ pub fn alice() -> AccountId {
 
 pub fn bob() -> AccountId {
 	AccountKeyring::Bob.to_account_id()
+}
+
+pub fn charlie() -> AccountId {
+	AccountKeyring::Charlie.to_account_id()
 }
 
 pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {

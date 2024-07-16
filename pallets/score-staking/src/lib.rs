@@ -42,7 +42,11 @@
 #![allow(clippy::too_many_arguments)]
 
 use core_primitives::{DAYS, YEARS};
-use frame_support::traits::Currency;
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo,
+	pallet_prelude::*,
+	traits::{Currency, Imbalance, LockableCurrency, ReservableCurrency, StorageVersion},
+};
 use pallet_parachain_staking as ParaStaking;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{traits::CheckedSub, Perbill};
@@ -71,11 +75,6 @@ pub mod pallet {
 	use super::*;
 
 	use core_primitives::Identity;
-	use frame_support::{
-		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*,
-		traits::{Imbalance, LockableCurrency, ReservableCurrency, StorageVersion},
-	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::Zero;
 
@@ -103,6 +102,10 @@ pub mod pallet {
 		// TODO: here `ParaStaking::BalanceOf` is used for easy type cohesion,
 		//       can we use `BalanceOf<Self>` everywhere?
 		type ScoreAmplifier: Get<ParaStaking::BalanceOf<Self>>;
+		#[pallet::constant]
+		/// Maximum number of entries (users) in the `Scores` storage,
+		/// this is to avoid iteration on an unbounded list in `on_initialize`
+		type MaxScoreUserCount: Get<u32>;
 		/// The origin who manages this pallet
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
@@ -137,6 +140,12 @@ pub mod pallet {
 		TotalScoreOverflow,
 		// total score underflow
 		TotalScoreUnderflow,
+		// score user count overflow
+		ScoreUserCountOverflow,
+		// score user count underflow
+		ScoreUserCountUnderflow,
+		// when the score user count would exceed `MaxScoreUserCount`
+		MaxScoreUserCountReached,
 	}
 
 	#[pallet::event]
@@ -181,6 +190,11 @@ pub mod pallet {
 	#[pallet::getter(fn scores)]
 	pub type Scores<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, ScorePayment<BalanceOf<T>>, OptionQuery>;
+
+	/// keep track of how many entries in the `Scores` storage
+	#[pallet::storage]
+	#[pallet::getter(fn score_user_count)]
+	pub type ScoreUserCount<T: Config> = StorageValue<_, Score, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_score)]
@@ -353,21 +367,14 @@ pub mod pallet {
 
 				match payment {
 					Some(s) => {
-						let mut total_score = Self::total_score()
-							.checked_sub(s.score)
-							.ok_or(Error::<T>::TotalScoreUnderflow)?;
-						total_score =
-							total_score.checked_add(score).ok_or(Error::<T>::TotalScoreOverflow)?;
+						Self::update_total_score(s.score, score)?;
 						s.score = score;
 						*payment = Some(*s);
-						TotalScore::<T>::put(total_score);
 					},
 					None => {
-						let total_score = Self::total_score()
-							.checked_add(score)
-							.ok_or(Error::<T>::TotalScoreOverflow)?;
+						Self::update_total_score(0, score)?;
+						Self::inc_score_user_count()?;
 						*payment = Some(ScorePayment { score, unpaid: 0u32.into() });
-						TotalScore::<T>::put(total_score);
 					},
 				}
 				Ok::<(), Error<T>>(())
@@ -385,10 +392,8 @@ pub mod pallet {
 				user.to_account_id().ok_or(Error::<T>::ConvertIdentityFailed)?,
 			);
 			let user_score = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?.score;
-			let total_score = Self::total_score()
-				.checked_sub(user_score)
-				.ok_or(Error::<T>::TotalScoreUnderflow)?;
-			TotalScore::<T>::put(total_score);
+			Self::update_total_score(user_score, 0)?;
+			Self::dec_score_user_count()?;
 			Scores::<T>::remove(&account);
 			Self::deposit_event(Event::ScoreRemoved { who: user });
 			Ok(Pays::No.into())
@@ -401,6 +406,7 @@ pub mod pallet {
 			T::AdminOrigin::ensure_origin(origin)?;
 			let _ = Scores::<T>::clear(u32::MAX, None);
 			TotalScore::<T>::put(0u32);
+			ScoreUserCount::<T>::put(0u32);
 			Self::deposit_event(Event::ScoreCleared {});
 			Ok(Pays::No.into())
 		}
@@ -432,6 +438,35 @@ pub mod pallet {
 			let payment = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?;
 			Self::claim(origin, payment.unpaid)
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn update_total_score(due_sub: Score, due_add: Score) -> Result<(), Error<T>> {
+		let mut s = Self::total_score();
+		if due_sub > 0 {
+			s = s.checked_sub(due_sub).ok_or(Error::<T>::TotalScoreUnderflow)?;
+		}
+		if due_add > 0 {
+			s = s.checked_add(due_add).ok_or(Error::<T>::TotalScoreOverflow)?;
+		}
+		TotalScore::<T>::put(s);
+		Ok(())
+	}
+
+	fn inc_score_user_count() -> Result<(), Error<T>> {
+		let mut c = Self::score_user_count();
+		ensure!(c < T::MaxScoreUserCount::get(), Error::<T>::MaxScoreUserCountReached);
+		c = c.checked_add(1).ok_or(Error::<T>::ScoreUserCountOverflow)?;
+		ScoreUserCount::<T>::put(c);
+		Ok(())
+	}
+
+	fn dec_score_user_count() -> Result<(), Error<T>> {
+		let mut c = Self::score_user_count();
+		c = c.checked_sub(1).ok_or(Error::<T>::ScoreUserCountUnderflow)?;
+		ScoreUserCount::<T>::put(c);
+		Ok(())
 	}
 }
 
