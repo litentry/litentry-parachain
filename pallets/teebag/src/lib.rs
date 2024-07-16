@@ -830,5 +830,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 #[cfg(any(test, feature = "runtime-benchmarks", feature = "test-util"))]
 pub mod test_util;

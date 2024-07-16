@@ -185,3 +185,8 @@ pub fn run_to_block(n: u32) {
 		System::on_initialize(System::block_number());
 	}
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+pub fn new_bench_ext() -> sp_io::TestExternalities {
+	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
