@@ -39,7 +39,7 @@ fn test_delegate_with_auto_compound_is_ok() {
 					PCall::<Test>::delegate_with_auto_compound {
 						candidate: H256::from(U8Wrapper(1u8)).into(),
 						amount: 10u128.into(),
-						autoCompound: 50u8.into(),
+						auto_compound: 50u8.into(),
 					},
 				)
 				.expect_no_logs()

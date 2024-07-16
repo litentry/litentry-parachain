@@ -94,7 +94,9 @@ where
 	fn delegate(handle: &mut impl PrecompileHandle, candidate: H256, amount: U256) -> EvmResult {
 		let candidate: [u8; 32] = candidate.into();
 		let candidate = Runtime::AccountId::from(candidate);
-		let amount: BalanceOf<Runtime> = amount.into();
+		let amount: BalanceOf<Runtime> = amount.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
+		})?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -115,7 +117,9 @@ where
 	) -> EvmResult {
 		let candidate: [u8; 32] = candidate.into();
 		let candidate = Runtime::AccountId::from(candidate);
-		let amount: BalanceOf<Runtime> = amount.into();
+		let amount: BalanceOf<Runtime> = amount.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
+		})?;
 
 		if auto_compound > 100 {
 			return Err(RevertReason::custom("Must be an integer between 0 and 100 included")
@@ -166,7 +170,9 @@ where
 	) -> EvmResult {
 		let candidate: [u8; 32] = candidate.into();
 		let candidate = Runtime::AccountId::from(candidate);
-		let more: BalanceOf<Runtime> = more.into();
+		let more: BalanceOf<Runtime> = more.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
+		})?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -187,7 +193,9 @@ where
 	) -> EvmResult {
 		let candidate: [u8; 32] = candidate.into();
 		let candidate = Runtime::AccountId::from(candidate);
-		let less: BalanceOf<Runtime> = less.into();
+		let less: BalanceOf<Runtime> = less.try_into().map_err(|_| {
+			Into::<PrecompileFailure>::into(RevertReason::value_is_too_large("balance type"))
+		})?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
