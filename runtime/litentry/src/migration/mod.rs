@@ -371,7 +371,7 @@ where
 		migrated_count.saturating_mul(weight.write + weight.read)
 	}
 
-	pub fn repalce_staked_storage() -> frame_support::weights::Weight {
+	pub fn replace_staked_storage() -> frame_support::weights::Weight {
 		log::info!(
 			target: "ReplaceParachainStakingStorage",
 			"running migration to ParachainStaking Staked"
