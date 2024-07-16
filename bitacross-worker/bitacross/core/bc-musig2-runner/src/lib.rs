@@ -153,15 +153,24 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				}
 			});
 		},
-		CeremonyEvent::CeremonyEnded(signature, request_aes_key) => {
+		CeremonyEvent::CeremonyEnded(
+			signature,
+			request_aes_key,
+			is_check_run,
+			verification_result,
+		) => {
 			debug!("Ceremony {:?} ended, signature {:?}", ceremony_id, signature);
 			let hash = blake2_256(&ceremony_id.encode());
-			let result = signature;
-			let encrypted_result = aes_encrypt_default(&request_aes_key, &result.encode()).encode();
+			let result = if is_check_run {
+				verification_result.encode()
+			} else {
+				let result = signature;
+				aes_encrypt_default(&request_aes_key, &result.encode()).encode()
+			};
 			event_threads_pool.execute(move || {
 				if let Err(e) = responder.send_state_with_status(
 					Hash::from_slice(&hash),
-					encrypted_result,
+					result,
 					DirectRequestStatus::Ok,
 				) {
 					error!("Could not send response to {:?}, reason: {:?}", &hash, e);

@@ -49,7 +49,7 @@ use std::sync::SgxMutex as Mutex;
 use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyEvent, CeremonyId,
-	CeremonyRegistry,
+	CeremonyRegistry, SignBitcoinPayload,
 };
 use bc_musig2_runner::process_event;
 use bc_relayer_registry::RelayerRegistryLookup;
@@ -351,7 +351,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 								commands_to_process = ceremony_command_tmp.read().unwrap().clone();
 							}
 						},
-						CeremonyEvent::CeremonyEnded(_, _)
+						CeremonyEvent::CeremonyEnded(_, _, _, _)
 						| CeremonyEvent::CeremonyError(_, _, _) => {
 							// remove ceremony
 							{
@@ -440,9 +440,11 @@ where
 				signer,
 				payload.clone(),
 				aes_key,
+				false,
 				context.relayer_registry_lookup.deref(),
 				context.ceremony_registry.clone(),
 				context.signer_registry_lookup.clone(),
+				context.enclave_registry_lookup.as_ref(),
 				&context.signing_key_pub,
 				context.bitcoin_key_repository.clone(),
 			)
@@ -452,6 +454,29 @@ where
 			})?;
 			let ret = BitAcrossProcessingResult::Submitted(hash);
 			Ok((Some(ret), Some((payload, command))))
+		},
+		DirectCall::CheckSignBitcoin(signer) => {
+			let payload = SignBitcoinPayload::Derived([0u8; 32].to_vec());
+			let aes_key = [0u8; 32];
+			let hash = blake2_256(&payload.encode());
+			sign_bitcoin::handle(
+				signer,
+				payload,
+				aes_key,
+				true,
+				context.relayer_registry_lookup.deref(),
+				context.ceremony_registry.clone(),
+				context.signer_registry_lookup.clone(),
+				context.enclave_registry_lookup.as_ref(),
+				&context.signing_key_pub,
+				context.bitcoin_key_repository.clone(),
+			)
+			.map_err(|e| {
+				error!("SignBitcoinCheck error: {:?}", e);
+				aes_encrypt_default(&aes_key, &e.encode()).encode()
+			})?;
+			let ret = BitAcrossProcessingResult::Submitted(hash);
+			Ok((Some(ret), None))
 		},
 		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
 			signer,

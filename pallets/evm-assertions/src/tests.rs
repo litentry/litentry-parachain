@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use crate::{mock::*, Error};
+use crate::{mock::*, Assertion, Error};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H160;
 
@@ -61,5 +61,27 @@ fn should_not_create_new_assertion_if_exists() {
 			),
 			Error::<Test>::AssertionExists
 		);
+	});
+}
+
+#[test]
+fn should_remove_assertion_if_failed_to_store() {
+	new_test_ext().execute_with(|| {
+		let assertion_id: H160 = H160::from_slice(&[1u8; 20]);
+		let byte_code = [0u8; 256].to_vec();
+		let secrets = vec![[2u8; 13].to_vec(), [3u8; 32].to_vec()];
+
+		assert_ok!(EvmAssertions::create_assertion(
+			RuntimeOrigin::root(),
+			assertion_id,
+			byte_code.clone(),
+			secrets.clone()
+		));
+
+		assert_eq!(EvmAssertions::assertions(assertion_id), Some(Assertion { byte_code, secrets }));
+
+		assert_ok!(EvmAssertions::void_assertion(RuntimeOrigin::root(), assertion_id,));
+
+		assert_eq!(EvmAssertions::assertions(assertion_id), None);
 	});
 }

@@ -134,6 +134,7 @@ bc-musig2-ceremony = { path = "../bitacross/core/bc-musig2-ceremony", default-fe
 bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
 bc-signer-registry = { path = "../bitacross/core/bc-signer-registry", default-features = false, features = ["sgx"] }
 bc-task-sender = { path = "../bitacross/core/bc-task-sender", default-features = false, features = ["sgx"] }
+lc-direct-call = { path = "../litentry/core/direct-call", default-features = false }
 litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }

@@ -102,7 +102,7 @@ impl Display for CeremonyCommand {
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
-	CeremonyEnded([u8; 64], RequestAesKey),
+	CeremonyEnded([u8; 64], RequestAesKey, bool, bool),
 	CeremonyError(Signers, CeremonyError, RequestAesKey),
 }
 
@@ -111,7 +111,7 @@ impl Display for CeremonyEvent {
 		match self {
 			CeremonyEvent::FirstRoundStarted(_, _, _) => write!(f, "FirstRoundStarted"),
 			CeremonyEvent::SecondRoundStarted(_, _, _) => write!(f, "SecondRoundStarted"),
-			CeremonyEvent::CeremonyEnded(_, _) => write!(f, "CeremonyEnded"),
+			CeremonyEvent::CeremonyEnded(_, _, _, _) => write!(f, "CeremonyEnded"),
 			CeremonyEvent::CeremonyError(_, _, _) => write!(f, "CeremonyError"),
 		}
 	}
@@ -138,6 +138,7 @@ pub struct MuSig2CeremonyData<AK: AccessKey<KeyType = SchnorrPair>> {
 	signers: SignersWithKeys,
 	signing_key_access: Arc<AK>,
 	agg_key: PublicKey,
+	check_run: bool,
 }
 
 pub struct MuSig2CeremonyState {
@@ -158,6 +159,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		mut signers: SignersWithKeys,
 		payload: SignBitcoinPayload,
 		signing_key_access: Arc<AK>,
+		check_run: bool,
 	) -> Result<Self, String> {
 		info!("Creating new ceremony {:?}", payload);
 		if signers.len() < 3 {
@@ -215,6 +217,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 				signers,
 				signing_key_access,
 				agg_key,
+				check_run,
 			},
 			ceremony_state: MuSig2CeremonyState {
 				first_round: Some(first_round),
@@ -387,14 +390,14 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						SignBitcoinPayload::WithTweaks(p, _) => p,
 					};
 
-					info!("Message {:?}", message);
-
-					info!("Verification result: ");
-					match verify_single(self.ceremony_data.agg_key, signature, message) {
-						Ok(_) => info!("OK!"),
-						Err(_) => info!("NOK!"),
-					};
-					Ok(Some(CeremonyEnded(signature.to_bytes(), self.ceremony_data.aes_key)))
+					let result =
+						verify_single(self.ceremony_data.agg_key, signature, message).is_ok();
+					Ok(Some(CeremonyEnded(
+						signature.to_bytes(),
+						self.ceremony_data.aes_key,
+						self.ceremony_data.check_run,
+						result,
+					)))
 				} else {
 					Err(CeremonyError::PartialSignatureReceivingError(
 						CeremonyErrorReason::IncorrectRound,
@@ -555,6 +558,7 @@ pub mod test {
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
+			false,
 		);
 
 		// then
@@ -574,6 +578,7 @@ pub mod test {
 			signers_with_keys()[0..1].to_vec(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
+			false,
 		);
 
 		// then
@@ -590,6 +595,7 @@ pub mod test {
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
+			false,
 		)
 		.unwrap();
 
@@ -630,6 +636,7 @@ pub mod test {
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
+			false,
 		)
 		.unwrap();
 

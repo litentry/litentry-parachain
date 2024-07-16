@@ -216,6 +216,18 @@ export const mockAssertions = [
             NftHolder: 'Club3Sbt',
         },
     },
+    {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'MFan',
+        },
+    },
+    {
+        description: 'You are a holder of a certain kind of NFT',
+        assertion: {
+            NftHolder: 'Mvp',
+        },
+    },
 
     // TokenHoldingAmount
     {
@@ -270,6 +282,18 @@ export const mockAssertions = [
         description: 'The amount of BEAN you are holding',
         assertion: {
             TokenHoldingAmount: 'BEAN',
+        },
+    },
+    {
+        description: 'The amount of AN you are holding',
+        assertion: {
+            TokenHoldingAmount: 'AN',
+        },
+    },
+    {
+        description: 'The amount of TUNA you are holding',
+        assertion: {
+            TokenHoldingAmount: 'TUNA',
         },
     },
 

@@ -27,6 +27,7 @@ SGX_PRODUCTION ?= 0
 ######## Worker Feature Settings ########
 # Set offchain-worker as default feature mode
 WORKER_MODE ?= offchain-worker
+RA_METHOD ?= 
 
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk
@@ -76,17 +77,17 @@ ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
 	SGX_SIGN_PASSFILE = $(SGX_PASSFILE)
-	WORKER_FEATURES := --features=link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=link-binary,$(WORKER_MODE),$(RA_METHOD),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
 	SGX_SIGN_PASSFILE = ""
-	WORKER_FEATURES := --features=default,development,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=default,development,link-binary,$(WORKER_MODE),$(RA_METHOD),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 	ADDITIONAL_FEATURES := development
 endif
 
-CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+CLIENT_FEATURES = --features=$(WORKER_MODE),$(RA_METHOD),$(ADDITIONAL_FEATURES)
 
 # check if running on Jenkins
 ifdef BUILD_ID

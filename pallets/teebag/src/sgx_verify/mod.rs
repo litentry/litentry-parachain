@@ -267,8 +267,6 @@ pub struct SgxReportBody {
 
 impl SgxReportBody {
 	pub fn sgx_build_mode(&self) -> SgxBuildMode {
-		#[cfg(test)]
-		println!("attributes flag : {:x}", self.attributes.flags);
 		if self.attributes.flags & SGX_FLAGS_DEBUG == SGX_FLAGS_DEBUG {
 			SgxBuildMode::Debug
 		} else {
@@ -545,9 +543,6 @@ pub fn verify_dcap_quote(
 	let quote: DcapQuote =
 		Decode::decode(&mut dcap_quote_clone).map_err(|_| "Failed to decode attestation report")?;
 
-	#[cfg(test)]
-	println!("{:?}", quote);
-
 	ensure!(quote.header.version == 3, "Only support for version 3");
 	ensure!(quote.header.attestation_key_type == 2, "Only support for ECDSA-256");
 	ensure!(
@@ -643,10 +638,6 @@ pub fn verify_dcap_quote(
 pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	// Before we reach here, the runtime already verified the extrinsic is properly signed by the
 	// extrinsic sender Hence, we skip: EphemeralKey::try_from(cert)?;
-
-	#[cfg(test)]
-	println!("verifyRA: start verifying RA cert");
-
 	let cert = CertDer(cert_der);
 	let netscape = NetscapeComment::try_from(cert)?;
 	let sig_cert_der = webpki::types::CertificateDer::from(netscape.sig_cert.as_slice());
@@ -691,9 +682,6 @@ fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
 		.try_into()
 		.map_err(|_| "Error converting report.timestamp to u64")?;
 
-	#[cfg(test)]
-	println!("verifyRA attestation timestamp [unix epoch]: {}", ra_timestamp);
-
 	// get quote status (mandatory field)
 	let ra_status = match &attn_report["isvEnclaveQuoteStatus"] {
 		Value::String(quote_status) => match quote_status.as_ref() {
@@ -706,31 +694,17 @@ fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
 		_ => return Err("Failed to fetch isvEnclaveQuoteStatus from attestation report"),
 	};
 
-	#[cfg(test)]
-	println!("verifyRA attestation status is: {:?}", ra_status);
 	// parse quote body
 	if let Value::String(quote_raw) = &attn_report["isvEnclaveQuoteBody"] {
 		let quote = match base64::decode(quote_raw) {
 			Ok(q) => q,
 			Err(_) => return Err("Quote Decoding Error"),
 		};
-		#[cfg(test)]
-		println!("Quote read. len={}", quote.len());
 		// TODO: lack security check here
 		let sgx_quote: SgxQuote = match Decode::decode(&mut &quote[..]) {
 			Ok(q) => q,
 			Err(_) => return Err("could not decode quote"),
 		};
-
-		#[cfg(test)]
-		{
-			println!("sgx quote version = {}", sgx_quote.version);
-			println!("sgx quote signature type = {}", sgx_quote.sign_type);
-			//println!("sgx quote report_data = {:?}", sgx_quote.report_body.report_data.d[..32]);
-			println!("sgx quote mr_enclave = {:x?}", sgx_quote.report_body.mr_enclave);
-			println!("sgx quote mr_signer = {:x?}", sgx_quote.report_body.mr_signer);
-			println!("sgx quote report_data = {:x?}", sgx_quote.report_body.report_data.d.to_vec());
-		}
 
 		let mut xt_signer_array = [0u8; 32];
 		xt_signer_array.copy_from_slice(&sgx_quote.report_body.report_data.d[..32]);
@@ -754,16 +728,8 @@ pub fn verify_signature(
 	signature_algorithm: &dyn webpki::types::SignatureVerificationAlgorithm,
 ) -> Result<(), &'static str> {
 	match entity_cert.verify_signature(signature_algorithm, data, signature) {
-		Ok(()) => {
-			#[cfg(test)]
-			println!("IAS signature is valid");
-			Ok(())
-		},
-		Err(_e) => {
-			#[cfg(test)]
-			println!("RSA Signature ERROR: {}", _e);
-			Err("bad signature")
-		},
+		Ok(()) => Ok(()),
+		Err(_e) => Err("bad signature"),
 	}
 }
 
@@ -780,16 +746,8 @@ pub fn verify_server_cert(
 		webpki::KeyUsage::server_auth(),
 		None,
 	) {
-		Ok(()) => {
-			#[cfg(test)]
-			println!("CA is valid");
-			Ok(())
-		},
-		Err(_e) => {
-			#[cfg(test)]
-			println!("CA ERROR: {}", _e);
-			Err("CA verification failed")
-		},
+		Ok(()) => Ok(()),
+		Err(_e) => Err("CA verification failed"),
 	}
 }
 

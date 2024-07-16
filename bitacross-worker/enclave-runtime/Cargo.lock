@@ -1079,6 +1079,7 @@ dependencies = [
  "itp-utils",
  "jsonrpc-core",
  "lazy_static",
+ "lc-direct-call",
  "litentry-hex-utils",
  "litentry-macros",
  "litentry-primitives",
