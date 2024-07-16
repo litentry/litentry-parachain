@@ -7,7 +7,7 @@ use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_runtime::traits::Dispatchable;
 
-use sp_core::{H256, U256};
+use sp_core::U256;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_bridge_transfer::BalanceOf;

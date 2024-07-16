@@ -17,6 +17,7 @@
 extern crate alloc;
 use crate::{mock::*, *};
 use frame_support::assert_ok;
+use precompile_utils::testing::*;
 
 fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 	PrecompilesValue::get()

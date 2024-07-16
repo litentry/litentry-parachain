@@ -22,13 +22,8 @@ use frame_support::{
 	weights::Weight,
 };
 use hex_literal::hex;
-use pallet_evm::{
-	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
-};
-use precompile_utils::{
-	precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder},
-	testing::PrecompileTesterExt,
-};
+use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,

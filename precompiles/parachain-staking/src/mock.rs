@@ -25,10 +25,7 @@ use pallet_evm::{
 	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
 };
 use pallet_parachain_staking::{InflationInfo, Range};
-use precompile_utils::{
-	precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder},
-	testing::PrecompileTesterExt,
-};
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
