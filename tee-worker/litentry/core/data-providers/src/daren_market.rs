@@ -40,23 +40,23 @@ use std::{
 	vec::Vec,
 };
 
-pub struct MagicCraftClient {
+pub struct DarenMarketClient {
 	retry_option: RetryOption,
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 #[derive(Debug)]
-pub struct MagicCraftRequest {
+pub struct DarenMarketRequest {
 	path: String,
 	query: Option<Vec<(String, String)>>,
 }
 
-impl MagicCraftClient {
+impl DarenMarketClient {
 	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
-		let api_retry_delay = data_provider_config.magic_craft_api_retry_delay;
-		let api_retry_times = data_provider_config.magic_craft_api_retry_times;
-		let api_url = data_provider_config.magic_craft_api_url.clone();
-		let api_key = data_provider_config.magic_craft_api_key.clone();
+		let api_retry_delay = data_provider_config.daren_market_api_retry_delay;
+		let api_retry_times = data_provider_config.daren_market_api_retry_times;
+		let api_url = data_provider_config.daren_market_api_url.clone();
+		let api_key = data_provider_config.daren_market_api_key.clone();
 		let retry_option =
 			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
 
@@ -65,10 +65,10 @@ impl MagicCraftClient {
 		headers.insert("X-API-Key", api_key.as_str());
 		let client = build_client_with_cert(api_url.as_str(), headers);
 
-		MagicCraftClient { retry_option, client }
+		DarenMarketClient { retry_option, client }
 	}
 
-	fn get<T>(&mut self, params: MagicCraftRequest, fast_fail: bool) -> Result<T, Error>
+	fn get<T>(&mut self, params: DarenMarketRequest, fast_fail: bool) -> Result<T, Error>
 	where
 		T: serde::de::DeserializeOwned + for<'a> RestPath<ReqPath<'a>>,
 	{
@@ -92,7 +92,9 @@ impl MagicCraftClient {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UserVerificationResponse {
-	pub user: bool,
+	pub success: bool,
+	pub created: bool,
+	pub message: String,
 }
 
 impl<'a> RestPath<ReqPath<'a>> for UserVerificationResponse {
@@ -101,7 +103,7 @@ impl<'a> RestPath<ReqPath<'a>> for UserVerificationResponse {
 	}
 }
 
-pub trait MagicCraftApi {
+pub trait DarenMarketApi {
 	fn user_verification(
 		&mut self,
 		address: String,
@@ -109,25 +111,25 @@ pub trait MagicCraftApi {
 	) -> Result<UserVerificationResponse, Error>;
 }
 
-impl MagicCraftApi for MagicCraftClient {
+impl DarenMarketApi for DarenMarketClient {
 	fn user_verification(
 		&mut self,
 		address: String,
 		fail_fast: bool,
 	) -> Result<UserVerificationResponse, Error> {
-		let query: Vec<(String, String)> = vec![("wallet_address".to_string(), address)];
+		let query: Vec<(String, String)> = vec![("address".to_string(), address)];
 
-		let params = MagicCraftRequest { path: "litentry/user".into(), query: Some(query) };
+		let params = DarenMarketRequest { path: "api/talent-asset".into(), query: Some(query) };
 
-		debug!("MagicCraft user_verification, params: {:?}", params);
+		debug!("DarenMarket user_verification, params: {:?}", params);
 
 		match self.get::<UserVerificationResponse>(params, fail_fast) {
 			Ok(resp) => {
-				debug!("MagicCraft user_verification, response: {:?}", resp);
+				debug!("DarenMarket user_verification, response: {:?}", resp);
 				Ok(resp)
 			},
 			Err(e) => {
-				debug!("MagicCraft user_verification, error: {:?}", e);
+				debug!("DarenMarket user_verification, error: {:?}", e);
 				Err(e)
 			},
 		}
@@ -141,25 +143,29 @@ mod tests {
 
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/magic_craft/";
+		let url = run(0).unwrap() + "/daren_market/";
 
 		let mut config = DataProviderConfig::new().unwrap();
-		config.set_magic_craft_api_url(url).unwrap();
+		config.set_daren_market_api_url(url).unwrap();
 		config
 	}
 
 	#[test]
 	fn does_user_verification_works() {
 		let config = init();
-		let mut client = MagicCraftClient::new(&config);
+		let mut client = DarenMarketClient::new(&config);
 		let mut response = client
 			.user_verification("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".into(), true)
 			.unwrap();
-		assert_eq!(response.user, true);
+		assert_eq!(response.success, true);
+		assert_eq!(response.created, true);
+		assert_eq!(response.message, "Talent Asset Found!".to_string());
 
 		response = client
 			.user_verification("0x9401518f4ebba857baa879d9f76e1cc8b31ed197".into(), false)
 			.unwrap();
-		assert_eq!(response.user, false);
+		assert_eq!(response.success, false);
+		assert_eq!(response.created, false);
+		assert_eq!(response.message, "".to_string());
 	}
 }

@@ -64,6 +64,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub mod achainable;
 pub mod achainable_names;
 pub mod blockchain_info;
+pub mod daren_market;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
@@ -201,6 +202,10 @@ pub struct DataProviderConfig {
 	pub magic_craft_api_retry_times: u16,
 	pub magic_craft_api_url: String,
 	pub magic_craft_api_key: String,
+	pub daren_market_api_retry_delay: u64,
+	pub daren_market_api_retry_times: u16,
+	pub daren_market_api_url: String,
+	pub daren_market_api_key: String,
 	pub moralis_api_url: String,
 	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
@@ -253,6 +258,10 @@ impl DataProviderConfig {
 			magic_craft_api_retry_times: 2,
 			magic_craft_api_url: "https://lobby-api-prod.magiccraft.io/".to_string(),
 			magic_craft_api_key: "".to_string(),
+			daren_market_api_retry_delay: 5000,
+			daren_market_api_retry_times: 2,
+			daren_market_api_url: "https://daren.market/".to_string(),
+			daren_market_api_key: "".to_string(),
 			moralis_api_key: "".to_string(),
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
@@ -338,6 +347,15 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("MAGIC_CRAFT_API_URL") {
 				config.set_magic_craft_api_url(v)?;
 			}
+			if let Ok(v) = env::var("DAREN_MARKET_API_RETRY_DELAY") {
+				config.set_daren_market_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("DAREN_MARKET_API_RETRY_TIMES") {
+				config.set_daren_market_api_retry_times(v.parse::<u16>().unwrap());
+			}
+			if let Ok(v) = env::var("DAREN_MARKET_API_URL") {
+				config.set_daren_market_api_url(v)?;
+			}
 			if let Ok(v) = env::var("MORALIS_API_URL") {
 				config.set_moralis_api_url(v)?;
 			}
@@ -396,6 +414,9 @@ impl DataProviderConfig {
 		}
 		if let Ok(v) = env::var("MAGIC_CRAFT_API_KEY") {
 			config.set_magic_craft_api_key(v);
+		}
+		if let Ok(v) = env::var("DAREN_MARKET_API_KEY") {
+			config.set_daren_market_api_key(v);
 		}
 		Ok(config)
 	}
@@ -562,6 +583,24 @@ impl DataProviderConfig {
 	pub fn set_magic_craft_api_key(&mut self, v: String) {
 		debug!("set_magic_craft_api_key: {:?}", v);
 		self.magic_craft_api_key = v;
+	}
+	pub fn set_daren_market_api_retry_delay(&mut self, v: u64) {
+		debug!("set_daren_market_api_retry_delay: {:?}", v);
+		self.daren_market_api_retry_delay = v;
+	}
+	pub fn set_daren_market_api_retry_times(&mut self, v: u16) {
+		debug!("set_daren_market_api_retry_times: {:?}", v);
+		self.daren_market_api_retry_times = v;
+	}
+	pub fn set_daren_market_api_url(&mut self, v: String) -> Result<(), Error> {
+		check_url(&v)?;
+		debug!("set_daren_market_api_url: {:?}", v);
+		self.daren_market_api_url = v;
+		Ok(())
+	}
+	pub fn set_daren_market_api_key(&mut self, v: String) {
+		debug!("set_daren_market_api_key: {:?}", v);
+		self.daren_market_api_key = v;
 	}
 	pub fn set_moralis_api_key(&mut self, v: String) {
 		debug!("set_moralis_api_key: {:?}", v);
