@@ -27,8 +27,8 @@ use frame_support::{
 	traits::{Currency, Get},
 };
 use pallet_evm::{AddressMapping, Precompile};
-use precompile_utils::EvmResult;
-use sp_core::H256;
+use precompile_utils::{prelude::*, EvmResult};
+use sp_core::{H256, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::marker::PhantomData;
 
@@ -54,7 +54,7 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<pallet_parachain_staking::Call<Runtime>>,
-	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
+	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 {
 	#[precompile::public("delegationRequestIsPending(bytes32,bytes32)")]
 	#[precompile::view]
@@ -268,18 +268,4 @@ where
 
 		Ok(())
 	}
-}
-
-#[precompile_utils::generate_function_selector]
-#[derive(Debug, PartialEq)]
-pub enum Action {
-	DelegationRequestIsPending = "delegationRequestIsPending(bytes32,bytes32)",
-	Delegate = "delegate(bytes32,uint256)",
-	DelegateWithAutoCompound = "delegateWithAutoCompound(bytes32,uint256,uint8)",
-	ScheduleRevokeDelegation = "scheduleRevokeDelegation(bytes32)",
-	DelegatorBondMore = "delegatorBondMore(bytes32,uint256)",
-	ScheduleDelegatorBondLess = "scheduleDelegatorBondLess(bytes32,uint256)",
-	ExecuteDelegationRequest = "executeDelegationRequest(bytes32,bytes32)",
-	CancelDelegationRequest = "cancelDelegationRequest(bytes32)",
-	SetAutoCompound = "setAutoCompound(bytes32,uint8)",
 }
