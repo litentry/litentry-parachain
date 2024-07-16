@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Matching version for [parachain-release v0.9.18-10](https://github.com/litentry/litentry-parachain/releases/tag/v0.9.18-10)
 
+## [0.9.18-next.11] - 2024-07-12
+
+### Added
+
+-   (#2877, #2889) Add `MFan` and `Mvp` to `Web3NftType`
+-   (#2884) Add `An` and `Tuna` to the list of `Web3TokenType`
+
 ## [0.9.18-next.8] - 2024-07-02
 
 Routinely update

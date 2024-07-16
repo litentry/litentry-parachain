@@ -33,7 +33,7 @@ pub fn handle<RRL: RelayerRegistryLookup, EKR: AccessKey<KeyType = Pair>>(
 	relayer_registry: &RRL,
 	key_repository: &EKR,
 ) -> Result<[u8; 65], SignEthereumError> {
-	if relayer_registry.contains_key(signer) {
+	if relayer_registry.contains_key(&signer) {
 		let key = key_repository.retrieve_key().map_err(|e| {
 			error!("Could not retrieve ethereum signing key: {}", e);
 			SignEthereumError::SigningError
