@@ -280,7 +280,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 					error!("Nonce receiving error: {:?}", e);
 					CeremonyError::NonceReceivingError(CeremonyErrorReason::RoundFinalizationError)
 				})?;
-				self.start_second_round(secret_key).map(|e| Some(e))
+				self.start_second_round(secret_key).map(Some)
 			} else {
 				Ok(None)
 			}

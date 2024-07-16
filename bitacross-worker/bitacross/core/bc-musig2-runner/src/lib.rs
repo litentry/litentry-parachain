@@ -77,12 +77,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	match event {
 		CeremonyEvent::FirstRoundStarted(signers, message, nonce) => {
 			let aes_key = random_aes_key();
-			let direct_call = DirectCall::NonceShare(
-				identity.clone(),
-				aes_key,
-				message.clone(),
-				nonce.serialize(),
-			);
+			let direct_call = DirectCall::NonceShare(identity, aes_key, message, nonce.serialize());
 			let request = prepare_request(
 				aes_key,
 				shielding_key_access.as_ref(),
@@ -97,7 +92,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					signer_id, ceremony_id
 				);
 
-				let signer_id = signer_id.clone();
+				let signer_id = *signer_id;
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();
@@ -117,9 +112,9 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
 			let aes_key = random_aes_key();
 			let direct_call = DirectCall::PartialSignatureShare(
-				identity.clone(),
+				identity,
 				aes_key,
-				message.clone(),
+				message,
 				signature.serialize(),
 			);
 			let request = prepare_request(
@@ -136,7 +131,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					signer_id, ceremony_id
 				);
 
-				let signer_id = signer_id.clone();
+				let signer_id = *signer_id;
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();
@@ -192,8 +187,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			});
 
 			let aes_key = random_aes_key();
-			let direct_call =
-				DirectCall::KillCeremony(identity.clone(), aes_key, ceremony_id.clone());
+			let direct_call = DirectCall::KillCeremony(identity, aes_key, ceremony_id.clone());
 			let request = prepare_request(
 				aes_key,
 				shielding_key_access.as_ref(),
@@ -209,7 +203,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 					signer_id, ceremony_id
 				);
 
-				let signer_id = signer_id.clone();
+				let signer_id = *signer_id;
 				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				if let Some(mut client) = client {
 					let request = request.clone();

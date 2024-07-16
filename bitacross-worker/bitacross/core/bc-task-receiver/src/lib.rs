@@ -279,7 +279,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 						.ceremony_command_tmp
 						.write()
 						.unwrap()
-						.entry(ceremony_id.clone())
+						.entry(ceremony_id)
 						.and_modify(|(command_tmp, _)| {
 							command_tmp.write().unwrap().push(command.clone())
 						})
