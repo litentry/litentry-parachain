@@ -134,7 +134,8 @@ describe('Test Identity (direct invocation)', function () {
             eveSubstrateIdentity,
             eveSubstrateNonce,
             'substrate',
-            context.web3Wallets.substrate.Eve
+            context.web3Wallets.substrate.Eve,
+            { prettifiedMessage: true }
         );
         const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']);
         linkIdentityRequestParams.push({
