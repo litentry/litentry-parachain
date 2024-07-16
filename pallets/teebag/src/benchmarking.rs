@@ -32,6 +32,20 @@ mod benchmarks {
 		)
 	}
 
+	#[benchmark]
+	fn force_remove_enclave() {
+		let who: T::AccountId = account("who", 1, 1);
+		let test_enclave = Enclave::new(WorkerType::Identity);
+		Teebag::<T>::add_enclave(&who, &test_enclave);
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 1);
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, who.clone());
+
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
+		assert_eq!(EnclaveRegistry::<T>::get(who.clone()), None);
+		assert_last_event::<T>(Event::EnclaveRemoved { who }.into())
+	}
 
 	impl_benchmark_test_suite!(Teebag, super::mock::new_bench_ext(), super::mock::Test);
 }
