@@ -415,11 +415,7 @@ where
 					warn!("Unable to submit response back to the handler: {:?}", e);
 				}
 			}
-			if let Some((ceremony_id, command)) = to_process {
-				Some((ceremony_id, command))
-			} else {
-				None
-			}
+			to_process
 		},
 		Err(e) => {
 			if let Err(e) = request.try_send_result(Err(e)) {
