@@ -44,7 +44,7 @@ use sp_runtime::{
 	generic::SignedBlock as SignedParentchainBlock,
 	traits::{Block as ParentchainBlockTrait, Header},
 };
-use std::{marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, sync::Arc, vec::Vec};
 
 /// Implements `BlockImport`.
 #[derive(Clone)]
@@ -151,23 +151,18 @@ impl<
 			.signed_top_hashes()
 			.iter()
 			.map(|hash: &H256| (TrustedOperationOrHash::Hash(*hash), true))
-			.collect();
-
-		let failed_operations = sidechain_block
-			.block_data()
-			.failed_top_hashes()
-			.iter()
-			.map(|hash| (TrustedOperationOrHash::Hash(*hash), true))
-			.collect();
+			.chain(
+				sidechain_block
+					.block_data()
+					.failed_top_hashes()
+					.iter()
+					.map(|hash| (TrustedOperationOrHash::Hash(*hash), true)),
+			)
+			.collect::<Vec<_>>();
 
 		let _calls_failed_to_remove = self
 			.top_pool_author
 			.remove_calls_from_pool(sidechain_block.header().shard_id(), executed_operations);
-
-		// TODO: Refactor this later
-		let _calls_failed_to_remove = self
-			.top_pool_author
-			.remove_calls_from_pool(sidechain_block.header().shard_id(), failed_operations);
 
 		// In case the executed call did not originate in our own TOP pool, we will not be able to remove it from our TOP pool.
 		// So this error will occur frequently, without it meaning that something really went wrong.
