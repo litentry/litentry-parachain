@@ -222,7 +222,7 @@ fn mint_is_ok() {
 		));
 
 		// Sanity check, Bob should be without assets
-		assert!(Assets::balance(asset_id, &Bob.into()).is_zero());
+		assert!(Assets::balance(asset_id, Bob.into()).is_zero());
 
 		// Mint some assets for Bob
 		let mint_amount = 7 * 11 * 19;
@@ -243,7 +243,7 @@ fn mint_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was increased
-		assert_eq!(Assets::balance(asset_id, &Bob.into()), mint_amount);
+		assert_eq!(Assets::balance(asset_id, Bob.into()), mint_amount);
 	});
 }
 
@@ -266,7 +266,7 @@ fn mint_non_admin_is_not_ok() {
 				PrecompileCall::mint { to: Address(Bob.into()), value: 42.into() },
 			)
 			.expect_no_logs()
-			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
+			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));
 
 		precompiles()
 			.prepare_test(
@@ -278,7 +278,7 @@ fn mint_non_admin_is_not_ok() {
 				},
 			)
 			.execute_reverts(|output| {
-				from_utf8(&output)
+				from_utf8(output)
 					.unwrap()
 					.contains("value: Value is too large for balance type")
 			});
@@ -305,7 +305,7 @@ fn burn_is_ok() {
 			Bob.into(),
 			init_amount,
 		));
-		assert_eq!(Assets::balance(asset_id, &Bob.into()), init_amount);
+		assert_eq!(Assets::balance(asset_id, Bob.into()), init_amount);
 
 		// Burn some assets from Bob
 		let burn_amount = 19;
@@ -326,7 +326,7 @@ fn burn_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(Assets::balance(asset_id, &Bob.into()), init_amount - burn_amount);
+		assert_eq!(Assets::balance(asset_id, Bob.into()), init_amount - burn_amount);
 	});
 }
 
@@ -355,7 +355,7 @@ fn burn_non_admin_is_not_ok() {
 				PrecompileCall::burn { from: Address(Bob.into()), value: 42.into() },
 			)
 			.expect_no_logs()
-			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
+			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));
 
 		precompiles()
 			.prepare_test(
@@ -367,7 +367,7 @@ fn burn_non_admin_is_not_ok() {
 				},
 			)
 			.execute_reverts(|output| {
-				from_utf8(&output).unwrap().contains("Value is too large for balance type")
+				from_utf8(output).unwrap().contains("Value is too large for balance type")
 			});
 	});
 }
@@ -615,10 +615,10 @@ fn transfer_not_enough_founds() {
 					PrecompileCall::transfer { to: Address(Charlie.into()), value: 50.into() },
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output)
+					from_utf8(output)
 						.unwrap()
 						.contains("Dispatched call failed with error: Module(ModuleError") &&
-						from_utf8(&output).unwrap().contains("BalanceLow")
+						from_utf8(output).unwrap().contains("BalanceLow")
 				});
 
 			precompiles()
@@ -631,7 +631,7 @@ fn transfer_not_enough_founds() {
 					},
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output).unwrap().contains("Value is too large for balance type")
+					from_utf8(output).unwrap().contains("Value is too large for balance type")
 				});
 		});
 }
@@ -852,7 +852,7 @@ fn transfer_from_above_allowance() {
 					},
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output).unwrap().contains("Value is too large for balance type")
+					from_utf8(output).unwrap().contains("Value is too large for balance type")
 				});
 		});
 }
