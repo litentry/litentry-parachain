@@ -3,15 +3,14 @@ use super::{
 	TreasuryPalletId,
 };
 use crate::{constants::currency, deposit, precompiles::ASSET_PRECOMPILE_ADDRESS_PREFIX};
-use frame_support::{
-	parameter_types,
-	traits::{ConstU32, Contains},
-};
+use frame_support::{parameter_types, traits::ConstU32};
 use frame_system::EnsureRoot;
 use pallet_evm_precompile_assets_erc20::AddressToAssetId;
 use parity_scale_codec::Compact;
 use runtime_common::{
-	currency::DOLLARS, xcm_impl::CurrencyId, EnsureRootOrHalfCouncil, EXISTENTIAL_DEPOSIT,
+	currency::{DOLLARS, EXISTENTIAL_DEPOSIT},
+	xcm_impl::CurrencyId,
+	EnsureRootOrHalfCouncil,
 };
 use sp_core::{ConstU128, H160};
 use sp_runtime::traits::AccountIdConversion;

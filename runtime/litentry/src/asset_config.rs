@@ -1,19 +1,17 @@
-pub use crate::constants::currency;
-use frame_support::{
-	parameter_types,
-	traits::{ConstU32, Contains},
-};
-use frame_system::EnsureRoot;
-use runtime_common::{
-	currency::DOLLARS, xcm_impl::CurrencyId, EnsureRootOrHalfCouncil, EXISTENTIAL_DEPOSIT,
-};
-use sp_runtime::traits::AccountIdConversion;
-use sp_std::prelude::*;
-
 use super::{
 	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Runtime, RuntimeEvent,
 	TreasuryPalletId,
 };
+use crate::constants::{currency, deposit};
+use frame_support::{parameter_types, traits::ConstU32};
+use frame_system::EnsureRoot;
+use parity_scale_codec::Compact;
+use runtime_common::{
+	currency::DOLLARS, xcm_impl::CurrencyId, EnsureRootOrHalfCouncil, EXISTENTIAL_DEPOSIT,
+};
+use sp_core::ConstU128;
+use sp_runtime::traits::AccountIdConversion;
+use sp_std::prelude::*;
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	// Add whitelist here, usually this is the system account like treasury

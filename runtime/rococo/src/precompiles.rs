@@ -16,6 +16,7 @@
 
 use crate::RuntimeCall;
 use core::marker::PhantomData;
+use fp_evm::{ExitError, PrecompileFailure};
 use frame_support::{
 	dispatch::GetDispatchInfo,
 	pallet_prelude::{DispatchClass, Pays},
@@ -85,7 +86,7 @@ impl Contains<RuntimeCall> for WhitelistedCalls {
 }
 /// The PrecompileSet installed in the rococo runtime.
 #[precompile_utils::precompile_name_from_address]
-pub type PrecompilesSetAt<R, C> = (
+pub type PrecompilesSetAt<R> = (
 	// Ethereum precompiles:
 	// We allow DELEGATECALL to stay compliant with Ethereum behavior.
 	PrecompileAt<AddressU64<1>, ECRecover, EthereumPrecompilesChecks>,
@@ -123,7 +124,7 @@ pub type PrecompilesSetAt<R, C> = (
 	>,
 );
 
-pub type RococoNetworkPrecompiles<R, C> = PrecompileSetBuilder<
+pub type RococoNetworkPrecompiles<R> = PrecompileSetBuilder<
 	R,
 	(
 		// Skip precompiles if out of range.
