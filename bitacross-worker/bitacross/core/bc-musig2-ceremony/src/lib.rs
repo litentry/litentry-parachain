@@ -650,3 +650,244 @@ pub mod test {
 		);
 	}
 }
+
+#[cfg(feature = "sgx-test")]
+pub mod sgx_tests {
+	use super::*;
+	use crate::{
+		generate_aggregated_public_key, CeremonyEvent, MuSig2Ceremony, SignBitcoinPayload,
+	};
+	use alloc::sync::Arc;
+	use k256::schnorr::SigningKey;
+	use musig2::verify_single;
+
+	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
+	pub const SIGNER_1_ID: SignerId = [1u8; 32];
+	pub const SIGNER_2_ID: SignerId = [2u8; 32];
+	pub const SAMPLE_REQUEST_AES_KEY: RequestAesKey = [0u8; 32];
+	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 32] = [0u8; 32];
+
+	struct MockedSigningKeyAccess {
+		pub signing_key: SigningKey,
+	}
+
+	impl AccessKey for MockedSigningKeyAccess {
+		type KeyType = SchnorrPair;
+
+		fn retrieve_key(&self) -> itp_sgx_crypto::Result<Self::KeyType> {
+			Ok(SchnorrPair::new(self.signing_key.clone()))
+		}
+	}
+
+	pub fn test_full_flow_with_3_ceremonies() {
+		// given
+		let ceremony_id = SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec());
+		//my signer
+		let my_signer_key_access = MockedSigningKeyAccess { signing_key: my_priv_key() };
+		let mut my_ceremony = MuSig2Ceremony::new(
+			MY_SIGNER_ID,
+			SAMPLE_REQUEST_AES_KEY.clone(),
+			signers_with_keys(),
+			ceremony_id.clone(),
+			Arc::new(my_signer_key_access),
+			false,
+		)
+		.unwrap();
+		// signer 1
+		let signer1_key_access = MockedSigningKeyAccess { signing_key: signer1_priv_key() };
+		let mut signer1_ceremony = MuSig2Ceremony::new(
+			SIGNER_1_ID,
+			SAMPLE_REQUEST_AES_KEY.clone(),
+			signers_with_keys(),
+			ceremony_id.clone(),
+			Arc::new(signer1_key_access),
+			false,
+		)
+		.unwrap();
+		// signer 2
+		let signer2_key_access = MockedSigningKeyAccess { signing_key: signer2_priv_key() };
+		let mut signer2_ceremony = MuSig2Ceremony::new(
+			SIGNER_2_ID,
+			SAMPLE_REQUEST_AES_KEY.clone(),
+			signers_with_keys(),
+			ceremony_id.clone(),
+			Arc::new(signer2_key_access),
+			false,
+		)
+		.unwrap();
+
+		// CeremonyCommand::Init -> CeremonyEvent::FirstRoundStarted
+		let my_ceremony_first_round_started_ev = my_ceremony.process_command(CeremonyCommand::Init);
+		let signer1_ceremony_first_round_started_ev =
+			signer1_ceremony.process_command(CeremonyCommand::Init);
+		let signer2_ceremony_first_round_started_ev =
+			signer2_ceremony.process_command(CeremonyCommand::Init);
+
+		let my_ceremony_nonce = match my_ceremony_first_round_started_ev {
+			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
+			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
+		};
+		let signer1_ceremony_nonce = match signer1_ceremony_first_round_started_ev {
+			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
+			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
+		};
+		let signer2_ceremony_nonce = match signer2_ceremony_first_round_started_ev {
+			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
+			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
+		};
+
+		// CeremonyCommand::SaveNonce -> CeremonyEvent::SecondRoundStarted
+		// my signer receive nonce
+		let my_ceremony_receive_first_nonce_ev = my_ceremony.process_command(
+			CeremonyCommand::SaveNonce(SIGNER_1_ID, signer1_ceremony_nonce.clone()),
+		);
+		match my_ceremony_receive_first_nonce_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let my_ceremony_second_round_started_ev = my_ceremony.process_command(
+			CeremonyCommand::SaveNonce(SIGNER_2_ID, signer2_ceremony_nonce.clone()),
+		);
+		let my_ceremony_partial_sign = match my_ceremony_second_round_started_ev {
+			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
+			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
+		};
+		// signer 1 receive nonce
+		let signer1_ceremony_receive_first_nonce_ev = signer1_ceremony
+			.process_command(CeremonyCommand::SaveNonce(MY_SIGNER_ID, my_ceremony_nonce.clone()));
+		match signer1_ceremony_receive_first_nonce_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let signer1_ceremony_second_round_started_ev = signer1_ceremony.process_command(
+			CeremonyCommand::SaveNonce(SIGNER_2_ID, signer2_ceremony_nonce.clone()),
+		);
+		let signer1_ceremony_partial_sign = match signer1_ceremony_second_round_started_ev {
+			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
+			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
+		};
+		// signer 2 receive nonce
+		let signer2_ceremony_receive_first_nonce_ev = signer2_ceremony
+			.process_command(CeremonyCommand::SaveNonce(MY_SIGNER_ID, my_ceremony_nonce.clone()));
+		match signer2_ceremony_receive_first_nonce_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let signer2_ceremony_second_round_started_ev = signer2_ceremony.process_command(
+			CeremonyCommand::SaveNonce(SIGNER_1_ID, signer1_ceremony_nonce.clone()),
+		);
+		let signer2_ceremony_partial_sign = match signer2_ceremony_second_round_started_ev {
+			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
+			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
+		};
+
+		// CeremonyCommand::SavePartialSignature -> CeremonyEvent::CeremonyEnded
+		// my signer receive partial_sign
+		let my_ceremony_receive_first_partial_sign_ev =
+			my_ceremony.process_command(CeremonyCommand::SavePartialSignature(
+				SIGNER_1_ID,
+				signer1_ceremony_partial_sign.clone(),
+			));
+		match my_ceremony_receive_first_partial_sign_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let my_ceremony_ended_ev =
+			my_ceremony.process_command(CeremonyCommand::SavePartialSignature(
+				SIGNER_2_ID,
+				signer2_ceremony_partial_sign.clone(),
+			));
+		let my_ceremony_final_signature = match my_ceremony_ended_ev {
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
+		};
+		// signer 1 receive partial_sign
+		let signer1_receive_first_partial_sign_ev = signer1_ceremony.process_command(
+			CeremonyCommand::SavePartialSignature(MY_SIGNER_ID, my_ceremony_partial_sign.clone()),
+		);
+		match signer1_receive_first_partial_sign_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let signer1_ceremony_ended_ev =
+			signer1_ceremony.process_command(CeremonyCommand::SavePartialSignature(
+				SIGNER_2_ID,
+				signer2_ceremony_partial_sign.clone(),
+			));
+		let signer1_ceremony_final_signature = match signer1_ceremony_ended_ev {
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
+		};
+		// signer 2 receive partial_sign
+		let signer2_receive_first_partial_sign_ev = signer2_ceremony.process_command(
+			CeremonyCommand::SavePartialSignature(MY_SIGNER_ID, my_ceremony_partial_sign.clone()),
+		);
+		match signer2_receive_first_partial_sign_ev {
+			None => {},
+			ev => panic!("except None but get: {:?}", ev),
+		}
+		let signer2_ceremony_ended_ev =
+			signer2_ceremony.process_command(CeremonyCommand::SavePartialSignature(
+				SIGNER_1_ID,
+				signer1_ceremony_partial_sign.clone(),
+			));
+		let signer2_ceremony_final_signature = match signer2_ceremony_ended_ev {
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
+		};
+
+		assert_eq!(my_ceremony_final_signature, signer1_ceremony_final_signature);
+		assert_eq!(my_ceremony_final_signature, signer2_ceremony_final_signature);
+
+		// let signature =
+		// 	k256::schnorr::Signature::try_from(signer1_ceremony_final_signature.as_slice())
+		// 		.unwrap();
+		let agg_key =
+			generate_aggregated_public_key(signers_with_keys().iter().map(|sk| sk.1).collect());
+		// let ver_key = k256::schnorr::VerifyingKey::try_from(agg_key).unwrap();
+
+		// this pass
+		verify_single(agg_key, signer1_ceremony_final_signature, SAMPLE_SIGNATURE_PAYLOAD).unwrap();
+
+		// this not pass
+		// ver_key.verify(&SAMPLE_SIGNATURE_PAYLOAD, &signature).unwrap()
+	}
+
+	fn signers_with_keys() -> SignersWithKeys {
+		vec![
+			(MY_SIGNER_ID, k256::elliptic_curve::PublicKey::from(my_priv_key().verifying_key())),
+			(
+				SIGNER_1_ID,
+				k256::elliptic_curve::PublicKey::from(signer1_priv_key().verifying_key()),
+			),
+			(
+				SIGNER_2_ID,
+				k256::elliptic_curve::PublicKey::from(signer2_priv_key().verifying_key()),
+			),
+		]
+	}
+
+	fn my_priv_key() -> SigningKey {
+		SigningKey::from_bytes(&[
+			252, 240, 35, 85, 243, 83, 129, 54, 7, 155, 24, 114, 254, 0, 134, 251, 207, 83, 177, 9,
+			92, 118, 222, 5, 202, 239, 188, 215, 132, 113, 127, 94,
+		])
+		.unwrap()
+	}
+
+	fn signer1_priv_key() -> SigningKey {
+		SigningKey::from_bytes(&[
+			42, 82, 57, 169, 208, 130, 125, 141, 62, 185, 167, 41, 142, 217, 252, 135, 158, 128,
+			44, 129, 222, 71, 55, 86, 230, 183, 54, 111, 152, 83, 85, 155,
+		])
+		.unwrap()
+	}
+
+	fn signer2_priv_key() -> SigningKey {
+		SigningKey::from_bytes(&[
+			117, 130, 176, 36, 185, 53, 187, 61, 123, 86, 24, 38, 174, 143, 129, 73, 245, 210, 127,
+			148, 115, 136, 32, 98, 62, 47, 26, 196, 57, 211, 171, 185,
+		])
+		.unwrap()
+	}
+}
