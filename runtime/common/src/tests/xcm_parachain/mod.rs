@@ -20,7 +20,7 @@ use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{fungibles::Inspect, Currency, Get, OriginTrait, PalletInfoAccess},
+	traits::{Currency, Get, OriginTrait, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
 use parity_scale_codec::Encode;
@@ -1320,8 +1320,8 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		// is not allowed to proccessing assets token
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
-			0,
-			R::ParaOrigin::signed(alice()),
+			0u128.into(),
+			alice(),
 			true,
 			1
 		));
@@ -1344,8 +1344,8 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		// is not allowed to proccessing assets token
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
-			0,
-			R::ParaOrigin::signed(alice()),
+			0u128.into(),
+			alice(),
 			true,
 			1
 		));
