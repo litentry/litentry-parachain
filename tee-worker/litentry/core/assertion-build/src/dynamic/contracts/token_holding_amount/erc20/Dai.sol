@@ -28,7 +28,9 @@ library Dai {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0x6b175474e89094c44da98b954eedeac495271d0f";
 	}
-
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o";
+	}
 	function getTokenName() internal pure returns (string memory) {
 		return "dai";
 	}
@@ -51,6 +53,7 @@ library Dai {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}

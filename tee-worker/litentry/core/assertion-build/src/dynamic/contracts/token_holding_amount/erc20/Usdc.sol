@@ -12,6 +12,9 @@ library Usdc {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 	}
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+	}
 	function getTokenName() internal pure returns (string memory) {
 		return "usdc";
 	}
@@ -34,6 +37,7 @@ library Usdc {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}

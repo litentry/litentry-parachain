@@ -28,6 +28,9 @@ library Mcrt {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
 	}
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq";
+	}
 	function getTokenName() internal pure returns (string memory) {
 		return "mcrt";
 	}
@@ -44,9 +47,10 @@ library Mcrt {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](3);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}

@@ -28,7 +28,9 @@ library Sol {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0x5288738df1aeb0894713de903e1d0c001eeb7644";
 	}
-
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "Native Token";
+	}
 	function getTokenName() internal pure returns (string memory) {
 		return "sol";
 	}
@@ -52,6 +54,7 @@ library Sol {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}

@@ -28,6 +28,9 @@ library Cro {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b";
 	}
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA";
+	}
 
 	function getTokenName() internal pure returns (string memory) {
 		return "cro";
@@ -49,6 +52,7 @@ library Cro {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}

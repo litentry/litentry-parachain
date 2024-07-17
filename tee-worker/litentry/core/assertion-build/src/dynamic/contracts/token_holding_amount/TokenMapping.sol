@@ -170,6 +170,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["cro"][Web3Networks.Bsc] = Cro.getTokenBscAddress();
 		tokenAddresses["cro"][Web3Networks.Ethereum] = Cro
 			.getTokenEthereumAddress();
+		tokenAddresses["cro"][Web3Networks.Solana] = Cro
+			.getTokenSolanaAddress();
 
 		// crv
 		tokenNames["crv"] = Crv.getTokenName();
@@ -194,6 +196,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["dai"][Web3Networks.Bsc] = Dai.getTokenBscAddress();
 		tokenAddresses["dai"][Web3Networks.Ethereum] = Dai
 			.getTokenEthereumAddress();
+		tokenAddresses["dai"][Web3Networks.Solana] = Dai
+			.getTokenSolanaAddress();
 
 		// doge
 		tokenNames["doge"] = Doge.getTokenName();
@@ -314,6 +318,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["mcrt"][Web3Networks.Bsc] = Mcrt.getTokenBscAddress();
 		tokenAddresses["mcrt"][Web3Networks.Ethereum] = Mcrt
 			.getTokenEthereumAddress();
+		tokenAddresses["mcrt"][Web3Networks.Solana] = Mcrt
+			.getTokenSolanaAddress();
 
 		// nfp
 		tokenNames["nfp"] = Nfp.getTokenName();
@@ -347,6 +353,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["sol"][Web3Networks.Bsc] = Sol.getTokenBscAddress();
 		tokenAddresses["sol"][Web3Networks.Ethereum] = Sol
 			.getTokenEthereumAddress();
+		tokenAddresses["sol"][Web3Networks.Solana] = Sol
+			.getTokenSolanaAddress();
 
 		// spaceid
 		tokenNames["spaceid"] = SpaceId.getTokenName();
@@ -388,6 +396,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["uni"][Web3Networks.Bsc] = Uni.getTokenBscAddress();
 		tokenAddresses["uni"][Web3Networks.Ethereum] = Uni
 			.getTokenEthereumAddress();
+		tokenAddresses["uni"][Web3Networks.Solana] = Uni
+			.getTokenSolanaAddress();
 
 		// usdc
 		tokenNames["usdc"] = Usdc.getTokenName();
@@ -396,6 +406,8 @@ contract TokenMapping is TokenQueryLogic {
 		tokenAddresses["usdc"][Web3Networks.Bsc] = Usdc.getTokenBscAddress();
 		tokenAddresses["usdc"][Web3Networks.Ethereum] = Usdc
 			.getTokenEthereumAddress();
+		tokenAddresses["usdc"][Web3Networks.Solana] = Usdc
+			.getTokenSolanaAddress();
 
 		// usdd
 		tokenNames["usdd"] = Usdd.getTokenName();

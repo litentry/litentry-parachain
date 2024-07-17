@@ -28,6 +28,9 @@ library Uni {
 	function getTokenEthereumAddress() internal pure returns (string memory) {
 		return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
 	}
+	function getTokenSolanaAddress() internal pure returns (string memory) {
+		return "8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36";
+	}
 	function getTokenName() internal pure returns (string memory) {
 		return "uni";
 	}
@@ -50,6 +53,7 @@ library Uni {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
+		networks[2] = Web3Networks.Solana;
 
 		return networks;
 	}
