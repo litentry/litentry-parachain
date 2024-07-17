@@ -20,10 +20,9 @@ use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, Get, OriginTrait, PalletInfoAccess},
+	traits::{fungibles::Inspect, Currency, Get, OriginTrait, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
-use orml_traits::MultiCurrency;
 use parity_scale_codec::Encode;
 use polkadot_parachain::primitives::RelayChainBlockNumber;
 use sp_runtime::{
@@ -154,7 +153,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -162,7 +161,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
+			Assets::<R::ParaRuntime>::balance(0, &xcm_fees_account),
 			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 
@@ -221,14 +220,14 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 	});
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
 			0
 		);
 		// Check the treasury of remote chain's asset XCM
-		assert_eq!(Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account), 0);
+		assert_eq!(Assets::<R::ParaRuntime>::balance(0, &xcm_fees_account), 0);
 	});
 
 	R::ParaA::execute_with(|| {
@@ -256,7 +255,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -264,7 +263,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
+			Assets::<R::ParaRuntime>::balance(0, &xcm_fees_account),
 			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 	});
@@ -357,7 +356,7 @@ where
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -515,7 +514,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token: ParaA Token in Para B
 				&bob()
 			),
@@ -664,7 +663,7 @@ where
 
 	R::ParaB::execute_with(|| {
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token: ParaA Token in Para B
 				&bob()
 			),
@@ -795,7 +794,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 	R::ParaB::execute_with(|| {
 		// The remote received and ignored
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -838,7 +837,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 	R::ParaB::execute_with(|| {
 		// The remote received and handled exactly same result as normal transaction
 		assert_eq!(
-			Assets::<R::ParaRuntime>::free_balance(
+			Assets::<R::ParaRuntime>::balance(
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
@@ -991,7 +990,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	});
 	R::ParaA::execute_with(|| {
 		// Message ignored
-		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 0);
+		assert_eq!(Assets::<R::ParaRuntime>::balance(1, &bob()), 0);
 	});
 
 	// Relay root manipulate the soveregin account of Relay on Parachain A succeed
@@ -1029,7 +1028,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	});
 	R::ParaA::execute_with(|| {
 		// Relay root is similar Sibling root
-		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 10_000 * RELAY_UNIT);
+		assert_eq!(Assets::<R::ParaRuntime>::balance(1, &bob()), 10_000 * RELAY_UNIT);
 	});
 
 	// But as relay, Xcm without Buy execution is also fine
@@ -1060,7 +1059,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 	R::ParaA::execute_with(|| {
 		// We trust Relay root with even more power than Sibling root. They can easily manipulate
 		// thei R::ParaRuntime asset on our chain
-		assert_eq!(Assets::<R::ParaRuntime>::free_balance(1, &bob()), 30_000 * RELAY_UNIT);
+		assert_eq!(Assets::<R::ParaRuntime>::balance(1, &bob()), 30_000 * RELAY_UNIT);
 	});
 
 	// Relay root manipulate LIT on Parachain A failed
