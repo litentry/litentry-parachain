@@ -108,6 +108,30 @@ mod benchmarks {
 		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
 	}
 
+	#[benchmark]
+	fn force_add_authorized_enclave() {
+		let n_enclaves = T::MaxAuthorizedEnclave::get() - 1;
+		create_test_authorized_enclaves::<T>(n_enclaves, WorkerType::Identity);
+		assert_eq!(
+			AuthorizedEnclave::<T>::get(WorkerType::Identity).iter().count() as u32,
+			n_enclaves
+		);
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, WorkerType::Identity, test_util::TEST4_MRENCLAVE);
+
+		assert_eq!(
+			AuthorizedEnclave::<T>::get(WorkerType::Identity).iter().count() as u32,
+			n_enclaves + 1
+		);
+		assert_last_event::<T>(
+			Event::EnclaveAuthorized {
+				worker_type: WorkerType::Identity,
+				mrenclave: test_util::TEST4_MRENCLAVE,
+			}
+			.into(),
+		)
+	}
 
 	impl_benchmark_test_suite!(Teebag, super::mock::new_bench_ext(), super::mock::Test);
 }
