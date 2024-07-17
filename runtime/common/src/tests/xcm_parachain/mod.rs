@@ -1322,9 +1322,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0u128.into(),
-			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref())
-				.expect("AccountId transfer failed")
-				.into(),
+			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
 			true,
 			1
 		));
@@ -1348,9 +1346,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0u128.into(),
-			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref())
-				.expect("AccountId transfer failed")
-				.into(),
+			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
 			true,
 			1
 		));
