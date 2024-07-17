@@ -46,7 +46,7 @@ use crate::{
 	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
 	ParaRuntimeRequirements,
 };
-use parity_scale_codec::Decode;
+use sp_runtime::traits::StaticLookup;
 
 pub mod relay_sproof_builder;
 
