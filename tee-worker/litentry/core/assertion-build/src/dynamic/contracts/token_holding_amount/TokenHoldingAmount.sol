@@ -92,7 +92,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			uint256 networksLength = identity.networks.length;
 			for (uint32 j = 0; j < networksLength; j++) {
 				uint32 network = identity.networks[j];
-				if (isSupportedNetwork(network)) {
+				if (isSupportedNetwork(tokenName, network)) {
 					total_balance += queryBalance(
 						identity,
 						network,
@@ -182,8 +182,9 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	function getTokenDecimals() internal pure virtual returns (uint8);
 
 	function isSupportedNetwork(
+		string memory tokenName,
 		uint32 network
-	) internal pure virtual returns (bool);
+	) internal view virtual returns (bool);
 
 	function queryBalance(
 		Identity memory identity,
