@@ -27,6 +27,14 @@ fn generate_random_mrenclave() -> MrEnclave {
 	MrEnclave::from(mrenclave)
 }
 
+fn create_test_authorized_enclaves<T: Config>(n: u32, worker_type: WorkerType) {
+	for _ in 0..n {
+		let mrenclave = generate_random_mrenclave();
+		AuthorizedEnclave::<T>::try_mutate(worker_type, |v| v.try_push(mrenclave))
+			.expect("Failed to add authorized enclave");
+	}
+}
+
 #[benchmarks(
     where <T as frame_system::Config>::Hash: From<[u8; 32]>
 )]
