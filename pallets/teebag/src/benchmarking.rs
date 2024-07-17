@@ -2,6 +2,7 @@ use super::{Pallet as Teebag, *};
 use frame_benchmarking::v2::*;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
+use std::time::SystemTime;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -13,6 +14,17 @@ fn create_test_enclaves<T: Config>(n: u32, mrenclave: MrEnclave) {
 		let test_enclave = Enclave::new(WorkerType::Identity).with_mrenclave(mrenclave.clone());
 		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
 	}
+}
+
+fn generate_random_mrenclave() -> MrEnclave {
+	let time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos();
+
+	let mut mrenclave = [0u8; 32];
+	for (i, byte) in time.to_ne_bytes().iter().cycle().take(32).enumerate() {
+		mrenclave[i] = *byte;
+	}
+
+	MrEnclave::from(mrenclave)
 }
 
 #[benchmarks(
