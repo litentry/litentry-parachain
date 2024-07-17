@@ -36,7 +36,8 @@ fn create_test_authorized_enclaves<T: Config>(n: u32, worker_type: WorkerType) {
 }
 
 #[benchmarks(
-    where <T as frame_system::Config>::Hash: From<[u8; 32]>
+    where <T as frame_system::Config>::Hash: From<[u8; 32]>,
+          <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 )]
 mod benchmarks {
 	use super::*;
@@ -161,6 +162,51 @@ mod benchmarks {
 			Event::EnclaveUnauthorized {
 				worker_type: WorkerType::Identity,
 				mrenclave: test_util::TEST4_MRENCLAVE,
+			}
+			.into(),
+		)
+	}
+
+	#[benchmark]
+	fn register_enclave_with_ias_attestation() {
+		AuthorizedEnclave::<T>::try_mutate(WorkerType::Identity, |v| {
+			v.try_push(test_util::TEST4_MRENCLAVE)
+		})
+		.expect("Failed to add authorized enclave");
+
+		assert_ok!(pallet_timestamp::Pallet::<T>::set(
+			RawOrigin::None.into(),
+			T::Moment::saturated_from(test_util::TEST4_TIMESTAMP)
+		));
+
+		let caller: T::AccountId =
+			test_util::get_signer::<T::AccountId>(test_util::TEST4_SIGNER_PUB).into();
+
+		#[extrinsic_call]
+		Teebag::<T>::register_enclave(
+			RawOrigin::Signed(caller.clone()),
+			WorkerType::Identity,
+			WorkerMode::OffChainWorker,
+			test_util::TEST4_CERT.to_vec(),
+			test_util::URL.to_vec(),
+			None,
+			None,
+			AttestationType::Ias,
+		);
+
+		let registered_enclave = Enclave::new(WorkerType::Identity)
+			.with_mrenclave(test_util::TEST4_MRENCLAVE)
+			.with_last_seen_timestamp(test_util::TEST4_TIMESTAMP)
+			.with_sgx_build_mode(SgxBuildMode::Debug)
+			.with_url(test_util::URL.to_vec())
+			.with_attestation_type(AttestationType::Ias);
+
+		assert_eq!(EnclaveRegistry::<T>::get(caller.clone()).unwrap(), registered_enclave);
+		assert_last_event::<T>(
+			Event::EnclaveAdded {
+				who: caller,
+				worker_type: WorkerType::Identity,
+				url: test_util::URL.to_vec(),
 			}
 			.into(),
 		)
