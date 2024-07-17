@@ -48,7 +48,7 @@ fn transfer_native_is_ok() {
 				PCall::<Test>::transfer_native {
 					amount: 100u128.into(),
 					receipt: dest_account.into(),
-					dest_id: dest_bridge_id.into(),
+					dest_id: dest_bridge_id,
 				},
 			)
 			.expect_no_logs()

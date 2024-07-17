@@ -140,7 +140,7 @@ mod tests {
 		fn call(
 			&mut self,
 			_: sp_core::H160,
-			_: Option<evm::Transfer>,
+			_: Option<fp_evm::Transfer>,
 			_: Vec<u8>,
 			_: Option<u64>,
 			_: bool,
@@ -149,7 +149,7 @@ mod tests {
 			unimplemented!()
 		}
 
-		fn record_cost(&mut self, _: u64) -> Result<(), evm::ExitError> {
+		fn record_cost(&mut self, _: u64) -> Result<(), fp_evm::ExitError> {
 			unimplemented!()
 		}
 
@@ -162,7 +162,7 @@ mod tests {
 			_: sp_core::H160,
 			_: Vec<sp_core::H256>,
 			_: Vec<u8>,
-		) -> Result<(), evm::ExitError> {
+		) -> Result<(), fp_evm::ExitError> {
 			unimplemented!()
 		}
 
@@ -174,7 +174,7 @@ mod tests {
 			unimplemented!()
 		}
 
-		fn context(&self) -> &evm::Context {
+		fn context(&self) -> &fp_evm::Context {
 			unimplemented!()
 		}
 
