@@ -166,5 +166,5 @@ mod benchmarks {
 		)
 	}
 
-	impl_benchmark_test_suite!(Teebag, super::mock::new_bench_ext(), super::mock::Test);
+	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
