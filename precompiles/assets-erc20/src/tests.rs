@@ -222,7 +222,7 @@ fn mint_is_ok() {
 		));
 
 		// Sanity check, Bob should be without assets
-		assert!(Assets::balance(asset_id, Bob.into()).is_zero());
+		assert!(Assets::balance(asset_id, MockAccount::from(Bob)).is_zero());
 
 		// Mint some assets for Bob
 		let mint_amount = 7 * 11 * 19;
@@ -243,7 +243,7 @@ fn mint_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was increased
-		assert_eq!(Assets::balance(asset_id, Bob.into()), mint_amount);
+		assert_eq!(Assets::balance(asset_id, MockAccount::from(Bob)), mint_amount);
 	});
 }
 
@@ -305,7 +305,7 @@ fn burn_is_ok() {
 			Bob.into(),
 			init_amount,
 		));
-		assert_eq!(Assets::balance(asset_id, Bob.into()), init_amount);
+		assert_eq!(Assets::balance(asset_id, MockAccount::from(Bob)), init_amount);
 
 		// Burn some assets from Bob
 		let burn_amount = 19;
@@ -326,7 +326,7 @@ fn burn_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(Assets::balance(asset_id, Bob.into()), init_amount - burn_amount);
+		assert_eq!(Assets::balance(asset_id, MockAccount::from(Bob)), init_amount - burn_amount);
 	});
 }
 

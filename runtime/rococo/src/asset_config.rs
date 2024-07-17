@@ -5,9 +5,9 @@ use super::{
 pub use constants::currency;
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU32, Contains},
+	traits::{ConstU32, Contains},
 };
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use pallet_evm_precompile_assets_erc20::AddressToAssetId;
 use runtime_common::{currency::DOLLARS, xcm_impl::CurrencyId, EnsureRootOrHalfCouncil};
 use sp_runtime::traits::AccountIdConversion;
@@ -57,7 +57,9 @@ impl pallet_assets::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type Currency = Balances;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	// We do not allow creating by regular users before pallet_asset_manager fully adopted
+	// P-937
+	type CreateOrigin = EnsureRoot<AccountId>;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;
