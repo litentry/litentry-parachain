@@ -34,6 +34,7 @@ pub struct SidechainBlockDataBuilder {
 	layer_one_head: H256,
 	signer: ed25519::Pair,
 	signed_top_hashes: Vec<H256>,
+	failed_top_hashes: Vec<H256>,
 	encrypted_state_diff: Vec<u8>,
 }
 
@@ -44,6 +45,7 @@ impl Default for SidechainBlockDataBuilder {
 			layer_one_head: Default::default(),
 			signer: Pair::from_seed(&ENCLAVE_SEED),
 			signed_top_hashes: Default::default(),
+			failed_top_hashes: Default::default(),
 			encrypted_state_diff: Default::default(),
 		}
 	}
@@ -56,6 +58,7 @@ impl SidechainBlockDataBuilder {
 			layer_one_head: BlockHash::random(),
 			signer: Pair::from_seed(&ENCLAVE_SEED),
 			signed_top_hashes: vec![H256::random(), H256::random()],
+			failed_top_hashes: vec![H256::random(), H256::random()],
 			encrypted_state_diff: vec![1, 3, 42, 8, 11, 33],
 		}
 	}
@@ -91,6 +94,7 @@ impl SidechainBlockDataBuilder {
 			block_author: self.signer.public(),
 			layer_one_head: self.layer_one_head,
 			signed_top_hashes: self.signed_top_hashes,
+			failed_top_hashes: self.failed_top_hashes,
 			encrypted_state_diff: self.encrypted_state_diff,
 		}
 	}

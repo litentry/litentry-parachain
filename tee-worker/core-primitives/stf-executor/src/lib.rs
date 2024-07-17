@@ -285,6 +285,7 @@ mod tests {
 	) -> BatchExecutionResult<SgxExternalities, TrustedCallSignedMock, GetterMock> {
 		BatchExecutionResult {
 			executed_operations: executed_calls,
+			failed_operations: Default::default(),
 			state_hash_before_execution: H256::default(),
 			state_after_execution: SgxExternalities::default(),
 		}
