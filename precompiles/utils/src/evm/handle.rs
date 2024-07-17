@@ -145,7 +145,7 @@ mod tests {
 			_: Option<u64>,
 			_: bool,
 			_: &fp_evm::Context,
-		) -> (evm::ExitReason, Vec<u8>) {
+		) -> (fp_evm::ExitReason, Vec<u8>) {
 			unimplemented!()
 		}
 
