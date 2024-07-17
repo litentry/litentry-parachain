@@ -94,6 +94,7 @@ runtime-benchmarks = [
 ]
 
 try-runtime = [
+    "pallet-assets/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
     "pallet-group/try-runtime",

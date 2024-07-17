@@ -15,10 +15,10 @@ path = "tests/tests.rs"
 case = "1.0"
 num_enum = { workspace = true }
 prettyplease = "0.2.12"
-proc-macro2 = "1.0"
-quote = "1.0"
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
 sp-core-hashing = { workspace = true }
-syn = { version = "1.0", features = ["extra-traits", "fold", "full", "visit"] }
+syn = { workspace = true, features = ["extra-traits", "fold", "full", "visit"] }
 
 [dev-dependencies]
 macrotest = "1.0.9"
