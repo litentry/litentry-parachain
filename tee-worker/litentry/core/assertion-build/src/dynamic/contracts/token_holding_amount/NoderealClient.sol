@@ -19,10 +19,12 @@
 pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
+import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
+
 library NoderealClient {
 	function getTokenBalance(
-		string memory url,
+        uint32 network,
 		string[] memory secrets,
 		string memory tokenContractAddress,
 		string memory account
@@ -31,7 +33,7 @@ library NoderealClient {
 		string memory request;
 
 		string memory encodePackedUrl = string(
-			abi.encodePacked(url, secrets[0])
+			abi.encodePacked(getNetworkUrl(network), secrets[0])
 		);
 		if (
 			keccak256(bytes(tokenContractAddress)) == keccak256("Native Token")
@@ -69,5 +71,21 @@ library NoderealClient {
 		} else {
 			return (false, 0);
 		}
-	}
+    }
+
+    function isSupportedNetwork(uint32 network) internal pure returns (bool) {
+        return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
+    }
+
+    function getNetworkUrl(uint32 network)
+        internal
+        pure
+        returns (string memory url)
+    {
+        if (network == Web3Networks.Bsc) {
+            url = "https://bsc-mainnet.nodereal.io/v1/";
+        } else if (network == Web3Networks.Ethereum) {
+            url = "https://eth-mainnet.nodereal.io/v1/";
+        }
+    }
 }
