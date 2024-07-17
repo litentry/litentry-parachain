@@ -34,5 +34,4 @@ pub mod sgx_reexport_prelude {
 }
 
 pub mod constants;
-pub mod direct_top_pool_api;
 pub mod import_block_api;

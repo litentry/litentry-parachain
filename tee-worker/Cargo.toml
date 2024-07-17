@@ -69,6 +69,7 @@ members = [
     "sidechain/rpc-handler",
     "sidechain/sidechain-crate",
     "sidechain/state",
+    "sidechain/trusted-direct-api-module",
     "sidechain/validateer-fetch",
     "litentry/primitives",
     "litentry/pallets/identity-management",

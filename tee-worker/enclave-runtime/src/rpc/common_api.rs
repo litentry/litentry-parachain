@@ -1,28 +1,13 @@
-/*
-	Copyright 2021 Integritee AG and Supercomputing Systems AG
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-		http://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-
-*/
-
 use crate::{
 	attestation::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
+	std::borrow::ToOwned,
 	utils::get_validator_accessor_from_integritee_solo_or_parachain,
 };
-use codec::Encode;
+use base58::FromBase58;
+use codec::{Decode, Encode};
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
@@ -41,10 +26,6 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use its_primitives::types::block::SignedBlock;
-use its_sidechain::rpc_handler::{
-	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
-};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::twitter;
@@ -54,31 +35,21 @@ use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
-use std::{borrow::ToOwned, boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
+use std::{boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
 }
 
-fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
-	let method_string = io_handler
-		.iter()
-		.map(|rp_tuple| rp_tuple.0.to_owned())
-		.collect::<Vec<String>>()
-		.join(", ");
-
-	format!("methods: [{}]", method_string)
-}
-
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallApi, State>(
+pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, State>(
+	io_handler: &mut IoHandler,
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	ocall_api: Arc<OcallApi>,
 	state: Option<Arc<State>>,
 	data_provider_config: Arc<DataProviderConfig>,
-) -> IoHandler
-where
+) where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
 	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
@@ -88,13 +59,8 @@ where
 	State: HandleState + Send + Sync + 'static,
 	State::StateT: SgxExternalitiesTrait,
 {
-	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(
-		top_pool_author.clone(),
-		IoHandler::new(),
-	);
-
 	let shielding_key_cloned = shielding_key.clone();
-	io.add_sync_method("author_getShieldingKey", move |_: Params| {
+	io_handler.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
 		let rsa_pubkey = match shielding_key_cloned.retrieve_pubkey() {
 			Ok(key) => key,
@@ -120,7 +86,7 @@ where
 	// author_getEnclaveSignerAccount
 	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
 	let shielding_key_cloned = shielding_key.clone();
-	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
+	io_handler.add_sync_method(rsa_pubkey_name, move |_: Params| {
 		let enclave_signer_public_key = match shielding_key_cloned
 			.retrieve_key()
 			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
@@ -146,7 +112,7 @@ where
 
 	let local_state = if_development_or!(state.clone(), state);
 
-	io.add_sync_method("author_getNextNonce", move |params: Params| {
+	io_handler.add_sync_method("author_getNextNonce", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_getNextNonce");
 		let local_state = match local_state.clone() {
 			Some(s) => s,
@@ -214,14 +180,14 @@ where
 		}
 	});
 
-	io.add_sync_method("author_getShard", move |_: Params| {
+	io_handler.add_sync_method("author_getShard", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShard");
 		let shard = top_pool_author.list_handled_shards().first().copied().unwrap_or_default();
 		let json_value = RpcReturnValue::new(shard.encode(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
 	});
 
-	io.add_sync_method("author_getMuRaUrl", move |_: Params| {
+	io_handler.add_sync_method("author_getMuRaUrl", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getMuRaUrl");
 		let url = match GLOBAL_PRIMITIVES_CACHE.get_mu_ra_url() {
 			Ok(url) => url,
@@ -235,7 +201,7 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
-	io.add_sync_method("author_getUntrustedUrl", move |_: Params| {
+	io_handler.add_sync_method("author_getUntrustedUrl", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getUntrustedUrl");
 		let url = match GLOBAL_PRIMITIVES_CACHE.get_untrusted_worker_url() {
 			Ok(url) => url,
@@ -249,20 +215,20 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
-	io.add_sync_method("chain_subscribeAllHeads", |_: Params| {
+	io_handler.add_sync_method("chain_subscribeAllHeads", |_: Params| {
 		debug!("worker_api_direct rpc was called: chain_subscribeAllHeads");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
-	io.add_sync_method("state_getMetadata", |_: Params| {
+	io_handler.add_sync_method("state_getMetadata", |_: Params| {
 		debug!("worker_api_direct rpc was called: state_getMetadata");
 		let metadata = Runtime::metadata();
 		let json_value = RpcReturnValue::new(metadata.into(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
 	});
 
-	io.add_sync_method("state_getRuntimeVersion", |_: Params| {
+	io_handler.add_sync_method("state_getRuntimeVersion", |_: Params| {
 		debug!("worker_api_direct rpc was called: state_getRuntimeVersion");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
@@ -270,7 +236,7 @@ where
 
 	// TODO: deprecate
 	let getter_executor_cloned = getter_executor.clone();
-	io.add_sync_method("state_executeGetter", move |params: Params| {
+	io_handler.add_sync_method("state_executeGetter", move |params: Params| {
 		debug!("worker_api_direct rpc was called: state_executeGetter");
 		#[allow(deprecated)]
 		let json_value = match execute_rsa_getter_inner(getter_executor_cloned.as_ref(), params) {
@@ -285,7 +251,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	io.add_sync_method("state_executeAesGetter", move |params: Params| {
+	io_handler.add_sync_method("state_executeAesGetter", move |params: Params| {
 		debug!("worker_api_direct rpc was called: state_executeAesGetter");
 
 		let shielding_key = match shielding_key.retrieve_key().map_err(|e| format!("{:?}", e)) {
@@ -328,7 +294,7 @@ where
 		}
 	});
 
-	io.add_sync_method("attesteer_forwardDcapQuote", move |params: Params| {
+	io_handler.add_sync_method("attesteer_forwardDcapQuote", move |params: Params| {
 		debug!("worker_api_direct rpc was called: attesteer_forwardDcapQuote");
 		let json_value = match forward_dcap_quote_inner(params) {
 			Ok(val) => RpcReturnValue {
@@ -343,7 +309,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	io.add_sync_method("attesteer_forwardIasAttestationReport", move |params: Params| {
+	io_handler.add_sync_method("attesteer_forwardIasAttestationReport", move |params: Params| {
 		debug!("worker_api_direct rpc was called: attesteer_forwardIasAttestationReport");
 		let json_value = match attesteer_forward_ias_attestation_report_inner(params) {
 			Ok(val) => RpcReturnValue {
@@ -358,7 +324,7 @@ where
 	});
 
 	// state_getMrenclave
-	io.add_sync_method("state_getMrenclave", move |_: Params| {
+	io_handler.add_sync_method("state_getMrenclave", move |_: Params| {
 		let json_value = match ocall_api.get_mrenclave_of_self() {
 			Ok(m) => RpcReturnValue {
 				do_watch: false,
@@ -376,7 +342,7 @@ where
 
 	if_development!({
 		// state_getStorage
-		io.add_sync_method("state_getStorage", move |params: Params| {
+		io_handler.add_sync_method("state_getStorage", move |params: Params| {
 			let local_state = match state.clone() {
 				Some(s) => s,
 				None =>
@@ -427,25 +393,25 @@ where
 	});
 
 	// system_health
-	io.add_sync_method("system_health", |_: Params| {
+	io_handler.add_sync_method("system_health", |_: Params| {
 		debug!("worker_api_direct rpc was called: system_health");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
-	io.add_sync_method("system_name", |_: Params| {
+	io_handler.add_sync_method("system_name", |_: Params| {
 		debug!("worker_api_direct rpc was called: system_name");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
-	io.add_sync_method("system_version", |_: Params| {
+	io_handler.add_sync_method("system_version", |_: Params| {
 		debug!("worker_api_direct rpc was called: system_version");
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
-	io.add_sync_method("identity_getTwitterAuthorizeUrl", move |params: Params| {
+	io_handler.add_sync_method("identity_getTwitterAuthorizeUrl", move |params: Params| {
 		debug!("worker_api_direct rpc was called: identity_getTwitterAuthorizeUrl");
 
 		match params.parse::<(String, String)>() {
@@ -487,14 +453,6 @@ where
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
 		}
 	});
-
-	let rpc_methods_string = get_all_rpc_methods_string(&io);
-	io.add_sync_method("rpc_methods", move |_: Params| {
-		debug!("worker_api_direct rpc was called: rpc_methods");
-		Ok(Value::String(rpc_methods_string.to_owned()))
-	});
-
-	io
 }
 
 #[deprecated(note = "`state_executeAesGetter` should be preferred")]
@@ -582,32 +540,15 @@ fn attesteer_forward_ias_attestation_report_inner(
 	Ok(ext)
 }
 
-pub fn sidechain_io_handler<ImportFn, Error>(import_fn: ImportFn) -> IoHandler
-where
-	ImportFn: Fn(SignedBlock) -> Result<(), Error> + Sync + Send + 'static,
-	Error: std::fmt::Debug,
-{
-	let io = IoHandler::new();
-	import_block_api::add_import_block_rpc_method(import_fn, io)
-}
-
-#[cfg(feature = "test")]
-pub mod tests {
-	use super::*;
-	use std::string::ToString;
-
-	pub fn test_given_io_handler_methods_then_retrieve_all_names_as_string() {
-		let mut io = IoHandler::new();
-		let method_names: [&str; 4] = ["method1", "another_method", "fancy_thing", "solve_all"];
-
-		for method_name in method_names.iter() {
-			io.add_sync_method(method_name, |_: Params| Ok(Value::String("".to_string())));
-		}
-
-		let method_string = get_all_rpc_methods_string(&io);
-
-		for method_name in method_names.iter() {
-			assert!(method_string.contains(method_name));
-		}
-	}
+// converts the rpc methods vector to a string and adds commas and brackets for readability
+pub fn decode_shard_from_base58(shard_base58: &str) -> Result<ShardIdentifier, String> {
+	let shard_vec = match shard_base58.from_base58() {
+		Ok(vec) => vec,
+		Err(_) => return Err("Invalid base58 format of shard id".to_owned()),
+	};
+	let shard = match ShardIdentifier::decode(&mut shard_vec.as_slice()) {
+		Ok(hash) => hash,
+		Err(_) => return Err("Shard ID is not of type H256".to_owned()),
+	};
+	Ok(shard)
 }

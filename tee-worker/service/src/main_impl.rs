@@ -30,7 +30,6 @@ use clap::{load_yaml, App, ArgMatches};
 use codec::{Decode, Encode};
 use ita_parentchain_interface::integritee::{Hash, Header};
 use itp_enclave_api::{
-	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
@@ -312,7 +311,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
-	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+	E: EnclaveBase + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
@@ -434,14 +433,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Start untrusted worker rpc server.
-	// i.e move sidechain block importing to trusted worker.
 	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-		sidechain_start_untrusted_rpc_server(
-			&config,
-			enclave.clone(),
-			sidechain_storage.clone(),
-			&tokio_handle,
-		);
+		sidechain_start_untrusted_rpc_server(&config, sidechain_storage.clone(), &tokio_handle);
 	}
 
 	// ------------------------------------------------------------------------
@@ -1049,7 +1042,7 @@ fn register_enclave<E>(
 	is_development_mode: bool,
 ) -> ServiceResult<Hash>
 where
-	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+	E: EnclaveBase + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
 {
 	#[cfg(not(feature = "dcap"))]
 	let register_xt = move || enclave.generate_ias_ra_extrinsic(url, skip_ra).unwrap();
