@@ -1318,7 +1318,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		// normal create is wrong
 		// need to set asset is_frozen to True, otherwise no existing account (i.e. no native token)
 		// is not allowed to proccessing assets token
-		assert_ok!(Assets::force_create(
+		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0,
 			R::ParaOrigin::signed(alice()),
@@ -1339,6 +1339,16 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		));
 	});
 	R::ParaB::execute_with(|| {
+		// normal create is wrong
+		// need to set asset is_frozen to True, otherwise no existing account (i.e. no native token)
+		// is not allowed to proccessing assets token
+		assert_ok!(Assets::<R::ParaRuntime>::force_create(
+			RawOrigin::Root.into(),
+			0,
+			R::ParaOrigin::signed(alice()),
+			true,
+			1
+		));
 		assert_ok!(AssetManager::<R::ParaRuntime>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			CurrencyId::<R::ParaRuntime>::ParachainReserve(Box::new(
