@@ -1,9 +1,18 @@
 use super::{Pallet as Teebag, *};
 use frame_benchmarking::v2::*;
+use frame_support::assert_ok;
 use frame_system::RawOrigin;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
+
+fn create_test_enclaves<T: Config>(n: u32, mrenclave: MrEnclave) {
+	for i in 0..n {
+		let who: T::AccountId = account("who", i, 1);
+		let test_enclave = Enclave::new(WorkerType::Identity).with_mrenclave(mrenclave.clone());
+		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
+	}
 }
 
 #[benchmarks(
