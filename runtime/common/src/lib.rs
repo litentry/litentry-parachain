@@ -232,8 +232,10 @@ macro_rules! prod_or_fast {
 /// Instance definition for council and technical committee
 pub type CouncilInstance = pallet_collective::Instance1;
 pub type TechnicalCommitteeInstance = pallet_collective::Instance2;
+pub type DeveloperCommitteeInstance = pallet_collective::Instance3;
 pub type CouncilMembershipInstance = pallet_membership::Instance1;
 pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance2;
+pub type DeveloperCommitteeMembershipInstance = pallet_membership::Instance3;
 
 /// Instance definition for whitelist or any other kind
 /// Instance here is supposed to control privilege of unlimited group size

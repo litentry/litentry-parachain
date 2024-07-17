@@ -169,7 +169,7 @@ pub mod storage {
 	pub fn clear(key: &[u8]) {
 		with_externalities(|ext| {
 			if ext.remove(key).is_none() {
-				info!("Tried to clear storage that was not existing");
+				debug!("Tried to clear storage that was not existing");
 			}
 		});
 	}

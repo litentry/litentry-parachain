@@ -32,8 +32,7 @@ use itp_stf_primitives::{
 };
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{Index, ShardIdentifier};
-use log::*;
+use itp_types::{Index, MrEnclave, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
@@ -113,8 +112,11 @@ where
 	G: PartialEq + Encode + Decode + Debug + Send + Sync,
 {
 	fn get_enclave_account(&self) -> Result<AccountId> {
-		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
-		Ok(enclave_call_signing_key.public().into())
+		self.get_enclave_call_signing_key().map(|key| key.public().into())
+	}
+
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.ocall_api.get_mrenclave_of_self().map(|m| m.m)?)
 	}
 
 	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
@@ -122,7 +124,7 @@ where
 		trusted_call: &TC,
 		shard: &ShardIdentifier,
 	) -> Result<TCS> {
-		let mr_enclave = self.ocall_api.get_mrenclave_of_self()?;
+		let mrenclave = self.get_mrenclave()?;
 		let enclave_account = self.get_enclave_account()?;
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
 
@@ -138,16 +140,12 @@ where
 		Ok(trusted_call.sign(
 			&KeyPair::Ed25519(Box::new(enclave_call_signing_key)),
 			adjusted_nonce,
-			&mr_enclave.m,
+			&mrenclave,
 			shard,
 		))
 	}
 
-	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
-		let enclave_account = self.get_enclave_account()?;
-		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
-
-		debug!("	[EnclaveSigner] VC pubkey: {:?}", enclave_call_signing_key.public().to_vec());
-		Ok((enclave_account, enclave_call_signing_key.sign(payload).0.to_vec()))
+	fn sign(&self, payload: &[u8]) -> Result<Vec<u8>> {
+		self.get_enclave_call_signing_key().map(|key| key.sign(payload).0.to_vec())
 	}
 }

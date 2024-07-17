@@ -220,7 +220,7 @@ where
 					id, curr_block_number, until_synced_header.number, immediate_import, format_duration(remaining_time_estimate)
 				);
 			}
-			debug!(
+			trace!(
 				"[{:?}] Found {} block(s) to sync in this chunk. immediate import={} ",
 				id,
 				block_chunk_to_sync.len(),
@@ -252,7 +252,7 @@ where
 						self.parentchain_api.get_events_for_block(Some(block.block.header.hash()))
 					})
 					.collect::<Result<Vec<_>, _>>()?;
-				debug!("[{:?}] Found {} event vector(s) to sync in this chunk", id, evs.len());
+				trace!("[{:?}] Found {} event vector(s) to sync in this chunk", id, evs.len());
 				evs
 			};
 
@@ -290,7 +290,7 @@ where
 					.expect("Can decode previously encoded header; qed");
 
 			start_block = until_synced_header.number + 1;
-			println!(
+			info!(
 				"[{:?}] Synced {} out of {} finalized parentchain blocks",
 				id, until_synced_header.number, curr_block_number,
 			);
@@ -321,7 +321,7 @@ where
 				shard,
 				true,
 			)?;
-			println!("[{:?}] synced block number: #{}", id, last_synced_header.number);
+			info!("[{:?}] synced block number: #{}", id, last_synced_header.number);
 			std::thread::sleep(std::time::Duration::from_secs(1));
 		}
 		Ok(last_synced_header)

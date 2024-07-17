@@ -37,8 +37,8 @@ impl TryFrom<NodeMetadataMock> for Metadata {
 pub struct NodeMetadataMock {
 	// teebag
 	teebag_module: u8,
-	set_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
+	force_add_authorized_enclave: u8,
+	force_remove_authorized_enclave: u8,
 	register_enclave: u8,
 	unregister_enclave: u8,
 	register_quoting_enclave: u8,
@@ -78,8 +78,8 @@ impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
 			teebag_module: 50u8,
-			set_scheduled_enclave: 0u8,
-			remove_scheduled_enclave: 1u8,
+			force_add_authorized_enclave: 0u8,
+			force_remove_authorized_enclave: 1u8,
 			register_enclave: 2u8,
 			unregister_enclave: 3u8,
 			register_quoting_enclave: 4u8,
@@ -118,11 +118,11 @@ impl NodeMetadataMock {
 }
 
 impl TeebagCallIndexes for NodeMetadataMock {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.set_scheduled_enclave])
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_add_authorized_enclave])
 	}
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.remove_scheduled_enclave])
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_remove_authorized_enclave])
 	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.register_enclave])

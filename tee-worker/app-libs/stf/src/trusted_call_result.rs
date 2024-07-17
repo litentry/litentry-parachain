@@ -18,10 +18,11 @@
 // passed back to the requester of trustedCall direct invocation (DI).
 // They are mostly translated from the callback extrinsics in IMP.
 
+use crate::{Box, String};
 use codec::{Decode, Encode};
 use itp_stf_interface::StfExecutionResult;
 use itp_types::H256;
-use litentry_primitives::AesOutput;
+use litentry_primitives::{AesOutput, VCMPError};
 use std::vec::Vec;
 
 #[derive(Encode, Decode, Debug)]
@@ -96,6 +97,8 @@ pub struct SetIdentityNetworksResult {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct RequestVCResult {
 	pub vc_payload: AesOutput,
+	// Mainly used to returning logs in dynamic contract VC.
+	pub vc_logs: Option<AesOutput>,
 	// see comments in `lc-vc-task-receiver` why it's prefixed with `pre...`
 	// they should be referenced/used only when the client's local IDGraph is empty
 	pub pre_mutated_id_graph: AesOutput,
@@ -103,9 +106,33 @@ pub struct RequestVCResult {
 }
 
 #[derive(Debug, Encode, Decode, Clone)]
+pub enum RequestVcErrorDetail {
+	UnexpectedCall(String),
+	DuplicateAssertionRequest,
+	ShieldingKeyRetrievalFailed(String), // Stringified itp_sgx_crypto::Error
+	RequestPayloadDecodingFailed,
+	SidechainDataRetrievalFailed(String), // Stringified itp_stf_state_handler::Error
+	IdentityAlreadyLinked,
+	NoEligibleIdentity,
+	InvalidSignerAccount,
+	UnauthorizedSigner,
+	AssertionBuildFailed(Box<VCMPError>),
+	MissingAesKey,
+	MrEnclaveRetrievalFailed,
+	EnclaveSignerRetrievalFailed,
+	SignatureVerificationFailed,
+	ConnectionHashNotFound(String),
+	MetadataRetrievalFailed(String), // Stringified itp_node_api_metadata_provider::Error
+	InvalidMetadata(String),         // Stringified itp_node_api_metadata::Error
+	TrustedCallSendingFailed(String), // Stringified mpsc::SendError<(H256, TrustedCall)>
+	CallSendingFailed(String),
+	ExtrinsicConstructionFailed(String), // Stringified itp_extrinsics_factory::Error
+	ExtrinsicSendingFailed(String),      // Stringified sgx_status_t
+}
+
+#[derive(Debug, Encode, Decode, Clone)]
 pub struct RequestVcResultOrError {
-	pub payload: Vec<u8>,
-	pub is_error: bool,
+	pub result: Result<Vec<u8>, RequestVcErrorDetail>,
 	pub idx: u8,
 	pub len: u8,
 }

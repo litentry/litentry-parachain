@@ -63,7 +63,7 @@ use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
-use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
+use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
@@ -87,7 +87,7 @@ use its_sidechain::{
 };
 use lc_data_providers::DataProviderConfig;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
 use litentry_primitives::BroadcastedRequest;
@@ -214,6 +214,7 @@ pub(crate) fn init_enclave(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
+		ocall_api.clone(),
 		Some(state_handler),
 		data_provider_config,
 	);
@@ -265,10 +266,13 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,
@@ -295,21 +299,30 @@ fn run_vc_issuance() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,
 		evm_assertion_repository,
 	);
-	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
-	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	run_vc_handler_runner(Arc::new(stf_task_context), node_metadata_repo);
 
 	Ok(())
+}
+
+fn run_parachain_extrinsic_sender() -> Result<(), Error> {
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+
+	run_parachain_extrinsic_task_receiver(ocall_api, extrinsics_factory).map_err(|e| e.into())
 }
 
 pub(crate) fn init_enclave_sidechain_components(
@@ -322,11 +335,6 @@ pub(crate) fn init_enclave_sidechain_components(
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
-
-	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	let parentchain_block_import_dispatcher =
 		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;
@@ -391,6 +399,12 @@ pub(crate) fn init_enclave_sidechain_components(
 		run_vc_issuance().unwrap();
 	});
 
+	std::thread::spawn(move || {
+		println!("running parentchain extrinsic sender");
+		#[allow(clippy::unwrap_used)]
+		run_parachain_extrinsic_sender().unwrap();
+	});
+
 	Ok(())
 }
 
@@ -438,12 +452,9 @@ pub(crate) fn init_shard(shard: ShardIdentifier) -> EnclaveResult<()> {
 	Ok(())
 }
 
-pub(crate) fn migrate_shard(
-	old_shard: ShardIdentifier,
-	new_shard: ShardIdentifier,
-) -> EnclaveResult<()> {
+pub(crate) fn migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let _ = state_handler.migrate_shard(old_shard, new_shard)?;
+	let _ = state_handler.migrate_shard(new_shard)?;
 	Ok(())
 }
 

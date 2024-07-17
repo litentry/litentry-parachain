@@ -43,7 +43,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use log::error;
 pub use pallet_teebag::{
-	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, Enclave,
+	decl_rsa_request, extract_tcb_info_from_raw_dcap_quote, AttestationType, DcapProvider, Enclave,
 	EnclaveFingerprint, MrEnclave, ShardIdentifier, SidechainBlockNumber, WorkerMode, WorkerType,
 };
 pub use parentchain_primitives::{
@@ -56,6 +56,7 @@ pub use parentchain_primitives::{
 		},
 		bnb_domain::BnbDigitDomainType,
 		contest::ContestType,
+		dynamic::{DynamicContractParams, DynamicParams},
 		evm_amount_holding::EVMTokenType,
 		generic_discord_role::GenericDiscordRoleType,
 		network::{
@@ -72,10 +73,10 @@ pub use parentchain_primitives::{
 	},
 	identity::*,
 	AccountId as ParentchainAccountId, Balance as ParentchainBalance,
-	BlockNumber as ParentchainBlockNumber, DynamicParams, ErrorDetail, ErrorString,
-	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
-	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, VCMPError, MINUTES,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
+	VCMPError, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

@@ -10,6 +10,7 @@ edition = "2021"
 # std dependecies
 base58 = { version = "0.2", default-features = false }
 blake2-rfc = { version = "0.2.18", default-features = false }
+chrono = { version = "0.4.26", default-features = true, optional = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 http = { version = "0.2", optional = true }
 rust_decimal = { version = "1.35.0", default-features = false }
@@ -17,6 +18,7 @@ ss58-registry = { version = "1.40", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # sgx dependencies
+chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 http-sgx = { package = "http", git = "https://github.com/integritee-network/http-sgx.git", branch = "sgx-experimental", optional = true }
 itp-sgx-temp-dir = { version = "0.1", default-features = false, path = "../../../core-primitives/sgx/temp-dir", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
@@ -52,6 +54,7 @@ std = [
     "serde_json/std",
     "http",
     "thiserror",
+    "chrono",
 ]
 sgx = [
     "sgx_tstd",
@@ -60,5 +63,6 @@ sgx = [
     "itc-rest-client/sgx",
     "itp-sgx-io/sgx",
     "thiserror-sgx",
+    "chrono_sgx",
 ]
 sgx-test = ["itp-sgx-temp-dir/sgx"]

@@ -118,51 +118,42 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
-    // prepare teebag enclave registry data for further checks
-    const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
-    const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
-    const enclaveIdentifier = await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity');
-    const lastRegisteredEnclave = (
-        await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveIdentifier[enclaveIdentifier.length - 1])
-    ).unwrap();
-
-    // step 6
     // check vc signature
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
     const message = Buffer.from(JSON.stringify(vcWithoutProof));
-    const vcPubkeyBytes = context.api.createType('Option<Bytes>', lastRegisteredEnclave.vcPubkey).unwrap();
-    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
+    const vcPubkey = Buffer.from(hexToU8a(proof.verificationMethod));
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
-
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
 
-    // step 7
-    // check VC mrenclave with enclave's mrenclave from registry
+    // step 6
+    // lookup the teebag enclave regsitry to check mrenclave and vcPubkey
+    const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
+    const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
+    const enclaveAccount = trimPrefix(vcPayloadJson.issuer.id, 'did:litentry:substrate:');
+    const registeredEnclave = (await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveAccount)).unwrap();
+
     assert.equal(
         vcPayloadJson.issuer.mrenclave,
-        base58.encode(lastRegisteredEnclave.mrenclave),
+        base58.encode(registeredEnclave.mrenclave),
         "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
     );
 
-    // step 8
-    // check vc issuer id
     assert.equal(
-        vcPayloadJson.issuer.id,
-        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
-        "Check VC id: it should equal enclave's pubkey from parachains enclave registry"
+        proof.verificationMethod,
+        registeredEnclave.vcPubkey,
+        "Check VC pubkey: it should equal enclave's vcPubkey from parachains enclave registry"
     );
 
-    // step 9
+    // step 7
     // check runtime version is present
     assert.deepEqual(
         vcPayloadJson.issuer.runtimeVersion,
-        { parachain: 9181, sidechain: 107 },
+        { parachain: 9183, sidechain: 109 },
         'Check VC runtime version: it should equal the current defined versions'
     );
 
-    // step 10
+    // step 8
     // validate VC against schema
-
     const schemaResult = await validateVcSchema(vcPayloadJson);
 
     if (schemaResult.errors) console.log('Schema Validation errors: ', schemaResult.errors);
@@ -197,4 +188,11 @@ export async function assertIdGraphHash(
     const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
     console.log('queried id graph hash: ', queriedIdGraphHash);
     assert.equal(computedIdGraphHash, queriedIdGraphHash);
+}
+
+function trimPrefix(str: string, prefix: string): string {
+    if (str.startsWith(prefix)) {
+        return str.substring(prefix.length);
+    }
+    return str;
 }

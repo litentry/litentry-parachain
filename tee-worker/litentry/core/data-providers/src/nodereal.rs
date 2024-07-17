@@ -151,6 +151,7 @@ impl DomainInfo {
 			NaiveDateTime::parse_from_str(&self.expires, "%Y-%m-%dT%H:%M:%SZ").map_err(|e| {
 				Error::Utf8Error(format!("Nodereal parse domain expires date error: {:?}", e))
 			})?;
+		#[allow(deprecated)]
 		let expired: DateTime<TzUtc> = DateTime::from_utc(expired, TzUtc);
 
 		Ok(expired <= now)

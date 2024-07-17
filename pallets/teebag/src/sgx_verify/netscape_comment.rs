@@ -25,8 +25,6 @@ impl<'a> TryFrom<CertDer<'a>> for NetscapeComment<'a> {
 
 		offset += 12; // 11 + TAG (0x04)
 
-		#[cfg(test)]
-		println!("netscape");
 		// Obtain Netscape Comment length
 		let len = length_from_raw_data(cert_der, &mut offset)?;
 		// Obtain Netscape Comment

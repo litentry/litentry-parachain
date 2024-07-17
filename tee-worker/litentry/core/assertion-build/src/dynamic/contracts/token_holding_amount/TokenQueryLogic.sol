@@ -23,26 +23,14 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
-abstract contract TokenLogic is TokenHoldingAmount {
-	mapping(uint32 => string) internal networkUrls;
-	mapping(uint32 => bool) private queriedNetworks;
+
+abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
 	mapping(string => string) internal tokenBscAddress;
 	mapping(string => string) internal tokenEthereumAddress;
 	mapping(string => uint32[]) internal tokenNetworks;
 
-	constructor() {
-		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
-		networkUrls[
-			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
-
-		networkUrls[
-			Web3Networks.BitcoinP2tr
-		] = "https://api.geniidata.com/api/1/brc20/balance"; //  test against mock server => "http://localhost:19529/api/1/brc20/balance"
-		// Add more networks as needed
-	}
-
+	// TODO fix it for erc20 token, same token for different networks has different decimals.
 	function getTokenDecimals() internal pure override returns (uint8) {
 		return 18;
 	}
@@ -57,44 +45,29 @@ abstract contract TokenLogic is TokenHoldingAmount {
 			.identityToString(network, identity.value);
 
 		if (identityToStringSuccess) {
-			string memory url;
-			uint32[] memory networks = tokenNetworks[tokenName];
 			uint256 totalBalance = 0;
 
-			for (uint32 i = 0; i < networks.length; i++) {
-				// Check if this network has been queried
-				url = networkUrls[networks[i]];
-
-				if (!queriedNetworks[networks[i]]) {
-					string memory _tokenContractAddress = tokenAddresses[
-						tokenName
-					][networks[i]];
-					if (networks[i] == Web3Networks.BitcoinP2tr) {
-						uint256 balance = GeniidataClient.getTokenBalance(
-							secrets,
-							url,
-							identityString,
-							tokenName,
-							getTokenDecimals()
-						);
-						totalBalance += balance;
-					} else if (
-						networks[i] == Web3Networks.Bsc ||
-						networks[i] == Web3Networks.Ethereum
-					) {
-						(bool success, uint256 balance) = NoderealClient
-							.getTokenBalance(
-								url,
-								secrets,
-								_tokenContractAddress,
-								identityString
-							);
-						if (success) {
-							totalBalance += balance;
-						}
-					}
-					// Mark this network as queried
-					queriedNetworks[networks[i]] = true;
+			string memory tokenContractAddress = tokenAddresses[tokenName][
+				network
+			];
+			if (GeniidataClient.isSupportedNetwork(network)) {
+				uint256 balance = GeniidataClient.getTokenBalance(
+					secrets,
+					identityString,
+					tokenName,
+					getTokenDecimals()
+				);
+				totalBalance += balance;
+			} else if (NoderealClient.isSupportedNetwork(network)) {
+				(bool success, uint256 balance) = NoderealClient
+						.getTokenBalance(
+						network,
+						secrets,
+						tokenContractAddress,
+						identityString
+					);
+				if (success) {
+					totalBalance += balance;
 				}
 			}
 			return totalBalance;
@@ -102,12 +75,18 @@ abstract contract TokenLogic is TokenHoldingAmount {
 		return 0;
 	}
 
-	function isSupportedNetwork(
-		uint32 network
-	) internal pure override returns (bool) {
-		return
-			network == Web3Networks.Bsc ||
-			network == Web3Networks.Ethereum ||
-			network == Web3Networks.BitcoinP2tr;
+    function isSupportedNetwork(string memory tokenName, uint32 network)
+        internal
+        view
+        override
+        returns (bool)
+    {
+        uint32[] memory networks = tokenNetworks[tokenName];
+        for (uint32 i = 0; i < networks.length; i++) {
+            if (network == networks[i]) {
+                return true;
+            }
+		}
+		return false;
 	}
 }

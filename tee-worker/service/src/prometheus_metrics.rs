@@ -317,8 +317,8 @@ fn assertion_to_string(assertion: Assertion) -> String {
 		Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount".into(),
 		Assertion::PlatformUser(_) => "PlatformUser".into(),
 		Assertion::NftHolder(_) => "NftHolder".into(),
-		Assertion::Dynamic(id, _) => {
-			format!("DynamicAssertion({:?})", id)
+		Assertion::Dynamic(param) => {
+			format!("DynamicAssertion({:?})", param.smart_contract_id)
 		},
 	};
 	assertion

@@ -82,6 +82,8 @@ members = [
     "litentry/core/vc-task/receiver",
     "litentry/core/dynamic-assertion",
     "litentry/core/evm-dynamic-assertions",
+    "litentry/core/parachain-extrinsic-task/sender",
+    "litentry/core/parachain-extrinsic-task/receiver",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

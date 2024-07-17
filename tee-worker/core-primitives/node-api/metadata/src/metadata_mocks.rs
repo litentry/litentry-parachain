@@ -16,7 +16,8 @@
 */
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes,
+	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
@@ -39,8 +40,8 @@ pub struct NodeMetadataMock {
 	// litentry
 	// teebag
 	teebag_module: u8,
-	set_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
+	force_add_authorized_enclave: u8,
+	force_remove_authorized_enclave: u8,
 	register_enclave: u8,
 	unregister_enclave: u8,
 	register_quoting_enclave: u8,
@@ -64,6 +65,10 @@ pub struct NodeMetadataMock {
 	vcmp_request_vc: u8,
 	vcmp_vc_issued: u8,
 	vcmp_some_error: u8,
+	// EVM Assertion
+	evm_assertions_module: u8,
+	evm_assertions_store_assertion: u8,
+	evm_assertions_void_assertion: u8,
 
 	utility_module: u8,
 	utility_batch: u8,
@@ -90,8 +95,8 @@ impl NodeMetadataMock {
 		NodeMetadataMock {
 			// litentry
 			teebag_module: 50u8,
-			set_scheduled_enclave: 0u8,
-			remove_scheduled_enclave: 1u8,
+			force_add_authorized_enclave: 0u8,
+			force_remove_authorized_enclave: 1u8,
 			register_enclave: 2u8,
 			unregister_enclave: 3u8,
 			register_quoting_enclave: 4u8,
@@ -116,6 +121,10 @@ impl NodeMetadataMock {
 			vcmp_vc_issued: 3u8,
 			vcmp_some_error: 9u8,
 
+			evm_assertions_module: 76u8,
+			evm_assertions_store_assertion: 77u8,
+			evm_assertions_void_assertion: 78u8,
+
 			utility_module: 80u8,
 			utility_batch: 0u8,
 			utility_as_derivative: 1u8,
@@ -139,11 +148,11 @@ impl NodeMetadataMock {
 }
 
 impl TeebagCallIndexes for NodeMetadataMock {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.set_scheduled_enclave])
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_add_authorized_enclave])
 	}
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.remove_scheduled_enclave])
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_remove_authorized_enclave])
 	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.register_enclave])
@@ -289,5 +298,15 @@ impl BalancesCallIndexes for NodeMetadataMock {
 impl TimestampCallIndexes for NodeMetadataMock {
 	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.timestamp_module, self.timestamp_set])
+	}
+}
+
+impl EvmAssertionsCallIndexes for NodeMetadataMock {
+	fn store_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_store_assertion])
+	}
+
+	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
 	}
 }

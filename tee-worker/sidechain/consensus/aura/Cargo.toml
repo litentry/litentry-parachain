@@ -41,7 +41,6 @@ its-validateer-fetch = { path = "../../validateer-fetch", default-features = fal
 
 # litentry
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
-lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
 litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 
 [dev-dependencies]
@@ -84,7 +83,6 @@ std = [
     "its-state/std",
     "its-validateer-fetch/std",
     "its-primitives/std",
-    "lc-scheduled-enclave/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -102,5 +100,4 @@ sgx = [
     "its-consensus-slots/sgx",
     "its-state/sgx",
     "its-block-verification/sgx",
-    "lc-scheduled-enclave/sgx",
 ]

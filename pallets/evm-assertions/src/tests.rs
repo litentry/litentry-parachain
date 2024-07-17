@@ -13,27 +13,19 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use crate::{mock::*, Error};
+use crate::{mock::*, Assertion, Error};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H160;
-
-type SystemAccountId = <Test as frame_system::Config>::AccountId;
 
 #[test]
 fn should_create_new_assertion() {
 	new_test_ext().execute_with(|| {
-		let pubkey: [u8; 32] = [
-			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
-			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
-		];
-
-		let alice: SystemAccountId = get_signer(&pubkey);
 		let assertion_id: H160 = H160::from_slice(&[1u8; 20]);
 		let byte_code = [0u8; 256].to_vec();
 		let secrets = vec![[2u8; 13].to_vec(), [3u8; 32].to_vec()];
 
 		assert_ok!(EvmAssertions::create_assertion(
-			RuntimeOrigin::signed(alice),
+			RuntimeOrigin::root(),
 			assertion_id,
 			byte_code.clone(),
 			secrets.clone()
@@ -49,18 +41,12 @@ fn should_create_new_assertion() {
 #[test]
 fn should_not_create_new_assertion_if_exists() {
 	new_test_ext().execute_with(|| {
-		let pubkey: [u8; 32] = [
-			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
-			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
-		];
-
-		let alice: SystemAccountId = get_signer(&pubkey);
 		let assertion_id: H160 = H160::from_slice(&[1u8; 20]);
 		let byte_code = [0u8; 256].to_vec();
 		let secrets = vec![[2u8; 13].to_vec(), [3u8; 32].to_vec()];
 
 		assert_ok!(EvmAssertions::create_assertion(
-			RuntimeOrigin::signed(alice.clone()),
+			RuntimeOrigin::root(),
 			assertion_id,
 			byte_code.clone(),
 			secrets.clone()
@@ -68,7 +54,7 @@ fn should_not_create_new_assertion_if_exists() {
 
 		assert_noop!(
 			EvmAssertions::create_assertion(
-				RuntimeOrigin::signed(alice),
+				RuntimeOrigin::root(),
 				assertion_id,
 				byte_code,
 				secrets
@@ -78,6 +64,24 @@ fn should_not_create_new_assertion_if_exists() {
 	});
 }
 
-pub fn get_signer<AccountId: From<[u8; 32]>>(pubkey: &[u8; 32]) -> AccountId {
-	AccountId::from(*pubkey)
+#[test]
+fn should_remove_assertion_if_failed_to_store() {
+	new_test_ext().execute_with(|| {
+		let assertion_id: H160 = H160::from_slice(&[1u8; 20]);
+		let byte_code = [0u8; 256].to_vec();
+		let secrets = vec![[2u8; 13].to_vec(), [3u8; 32].to_vec()];
+
+		assert_ok!(EvmAssertions::create_assertion(
+			RuntimeOrigin::root(),
+			assertion_id,
+			byte_code.clone(),
+			secrets.clone()
+		));
+
+		assert_eq!(EvmAssertions::assertions(assertion_id), Some(Assertion { byte_code, secrets }));
+
+		assert_ok!(EvmAssertions::void_assertion(RuntimeOrigin::root(), assertion_id,));
+
+		assert_eq!(EvmAssertions::assertions(assertion_id), None);
+	});
 }
