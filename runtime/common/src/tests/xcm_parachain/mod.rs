@@ -46,6 +46,7 @@ use crate::{
 	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
 	ParaRuntimeRequirements,
 };
+use parity_scale_codec::Decode;
 
 pub mod relay_sproof_builder;
 
@@ -1321,8 +1322,9 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0u128.into(),
-			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref()).into(),
-			.unwrap()
+			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref())
+				.expect("AccountId transfer failed")
+				.into(),
 			true,
 			1
 		));
@@ -1347,6 +1349,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 			RawOrigin::Root.into(),
 			0u128.into(),
 			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref())
+				.expect("AccountId transfer failed")
 				.into(),
 			true,
 			1
