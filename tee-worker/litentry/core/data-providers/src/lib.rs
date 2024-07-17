@@ -205,7 +205,6 @@ pub struct DataProviderConfig {
 	pub daren_market_api_retry_delay: u64,
 	pub daren_market_api_retry_times: u16,
 	pub daren_market_api_url: String,
-	pub daren_market_api_key: String,
 	pub moralis_api_url: String,
 	pub moralis_solana_api_url: String,
 	pub moralis_api_retry_delay: u64,
@@ -261,7 +260,6 @@ impl DataProviderConfig {
 			daren_market_api_retry_delay: 5000,
 			daren_market_api_retry_times: 2,
 			daren_market_api_url: "https://daren.market/".to_string(),
-			daren_market_api_key: "".to_string(),
 			moralis_api_key: "".to_string(),
 			moralis_api_retry_delay: 5000,
 			moralis_api_retry_times: 2,
@@ -414,9 +412,6 @@ impl DataProviderConfig {
 		}
 		if let Ok(v) = env::var("MAGIC_CRAFT_API_KEY") {
 			config.set_magic_craft_api_key(v);
-		}
-		if let Ok(v) = env::var("DAREN_MARKET_API_KEY") {
-			config.set_daren_market_api_key(v);
 		}
 		Ok(config)
 	}
@@ -597,10 +592,6 @@ impl DataProviderConfig {
 		debug!("set_daren_market_api_url: {:?}", v);
 		self.daren_market_api_url = v;
 		Ok(())
-	}
-	pub fn set_daren_market_api_key(&mut self, v: String) {
-		debug!("set_daren_market_api_key: {:?}", v);
-		self.daren_market_api_key = v;
 	}
 	pub fn set_moralis_api_key(&mut self, v: String) {
 		debug!("set_moralis_api_key: {:?}", v);

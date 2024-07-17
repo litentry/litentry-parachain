@@ -56,13 +56,11 @@ impl DarenMarketClient {
 		let api_retry_delay = data_provider_config.daren_market_api_retry_delay;
 		let api_retry_times = data_provider_config.daren_market_api_retry_times;
 		let api_url = data_provider_config.daren_market_api_url.clone();
-		let api_key = data_provider_config.daren_market_api_key.clone();
 		let retry_option =
 			RetryOption { retry_delay: Some(api_retry_delay), retry_times: Some(api_retry_times) };
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert("X-API-Key", api_key.as_str());
 		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		DarenMarketClient { retry_option, client }
