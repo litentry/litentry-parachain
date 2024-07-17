@@ -54,12 +54,14 @@ use bc_musig2_ceremony::{
 use bc_musig2_event::process_event;
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
-use bc_task_sender::{init_bit_across_task_sender_storage, BitAcrossProcessingResult};
+use bc_task_sender::{
+	init_bit_across_task_sender_storage, BitAcrossProcessingResult, BitAcrossRequest,
+};
 use codec::{Decode, Encode};
 use core::{ops::Deref, time::Duration};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use ita_stf::TrustedCallSigned;
-use itc_direct_rpc_client::{DirectRpcClientFactory, RpcClientFactory};
+use itc_direct_rpc_client::{DirectRpcClient, DirectRpcClientFactory, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{
@@ -230,156 +232,26 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
+	let peers_map = Arc::new(Mutex::new(HashMap::<[u8; 32], DirectRpcClient>::new()));
 	let command_threads_count = 4;
 	let event_threads_count = 20;
 	let command_threads_pool = ThreadPool::new(command_threads_count);
 	let event_threads_pool = ThreadPool::new(event_threads_count);
 	info!("start {} command threads, {} event threads", command_threads_count, event_threads_count);
-	let peers_map = Arc::new(Mutex::new(HashMap::new()));
-	while let Ok(mut req) = bit_across_task_receiver.recv() {
-		let context_pool = context.clone();
+
+	while let Ok(req) = bit_across_task_receiver.recv() {
+		let context = context.clone();
 		let event_threads_pool = event_threads_pool.clone();
 		let peers_map = peers_map.clone();
 		command_threads_pool.execute(move || {
-			let (ceremony_id, command) =
-				match handle_request(req.get_aes_request_mut_ref(), context_pool.clone()) {
-					Ok((processing_ret, to_process)) => {
-						if let Some(processing_ret) = processing_ret {
-							if let Err(e) = req.try_send_result(Ok(processing_ret)) {
-								warn!("Unable to submit response back to the handler: {:?}", e);
-							}
-						}
-						if let Some((ceremony_id, command)) = to_process {
-							(ceremony_id, command)
-						} else {
-							return
-						}
-					},
-					Err(e) => {
-						if let Err(e) = req.try_send_result(Err(e)) {
-							warn!("Unable to submit response back to the handler: {:?}", e);
-						}
-						return
-					},
-				};
-
-			// check whether to store command to tmp
-			let is_first_round = {
-				context_pool
-					.ceremony_registry
-					.read()
-					.unwrap()
-					.get(&ceremony_id)
-					.map(|(c, _)| c.read().unwrap().is_first_round())
-			};
-			match (is_first_round, &command) {
-				(None, CeremonyCommand::SaveNonce(_, _))
-				| (Some(true), CeremonyCommand::SavePartialSignature(_, _)) => {
-					context_pool
-						.ceremony_command_tmp
-						.write()
-						.unwrap()
-						.entry(ceremony_id)
-						.and_modify(|(command_tmp, _)| {
-							command_tmp.write().unwrap().push(command.clone())
-						})
-						.or_insert((Arc::new(RwLock::new(vec![command])), get_current_timestamp()));
-					return
-				},
-				(Some(true), CeremonyCommand::SaveNonce(_, _))
-				| (Some(true), CeremonyCommand::Init)
-				| (Some(false), CeremonyCommand::SavePartialSignature(_, _)) => {},
-				(is_first_round, command) => {
-					error!(
-						"receive wrong command: is_first_round: {:?}, command: {:?}, drop it",
-						is_first_round, command
-					);
-					return
-				},
-			}
-
-			// try to udpate peers_map
-			let my_identity: Address32 =
-				context_pool.signing_key_access.retrieve_key().unwrap().public().0.into();
-			context_pool.enclave_registry_lookup.get_all().iter().for_each(
-				|(identity, address)| {
-					if my_identity != *identity
-						&& !peers_map.lock().unwrap().contains_key(identity.as_ref())
-					{
-						info!("creating new connection to peer: {:?}", address);
-						match (DirectRpcClientFactory {}).create(address) {
-							Ok(client) => {
-								peers_map.lock().unwrap().insert(*identity.as_ref(), client);
-							},
-							Err(e) =>
-								error!("Could not connect to peer {}, reason: {:?}", address, e),
-						}
-					}
-				},
-			);
-
-			// process commands and events
-			let mut commands_to_process = vec![command];
-			while !commands_to_process.is_empty() {
-				let command = commands_to_process.pop().unwrap();
-				let event = {
-					let ceremony_rwlock = {
-						context_pool
-							.ceremony_registry
-							.read()
-							.unwrap()
-							.get(&ceremony_id)
-							.unwrap()
-							.0
-							.clone()
-					};
-
-					let mut ceremony = ceremony_rwlock.write().unwrap();
-					ceremony.process_command(command)
-				};
-
-				if let Some(event) = event {
-					match event {
-						CeremonyEvent::FirstRoundStarted(_, _, _)
-						| CeremonyEvent::SecondRoundStarted(_, _, _) => {
-							// get all ceremony_command_tmp
-							let mut ceremony_command_tmp_write =
-								context_pool.ceremony_command_tmp.write().unwrap();
-							if let Some((ceremony_command_tmp, _)) =
-								ceremony_command_tmp_write.remove(&ceremony_id)
-							{
-								commands_to_process = ceremony_command_tmp.read().unwrap().clone();
-							}
-						},
-						CeremonyEvent::CeremonyEnded(_, _, _, _)
-						| CeremonyEvent::CeremonyError(_, _, _) => {
-							// remove ceremony
-							{
-								let mut registry_write =
-									context_pool.ceremony_registry.write().unwrap();
-								registry_write.remove(&ceremony_id);
-							}
-							{
-								context_pool
-									.ceremony_command_tmp
-									.write()
-									.unwrap()
-									.remove(&ceremony_id);
-							}
-						},
-					}
-
-					process_event(
-						context_pool.signing_key_access.clone(),
-						context_pool.shielding_key.clone(),
-						context_pool.ocall_api.clone(),
-						context_pool.responder.clone(),
-						event,
-						ceremony_id.clone(),
-						event_threads_pool.clone(),
-						peers_map.clone(),
-					);
-				}
+			if let Some((ceremony_id, command)) = handle_request(req, context.clone()) {
+				handle_ceremony_command(
+					context,
+					ceremony_id,
+					command,
+					event_threads_pool,
+					peers_map,
+				);
 			}
 		});
 	}
@@ -390,7 +262,176 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 }
 
 #[allow(clippy::type_complexity)]
-pub fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+	ceremony_id: CeremonyId,
+	command: CeremonyCommand,
+	event_threads_pool: ThreadPool,
+	peers_map: Arc<Mutex<HashMap<[u8; 32], DirectRpcClient>>>,
+) where
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
+	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
+	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	RRL: RelayerRegistryLookup + Send + Sync + 'static,
+	ERL: EnclaveRegistryLookup + Send + Sync + 'static,
+	SRL: SignerRegistryLookup + Send + Sync + 'static,
+	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
+{
+	// check whether to store command to tmp
+	let is_first_round = {
+		context
+			.ceremony_registry
+			.read()
+			.unwrap()
+			.get(&ceremony_id)
+			.map(|(c, _)| c.read().unwrap().is_first_round())
+	};
+	match (is_first_round, &command) {
+		(None, CeremonyCommand::SaveNonce(_, _))
+		| (Some(true), CeremonyCommand::SavePartialSignature(_, _)) => {
+			context
+				.ceremony_command_tmp
+				.write()
+				.unwrap()
+				.entry(ceremony_id)
+				.and_modify(|(command_tmp, _)| command_tmp.write().unwrap().push(command.clone()))
+				.or_insert((Arc::new(RwLock::new(vec![command])), get_current_timestamp()));
+			return
+		},
+		(Some(true), CeremonyCommand::SaveNonce(_, _))
+		| (Some(true), CeremonyCommand::Init)
+		| (Some(false), CeremonyCommand::SavePartialSignature(_, _)) => {},
+		(is_first_round, command) => {
+			error!(
+				"receive wrong command: is_first_round: {:?}, command: {:?}, drop it",
+				is_first_round, command
+			);
+			return
+		},
+	}
+
+	// try to udpate peers_map
+	let my_identity: Address32 =
+		context.signing_key_access.retrieve_key().unwrap().public().0.into();
+	context
+		.enclave_registry_lookup
+		.get_all()
+		.iter()
+		.for_each(|(identity, address)| {
+			if my_identity != *identity
+				&& !peers_map.lock().unwrap().contains_key(identity.as_ref())
+			{
+				info!("creating new connection to peer: {:?}", address);
+				match (DirectRpcClientFactory {}).create(address) {
+					Ok(client) => {
+						peers_map.lock().unwrap().insert(*identity.as_ref(), client);
+					},
+					Err(e) => error!("Could not connect to peer {}, reason: {:?}", address, e),
+				}
+			}
+		});
+
+	// process commands and events
+	let mut commands_to_process = vec![command];
+	while !commands_to_process.is_empty() {
+		let command = commands_to_process.pop().unwrap();
+		let event = {
+			let ceremony_rwlock =
+				{ context.ceremony_registry.read().unwrap().get(&ceremony_id).unwrap().0.clone() };
+
+			let mut ceremony = ceremony_rwlock.write().unwrap();
+			ceremony.process_command(command)
+		};
+
+		if let Some(event) = event {
+			match event {
+				CeremonyEvent::FirstRoundStarted(_, _, _)
+				| CeremonyEvent::SecondRoundStarted(_, _, _) => {
+					// get all ceremony_command_tmp
+					let mut ceremony_command_tmp_write =
+						context.ceremony_command_tmp.write().unwrap();
+					if let Some((ceremony_command_tmp, _)) =
+						ceremony_command_tmp_write.remove(&ceremony_id)
+					{
+						commands_to_process = ceremony_command_tmp.read().unwrap().clone();
+					}
+				},
+				CeremonyEvent::CeremonyEnded(_, _, _, _)
+				| CeremonyEvent::CeremonyError(_, _, _) => {
+					// remove ceremony
+					{
+						let mut registry_write = context.ceremony_registry.write().unwrap();
+						registry_write.remove(&ceremony_id);
+					}
+					{
+						context.ceremony_command_tmp.write().unwrap().remove(&ceremony_id);
+					}
+				},
+			}
+
+			process_event(
+				context.signing_key_access.clone(),
+				context.shielding_key.clone(),
+				context.ocall_api.clone(),
+				context.responder.clone(),
+				event,
+				ceremony_id.clone(),
+				event_threads_pool.clone(),
+				peers_map.clone(),
+			);
+		}
+	}
+}
+
+#[allow(clippy::type_complexity)]
+fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+	mut request: BitAcrossRequest,
+	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+) -> Option<(CeremonyId, CeremonyCommand)>
+where
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
+	EKR: AccessKey<KeyType = EcdsaPair>,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	RRL: RelayerRegistryLookup + 'static,
+	ERL: EnclaveRegistryLookup + 'static,
+	SRL: SignerRegistryLookup + 'static,
+	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
+{
+	match handle_request_inner(request.get_aes_request_mut_ref(), context) {
+		Ok((processing_ret, to_process)) => {
+			if let Some(processing_ret) = processing_ret {
+				if let Err(e) = request.try_send_result(Ok(processing_ret)) {
+					warn!("Unable to submit response back to the handler: {:?}", e);
+				}
+			}
+			if let Some((ceremony_id, command)) = to_process {
+				Some((ceremony_id, command))
+			} else {
+				None
+			}
+		},
+		Err(e) => {
+			if let Err(e) = request.try_send_result(Err(e)) {
+				warn!("Unable to submit response back to the handler: {:?}", e);
+			}
+			None
+		},
+	}
+}
+
+#[allow(clippy::type_complexity)]
+fn handle_request_inner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: &mut AesRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) -> Result<(Option<BitAcrossProcessingResult>, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
