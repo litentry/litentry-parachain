@@ -43,10 +43,14 @@ mod benchmarks {
 
 	#[benchmark]
 	fn force_remove_enclave() {
-		let who: T::AccountId = account("who", 1, 1);
+		create_test_enclaves::<T>(T::MaxEnclaveIdentifier::get() - 1, test_util::TEST4_MRENCLAVE);
+		let who: T::AccountId = account("who", 1, 99999);
 		let test_enclave = Enclave::new(WorkerType::Identity);
-		Teebag::<T>::add_enclave(&who, &test_enclave);
-		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 1);
+		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
+		assert_eq!(
+			Teebag::<T>::enclave_count(WorkerType::Identity),
+			T::MaxEnclaveIdentifier::get()
+		);
 
 		#[extrinsic_call]
 		_(RawOrigin::Root, who.clone());
