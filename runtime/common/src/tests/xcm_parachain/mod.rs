@@ -124,7 +124,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		assert_noop!(
 			XTokens::<R::ParaRuntime>::transfer(
 				R::ParaOrigin::signed(alice()),
-				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
 				xcm_simulator::Limited((R::UnitWeightCost::get().ref_time() * 4).into())
@@ -134,7 +134,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
-			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
@@ -202,7 +202,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		// Insufficient weight still pass, but has no effect on remote chain
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
-			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
@@ -235,7 +235,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		// Redundant weight pass but remote the chain charges its own rule and returns the surplus
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
-			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
@@ -290,7 +290,7 @@ where
 						CurrencyIdMultiLocationConvert::<R::ParaRuntime>::convert(CurrencyId::<
 							R::ParaRuntime,
 						>::SelfReserve(
-							PhantomData::default()
+							PhantomData
 						))
 						.unwrap(),
 					),
@@ -329,7 +329,7 @@ where
 						CurrencyIdMultiLocationConvert::<R::ParaRuntime>::convert(CurrencyId::<
 							R::ParaRuntime,
 						>::SelfReserve(
-							PhantomData::default()
+							PhantomData
 						))
 						.unwrap(),
 					),
@@ -407,7 +407,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		// Sending 100 ParaA token after xcm fee to BOB by XTokens::transfer_with_fee
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer_with_fee(
 			R::ParaOrigin::signed(alice()),
-			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 			10 * CENTS,
 			(R::UnitWeightCost::get().ref_time() * 4).into(),
 			Box::new(
@@ -463,7 +463,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer_multicurrencies(
 			R::ParaOrigin::signed(alice()),
 			vec![(
-				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
 			)],
 			0,
@@ -532,7 +532,7 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 		assert_noop!(
 			XTokens::<R::ParaRuntime>::transfer(
 				R::ParaOrigin::signed(alice()),
-				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
+				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData),
 				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 100 * MILLICENTS,
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
@@ -574,7 +574,7 @@ where
 						CurrencyIdMultiLocationConvert::<R::ParaRuntime>::convert(CurrencyId::<
 							R::ParaRuntime,
 						>::SelfReserve(
-							PhantomData::default()
+							PhantomData
 						))
 						.unwrap(),
 					),
