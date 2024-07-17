@@ -23,7 +23,8 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
-
+import "./MoralisClient.sol";
+import "../openzeppelin/Strings.sol";
 abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
 	mapping(string => string) internal tokenBscAddress;
@@ -52,7 +53,7 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 			];
 			if (GeniidataClient.isSupportedNetwork(network)) {
 				uint256 balance = GeniidataClient.getTokenBalance(
-					secrets,
+					secrets[0],
 					identityString,
 					tokenName,
 					getTokenDecimals()
@@ -60,14 +61,67 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 				totalBalance += balance;
 			} else if (NoderealClient.isSupportedNetwork(network)) {
 				(bool success, uint256 balance) = NoderealClient
-						.getTokenBalance(
+					.getTokenBalance(
 						network,
-						secrets,
+						secrets[1],
 						tokenContractAddress,
 						identityString
 					);
 				if (success) {
 					totalBalance += balance;
+				}
+			} else if (MoralisClient.isSupportedNetwork(network)) {
+				if (Strings.equal(tokenContractAddress, "Native Token")) {
+					(
+						bool success,
+						string memory solanaTokenBalance
+					) = MoralisClient.getSolanaNativeBalance(
+							network,
+							secrets[2],
+							identityString
+						);
+
+					if (success) {
+						(bool parsedStatus, uint256 parsedAmount) = Utils
+							.parseDecimal(
+								solanaTokenBalance,
+								getTokenDecimals()
+							);
+						if (parsedStatus) {
+							totalBalance += parsedAmount;
+						}
+					}
+				} else {
+					(
+						bool success,
+						SolanaTokenBalance[] memory solanaTokenBalance
+					) = MoralisClient.getSolanaTokensBalance(
+							network,
+							secrets[2],
+							identityString
+						);
+
+					if (success) {
+						for (uint i = 0; i < solanaTokenBalance.length; i++) {
+							if (
+								Strings.equal(
+									solanaTokenBalance[i].mint,
+									tokenAddresses[tokenName][network]
+								)
+							) {
+								(
+									bool parsedStatus,
+									uint256 parsedAmount
+								) = Utils.parseDecimal(
+										solanaTokenBalance[i].amount,
+										getTokenDecimals()
+									);
+								if (parsedStatus) {
+									totalBalance += parsedAmount;
+								}
+							}
+						}
+					}
 				}
 			}
 			return totalBalance;
@@ -75,17 +129,15 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		return 0;
 	}
 
-    function isSupportedNetwork(string memory tokenName, uint32 network)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        uint32[] memory networks = tokenNetworks[tokenName];
-        for (uint32 i = 0; i < networks.length; i++) {
-            if (network == networks[i]) {
-                return true;
-            }
+	function isSupportedNetwork(
+		string memory tokenName,
+		uint32 network
+	) internal view override returns (bool) {
+		uint32[] memory networks = tokenNetworks[tokenName];
+		for (uint32 i = 0; i < networks.length; i++) {
+			if (network == networks[i]) {
+				return true;
+			}
 		}
 		return false;
 	}
