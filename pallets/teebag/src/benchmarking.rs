@@ -60,5 +60,19 @@ mod benchmarks {
 		assert_last_event::<T>(Event::EnclaveRemoved { who }.into())
 	}
 
+	#[benchmark]
+	fn force_remove_enclave_by_mrenclave() {
+		create_test_enclaves::<T>(T::MaxEnclaveIdentifier::get(), test_util::TEST4_MRENCLAVE);
+		assert_eq!(
+			Teebag::<T>::enclave_count(WorkerType::Identity),
+			T::MaxEnclaveIdentifier::get()
+		);
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, test_util::TEST4_MRENCLAVE);
+
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_bench_ext(), super::mock::Test);
 }
