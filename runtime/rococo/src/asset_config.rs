@@ -52,16 +52,6 @@ impl AddressToAssetId<AssetId> for Runtime {
 	}
 }
 
-pub struct AssetsBenchmarkHelper;
-#[cfg(feature = "runtime-benchmarks")]
-impl<AssetIdParameter: From<u128>> pallet_assets::BenchmarkHelper<AssetIdParameter>
-	for AssetsBenchmarkHelper
-{
-	fn create_asset_id_parameter(id: u32) -> AssetIdParameter {
-		AssetId::from(id).into()
-	}
-}
-
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -81,8 +71,6 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = Compact<AssetId>;
 	type CallbackHandle = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = AssetsBenchmarkHelper;
 }
 
 impl pallet_asset_manager::Config for Runtime {
