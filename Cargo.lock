@@ -10739,6 +10739,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
+ "precompile-utils",
  "runtime-common",
  "scale-info",
  "sp-api",
