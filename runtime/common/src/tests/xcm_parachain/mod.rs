@@ -1321,7 +1321,8 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0u128.into(),
-			alice().into(),
+			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref()).into(),
+			.unwrap()
 			true,
 			1
 		));
@@ -1345,7 +1346,8 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
 			0u128.into(),
-			alice().into(),
+			<R::ParaRuntime as frame_system::Config>::AccountId::decode(&mut alice().as_ref())
+				.into(),
 			true,
 			1
 		));
