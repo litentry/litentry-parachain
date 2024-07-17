@@ -30,3 +30,4 @@ fp-evm = { workspace = true }
 frame-support = { workspace = true }
 sp-core-hashing = { workspace = true }
 sp-std = { workspace = true }
+sp-runtime = { workspace = true, features = ["std"] }

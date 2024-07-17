@@ -9934,6 +9934,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sp-core-hashing",
+ "sp-runtime",
  "sp-std",
  "syn 1.0.109",
  "trybuild",
