@@ -74,5 +74,20 @@ mod benchmarks {
 		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
 	}
 
+	#[benchmark]
+	fn force_remove_enclave_by_worker_type() {
+		create_test_enclaves::<T>(T::MaxEnclaveIdentifier::get(), test_util::TEST4_MRENCLAVE);
+		assert_eq!(
+			Teebag::<T>::enclave_count(WorkerType::Identity),
+			T::MaxEnclaveIdentifier::get()
+		);
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, WorkerType::Identity);
+
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
+	}
+
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_bench_ext(), super::mock::Test);
 }
