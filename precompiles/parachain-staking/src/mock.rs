@@ -15,15 +15,12 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use fp_evm::IsPrecompileResult;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU64, Everything, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 };
-use pallet_evm::{
-	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
-};
+use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
 use pallet_parachain_staking::{InflationInfo, Range};
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};

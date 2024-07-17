@@ -20,13 +20,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use fp_evm::{PrecompileFailure, PrecompileHandle, PrecompileOutput};
+use fp_evm::{PrecompileFailure, PrecompileHandle};
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::Percent,
 	traits::{Currency, Get},
 };
-use pallet_evm::{AddressMapping, Precompile};
+use pallet_evm::AddressMapping;
 use precompile_utils::{prelude::*, EvmResult};
 use sp_core::{H256, U256};
 use sp_runtime::traits::Dispatchable;
