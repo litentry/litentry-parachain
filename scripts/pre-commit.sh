@@ -36,6 +36,10 @@ function clean_up() {
     cargo clean
     cd "$root_dir/tee-worker/enclave-runtime"
     cargo clean
+    cd "$root_dir/bitacross-worker"
+    cargo clean
+    cd "$root_dir/bitacross-worker/enclave-runtime"
+    cargo clean
 }
 
 root_dir=$(git rev-parse --show-toplevel)
