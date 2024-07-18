@@ -17,6 +17,7 @@ members = [
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
     'precompiles/*',
+    'precompiles/utils/macro',
     'primitives/core',
     'primitives/core/proc-macros',
     'primitives/core/macros',
@@ -264,6 +265,7 @@ pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = fa
 # This is a temporary pallet copy from Astar with polkadot-0.9.43
 # The official release of this pallet will be in frontier repo
 precompile-utils = { path = "precompiles/utils", default-features = false }
+precompile-utils-macro-v2 = { path = "precompiles/utils/macro", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
