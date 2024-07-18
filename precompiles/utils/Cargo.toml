@@ -45,6 +45,7 @@ precompile-utils-macro-v2 = { path = "macro", features = ["std"] }
 default = ["std"]
 std = [
     "environmental/std",
+    "evm/std",
     "fp-evm/std",
     "frame-support/std",
     "frame-system/std",

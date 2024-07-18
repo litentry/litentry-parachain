@@ -92,7 +92,7 @@ pallet-teebag = { workspace = true }
 pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
 
-fp-evm = { workspace = true, features = ["serde"] }
+fp-evm = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
@@ -118,10 +118,12 @@ precompile-utils = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 polkadot-primitives = { workspace = true, features = ["std"] }
 polkadot-runtime-parachains = { workspace = true, features = ["std"] }
-precompile-utils = { workspace = true, features = ["testing"] }
+precompile-utils = { workspace = true, features = ["std"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
