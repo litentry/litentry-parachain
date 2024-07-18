@@ -3,7 +3,10 @@ use super::{
 	TreasuryPalletId,
 };
 use crate::{constants::currency::deposit, precompiles::ASSET_PRECOMPILE_ADDRESS_PREFIX};
-use frame_support::{parameter_types, traits::ConstU32};
+use frame_support::{
+	parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU32, NeverEnsureOrigin},
+};
 use frame_system::EnsureRoot;
 use pallet_evm_precompile_assets_erc20::AddressToAssetId;
 use parity_scale_codec::Compact;
@@ -60,9 +63,9 @@ impl pallet_assets::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type Currency = Balances;
-	// We do not allow creating by regular users before pallet_asset_manager fully adopted
+	// TODO: We do not allow creating by regular users before pallet_asset_manager fully adopted
 	// P-937
-	type CreateOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;
