@@ -38,7 +38,7 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "__UnsupportedLitentryRococo", "Khala", "__UnsupportedSubstrateTestnet", "Ethereum"],
         },
         DynamicParams: {
             smart_contract_id: "[u8;20]",
