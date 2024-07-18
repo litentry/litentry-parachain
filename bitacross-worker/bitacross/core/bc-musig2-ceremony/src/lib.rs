@@ -548,16 +548,10 @@ pub mod test {
 		);
 		assert!(ceremony.ceremony_state.first_round.is_some());
 		assert!(ceremony.ceremony_state.second_round.is_none());
-		assert!(event.is_ok());
-		let event = event.unwrap();
-		assert!(event.is_some());
+		assert!(event.is_err());
 		assert!(matches!(
-			event.unwrap(),
-			CeremonyEvent::CeremonyError(
-				_,
-				CeremonyError::NonceReceivingError(CeremonyErrorReason::SignerNotFound),
-				_,
-			)
+			event.unwrap_err(),
+			CeremonyError::NonceReceivingError(CeremonyErrorReason::SignerNotFound)
 		));
 	}
 
