@@ -81,7 +81,7 @@ pub enum CeremonyErrorReason {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CeremonyCommand {
-	InitCeremony([u8; 32], SignersWithKeys),
+	InitCeremony([u8; 32], SignersWithKeys, bool),
 	SaveNonce(SignerId, PubNonce),
 	SavePartialSignature(SignerId, PartialSignature),
 	KillCeremony,

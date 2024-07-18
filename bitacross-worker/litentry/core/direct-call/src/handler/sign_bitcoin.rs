@@ -35,6 +35,7 @@ pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveR
 	relayer_registry: &RRL,
 	signer_registry: Arc<SR>,
 	enclave_registry: &ER,
+	check_run: bool,
 ) -> Result<CeremonyCommand, SignBitcoinError> {
 	if relayer_registry.contains_key(&signer)
 		|| match &signer {
@@ -51,7 +52,7 @@ pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveR
 			})
 			.collect();
 
-		Ok(CeremonyCommand::InitCeremony(aes_key, signers?))
+		Ok(CeremonyCommand::InitCeremony(aes_key, signers?, check_run))
 	} else {
 		Err(SignBitcoinError::InvalidSigner)
 	}
@@ -129,6 +130,7 @@ pub mod test {
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
+			false,
 		);
 
 		// then
@@ -152,6 +154,7 @@ pub mod test {
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
+			false,
 		);
 
 		// then
@@ -175,6 +178,7 @@ pub mod test {
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
+			false,
 		);
 
 		//then

@@ -50,7 +50,6 @@ use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyError, CeremonyErrorReason,
 	CeremonyEvent, CeremonyId, CeremonyRegistry, MuSig2Ceremony, SignBitcoinPayload,
-	SignersWithKeys,
 };
 use bc_musig2_event::process_event;
 use bc_relayer_registry::RelayerRegistryLookup;
@@ -294,7 +293,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 			.map(|(c, _)| c.read().unwrap().is_first_round())
 	};
 	match (is_first_round, &command) {
-		(None, CeremonyCommand::InitCeremony(_, _))
+		(None, CeremonyCommand::InitCeremony(_, _, _))
 		| (Some(true), CeremonyCommand::SaveNonce(_, _))
 		| (Some(false), CeremonyCommand::SavePartialSignature(_, _))
 		| (_, CeremonyCommand::KillCeremony) => {},
@@ -344,33 +343,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 	while !commands_to_process.is_empty() {
 		let command = commands_to_process.pop().unwrap();
 
-		let event = {
-			match command {
-				CeremonyCommand::InitCeremony(aes_key, signers) => {
-					// InitCeremony should create ceremony first
-					insert_new_ceremony(context.clone(), aes_key, ceremony_id.clone(), signers)
-				},
-				CeremonyCommand::KillCeremony => {
-					{
-						context.ceremony_registry.write().unwrap().remove(&ceremony_id);
-					}
-					{
-						context.ceremony_command_tmp.write().unwrap().remove(&ceremony_id);
-					}
-					None
-				},
-				_ => {
-					let ceremony_rwlock =
-						context.ceremony_registry.read().unwrap().get(&ceremony_id).cloned();
-					if let Some(ceremony_rwlock) = ceremony_rwlock {
-						let mut ceremony_write_lock = ceremony_rwlock.0.write().unwrap();
-						ceremony_process_command(&mut ceremony_write_lock, command)
-					} else {
-						None
-					}
-				},
-			}
-		};
+		let event = process_command(context.clone(), ceremony_id.clone(), command);
 
 		if let Some(event) = event {
 			match event {
@@ -413,11 +386,10 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 }
 
 #[allow(clippy::type_complexity)]
-fn insert_new_ceremony<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn process_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
-	aes_key: [u8; 32],
-	payload: SignBitcoinPayload,
-	signers: SignersWithKeys,
+	ceremony_id: CeremonyId,
+	command: CeremonyCommand,
 ) -> Option<CeremonyEvent>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
@@ -434,55 +406,87 @@ where
 	SRL: SignerRegistryLookup + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let result = MuSig2Ceremony::new(
-		context.signing_key_pub,
-		aes_key,
-		signers,
-		payload.clone(),
-		context.bitcoin_key_repository.clone(),
-		false,
-	);
+	match command {
+		CeremonyCommand::InitCeremony(aes_key, signers, check_run) => {
+			// InitCeremony should create ceremony first
+			let result = MuSig2Ceremony::new(
+				context.signing_key_pub,
+				aes_key,
+				signers,
+				ceremony_id.clone(),
+				context.bitcoin_key_repository.clone(),
+				check_run,
+			);
 
-	match result {
-		Ok((ceremony, event)) => {
-			{
-				let mut registry_write = context.ceremony_registry.write().unwrap();
-				if registry_write.contains_key(&payload) {
-					let error = CeremonyError::CeremonyInitError(CeremonyErrorReason::AlreadyExist);
-					return Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
-				}
-				registry_write
-					.insert(payload, (Arc::new(RwLock::new(ceremony)), get_current_timestamp()));
+			match result {
+				Ok((ceremony, event)) => {
+					{
+						let mut registry_write = context.ceremony_registry.write().unwrap();
+						if registry_write.contains_key(&ceremony_id) {
+							let error =
+								CeremonyError::CeremonyInitError(CeremonyErrorReason::AlreadyExist);
+							return Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
+						}
+						registry_write.insert(
+							ceremony_id,
+							(Arc::new(RwLock::new(ceremony)), get_current_timestamp()),
+						);
+					}
+					Some(event)
+				},
+				Err(e) => {
+					error!("Could not start ceremony, error: {:?}", e);
+					let error =
+						CeremonyError::CeremonyInitError(CeremonyErrorReason::CreateCeremonyError);
+					Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
+				},
 			}
-			Some(event)
 		},
-		Err(e) => {
-			error!("Could not start ceremony, error: {:?}", e);
-			let error = CeremonyError::CeremonyInitError(CeremonyErrorReason::CreateCeremonyError);
-			Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
+		CeremonyCommand::SaveNonce(signer, nonce) => {
+			let ceremony_rwlock =
+				context.ceremony_registry.read().unwrap().get(&ceremony_id).cloned();
+			if let Some(ceremony_rwlock) = ceremony_rwlock {
+				let mut ceremony_write_lock = ceremony_rwlock.0.write().unwrap();
+				let event_ret = ceremony_write_lock.receive_nonce(signer, nonce);
+				match event_ret {
+					Ok(event) => event,
+					Err(e) => Some(CeremonyEvent::CeremonyError(
+						ceremony_write_lock.get_signers_except_self(),
+						e,
+						*ceremony_write_lock.get_aes_key(),
+					)),
+				}
+			} else {
+				None
+			}
 		},
-	}
-}
-
-fn ceremony_process_command<AK: AccessKey<KeyType = SchnorrPair>>(
-	ceremony: &mut MuSig2Ceremony<AK>,
-	command: CeremonyCommand,
-) -> Option<CeremonyEvent> {
-	let event_ret = match command {
-		CeremonyCommand::InitCeremony(_, _) => unreachable!("InitCeremony should not reach here"),
-		CeremonyCommand::SaveNonce(signer, nonce) => ceremony.receive_nonce(signer, nonce),
-		CeremonyCommand::SavePartialSignature(signer, partial_signature) =>
-			ceremony.receive_partial_sign(signer, partial_signature),
-		CeremonyCommand::KillCeremony => unreachable!("KillCeremony should not reach here"),
-	};
-
-	match event_ret {
-		Ok(event) => event,
-		Err(e) => Some(CeremonyEvent::CeremonyError(
-			ceremony.get_signers_except_self(),
-			e,
-			*ceremony.get_aes_key(),
-		)),
+		CeremonyCommand::SavePartialSignature(signer, partial_signature) => {
+			let ceremony_rwlock =
+				context.ceremony_registry.read().unwrap().get(&ceremony_id).cloned();
+			if let Some(ceremony_rwlock) = ceremony_rwlock {
+				let mut ceremony_write_lock = ceremony_rwlock.0.write().unwrap();
+				let event_ret = ceremony_write_lock.receive_partial_sign(signer, partial_signature);
+				match event_ret {
+					Ok(event) => event,
+					Err(e) => Some(CeremonyEvent::CeremonyError(
+						ceremony_write_lock.get_signers_except_self(),
+						e,
+						*ceremony_write_lock.get_aes_key(),
+					)),
+				}
+			} else {
+				None
+			}
+		},
+		CeremonyCommand::KillCeremony => {
+			{
+				context.ceremony_registry.write().unwrap().remove(&ceremony_id);
+			}
+			{
+				context.ceremony_command_tmp.write().unwrap().remove(&ceremony_id);
+			}
+			None
+		},
 	}
 }
 
@@ -576,6 +580,7 @@ where
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),
 				context.enclave_registry_lookup.as_ref(),
+				false,
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
@@ -588,19 +593,20 @@ where
 			let payload = SignBitcoinPayload::Derived([0u8; 32].to_vec());
 			let aes_key = [0u8; 32];
 			let hash = blake2_256(&payload.encode());
-			sign_bitcoin::handle(
+			let command = sign_bitcoin::handle(
 				signer,
 				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),
 				context.enclave_registry_lookup.as_ref(),
+				true,
 			)
 			.map_err(|e| {
 				error!("SignBitcoinCheck error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})?;
 			let ret = BitAcrossProcessingResult::Submitted(hash);
-			Ok((Some(ret), None))
+			Ok((Some(ret), Some((payload, command))))
 		},
 		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
 			signer,
