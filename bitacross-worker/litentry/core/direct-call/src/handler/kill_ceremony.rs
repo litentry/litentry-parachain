@@ -15,30 +15,19 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_enclave_registry::EnclaveRegistryLookup;
-use bc_musig2_ceremony::{CeremonyCommandTmp, CeremonyId, CeremonyRegistry};
+use bc_musig2_ceremony::CeremonyCommand;
 use codec::Encode;
-use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use parentchain_primitives::Identity;
-use std::sync::Arc;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
 
 #[derive(Encode, Debug)]
 pub enum KillCeremonyError {
 	InvalidSigner,
 }
 
-pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
+pub fn handle<ER: EnclaveRegistryLookup>(
 	signer: Identity,
-	ceremony_id: CeremonyId,
-	ceremony_registry: Arc<RwLock<CeremonyRegistry<AK>>>,
-	ceremony_commands: Arc<RwLock<CeremonyCommandTmp>>,
-	enclave_registry: Arc<ER>,
-) -> Result<(), KillCeremonyError> {
+	enclave_registry: &ER,
+) -> Result<CeremonyCommand, KillCeremonyError> {
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
 		_ => false,
@@ -48,15 +37,7 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 	}
 
 	match signer {
-		Identity::Substrate(_) => {
-			{
-				ceremony_registry.write().unwrap().remove(&ceremony_id);
-			}
-			{
-				ceremony_commands.write().unwrap().remove(&ceremony_id);
-			}
-		},
-		_ => return Err(KillCeremonyError::InvalidSigner),
+		Identity::Substrate(_) => Ok(CeremonyCommand::KillCeremony),
+		_ => Err(KillCeremonyError::InvalidSigner),
 	}
-	Ok(())
 }

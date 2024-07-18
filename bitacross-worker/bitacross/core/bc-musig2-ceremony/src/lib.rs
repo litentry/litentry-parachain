@@ -34,7 +34,6 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use crate::CeremonyEvent::CeremonyEnded;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use k256::SecretKey;
@@ -72,18 +71,20 @@ pub enum CeremonyError {
 
 #[derive(Debug, Eq, PartialEq, Encode)]
 pub enum CeremonyErrorReason {
+	AlreadyExist,
+	CreateCeremonyError,
 	SignerNotFound,
 	ContributionError,
 	IncorrectRound,
 	RoundFinalizationError,
 }
 
-// events come from outside and are consumed by ceremony in tick fn
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CeremonyCommand {
-	Init,
+	InitCeremony([u8; 32], SignersWithKeys),
 	SaveNonce(SignerId, PubNonce),
 	SavePartialSignature(SignerId, PartialSignature),
+	KillCeremony,
 }
 
 // commands are created by ceremony and executed by runner
@@ -138,7 +139,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		payload: SignBitcoinPayload,
 		signing_key_access: Arc<AK>,
 		check_run: bool,
-	) -> Result<Self, String> {
+	) -> Result<(Self, CeremonyEvent), String> {
 		info!("Creating new ceremony {:?}", payload);
 		if signers.len() < 3 {
 			return Err(format!("Not enough signers, minimum: {:?}, actual {:?}", 3, signers.len()))
@@ -187,7 +188,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 			musig2::FirstRound::new(key_context, nonce_seed, my_index, SecNonceSpices::new())
 				.map_err(|e| format!("First round creation error: {:?}", e))?;
 
-		Ok(Self {
+		let ceremony = Self {
 			ceremony_data: MuSig2CeremonyData {
 				payload,
 				aes_key,
@@ -201,50 +202,27 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 				first_round: Some(first_round),
 				second_round: None,
 			},
-		})
+		};
+		let event = ceremony.start_first_round();
+		Ok((ceremony, event))
 	}
 
-	pub fn process_command(&mut self, command: CeremonyCommand) -> Option<CeremonyEvent> {
-		let event_ret = match command {
-			CeremonyCommand::Init => self
-				.ceremony_state
-				.first_round
-				.as_ref()
-				.map(|f| {
-					Some(CeremonyEvent::FirstRoundStarted(
-						self.ceremony_data
-							.signers
-							.iter()
-							.filter(|e| e.0 != self.ceremony_data.me)
-							.map(|s| s.0)
-							.collect(),
-						self.ceremony_data.payload.clone(),
-						f.our_public_nonce(),
-					))
-				})
-				.ok_or(CeremonyError::CeremonyInitError(CeremonyErrorReason::IncorrectRound)),
-			CeremonyCommand::SaveNonce(signer, nonce) => self.receive_nonce(signer, nonce),
-			CeremonyCommand::SavePartialSignature(signer, partial_signature) =>
-				self.receive_partial_sign(signer, partial_signature),
-		};
-
-		match event_ret {
-			Ok(event) => event,
-			Err(e) => Some(CeremonyEvent::CeremonyError(
-				self.ceremony_data
-					.signers
-					.iter()
-					.filter(|e| e.0 != self.ceremony_data.me)
-					.map(|s| s.0)
-					.collect(),
-				e,
-				self.ceremony_data.aes_key,
-			)),
-		}
+	fn start_first_round(&self) -> CeremonyEvent {
+		self.ceremony_state
+			.first_round
+			.as_ref()
+			.map(|f| {
+				CeremonyEvent::FirstRoundStarted(
+					self.get_signers_except_self(),
+					self.ceremony_data.payload.clone(),
+					f.our_public_nonce(),
+				)
+			})
+			.unwrap()
 	}
 
 	// Saves signer's nonce
-	fn receive_nonce(
+	pub fn receive_nonce(
 		&mut self,
 		signer: SignerId,
 		nonce: PubNonce,
@@ -316,19 +294,14 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		self.ceremony_state.second_round = Some(second_round);
 
 		Ok(CeremonyEvent::SecondRoundStarted(
-			self.ceremony_data
-				.signers
-				.iter()
-				.filter(|e| e.0 != self.ceremony_data.me)
-				.map(|s| s.0)
-				.collect(),
+			self.get_signers_except_self(),
 			self.get_id_ref().clone(),
 			partial_signature,
 		))
 	}
 
 	// Saves signer's partial signature
-	fn receive_partial_sign(
+	pub fn receive_partial_sign(
 		&mut self,
 		signer: SignerId,
 		partial_signature: impl Into<PartialSignature>,
@@ -370,7 +343,7 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 
 					let result =
 						verify_single(self.ceremony_data.agg_key, signature, message).is_ok();
-					Ok(Some(CeremonyEnded(
+					Ok(Some(CeremonyEvent::CeremonyEnded(
 						signature.to_bytes(),
 						self.ceremony_data.aes_key,
 						self.ceremony_data.check_run,
@@ -387,6 +360,15 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		} else {
 			Err(CeremonyError::PartialSignatureReceivingError(CeremonyErrorReason::IncorrectRound))
 		}
+	}
+
+	pub fn get_signers_except_self(&self) -> Signers {
+		self.ceremony_data
+			.signers
+			.iter()
+			.filter(|e| e.0 != self.ceremony_data.me)
+			.map(|s| s.0)
+			.collect()
 	}
 
 	pub fn get_id_ref(&self) -> &CeremonyId {
@@ -428,8 +410,8 @@ fn random_seed() -> [u8; 32] {
 #[cfg(test)]
 pub mod test {
 	use crate::{
-		CeremonyCommand, CeremonyError, CeremonyErrorReason, CeremonyEvent, MuSig2Ceremony,
-		SignBitcoinPayload, SignerId, SignersWithKeys,
+		CeremonyError, CeremonyErrorReason, CeremonyEvent, MuSig2Ceremony, SignBitcoinPayload,
+		SignerId, SignersWithKeys,
 	};
 	use alloc::sync::Arc;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
@@ -488,27 +470,6 @@ pub mod test {
 		]
 	}
 
-	fn save_signer1_nonce_cmd() -> CeremonyCommand {
-		CeremonyCommand::SaveNonce(
-			SIGNER_1_ID,
-			SecNonce::from_bytes(&SIGNER_1_SEC_NONCE).unwrap().public_nonce(),
-		)
-	}
-
-	fn save_signer2_nonce_cmd() -> CeremonyCommand {
-		CeremonyCommand::SaveNonce(
-			SIGNER_2_ID,
-			SecNonce::from_bytes(&SIGNER_2_SEC_NONCE).unwrap().public_nonce(),
-		)
-	}
-
-	fn unknown_signer_nonce_cmd() -> CeremonyCommand {
-		CeremonyCommand::SaveNonce(
-			[10u8; 32],
-			SecNonce::from_bytes(&SIGNER_2_SEC_NONCE).unwrap().public_nonce(),
-		)
-	}
-
 	pub const SAMPLE_REQUEST_AES_KEY: RequestAesKey = [0u8; 32];
 	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 32] = [0u8; 32];
 
@@ -541,7 +502,7 @@ pub mod test {
 
 		// then
 		assert!(result.is_ok());
-		assert!(result.unwrap().is_first_round())
+		assert!(result.unwrap().0.is_first_round())
 	}
 
 	#[test]
@@ -575,24 +536,20 @@ pub mod test {
 			Arc::new(signing_key_access),
 			false,
 		)
-		.unwrap();
+		.unwrap()
+		.0;
 
-		let event = ceremony.process_command(CeremonyCommand::Init);
 		assert!(ceremony.ceremony_state.first_round.is_some());
 		assert!(ceremony.ceremony_state.second_round.is_none());
-		assert!(event.is_some());
-		assert_eq!(
-			event.unwrap(),
-			CeremonyEvent::FirstRoundStarted(
-				vec![SIGNER_1_ID, SIGNER_2_ID],
-				SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
-				ceremony.ceremony_state.first_round.as_ref().unwrap().our_public_nonce(),
-			)
+
+		let event = ceremony.receive_nonce(
+			[10u8; 32],
+			SecNonce::from_bytes(&SIGNER_2_SEC_NONCE).unwrap().public_nonce(),
 		);
-
-		let event = ceremony.process_command(unknown_signer_nonce_cmd());
 		assert!(ceremony.ceremony_state.first_round.is_some());
 		assert!(ceremony.ceremony_state.second_round.is_none());
+		assert!(event.is_ok());
+		let event = event.unwrap();
 		assert!(event.is_some());
 		assert!(matches!(
 			event.unwrap(),
@@ -616,29 +573,29 @@ pub mod test {
 			Arc::new(signing_key_access),
 			false,
 		)
-		.unwrap();
+		.unwrap()
+		.0;
 
-		let event = ceremony.process_command(CeremonyCommand::Init);
 		assert!(ceremony.ceremony_state.first_round.is_some());
 		assert!(ceremony.ceremony_state.second_round.is_none());
-		assert!(event.is_some());
-		assert_eq!(
-			event.unwrap(),
-			CeremonyEvent::FirstRoundStarted(
-				vec![SIGNER_1_ID, SIGNER_2_ID],
-				SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
-				ceremony.ceremony_state.first_round.as_ref().unwrap().our_public_nonce(),
-			)
+
+		let event = ceremony.receive_nonce(
+			SIGNER_1_ID,
+			SecNonce::from_bytes(&SIGNER_1_SEC_NONCE).unwrap().public_nonce(),
 		);
-
-		let event = ceremony.process_command(save_signer1_nonce_cmd());
 		assert!(ceremony.ceremony_state.first_round.is_some());
 		assert!(ceremony.ceremony_state.second_round.is_none());
-		assert!(event.is_none());
+		assert!(event.is_ok());
+		assert!(event.unwrap().is_none());
 
-		let event = ceremony.process_command(save_signer2_nonce_cmd());
+		let event = ceremony.receive_nonce(
+			SIGNER_2_ID,
+			SecNonce::from_bytes(&SIGNER_2_SEC_NONCE).unwrap().public_nonce(),
+		);
 		assert!(ceremony.ceremony_state.first_round.is_none());
 		assert!(ceremony.ceremony_state.second_round.is_some());
+		assert!(event.is_ok());
+		let event = event.unwrap();
 		assert!(event.is_some());
 		assert_eq!(
 			event.unwrap(),
@@ -692,7 +649,8 @@ pub mod sgx_tests {
 			Arc::new(my_signer_key_access),
 			false,
 		)
-		.unwrap();
+		.unwrap()
+		.0;
 		// signer 1
 		let signer1_key_access = MockedSigningKeyAccess { signing_key: signer1_priv_key() };
 		let mut signer1_ceremony = MuSig2Ceremony::new(
@@ -703,7 +661,8 @@ pub mod sgx_tests {
 			Arc::new(signer1_key_access),
 			false,
 		)
-		.unwrap();
+		.unwrap()
+		.0;
 		// signer 2
 		let signer2_key_access = MockedSigningKeyAccess { signing_key: signer2_priv_key() };
 		let mut signer2_ceremony = MuSig2Ceremony::new(
@@ -714,123 +673,103 @@ pub mod sgx_tests {
 			Arc::new(signer2_key_access),
 			false,
 		)
-		.unwrap();
+		.unwrap()
+		.0;
 
-		// CeremonyCommand::Init -> CeremonyEvent::FirstRoundStarted
-		let my_ceremony_first_round_started_ev = my_ceremony.process_command(CeremonyCommand::Init);
-		let signer1_ceremony_first_round_started_ev =
-			signer1_ceremony.process_command(CeremonyCommand::Init);
-		let signer2_ceremony_first_round_started_ev =
-			signer2_ceremony.process_command(CeremonyCommand::Init);
+		let my_ceremony_nonce =
+			my_ceremony.ceremony_state.first_round.as_ref().unwrap().our_public_nonce();
+		let signer1_ceremony_nonce =
+			signer1_ceremony.ceremony_state.first_round.as_ref().unwrap().our_public_nonce();
+		let signer2_ceremony_nonce =
+			signer2_ceremony.ceremony_state.first_round.as_ref().unwrap().our_public_nonce();
 
-		let my_ceremony_nonce = match my_ceremony_first_round_started_ev {
-			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
-			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
-		};
-		let signer1_ceremony_nonce = match signer1_ceremony_first_round_started_ev {
-			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
-			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
-		};
-		let signer2_ceremony_nonce = match signer2_ceremony_first_round_started_ev {
-			Some(CeremonyEvent::FirstRoundStarted(_, _, nonce)) => nonce,
-			ev => panic!("except Some(CeremonyEvent::FirstRoundStarted) but get: {:?}", ev),
-		};
-
-		// CeremonyCommand::SaveNonce -> CeremonyEvent::SecondRoundStarted
 		// my signer receive nonce
-		let my_ceremony_receive_first_nonce_ev = my_ceremony.process_command(
-			CeremonyCommand::SaveNonce(SIGNER_1_ID, signer1_ceremony_nonce.clone()),
-		);
+		let my_ceremony_receive_first_nonce_ev =
+			my_ceremony.receive_nonce(SIGNER_1_ID, signer1_ceremony_nonce.clone()).unwrap();
 		match my_ceremony_receive_first_nonce_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let my_ceremony_second_round_started_ev = my_ceremony.process_command(
-			CeremonyCommand::SaveNonce(SIGNER_2_ID, signer2_ceremony_nonce.clone()),
-		);
+		let my_ceremony_second_round_started_ev =
+			my_ceremony.receive_nonce(SIGNER_2_ID, signer2_ceremony_nonce.clone()).unwrap();
 		let my_ceremony_partial_sign = match my_ceremony_second_round_started_ev {
 			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
 			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
 		};
+
 		// signer 1 receive nonce
-		let signer1_ceremony_receive_first_nonce_ev = signer1_ceremony
-			.process_command(CeremonyCommand::SaveNonce(MY_SIGNER_ID, my_ceremony_nonce.clone()));
+		let signer1_ceremony_receive_first_nonce_ev =
+			signer1_ceremony.receive_nonce(MY_SIGNER_ID, my_ceremony_nonce.clone()).unwrap();
 		match signer1_ceremony_receive_first_nonce_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let signer1_ceremony_second_round_started_ev = signer1_ceremony.process_command(
-			CeremonyCommand::SaveNonce(SIGNER_2_ID, signer2_ceremony_nonce.clone()),
-		);
+		let signer1_ceremony_second_round_started_ev = signer1_ceremony
+			.receive_nonce(SIGNER_2_ID, signer2_ceremony_nonce.clone())
+			.unwrap();
 		let signer1_ceremony_partial_sign = match signer1_ceremony_second_round_started_ev {
 			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
 			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
 		};
+
 		// signer 2 receive nonce
-		let signer2_ceremony_receive_first_nonce_ev = signer2_ceremony
-			.process_command(CeremonyCommand::SaveNonce(MY_SIGNER_ID, my_ceremony_nonce.clone()));
+		let signer2_ceremony_receive_first_nonce_ev =
+			signer2_ceremony.receive_nonce(MY_SIGNER_ID, my_ceremony_nonce.clone()).unwrap();
 		match signer2_ceremony_receive_first_nonce_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let signer2_ceremony_second_round_started_ev = signer2_ceremony.process_command(
-			CeremonyCommand::SaveNonce(SIGNER_1_ID, signer1_ceremony_nonce.clone()),
-		);
+		let signer2_ceremony_second_round_started_ev = signer2_ceremony
+			.receive_nonce(SIGNER_1_ID, signer1_ceremony_nonce.clone())
+			.unwrap();
 		let signer2_ceremony_partial_sign = match signer2_ceremony_second_round_started_ev {
 			Some(CeremonyEvent::SecondRoundStarted(_, _, partial_sign)) => partial_sign,
 			ev => panic!("except Some(CeremonyEvent::SecondRoundStarted) but get: {:?}", ev),
 		};
 
-		// CeremonyCommand::SavePartialSignature -> CeremonyEvent::CeremonyEnded
 		// my signer receive partial_sign
-		let my_ceremony_receive_first_partial_sign_ev =
-			my_ceremony.process_command(CeremonyCommand::SavePartialSignature(
-				SIGNER_1_ID,
-				signer1_ceremony_partial_sign.clone(),
-			));
+		let my_ceremony_receive_first_partial_sign_ev = my_ceremony
+			.receive_partial_sign(SIGNER_1_ID, signer1_ceremony_partial_sign)
+			.unwrap();
 		match my_ceremony_receive_first_partial_sign_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let my_ceremony_ended_ev =
-			my_ceremony.process_command(CeremonyCommand::SavePartialSignature(
-				SIGNER_2_ID,
-				signer2_ceremony_partial_sign.clone(),
-			));
+		let my_ceremony_ended_ev = my_ceremony
+			.receive_partial_sign(SIGNER_2_ID, signer2_ceremony_partial_sign)
+			.unwrap();
 		let my_ceremony_final_signature = match my_ceremony_ended_ev {
 			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
 		};
+
 		// signer 1 receive partial_sign
-		let signer1_receive_first_partial_sign_ev = signer1_ceremony.process_command(
-			CeremonyCommand::SavePartialSignature(MY_SIGNER_ID, my_ceremony_partial_sign.clone()),
-		);
+		let signer1_receive_first_partial_sign_ev = signer1_ceremony
+			.receive_partial_sign(MY_SIGNER_ID, my_ceremony_partial_sign)
+			.unwrap();
 		match signer1_receive_first_partial_sign_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let signer1_ceremony_ended_ev =
-			signer1_ceremony.process_command(CeremonyCommand::SavePartialSignature(
-				SIGNER_2_ID,
-				signer2_ceremony_partial_sign.clone(),
-			));
+		let signer1_ceremony_ended_ev = signer1_ceremony
+			.receive_partial_sign(SIGNER_2_ID, signer2_ceremony_partial_sign)
+			.unwrap();
 		let signer1_ceremony_final_signature = match signer1_ceremony_ended_ev {
 			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
 		};
+
 		// signer 2 receive partial_sign
-		let signer2_receive_first_partial_sign_ev = signer2_ceremony.process_command(
-			CeremonyCommand::SavePartialSignature(MY_SIGNER_ID, my_ceremony_partial_sign.clone()),
-		);
+		let signer2_receive_first_partial_sign_ev = signer2_ceremony
+			.receive_partial_sign(MY_SIGNER_ID, my_ceremony_partial_sign)
+			.unwrap();
 		match signer2_receive_first_partial_sign_ev {
 			None => {},
 			ev => panic!("except None but get: {:?}", ev),
 		}
-		let signer2_ceremony_ended_ev =
-			signer2_ceremony.process_command(CeremonyCommand::SavePartialSignature(
-				SIGNER_1_ID,
-				signer1_ceremony_partial_sign.clone(),
-			));
+		let signer2_ceremony_ended_ev = signer2_ceremony
+			.receive_partial_sign(SIGNER_1_ID, signer1_ceremony_partial_sign)
+			.unwrap();
 		let signer2_ceremony_final_signature = match signer2_ceremony_ended_ev {
 			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
