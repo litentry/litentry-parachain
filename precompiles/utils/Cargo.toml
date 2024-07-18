@@ -17,7 +17,7 @@ serde = { workspace = true, optional = true }
 similar-asserts = { workspace = true, optional = true }
 
 # Frontier
-precompile-utils-macro-v2 = { workspace = true }
+precompile-utils-macro-v2 = { path = "macro" }
 
 # Substrate
 frame-support = { workspace = true }
@@ -39,7 +39,6 @@ xcm = { workspace = true, optional = true }
 [dev-dependencies]
 hex-literal = { workspace = true }
 xcm = { workspace = true }
-precompile-utils-macro-v2 = { path = "macro", features = ["std"] }
 
 [features]
 default = ["std"]
@@ -55,7 +54,6 @@ std = [
     "sp-io/std",
     "sp-std/std",
     "sp-runtime/std",
-    "precompile-utils-macro-v2/std",
 ]
 codec-xcm = ["xcm"]
 testing = [

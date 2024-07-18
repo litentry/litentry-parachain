@@ -18,7 +18,6 @@ prettyplease = "0.2.12"
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 sp-core-hashing = { workspace = true }
-sp-runtime = { workspace = true }
 syn = { version = "1.0", features = ["extra-traits", "fold", "full", "visit"] }
 
 [dev-dependencies]
@@ -31,13 +30,3 @@ fp-evm = { workspace = true }
 frame-support = { workspace = true }
 sp-core-hashing = { workspace = true }
 sp-std = { workspace = true }
-
-[features]
-default = ["std"]
-std = [
-    "fp-evm/std",
-    "frame-support/std",
-    "sp-core-hashing/std",
-    "sp-std/std",
-    "sp-runtime/std",
-]

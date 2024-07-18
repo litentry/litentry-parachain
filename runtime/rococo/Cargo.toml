@@ -115,8 +115,9 @@ moonbeam-rpc-primitives-txpool = { workspace = true }
 precompile-utils = { workspace = true }
 
 [dev-dependencies]
+cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 polkadot-primitives = { workspace = true, features = ["std"] }
-polkadot-runtime-parachains = { workspace = true }
+polkadot-runtime-parachains = { workspace = true, features = ["std"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
