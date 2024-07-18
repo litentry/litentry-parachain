@@ -9,3 +9,24 @@ This package features a series of tests to assert if the given Parachain Node an
     ```
     pnpm install
     ```
+
+1. Target the desired environment (optional)
+
+    Set the `LITENTRY_NETWORK` environment to any of the following values:
+
+    - `litentry-prod`: (default) will point to `tee-prod`'s Enclave.
+    - `litentry-dev`: will point to `tee-dev`'s Enclave.
+    - `litentry-staging`: will point to `tee-staging`'s Enclave.
+    - `litentry-local`: will point to a local enclave `ws://localhost:2000`
+
+1. Run the checks
+
+    ```
+    pnpm start
+    ```
+
+    Running the checks against a specific environment
+
+    ```
+    LITENTRY_NETWORK=litentry-dev pnpm start
+    ```
