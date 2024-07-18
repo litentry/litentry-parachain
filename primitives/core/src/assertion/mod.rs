@@ -143,7 +143,7 @@ pub enum Assertion {
 	Dynamic(DynamicParams)
 }
 
-pub const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
+const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
 	Web3Network::Polkadot,
 	Web3Network::Kusama,
 	Web3Network::Litentry,
