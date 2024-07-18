@@ -143,6 +143,15 @@ pub enum Assertion {
 	Dynamic(DynamicParams)
 }
 
+pub const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
+	Web3Network::Polkadot,
+	Web3Network::Kusama,
+	Web3Network::Litentry,
+	Web3Network::Litmus,
+	Web3Network::Khala,
+	Web3Network::Ethereum,
+];
+
 impl Assertion {
 	// Given an assertion enum type, retrieve the supported web3 networks.
 	// So we limit the network types on the assertion definition level.
@@ -164,7 +173,11 @@ impl Assertion {
 			Self::VIP3MembershipCard(..) |
 			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
-			Self::A8(network) => network.to_vec(),
+			Self::A8(networks) => networks
+				.into_iter()
+				.filter(|network| A8_SUPPORTED_NETWORKS.contains(*network))
+				.cloned()
+				.collect::<Vec<_>>(),
 			// Achainable Assertions
 			Self::Achainable(arg) => arg.chains(),
 			// OneBlock Assertion
