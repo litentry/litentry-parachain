@@ -5,7 +5,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 
 import { identity, trusted_operations, sidechain, vc } from '@litentry/parachain-api';
-import { request, createLitentryIdentityType } from '@litentry/enclave';
+import { request, createLitentryIdentityType, createLitentryValidationDataType } from '@litentry/enclave';
 
 import { nodeEndpoint, enclaveEndpoint } from '../config';
 import { u8aToHex, u8aToString } from '@polkadot/util';
@@ -106,4 +106,44 @@ it(`can issue a verifiable-credential for Alice`, async () => {
     const vcString = JSON.parse(u8aToString(response.vcPayloads[0] as Uint8Array));
     assert.isArray(vcString['@context']);
     assert.isString(vcString.id);
+});
+
+/**
+ * This test implicitly checks that the state is readable and consistent
+ */
+it(`should have consistent historical state for Alice`, async () => {
+    const alice = keyring.addFromUri('//Alice');
+    const aliceIdentity = createLitentryIdentityType(api.registry, {
+        addressOrHandle: alice.address,
+        type: 'Substrate',
+    });
+
+    assert.strictEqual(u8aToHex(alice.addressRaw), aliceIdentity.asSubstrate.toHex());
+
+    const { send, payloadToSign } = await request.getIdGraph(api, {
+        who: aliceIdentity,
+    });
+
+    const signature = alice.sign(payloadToSign);
+
+    const { idGraph } = await send({
+        signedPayload: u8aToHex(signature),
+    });
+
+    // Alice has at least, the following identities:
+    const bob = keyring.addFromUri('//Bob');
+    const eve = keyring.addFromUri('//Eve');
+
+    assert.isTrue(
+        idGraph.some(([identity]) => identity.asSubstrate.eq(alice.addressRaw)),
+        'Alice is not in the graph'
+    );
+    assert.isTrue(
+        idGraph.some(([identity]) => identity.asSubstrate.eq(bob.addressRaw)),
+        'Bob is not in the graph'
+    );
+    assert.isTrue(
+        idGraph.some(([identity]) => identity.asSubstrate.eq(eve.addressRaw)),
+        'Eve is not in the graph'
+    );
 });
