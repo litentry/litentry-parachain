@@ -22,14 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Tusd {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x0000000000085d4780b73119b644ae5ecd22b376";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "tusd";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x0000000000085d4780b73119b644ae5ecd22b376";
+		}
+		if (network == Web3Networks.Bsc) {
+			return "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -22,17 +22,17 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Sol {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x5288738df1aeb0894713de903e1d0c001eeb7644";
-	}
-	function getTokenSolanaAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "sol";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x5288738df1aeb0894713de903e1d0c001eeb7644";
+		} else if (network == Web3Networks.Bsc) {
+			return "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
+		} else if (network == Web3Networks.Solana) {
+			return "Native Token";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -51,7 +51,7 @@ library Sol {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](3);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
 		networks[2] = Web3Networks.Solana;

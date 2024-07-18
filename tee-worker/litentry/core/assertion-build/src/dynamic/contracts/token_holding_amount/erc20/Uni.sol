@@ -22,17 +22,19 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Uni {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xbf5140a22578168fd562dccf235e5d43a02ce9b1";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
-	}
-	function getTokenSolanaAddress() internal pure returns (string memory) {
-		return "8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "uni";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
+		}
+		if (network == Web3Networks.Bsc) {
+			return "0xbf5140a22578168fd562dccf235e5d43a02ce9b1";
+		}
+		if (network == Web3Networks.Solana) {
+			return "8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -50,7 +52,7 @@ library Uni {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](3);
 		networks[0] = Web3Networks.Ethereum;
 		networks[1] = Web3Networks.Bsc;
 		networks[2] = Web3Networks.Solana;

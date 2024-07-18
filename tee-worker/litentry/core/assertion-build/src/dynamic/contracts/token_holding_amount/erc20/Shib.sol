@@ -22,15 +22,13 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Shib {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "shib";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -47,9 +45,8 @@ library Shib {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](1);
 		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
 		return networks;
 	}

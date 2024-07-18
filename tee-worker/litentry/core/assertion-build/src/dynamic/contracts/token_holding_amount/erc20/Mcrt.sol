@@ -22,17 +22,17 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Mcrt {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
-	}
-	function getTokenSolanaAddress() internal pure returns (string memory) {
-		return "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "mcrt";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
+		} else if (network == Web3Networks.Bsc) {
+			return "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
+		} else if (network == Web3Networks.Solana) {
+			return "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

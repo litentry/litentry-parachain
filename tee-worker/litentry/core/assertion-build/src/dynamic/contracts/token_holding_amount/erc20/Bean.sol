@@ -22,14 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Bean {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xba7b9936a965fac23bb7a8190364fa60622b3cff";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "bean";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "0xba7b9936a965fac23bb7a8190364fa60622b3cff";
+		}
+		revert("Unsupported network");
 	}
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](5);

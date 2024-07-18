@@ -22,15 +22,13 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library People {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x7a58c0be72be218b41c608b7fe7c5bb630736c71";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "people";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x7a58c0be72be218b41c608b7fe7c5bb630736c71";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -49,9 +47,8 @@ library People {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](1);
 		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
 		return networks;
 	}

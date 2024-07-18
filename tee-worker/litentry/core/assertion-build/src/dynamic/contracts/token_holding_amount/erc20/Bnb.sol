@@ -22,14 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Bnb {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xb8c77482e45f1f44de1745f52c74426c631bdd52";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "bnb";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "Native Token";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "0xb8c77482e45f1f44de1745f52c74426c631bdd52";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

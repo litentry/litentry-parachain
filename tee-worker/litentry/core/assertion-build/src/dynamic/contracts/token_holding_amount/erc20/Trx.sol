@@ -22,15 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Trx {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x50327c6c5a14dcade707abad2e27eb517df87ab5";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "trx";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x50327c6c5a14dcade707abad2e27eb517df87ab5";
+		}
+		if (network == Web3Networks.Bsc) {
+			return "0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

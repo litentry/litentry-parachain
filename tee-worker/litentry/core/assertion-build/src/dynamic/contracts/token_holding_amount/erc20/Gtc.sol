@@ -22,17 +22,14 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Gtc {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f";
+		}
+		revert("Unsupported network");
 	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "gtc";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -49,9 +46,8 @@ library Gtc {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
+		uint32[] memory networks = new uint32[](1);
 		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
 		return networks;
 	}

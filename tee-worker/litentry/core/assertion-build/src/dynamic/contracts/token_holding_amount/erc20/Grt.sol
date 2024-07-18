@@ -21,15 +21,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Grt {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xc944e90c64b2c07662a292be6244bdf05cda44a7";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "grt";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

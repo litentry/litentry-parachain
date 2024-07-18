@@ -22,15 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library SpaceId {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x2dff88a56767223a5529ea5960da7a3f5f766406";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x2dff88a56767223a5529ea5960da7a3f5f766406";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "spaceid";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0x2dff88a56767223a5529ea5960da7a3f5f766406";
+		}
+		if (network == Web3Networks.Bsc) {
+			return "0x2dff88a56767223a5529ea5960da7a3f5f766406";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

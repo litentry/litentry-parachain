@@ -21,15 +21,16 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 
 library Eth {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "eth";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "Native Token";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

@@ -22,15 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Matic {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xcc42724c6683b7e57334c4e856f4c9965ed682bd";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "matic";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0xcc42724c6683b7e57334c4e856f4c9965ed682bd";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {

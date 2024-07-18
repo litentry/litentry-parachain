@@ -22,15 +22,13 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Nfp {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x75e8ddb518bb757b4282cd5b83bb70d4101d12fb";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "nfp";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x75e8ddb518bb757b4282cd5b83bb70d4101d12fb";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -49,9 +47,8 @@ library Nfp {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
+		uint32[] memory networks = new uint32[](1);
+		networks[0] = Web3Networks.Bsc;
 
 		return networks;
 	}

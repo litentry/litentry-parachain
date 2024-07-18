@@ -20,16 +20,13 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
 library Ada {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47";
-	}
-
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "ada";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -45,9 +42,8 @@ library Ada {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
+		uint32[] memory networks = new uint32[](1);
+		networks[0] = Web3Networks.Bsc;
 		return networks;
 	}
 }

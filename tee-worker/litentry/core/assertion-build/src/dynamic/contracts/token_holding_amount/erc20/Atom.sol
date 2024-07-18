@@ -30,6 +30,18 @@ library Atom {
 		return "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB";
 	}
 
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
+		}
+		if (network == Web3Networks.Ethereum) {
+			return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
+		}
+		revert("Unsupported network");
+	}
+
 	function getTokenName() internal pure returns (string memory) {
 		return "atom";
 	}

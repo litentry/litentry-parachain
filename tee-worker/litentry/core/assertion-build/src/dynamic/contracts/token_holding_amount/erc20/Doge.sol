@@ -21,17 +21,14 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Doge {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xba2ae424d960c26247dd6c32edc70b295c744c43";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Bsc) {
+			return "0xba2ae424d960c26247dd6c32edc70b295c744c43";
+		}
+		revert("Unsupported network");
 	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "doge";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](7);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -45,9 +42,8 @@ library Doge {
 		return ranges;
 	}
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
+		uint32[] memory networks = new uint32[](1);
+		networks[0] = Web3Networks.Bsc;
 
 		return networks;
 	}

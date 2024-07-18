@@ -22,18 +22,16 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Cro {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b";
-	}
-	function getTokenSolanaAddress() internal pure returns (string memory) {
-		return "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "cro";
+	function getTokenAddress(
+		uint32 network
+	) internal pure returns (string memory) {
+		if (network == Web3Networks.Ethereum) {
+			return "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b";
+		}
+		if (network == Web3Networks.Solana) {
+			return "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA";
+		}
+		revert("Unsupported network");
 	}
 
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -51,8 +49,7 @@ library Cro {
 	function getTokenNetworks() internal pure returns (uint32[] memory) {
 		uint32[] memory networks = new uint32[](2);
 		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-		networks[2] = Web3Networks.Solana;
+		networks[1] = Web3Networks.Solana;
 
 		return networks;
 	}

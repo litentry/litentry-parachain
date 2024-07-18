@@ -22,10 +22,6 @@ import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
 library Btcs {
-	function getTokenName() internal pure returns (string memory) {
-		return "btcs";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
 		ranges[0] = 0 * Constants.decimals_factor;

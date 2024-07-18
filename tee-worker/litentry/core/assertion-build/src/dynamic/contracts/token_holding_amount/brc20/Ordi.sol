@@ -22,10 +22,6 @@ import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
 library Ordi {
-	function getTokenName() internal pure returns (string memory) {
-		return "ordi";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](8);
 		ranges[0] = 0 * Constants.decimals_factor;
