@@ -179,12 +179,12 @@ mod benchmarks {
 			T::Moment::saturated_from(test_util::TEST4_TIMESTAMP)
 		));
 
-		let caller: T::AccountId =
+		let signer: T::AccountId =
 			test_util::get_signer::<T::AccountId>(test_util::TEST4_SIGNER_PUB).into();
 
 		#[extrinsic_call]
 		Teebag::<T>::register_enclave(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(signer.clone()),
 			WorkerType::Identity,
 			WorkerMode::OffChainWorker,
 			test_util::TEST4_CERT.to_vec(),
@@ -201,7 +201,16 @@ mod benchmarks {
 			.with_url(test_util::URL.to_vec())
 			.with_attestation_type(AttestationType::Ias);
 
-		assert_eq!(EnclaveRegistry::<T>::get(caller.clone()).unwrap(), registered_enclave);
+		assert_eq!(EnclaveRegistry::<T>::get(signer.clone()).unwrap(), registered_enclave);
+		assert_last_event::<T>(
+			Event::EnclaveAdded {
+				who: signer,
+				worker_type: WorkerType::Identity,
+				url: test_util::URL.to_vec(),
+			}
+			.into(),
+		)
+	}
 		assert_last_event::<T>(
 			Event::EnclaveAdded {
 				who: caller,
