@@ -58,7 +58,7 @@ use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
 	AllPalletsWithSystem, AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo,
-	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};

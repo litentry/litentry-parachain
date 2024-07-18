@@ -1,6 +1,5 @@
 use super::{
-	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Runtime, RuntimeEvent,
-	TreasuryPalletId,
+	weights, AccountId, AssetId, Balance, Balances, Runtime, RuntimeEvent, TreasuryPalletId,
 };
 use crate::constants::currency::deposit;
 use frame_support::{
