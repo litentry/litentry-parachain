@@ -2,7 +2,7 @@ use super::{
 	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Runtime, RuntimeEvent,
 	TreasuryPalletId,
 };
-use crate::constants::{currency, deposit};
+use crate::constants::currency::deposit;
 use frame_support::{parameter_types, traits::ConstU32};
 use frame_system::EnsureRoot;
 use parity_scale_codec::Compact;
@@ -45,7 +45,7 @@ impl pallet_assets::Config for Runtime {
 	type MetadataDepositBase = MetadataDepositBase;
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type AssetAccountDeposit = AssetAccountDeposit;
-	type ApprovalDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
+	type ApprovalDeposit = ConstU128<{ EXISTENTIAL_DEPOSIT }>;
 	type StringLimit = AssetsStringLimit;
 	type Freezer = ();
 	type Extra = ();

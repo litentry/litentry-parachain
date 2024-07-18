@@ -26,9 +26,11 @@ use frame_support::{
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
+use pallet_evm_precompile_bridge_transfer::BridgeTransferPrecompile;
 use pallet_evm_precompile_dispatch::{Dispatch, DispatchValidateT};
 use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
+use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use precompile_utils::precompile_set::*;
@@ -131,7 +133,7 @@ pub type RococoNetworkPrecompiles<R> = PrecompileSetBuilder<
 		PrecompilesInRangeInclusive<
 			// We take range as last precompile index, UPDATE this once new prcompile is added
 			(AddressU64<1>, AddressU64<20484>),
-			PrecompilesSetAt<R, C>,
+			PrecompilesSetAt<R>,
 		>,
 		// Prefixed precompile sets (XC20)
 		PrecompileSetStartingWith<AssetPrefix, Erc20AssetsPrecompileSet<R>, CallableByContract>,
