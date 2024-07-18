@@ -103,7 +103,7 @@ contract TokenMapping is TokenQueryLogic {
 		// ada
 		tokenRanges["ada"] = Ada.getTokenRanges();
 		tokenNetworks["ada"] = Ada.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["ada"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["ada"].length; i++) {
 			tokenAddresses["ada"][tokenNetworks["ada"][i]] = Ada
 				.getTokenAddress(tokenNetworks["ada"][i]);
 		}
@@ -111,7 +111,7 @@ contract TokenMapping is TokenQueryLogic {
 		// amp
 		tokenRanges["amp"] = Amp.getTokenRanges();
 		tokenNetworks["amp"] = Amp.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["amp"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["amp"].length; i++) {
 			tokenAddresses["amp"][tokenNetworks["amp"][i]] = Amp
 				.getTokenAddress(tokenNetworks["amp"][i]);
 		}
@@ -119,7 +119,7 @@ contract TokenMapping is TokenQueryLogic {
 		// atom
 		tokenRanges["atom"] = Atom.getTokenRanges();
 		tokenNetworks["atom"] = Atom.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["atom"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["atom"].length; i++) {
 			tokenAddresses["atom"][tokenNetworks["atom"][i]] = Atom
 				.getTokenAddress(tokenNetworks["atom"][i]);
 		}
@@ -127,7 +127,7 @@ contract TokenMapping is TokenQueryLogic {
 		// bch
 		tokenRanges["bch"] = Bch.getTokenRanges();
 		tokenNetworks["bch"] = Bch.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["bch"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["bch"].length; i++) {
 			tokenAddresses["bch"][tokenNetworks["bch"][i]] = Bch
 				.getTokenAddress(tokenNetworks["bch"][i]);
 		}
@@ -135,7 +135,7 @@ contract TokenMapping is TokenQueryLogic {
 		// bean
 		tokenRanges["bean"] = Bean.getTokenRanges();
 		tokenNetworks["bean"] = Bean.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["bean"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["bean"].length; i++) {
 			tokenAddresses["bean"][tokenNetworks["bean"][i]] = Bean
 				.getTokenAddress(tokenNetworks["bean"][i]);
 		}
@@ -143,7 +143,7 @@ contract TokenMapping is TokenQueryLogic {
 		// bnb
 		tokenRanges["bnb"] = Bnb.getTokenRanges();
 		tokenNetworks["bnb"] = Bnb.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["bnb"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["bnb"].length; i++) {
 			tokenAddresses["bnb"][tokenNetworks["bnb"][i]] = Bnb
 				.getTokenAddress(tokenNetworks["bnb"][i]);
 		}
@@ -151,7 +151,7 @@ contract TokenMapping is TokenQueryLogic {
 		// comp
 		tokenRanges["comp"] = Comp.getTokenRanges();
 		tokenNetworks["comp"] = Comp.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["comp"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["comp"].length; i++) {
 			tokenAddresses["comp"][tokenNetworks["comp"][i]] = Comp
 				.getTokenAddress(tokenNetworks["comp"][i]);
 		}
@@ -159,7 +159,7 @@ contract TokenMapping is TokenQueryLogic {
 		// cro
 		tokenRanges["cro"] = Cro.getTokenRanges();
 		tokenNetworks["cro"] = Cro.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["cro"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["cro"].length; i++) {
 			tokenAddresses["cro"][tokenNetworks["cro"][i]] = Cro
 				.getTokenAddress(tokenNetworks["cro"][i]);
 		}
@@ -167,7 +167,7 @@ contract TokenMapping is TokenQueryLogic {
 		// crv
 		tokenRanges["crv"] = Crv.getTokenRanges();
 		tokenNetworks["crv"] = Crv.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["crv"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["crv"].length; i++) {
 			tokenAddresses["crv"][tokenNetworks["crv"][i]] = Crv
 				.getTokenAddress(tokenNetworks["crv"][i]);
 		}
@@ -175,7 +175,7 @@ contract TokenMapping is TokenQueryLogic {
 		// dai
 		tokenRanges["dai"] = Dai.getTokenRanges();
 		tokenNetworks["dai"] = Dai.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["dai"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["dai"].length; i++) {
 			tokenAddresses["dai"][tokenNetworks["dai"][i]] = Dai
 				.getTokenAddress(tokenNetworks["dai"][i]);
 		}
@@ -183,7 +183,7 @@ contract TokenMapping is TokenQueryLogic {
 		// doge
 		tokenRanges["doge"] = Doge.getTokenRanges();
 		tokenNetworks["doge"] = Doge.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["doge"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["doge"].length; i++) {
 			tokenAddresses["doge"][tokenNetworks["doge"][i]] = Doge
 				.getTokenAddress(tokenNetworks["doge"][i]);
 		}
@@ -191,7 +191,7 @@ contract TokenMapping is TokenQueryLogic {
 		// dydx
 		tokenRanges["dydx"] = Dydx.getTokenRanges();
 		tokenNetworks["dydx"] = Dydx.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["dydx"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["dydx"].length; i++) {
 			tokenAddresses["dydx"][tokenNetworks["dydx"][i]] = Dydx
 				.getTokenAddress(tokenNetworks["dydx"][i]);
 		}
@@ -199,7 +199,7 @@ contract TokenMapping is TokenQueryLogic {
 		// etc
 		tokenRanges["etc"] = Etc.getTokenRanges();
 		tokenNetworks["etc"] = Etc.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["etc"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["etc"].length; i++) {
 			tokenAddresses["etc"][tokenNetworks["etc"][i]] = Etc
 				.getTokenAddress(tokenNetworks["etc"][i]);
 		}
@@ -207,7 +207,7 @@ contract TokenMapping is TokenQueryLogic {
 		// eth
 		tokenRanges["eth"] = Eth.getTokenRanges();
 		tokenNetworks["eth"] = Eth.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["eth"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["eth"].length; i++) {
 			tokenAddresses["eth"][tokenNetworks["eth"][i]] = Eth
 				.getTokenAddress(tokenNetworks["eth"][i]);
 		}
@@ -215,7 +215,7 @@ contract TokenMapping is TokenQueryLogic {
 		// fil
 		tokenRanges["fil"] = Fil.getTokenRanges();
 		tokenNetworks["fil"] = Fil.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["fil"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["fil"].length; i++) {
 			tokenAddresses["fil"][tokenNetworks["fil"][i]] = Fil
 				.getTokenAddress(tokenNetworks["fil"][i]);
 		}
@@ -223,7 +223,7 @@ contract TokenMapping is TokenQueryLogic {
 		// grt
 		tokenRanges["grt"] = Grt.getTokenRanges();
 		tokenNetworks["grt"] = Grt.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["grt"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["grt"].length; i++) {
 			tokenAddresses["grt"][tokenNetworks["grt"][i]] = Grt
 				.getTokenAddress(tokenNetworks["grt"][i]);
 		}
@@ -231,7 +231,7 @@ contract TokenMapping is TokenQueryLogic {
 		// gtc
 		tokenRanges["gtc"] = Gtc.getTokenRanges();
 		tokenNetworks["gtc"] = Gtc.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["gtc"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["gtc"].length; i++) {
 			tokenAddresses["gtc"][tokenNetworks["gtc"][i]] = Gtc
 				.getTokenAddress(tokenNetworks["gtc"][i]);
 		}
@@ -239,7 +239,7 @@ contract TokenMapping is TokenQueryLogic {
 		// gusd
 		tokenRanges["gusd"] = Gusd.getTokenRanges();
 		tokenNetworks["gusd"] = Gusd.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["gusd"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["gusd"].length; i++) {
 			tokenAddresses["gusd"][tokenNetworks["gusd"][i]] = Gusd
 				.getTokenAddress(tokenNetworks["gusd"][i]);
 		}
@@ -247,7 +247,7 @@ contract TokenMapping is TokenQueryLogic {
 		// imx
 		tokenRanges["imx"] = Imx.getTokenRanges();
 		tokenNetworks["imx"] = Imx.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["imx"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["imx"].length; i++) {
 			tokenAddresses["imx"][tokenNetworks["imx"][i]] = Imx
 				.getTokenAddress(tokenNetworks["imx"][i]);
 		}
@@ -255,7 +255,7 @@ contract TokenMapping is TokenQueryLogic {
 		// inj
 		tokenRanges["inj"] = Inj.getTokenRanges();
 		tokenNetworks["inj"] = Inj.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["inj"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["inj"].length; i++) {
 			tokenAddresses["inj"][tokenNetworks["inj"][i]] = Inj
 				.getTokenAddress(tokenNetworks["inj"][i]);
 		}
@@ -263,7 +263,7 @@ contract TokenMapping is TokenQueryLogic {
 		// leo
 		tokenRanges["leo"] = Leo.getTokenRanges();
 		tokenNetworks["leo"] = Leo.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["leo"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["leo"].length; i++) {
 			tokenAddresses["leo"][tokenNetworks["leo"][i]] = Leo
 				.getTokenAddress(tokenNetworks["leo"][i]);
 		}
@@ -271,7 +271,7 @@ contract TokenMapping is TokenQueryLogic {
 		// link
 		tokenRanges["link"] = Link.getTokenRanges();
 		tokenNetworks["link"] = Link.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["link"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["link"].length; i++) {
 			tokenAddresses["link"][tokenNetworks["link"][i]] = Link
 				.getTokenAddress(tokenNetworks["link"][i]);
 		}
@@ -279,7 +279,7 @@ contract TokenMapping is TokenQueryLogic {
 		// lit
 		tokenRanges["lit"] = Lit.getTokenRanges();
 		tokenNetworks["lit"] = Lit.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["lit"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["lit"].length; i++) {
 			tokenAddresses["lit"][tokenNetworks["lit"][i]] = Lit
 				.getTokenAddress(tokenNetworks["lit"][i]);
 		}
@@ -287,7 +287,7 @@ contract TokenMapping is TokenQueryLogic {
 		// matic
 		tokenRanges["matic"] = Matic.getTokenRanges();
 		tokenNetworks["matic"] = Matic.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["matic"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["matic"].length; i++) {
 			tokenAddresses["matic"][tokenNetworks["matic"][i]] = Matic
 				.getTokenAddress(tokenNetworks["matic"][i]);
 		}
@@ -295,7 +295,7 @@ contract TokenMapping is TokenQueryLogic {
 		// mcrt
 		tokenRanges["mcrt"] = Mcrt.getTokenRanges();
 		tokenNetworks["mcrt"] = Mcrt.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["mcrt"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["mcrt"].length; i++) {
 			tokenAddresses["mcrt"][tokenNetworks["mcrt"][i]] = Mcrt
 				.getTokenAddress(tokenNetworks["mcrt"][i]);
 		}
@@ -303,7 +303,7 @@ contract TokenMapping is TokenQueryLogic {
 		// nfp
 		tokenRanges["nfp"] = Nfp.getTokenRanges();
 		tokenNetworks["nfp"] = Nfp.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["nfp"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["nfp"].length; i++) {
 			tokenAddresses["nfp"][tokenNetworks["nfp"][i]] = Nfp
 				.getTokenAddress(tokenNetworks["nfp"][i]);
 		}
@@ -311,7 +311,7 @@ contract TokenMapping is TokenQueryLogic {
 		// people
 		tokenRanges["people"] = People.getTokenRanges();
 		tokenNetworks["people"] = People.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["people"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["people"].length; i++) {
 			tokenAddresses["people"][tokenNetworks["people"][i]] = People
 				.getTokenAddress(tokenNetworks["people"][i]);
 		}
@@ -319,7 +319,7 @@ contract TokenMapping is TokenQueryLogic {
 		// shib
 		tokenRanges["shib"] = Shib.getTokenRanges();
 		tokenNetworks["shib"] = Shib.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["shib"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["shib"].length; i++) {
 			tokenAddresses["shib"][tokenNetworks["shib"][i]] = Shib
 				.getTokenAddress(tokenNetworks["shib"][i]);
 		}
@@ -327,7 +327,7 @@ contract TokenMapping is TokenQueryLogic {
 		// sol
 		tokenRanges["sol"] = Sol.getTokenRanges();
 		tokenNetworks["sol"] = Sol.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["sol"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["sol"].length; i++) {
 			tokenAddresses["sol"][tokenNetworks["sol"][i]] = Sol
 				.getTokenAddress(tokenNetworks["sol"][i]);
 		}
@@ -335,7 +335,7 @@ contract TokenMapping is TokenQueryLogic {
 		// spaceid
 		tokenRanges["spaceid"] = SpaceId.getTokenRanges();
 		tokenNetworks["spaceid"] = SpaceId.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["spaceid"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["spaceid"].length; i++) {
 			tokenAddresses["spaceid"][tokenNetworks["spaceid"][i]] = SpaceId
 				.getTokenAddress(tokenNetworks["spaceid"][i]);
 		}
@@ -343,7 +343,7 @@ contract TokenMapping is TokenQueryLogic {
 		// ton
 		tokenRanges["ton"] = Ton.getTokenRanges();
 		tokenNetworks["ton"] = Ton.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["ton"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["ton"].length; i++) {
 			tokenAddresses["ton"][tokenNetworks["ton"][i]] = Ton
 				.getTokenAddress(tokenNetworks["ton"][i]);
 		}
@@ -351,7 +351,7 @@ contract TokenMapping is TokenQueryLogic {
 		// trx
 		tokenRanges["trx"] = Trx.getTokenRanges();
 		tokenNetworks["trx"] = Trx.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["trx"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["trx"].length; i++) {
 			tokenAddresses["trx"][tokenNetworks["trx"][i]] = Trx
 				.getTokenAddress(tokenNetworks["trx"][i]);
 		}
@@ -359,7 +359,7 @@ contract TokenMapping is TokenQueryLogic {
 		// tusd
 		tokenRanges["tusd"] = Tusd.getTokenRanges();
 		tokenNetworks["tusd"] = Tusd.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["tusd"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["tusd"].length; i++) {
 			tokenAddresses["tusd"][tokenNetworks["tusd"][i]] = Tusd
 				.getTokenAddress(tokenNetworks["tusd"][i]);
 		}
@@ -367,7 +367,7 @@ contract TokenMapping is TokenQueryLogic {
 		// uni
 		tokenRanges["uni"] = Uni.getTokenRanges();
 		tokenNetworks["uni"] = Uni.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["uni"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["uni"].length; i++) {
 			tokenAddresses["uni"][tokenNetworks["uni"][i]] = Uni
 				.getTokenAddress(tokenNetworks["uni"][i]);
 		}
@@ -375,7 +375,7 @@ contract TokenMapping is TokenQueryLogic {
 		// usdc
 		tokenRanges["usdc"] = Usdc.getTokenRanges();
 		tokenNetworks["usdc"] = Usdc.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["usdc"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["usdc"].length; i++) {
 			tokenAddresses["usdc"][tokenNetworks["usdc"][i]] = Usdc
 				.getTokenAddress(tokenNetworks["usdc"][i]);
 		}
@@ -383,7 +383,7 @@ contract TokenMapping is TokenQueryLogic {
 		// usdd
 		tokenRanges["usdd"] = Usdd.getTokenRanges();
 		tokenNetworks["usdd"] = Usdd.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["usdd"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["usdd"].length; i++) {
 			tokenAddresses["usdd"][tokenNetworks["usdd"][i]] = Usdd
 				.getTokenAddress(tokenNetworks["usdd"][i]);
 		}
@@ -391,7 +391,7 @@ contract TokenMapping is TokenQueryLogic {
 		// usdt
 		tokenRanges["usdt"] = Usdt.getTokenRanges();
 		tokenNetworks["usdt"] = Usdt.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["usdt"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["usdt"].length; i++) {
 			tokenAddresses["usdt"][tokenNetworks["usdt"][i]] = Usdt
 				.getTokenAddress(tokenNetworks["usdt"][i]);
 		}
@@ -399,7 +399,7 @@ contract TokenMapping is TokenQueryLogic {
 		// wbtc
 		tokenRanges["wbtc"] = Wbtc.getTokenRanges();
 		tokenNetworks["wbtc"] = Wbtc.getTokenNetworks();
-		for (uint i = 0; i < tokenNetworks["wbtc"].length; i++) {
+		for (uint32 i = 0; i < tokenNetworks["wbtc"].length; i++) {
 			tokenAddresses["wbtc"][tokenNetworks["wbtc"][i]] = Wbtc
 				.getTokenAddress(tokenNetworks["wbtc"][i]);
 		}
