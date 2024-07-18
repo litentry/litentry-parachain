@@ -256,9 +256,51 @@ mod benchmarks {
 			.into(),
 		)
 	}
+
+	#[benchmark]
+	fn register_enclave_with_dcap_attestation() {
+		let valid_timestamp: u64 = 1671606747000;
+		assert_ok!(pallet_timestamp::Pallet::<T>::set(
+			RawOrigin::None.into(),
+			T::Moment::saturated_from(valid_timestamp)
+		));
+		register_quoting_enclave::<T>();
+		register_tcb_info::<T>();
+
+		let mrenclave: MrEnclave = [
+			111, 144, 18, 11, 92, 31, 3, 97, 145, 18, 234, 200, 85, 226, 157, 110, 11, 228, 243,
+			91, 41, 2, 170, 22, 154, 255, 255, 119, 25, 39, 126, 188,
+		];
+
+		AuthorizedEnclave::<T>::try_mutate(WorkerType::Identity, |v| v.try_push(mrenclave))
+			.expect("Failed to add authorized enclave");
+
+		let pubkey: [u8; 32] = [
+			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
+			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+		];
+		let signer: T::AccountId = test_util::get_signer::<T::AccountId>(&pubkey).into();
+
+		#[extrinsic_call]
+		Teebag::<T>::register_enclave(
+			RawOrigin::Signed(signer.clone()),
+			WorkerType::Identity,
+			WorkerMode::OffChainWorker,
+			test_util::TEST1_DCAP_QUOTE.to_vec(),
+			test_util::URL.to_vec(),
+			None,
+			None,
+			AttestationType::Dcap(DcapProvider::Intel),
+		);
+
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 1);
+		assert_eq!(
+			Teebag::<T>::enclave_registry(&signer).unwrap().last_seen_timestamp,
+			valid_timestamp
+		);
 		assert_last_event::<T>(
 			Event::EnclaveAdded {
-				who: caller,
+				who: signer,
 				worker_type: WorkerType::Identity,
 				url: test_util::URL.to_vec(),
 			}
