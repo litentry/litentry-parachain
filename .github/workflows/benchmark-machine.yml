@@ -9,21 +9,27 @@ on:
         required: true
 
 env:
-  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }}  # remote AWS host to run benchmarking
+  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }}
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
-  BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
+  BENCHMARK_SSH_KEY: ${{ secrets.BENCHMARK_SSH_KEY }}
 
 jobs:
   ## run the benchmarking remotely
   benchmark-machine:
-    runs-on: jumphost
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # TODO: maybe use GHA to start/stop remote instance
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Start remote instance
         timeout-minutes: 10
         id: start_instance
@@ -38,26 +44,30 @@ jobs:
               break
             else
               sleep 20
+              SECONDS=$((SECONDS + 20))
             fi
           done
           echo "Remote instance reachable now after $SECONDS seconds"
-          remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
-          echo "Running instances ip address: $remote_ip"
+          remote_ip=$(aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text)
+          echo "Running instances IP address: $remote_ip"
           echo "remote_ip=$remote_ip" >> $GITHUB_OUTPUT
 
-      # exit status should propagate through ssh
       - name: Remotely benchmark machine
         timeout-minutes: 10
         run: |
-          echo "Running instances ip address: ${{ steps.start_instance.outputs.remote_ip }}"
-          ssh -x -o StrictHostKeychecking=no "${{ steps.start_instance.outputs.remote_ip }}" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} \
-            docker pull litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} && \
-            docker run --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} benchmark machine --allow-fail --chain=litmus-dev
+          echo "Running instance's IP address: ${{ steps.start_instance.outputs.remote_ip }}"
+          cat << EOF > ./benchmark-server-key.pem
+          ${{ env.BENCHMARK_SSH_KEY }}
+          EOF
+          chmod 600 ./benchmark-server-key.pem
+          ssh -o StrictHostKeyChecking=no -i ./benchmark-server-key.pem "${{ env.BENCHMARK_SSH_USER }}@${{ steps.start_instance.outputs.remote_ip }}" \
+            "docker pull litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} && \
+            docker run --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} benchmark machine --allow-fail --chain=litmus-dev"
 
       - name: Stop remote instance
         if: always()
         run: |
           aws ec2 stop-instances --instance-ids ${{ env.INSTANCE_ID }}
           sleep 5
-          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
+          ret=$(aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text)
           echo "Remote instance running state: $ret"
