@@ -115,18 +115,12 @@ moonbeam-rpc-primitives-txpool = { workspace = true }
 precompile-utils = { workspace = true }
 
 [dev-dependencies]
-cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 polkadot-primitives = { workspace = true, features = ["std"] }
-polkadot-runtime-parachains = { workspace = true, features = ["std"] }
-precompile-utils = { workspace = true, features = ["std"] }
+polkadot-runtime-parachains = { workspace = true }
+precompile-utils = { workspace = true, features = ["std", "testing"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
-pallet-evm = { workspace = true, features = ["std"] }
-pallet-evm-precompile-assets-erc20 = { workspace = true, features = ["std"] }
-pallet-evm-precompile-bridge-transfer = { workspace = true, features = ["std"] }
-pallet-evm-precompile-parachain-staking = { workspace = true, features = ["std"] }
-frame-support = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

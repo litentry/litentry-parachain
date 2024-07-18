@@ -85,14 +85,14 @@ ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
 webpki = { version = "=0.102.0-alpha.3", git = "https://github.com/rustls/webpki", rev = "da923ed", package = "rustls-webpki", default-features = false, features = ["alloc", "ring"] }
 
 # cumulus client
-cumulus-client-cli = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-client-consensus-aura = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-client-consensus-common = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-client-network = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-client-service = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-relay-chain-inprocess-interface = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-relay-chain-interface = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
-cumulus-relay-chain-minimal-node = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42" }
 
 # evm-tracing
 # Moonbeam Team did not export its corresponding code
@@ -212,17 +212,17 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = 
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42", default-features = false }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42", default-features = false }
 
-cumulus-pallet-aura-ext = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-pallet-dmp-queue = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-pallet-parachain-system = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-pallet-xcm = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-pallet-xcmp-queue = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-primitives-core = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-primitives-timestamp = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-primitives-utility = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-cumulus-primitives-parachain-inherent = { git = 'https://github.com/wangminqi/cumulus', branch = "polkadot-v0.9.42", default-features = false }
-pallet-collator-selection = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
-parachain-info = { git = "https://github.com/wangminqi/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.42", default-features = false }
+pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
+parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.42", default-features = false }
 
 substrate-fixed = { git = "https://github.com/encointer/substrate-fixed", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.42", default-features = false }
@@ -233,7 +233,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-cumulus-pallet-session-benchmarking = { git = 'https://github.com/wangminqi/cumulus', branch = "polkadot-v0.9.42", default-features = false }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.42", default-features = false }
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 # local
