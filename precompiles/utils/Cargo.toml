@@ -17,7 +17,7 @@ serde = { workspace = true, optional = true }
 similar-asserts = { workspace = true, optional = true }
 
 # Frontier
-precompile-utils-macro-v2 = { path = "macro", default-features = false }
+precompile-utils-macro-v2 = { workspace = true }
 
 # Substrate
 frame-support = { workspace = true }

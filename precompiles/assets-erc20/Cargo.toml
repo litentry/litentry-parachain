@@ -9,7 +9,7 @@ log = { workspace = true }
 num_enum = { workspace = true }
 slices = { workspace = true }
 
-precompile-utils = { workspace = true, default-features = false }
+precompile-utils = { workspace = true }
 
 # Substrate
 frame-support = { workspace = true }
@@ -30,11 +30,10 @@ pallet-evm = { workspace = true }
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+scale-info = { workspace = true }
 
 precompile-utils = { workspace = true, features = ["testing"] }
-
-pallet-timestamp = { workspace = true }
-scale-info = { workspace = true }
+pallet-timestamp = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]

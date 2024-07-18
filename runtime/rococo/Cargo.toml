@@ -117,7 +117,6 @@ precompile-utils = { workspace = true }
 [dev-dependencies]
 polkadot-primitives = { workspace = true, features = ["std"] }
 polkadot-runtime-parachains = { workspace = true }
-precompile-utils = { workspace = true, features = ["std", "testing"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
