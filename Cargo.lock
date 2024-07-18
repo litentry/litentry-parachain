@@ -7854,6 +7854,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "num-integer",
  "pallet-balances",
  "pallet-parachain-staking",
  "parity-scale-codec",

@@ -245,7 +245,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9184,
+	spec_version: 9183,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1203,7 +1203,6 @@ impl pallet_score_staking::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
-	type ScoreAmplifier = ConstU128<{ UNIT }>;
 	type MaxScoreUserCount = ConstU32<1_000_000>;
 }
 

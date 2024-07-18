@@ -177,7 +177,6 @@ impl pallet_score_staking::Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
-	type ScoreAmplifier = ConstU128<{ UNIT }>;
 	type MaxScoreUserCount = ConstU32<2>;
 }
 
@@ -211,11 +210,7 @@ pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
 		if fast_round {
 			assert_ok!(ScoreStaking::set_round_config(
 				RuntimeOrigin::root(),
-				RoundSetting {
-					interval: 5,
-					score_coefficient: Perbill::from_percent(80),
-					stake_coefficient: Perbill::from_percent(20),
-				}
+				RoundSetting { interval: 5, stake_coef_n: 1, stake_coef_m: 2 }
 			));
 		}
 	});

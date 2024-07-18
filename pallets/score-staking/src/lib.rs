@@ -28,9 +28,7 @@
 //!
 //! Then the round reward for a specific user is calculated by:
 //!
-//! total_round_rewards *
-//!     (score_coefficient * S(i) + stake_coefficient * T(i))
-//!  /  (score_coefficient * S(a) + stake_coefficient * T(a))
+//! total_round_rewards * (S(i) / S(a)) * ((T(i) / T(a)) ^ n/m)
 //!
 //! , where
 //! S(i): the score of this user
@@ -49,7 +47,7 @@ use frame_support::{
 };
 use pallet_parachain_staking as ParaStaking;
 use sp_core::crypto::AccountId32;
-use sp_runtime::{traits::CheckedSub, Perbill};
+use sp_runtime::{traits::CheckedSub, Perbill, SaturatedConversion};
 
 pub use pallet::*;
 
@@ -96,12 +94,6 @@ pub mod pallet {
 		type YearlyIssuance: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		type YearlyInflation: Get<Perbill>;
-		/// The amplifier applied to the score calculation, so that
-		/// it's of the same magnitutude as stake balance
-		#[pallet::constant]
-		// TODO: here `ParaStaking::BalanceOf` is used for easy type cohesion,
-		//       can we use `BalanceOf<Self>` everywhere?
-		type ScoreAmplifier: Get<ParaStaking::BalanceOf<Self>>;
 		#[pallet::constant]
 		/// Maximum number of entries (users) in the `Scores` storage,
 		/// this is to avoid iteration on an unbounded list in `on_initialize`
@@ -172,11 +164,7 @@ pub mod pallet {
 
 	#[pallet::type_value]
 	pub fn DefaultRoundSetting<T: Config>() -> RoundSetting {
-		RoundSetting {
-			interval: DEFAULT_ROUND_INTERVAL,
-			score_coefficient: DEFAULT_SCORE_COEFFICIENT,
-			stake_coefficient: DEFAULT_STAKE_COEFFICIENT,
-		}
+		RoundSetting { interval: 7 * DAYS, stake_coef_n: 1, stake_coef_m: 2 }
 	}
 
 	#[pallet::storage]
@@ -251,34 +239,38 @@ pub mod pallet {
 			// 2. calculate payout
 			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get() /
 				YEARS.into()) * Self::round_config().interval.into();
+			let round_reward_u128 = round_reward.saturated_into::<u128>();
 
-			let total_stake = ParaStaking::Pallet::<T>::total();
+			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
 			let total_score = Self::total_score();
-			let score_coef = Self::round_config().score_coefficient * T::ScoreAmplifier::get();
-			let stake_coef = Self::round_config().stake_coefficient;
+			let n = Self::round_config().stake_coef_n;
+			let m = Self::round_config().stake_coef_m;
 
-			let mut total_user_reward = BalanceOf::<T>::zero();
+			let mut all_user_reward = BalanceOf::<T>::zero();
 
 			for (a, mut p) in Scores::<T>::iter() {
-				let user_stake = ParaStaking::Pallet::<T>::delegator_state(&a)
+				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
 					.map(|s| s.total)
-					.unwrap_or_default();
-				let user_reward: BalanceOf<T> = Perbill::from_rational(
-					stake_coef * user_stake +
-						score_coef * <u32 as Into<ParaStaking::BalanceOf<T>>>::into(p.score),
-					stake_coef * total_stake +
-						score_coef * <u32 as Into<ParaStaking::BalanceOf<T>>>::into(total_score),
-				) * round_reward;
+					.unwrap_or_default()
+					.saturated_into::<u128>();
+				let user_reward_u128 = round_reward_u128
+					.saturating_mul(p.score.into())
+					.saturating_div(total_score.into())
+					.saturating_mul(num_integer::Roots::nth_root(&user_stake_u128.pow(n), m))
+					.saturating_div(num_integer::Roots::nth_root(&total_stake_u128.pow(n), m));
+				let user_reward = user_reward_u128.saturated_into::<BalanceOf<T>>();
 
-				p.unpaid += user_reward;
-				total_user_reward += user_reward;
+				p.last_round_reward = user_reward;
+				p.total_reward += user_reward;
+				p.unpaid_reward += user_reward;
+				all_user_reward += user_reward;
 				Scores::<T>::insert(&a, p);
 				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 			}
 
 			Self::deposit_event(Event::<T>::RewardCalculated {
 				total: round_reward,
-				distributed: total_user_reward,
+				distributed: all_user_reward,
 			});
 
 			weight
@@ -374,7 +366,7 @@ pub mod pallet {
 					None => {
 						Self::update_total_score(0, score)?;
 						Self::inc_score_user_count()?;
-						*payment = Some(ScorePayment { score, unpaid: 0u32.into() });
+						*payment = Some(ScorePayment { score, ..Default::default() });
 					},
 				}
 				Ok::<(), Error<T>>(())
@@ -417,11 +409,12 @@ pub mod pallet {
 			let account = ensure_signed(origin)?;
 			Scores::<T>::try_mutate(&account, |payment| {
 				let mut p = payment.take().ok_or(Error::<T>::UserNotExist)?;
-				ensure!(amount <= p.unpaid, Error::<T>::InsufficientBalance);
+				ensure!(amount <= p.unpaid_reward, Error::<T>::InsufficientBalance);
 				let rewarded =
 					<T as pallet::Config>::Currency::deposit_into_existing(&account, amount)?
 						.peek();
-				p.unpaid = p.unpaid.checked_sub(&rewarded).ok_or(Error::<T>::BalanceUnderflow)?;
+				p.unpaid_reward =
+					p.unpaid_reward.checked_sub(&rewarded).ok_or(Error::<T>::BalanceUnderflow)?;
 				*payment = Some(p);
 				Self::deposit_event(Event::RewardClaimed {
 					who: account.clone(),
@@ -436,7 +429,7 @@ pub mod pallet {
 		pub fn claim_all(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let account = ensure_signed(origin.clone())?;
 			let payment = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?;
-			Self::claim(origin, payment.unpaid)
+			Self::claim(origin, payment.unpaid_reward)
 		}
 	}
 }

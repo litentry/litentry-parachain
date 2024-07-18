@@ -5,6 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+num-integer = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true }
@@ -31,6 +32,7 @@ std = [
     "parity-scale-codec/std",
     "serde/std",
     "serde_json/std",
+    "num-integer/std",
     "frame-benchmarking?/std",
     "frame-support/std",
     "frame-system/std",
