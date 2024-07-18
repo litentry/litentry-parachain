@@ -118,7 +118,7 @@ precompile-utils = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 polkadot-primitives = { workspace = true, features = ["std"] }
 polkadot-runtime-parachains = { workspace = true, features = ["std"] }
-precompile-utils = { workspace = true, features = ["std"] }
+precompile-utils = { workspace = true, features = ["testing"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
