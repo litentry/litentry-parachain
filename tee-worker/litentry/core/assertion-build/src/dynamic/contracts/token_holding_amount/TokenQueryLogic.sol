@@ -27,8 +27,6 @@ import "./MoralisClient.sol";
 import "../openzeppelin/Strings.sol";
 abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
-	mapping(string => string) internal tokenBscAddress;
-	mapping(string => string) internal tokenEthereumAddress;
 	mapping(string => uint32[]) internal tokenNetworks;
 
 	// TODO fix it for erc20 token, same token for different networks has different decimals.

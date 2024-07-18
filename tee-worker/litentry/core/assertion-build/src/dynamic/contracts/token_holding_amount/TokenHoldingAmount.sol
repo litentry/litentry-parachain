@@ -26,7 +26,6 @@ import "./Constants.sol";
 import "../libraries/StringShift.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	mapping(string => string) internal tokenNames;
 	mapping(string => uint256[]) internal tokenRanges;
 	function execute(
 		Identity[] memory identities,
@@ -50,17 +49,10 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 		string memory tokenLowercaseName = abi.decode(params, (string));
 
-		if (
-			keccak256(abi.encodePacked(tokenNames[tokenLowercaseName])) ==
-			keccak256(abi.encodePacked(""))
-		) {
-			revert("Token not supported or not found");
-		}
-
 		uint256 balance = queryTotalBalance(
 			identities,
 			secrets,
-			tokenNames[tokenLowercaseName]
+			tokenLowercaseName
 		);
 
 		(uint256 index, uint256 min, int256 max) = calculateRange(
@@ -71,7 +63,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		string[] memory assertions = assembleAssertions(
 			min,
 			max,
-			tokenNames[tokenLowercaseName]
+			tokenLowercaseName
 		);
 
 		bool result = index > 0 || balance > 0;
