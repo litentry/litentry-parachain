@@ -20,18 +20,39 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use litentry_primitives::PlatformUserType;
+use core::result::Result;
+use std::string::ToString;
 
-pub trait PlatformName {
-	fn get_platform_name(&self) -> &'static str;
-}
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_data_providers::{
+	daren_market::{DarenMarketApi, DarenMarketClient},
+	DataProviderConfig,
+};
 
-impl PlatformName for PlatformUserType {
-	fn get_platform_name(&self) -> &'static str {
-		match self {
-			Self::KaratDao => "KaratDao",
-			Self::MagicCraftStaking => "MagicCraft",
-			Self::DarenMarket => "DarenMarket",
-		}
-	}
+use crate::*;
+
+pub fn is_user(
+	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	let mut result = false;
+	let mut client = DarenMarketClient::new(data_provider_config);
+
+	loop_with_abort_strategy(
+		addresses,
+		|address| match client.user_verification(address.to_string(), true) {
+			Ok(response) =>
+				if response.created {
+					result = true;
+					Ok(LoopControls::Break)
+				} else {
+					Ok(LoopControls::Continue)
+				},
+			Err(err) => Err(err.into_error_detail()),
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
+
+	Ok(result)
 }
