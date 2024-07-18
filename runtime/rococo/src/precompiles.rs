@@ -84,7 +84,7 @@ impl Contains<RuntimeCall> for WhitelistedCalls {
 			RuntimeCall::Assets(pallet_assets::Call::transfer { .. }) => true,
 			RuntimeCall::Utility(pallet_utility::Call::batch { calls }) |
 			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls }) =>
-				calls.iter().all(|call| WhitelistedCalls::contains(call)),
+				calls.iter().all(WhitelistedCalls::contains),
 			_ => false,
 		}
 	}
