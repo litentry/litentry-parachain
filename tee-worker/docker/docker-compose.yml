@@ -138,6 +138,7 @@ services:
       - KARAT_DAO_API_URL=http://localhost:19527/karat_dao/
       - MAGIC_CRAFT_API_URL=http://localhost:19527/magic_craft/
       - MAGIC_CRAFT_API_KEY=
+      - DAREN_MARKET_API_URL=http://localhost:19527/daren_market/
       - MORALIS_API_KEY=
       - NODEREAL_API_KEY=NODEREAL_API_KEY
       - NODEREAL_API_URL=http://localhost:19527

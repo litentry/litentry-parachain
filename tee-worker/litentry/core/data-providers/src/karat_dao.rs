@@ -123,15 +123,15 @@ impl KaratDaoApi for KaratDaoClient {
 
 		let params = KaratDaoRequest { path: "user/verification".into(), query: Some(query) };
 
-		debug!("user_verification, params: {:?}", params);
+		debug!("KaratDao user_verification, params: {:?}", params);
 
 		match self.get::<UserVerificationResponse>(params, fail_fast) {
 			Ok(resp) => {
-				debug!("user_verification, response: {:?}", resp);
+				debug!("KaratDao user_verification, response: {:?}", resp);
 				Ok(resp)
 			},
 			Err(e) => {
-				debug!("user_verification, error: {:?}", e);
+				debug!("KaratDao user_verification, error: {:?}", e);
 				Err(e)
 			},
 		}
