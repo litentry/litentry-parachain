@@ -17,8 +17,6 @@ members = [
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
-    'precompiles/*',
-    'precompiles/utils/macro',
     'primitives/core',
     'primitives/core/proc-macros',
     'primitives/core/macros',
@@ -28,9 +26,6 @@ members = [
     'runtime/rococo',
     'runtime/common',
     'worker-pallets/parentchain',
-]
-exclude = [
-    'precompiles/utils',
 ]
 
 [profile.release]
@@ -270,7 +265,7 @@ pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-stakin
 pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = false }
 # This is a temporary pallet copy from Astar with polkadot-0.9.43
 # The official release of this pallet will be in frontier repo
-precompile-utils = { path = "precompiles/utils", default-features = false }
+precompile-utils = { git = "https://github.com/litentry/precompile-utils", branch = "main", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }

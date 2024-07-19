@@ -288,6 +288,7 @@ try-runtime = [
     "pallet-democracy/try-runtime",
     "pallet-ethereum/try-runtime",
     "pallet-evm/try-runtime",
+    "pallet-evm-assertions/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
     "pallet-group/try-runtime",

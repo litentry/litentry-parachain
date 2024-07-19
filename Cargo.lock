@@ -565,15 +565,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "basic-toml"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "823388e228f614e9558c6804262db37960ec8821856535f5c3f59913140558f8"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2297,12 +2288,6 @@ dependencies = [
  "rustc_version",
  "syn 2.0.71",
 ]
-
-[[package]]
-name = "diff"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "difflib"
@@ -5834,22 +5819,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b823e83b2affd8f40a9ee8c29dbc56404c1e34cd2710921f2801e2cf29527afa"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "macrotest"
-version = "1.0.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e2035deb453578ff1cd2da2761ac78abbffffd1d06a0f59261c082ea713fdad"
-dependencies = [
- "basic-toml",
- "diff",
- "glob",
- "prettyplease 0.2.20",
- "serde",
- "serde_derive",
- "serde_json",
- "syn 2.0.71",
 ]
 
 [[package]]
@@ -9924,6 +9893,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
+source = "git+https://github.com/litentry/precompile-utils?branch=main#261ec953f6614bf634e86d9e8967eae3f84486a1"
 dependencies = [
  "derive_more",
  "environmental",
@@ -9951,19 +9921,15 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro-v2"
 version = "0.1.0"
+source = "git+https://github.com/litentry/precompile-utils?branch=main#261ec953f6614bf634e86d9e8967eae3f84486a1"
 dependencies = [
  "case",
- "fp-evm",
- "frame-support",
- "macrotest",
  "num_enum 0.7.2",
  "prettyplease 0.2.20",
  "proc-macro2",
  "quote",
  "sp-core-hashing",
- "sp-std",
  "syn 1.0.109",
- "trybuild",
 ]
 
 [[package]]
@@ -14556,20 +14522,6 @@ dependencies = [
  "sp-weights",
  "substrate-rpc-client",
  "zstd 0.12.4",
-]
-
-[[package]]
-name = "trybuild"
-version = "1.0.97"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b1e5645f2ee8025c2f1d75e1138f2dd034d74e6ba54620f3c569ba2a2a1ea06"
-dependencies = [
- "glob",
- "serde",
- "serde_derive",
- "serde_json",
- "termcolor",
- "toml 0.8.2",
 ]
 
 [[package]]
