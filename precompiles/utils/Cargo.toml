@@ -5,40 +5,40 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-derive_more = { workspace = true, optional = true }
-environmental = { workspace = true }
-hex = { workspace = true }
-hex-literal = { workspace = true, optional = true }
-impl-trait-for-tuples = { workspace = true }
-log = { workspace = true }
-num_enum = { workspace = true }
-scale-info = { workspace = true, optional = true, features = ["derive"] }
-serde = { workspace = true, optional = true }
-similar-asserts = { workspace = true, optional = true }
+derive_more = { version = "0.99", optional = true }
+environmental = { version = "1.1.2", default-features = false }
+hex = { version = "0.4", default-features = false }
+hex-literal = { version = "0.4.1", default-features = false, optional = true }
+impl-trait-for-tuples = { version = "0.2.2" }
+log = { version = "0.4", default-features = false }
+num_enum = { version = "0.7.2", default-features = false }
+scale-info = { version = "2.11", default-features = false, optional = true, features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"], optional = true }
+similar-asserts = { version = "1.5.0", optional = true }
 
 # Frontier
 precompile-utils-macro-v2 = { path = "macro" }
 
 # Substrate
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-parity-scale-codec = { workspace = true }
-sp-core = { workspace = true }
-sp-io = { workspace = true }
-sp-runtime = { workspace = true }
-sp-std = { workspace = true }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "max-encoded-len"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # Frontier
-evm = { workspace = true, features = ["with-codec"] }
-fp-evm = { workspace = true }
-pallet-evm = { workspace = true, features = ["forbid-evm-reentrancy"] }
+evm = { version = "0.41.1", default-features = false, features = ["with-codec"] }
+fp-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false, features = ["forbid-evm-reentrancy"] }
 
 # Polkadot / XCM
-xcm = { workspace = true, optional = true }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42", default-features = false, optional = true }
 
 [dev-dependencies]
-hex-literal = { workspace = true }
-xcm = { workspace = true }
+hex-literal = { version = "0.4.1", default-features = false }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.42", default-features = false }
 
 [features]
 default = ["std"]
