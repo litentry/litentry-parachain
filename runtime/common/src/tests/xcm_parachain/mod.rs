@@ -944,6 +944,16 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() {
 	relaychain_parachains_set_up::<R>();
 	R::ParaA::execute_with(|| {
+		// normal create is wrong
+		// need to set asset is_frozen to True, otherwise no existing account (i.e. no native token)
+		// is not allowed to proccessing assets token
+		assert_ok!(Assets::<R::ParaRuntime>::force_create(
+			RawOrigin::Root.into(),
+			1u128.into(),
+			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
+			true,
+			1
+		));
 		assert_ok!(AssetManager::<R::ParaRuntime>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			CurrencyId::ParachainReserve(Box::new((Parent, Here).into())),
