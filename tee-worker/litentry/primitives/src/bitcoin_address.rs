@@ -16,7 +16,8 @@
 */
 
 use bitcoin::{
-	address::Address, key::PublicKey, network::Network, secp256k1::Secp256k1, XOnlyPublicKey,
+	address::Address, key::PublicKey, network::Network, secp256k1::Secp256k1, Script,
+	XOnlyPublicKey,
 };
 use core::str::FromStr;
 use std::string::{String, ToString};
@@ -53,5 +54,11 @@ pub fn p2tr_address(pubkey_string: &str) -> String {
 pub fn p2pkh_address(pubkey_string: &str) -> String {
 	let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
 	let address = Address::p2pkh(&pubkey, Network::Bitcoin);
+	address.to_string()
+}
+
+pub fn p2wsh_address(pubkey_string: &str) -> String {
+	let script = Script::from_bytes(pubkey_string.as_bytes());
+	let address = Address::p2wsh(script, Network::Bitcoin);
 	address.to_string()
 }
