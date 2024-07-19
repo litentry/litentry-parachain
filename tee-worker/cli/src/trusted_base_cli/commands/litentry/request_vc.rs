@@ -284,8 +284,9 @@ pub enum TokenHoldingAmountCommand {
 
 #[derive(Subcommand, Debug)]
 pub enum PlatformUserCommand {
-	KaratDaoUser,
-	MagicCraftStakingUser,
+	KaratDao,
+	MagicCraftStaking,
+	DarenMarket,
 }
 
 #[derive(Subcommand, Debug)]
@@ -293,6 +294,7 @@ pub enum NftHolderCommand {
 	WeirdoGhostGang,
 	Club3Sbt,
 	MFan,
+	Mvp,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -651,14 +653,16 @@ impl Command {
 				TokenHoldingAmountCommand::Tuna => TokenHoldingAmount(Web3TokenType::Tuna),
 			}),
 			Command::PlatformUser(arg) => Ok(match arg {
-				PlatformUserCommand::KaratDaoUser => PlatformUser(PlatformUserType::KaratDaoUser),
-				PlatformUserCommand::MagicCraftStakingUser =>
-					PlatformUser(PlatformUserType::MagicCraftStakingUser),
+				PlatformUserCommand::KaratDao => PlatformUser(PlatformUserType::KaratDao),
+				PlatformUserCommand::MagicCraftStaking =>
+					PlatformUser(PlatformUserType::MagicCraftStaking),
+				PlatformUserCommand::DarenMarket => PlatformUser(PlatformUserType::DarenMarket),
 			}),
 			Command::NftHolder(arg) => Ok(match arg {
 				NftHolderCommand::WeirdoGhostGang => NftHolder(Web3NftType::WeirdoGhostGang),
 				NftHolderCommand::Club3Sbt => NftHolder(Web3NftType::Club3Sbt),
 				NftHolderCommand::MFan => NftHolder(Web3NftType::MFan),
+				NftHolderCommand::Mvp => NftHolder(Web3NftType::Mvp),
 			}),
 			Command::Dynamic(arg) => {
 				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();

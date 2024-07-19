@@ -14,13 +14,21 @@ export function generateVerificationMessage(
     context: IntegrationTestContext,
     signer: CorePrimitivesIdentity,
     identity: CorePrimitivesIdentity,
-    sidechainNonce: number
-): HexString {
+    sidechainNonce: number,
+    options?: { prettifiedMessage?: boolean }
+): string {
+    const _options = { prettifiedMessage: false, ...options };
     const encodedIdentity = context.api.createType('CorePrimitivesIdentity', identity).toU8a();
     const encodedWho = context.api.createType('CorePrimitivesIdentity', signer).toU8a();
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
-    return blake2AsHex(msg, 256);
+    const hash = blake2AsHex(msg, 256);
+
+    if (_options.prettifiedMessage) {
+        return `Token: ${hash}`;
+    }
+
+    return hash;
 }
 
 export async function buildIdentityHelper(
@@ -139,8 +147,10 @@ export async function buildValidations(
     linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'bitcoin' | 'solana',
-    signer?: Signer
+    signer?: Signer,
+    options?: { prettifiedMessage?: boolean }
 ): Promise<LitentryValidationData> {
+    const _options = { prettifiedMessage: false, ...options };
     const validationNonce = startingSidechainNonce++;
 
     const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
@@ -148,7 +158,7 @@ export async function buildValidations(
         const evmValidationData = {
             Web3Validation: {
                 Evm: {
-                    message: '' as HexString,
+                    message: '',
                     signature: {
                         Ethereum: '' as HexString,
                     },
@@ -168,7 +178,7 @@ export async function buildValidations(
         const substrateValidationData = {
             Web3Validation: {
                 Substrate: {
-                    message: '' as HexString,
+                    message: '',
                     signature: {
                         Sr25519: '' as HexString,
                     },
@@ -187,7 +197,7 @@ export async function buildValidations(
         const bitcoinValidationData = {
             Web3Validation: {
                 Bitcoin: {
-                    message: '' as HexString,
+                    message: '',
                     signature: {
                         Bitcoin: '' as HexString,
                     },
@@ -206,7 +216,7 @@ export async function buildValidations(
         const solanaValidationData = {
             Web3Validation: {
                 Solana: {
-                    message: '' as HexString,
+                    message: '',
                     signature: {
                         Ed25519: '' as HexString,
                     },

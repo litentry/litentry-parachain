@@ -21,19 +21,38 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use core::result::Result;
+use std::string::ToString;
+
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
+use lc_data_providers::{
+	daren_market::{DarenMarketApi, DarenMarketClient},
+	DataProviderConfig,
+};
 
 use crate::*;
 
-mod common;
-
-pub fn has_nft(
-	nft_type: Web3NftType,
-	addresses: Vec<(Web3Network, String)>,
+pub fn is_user(
+	addresses: Vec<String>,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
-	if nft_type == Web3NftType::Club3Sbt {
-		common::has_nft_1155(addresses, nft_type, data_provider_config)
-	} else {
-		common::has_nft_721(addresses, nft_type, data_provider_config)
-	}
+	let mut result = false;
+	let mut client = DarenMarketClient::new(data_provider_config);
+
+	loop_with_abort_strategy(
+		addresses,
+		|address| match client.user_verification(address.to_string(), true) {
+			Ok(response) =>
+				if response.created {
+					result = true;
+					Ok(LoopControls::Break)
+				} else {
+					Ok(LoopControls::Continue)
+				},
+			Err(err) => Err(err.into_error_detail()),
+		},
+		AbortStrategy::ContinueUntilEnd::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
+
+	Ok(result)
 }

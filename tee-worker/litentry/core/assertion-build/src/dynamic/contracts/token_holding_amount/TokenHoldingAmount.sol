@@ -23,6 +23,7 @@ import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 import "./Constants.sol";
+import "../libraries/StringShift.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
 	mapping(string => string) internal tokenNames;
@@ -91,7 +92,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			uint256 networksLength = identity.networks.length;
 			for (uint32 j = 0; j < networksLength; j++) {
 				uint32 network = identity.networks[j];
-				if (isSupportedNetwork(network)) {
+				if (isSupportedNetwork(tokenName, network)) {
 					total_balance += queryBalance(
 						identity,
 						network,
@@ -157,7 +158,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			1,
 			variable,
 			AssertionLogic.Op.GreaterEq,
-			Strings.toString(min / Constants.decimals_factor)
+			StringShift.toShiftedString(min, Constants.decimals_factor)
 		);
 		if (max > 0) {
 			AssertionLogic.andOp(
@@ -165,7 +166,10 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 				2,
 				variable,
 				AssertionLogic.Op.LessThan,
-				Strings.toString(uint256(max) / Constants.decimals_factor)
+				StringShift.toShiftedString(
+					uint256(max),
+					Constants.decimals_factor
+				)
 			);
 		}
 
@@ -178,8 +182,9 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	function getTokenDecimals() internal pure virtual returns (uint8);
 
 	function isSupportedNetwork(
+		string memory tokenName,
 		uint32 network
-	) internal pure virtual returns (bool);
+	) internal view virtual returns (bool);
 
 	function queryBalance(
 		Identity memory identity,
