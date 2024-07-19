@@ -49,6 +49,11 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 		string memory tokenLowercaseName = abi.decode(params, (string));
 
+		require(
+			tokenRanges[tokenLowercaseName].length > 0,
+			"Token not supported or not found"
+		);
+
 		uint256 balance = queryTotalBalance(
 			identities,
 			secrets,

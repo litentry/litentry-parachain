@@ -25,9 +25,11 @@ import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
 import "./MoralisClient.sol";
 import "../openzeppelin/Strings.sol";
+import "./Constants.sol";
+
 abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => mapping(uint32 => string)) tokenAddresses;
-	mapping(string => uint32[]) internal tokenNetworks;
+	mapping(string => TokenInfo[]) internal tokenInfo;
 
 	// TODO fix it for erc20 token, same token for different networks has different decimals.
 	function getTokenDecimals() internal pure override returns (uint8) {
@@ -46,9 +48,11 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		if (identityToStringSuccess) {
 			uint256 totalBalance = 0;
 
-			string memory tokenContractAddress = tokenAddresses[tokenName][
+			string memory tokenContractAddress = getTokenAddress(
+				tokenName,
 				network
-			];
+			);
+
 			if (GeniidataClient.isSupportedNetwork(network)) {
 				uint256 balance = GeniidataClient.getTokenBalance(
 					secrets[0],
@@ -131,12 +135,24 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		string memory tokenName,
 		uint32 network
 	) internal view override returns (bool) {
-		uint32[] memory networks = tokenNetworks[tokenName];
-		for (uint32 i = 0; i < networks.length; i++) {
-			if (network == networks[i]) {
+		TokenInfo[] memory infoArray = tokenInfo[tokenName];
+		for (uint32 i = 0; i < infoArray.length; i++) {
+			if (network == infoArray[i].network) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	function getTokenAddress(
+		string memory tokenName,
+		uint32 network
+	) internal view returns (string memory) {
+		for (uint i = 0; i < tokenInfo[tokenName].length; i++) {
+			if (tokenInfo[tokenName][i].network == network) {
+				return tokenInfo[tokenName][i].tokenAddress;
+			}
+		}
+		revert("Token address not found for the specified network");
 	}
 }
