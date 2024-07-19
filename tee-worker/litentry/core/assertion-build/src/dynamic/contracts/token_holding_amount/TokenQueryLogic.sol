@@ -28,7 +28,6 @@ import "../openzeppelin/Strings.sol";
 import "./Constants.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {
-	mapping(string => mapping(uint32 => string)) tokenAddresses;
 	mapping(string => TokenInfo[]) internal tokenInfo;
 
 	// TODO fix it for erc20 token, same token for different networks has different decimals.
@@ -108,7 +107,7 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 							if (
 								Strings.equal(
 									solanaTokenBalance[i].mint,
-									tokenAddresses[tokenName][network]
+									tokenContractAddress
 								)
 							) {
 								(
