@@ -93,12 +93,26 @@ mod tests {
 	use litentry_hex_utils::decode_hex;
 	use litentry_primitives::{Identity, IdentityNetworkTuple};
 
-	fn init() -> DataProviderConfig {
+	fn init(platform_user_type: PlatformUserType) -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/karat_dao/";
 
 		let mut config = DataProviderConfig::new().unwrap();
-		config.set_karat_dao_api_url(url).unwrap();
+
+		match platform_user_type {
+			PlatformUserType::KaratDao => {
+				let url = run(0).unwrap() + "/karat_dao/";
+				config.set_karat_dao_api_url(url).unwrap();
+			},
+			PlatformUserType::MagicCraftStaking => {
+				let url = run(0).unwrap() + "/magic_craft/";
+				config.set_magic_craft_api_url(url).unwrap();
+			},
+			PlatformUserType::DarenMarket => {
+				let url = run(0).unwrap() + "/daren_market/";
+				config.set_daren_market_api_url(url).unwrap();
+			},
+		};
+
 		config
 	}
 
@@ -129,11 +143,11 @@ mod tests {
 		assertion_value: bool,
 		data_provider_config: &DataProviderConfig,
 	) {
-		let req = crate_assertion_build_request(PlatformUserType::KaratDaoUser, identities);
+		let req = crate_assertion_build_request(platform_user_type.clone(), identities);
 
 		match build(&req, platform_user_type.clone(), &data_provider_config) {
 			Ok(credential) => {
-				log::info!("build karat dao user done");
+				log::info!("build platform user: {:?} done", platform_user_type);
 				assert_eq!(
 					*(credential.credential_subject.assertions.first().unwrap()),
 					AssertionLogic::And {
@@ -150,14 +164,15 @@ mod tests {
 				);
 			},
 			Err(e) => {
-				panic!("build karat dao user failed with error {:?}", e);
+				panic!("build platform user: {:?} failed with error {:?}", platform_user_type, e);
 			},
 		}
 	}
 
 	#[test]
 	fn build_karat_dao_user_works() {
-		let data_provider_config = init();
+		let data_provider_config = init(PlatformUserType::KaratDao);
+
 		let mut address =
 			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
 				.unwrap()
@@ -169,7 +184,7 @@ mod tests {
 
 		build_and_assert_result(
 			identities,
-			PlatformUserType::KaratDaoUser,
+			PlatformUserType::KaratDao,
 			true,
 			&data_provider_config,
 		);
@@ -183,7 +198,77 @@ mod tests {
 
 		build_and_assert_result(
 			identities,
-			PlatformUserType::KaratDaoUser,
+			PlatformUserType::KaratDao,
+			false,
+			&data_provider_config,
+		);
+	}
+
+	#[test]
+	fn build_magic_craft_staking_user_works() {
+		let data_provider_config = init(PlatformUserType::MagicCraftStaking);
+
+		let mut address =
+			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap();
+		let mut identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
+
+		build_and_assert_result(
+			identities,
+			PlatformUserType::MagicCraftStaking,
+			true,
+			&data_provider_config,
+		);
+
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc, Web3Network::Ethereum])];
+
+		build_and_assert_result(
+			identities,
+			PlatformUserType::MagicCraftStaking,
+			false,
+			&data_provider_config,
+		);
+	}
+
+	#[test]
+	fn build_daren_market_user_works() {
+		let data_provider_config = init(PlatformUserType::DarenMarket);
+
+		let mut address =
+			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap();
+		let mut identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
+
+		build_and_assert_result(
+			identities,
+			PlatformUserType::DarenMarket,
+			true,
+			&data_provider_config,
+		);
+
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Bsc, Web3Network::Ethereum])];
+
+		build_and_assert_result(
+			identities,
+			PlatformUserType::DarenMarket,
 			false,
 			&data_provider_config,
 		);

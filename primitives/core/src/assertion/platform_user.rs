@@ -23,15 +23,17 @@ use crate::assertion::network::{all_evm_web3networks, Web3Network};
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum PlatformUserType {
 	#[codec(index = 0)]
-	KaratDaoUser,
+	KaratDao,
 	#[codec(index = 1)]
-	MagicCraftStakingUser,
+	MagicCraftStaking,
+	#[codec(index = 2)]
+	DarenMarket,
 }
 
 impl PlatformUserType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::KaratDaoUser | Self::MagicCraftStakingUser => all_evm_web3networks(),
+			Self::KaratDao | Self::MagicCraftStaking | Self::DarenMarket => all_evm_web3networks(),
 		}
 	}
 }

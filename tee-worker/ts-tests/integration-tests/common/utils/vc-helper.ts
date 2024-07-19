@@ -312,15 +312,21 @@ export const mockAssertions = [
 
     // PlatformUser
     {
-        description: 'You are a user of a certain platform',
+        description: 'You are a user of platform KaratDao',
         assertion: {
-            PlatformUser: 'KaratDaoUser',
+            PlatformUser: 'KaratDao',
         },
     },
     {
-        description: 'You are a user of a certain platform',
+        description: 'You are a user of platform MagicCraft',
         assertion: {
-            PlatformUser: 'MagicCraftStakingUser',
+            PlatformUser: 'MagicCraftStaking',
+        },
+    },
+    {
+        description: 'You are a user of platform DarenMarket',
+        assertion: {
+            PlatformUser: 'DarenMarket',
         },
     },
 
