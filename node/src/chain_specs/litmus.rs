@@ -239,7 +239,7 @@ fn generate_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		transaction_payment: Default::default(),
-		tokens: Default::default(),
+		assets: Default::default(),
 		teebag: TeebagConfig {
 			allow_sgx_debug_mode: true,
 			admin: None,
