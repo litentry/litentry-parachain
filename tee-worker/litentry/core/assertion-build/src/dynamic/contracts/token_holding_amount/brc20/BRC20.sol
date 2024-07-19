@@ -18,29 +18,18 @@
 
 pragma solidity ^0.8.8;
 
-import "../../libraries/Identities.sol";
 import "../Constants.sol";
-import "./BRC20.sol";
+import "../../libraries/Identities.sol";
 
-library Cats {
-	function getTokenName() internal pure returns (string memory) {
-		return "cats";
-	}
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](8);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 10000 * Constants.decimals_factor;
-		ranges[3] = 50000 * Constants.decimals_factor;
-		ranges[4] = 100000 * Constants.decimals_factor;
-		ranges[5] = 200000 * Constants.decimals_factor;
-		ranges[6] = 500000 * Constants.decimals_factor;
-		ranges[7] = 800000 * Constants.decimals_factor;
-		return ranges;
-	}
-	
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		return BRC20.getDefaultTokenNetworks();
+library BRC20 {
+	function getDefaultTokenNetworks() internal pure returns (uint32[] memory) {
+		uint32[] memory networks = new uint32[](5);
+		networks[0] = Web3Networks.BitcoinP2tr;
+		networks[1] = Web3Networks.BitcoinP2pkh;
+		networks[2] = Web3Networks.BitcoinP2sh;
+		networks[3] = Web3Networks.BitcoinP2wpkh;
+		networks[4] = Web3Networks.BitcoinP2wsh;
+		return networks;
 	}
 }
