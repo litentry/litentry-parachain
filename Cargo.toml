@@ -28,6 +28,9 @@ members = [
     'runtime/common',
     'worker-pallets/parentchain',
 ]
+exclude = [
+    'precompiles/utils',
+]
 
 [profile.release]
 opt-level = 3
