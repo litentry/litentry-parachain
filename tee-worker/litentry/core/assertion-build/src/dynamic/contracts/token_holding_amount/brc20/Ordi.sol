@@ -18,8 +18,9 @@
 
 pragma solidity ^0.8.8;
 
-import "../Constants.sol";
 import "../../libraries/Identities.sol";
+import "../Constants.sol";
+import "./BRC20.sol";
 
 library Ordi {
 	function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -35,8 +36,11 @@ library Ordi {
 		return ranges;
 	}
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(Web3Networks.BitcoinP2tr, "");
+		uint32[] memory networks = BRC20.getDefaultTokenNetworks();
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
+		for (uint i = 0; i < networks.length; i++) {
+			tokenInfoList[i] = TokenInfo(networks[i], "");
+		}
 
 		return tokenInfoList;
 	}
