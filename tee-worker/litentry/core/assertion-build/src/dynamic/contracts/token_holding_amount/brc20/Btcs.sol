@@ -35,9 +35,10 @@ library Btcs {
 		ranges[8] = 800 * Constants.decimals_factor;
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](1);
-		networks[0] = Web3Networks.BitcoinP2tr;
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(Web3Networks.BitcoinP2tr, "");
+
+		return tokenInfoList;
 	}
 }
