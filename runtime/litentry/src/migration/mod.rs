@@ -711,9 +711,9 @@ where
 		// No need for AtStake Migration since this is a snapshot, everything is good as long as it
 		// will not change proportion AtStake
 
-		weight += Self::repalce_delayed_payouts_storage();
+		weight += Self::replace_delayed_payouts_storage();
 		// Staked Storage holds limited amount of recent rounds only, should not cause large PoV
-		weight += Self::repalce_staked_storage();
+		weight += Self::replace_staked_storage();
 
 		// No need since all balance related config is Zero
 		// InflationConfig
