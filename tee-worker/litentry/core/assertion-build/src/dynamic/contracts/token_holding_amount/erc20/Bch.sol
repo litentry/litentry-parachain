@@ -22,15 +22,6 @@ import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
 library Bch {
-	function getTokenAddress(
-		uint32 network
-	) internal pure returns (string memory) {
-		if (network == Web3Networks.Bsc) {
-			return "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf";
-		}
-		revert("Unsupported network");
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
 
@@ -50,6 +41,15 @@ library Bch {
 		uint32[] memory networks = new uint32[](1);
 		networks[0] = Web3Networks.Bsc;
 
+		return networks;
+	}
+
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory networks = new TokenInfo[](1);
+		networks[0] = TokenInfo(
+			Web3Networks.Bsc,
+			"0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf"
+		);
 		return networks;
 	}
 }

@@ -22,15 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Leo {
-	function getTokenAddress(
-		uint32 network
-	) internal pure returns (string memory) {
-		if (network == Web3Networks.Ethereum) {
-			return "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3";
-		}
-		revert("Unsupported network");
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -42,10 +33,13 @@ library Leo {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](1);
-		networks[0] = Web3Networks.Ethereum;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3"
+		);
+		return tokenInfoList;
 	}
 }

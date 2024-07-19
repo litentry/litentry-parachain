@@ -22,16 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Dydx {
-	function getTokenAddress(
-		uint32 network
-	) internal pure returns (string memory) {
-		if (network == Web3Networks.Ethereum) {
-			return "0x92d6c1e31e14520e676a687f0a93788b716beff5";
-		}
-
-		revert("Unsupported network");
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -47,10 +37,14 @@ library Dydx {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](1);
-		networks[0] = Web3Networks.Ethereum;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x92d6c1e31e14520e676a687f0a93788b716beff5"
+		);
+
+		return tokenInfoList;
 	}
 }

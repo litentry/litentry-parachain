@@ -22,30 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Atom {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
-	}
-
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB";
-	}
-
-	function getTokenAddress(
-		uint32 network
-	) internal pure returns (string memory) {
-		if (network == Web3Networks.Bsc) {
-			return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
-		}
-		if (network == Web3Networks.Ethereum) {
-			return "0x0eb3a705fc54725037cc9e008bdede697f62f335";
-		}
-		revert("Unsupported network");
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "atom";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -57,11 +33,17 @@ library Atom {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory networks = new TokenInfo[](2);
+		networks[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x8D983cb9388EaC77af0474fA441C4815500Cb7BB"
+		);
+		networks[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0x0eb3a705fc54725037cc9e008bdede697f62f335"
+		);
 		return networks;
 	}
 }

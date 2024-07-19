@@ -22,18 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Matic {
-	function getTokenAddress(
-		uint32 network
-	) internal pure returns (string memory) {
-		if (network == Web3Networks.Bsc) {
-			return "0xcc42724c6683b7e57334c4e856f4c9965ed682bd";
-		}
-		if (network == Web3Networks.Ethereum) {
-			return "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
-		}
-		revert("Unsupported network");
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -49,11 +37,18 @@ library Matic {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Bsc,
+			"0xcc42724c6683b7e57334c4e856f4c9965ed682bd"
+		);
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
+		);
+
+		return tokenInfoList;
 	}
 }
