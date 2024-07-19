@@ -26,7 +26,7 @@ use sp_runtime::{
 	BoundedVec, DispatchError, DispatchErrorWithPostInfo,
 };
 
-pub type MaxStringLength = ConstU32<100>;
+type MaxStringLength = ConstU32<100>;
 pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 
 // enum to reflect the error detail from TEE-worker processing
