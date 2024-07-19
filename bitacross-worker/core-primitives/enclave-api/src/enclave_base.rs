@@ -35,6 +35,8 @@ pub trait EnclaveBase: Send + Sync + 'static {
 		mu_ra_addr: &str,
 		untrusted_worker_addr: &str,
 		base_dir: &str,
+		ceremony_commands_thread_count: u8,
+		ceremony_events_thread_count: u8,
 	) -> EnclaveResult<()>;
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
@@ -118,6 +120,8 @@ mod impl_ffi {
 			mu_ra_addr: &str,
 			untrusted_worker_addr: &str,
 			base_dir: &str,
+			ceremony_commands_thread_count: u8,
+			ceremony_events_thread_count: u8,
 		) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
@@ -135,6 +139,8 @@ mod impl_ffi {
 					encoded_untrusted_worker_addr.len() as u32,
 					encoded_base_dir.as_ptr(),
 					encoded_base_dir.len() as u32,
+					ceremony_commands_thread_count,
+					ceremony_events_thread_count,
 				)
 			};
 
