@@ -13,6 +13,7 @@ members = [
     'pallets/group',
     'pallets/identity-management',
     'pallets/parachain-staking',
+    'pallets/score-staking',
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
@@ -83,6 +84,7 @@ tokio = { version = "1.38.0", features = ["macros", "sync"] }
 strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
 num_enum = { version = "0.7.2", default-features = false }
+num-integer = { version = "0.1", default-features = false }
 rustc-hex = { version = "2.0.1", default-features = false }
 x509-cert = { version = "0.1.0", default-features = false, features = ["alloc"] }
 ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
@@ -259,6 +261,7 @@ pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features 
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }
 pallet-parachain-staking = { path = "pallets/parachain-staking", default-features = false }
+pallet-score-staking = { path = "pallets/score-staking", default-features = false }
 pallet-teebag = { path = "pallets/teebag", default-features = false }
 pallet-vc-management = { path = "pallets/vc-management", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "precompiles/assets-erc20", default-features = false }
