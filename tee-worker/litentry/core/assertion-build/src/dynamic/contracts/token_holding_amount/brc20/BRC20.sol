@@ -21,6 +21,7 @@ pragma solidity ^0.8.8;
 import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
+
 library BRC20 {
 	function getDefaultTokenNetworks() internal pure returns (uint32[] memory) {
 		uint32[] memory networks = new uint32[](5);
