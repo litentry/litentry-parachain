@@ -293,7 +293,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 			.map(|(c, _)| c.read().unwrap().is_first_round())
 	};
 	match (is_first_round, &command) {
-		(None, CeremonyCommand::InitCeremony(_, _, _))
+		(None, CeremonyCommand::InitCeremony(_, _, _, _))
 		| (Some(true), CeremonyCommand::SaveNonce(_, _))
 		| (Some(false), CeremonyCommand::SavePartialSignature(_, _))
 		| (_, CeremonyCommand::KillCeremony) => {},
@@ -407,13 +407,13 @@ where
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	match command {
-		CeremonyCommand::InitCeremony(aes_key, signers, check_run) => {
+		CeremonyCommand::InitCeremony(aes_key, signers, payload, check_run) => {
 			// InitCeremony should create ceremony first
 			let result = MuSig2Ceremony::new(
 				context.signing_key_pub,
 				aes_key,
 				signers,
-				ceremony_id.clone(),
+				payload,
 				context.bitcoin_key_repository.clone(),
 				check_run,
 			);
@@ -576,6 +576,7 @@ where
 			let hash = blake2_256(&payload.encode());
 			let command = sign_bitcoin::handle(
 				signer,
+				payload.clone(),
 				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),
@@ -595,6 +596,7 @@ where
 			let hash = blake2_256(&payload.encode());
 			let command = sign_bitcoin::handle(
 				signer,
+				payload.clone(),
 				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),

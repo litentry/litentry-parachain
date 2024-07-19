@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use bc_enclave_registry::EnclaveRegistryLookup;
-use bc_musig2_ceremony::{CeremonyCommand, PublicKey, SignersWithKeys};
+use bc_musig2_ceremony::{CeremonyCommand, PublicKey, SignBitcoinPayload, SignersWithKeys};
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use codec::Encode;
@@ -31,6 +31,7 @@ pub enum SignBitcoinError {
 #[allow(clippy::too_many_arguments)]
 pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveRegistryLookup>(
 	signer: Identity,
+	payload: SignBitcoinPayload,
 	aes_key: [u8; 32],
 	relayer_registry: &RRL,
 	signer_registry: Arc<SR>,
@@ -52,7 +53,7 @@ pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveR
 			})
 			.collect();
 
-		Ok(CeremonyCommand::InitCeremony(aes_key, signers?, check_run))
+		Ok(CeremonyCommand::InitCeremony(aes_key, signers?, payload, check_run))
 	} else {
 		Err(SignBitcoinError::InvalidSigner)
 	}
@@ -63,6 +64,7 @@ pub mod test {
 	use crate::handler::sign_bitcoin::{handle, SignBitcoinError};
 	use alloc::sync::Arc;
 	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
+	use bc_musig2_ceremony::SignBitcoinPayload;
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
@@ -126,6 +128,7 @@ pub mod test {
 		// when
 		let result = handle(
 			relayer_account,
+			SignBitcoinPayload::Derived(vec![]),
 			[0u8; 32],
 			&relayer_registry,
 			signers_registry,
@@ -150,6 +153,7 @@ pub mod test {
 		// when
 		let result = handle(
 			enclave_account,
+			SignBitcoinPayload::Derived(vec![]),
 			[0u8; 32],
 			&relayer_registry,
 			signers_registry,
@@ -174,6 +178,7 @@ pub mod test {
 		//when
 		let result = handle(
 			non_relayer_account,
+			SignBitcoinPayload::Derived(vec![]),
 			[0u8; 32],
 			&relayer_registry,
 			signers_registry,

@@ -81,7 +81,7 @@ pub enum CeremonyErrorReason {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CeremonyCommand {
-	InitCeremony([u8; 32], SignersWithKeys, bool),
+	InitCeremony([u8; 32], SignersWithKeys, SignBitcoinPayload, bool),
 	SaveNonce(SignerId, PubNonce),
 	SavePartialSignature(SignerId, PartialSignature),
 	KillCeremony,
@@ -117,6 +117,7 @@ pub struct MuSig2CeremonyData<AK: AccessKey<KeyType = SchnorrPair>> {
 	signers: SignersWithKeys,
 	signing_key_access: Arc<AK>,
 	agg_key: PublicKey,
+	// indicates whether it's check run - signature verification result is returned instead of signature
 	check_run: bool,
 }
 
