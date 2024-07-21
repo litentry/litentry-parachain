@@ -29,6 +29,7 @@ frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 
+pallet-assets = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
@@ -67,7 +68,6 @@ xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 
-orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
@@ -167,10 +167,10 @@ std = [
     "frame-system-benchmarking?/std",
     "frame-try-runtime?/std",
     "frame-system-rpc-runtime-api/std",
-    "orml-tokens/std",
     "orml-traits/std",
     "orml-xtokens/std",
     "pallet-asset-manager/std",
+    "pallet-assets/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -235,9 +235,9 @@ try-runtime = [
     "frame-system/try-runtime",
     "frame-try-runtime",
     "fp-self-contained/try-runtime",
-    "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
+    "pallet-assets/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
