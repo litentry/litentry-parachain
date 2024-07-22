@@ -19,18 +19,8 @@
 pragma solidity ^0.8.8;
 
 import "../../libraries/Identities.sol";
-
+import "../Constants.sol";
 library Wbtc {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "wbtc";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](14);
 
@@ -53,11 +43,14 @@ library Wbtc {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+		);
+
+		return tokenInfoList;
 	}
 }

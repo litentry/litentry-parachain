@@ -23,10 +23,6 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Rats {
-	function getTokenName() internal pure returns (string memory) {
-		return "rats";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -39,9 +35,5 @@ library Rats {
 		ranges[7] = 10000000 * Constants.decimals_factor;
 		ranges[8] = 2000000 * Constants.decimals_factor;
 		return ranges;
-	}
-	
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		return BRC20.getDefaultTokenNetworks();
 	}
 }

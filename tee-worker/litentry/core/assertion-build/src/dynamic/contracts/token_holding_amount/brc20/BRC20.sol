@@ -32,4 +32,13 @@ library BRC20 {
 		networks[4] = Web3Networks.BitcoinP2wsh;
 		return networks;
 	}
+	function getBrc20TokenInfo() internal pure returns (TokenInfo[] memory) {
+		uint32[] memory networks = BRC20.getDefaultTokenNetworks();
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
+		for (uint i = 0; i < networks.length; i++) {
+			tokenInfoList[i] = TokenInfo(networks[i], "");
+		}
+
+		return tokenInfoList;
+	}
 }

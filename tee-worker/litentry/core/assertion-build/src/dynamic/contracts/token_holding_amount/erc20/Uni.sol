@@ -22,16 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Uni {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xbf5140a22578168fd562dccf235e5d43a02ce9b1";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "uni";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -46,11 +36,22 @@ library Uni {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+		);
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0xbf5140a22578168fd562dccf235e5d43a02ce9b1"
+		);
+		tokenInfoList[2] = TokenInfo(
+			Web3Networks.Solana,
+			"8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36"
+		);
+
+		return tokenInfoList;
 	}
 }
