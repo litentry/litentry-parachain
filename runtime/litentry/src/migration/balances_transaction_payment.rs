@@ -312,8 +312,8 @@ where
 				.map_err(|_| "Failed to decode Locks")?;
 		for (account, actual_result) in <Locks<T>>::iter() {
 			let expected_result: Vec<BalanceLock<u128>> =
-				expected_state.get(&account).ok_or("Not Expected Locks")?.into_inner().clone();
-			assert_eq!(expected_result.encode(), actual_result.encode());
+				expected_state.get(&account).ok_or("Not Expected Locks")?.clone();
+			assert_eq!(expected_result.encode(), actual_result.into_inner().encode());
 		}
 		Ok(())
 	}
