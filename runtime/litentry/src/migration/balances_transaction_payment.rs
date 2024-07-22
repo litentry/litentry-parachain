@@ -295,10 +295,10 @@ where
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_locks_storage() -> Result<Vec<u8>, &'static str> {
-		let result: BTreeMap<T::AccountId, WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>> =
+		let result: BTreeMap<T::AccountId, Vec<BalanceLock<u128>, T::MaxLocks>> =
 			<Locks<T>>::iter()
 				.map(|(account, state)| {
-					let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
+					let new_locks: Vec<BalanceLock<u128>, T::MaxLocks> = state.into_inner();
 					for balance_lock in new_locks.iter_mut() {
 						balance_lock.amount =
 							balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -310,13 +310,11 @@ where
 	}
 	pub fn post_upgrade_balances_locks_storage(state: Vec<u8>) -> Result<(), &'static str> {
 		let expected_state =
-			BTreeMap::<T::AccountId, WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>>::decode(
-				&mut &state[..],
-			)
-			.map_err(|_| "Failed to decode Locks")?;
+			BTreeMap::<T::AccountId, Vec<BalanceLock<u128>, T::MaxLocks>>::decode(&mut &state[..])
+				.map_err(|_| "Failed to decode Locks")?;
 		for (account, actual_result) in <Locks<T>>::iter() {
-			let expected_result: WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> =
-				expected_state.get(&account).ok_or("Not Expected Locks")?.clone();
+			let expected_result: Vec<BalanceLock<u128>, T::MaxLocks> =
+				expected_state.get(&account).ok_or("Not Expected Locks")?.into_inner().clone();
 			assert_eq!(expected_result.encode(), actual_result.encode());
 		}
 		Ok(())
