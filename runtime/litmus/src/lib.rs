@@ -85,7 +85,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
-pub mod migration;
 pub mod weights;
 pub mod xcm_config;
 

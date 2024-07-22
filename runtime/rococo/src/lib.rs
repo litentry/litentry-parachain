@@ -31,7 +31,7 @@ use frame_support::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
 		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;

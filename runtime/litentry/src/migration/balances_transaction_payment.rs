@@ -23,8 +23,8 @@ use frame_support::{
 };
 use frame_system::{Account, AccountInfo};
 use pallet_balances::{
-	AccountData, BalanceLock, Holds, IdAmount, InactiveIssuance, Locks, ReserveData, Reserves,
-	TotalIssuance,
+	AccountData, BalanceLock, Freezes, Holds, IdAmount, InactiveIssuance, Locks, ReserveData,
+	Reserves, TotalIssuance,
 };
 use sp_runtime::Saturating;
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
@@ -168,7 +168,7 @@ where
 			for balance_lock in new_locks.iter_mut() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
-			<Locks<T>>::insert(&account, new_lock)
+			<Locks<T>>::insert(&account, new_locks)
 		}
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
@@ -288,7 +288,7 @@ where
 	}
 	pub fn pre_upgrade_balances_account_check() -> Result<Vec<u8>, &'static str> {
 		assert!(<Account<T>>::iter().next().is_none());
-		Ok(())
+		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_account_check(_state: Vec<u8>) -> Result<(), &'static str> {
 		assert!(<Account<T>>::iter().next().is_none());
@@ -323,7 +323,7 @@ where
 	}
 	pub fn pre_upgrade_balances_reserves_check() -> Result<Vec<u8>, &'static str> {
 		assert!(<Reserves<T>>::iter().next().is_none());
-		Ok(())
+		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_reserves_check(_state: Vec<u8>) -> Result<(), &'static str> {
 		assert!(<Reserves<T>>::iter().next().is_none());
@@ -331,7 +331,7 @@ where
 	}
 	pub fn pre_upgrade_balances_holds_check() -> Result<Vec<u8>, &'static str> {
 		assert!(<Holds<T>>::iter().next().is_none());
-		Ok(())
+		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_holds_check(_state: Vec<u8>) -> Result<(), &'static str> {
 		assert!(<Holds<T>>::iter().next().is_none());
@@ -339,7 +339,7 @@ where
 	}
 	pub fn pre_upgrade_balances_freezes_check() -> Result<Vec<u8>, &'static str> {
 		assert!(<Freezes<T>>::iter().next().is_none());
-		Ok(())
+		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_freezes_check(_state: Vec<u8>) -> Result<(), &'static str> {
 		assert!(<Freezes<T>>::iter().next().is_none());
