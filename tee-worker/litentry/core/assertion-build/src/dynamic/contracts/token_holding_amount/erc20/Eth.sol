@@ -19,19 +19,8 @@
 pragma solidity ^0.8.8;
 
 import "../../libraries/Identities.sol";
-
+import "../Constants.sol";
 library Eth {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "eth";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 
@@ -50,11 +39,15 @@ library Eth {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(Web3Networks.Ethereum, "Native Token");
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0x2170ed0880ac9a755fd29b2688956bd959f933f8"
+		);
+
+		return tokenInfoList;
 	}
 }

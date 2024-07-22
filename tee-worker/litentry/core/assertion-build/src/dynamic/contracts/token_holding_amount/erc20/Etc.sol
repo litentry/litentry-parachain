@@ -22,17 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Etc {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x3d6545b08693dae087e957cb1180ee38b9e3c25e";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "etc";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](6);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -44,11 +33,13 @@ library Etc {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Bsc,
+			"0x3d6545b08693dae087e957cb1180ee38b9e3c25e"
+		);
+		return tokenInfoList;
 	}
 }
