@@ -162,7 +162,7 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.next()
 		.is_none());
-		for (account, state) in stored_data {
+		for (account, mut state) in stored_data {
 			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
 			for balance_lock in new_locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -296,7 +296,7 @@ where
 	pub fn pre_upgrade_balances_locks_storage() -> Result<Vec<u8>, &'static str> {
 		let result: BTreeMap<T::AccountId, Vec<BalanceLock<u128>>> = <Locks<T>>::iter()
 			.map(|(account, state)| {
-				let new_locks: Vec<BalanceLock<u128>> = state.into_inner();
+				let mut new_locks: Vec<BalanceLock<u128>> = state.into_inner();
 				for balance_lock in new_locks.iter_mut() {
 					balance_lock.amount =
 						balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
