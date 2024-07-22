@@ -26,7 +26,6 @@ import "./Constants.sol";
 import "../libraries/StringShift.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-	mapping(string => string) internal tokenNames;
 	mapping(string => uint256[]) internal tokenRanges;
 	function execute(
 		Identity[] memory identities,
@@ -50,17 +49,15 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
 		string memory tokenLowercaseName = abi.decode(params, (string));
 
-		if (
-			keccak256(abi.encodePacked(tokenNames[tokenLowercaseName])) ==
-			keccak256(abi.encodePacked(""))
-		) {
-			revert("Token not supported or not found");
-		}
+		require(
+			tokenRanges[tokenLowercaseName].length > 0,
+			"Token not supported or not found"
+		);
 
 		uint256 balance = queryTotalBalance(
 			identities,
 			secrets,
-			tokenNames[tokenLowercaseName]
+			tokenLowercaseName
 		);
 
 		(uint256 index, uint256 min, int256 max) = calculateRange(
@@ -71,7 +68,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		string[] memory assertions = assembleAssertions(
 			min,
 			max,
-			tokenNames[tokenLowercaseName]
+			tokenLowercaseName
 		);
 
 		bool result = index > 0 || balance > 0;
@@ -92,7 +89,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 			uint256 networksLength = identity.networks.length;
 			for (uint32 j = 0; j < networksLength; j++) {
 				uint32 network = identity.networks[j];
-				if (isSupportedNetwork(network)) {
+				if (isSupportedNetwork(tokenName, network)) {
 					total_balance += queryBalance(
 						identity,
 						network,
@@ -182,8 +179,9 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 	function getTokenDecimals() internal pure virtual returns (uint8);
 
 	function isSupportedNetwork(
+		string memory tokenName,
 		uint32 network
-	) internal pure virtual returns (bool);
+	) internal view virtual returns (bool);
 
 	function queryBalance(
 		Identity memory identity,

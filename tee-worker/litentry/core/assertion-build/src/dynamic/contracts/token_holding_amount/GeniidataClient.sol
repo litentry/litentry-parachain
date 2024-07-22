@@ -19,18 +19,20 @@
 pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
+import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
+
 library GeniidataClient {
 	function getTokenBalance(
-		string[] memory secrets,
-		string memory url,
+		string memory secret,
 		string memory identityString,
 		string memory tokenName,
 		uint8 tokenDecimals
 	) internal returns (uint256) {
 		string memory encodePackedUrl = string(
 			abi.encodePacked(
-				url,
+				// test against mock server => "http://localhost:19529/api/1/brc20/balance"
+				"https://api.geniidata.com/api/1/brc20/balance",
 				"?tick=",
 				tokenName,
 				"&address=",
@@ -38,7 +40,7 @@ library GeniidataClient {
 			)
 		);
 		HttpHeader[] memory headers = new HttpHeader[](1);
-		headers[0] = HttpHeader("api-key", secrets[1]);
+		headers[0] = HttpHeader("api-key", secret);
 
 		// https://geniidata.readme.io/reference/get-brc20-tick-list-copy
 		(bool success, string memory value) = Http.GetString(
@@ -57,5 +59,14 @@ library GeniidataClient {
 			}
 		}
 		return 0;
+	}
+
+	function isSupportedNetwork(uint32 network) internal pure returns (bool) {
+		return
+			network == Web3Networks.BitcoinP2tr ||
+			network == Web3Networks.BitcoinP2pkh ||
+			network == Web3Networks.BitcoinP2sh ||
+			network == Web3Networks.BitcoinP2wpkh ||
+			network == Web3Networks.BitcoinP2wsh;
 	}
 }

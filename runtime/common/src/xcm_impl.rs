@@ -322,7 +322,7 @@ impl<R: BaseRuntimeRequirements> From<MultiLocation> for CurrencyId<R> {
 		match location {
 			a if (a == (OldAnchoringSelfReserve::<R>::get())) |
 				(a == (NewAnchoringSelfReserve::<R>::get())) =>
-				CurrencyId::<R>::SelfReserve(PhantomData::default()),
+				CurrencyId::<R>::SelfReserve(PhantomData),
 			_ => CurrencyId::<R>::ParachainReserve(Box::new(location)),
 		}
 	}
@@ -372,7 +372,7 @@ impl<R: BaseRuntimeRequirements> spConvert<MultiLocation, Option<CurrencyId<R>>>
 		match multi {
 			a if (a == OldAnchoringSelfReserve::<R>::get()) |
 				(a == NewAnchoringSelfReserve::<R>::get()) =>
-				Some(CurrencyId::<R>::SelfReserve(PhantomData::default())),
+				Some(CurrencyId::<R>::SelfReserve(PhantomData)),
 			_ => Some(CurrencyId::<R>::ParachainReserve(Box::new(multi))),
 		}
 	}

@@ -22,17 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Trx {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x50327c6c5a14dcade707abad2e27eb517df87ab5";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "trx";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -48,11 +37,17 @@ library Trx {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x50327c6c5a14dcade707abad2e27eb517df87ab5"
+		);
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3"
+		);
+		return tokenInfoList;
 	}
 }
