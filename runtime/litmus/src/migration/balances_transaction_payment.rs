@@ -19,16 +19,15 @@ use frame_support::{
 	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
-	Blake2_128Concat, Twox64Concat, WeakBoundedVec,
+	Blake2_128Concat, WeakBoundedVec,
 };
 use frame_system::{Account, AccountInfo};
-use pallet_balances::{AccountData, IdAmount, InactiveIssuance, Locks, ReserveData, TotalIssuance};
-use sp_runtime::Saturating;
-use sp_std::{
-	convert::{From, TryInto},
-	marker::PhantomData,
-	vec::Vec,
+use pallet_balances::{
+	AccountData, BalanceLock, Holds, IdAmount, InactiveIssuance, Locks, ReserveData, Reserves,
+	TotalIssuance,
 };
+use sp_runtime::Saturating;
+use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -37,8 +36,6 @@ use parity_scale_codec::Encode;
 #[cfg(feature = "try-runtime")]
 use sp_std::collections::btree_map::BTreeMap;
 use storage::migration::get_storage_value;
-
-use crate::weights::frame_system;
 
 // Replace Frame System Storage for Decimal Change from 12 to 18
 // Replace Balances Storage for Decimal Change from 12 to 18

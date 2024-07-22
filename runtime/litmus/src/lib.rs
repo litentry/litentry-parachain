@@ -138,7 +138,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(migration::ReplaceBalancesRelatedStorage,),
+	(migration::ReplaceBalancesRelatedStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
