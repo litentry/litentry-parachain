@@ -15,16 +15,14 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use fp_evm::IsPrecompileResult;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU64, Everything, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 };
-use pallet_evm::{
-	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
-};
+use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
 use pallet_parachain_staking::{InflationInfo, Range};
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -157,26 +155,10 @@ pub fn precompile_address() -> H160 {
 	H160::from_low_u64_be(20480 + 45)
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct ParachainStakingMockPrecompile<R>(PhantomData<R>);
+pub type ParachainStakingMockPrecompile<R> =
+	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<20525>, ParachainStakingPrecompile<R>>,)>;
 
-impl<R> PrecompileSet for ParachainStakingMockPrecompile<R>
-where
-	R: pallet_evm::Config,
-	ParachainStakingPrecompile<R>: Precompile,
-{
-	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
-		match handle.code_address() {
-			a if a == precompile_address() =>
-				Some(ParachainStakingPrecompile::<R>::execute(handle)),
-			_ => None,
-		}
-	}
-
-	fn is_precompile(&self, address: sp_core::H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer { is_precompile: address == precompile_address(), extra_cost: 0 }
-	}
-}
+pub type PCall<Runtime> = ParachainStakingPrecompileCall<Runtime>;
 
 pub struct TruncatedAddressMapping;
 impl AddressMapping<AccountId> for TruncatedAddressMapping {
@@ -209,7 +191,7 @@ impl From<U8Wrapper> for AccountId {
 }
 
 parameter_types! {
-	pub PrecompilesValue: ParachainStakingMockPrecompile<Test> = ParachainStakingMockPrecompile(Default::default());
+	pub PrecompilesValue: ParachainStakingMockPrecompile<Test> = ParachainStakingMockPrecompile::new();
 	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
 }
 
@@ -223,7 +205,7 @@ impl pallet_evm::Config for Test {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = ParachainStakingMockPrecompile<Test>;
+	type PrecompilesType = ParachainStakingMockPrecompile<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type Timestamp = Timestamp;
 	type ChainId = ();

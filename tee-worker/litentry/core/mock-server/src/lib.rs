@@ -26,6 +26,7 @@ use warp::Filter;
 
 pub mod achainable;
 pub mod blockchain_info;
+pub mod daren_market;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod geniidata;
@@ -76,6 +77,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(nodereal_jsonrpc::query())
 					.or(karat_dao::query())
 					.or(magic_craft::query())
+					.or(daren_market::query())
 					.or(moralis::query_nft())
 					.or(moralis::query_erc20())
 					.or(moralis::query_solana())

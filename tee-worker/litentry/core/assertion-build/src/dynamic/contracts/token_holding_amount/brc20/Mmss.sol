@@ -18,14 +18,11 @@
 
 pragma solidity ^0.8.8;
 
-import "../Constants.sol";
 import "../../libraries/Identities.sol";
+import "../Constants.sol";
+import "./BRC20.sol";
 
 library Mmss {
-	function getTokenName() internal pure returns (string memory) {
-		return "mmss";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](9);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -38,10 +35,5 @@ library Mmss {
 		ranges[7] = 1000 * Constants.decimals_factor;
 		ranges[8] = 2000 * Constants.decimals_factor;
 		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](1);
-		networks[0] = Web3Networks.BitcoinP2tr;
-		return networks;
 	}
 }

@@ -27,6 +27,7 @@ use litentry_primitives::PlatformUserType;
 
 use crate::*;
 
+mod daren_market_user;
 mod karat_dao_user;
 mod magic_craft_staking_user;
 
@@ -36,8 +37,10 @@ pub fn is_user(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
 	match platform_user_type {
-		PlatformUserType::KaratDaoUser => karat_dao_user::is_user(addresses, data_provider_config),
-		PlatformUserType::MagicCraftStakingUser =>
+		PlatformUserType::KaratDao => karat_dao_user::is_user(addresses, data_provider_config),
+		PlatformUserType::MagicCraftStaking =>
 			magic_craft_staking_user::is_user(addresses, data_provider_config),
+		PlatformUserType::DarenMarket =>
+			daren_market_user::is_user(addresses, data_provider_config),
 	}
 }
