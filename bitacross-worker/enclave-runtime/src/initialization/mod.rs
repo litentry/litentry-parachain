@@ -103,7 +103,12 @@ pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	base_dir: PathBuf,
+	ceremony_commands_thread_count: u8,
+	ceremony_events_thread_count: u8,
 ) -> EnclaveResult<()> {
+	info!("Ceremony commands thread count: {}", ceremony_commands_thread_count);
+	info!("Ceremony events thread count: {}", ceremony_events_thread_count);
+
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
 
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
