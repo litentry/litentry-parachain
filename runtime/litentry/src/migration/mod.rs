@@ -28,6 +28,8 @@ use sp_std::{
 	vec::Vec,
 };
 
+pub mod pallet_bounty;
+
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
 	CandidatePool, DelayedPayout, DelayedPayouts, DelegationAction, DelegationScheduledRequests,
