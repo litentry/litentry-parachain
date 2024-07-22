@@ -42,7 +42,8 @@ library People {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0x7a58c0be72be218b41c608b7fe7c5bb630736c71"
+			"0x7a58c0be72be218b41c608b7fe7c5bb630736c71",
+			DataProviderTypes.NoderealClient
 		);
 
 		return tokenInfoList;

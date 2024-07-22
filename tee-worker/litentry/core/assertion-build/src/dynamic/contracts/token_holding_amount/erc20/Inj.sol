@@ -38,7 +38,8 @@ library Inj {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b"
+			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+			DataProviderTypes.NoderealClient
 		);
 
 		return tokenInfoList;

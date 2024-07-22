@@ -38,7 +38,8 @@ library Etc {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x3d6545b08693dae087e957cb1180ee38b9e3c25e"
+			"0x3d6545b08693dae087e957cb1180ee38b9e3c25e",
+			DataProviderTypes.NoderealClient
 		);
 		return tokenInfoList;
 	}

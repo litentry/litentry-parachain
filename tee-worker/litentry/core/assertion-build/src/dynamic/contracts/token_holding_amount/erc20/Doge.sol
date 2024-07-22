@@ -35,11 +35,12 @@ library Doge {
 	}
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](1);
-		networks[0] = TokenInfo(
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Bsc,
-			"0xba2ae424d960c26247dd6c32edc70b295c744c43"
+			"0xba2ae424d960c26247dd6c32edc70b295c744c43",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		return tokenInfoList;
 	}
 }

@@ -39,12 +39,17 @@ library Bnb {
 	}
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](2);
-		networks[0] = TokenInfo(Web3Networks.Bsc, "Native Token");
-		networks[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xb8c77482e45f1f44de1745f52c74426c631bdd52"
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Bsc,
+			"Native Token",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0xb8c77482e45f1f44de1745f52c74426c631bdd52",
+			DataProviderTypes.NoderealClient
+		);
+		return tokenInfoList;
 	}
 }

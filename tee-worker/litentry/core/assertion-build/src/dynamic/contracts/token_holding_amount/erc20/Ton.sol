@@ -42,11 +42,13 @@ library Ton {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0x582d872a1b094fc48f5de31d3b73f2d9be47def1"
+			"0x582d872a1b094fc48f5de31d3b73f2d9be47def1",
+			DataProviderTypes.NoderealClient
 		);
 		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x76a797a59ba2c17726896976b7b3747bfd1d220f"
+			"0x76a797a59ba2c17726896976b7b3747bfd1d220f",
+			DataProviderTypes.NoderealClient
 		);
 		return tokenInfoList;
 	}

@@ -41,15 +41,18 @@ library Uni {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+			"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+			DataProviderTypes.NoderealClient
 		);
 		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Bsc,
-			"0xbf5140a22578168fd562dccf235e5d43a02ce9b1"
+			"0xbf5140a22578168fd562dccf235e5d43a02ce9b1",
+			DataProviderTypes.NoderealClient
 		);
 		tokenInfoList[2] = TokenInfo(
 			Web3Networks.Solana,
-			"8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36"
+			"8FU95xFJhUUkyyCLU13HSzDLs7oC4QZdXQHL6SCeab36",
+			DataProviderTypes.NoderealClient
 		);
 
 		return tokenInfoList;

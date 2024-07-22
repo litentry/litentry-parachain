@@ -21,7 +21,6 @@ pragma solidity ^0.8.8;
 import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
-
 library BRC20 {
 	function getDefaultTokenNetworks() internal pure returns (uint32[] memory) {
 		uint32[] memory networks = new uint32[](5);
@@ -36,7 +35,11 @@ library BRC20 {
 		uint32[] memory networks = BRC20.getDefaultTokenNetworks();
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
 		for (uint i = 0; i < networks.length; i++) {
-			tokenInfoList[i] = TokenInfo(networks[i], "");
+			tokenInfoList[i] = TokenInfo(
+				networks[i],
+				"",
+				DataProviderTypes.GeniidataClient
+			);
 		}
 
 		return tokenInfoList;

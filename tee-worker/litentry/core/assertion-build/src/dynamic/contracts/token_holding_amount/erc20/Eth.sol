@@ -42,10 +42,15 @@ library Eth {
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(Web3Networks.Ethereum, "Native Token");
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"Native Token",
+			DataProviderTypes.NoderealClient
+		);
 		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x2170ed0880ac9a755fd29b2688956bd959f933f8"
+			"0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+			DataProviderTypes.NoderealClient
 		);
 
 		return tokenInfoList;

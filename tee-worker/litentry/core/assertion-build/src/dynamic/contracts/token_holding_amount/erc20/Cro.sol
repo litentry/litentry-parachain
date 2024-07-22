@@ -36,15 +36,17 @@ library Cro {
 	}
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](2);
-		networks[0] = TokenInfo(
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b"
+			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+			DataProviderTypes.NoderealClient
 		);
-		networks[1] = TokenInfo(
+		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Solana,
-			"DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA"
+			"DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		return tokenInfoList;
 	}
 }

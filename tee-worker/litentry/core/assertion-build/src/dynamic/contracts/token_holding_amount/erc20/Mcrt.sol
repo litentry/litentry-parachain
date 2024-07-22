@@ -35,19 +35,22 @@ library Mcrt {
 	}
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](3);
-		networks[0] = TokenInfo(
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
+		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0xde16ce60804a881e9f8c4ebb3824646edecd478d"
+			"0xde16ce60804a881e9f8c4ebb3824646edecd478d",
+			DataProviderTypes.NoderealClient
 		);
-		networks[1] = TokenInfo(
+		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f"
+			"0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f",
+			DataProviderTypes.NoderealClient
 		);
-		networks[2] = TokenInfo(
+		tokenInfoList[2] = TokenInfo(
 			Web3Networks.Solana,
-			"FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"
+			"FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		return tokenInfoList;
 	}
 }

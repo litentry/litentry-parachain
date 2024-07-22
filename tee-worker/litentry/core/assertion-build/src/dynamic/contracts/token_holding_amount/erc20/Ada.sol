@@ -34,11 +34,12 @@ library Ada {
 		return ranges;
 	}
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](1);
-		networks[0] = TokenInfo(
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47"
+			"0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		return tokenInfoList;
 	}
 }

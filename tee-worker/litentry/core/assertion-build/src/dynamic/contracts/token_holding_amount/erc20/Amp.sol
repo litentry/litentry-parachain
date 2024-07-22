@@ -38,11 +38,12 @@ library Amp {
 	}
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](1);
-		networks[0] = TokenInfo(
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0xff20817765cb7f73d4bde2e66e067e58d11095c2"
+			"0xff20817765cb7f73d4bde2e66e067e58d11095c2",
+			DataProviderTypes.NoderealClient
 		);
-		return networks;
+		return tokenInfoList;
 	}
 }

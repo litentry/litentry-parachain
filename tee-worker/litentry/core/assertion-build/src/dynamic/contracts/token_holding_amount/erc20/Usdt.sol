@@ -42,11 +42,13 @@ library Usdt {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
 		tokenInfoList[0] = TokenInfo(
 			Web3Networks.Ethereum,
-			"0xdac17f958d2ee523a2206206994597c13d831ec7"
+			"0xdac17f958d2ee523a2206206994597c13d831ec7",
+			DataProviderTypes.NoderealClient
 		);
 		tokenInfoList[1] = TokenInfo(
 			Web3Networks.Bsc,
-			"0x55d398326f99059ff775485246999027b3197955"
+			"0x55d398326f99059ff775485246999027b3197955",
+			DataProviderTypes.NoderealClient
 		);
 
 		return tokenInfoList;
