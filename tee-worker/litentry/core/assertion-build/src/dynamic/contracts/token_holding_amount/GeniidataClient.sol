@@ -24,7 +24,7 @@ import "../libraries/Utils.sol";
 
 library GeniidataClient {
 	function getTokenBalance(
-		string[] memory secrets,
+		string memory secret,
 		string memory identityString,
 		string memory tokenName,
 		uint8 tokenDecimals
@@ -40,7 +40,7 @@ library GeniidataClient {
 			)
 		);
 		HttpHeader[] memory headers = new HttpHeader[](1);
-		headers[0] = HttpHeader("api-key", secrets[1]);
+		headers[0] = HttpHeader("api-key", secret);
 
 		// https://geniidata.readme.io/reference/get-brc20-tick-list-copy
 		(bool success, string memory value) = Http.GetString(

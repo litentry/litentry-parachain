@@ -23,10 +23,6 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Ordi {
-	function getTokenName() internal pure returns (string memory) {
-		return "ordi";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](8);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -38,9 +34,5 @@ library Ordi {
 		ranges[6] = 200 * Constants.decimals_factor;
 		ranges[7] = 500 * Constants.decimals_factor;
 		return ranges;
-	}
-	
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		return BRC20.getDefaultTokenNetworks();
 	}
 }
