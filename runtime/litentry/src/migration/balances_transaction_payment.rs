@@ -164,8 +164,8 @@ where
 		.next()
 		.is_none());
 		for (account, state) in stored_data {
-			let mut new_locks: WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = state;
-			for balance_lock in new_locks.iter_mut() {
+			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
+			for balance_lock in new_locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 			<Locks<T>>::insert(&account, new_locks)
@@ -298,7 +298,7 @@ where
 		let result: BTreeMap<T::AccountId, WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>> =
 			<Locks<T>>::iter()
 				.map(|(account, state)| {
-					let mut new_locks: WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = state;
+					let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
 					for balance_lock in new_locks.iter_mut() {
 						balance_lock.amount =
 							balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
