@@ -29,6 +29,7 @@ import { Mmss } from "./brc20/Mmss.sol";
 import { Ordi } from "./brc20/Ordi.sol";
 import { Rats } from "./brc20/Rats.sol";
 import { Sats } from "./brc20/Sats.sol";
+import { BRC20 } from "./brc20/BRC20.sol";
 
 // erc20
 import { Ada } from "./erc20/Ada.sol";
@@ -74,44 +75,44 @@ contract TokenMapping is TokenQueryLogic {
 	constructor() {
 		// btcs
 		tokenRanges["btcs"] = Btcs.getTokenRanges();
-		for (uint8 i = 0; i < Btcs.getTokenInfo().length; i++) {
-			tokenInfo["btcs"].push(Btcs.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["btcs"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// cats
 		tokenRanges["cats"] = Cats.getTokenRanges();
-		for (uint8 i = 0; i < Cats.getTokenInfo().length; i++) {
-			tokenInfo["cats"].push(Cats.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["cats"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// long
 		tokenRanges["long"] = Long.getTokenRanges();
-		for (uint8 i = 0; i < Long.getTokenInfo().length; i++) {
-			tokenInfo["long"].push(Long.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["long"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// mmss
 		tokenRanges["mmss"] = Mmss.getTokenRanges();
-		for (uint8 i = 0; i < Mmss.getTokenInfo().length; i++) {
-			tokenInfo["mmss"].push(Mmss.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["mmss"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// ordi
 		tokenRanges["ordi"] = Ordi.getTokenRanges();
-		for (uint8 i = 0; i < Ordi.getTokenInfo().length; i++) {
-			tokenInfo["ordi"].push(Ordi.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["ordi"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// rats
 		tokenRanges["rats"] = Rats.getTokenRanges();
-		for (uint8 i = 0; i < Rats.getTokenInfo().length; i++) {
-			tokenInfo["rats"].push(Rats.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["rats"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// sats
 		tokenRanges["sats"] = Sats.getTokenRanges();
-		for (uint8 i = 0; i < Sats.getTokenInfo().length; i++) {
-			tokenInfo["sats"].push(Sats.getTokenInfo()[i]);
+		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+			tokenInfo["sats"].push(BRC20.getBrc20TokenInfo()[i]);
 		}
 
 		// ada
