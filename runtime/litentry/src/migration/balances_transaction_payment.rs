@@ -41,7 +41,7 @@ use storage::migration::get_storage_value;
 use crate::weights::frame_system;
 
 // Replace Frame System Storage for Decimal Change from 12 to 18
-// Replace Parachain Staking Storage for Decimal Change from 12 to 18
+// Replace Balances Storage for Decimal Change from 12 to 18
 pub struct ReplaceBalancesRelatedStorage<T>(PhantomData<T>);
 impl<T> ReplaceBalancesRelatedStorage<T>
 where
