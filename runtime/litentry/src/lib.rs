@@ -134,7 +134,7 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	migration::ReplaceParachainStakingStorage<Runtime>,
+	(migration::ReplaceParachainStakingStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {

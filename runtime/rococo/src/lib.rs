@@ -96,6 +96,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
+
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -173,6 +176,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(migration::ReplaceParachainStakingStorage<Runtime>,),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
