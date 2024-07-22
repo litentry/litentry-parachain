@@ -198,6 +198,8 @@ where
 #[allow(clippy::type_complexity)]
 pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+	ceremony_commands_thread_count: u8,
+	ceremony_events_thread_count: u8,
 ) where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
@@ -233,11 +235,8 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
 	let peers_map = Arc::new(Mutex::new(HashMap::<[u8; 32], DirectRpcClient>::new()));
-	let command_threads_count = 4;
-	let event_threads_count = 20;
-	let command_threads_pool = ThreadPool::new(command_threads_count);
-	let event_threads_pool = ThreadPool::new(event_threads_count);
-	info!("start {} command threads, {} event threads", command_threads_count, event_threads_count);
+	let command_threads_pool = ThreadPool::new(ceremony_commands_thread_count.into());
+	let event_threads_pool = ThreadPool::new(ceremony_events_thread_count.into());
 
 	while let Ok(req) = bit_across_task_receiver.recv() {
 		let context = context.clone();

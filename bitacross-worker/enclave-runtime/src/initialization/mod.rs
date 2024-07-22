@@ -260,6 +260,8 @@ pub(crate) fn init_enclave(
 			ceremony_command_tmp,
 			signer.public().0,
 			rpc_responder,
+			ceremony_commands_thread_count,
+			ceremony_events_thread_count,
 		)
 		.unwrap()
 	});
@@ -366,6 +368,8 @@ fn run_bit_across_handler(
 	responder: Arc<
 		RpcResponder<ConnectionRegistry<H256, ConnectionToken>, H256, RpcResponseChannel>,
 	>,
+	ceremony_commands_thread_count: u8,
+	ceremony_events_thread_count: u8,
 ) -> Result<(), Error> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let signing_key = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?;
@@ -404,7 +408,11 @@ fn run_bit_across_handler(
 		musig2_ceremony_pending_commands,
 		responder,
 	);
-	run_bit_across_handler_runner(Arc::new(stf_task_context));
+	run_bit_across_handler_runner(
+		Arc::new(stf_task_context),
+		ceremony_commands_thread_count,
+		ceremony_events_thread_count,
+	);
 	Ok(())
 }
 
