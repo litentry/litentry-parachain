@@ -510,7 +510,7 @@ where
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	match request {
-		BitAcrossRequest::CreateSignTask(mut aes_request, sender) => {
+		BitAcrossRequest::Request(mut aes_request, sender) => {
 			match handle_direct_call(&mut aes_request, context) {
 				Ok((processing_ret, to_process)) => {
 					if let Some(processing_ret) = processing_ret {

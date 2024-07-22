@@ -530,7 +530,7 @@ async fn bitacross_task_create_inner(params: Params) -> Result<RpcReturnValue, V
 	let bit_across_request_sender = BitAcrossRequestSender::new();
 	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
-	bit_across_request_sender.send(BitAcrossRequest::CreateSignTask(request, sender))?;
+	bit_across_request_sender.send(BitAcrossRequest::Request(request, sender))?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {
