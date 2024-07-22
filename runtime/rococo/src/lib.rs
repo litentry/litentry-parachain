@@ -96,6 +96,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
+
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -173,6 +176,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(migration::ReplaceBalancesRelatedStorage,),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
@@ -515,7 +519,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = MILLICENTS / 10; // 10^6
+	pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -523,7 +528,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeighToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
