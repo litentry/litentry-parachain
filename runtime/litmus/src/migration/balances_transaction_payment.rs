@@ -26,7 +26,6 @@ use pallet_balances::{
 	AccountData, BalanceLock, Freezes, Holds, IdAmount, InactiveIssuance, Locks, ReserveData,
 	Reserves, TotalIssuance,
 };
-use sp_runtime::Saturating;
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
