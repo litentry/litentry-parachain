@@ -22,16 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Bnb {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xb8c77482e45f1f44de1745f52c74426c631bdd52";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "bnb";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -47,11 +37,14 @@ library Bnb {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory networks = new TokenInfo[](2);
+		networks[0] = TokenInfo(Web3Networks.Bsc, "Native Token");
+		networks[1] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0xb8c77482e45f1f44de1745f52c74426c631bdd52"
+		);
 		return networks;
 	}
 }

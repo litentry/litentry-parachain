@@ -521,7 +521,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn delegator_state)]
 	/// Get delegator state associated with an account if account is delegating else None
-	pub(crate) type DelegatorState<T: Config> = StorageMap<
+	pub type DelegatorState<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -587,7 +587,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn total)]
 	/// Total capital locked by this staking pallet
-	pub(crate) type Total<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub type Total<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn candidate_pool)]
