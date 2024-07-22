@@ -23,12 +23,12 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
+import "./MoralisClient.sol";
+import "../openzeppelin/Strings.sol";
+import "./Constants.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {
-	mapping(string => mapping(uint32 => string)) tokenAddresses;
-	mapping(string => string) internal tokenBscAddress;
-	mapping(string => string) internal tokenEthereumAddress;
-	mapping(string => uint32[]) internal tokenNetworks;
+	mapping(string => TokenInfo[]) internal tokenInfo;
 
 	// TODO fix it for erc20 token, same token for different networks has different decimals.
 	function getTokenDecimals() internal pure override returns (uint8) {
@@ -47,12 +47,14 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		if (identityToStringSuccess) {
 			uint256 totalBalance = 0;
 
-			string memory tokenContractAddress = tokenAddresses[tokenName][
+			string memory tokenContractAddress = getTokenAddress(
+				tokenName,
 				network
-			];
+			);
+
 			if (GeniidataClient.isSupportedNetwork(network)) {
 				uint256 balance = GeniidataClient.getTokenBalance(
-					secrets,
+					secrets[0],
 					identityString,
 					tokenName,
 					getTokenDecimals()
@@ -60,14 +62,67 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 				totalBalance += balance;
 			} else if (NoderealClient.isSupportedNetwork(network)) {
 				(bool success, uint256 balance) = NoderealClient
-						.getTokenBalance(
+					.getTokenBalance(
 						network,
-						secrets,
+						secrets[1],
 						tokenContractAddress,
 						identityString
 					);
 				if (success) {
 					totalBalance += balance;
+				}
+			} else if (MoralisClient.isSupportedNetwork(network)) {
+				if (Strings.equal(tokenContractAddress, "Native Token")) {
+					(
+						bool success,
+						string memory solanaTokenBalance
+					) = MoralisClient.getSolanaNativeBalance(
+							network,
+							secrets[2],
+							identityString
+						);
+
+					if (success) {
+						(bool parsedStatus, uint256 parsedAmount) = Utils
+							.parseDecimal(
+								solanaTokenBalance,
+								getTokenDecimals()
+							);
+						if (parsedStatus) {
+							totalBalance += parsedAmount;
+						}
+					}
+				} else {
+					(
+						bool success,
+						SolanaTokenBalance[] memory solanaTokenBalance
+					) = MoralisClient.getSolanaTokensBalance(
+							network,
+							secrets[2],
+							identityString
+						);
+
+					if (success) {
+						for (uint i = 0; i < solanaTokenBalance.length; i++) {
+							if (
+								Strings.equal(
+									solanaTokenBalance[i].mint,
+									tokenContractAddress
+								)
+							) {
+								(
+									bool parsedStatus,
+									uint256 parsedAmount
+								) = Utils.parseDecimal(
+										solanaTokenBalance[i].amount,
+										getTokenDecimals()
+									);
+								if (parsedStatus) {
+									totalBalance += parsedAmount;
+								}
+							}
+						}
+					}
 				}
 			}
 			return totalBalance;
@@ -75,18 +130,28 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		return 0;
 	}
 
-    function isSupportedNetwork(string memory tokenName, uint32 network)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        uint32[] memory networks = tokenNetworks[tokenName];
-        for (uint32 i = 0; i < networks.length; i++) {
-            if (network == networks[i]) {
-                return true;
-            }
+	function isSupportedNetwork(
+		string memory tokenName,
+		uint32 network
+	) internal view override returns (bool) {
+		TokenInfo[] memory infoArray = tokenInfo[tokenName];
+		for (uint32 i = 0; i < infoArray.length; i++) {
+			if (network == infoArray[i].network) {
+				return true;
+			}
 		}
 		return false;
+	}
+
+	function getTokenAddress(
+		string memory tokenName,
+		uint32 network
+	) internal view returns (string memory) {
+		for (uint i = 0; i < tokenInfo[tokenName].length; i++) {
+			if (tokenInfo[tokenName][i].network == network) {
+				return tokenInfo[tokenName][i].tokenAddress;
+			}
+		}
+		revert("Token address not found for the specified network");
 	}
 }

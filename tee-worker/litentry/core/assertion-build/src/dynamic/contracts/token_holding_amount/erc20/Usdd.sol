@@ -22,16 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Usdd {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0xd17479997f34dd9156deef8f95a52d81d265be9c";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "usdd";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -47,11 +37,18 @@ library Usdd {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6"
+		);
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0xd17479997f34dd9156deef8f95a52d81d265be9c"
+		);
+
+		return tokenInfoList;
 	}
 }
