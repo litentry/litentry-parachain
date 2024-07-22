@@ -47,7 +47,7 @@ use itp_sgx_crypto::{
 };
 use itp_types::{DirectRequestStatus, Hash};
 use itp_utils::hex::ToHexPrefixed;
-use lc_direct_call::DirectCall;
+use lc_direct_call::CeremonyRoundCall;
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, ShardIdentifier};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -77,7 +77,8 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	match event {
 		CeremonyEvent::FirstRoundStarted(signers, message, nonce) => {
 			let aes_key = random_aes_key();
-			let direct_call = DirectCall::NonceShare(identity, aes_key, message, nonce.serialize());
+			let direct_call =
+				CeremonyRoundCall::NonceShare(identity, aes_key, message, nonce.serialize());
 			let request = prepare_request(
 				aes_key,
 				shielding_key_access.as_ref(),
@@ -111,7 +112,7 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
 			let aes_key = random_aes_key();
-			let direct_call = DirectCall::PartialSignatureShare(
+			let direct_call = CeremonyRoundCall::PartialSignatureShare(
 				identity,
 				aes_key,
 				message,
@@ -187,7 +188,8 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			});
 
 			let aes_key = random_aes_key();
-			let direct_call = DirectCall::KillCeremony(identity, aes_key, ceremony_id.clone());
+			let direct_call =
+				CeremonyRoundCall::KillCeremony(identity, aes_key, ceremony_id.clone());
 			let request = prepare_request(
 				aes_key,
 				shielding_key_access.as_ref(),
@@ -228,7 +230,7 @@ fn prepare_request<SHIELDAK, SIGNINGAK>(
 	shielding_key_access: &SHIELDAK,
 	signing_key_access: &SIGNINGAK,
 	mr_enclave: [u8; 32],
-	direct_call: DirectCall,
+	ceremony_round_call: CeremonyRoundCall,
 ) -> RpcRequest
 where
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
@@ -240,8 +242,11 @@ where
 
 	let shard = ShardIdentifier::from_slice(&mr_enclave);
 	// same as above
-	let dc_signed =
-		direct_call.sign(&signing_key_access.retrieve_key().unwrap().into(), &mr_enclave, &shard);
+	let dc_signed = ceremony_round_call.sign(
+		&signing_key_access.retrieve_key().unwrap().into(),
+		&mr_enclave,
+		&shard,
+	);
 	let encrypted_dc = aes_encrypt_default(&aes_key, &dc_signed.encode());
 	let request = AesRequest { shard, key: aes_key_encrypted, payload: encrypted_dc };
 	RpcRequest {

@@ -75,7 +75,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use lc_direct_call::{
 	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
-	DirectCall, DirectCallSigned,
+	CeremonyRoundCall, CeremonyRoundCallSigned, DirectCall, DirectCallSigned,
 };
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, DecryptableRequest};
 use log::*;
@@ -492,7 +492,7 @@ where
 
 #[allow(clippy::type_complexity)]
 fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	mut request: BitAcrossRequest,
+	request: BitAcrossRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) -> Option<(CeremonyId, CeremonyCommand)>
 where
@@ -509,26 +509,32 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	match handle_request_inner(request.get_aes_request_mut_ref(), context) {
-		Ok((processing_ret, to_process)) => {
-			if let Some(processing_ret) = processing_ret {
-				if let Err(e) = request.try_send_result(Ok(processing_ret)) {
-					warn!("Unable to submit response back to the handler: {:?}", e);
-				}
+	match request {
+		BitAcrossRequest::CreateSignTask(mut aes_request, sender) => {
+			match handle_direct_call(&mut aes_request, context) {
+				Ok((processing_ret, to_process)) => {
+					if let Some(processing_ret) = processing_ret {
+						if let Err(e) = sender.send(Ok(processing_ret)) {
+							warn!("Unable to submit response back to the handler: {:?}", e);
+						}
+					}
+					to_process
+				},
+				Err(e) => {
+					if let Err(e) = sender.send(Err(e)) {
+						warn!("Unable to submit response back to the handler: {:?}", e);
+					}
+					None
+				},
 			}
-			to_process
 		},
-		Err(e) => {
-			if let Err(e) = request.try_send_result(Err(e)) {
-				warn!("Unable to submit response back to the handler: {:?}", e);
-			}
-			None
-		},
+		BitAcrossRequest::ShareCeremonyData(mut aes_request) =>
+			handle_ceremony_round_call(&mut aes_request, context).unwrap_or_default(),
 	}
 }
 
 #[allow(clippy::type_complexity)]
-fn handle_request_inner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn handle_direct_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: &mut AesRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) -> Result<(Option<BitAcrossProcessingResult>, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
@@ -623,14 +629,62 @@ where
 		.map(|r| {
 			(Some(BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())), None)
 		}),
-		DirectCall::NonceShare(signer, aes_key, message, nonce) =>
+	}
+}
+
+#[allow(clippy::type_complexity)]
+fn handle_ceremony_round_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+	request: &mut AesRequest,
+	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+) -> Result<Option<(CeremonyId, CeremonyCommand)>, Vec<u8>>
+where
+	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
+	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
+	EKR: AccessKey<KeyType = EcdsaPair>,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
+	RRL: RelayerRegistryLookup + 'static,
+	ERL: EnclaveRegistryLookup + 'static,
+	SRL: SignerRegistryLookup + 'static,
+	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
+{
+	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
+		let err = format!("Failed to retrieve shielding key: {:?}", e);
+		error!("{}", err);
+		err
+	})?;
+	let crc = request
+		.decrypt(Box::new(enclave_shielding_key))
+		.ok()
+		.and_then(|v| CeremonyRoundCallSigned::decode(&mut v.as_slice()).ok())
+		.ok_or_else(|| {
+			let err = "Failed to decode payload".to_string();
+			error!("{}", err);
+			err
+		})?;
+
+	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
+		Ok(m) => m.m,
+		Err(_) => {
+			let err = "Failed to get mrenclave";
+			error!("{}", err);
+			return Err(err.encode())
+		},
+	};
+	debug!("Ceremony round call is: {:?}", crc);
+	ensure!(crc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
+	match crc.call {
+		CeremonyRoundCall::NonceShare(signer, aes_key, message, nonce) =>
 			nonce_share::handle(signer, &message, nonce, context.enclave_registry_lookup.clone())
 				.map_err(|e| {
 					error!("NonceShare error: {:?}", e);
 					aes_encrypt_default(&aes_key, &e.encode()).encode()
 				})
-				.map(|command| (None, Some((message, command)))),
-		DirectCall::PartialSignatureShare(signer, aes_key, message, signature) =>
+				.map(|command| Some((message, command))),
+		CeremonyRoundCall::PartialSignatureShare(signer, aes_key, message, signature) =>
 			partial_signature_share::handle(
 				signer,
 				&message,
@@ -641,13 +695,13 @@ where
 				error!("PartialSignatureShare error: {:?}", e);
 				aes_encrypt_default(&aes_key, &e.encode()).encode()
 			})
-			.map(|command| (None, Some((message, command)))),
-		DirectCall::KillCeremony(signer, aes_key, message) =>
+			.map(|command| Some((message, command))),
+		CeremonyRoundCall::KillCeremony(signer, aes_key, message) =>
 			kill_ceremony::handle(signer, context.enclave_registry_lookup.as_ref())
 				.map_err(|e| {
 					error!("KillCeremony error: {:?}", e);
 					aes_encrypt_default(&aes_key, &e.encode()).encode()
 				})
-				.map(|command| (None, Some((message, command)))),
+				.map(|command| Some((message, command))),
 	}
 }
