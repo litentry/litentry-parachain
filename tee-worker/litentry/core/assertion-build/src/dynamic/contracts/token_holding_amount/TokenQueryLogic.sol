@@ -27,7 +27,6 @@ import { BlockchainInfoClient } from "./BlockchainInfoClient.sol";
 import "./MoralisClient.sol";
 import "../openzeppelin/Strings.sol";
 import "./Constants.sol";
-import "hardhat/console.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {
 	mapping(string => TokenInfo[]) internal tokenInfo;
