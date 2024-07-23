@@ -1,9 +1,6 @@
 name: Parachain and Enclave integrety checks
 
 on:
-  # TODO: remove me. keep workflow_dispatch only.
-  pull_request:
-
   workflow_dispatch:
     inputs:
       environment:
