@@ -132,7 +132,6 @@ describe('Test Vc (direct request)', function () {
 
         const abiCoder = new ethers.utils.AbiCoder();
         const encodedData = abiCoder.encode(['string'], ['bnb']);
-        console.log(encodedData);
 
         const assertion = {
             dynamic: context.api.createType('DynamicParams', [
