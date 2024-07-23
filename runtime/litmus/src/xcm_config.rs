@@ -21,7 +21,7 @@ use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
 	traits::{Everything, Nothing},
-	weights::IdentityFee,
+	weights::ConstantMultiplier,
 	PalletId,
 };
 use frame_system::EnsureRoot;
@@ -44,6 +44,7 @@ use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use core_primitives::{AccountId, Weight};
 use runtime_common::{
+	currency::MILLICENTS,
 	xcm_impl::{
 		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
 		CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset,
@@ -173,18 +174,19 @@ parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
 	pub const MaxAssetsIntoHolding: u32 = 64;
+	pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
 }
 
 pub type Traders = (
 	UsingComponents<
-		IdentityFee<Balance>,
+		ConstantMultiplier<Balance, WeighToFeeFactor>,
 		NewAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
 		DealWithFees<Runtime>,
 	>,
 	UsingComponents<
-		IdentityFee<Balance>,
+		ConstantMultiplier<Balance, WeighToFeeFactor>,
 		OldAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,

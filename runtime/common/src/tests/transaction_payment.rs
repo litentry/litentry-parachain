@@ -18,14 +18,15 @@ use core_primitives::{AccountId, Balance};
 use frame_support::{
 	assert_ok,
 	dispatch::{DispatchClass, DispatchInfo, PostDispatchInfo, RawOrigin},
-	weights::{constants::ExtrinsicBaseWeight, IdentityFee, Weight, WeightToFee},
+	parameter_types,
+	weights::{constants::ExtrinsicBaseWeight, ConstantMultiplier, Weight, WeightToFee},
 };
 use pallet_balances::Call as BalancesCall;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
 use sp_runtime::traits::{Convert, Dispatchable, SignedExtension};
 
 use crate::{
-	currency::UNIT,
+	currency::{MILLICENTS, UNIT},
 	tests::setup::{
 		alice, bob, info_from_weight, post_info_from_weight, run_with_system_weight, ExtBuilder,
 	},
@@ -75,13 +76,19 @@ where
 		OnChargeTransaction<R, Balance = Balance, LiquidityInfo = Option<NegativeImbalance<R>>>,
 {
 	ExtBuilder::<R>::default()
-		.balances(vec![(alice(), 100 * UNIT), (Treasury::<R>::account_id(), 100 * UNIT)])
+		.balances(vec![
+			(alice(), 100_000_000 * UNIT),
+			(Treasury::<R>::account_id(), 100_000_000 * UNIT),
+		])
 		.build()
 		.execute_with(|| {
-			assert_eq!(Balances::<R>::free_balance(&alice()), 100 * UNIT);
-			assert_eq!(Balances::<R>::free_balance(Treasury::<R>::account_id()), 100 * UNIT);
+			assert_eq!(Balances::<R>::free_balance(&alice()), 100_000_000 * UNIT);
+			assert_eq!(
+				Balances::<R>::free_balance(Treasury::<R>::account_id()),
+				100_000_000 * UNIT
+			);
 			let initial_total_issuance = Balances::<R>::total_issuance();
-			assert_eq!(initial_total_issuance, 200 * UNIT);
+			assert_eq!(initial_total_issuance, 200_000_000 * UNIT);
 
 			let dispatch_info: u128 = 50;
 			let post_dispatch_info: u128 = 35;
@@ -102,14 +109,17 @@ where
 					len as usize,
 				)
 				.unwrap();
-
-			// This test here already assume that we use IdentityFee
+			parameter_types! {
+				pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
+			}
+			// This test here already assume that we use ConstantMultiplier<Balance,
+			// WeighToFeeFactor>
 			let total_payment: Balance =
-				IdentityFee::<Balance>::weight_to_fee(&ExtrinsicBaseWeight::get()) +
-					IdentityFee::<Balance>::weight_to_fee(&Weight::from_parts(
-						dispatch_info as u64,
-						0,
-					)) + (len as Balance) * TransactionByteFee::get();
+				ConstantMultiplier::<Balance, WeighToFeeFactor>::weight_to_fee(
+					&ExtrinsicBaseWeight::get(),
+				) + ConstantMultiplier::<Balance, WeighToFeeFactor>::weight_to_fee(
+					&Weight::from_parts(dispatch_info as u64, 0),
+				) + (len as Balance) * TransactionByteFee::get();
 			assert_eq!(old_sender_balance - Balances::<R>::free_balance(&alice()), total_payment);
 			assert_eq!(
 				Balances::<R>::free_balance(Treasury::<R>::account_id()),
