@@ -66,6 +66,7 @@ describe('Test Vc (direct request)', function () {
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
 
         const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [
+            // At least three secrets are required here.
             secret,
             secret,
             secret,
