@@ -31,6 +31,7 @@ use itp_storage::StorageProof;
 use itp_time_utils::duration_now;
 use itp_types::ShardIdentifier;
 use log::*;
+use rayon::prelude::*;
 use sp_consensus_grandpa::VersionedAuthorityList;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{cmp::min, sync::Arc, time::Duration};
@@ -204,10 +205,27 @@ where
 		}
 
 		loop {
-			let block_chunk_to_sync = self.parentchain_api.get_blocks(
-				start_block,
-				min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
-			)?;
+			let chunk_range =
+				start_block..min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number);
+
+			let start_fetch_time = duration_now();
+
+			let block_chunk_to_sync = chunk_range
+				.into_par_iter()
+				.filter_map(|block_number| {
+					self.parentchain_api
+						.get_block_by_number(block_number)
+						.expect("failed to get block")
+				})
+				.collect::<Vec<_>>();
+
+			debug!(
+				"[{:?}] Fetched {} blocks in {}",
+				id,
+				block_chunk_to_sync.len(),
+				format_duration(duration_now().saturating_sub(start_fetch_time))
+			);
+
 			if block_chunk_to_sync.len() == BLOCK_SYNC_BATCH_SIZE as usize {
 				let now = duration_now();
 				let total_blocks = curr_block_number.saturating_sub(last_synced_header_number);
@@ -247,7 +265,7 @@ where
 				vec![]
 			} else {
 				let evs = block_chunk_to_sync
-					.iter()
+					.par_iter()
 					.map(|block| {
 						self.parentchain_api.get_events_for_block(Some(block.block.header.hash()))
 					})
@@ -260,12 +278,14 @@ where
 				vec![]
 			} else {
 				block_chunk_to_sync
-					.iter()
+					.par_iter()
 					.map(|block| {
 						self.parentchain_api.get_events_value_proof(Some(block.block.header.hash()))
 					})
 					.collect::<Result<Vec<_>, _>>()?
 			};
+
+			let sync_start_time = duration_now();
 
 			self.enclave_api.sync_parentchain(
 				block_chunk_to_sync.as_slice(),
@@ -275,14 +295,16 @@ where
 				immediate_import,
 			)?;
 
+			info!(
+				"[{:?}] Synced parentchain batch in {}",
+				id,
+				format_duration(duration_now().saturating_sub(sync_start_time))
+			);
+
 			let api_client_until_synced_header = block_chunk_to_sync
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
-			debug!(
-				"[{:?}] Synced {} out of {} finalized parentchain blocks",
-				id, api_client_until_synced_header.number, curr_block_number,
-			);
 
 			// #TODO: #1451: fix api/client types
 			until_synced_header =
