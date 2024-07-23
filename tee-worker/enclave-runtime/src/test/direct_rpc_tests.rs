@@ -36,9 +36,7 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::{Address32, Identity};
-use std::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
-
-type TestBlock = u32;
+use std::{string::ToString, sync::Arc, vec::Vec};
 
 pub fn get_state_request_works() {
 	type TestState = u64;

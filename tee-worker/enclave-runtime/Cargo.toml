@@ -141,8 +141,8 @@ itp-utils = { path = "../core-primitives/utils", default-features = false }
 
 its-block-verification = { path = "../sidechain/block-verification", default-features = false }
 its-primitives = { path = "../sidechain/primitives", default-features = false }
+its-rpc-handler = { path = "../sidechain/rpc-handler", default-features = false, features = ["sgx"] }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
-its-trusted-direct-api-module = { path = "../sidechain/trusted-direct-api-module", default-features = false, features = ["sgx"] }
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }

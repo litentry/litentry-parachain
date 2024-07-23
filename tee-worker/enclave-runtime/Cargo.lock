@@ -930,8 +930,8 @@ dependencies = [
  "itp-utils",
  "its-block-verification",
  "its-primitives",
+ "its-rpc-handler",
  "its-sidechain",
- "its-trusted-direct-api-module",
  "jsonrpc-core",
  "lazy_static",
  "lc-data-providers",
@@ -2891,6 +2891,7 @@ name = "its-rpc-handler"
 version = "0.9.0"
 dependencies = [
  "futures 0.3.8",
+ "itp-import-queue",
  "itp-rpc",
  "itp-stf-primitives",
  "itp-top-pool-author",
@@ -2936,27 +2937,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "thiserror",
-]
-
-[[package]]
-name = "its-trusted-direct-api-module"
-version = "0.1.0"
-dependencies = [
- "itp-import-queue",
- "itp-rpc",
- "itp-stf-primitives",
- "itp-top-pool-author",
- "itp-types",
- "itp-utils",
- "its-primitives",
- "jsonrpc-core",
- "lc-vc-task-sender",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
- "sgx_tstd",
- "sp-core",
 ]
 
 [[package]]

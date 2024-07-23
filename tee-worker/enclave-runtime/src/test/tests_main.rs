@@ -18,14 +18,11 @@
 use crate::test::evm_pallet_tests;
 
 use crate::{
-	rpc,
 	sync::tests::{enclave_rw_lock_works, sidechain_rw_lock_works},
 	test::{
 		cert_tests::*,
 		direct_rpc_tests, enclave_signer_tests,
-		fixtures::test_setup::{
-			enclave_call_signer, test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor,
-		},
+		fixtures::test_setup::{test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor},
 		mocks::types::TestStateKeyRepo,
 		sidechain_aura_tests, sidechain_event_tests, state_getter_tests, top_pool_tests,
 	},

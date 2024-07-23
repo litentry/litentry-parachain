@@ -17,8 +17,6 @@
 
 pub mod global_components;
 pub mod parentchain;
-#[cfg(feature = "sidechain")]
-use crate::initialization::global_components::EnclaveSidechainBlockImportQueue;
 use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{
@@ -228,12 +226,13 @@ pub(crate) fn init_enclave(
 
 	#[cfg(feature = "sidechain")]
 	{
-		use its_trusted_direct_api_module::add_sidechain_api;
+		use crate::initialization::global_components::EnclaveSidechainBlockImportQueue;
+		use its_rpc_handler::add_sidechain_api;
 		let sidechain_block_import_queue = Arc::new(EnclaveSidechainBlockImportQueue::default());
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.initialize(sidechain_block_import_queue);
 		let sidechain_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
 		let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
-		add_sidechain_api(&mut io_handler, sidechain_import_queue, top_pool_author)
+		add_sidechain_api(&mut io_handler, top_pool_author, sidechain_import_queue);
 	}
 
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));

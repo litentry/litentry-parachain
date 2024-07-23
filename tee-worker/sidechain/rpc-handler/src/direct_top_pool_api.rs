@@ -1,18 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use jsonrpc_core_sgx as jsonrpc_core;
-	pub use rust_base58_sgx as base58;
-}
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
@@ -23,7 +8,6 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
-use itp_import_queue::{ImportQueue, PushToQueue};
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
@@ -44,26 +28,14 @@ use std::{
 	vec::Vec,
 };
 
-pub fn add_sidechain_api<Block, R, TCS, G>(
-	io_handler: &mut IoHandler,
-	sidechain_import_queue: Arc<ImportQueue<Block>>,
+pub fn add_top_pool_direct_rpc_methods<R, TCS, G>(
 	top_pool_author: Arc<R>,
+	io_handler: &mut IoHandler,
 ) where
-	Block: Decode + core::marker::Send + core::marker::Sync + 'static,
 	R: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
-	io_handler.add_sync_method("sidechain_importBlock", move |params: Params| {
-		debug!("worker_api_direct rpc was called: sidechain_importBlock");
-		let rpc_return_value =
-			match handle_sidechain_import_block(sidechain_import_queue.as_ref(), params) {
-				Ok(_) => RpcReturnValue::new(vec![], false, DirectRequestStatus::Ok),
-				Err(_) => RpcReturnValue::new(vec![], false, DirectRequestStatus::Error),
-			};
-		Ok(json!(rpc_return_value.to_hex()))
-	});
-
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method("author_submitAndWatchRsaRequest", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_submitAndWatchRsaRequest");
@@ -262,27 +234,6 @@ pub fn add_sidechain_api<Block, R, TCS, G>(
 			},
 		}
 	});
-}
-
-fn handle_sidechain_import_block<Block: Decode>(
-	sidechain_import_queue: &ImportQueue<Block>,
-	params: Params,
-) -> Result<(), ()> {
-	let hex_encoded_params = params
-		.parse::<Vec<String>>()
-		.map_err(|e| error!("Could not parse params: {:?}", e))?;
-	let param = hex_encoded_params.get(0).ok_or_else(|| {
-		error!("Could not get first param");
-	})?;
-	let blocks: Vec<Block> = Vec::<Block>::from_hex(param).map_err(|e| {
-		error!("Could not decode block to import: {:?}", e);
-	})?;
-	for block in blocks {
-		sidechain_import_queue.push_single(block).map_err(|e| {
-			error!("Could not import block: {:?}", e);
-		})?;
-	}
-	Ok(())
 }
 
 // converts the rpc methods vector to a string and adds commas and brackets for readability

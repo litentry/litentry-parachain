@@ -120,24 +120,11 @@ where
 		let nr_peers = peers.len();
 
 		for url in peers {
-			let encoded_block_cloned = encoded_blocks.clone();
+			let encoded_blocks_cloned = encoded_blocks.clone();
 			tokio::spawn(async move {
-				// FIXME: Websocket connection to a worker should stay, once established.
-				let trusted_client = match WsClientBuilder::default().build(&url.trusted).await {
-					Ok(c) => c,
-					Err(e) => {
-						error!("Failed to create websocket client for block broadcasting (target url: {}): {:?}", url.trusted, e);
-						return
-					},
-				};
+				let client = DirectWorkerApi::new(url.trusted.to_string());
 
-				if let Err(e) = trusted_client
-					.request::<String>(
-						RPC_METHOD_NAME_IMPORT_BLOCKS,
-						JsonRpcParams::Array(vec![JsonValue::String(encoded_block_cloned)]),
-					)
-					.await
-				{
+				if let Err(e) = client.import_sidechain_blocks(encoded_blocks_cloned) {
 					error!(
 						"Broadcast block request ({}) to {} failed: {:?}",
 						RPC_METHOD_NAME_IMPORT_BLOCKS, url.trusted, e
