@@ -857,11 +857,11 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Fill up the missing assets
 		let _ = pallet_balances::Pallet::<R::ParaRuntime>::deposit_creating(
 			&sibling_account::<R::LocationToAccountId>(2),
-			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT,
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR + 10 * UNIT,
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR + 10 * UNIT
 		);
 	});
 
@@ -871,7 +871,8 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 			fun: Fungibility::Fungible(
-				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 7 * UNIT,
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR +
+					7 * UNIT,
 			),
 		}]
 		.into();
@@ -881,7 +882,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
+					fun: Fungibility::Fungible(
+						(R::UnitWeightCost::get().ref_time() * 4).into() * WEIGHT_TO_FEE_FACTOR,
+					),
 				},
 				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
@@ -901,7 +904,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// The remote received and ignored
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR + 10 * UNIT
 		);
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 0);
 	});
@@ -912,7 +915,8 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 			fun: Fungibility::Fungible(
-				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 7 * UNIT,
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR +
+					7 * UNIT,
 			),
 		}]
 		.into();
@@ -922,7 +926,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
+					fun: Fungibility::Fungible(
+						(R::UnitWeightCost::get().ref_time() * 4).into() * WEIGHT_TO_FEE_FACTOR,
+					),
 				},
 				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
@@ -1125,11 +1131,11 @@ where
 	R::ParaA::execute_with(|| {
 		let _ = pallet_balances::Pallet::<R::ParaRuntime>::deposit_creating(
 			&relay_account::<R::LocationToAccountId>(),
-			10 * UNIT,
+			10 * WEIGHT_TO_FEE_FACTOR * UNIT,
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
-			10 * UNIT
+			10 * WEIGHT_TO_FEE_FACTOR * UNIT
 		);
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 0);
 		assert_ok!(ExtrinsicFilter::<R::ParaRuntime>::set_mode(
@@ -1145,7 +1151,8 @@ where
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 			/* Assets used for fee */
 			fun: Fungibility::Fungible(
-				u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS,
+				u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
+					100 * MILLICENTS,
 			),
 		}]
 		.into();
@@ -1155,7 +1162,8 @@ where
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS,
+						u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
+							100 * MILLICENTS,
 					),
 				},
 				weight_limit: WeightLimit::Limited(
@@ -1200,10 +1208,11 @@ where
 		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 2 * UNIT);
 		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 0);
-		let xcm_fee = u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS;
+		let xcm_fee = u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
+			100 * MILLICENTS;
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
-			10 * UNIT - xcm_fee - 2 * UNIT
+			10 * WEIGHT_TO_FEE_FACTOR * UNIT - xcm_fee - 2 * UNIT
 		);
 		// restore normal mode?
 		assert_ok!(ExtrinsicFilter::<R::ParaRuntime>::set_mode(
