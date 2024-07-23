@@ -355,11 +355,7 @@ fn start_worker<E, T, InitializationHandler>(
 	// ------------------------------------------------------------------------
 	// Start prometheus metrics server.
 	if config.enable_metrics_server() {
-		let enclave_wallet = Arc::new(EnclaveAccountInfoProvider::new(
-			litentry_rpc_api.clone(),
-			tee_accountid.clone(),
-		));
-		let metrics_handler = Arc::new(MetricsHandler::new(enclave_wallet));
+		let metrics_handler = Arc::new(MetricsHandler{});
 		let metrics_server_port = config
 			.try_parse_metrics_server_port()
 			.expect("metrics server port to be a valid port number");

@@ -185,11 +185,6 @@ where
 		// dummy block hash
 		let best_block_hash = Default::default();
 
-		// Update metric
-		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeIncrement) {
-			warn!("Failed to update metric for top pool size: {:?}", e);
-		}
-
 		if let Some(trusted_call_signed) = trusted_operation.to_call() {
 			debug!(
 				"Submitting trusted call to TOP pool: {:?}, TOP hash: {:?}",
@@ -250,11 +245,6 @@ where
 		}?;
 
 		debug!("removing {:?} from top pool", hash);
-
-		// Update metric
-		if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::TopPoolSizeDecrement) {
-			warn!("Failed to update metric for top pool size: {:?}", e);
-		}
 
 		let removed_op_hash = self
 			.top_pool

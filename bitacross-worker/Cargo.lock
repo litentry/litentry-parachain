@@ -462,6 +462,7 @@ dependencies = [
  "ita-stf",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
+ "itp-enclave-metrics",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
