@@ -65,7 +65,11 @@ describe('Test Vc (direct request)', function () {
         const assertionId = '0x0000000000000000000000000000000000000003';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
 
-        const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]);
+        const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [
+            secret,
+            secret,
+            secret,
+        ]);
         await context.api.tx.developerCommittee.execute(proposal, proposal.encodedLength).signAndSend(alice);
 
         const event = (await createAssertionEventsPromise).map((e) => e);
@@ -121,17 +125,19 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('requesting VC for deployed contract', async function () {
-        await sleep(30);
+        // await sleep(30);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
 
         const abiCoder = new ethers.utils.AbiCoder();
         const encodedData = abiCoder.encode(['string'], ['bnb']);
+        console.log(encodedData);
+
         const assertion = {
             dynamic: context.api.createType('DynamicParams', [
                 Uint8Array.from(Buffer.from('0000000000000000000000000000000000000003', 'hex')),
                 encodedData,
-                false,
+                true,
             ]),
         };
 
