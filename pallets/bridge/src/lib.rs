@@ -42,11 +42,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		{self as system},
 	};
-	use parity_scale_codec::{Decode, Encode, EncodeLike};
-	use scale_info::TypeInfo;
+	use parity_scale_codec::EncodeLike;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},
-		RuntimeDebug, SaturatedConversion,
+		SaturatedConversion,
 	};
 	use sp_std::prelude::*;
 

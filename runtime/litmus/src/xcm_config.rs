@@ -56,8 +56,8 @@ use runtime_common::{
 use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
-	AllPalletsWithSystem, AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo,
-	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
+	AllPalletsWithSystem, AssetId, AssetManager, Assets, Balance, Balances, DealWithFees,
+	ParachainInfo, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};
@@ -100,10 +100,10 @@ parameter_types! {
 	pub TempAccount: AccountId = TempPalletId::get().into_account_truncating();
 }
 // The non-reserve fungible transactor type
-// It will use orml_tokens, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
+// It will use pallet_assets, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
 pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
-	Tokens,
+	Assets,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
@@ -195,7 +195,7 @@ pub type Traders = (
 		CurrencyId<Runtime>,
 		AssetManager,
 		XcmFeesToAccount<
-			Tokens,
+			Assets,
 			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,

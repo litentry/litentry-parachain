@@ -43,7 +43,7 @@ use sp_runtime::{
 use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
-pub type MaxStringLength = ConstU32<64>;
+type MaxStringLength = ConstU32<64>;
 pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
 
 pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;

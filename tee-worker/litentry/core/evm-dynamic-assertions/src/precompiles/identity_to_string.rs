@@ -17,7 +17,9 @@
 use crate::{failure_precompile_output, precompiles::PrecompileResult, success_precompile_output};
 use base58::ToBase58;
 use blake2_rfc::blake2b::Blake2b;
-use litentry_primitives::{p2pkh_address, p2sh_address, p2tr_address, p2wpkh_address, Web3Network};
+use litentry_primitives::{
+	p2pkh_address, p2sh_address, p2tr_address, p2wpkh_address, p2wsh_address, Web3Network,
+};
 use ss58_registry::Ss58AddressFormat;
 use std::{format, string::String, vec, vec::Vec};
 
@@ -133,7 +135,9 @@ fn pubkey_to_address(network: u8, pubkey: &str) -> String {
 		11 => p2sh_address(pubkey),
 		// BitcoinP2wpkh
 		12 => p2wpkh_address(pubkey),
-		// BitcoinP2wsh and others
+		// BitcoinP2wsh
+		13 => p2wsh_address(pubkey),
+		// others
 		_ => "".into(),
 	}
 }
@@ -225,6 +229,23 @@ pub mod test {
 		assert_eq!(
 			success_precompile_output(Token::String(
 				"bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0".into()
+			)),
+			result
+		);
+
+		// BitcoinP2wsh
+		let encoded = encode(&[
+			Token::Uint(Web3Network::BitcoinP2wsh.get_code().into()),
+			Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+		]);
+
+		// when
+		let result = identity_to_string(encoded).unwrap();
+
+		// then
+		assert_eq!(
+			success_precompile_output(Token::String(
+				"bc1qvr0n2tgcevl26kx0vu76nujlju6fwkdzllv7qx5pz5ed3y8yf22st9hqmw".into()
 			)),
 			result
 		);

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.18-11] - 2024-07-19
+
+### Added
+
+-   (#2930) `PlatformUserType`: Add `DarenMarket`
+
+### Changed
+
+-   (#2930) `PlatformUserType`: rename `MagicCraftStakingUser` to `MagicCraftStaking`
+-   (#2930) `PlatformUserType`: rename `KaratDaoUser` to `KaratDao`
+-   (#2904) `AssertionSupportedNetwork`: update network list
+
 ## [0.9.18-10] - 2024-07-15
 
 Matching version for [parachain-release v0.9.18-10](https://github.com/litentry/litentry-parachain/releases/tag/v0.9.18-10)

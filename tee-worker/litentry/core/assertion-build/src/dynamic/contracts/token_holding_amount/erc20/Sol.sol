@@ -22,17 +22,6 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Sol {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x570a5d26f7765ecb712c0924e4de545b89fd43df";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x5288738df1aeb0894713de903e1d0c001eeb7644";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "sol";
-	}
-
 	function getTokenRanges() internal pure returns (uint256[] memory) {
 		uint256[] memory ranges = new uint256[](10);
 		ranges[0] = 0 * Constants.decimals_factor;
@@ -48,11 +37,18 @@ library Sol {
 
 		return ranges;
 	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
 
-		return networks;
+	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
+		tokenInfoList[0] = TokenInfo(
+			Web3Networks.Ethereum,
+			"0x5288738df1aeb0894713de903e1d0c001eeb7644"
+		);
+		tokenInfoList[1] = TokenInfo(
+			Web3Networks.Bsc,
+			"0x570a5d26f7765ecb712c0924e4de545b89fd43df"
+		);
+		tokenInfoList[2] = TokenInfo(Web3Networks.Solana, "Native Token");
+		return tokenInfoList;
 	}
 }
