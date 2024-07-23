@@ -183,8 +183,6 @@ describe('Test Vc (direct request)', function () {
                 onMessageReceived
             );
 
-            console.log(res.toHuman());
-
             const events = (await eventsPromise).map(({ event }) => event);
             assert.equal(events.length, Array.isArray(assertion) ? assertion.length : 1);
 
