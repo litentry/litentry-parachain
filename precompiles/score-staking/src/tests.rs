@@ -124,6 +124,6 @@ fn claim_is_ok() {
 				precompile_address(),
 				PCall::<Test>::claim { amount: 100u128.into() },
 			)
-			.execute_reverts(|output| from_utf8(&output).unwrap().contains("InsufficientBalance"));
+			.execute_reverts(|output| from_utf8(output).unwrap().contains("InsufficientBalance"));
 	});
 }

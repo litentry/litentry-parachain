@@ -31,6 +31,7 @@ use pallet_evm_precompile_dispatch::{Dispatch, DispatchValidateT};
 use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
+use pallet_evm_precompile_score_staking::ScoreStakingPrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use precompile_utils::precompile_set::*;
@@ -130,7 +131,7 @@ pub type PrecompilesSetAt<R> = (
 	// ScoreStaking: pallet_score_staking = 75 + 20480
 	PrecompileAt<
 		AddressU64<20555>,
-		BridgeTransferPrecompile<R>,
+		ScoreStakingPrecompile<R>,
 		(CallableByContract, CallableByPrecompile),
 	>,
 );
