@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.18-11] - 2024-07-19
+
 ### Added
 
 -   (#2930) `PlatformUserType`: Add `DarenMarket`
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   (#2930) `PlatformUserType`: rename `MagicCraftStakingUser` to `MagicCraftStaking`
 -   (#2930) `PlatformUserType`: rename `KaratDaoUser` to `KaratDao`
+-   (#2904) `AssertionSupportedNetwork`: update network list
 
 ## [0.9.18-10] - 2024-07-15
 
