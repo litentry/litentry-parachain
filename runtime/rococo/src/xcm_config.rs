@@ -40,7 +40,7 @@ use runtime_common::xcm_impl::{
 	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
-use runtime_common::{currency::MILLICENTS, EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
+use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin, WEIGHT_TO_FEE_FACTOR};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -173,7 +173,7 @@ parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
 	pub const MaxAssetsIntoHolding: u32 = 64;
-	pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
+	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 pub type Traders = (

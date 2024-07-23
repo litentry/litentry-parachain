@@ -81,6 +81,7 @@ use runtime_common::{
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
 	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS,
+	WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -519,8 +520,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10; // 10^6
-	pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -1117,7 +1118,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// Ethereum tx
 		// This is hardcoded ConstantMultiplier<Balance, WeighToFeeFactor>, WeighToFeeFactor =
 		// MILLICENTS / 10
-		let weight_to_fee: u128 = 1_000_000;
+		let weight_to_fee: u128 = WEIGHT_TO_FEE_FACTOR;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}

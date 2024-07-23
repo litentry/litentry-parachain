@@ -26,12 +26,12 @@ use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
 use sp_runtime::traits::{Convert, Dispatchable, SignedExtension};
 
 use crate::{
-	currency::{MILLICENTS, UNIT},
+	currency::UNIT,
 	tests::setup::{
 		alice, bob, info_from_weight, post_info_from_weight, run_with_system_weight, ExtBuilder,
 	},
 	BaseRuntimeRequirements, MinimumMultiplier, NegativeImbalance, RuntimeBlockWeights,
-	SlowAdjustingFeeUpdate, TargetBlockFullness,
+	SlowAdjustingFeeUpdate, TargetBlockFullness, WEIGHT_TO_FEE_FACTOR,
 };
 
 type Balances<R> = pallet_balances::Pallet<R>;
@@ -110,7 +110,7 @@ where
 				)
 				.unwrap();
 			parameter_types! {
-				pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
+				pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 			}
 			// This test here already assume that we use ConstantMultiplier<Balance,
 			// WeighToFeeFactor>
@@ -136,7 +136,7 @@ where
 				&Ok(())
 			));
 			// (dispatch_info - post_dispatch_info) weights (toFee) are refunded
-			let refunded = dispatch_info - post_dispatch_info;
+			let refunded = (dispatch_info - post_dispatch_info) * WEIGHT_TO_FEE_FACTOR;
 			assert_eq!(Balances::<R>::free_balance(&alice()) - old_sender_balance, refunded);
 
 			// treasury gets 40% of actual payment

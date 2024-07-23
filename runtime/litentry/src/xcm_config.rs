@@ -45,13 +45,12 @@ use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use core_primitives::{AccountId, Weight};
 use runtime_common::{
-	currency::MILLICENTS,
 	xcm_impl::{
 		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
 		CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset,
 		NewAnchoringSelfReserve, OldAnchoringSelfReserve, XcmFeesToAccount,
 	},
-	EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin,
+	EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin, WEIGHT_TO_FEE_FACTOR,
 };
 
 #[cfg(test)]
@@ -175,7 +174,7 @@ parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
 	pub const MaxAssetsIntoHolding: u32 = 64;
-	pub const WeighToFeeFactor: Balance = MILLICENTS / 10; // 10^6
+	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 pub type Traders = (
