@@ -125,7 +125,7 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('requesting VC for deployed contract', async function () {
-        // await sleep(30);
+        await sleep(30);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
 
