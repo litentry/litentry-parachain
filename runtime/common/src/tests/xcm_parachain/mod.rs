@@ -186,7 +186,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&bob()),
 			WEIGHT_TO_FEE_FACTOR * UNIT * 4 / 10 -
-				u128::from(R::UnitWeightCost::get().ref_time() * 4 * WEIGHT_TO_FEE_FACTOR)
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
