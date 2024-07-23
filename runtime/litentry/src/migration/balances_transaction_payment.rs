@@ -78,11 +78,9 @@ where
 		.is_none());
 		for (account, state) in stored_data {
 			let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
-			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_account.data.reserved =
-				new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_account.data.frozen =
-				new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR.into());
+			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
+			new_account.data.reserved = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+			new_account.data.frozen = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
 
 			<Account<T>>::insert(&account, new_account)
 		}
@@ -165,7 +163,7 @@ where
 		for (account, mut state) in stored_data {
 			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
 			for balance_lock in new_locks.into_iter() {
-				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 			<Locks<T>>::insert(&account, new_locks)
 		}
@@ -236,12 +234,11 @@ where
 			<Account<T>>::iter()
 				.map(|(account, state)| {
 					let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
-					new_account.data.free =
-						new_account.data.free.saturating_mul(DECIMAL_CONVERTOR.into());
+					new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
 					new_account.data.reserved =
-						new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR.into());
+						new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
 					new_account.data.frozen =
-						new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR.into());
+						new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
 
 					(account, new_account)
 				})
@@ -262,7 +259,7 @@ where
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_total_issuance_storage() -> Result<Vec<u8>, &'static str> {
-		Ok(<TotalIssuance<T>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
+		Ok(<TotalIssuance<T>>::get().saturating_mul(DECIMAL_CONVERTOR).encode())
 	}
 	pub fn post_upgrade_balances_total_issuance_storage(
 		state: Vec<u8>,
@@ -274,7 +271,7 @@ where
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_inactive_issuance_storage() -> Result<Vec<u8>, &'static str> {
-		Ok(<InactiveIssuance<T>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
+		Ok(<InactiveIssuance<T>>::get().saturating_mul(DECIMAL_CONVERTOR).encode())
 	}
 	pub fn post_upgrade_balances_inactive_issuance_storage(
 		state: Vec<u8>,
@@ -298,8 +295,7 @@ where
 			.map(|(account, state)| {
 				let mut new_locks: Vec<BalanceLock<u128>> = state.into_inner();
 				for balance_lock in new_locks.iter_mut() {
-					balance_lock.amount =
-						balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR.into());
+					balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 				}
 				(account, new_locks)
 			})
