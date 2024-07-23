@@ -127,6 +127,12 @@ pub type PrecompilesSetAt<R> = (
 		BridgeTransferPrecompile<R>,
 		(CallableByContract, CallableByPrecompile),
 	>,
+	// ScoreStaking: pallet_score_staking = 75 + 20480
+	PrecompileAt<
+		AddressU64<20555>,
+		BridgeTransferPrecompile<R>,
+		(CallableByContract, CallableByPrecompile),
+	>,
 );
 
 pub type RococoNetworkPrecompiles<R> = PrecompileSetBuilder<
@@ -135,7 +141,7 @@ pub type RococoNetworkPrecompiles<R> = PrecompileSetBuilder<
 		// Skip precompiles if out of range.
 		PrecompilesInRangeInclusive<
 			// We take range as last precompile index, UPDATE this once new prcompile is added
-			(AddressU64<1>, AddressU64<20484>),
+			(AddressU64<1>, AddressU64<20556>),
 			PrecompilesSetAt<R>,
 		>,
 		// Prefixed precompile sets (XC20)
