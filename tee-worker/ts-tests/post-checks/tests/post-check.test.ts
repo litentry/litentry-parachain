@@ -110,8 +110,10 @@ it(`can issue a verifiable-credential for Alice`, async () => {
 
 /**
  * This test implicitly checks that the state is readable and consistent
+ *
+ * Notice that this test is fixed to the historical state of tee-prod.
  */
-it(`should have consistent historical state for Alice`, async () => {
+it(`[PROD] should have consistent historical state for Alice`, async () => {
     const alice = keyring.addFromUri('//Alice');
     const aliceIdentity = createLitentryIdentityType(api.registry, {
         addressOrHandle: alice.address,
