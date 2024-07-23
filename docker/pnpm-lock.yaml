@@ -7,7 +7,7 @@ settings:
 dependencies:
   '@open-web3/parachain-launch':
     specifier: github:Kailai-Wang/parachain-launch#87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0
-    version: git@github.com+Kailai-Wang/parachain-launch/87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0
+    version: github.com/Kailai-Wang/parachain-launch/87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0
 
 packages:
 
