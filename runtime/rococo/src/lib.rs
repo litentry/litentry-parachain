@@ -1115,7 +1115,9 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// We do not want to involve Transaction Payment Multiplier here
 		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
 		// Ethereum tx
-		let weight_to_fee: u128 = 1;
+		// This is hardcoded ConstantMultiplier<Balance, WeighToFeeFactor>, WeighToFeeFactor =
+		// MILLICENTS / 10
+		let weight_to_fee: u128 = 1_000_000;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}
