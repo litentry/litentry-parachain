@@ -1238,7 +1238,7 @@ where
 	relaychain_parachains_set_up::<R>();
 	R::ParaA::execute_with(|| {
 		let call_message: R::RelayCall =
-			pallet_balances::Call::transfer { dest: bob().into(), value: 2 * UNIT }.into();
+			pallet_balances::Call::transfer { dest: bob().into(), value: 2 * RELAY_UNIT }.into();
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(Here.into()),
 			fun: Fungibility::Fungible(2_000_000_000 * RELAY_UNIT), // Assets used for fee
@@ -1281,13 +1281,16 @@ where
 	});
 	R::Relay::execute_with(|| {
 		// Manipulation successful
-		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 2 * UNIT);
+		assert_eq!(
+			pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()),
+			2 * RELAY_UNIT
+		);
 		let xcm_fee = 1_000_000_000 * RELAY_UNIT + 5 * 10 * RELAY_UNIT;
 		// So Transact simply consume all "require_weight_at_most" as long as qualified for dispatch
 		// weight.
 		assert_eq!(
 			pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&para_account(1)),
-			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE - 2 * UNIT - xcm_fee
+			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE - 2 * RELAY_UNIT - xcm_fee
 		);
 	});
 }
