@@ -18,13 +18,13 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
 import "./MoralisClient.sol";
-import "../openzeppelin/Strings.sol";
 import "./Constants.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {

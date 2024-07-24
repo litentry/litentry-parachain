@@ -18,7 +18,7 @@
 
 pragma solidity ^0.8.8;
 
-import "../openzeppelin/Strings.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/AssertionLogic.sol";
 import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
@@ -45,7 +45,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 		string
 			memory description = "The amount of a particular token you are holding";
 		string memory assertion_type = "Token Holding Amount";
-		schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-0.json";
+		schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-3.json";
 
 		string memory tokenLowercaseName = abi.decode(params, (string));
 

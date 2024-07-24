@@ -197,6 +197,14 @@ jobs:
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
         run: pnpm run check-format
+      
+      - name: Dynamic-contract install npm deps
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm run install
+
+      - name: Dynamic-contract check code format
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm run check-format
 
       - name: Fail early
         if: failure()

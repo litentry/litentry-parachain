@@ -18,10 +18,10 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Http.sol";
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
-import "../openzeppelin/Strings.sol";
 
 library NoderealClient {
 	function getTokenBalance(

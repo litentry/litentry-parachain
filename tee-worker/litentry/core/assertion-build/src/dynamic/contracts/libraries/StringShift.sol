@@ -17,8 +17,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity ^0.8.0;
-import "../openzeppelin/Strings.sol";
-import "../openzeppelin/math/Math.sol";
+
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+
 library StringShift {
 	/**
 	 * @dev Converts a uint256 input to a string and shifts the decimal point to the left by the specified number of places.
