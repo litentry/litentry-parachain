@@ -9,7 +9,7 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
-codec = { workspace = true }
+parity-scale-codec = { workspace = true }
 hex-literal = { workspace = true }
 scale-info = { workspace = true }
 
@@ -33,7 +33,7 @@ runtime-benchmarks = [
     "pallet-assets/runtime-benchmarks",
 ]
 std = [
-    "codec/std",
+    "parity-scale-codec/std",
     "scale-info/std",
     "sp-std/std",
     "sp-runtime/std",

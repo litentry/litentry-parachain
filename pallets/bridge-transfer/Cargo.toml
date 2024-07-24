@@ -7,7 +7,7 @@ repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.1.0'
 
 [dependencies]
-codec = { workspace = true }
+parity-scale-codec = { workspace = true }
 hex-literal = { workspace = true }
 scale-info = { workspace = true }
 
@@ -36,7 +36,7 @@ runtime-benchmarks = [
     "pallet-bridge/runtime-benchmarks",
 ]
 std = [
-    "codec/std",
+    "parity-scale-codec/std",
     "scale-info/std",
     "sp-std/std",
     "sp-runtime/std",

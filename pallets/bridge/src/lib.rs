@@ -33,13 +33,13 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use codec::{Codec, EncodeLike};
 	use frame_support::dispatch::GetDispatchInfo;
 	pub use frame_support::{pallet_prelude::*, traits::StorageVersion, PalletId, Parameter};
 	use frame_system::{
 		pallet_prelude::*,
 		{self as system},
 	};
+	use parity_scale_codec::{Codec, EncodeLike};
 	use sp_runtime::{
 		traits::{AccountIdConversion, AtLeast32BitUnsigned, Dispatchable},
 		FixedPointOperand, SaturatedConversion,
