@@ -183,7 +183,7 @@ where
 	{
 		let (client, pool) = cloned;
 		if !enable_evm_rpc {
-			return Ok(module)
+			return Ok(module);
 		}
 
 		let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;

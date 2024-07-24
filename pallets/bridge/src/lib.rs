@@ -527,8 +527,8 @@ pub mod pallet {
 		fn bump_nonce(id: BridgeChainId) -> Result<DepositNonce, Error<T>> {
 			let nonce = Self::chains(id).unwrap_or_default();
 			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverFlow);
-			if new_nonce.is_ok() {
-				ChainNonces::<T>::insert(id, new_nonce.as_ref().unwrap());
+			if let Ok(nonce) = &new_nonce {
+				ChainNonces::<T>::insert(id, nonce);
 			}
 			new_nonce
 		}
@@ -598,8 +598,9 @@ pub mod pallet {
 			let now = <frame_system::Pallet<T>>::block_number();
 			let mut votes = match Votes::<T>::get(src_id, (nonce, prop.clone())) {
 				Some(v) => v,
-				None =>
-					ProposalVotes { expiry: now + T::ProposalLifetime::get(), ..Default::default() },
+				None => {
+					ProposalVotes { expiry: now + T::ProposalLifetime::get(), ..Default::default() }
+				},
 			};
 
 			// Ensure the proposal isn't complete and relayer hasn't already voted
@@ -709,8 +710,8 @@ pub mod pallet {
 			let balance: BalanceOf<T> = T::Currency::free_balance(&sender);
 			ensure!(balance >= amount, Error::<T>::InsufficientBalance);
 
-			T::Currency::withdraw(&sender, amount, WithdrawReasons::TRANSFER, AllowDeath)?;
-			T::Currency::burn(amount);
+			let _ = T::Currency::withdraw(&sender, amount, WithdrawReasons::TRANSFER, AllowDeath)?;
+			let _ = T::Currency::burn(amount);
 
 			// deposit fee to treasury
 			let _ = T::Currency::deposit_into_existing(&T::TreasuryAccount::get(), fee)?;

@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
+#![allow(dead_code)]
 
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
@@ -491,10 +492,10 @@ pub mod pallet {
 
 			match Self::mode() {
 				OperationalMode::Production | OperationalMode::Maintenance => {
-					if !Self::allow_sgx_debug_mode() &&
-						enclave.sgx_build_mode == SgxBuildMode::Debug
+					if !Self::allow_sgx_debug_mode()
+						&& enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
-						return Err(Error::<T>::InvalidSgxMode.into())
+						return Err(Error::<T>::InvalidSgxMode.into());
 					}
 					ensure!(
 						AuthorizedEnclave::<T>::get(worker_type).contains(&enclave.mrenclave),
@@ -622,7 +623,7 @@ pub mod pallet {
 			// Simple logic for now: only accept blocks from first registered enclave.
 			let primary_enclave_identifier =
 				EnclaveIdentifier::<T>::get(sender_enclave.worker_type)
-					.get(0)
+					.first()
 					.cloned()
 					.ok_or(Error::<T>::EnclaveIdentifierNotExist)?;
 			if sender != primary_enclave_identifier {
@@ -630,7 +631,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(Pays::No.into())
+				return Ok(Pays::No.into());
 			}
 
 			let block_number = confirmation.block_number;

@@ -31,7 +31,7 @@ use hex_literal::hex;
 
 const TEST_THRESHOLD: u32 = 2;
 
-fn make_transfer_proposal(to: u64, amount: u64) -> RuntimeCall {
+fn make_transfer_proposal(to: u64, amount: u128) -> RuntimeCall {
 	let rid = NativeTokenResourceId::get();
 	// let amount
 	RuntimeCall::BridgeTransfer(crate::Call::transfer { to, amount, rid })
@@ -124,7 +124,7 @@ fn mint_overflow() {
 			BridgeTransfer::transfer(
 				RuntimeOrigin::signed(Bridge::account_id()),
 				RELAYER_A,
-				u64::MAX,
+				u128::MAX,
 				resource_id,
 			),
 			Error::<Test>::OverFlow
@@ -183,7 +183,7 @@ fn transfer_to_regular_account() {
 		let dest_chain = 0;
 		let asset =
 			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
-		let amount: u64 = 100;
+		let amount: u128 = 100;
 
 		assert_noop!(
 			BridgeTransfer::transfer(

@@ -18,34 +18,25 @@ use super::*;
 use crate as pallet_asset_manager;
 use parity_scale_codec::{Decode, Encode};
 
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{ConstU64, Everything},
-};
+use frame_support::{construct_runtime, parameter_types};
 use frame_system::EnsureRoot;
 use scale_info::TypeInfo;
 use sp_core::{RuntimeDebug, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, Hash as THash, IdentityLookup},
+	BuildStorage,
 };
 use xcm::latest::prelude::*;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
-
 pub type AccountId = u64;
-pub type Balance = u64;
+pub type Balance = u128;
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		AssetManager: pallet_asset_manager,
 	}
 );
 
@@ -54,24 +45,23 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
+	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
-	type DbWeight = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -80,20 +70,24 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub const ExistentialDeposit: u128 = 1;
+}
+
 impl pallet_balances::Config for Test {
-	type Balance = Balance;
+	type MaxLocks = ();
+	type Balance = u128;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ConstU64<1>;
+	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 pub type AssetId = u32;
@@ -158,9 +152,7 @@ pub(crate) struct ExtBuilder {}
 
 impl ExtBuilder {
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.expect("Frame system builds valid default genesis config");
+		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

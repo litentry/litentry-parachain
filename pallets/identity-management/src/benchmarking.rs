@@ -25,6 +25,7 @@ use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
 use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
 use sp_core::H256;
+use sp_runtime::BuildStorage;
 use sp_std::vec;
 
 use pallet_teebag::test_util::TEST8_MRENCLAVE;
@@ -172,10 +173,8 @@ benchmarks! {
 #[cfg(test)]
 mod tests {
 	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<crate::mock::Test>()
-			.unwrap();
-		sp_io::TestExternalities::new(t)
+		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+		t.into()
 	}
 }
 

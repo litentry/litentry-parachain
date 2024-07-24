@@ -47,5 +47,6 @@ std = [
     "frame-system/std",
     "frame-benchmarking?/std",
     "pallet-bridge/std",
+    "pallet-parachain-staking/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

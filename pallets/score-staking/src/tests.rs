@@ -238,13 +238,13 @@ fn score_staking_works() {
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: 2 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
+				total_reward: 2 * round_reward()
+					+ round_reward() * 3 / 4
+					+ round_reward() * 2 * 3 / (3 * 5),
 				last_round_reward: round_reward() * 2 * 3 / (3 * 5),
-				unpaid_reward: 2 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
+				unpaid_reward: 2 * round_reward()
+					+ round_reward() * 3 / 4
+					+ round_reward() * 2 * 3 / (3 * 5),
 			}
 		);
 

@@ -18,33 +18,25 @@
 
 use super::*;
 
-use frame_support::{
-	assert_ok, ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64},
-};
+use frame_support::{assert_ok, parameter_types};
 use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 
 use crate::{self as bridge, Config};
-pub use pallet_balances as balances;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+pub type Balance = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Bridge: bridge::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Bridge: bridge,
 	}
 );
 
@@ -54,49 +46,48 @@ parameter_types! {
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
+	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
-	type DbWeight = ();
 	type Version = ();
-	type AccountData = pallet_balances::AccountData<u64>;
+	type PalletInfo = PalletInfo;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type PalletInfo = PalletInfo;
-	type BlockWeights = ();
-	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-ord_parameter_types! {
-	pub const One: u64 = 1;
+parameter_types! {
+	pub const ExistentialDeposit: u128 = 1;
 }
 
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type MaxLocks = ();
+	type Balance = u128;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ConstU64<1>;
+	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type MaxLocks = ConstU32<100>;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 parameter_types! {
@@ -116,17 +107,16 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
-// pub const BRIDGE_ID: u64 =
 pub const RELAYER_A: u64 = 0x2;
 pub const RELAYER_B: u64 = 0x3;
 pub const RELAYER_C: u64 = 0x4;
-pub const ENDOWED_BALANCE: u64 = 100_000_000;
+pub const ENDOWED_BALANCE: u128 = 100_000_000;
 pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
 	let treasury_account: u64 = 0x8;
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),

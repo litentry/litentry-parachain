@@ -169,7 +169,7 @@ pub mod pallet {
 			let total_issuance = <T as bridge::Config>::Currency::total_issuance();
 			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
 			if new_issuance > MaximumIssuance::<T>::get() {
-				return Err(Error::<T>::ReachMaximumSupply.into())
+				return Err(Error::<T>::ReachMaximumSupply.into());
 			}
 			if rid == T::NativeTokenResourceId::get() {
 				let external_balances = <ExternalBalances<T>>::get()
@@ -182,7 +182,7 @@ pub mod pallet {
 				Self::deposit_event(Event::NativeTokenMinted { to, amount });
 				<ExternalBalances<T>>::put(external_balances);
 			} else {
-				return Err(Error::<T>::InvalidResourceId.into())
+				return Err(Error::<T>::InvalidResourceId.into());
 			}
 			Ok(())
 		}

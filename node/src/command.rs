@@ -400,7 +400,7 @@ pub fn run() -> Result<()> {
 				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
 						if !runner.config().chain_spec.is_dev() {
-							return Err("Only dev chain should be used in benchmark".into())
+							return Err("Only dev chain should be used in benchmark".into());
 						}
 
 						// TODO: which version shall we use, evm or no_evm?
@@ -442,8 +442,9 @@ pub fn run() -> Result<()> {
 					})
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) =>
-					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				BenchmarkCmd::Machine(cmd) => {
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+				},
 				// NOTE: this allows the Client to leniently implement
 				// new benchmark commands without requiring a companion MR.
 				#[allow(unreachable_patterns)]
@@ -501,8 +502,9 @@ pub fn run() -> Result<()> {
 			}
 		},
 		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) =>
-			Err("Try-runtime must be enabled by `--features try-runtime`".into()),
+		Some(Subcommand::TryRuntime) => {
+			Err("Try-runtime must be enabled by `--features try-runtime`".into())
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -526,7 +528,7 @@ pub fn run() -> Result<()> {
 						RococoParachainRuntimeExecutor,
 					>(config, evm_tracing_config)
 					.await
-					.map_err(Into::into)
+					.map_err(Into::into);
 				}
 
 				let hwbench = if !cli.no_hardware_benchmarks {

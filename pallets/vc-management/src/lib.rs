@@ -372,15 +372,17 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				VCMPError::RequestVCFailed(assertion, detail) =>
+				VCMPError::RequestVCFailed(assertion, detail) => {
 					Self::deposit_event(Event::RequestVCFailed {
 						identity,
 						assertion,
 						detail,
 						req_ext_hash,
-					}),
-				VCMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash }),
+					})
+				},
+				VCMPError::UnclassifiedError(detail) => {
+					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash })
+				},
 			}
 			Ok(Pays::No.into())
 		}

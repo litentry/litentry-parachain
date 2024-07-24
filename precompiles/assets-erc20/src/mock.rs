@@ -37,7 +37,7 @@ use super::*;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU64, Everything},
+	traits::{AsEnsureOriginWithArg, ConstU64},
 	weights::Weight,
 };
 
@@ -50,16 +50,13 @@ use precompile_utils::{
 
 use sp_core::{ConstU32, H160, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 
 pub type AccountId = MockAccount;
 pub type AssetId = u128;
 pub type Balance = u128;
-pub type BlockNumber = u64;
-pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
-pub type Block = frame_system::mocking::MockBlock<Runtime>;
 
 /// The local asset precompile address prefix. Addresses that match against this prefix will
 /// be routed to Erc20AssetsPrecompileSet being marked as local
@@ -89,21 +86,21 @@ impl AddressToAssetId<AssetId> for Runtime {
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for Runtime {
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = frame_support::traits::Everything;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Runtime>;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -112,9 +109,7 @@ impl frame_system::Config for Runtime {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type BlockWeights = ();
-	type BlockLength = ();
-	type SS58Prefix = SS58Prefix;
+	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -135,19 +130,19 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Runtime {
-	type MaxReserves = ();
-	type ReserveIdentifier = ();
 	type MaxLocks = ();
-	type Balance = Balance;
-	type RuntimeEvent = RuntimeEvent;
+	type Balance = u128;
 	type DustRemoval = ();
+	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<0>;
-	type MaxFreezes = ConstU32<0>;
+	type MaxHolds = ();
+	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 parameter_types! {
@@ -215,10 +210,7 @@ impl pallet_assets::Config for Runtime {
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -241,9 +233,7 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
-			.expect("Frame system builds valid default genesis config");
+		let mut t = frame_system::GenesisConfig::<Runtime>::default().build_storage().unwrap();
 
 		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
 			.assimilate_storage(&mut t)
