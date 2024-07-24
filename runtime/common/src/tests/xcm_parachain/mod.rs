@@ -1144,8 +1144,11 @@ where
 		));
 	});
 	R::Relay::execute_with(|| {
-		let call_message: R::ParaCall =
-			pallet_balances::Call::transfer { dest: bob().into(), value: 2 * UNIT }.into();
+		let call_message: R::ParaCall = pallet_balances::Call::transfer {
+			dest: bob().into(),
+			value: 2 * WEIGHT_TO_FEE_FACTOR * UNIT,
+		}
+		.into();
 
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
@@ -1206,13 +1209,16 @@ where
 		// The whole Xcm get Executed but fee paid without Transact executed ??????????
 		// TODO:: Some very detials need to be checked
 		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
-		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 2 * UNIT);
+		assert_eq!(
+			Balances::<R::ParaRuntime>::free_balance(&bob()),
+			2 * WEIGHT_TO_FEE_FACTOR * UNIT
+		);
 		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 0);
 		let xcm_fee = u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
 			100 * MILLICENTS;
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
-			10 * WEIGHT_TO_FEE_FACTOR * UNIT - xcm_fee - 2 * UNIT
+			10 * WEIGHT_TO_FEE_FACTOR * UNIT - xcm_fee - 2 * WEIGHT_TO_FEE_FACTOR * UNIT
 		);
 		// restore normal mode?
 		assert_ok!(ExtrinsicFilter::<R::ParaRuntime>::set_mode(
