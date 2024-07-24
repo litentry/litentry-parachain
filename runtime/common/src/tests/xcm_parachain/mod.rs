@@ -1155,7 +1155,7 @@ where
 			/* Assets used for fee */
 			fun: Fungibility::Fungible(
 				u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
-					100 * WEIGHT_TO_FEE_FACTOR * MILLICENTS,
+					100 * MILLICENTS,
 			),
 		}]
 		.into();
