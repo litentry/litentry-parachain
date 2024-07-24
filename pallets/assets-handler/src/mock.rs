@@ -85,11 +85,10 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<100>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
-	type RuntimeHoldReason = ();
-	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
@@ -111,7 +110,7 @@ impl pallet_bridge::Config for Test {
 parameter_types! {
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
-	// transfernativemembers
+	// TransferAssetsMembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
 }
 
@@ -165,9 +164,11 @@ impl pallet_assets_handler::Config for Test {
 	type TreasuryAccount = TreasuryAccount;
 }
 
+
+????????????????????
 impl pallet_bridge_transfer::Config for Test {
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Test>;
-	type TransferNativeMembers = MembersProvider;
+	type TransferAssetsMembers = MembersProvider;
 	type BridgeHandler = AssetsHandler;
 	type WeightInfo = ();
 }

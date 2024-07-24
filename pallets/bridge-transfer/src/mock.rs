@@ -14,46 +14,40 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
+use crate::{self as bridge_transfer, Config};
 use frame_support::{
-	ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64, SortedMembers},
+	assert_ok, derive_impl, ord_parameter_types, parameter_types,
+	traits::{
+		fungible,
+		tokens::{Fortitude, Precision},
+		ConstU32, ConstU64, SortedMembers,
+	},
 	PalletId,
 };
-use frame_system::{self as system, EnsureSignedBy};
+use frame_system as system;
 use hex_literal::hex;
-use sp_core::H256;
-use sp_runtime::{
-	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-};
-
-use crate::{self as bridge_transfer, Config};
 pub use pallet_balances as balances;
-use pallet_bridge as bridge;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+use pallet_bridge::{self as bridge, ResourceId};
+use sp_core::{ConstU16, H256};
+use sp_runtime::{
+	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	BuildStorage, DispatchError,
+};
+pub const TEST_THRESHOLD: u32 = 2;
 type Block = frame_system::mocking::MockBlock<Test>;
-pub const MAXIMUM_ISSURANCE: u64 = 20_000_000_000_000;
 
+type AccountId = u64;
+type Balance = u64;
+// Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Bridge: bridge::{Pallet, Call, Storage, Event<T>},
-		BridgeTransfer: bridge_transfer::{Pallet, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		System: frame_system,
+		Balances: pallet_balances,
+		Bridge: bridge,
+		BridgeTransfer: bridge_transfer,
 	}
 );
-
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -87,7 +81,7 @@ ord_parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ConstU64<1>;
@@ -173,15 +167,8 @@ impl bridge_transfer::BridgeHandler<Balance, AccountId, ResourceId> for MockAsse
 
 impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
-	type TransferNativeMembers = MembersProvider;
+	type TransferAssetsMembers = MembersProvider;
 	type BridgeHandler = MockAssetsHandler;
-	type WeightInfo = ();
-}
-
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<1>;
 	type WeightInfo = ();
 }
 
@@ -194,7 +181,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
 	let dest_chain = 0u8;
 	let treasury_account: u64 = 0x8;
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),

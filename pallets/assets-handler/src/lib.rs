@@ -69,6 +69,17 @@ pub mod pallet {
 
 		/// Treasury account to receive assets fee
 		type TreasuryAccount: Get<Self::AccountId>;
+
+		/// The privileged origin to call update_maximum_issuance
+		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		
+		#[pallet::constant]
+		type DefaultMaximumIssuance: Get<bridge::BalanceOf<Self>>;
+
+		#[pallet::constant]
+		// In parachain local decimal format
+		type ExternalTotalIssuance: Get<bridge::BalanceOf<Self>>;
+
 	}
 
 	// Resource Id of pallet assets token
@@ -103,11 +114,41 @@ pub mod pallet {
 		},
 	}
 
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// MaximumIssuance was changed
+		MaximumIssuanceChanged { old_value: BalanceOf<T> },
+	}
+
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidResourceId,
 		CannotPayAsFee,
+		ReachMaximumSupply,
+		OverFlow,
 	}
+
+	#[pallet::type_value]
+	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
+		T::ExternalTotalIssuance::get()
+			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
+				<T as frame_system::Config>::AccountId,
+			>>::total_issuance())
+			.map_or_else(|| 0u32.into(), |v| v)
+	}
+
+	// Native Token External Balance
+	#[pallet::storage]
+	#[pallet::getter(fn external_balances)]
+	pub type ExternalBalances<T: Config> =
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
+	
+	// Native Token Maximum Issuance
+	#[pallet::storage]
+	#[pallet::getter(fn maximum_issuance)]
+	pub type MaximumIssuance<T: Config> =
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

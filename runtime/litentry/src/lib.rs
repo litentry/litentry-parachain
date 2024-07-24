@@ -828,13 +828,8 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TransferNativeAnyone;
-	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
-	type DefaultMaximumIssuance = MaximumIssuance;
-	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type TransferAssetsMembers = TransferNativeAnyone;
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 

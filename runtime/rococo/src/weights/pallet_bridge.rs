@@ -60,28 +60,6 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
-	/// Storage: ChainBridge Resources (r:0 w:1)
-	/// Proof Skipped: ChainBridge Resources (max_values: None, max_size: None, mode: Measured)
-	fn set_resource() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 5_198_000 picoseconds.
-		Weight::from_parts(5_361_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
-	/// Storage: ChainBridge Resources (r:0 w:1)
-	/// Proof Skipped: ChainBridge Resources (max_values: None, max_size: None, mode: Measured)
-	fn remove_resource() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 4_399_000 picoseconds.
-		Weight::from_parts(4_584_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
 	/// Storage: ChainBridge ChainNonces (r:1 w:1)
 	/// Proof Skipped: ChainBridge ChainNonces (max_values: None, max_size: None, mode: Measured)
 	fn whitelist_chain() -> Weight {
@@ -121,17 +99,6 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 3688))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
-	}
-	/// Storage: ChainBridge BridgeFee (r:0 w:1)
-	/// Proof Skipped: ChainBridge BridgeFee (max_values: None, max_size: None, mode: Measured)
-	fn update_fee() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 11_350_000 picoseconds.
-		Weight::from_parts(11_739_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	/// Storage: ChainBridge Relayers (r:1 w:0)
 	/// Proof Skipped: ChainBridge Relayers (max_values: None, max_size: None, mode: Measured)

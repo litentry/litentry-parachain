@@ -51,7 +51,7 @@ benchmarks! {
 	transfer_assets{
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
 
-		ensure!(T::TransferNativeMembers::contains(&sender),"add transfer_native_member failed");
+		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
 		let dest_chain = 0;
 
 		let r_id = NATIVE_TOKEN_RESOURCE_ID;

@@ -61,7 +61,7 @@ pub mod pallet {
 		type BridgeOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
 		/// The priviledged accounts to call the transfer_assets
-		type TransferNativeMembers: SortedMembers<Self::AccountId>;
+		type TransferAssetsMembers: SortedMembers<Self::AccountId>;
 
 		// Handler of asset transfer/burn/mint etc.
 		type BridgeHandler: BridgeHandler<BalanceOf<Self>, Self::AccountId, ResourceId>;
@@ -85,7 +85,7 @@ pub mod pallet {
 			resource_id: ResourceId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
-			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
+			ensure!(T::TransferAssetsMembers::contains(&source), BadOrigin);
 			let actual_dest_amount =
 				T::BridgeHandler::prepare_token_bridge_out(resource_id, source, amount)?;
 			<bridge::Pallet<T>>::signal_transfer_fungible(
