@@ -88,10 +88,9 @@ library AchainableClient {
         }
     }
 
-    function parseDisplayItems(string memory response)
-        private
-        returns (bool, DisplayItem[] memory)
-    {
+    function parseDisplayItems(
+        string memory response
+    ) private returns (bool, DisplayItem[] memory) {
         (bool displayLenSuccess, int64 displayLen) = Json.getArrayLen(
             response,
             "/display"

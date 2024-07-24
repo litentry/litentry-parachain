@@ -22,26 +22,26 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Shib {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](8);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 400000 * Constants.decimals_factor;
-		ranges[2] = 2000000 * Constants.decimals_factor;
-		ranges[3] = 10000000 * Constants.decimals_factor;
-		ranges[4] = 20000000 * Constants.decimals_factor;
-		ranges[5] = 40000000 * Constants.decimals_factor;
-		ranges[6] = 100000000 * Constants.decimals_factor;
-		ranges[7] = 200000000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](8);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 400000 * Constants.decimals_factor;
+        ranges[2] = 2000000 * Constants.decimals_factor;
+        ranges[3] = 10000000 * Constants.decimals_factor;
+        ranges[4] = 20000000 * Constants.decimals_factor;
+        ranges[5] = 40000000 * Constants.decimals_factor;
+        ranges[6] = 100000000 * Constants.decimals_factor;
+        ranges[7] = 200000000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+        );
+        return tokenInfoList;
+    }
 }

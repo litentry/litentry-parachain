@@ -73,11 +73,9 @@ library AssertionLogic {
         return cc;
     }
 
-    function toString(CompositeCondition memory cc)
-        internal
-        pure
-        returns (string memory)
-    {
+    function toString(
+        CompositeCondition memory cc
+    ) internal pure returns (string memory) {
         string memory result = "{";
 
         if (cc.conditions.length > 0) {
@@ -100,11 +98,9 @@ library AssertionLogic {
         return result;
     }
 
-    function toString(Condition memory condition)
-        internal
-        pure
-        returns (string memory)
-    {
+    function toString(
+        Condition memory condition
+    ) internal pure returns (string memory) {
         return
             string(
                 abi.encodePacked(
