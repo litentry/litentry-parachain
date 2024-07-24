@@ -511,8 +511,8 @@ jobs:
     strategy:
       matrix:
         chain:
-          # - litmus
-          # - litentry
+          - litmus
+          - litentry
           - rococo
     steps:
       - uses: actions/checkout@v4
