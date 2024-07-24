@@ -17,6 +17,8 @@ import type { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api
 import { mockBatchAssertion } from './common/utils/vc-helper';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { Vec, Bytes } from '@polkadot/types';
+import { subscribeToEventsWithExtHash } from './common/transactions';
+import { assert } from 'chai';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -171,6 +173,7 @@ describe('Test Vc (direct request)', function () {
                 if (vcresponse.result.isOk) await assertVc(context, aliceSubstrateIdentity, vcresponse.result.asOk);
             };
 
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             // the +res+ below is the last message with "do_watch: false" property and we may not need it at all
             const res = await sendRequestFromTrustedCall(
                 context,
@@ -179,6 +182,9 @@ describe('Test Vc (direct request)', function () {
                 isVcDirect,
                 onMessageReceived
             );
+
+            const events = (await eventsPromise).map(({ event }) => event);
+            assert.equal(events.length, Array.isArray(assertion) ? assertion.length : 1);
 
             // @todo: assert batch vc response
         });
