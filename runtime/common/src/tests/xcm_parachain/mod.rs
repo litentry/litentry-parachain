@@ -1155,7 +1155,7 @@ where
 			/* Assets used for fee */
 			fun: Fungibility::Fungible(
 				u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
-					100 * MILLICENTS,
+					100 * WEIGHT_TO_FEE_FACTOR * MILLICENTS,
 			),
 		}]
 		.into();
@@ -1166,7 +1166,7 @@ where
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
 						u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
-							100 * MILLICENTS,
+							100 * WEIGHT_TO_FEE_FACTOR * MILLICENTS,
 					),
 				},
 				weight_limit: WeightLimit::Limited(
@@ -1215,7 +1215,7 @@ where
 		);
 		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 0);
 		let xcm_fee = u128::from(R::UnitWeightCost::get().ref_time() * 5) * WEIGHT_TO_FEE_FACTOR +
-			100 * MILLICENTS;
+			100 * WEIGHT_TO_FEE_FACTOR * MILLICENTS;
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
 			10 * WEIGHT_TO_FEE_FACTOR * UNIT - xcm_fee - 2 * WEIGHT_TO_FEE_FACTOR * UNIT
