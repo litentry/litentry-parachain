@@ -1,0 +1,35 @@
+name: System check
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        type: choice
+        options:
+          - litentry-prod
+          ## Target tee-prod only for now
+          # - litentry-dev
+          # - litentry-staging
+        default: "litentry-prod"
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set ENV
+        run: |
+          echo "LITENTRY_NETWORK=${{inputs.environment}}" >> $GITHUB_ENV
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: install deps
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm install --frozen-lockfile
+
+      - name: run
+        working-directory: ./tee-worker/ts-tests/post-checks
+        run: pnpm start
