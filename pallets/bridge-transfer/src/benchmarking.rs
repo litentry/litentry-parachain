@@ -18,80 +18,54 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 #![allow(clippy::type_complexity)]
-#[allow(unused)]
+#![allow(clippy::duplicated_attributes)]
+#![allow(unused)]
+#![allow(clippy::useless_vec)]
 use super::*;
-use bridge::BalanceOf as balance;
+use crate::Pallet as bridge_transfer;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{
-	ensure,
-	traits::{Currency, SortedMembers},
-	PalletId,
-};
+use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
+use hex_literal::hex;
 use pallet_bridge::{EnsureOrigin, Get};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
 
 const MAXIMUM_ISSURANCE: u32 = 20_000;
-
+const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
+	hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
-	let user = account(string, n, seed);
+	let user: T::AccountId = account(string, n, seed);
+	bridge_transfer::<T>::transfer(
+		RawOrigin::Root.into(),
+		user.clone(),
+		(n * MAXIMUM_ISSURANCE).into(),
+		NATIVE_TOKEN_RESOURCE_ID,
+	);
 
-	let default_balance = T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
-	let _ = T::Currency::deposit_creating(&user, default_balance);
 	user
 }
 
 benchmarks! {
-	transfer_native{
+	transfer_assets{
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
 
 		ensure!(T::TransferNativeMembers::contains(&sender),"add transfer_native_member failed");
-
 		let dest_chain = 0;
 
-		pallet_bridge::Pallet::<T>::update_fee(
-			RawOrigin::Root.into(),
-			dest_chain,
-			10u32.into(),
-		)?;
+		let r_id = NATIVE_TOKEN_RESOURCE_ID;
 
-		pallet_bridge::Pallet::<T>::whitelist_chain(
-			RawOrigin::Root.into(),
-			dest_chain,
-		)?;
-
-	}:_(RawOrigin::Signed(sender),50u32.into(),vec![0u8, 0u8, 0u8, 0u8],dest_chain)
+	}:_(RawOrigin::Signed(sender),50u32.into(),vec![0u8, 0u8, 0u8, 0u8],dest_chain,r_id)
 
 	transfer{
+		let r_id = NATIVE_TOKEN_RESOURCE_ID;
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
 
-		let default_balance =
-		T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
-		let _ = T::Currency::deposit_creating(&sender, default_balance);
-
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
-		let resource_id :bridge::ResourceId= T::NativeTokenResourceId::get();
-
-	}:_(RawOrigin::Signed(sender),to_account,50u32.into(),resource_id)
-
-	set_maximum_issuance{
-		let origin = T::SetMaximumIssuanceOrigin::try_successful_origin().expect("SetMaximumIssuanceOrigin has no successful origin required for the benchmark");
-		let maximum_issuance:balance<T> = 2u32.into();
-	}:_<T::RuntimeOrigin>(origin,maximum_issuance)
-	verify{
-		assert_eq!(MaximumIssuance::<T>::get(),maximum_issuance);
-	}
-
-	set_external_balances{
-		let external_balances:balance<T> = (MAXIMUM_ISSURANCE / 2).into();
-	}:_(RawOrigin::Root,external_balances)
-	verify{
-		assert_eq!(<ExternalBalances<T>>::get(),external_balances);
-	}
+	}:_(RawOrigin::Signed(sender),to_account,50u32.into(), r_id)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);

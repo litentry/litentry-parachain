@@ -14,30 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-
+use crate::{self as pallet_assets_handler};
 use frame_support::{
 	assert_ok, derive_impl, ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
+	PalletId,
 };
-use frame_system::{self as system};
+use hex_literal::hex;
+use pallet_assets_handler::AssetInfo;
 use sp_core::{ConstU16, H256};
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 	BuildStorage,
 };
-
-use crate::{self as bridge, Config};
-
+pub const TEST_THRESHOLD: u32 = 2;
 type Block = frame_system::mocking::MockBlock<Test>;
 
+type Balance = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Bridge: bridge,
+		Bridge: pallet_bridge,
+		Assets: pallet_assets,
+		AssetsHandler: pallet_assets_handler,
+		BridgeTransfer: pallet_bridge_transfer,
 	}
 );
 
@@ -73,7 +76,7 @@ ord_parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ConstU64<1>;
@@ -95,22 +98,84 @@ parameter_types! {
 	pub const TreasuryAccount:u64 = 0x8;
 }
 
-impl Config for Test {
+impl pallet_bridge::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = TestChainId;
-	type Balance = u64;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
 	type WeightInfo = ();
 }
 
-// pub const BRIDGE_ID: u64 =
+parameter_types! {
+	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
+	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
+	// transfernativemembers
+	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
+}
+
+pub struct MembersProvider;
+impl SortedMembers<u64> for MembersProvider {
+	fn sorted_members() -> Vec<u64> {
+		MembersProviderTestvalue::get()
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	fn contains(who: &u64) -> bool {
+		Self::sorted_members().contains(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &u64) {
+		unimplemented!()
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn contains(_who: &u64) -> bool {
+		true
+	}
+}
+
+impl pallet_assets::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = u32;
+	type AssetIdParameter = u32;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<Self::AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type AssetDeposit = ConstU64<1>;
+	type AssetAccountDeposit = ConstU64<10>;
+	type MetadataDepositBase = ConstU64<1>;
+	type MetadataDepositPerByte = ConstU64<1>;
+	type ApprovalDeposit = ConstU64<1>;
+	type StringLimit = ConstU32<50>;
+	type Freezer = ();
+	type WeightInfo = ();
+	type CallbackHandle = ();
+	type Extra = ();
+	type RemoveItemsLimit = ConstU32<5>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
+}
+
+impl pallet_assets_handler::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
+}
+
+impl pallet_bridge_transfer::Config for Test {
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Test>;
+	type TransferNativeMembers = MembersProvider;
+	type BridgeHandler = AssetsHandler;
+	type WeightInfo = ();
+}
+
 pub const RELAYER_A: u64 = 0x2;
 pub const RELAYER_B: u64 = 0x3;
 pub const RELAYER_C: u64 = 0x4;
 pub const ENDOWED_BALANCE: u64 = 100_000_000;
-pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
@@ -126,13 +191,30 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		frame_system::Pallet::<Test>::set_block_number(1);
+		let resource_id = NativeTokenResourceId::get();
+		let native_token_asset_info: AssetInfo<
+			<Test as pallet_assets::Config>::AssetId,
+			<Test as pallet_assets::Config>::Balance,
+		> = AssetInfo { fee: 0u64, asset: None };
+		// Setup asset handler
+		assert_ok!(AssetsHandler::set_resource(
+			RuntimeOrigin::root(),
+			resource_id,
+			native_token_asset_info
+		));
+	});
 	ext
 }
 
 pub fn new_test_ext_initialized(
-	src_id: BridgeChainId,
-	_r_id: ResourceId,
+	src_id: pallet_bridge::BridgeChainId,
+	r_id: pallet_bridge::ResourceId,
+	asset: AssetInfo<
+		<Test as pallet_assets::Config>::AssetId,
+		<Test as pallet_assets::Config>::Balance,
+	>,
 ) -> sp_io::TestExternalities {
 	let mut t = new_test_ext();
 	t.execute_with(|| {
@@ -145,6 +227,9 @@ pub fn new_test_ext_initialized(
 		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
 		// Whitelist chain
 		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), src_id));
+
+		// Setup asset handler
+		assert_ok!(AssetsHandler::set_resource(RuntimeOrigin::root(), r_id, asset));
 	});
 	t
 }
@@ -153,12 +238,12 @@ pub fn new_test_ext_initialized(
 // include the most recent event, but do not have to include every past event.
 pub fn assert_events(mut expected: Vec<RuntimeEvent>) {
 	let mut actual: Vec<RuntimeEvent> =
-		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
+		frame_system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
 
 	expected.reverse();
 
 	for evt in expected {
 		let next = actual.pop().expect("event expected");
-		assert_eq!(next, evt, "Events don't match (actual,expected)");
+		assert_eq!(next, evt, "Events don't match");
 	}
 }
