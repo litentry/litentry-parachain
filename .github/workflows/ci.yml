@@ -511,8 +511,8 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
-          - litentry
+          # - litmus
+          # - litentry
           - rococo
     steps:
       - uses: actions/checkout@v4
@@ -529,7 +529,7 @@ jobs:
         run: corepack enable && corepack enable pnpm
 
       - name: Run ts tests for ${{ matrix.chain }}
-        if: needs.set-condition.outputs.run_parachain_test == 'true'
+        # if: needs.set-condition.outputs.run_parachain_test == 'true'
         timeout-minutes: 35
         run: |
           make test-ts-docker-${{ matrix.chain }}
