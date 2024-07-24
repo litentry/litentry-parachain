@@ -5,3 +5,4 @@ node_modules
 .idea
 typechain-types
 coverage
+pnpm-lock.yaml
