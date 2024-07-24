@@ -331,8 +331,8 @@ pub mod pallet {
 			if let Some(i) = new_default_asset_type {
 				// new default asset type must register already, and not belong to other asset_id
 				ensure!(
-					AssetTypeId::<T>::get(&i).ok_or(Error::<T>::AssetTypeDoesNotExist)?
-						== asset_id.clone(),
+					AssetTypeId::<T>::get(&i).ok_or(Error::<T>::AssetTypeDoesNotExist)? ==
+						asset_id.clone(),
 					Error::<T>::AssetAlreadyExists
 				);
 				AssetIdType::<T>::insert(&asset_id, &i);
@@ -342,7 +342,7 @@ pub mod pallet {
 			    // This should be impossible to not get
 				AssetIdType::<T>::get(&asset_id).ok_or(Error::<T>::AssetIdDoesNotExist)?;
 			if default_asset_type == asset_type {
-				return Err(Error::<T>::DefaultAssetTypeRemoved.into());
+				return Err(Error::<T>::DefaultAssetTypeRemoved.into())
 			}
 
 			// Remove from AssetTypeId
@@ -386,7 +386,7 @@ pub mod pallet {
 		fn payment_is_supported(asset_type: T::ForeignAssetType) -> bool {
 			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
 				if AssetIdUnitsPerSecond::<T>::get(asset_id) > 0 {
-					return true;
+					return true
 				}
 			}
 			false
@@ -395,7 +395,7 @@ pub mod pallet {
 			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
 				let ups = AssetIdUnitsPerSecond::<T>::get(asset_id);
 				if ups > 0 {
-					return Some(ups);
+					return Some(ups)
 				}
 			}
 			None

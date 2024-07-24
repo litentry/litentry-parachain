@@ -29,6 +29,11 @@
       "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
       "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
     ],
+    "developerCommittee": [
+      "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
+      "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5",
+      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+    ],
     "bootNodes": [
       "/dns/parachain-sg-0.staging.litentry.io/tcp/40333/p2p/12D3KooWCnBzJy9w9hQFyiwVG2mADqNaPu3Z6WFThivwnrppdWND"
     ],

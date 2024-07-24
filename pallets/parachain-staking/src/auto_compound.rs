@@ -84,14 +84,13 @@ where
 	/// vector for binary_search to work.
 	pub fn set_for_delegator(&mut self, delegator: T::AccountId, value: Percent) -> bool {
 		match self.0.binary_search_by(|d| d.delegator.cmp(&delegator)) {
-			Ok(index) => {
+			Ok(index) =>
 				if self.0[index].value == value {
 					false
 				} else {
 					self.0[index].value = value;
 					true
-				}
-			},
+				},
 			Err(index) => {
 				self.0.insert(index, AutoCompoundConfig { delegator, value });
 				true

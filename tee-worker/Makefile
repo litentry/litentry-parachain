@@ -24,9 +24,13 @@ SGX_DEBUG ?= 0
 SGX_PRERELEASE ?= 0
 SGX_PRODUCTION ?= 0
 
+
 ######## Worker Feature Settings ########
 # Set sidechain as default feature mode
 WORKER_MODE ?= sidechain
+WORKER_DEV ?= 0
+WORKER_MOCK_SERVER ?= 0
+RA_METHOD ?= 
 
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk
@@ -71,21 +75,29 @@ endif
 
 SGX_COMMON_CFLAGS += -fstack-protector
 
+ifeq ($(WORKER_DEV), 1)
+	ADDITIONAL_FEATURES := $(ADDITIONAL_FEATURES),development
+endif
+
+ifeq ($(WORKER_MOCK_SERVER), 1)
+	WORKER_FEATURES := $(WORKER_FEATURES),mock-server
+endif
+
 ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_MODE = "Production Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
 	SGX_SIGN_PASSFILE = $(SGX_PASSFILE)
-	WORKER_FEATURES := --features=production,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=link-binary,$(WORKER_MODE),$(RA_METHOD),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
 	SGX_SIGN_PASSFILE = ""
-	WORKER_FEATURES := --features=default,link-binary,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=default,link-binary,$(WORKER_MODE),$(RA_METHOD),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 endif
 
-CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+CLIENT_FEATURES = --features=$(WORKER_MODE),$(RA_METHOD),$(ADDITIONAL_FEATURES)
 
 # check if running on Jenkins
 ifdef BUILD_ID
@@ -261,6 +273,7 @@ mrsigner:
 .PHONY: identity
 identity: mrenclave mrsigner
 
+
 .PHONY: release-pkg
 release-pkg:
 	@./scripts/litentry/release/generate_release_pkg.sh
@@ -285,3 +298,9 @@ help:
 	@echo "  SGX_PRODUCTION"
 	@echo "    0 (default): Using SGX development environment"
 	@echo "    1: Using SGX production environment"
+	@echo "  WORKER_DEV"
+	@echo "    0 (default): Not activating worker development feature"
+	@echo "    1: Activating worker development feature"
+	@echo "  WORKER_MOCK_SERVER"
+	@echo "    0 (default): Not activating worker mock-server feature"
+	@echo "    1: Activating worker mock-server feature"

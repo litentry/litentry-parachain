@@ -29,6 +29,7 @@ pub struct SealHandlerMock {
 	pub state_key: Arc<RwLock<Vec<u8>>>,
 	pub state: Arc<RwLock<Vec<u8>>>,
 	pub light_client_state: Arc<RwLock<Vec<u8>>>,
+	pub assertions_state: Arc<RwLock<Vec<u8>>>,
 }
 
 impl SealHandlerMock {
@@ -37,8 +38,9 @@ impl SealHandlerMock {
 		state_key: Arc<RwLock<Vec<u8>>>,
 		state: Arc<RwLock<Vec<u8>>>,
 		light_client_state: Arc<RwLock<Vec<u8>>>,
+		assertions_state: Arc<RwLock<Vec<u8>>>,
 	) -> Self {
-		Self { shielding_key, state_key, state, light_client_state }
+		Self { shielding_key, state_key, state, light_client_state, assertions_state }
 	}
 }
 
@@ -66,6 +68,11 @@ impl SealStateAndKeys for SealHandlerMock {
 		*self.light_client_state.write().unwrap() = bytes.to_vec();
 		Ok(())
 	}
+
+	fn seal_assertions_state(&self, bytes: &[u8]) -> EnclaveResult<()> {
+		*self.assertions_state.write().unwrap() = bytes.to_vec();
+		Ok(())
+	}
 }
 
 impl UnsealStateAndKeys for SealHandlerMock {
@@ -83,5 +90,9 @@ impl UnsealStateAndKeys for SealHandlerMock {
 
 	fn unseal_light_client_state(&self) -> EnclaveResult<Vec<u8>> {
 		Ok(self.light_client_state.read().unwrap().clone())
+	}
+
+	fn unseal_assertions_state(&self) -> EnclaveResult<Vec<u8>> {
+		Ok(self.assertions_state.read().unwrap().clone())
 	}
 }

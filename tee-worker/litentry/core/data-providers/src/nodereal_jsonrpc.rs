@@ -58,6 +58,8 @@ impl Web3NetworkNoderealJsonrpcClient for Web3Network {
 				Some(NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)),
 			Web3Network::Polygon =>
 				Some(NoderealJsonrpcClient::new(NoderealChain::Polygon, data_provider_config)),
+			Web3Network::Combo =>
+				Some(NoderealJsonrpcClient::new(NoderealChain::Combo, data_provider_config)),
 			_ => None,
 		}
 	}
@@ -79,6 +81,8 @@ pub enum NoderealChain {
 	Opt,
 	// Polygon
 	Polygon,
+	// Combo
+	Combo,
 }
 
 impl NoderealChain {
@@ -91,6 +95,7 @@ impl NoderealChain {
 			NoderealChain::Aptos => "aptos",
 			NoderealChain::Opt => "opt",
 			NoderealChain::Polygon => "polygon",
+			NoderealChain::Combo => "combo",
 		}
 	}
 }
@@ -446,7 +451,16 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			id: Id::Number(1),
 		};
 
-		self.post(&req_body, fast_fail)
+		match self.post(&req_body, fast_fail) {
+			Ok(resp) => {
+				debug!("get_token_holdings, response: {:?}", resp);
+				Ok(resp)
+			},
+			Err(e) => {
+				debug!("get_token_holdings, error: {:?}", e);
+				Err(e)
+			},
+		}
 	}
 }
 
@@ -531,7 +545,7 @@ mod tests {
 
 		let mut config = DataProviderConfig::new().unwrap();
 		config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
-		config.set_nodereal_api_chain_network_url(url);
+		config.set_nodereal_api_chain_network_url(url).unwrap();
 		config
 	}
 

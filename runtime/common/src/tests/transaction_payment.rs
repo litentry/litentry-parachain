@@ -105,8 +105,8 @@ where
 
 			// This test here already assume that we use IdentityFee
 			let total_payment: Balance =
-				IdentityFee::<Balance>::weight_to_fee(&ExtrinsicBaseWeight::get())
-					+ IdentityFee::<Balance>::weight_to_fee(&Weight::from_parts(
+				IdentityFee::<Balance>::weight_to_fee(&ExtrinsicBaseWeight::get()) +
+					IdentityFee::<Balance>::weight_to_fee(&Weight::from_parts(
 						dispatch_info as u64,
 						0,
 					)) + (len as Balance) * TransactionByteFee::get();

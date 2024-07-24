@@ -51,7 +51,7 @@ use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
-use itp_types::{AttestationType, OpaqueCall, WorkerType};
+use itp_types::{AttestationType, DcapProvider, OpaqueCall, WorkerType};
 use itp_utils::write_slice_and_whitespace_pad;
 use litentry_primitives::WorkerMode;
 use log::*;
@@ -319,16 +319,16 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	info!("    [Enclave] Compose register enclave getting callIDs:");
+	trace!("    [Enclave] Compose register enclave getting callIDs:");
 
 	let call_ids = node_metadata_repo
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
-	info!("    [Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
+	trace!("    [Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
 
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;
-	let attestation_type = AttestationType::Dcap(Default::default()); // skip_ra should be false here already
+	let attestation_type = AttestationType::Dcap(DcapProvider::Intel); // skip_ra should be false here already
 
 	let call = OpaqueCall::from_tuple(&(
 		call_ids,
@@ -340,7 +340,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 		vc_pubkey,
 		attestation_type,
 	));
-	info!("    [Enclave] Compose register enclave got extrinsic, returning");
+	trace!("    [Enclave] Compose register enclave got extrinsic, returning");
 	create_extrinsics(call)
 }
 
@@ -349,12 +349,12 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	info!("    [Enclave] Compose register enclave (skip-ra) getting callIDs:");
+	trace!("    [Enclave] Compose register enclave (skip-ra) getting callIDs:");
 
 	let call_ids = node_metadata_repo
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
-	info!("    [Enclave] Compose register enclave (skip-ra) call DCAP IDs: {:?}", call_ids);
+	trace!("    [Enclave] Compose register enclave (skip-ra) call DCAP IDs: {:?}", call_ids);
 
 	let shielding_pubkey = get_shielding_pubkey()?;
 	let vc_pubkey = get_vc_pubkey()?;

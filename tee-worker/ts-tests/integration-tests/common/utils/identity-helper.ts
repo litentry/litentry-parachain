@@ -2,29 +2,33 @@ import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
-import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
+import { decryptWithAes, Signer } from './crypto';
 import { ethers } from 'ethers';
-import type { Bytes, TypeRegistry, Vec } from '@polkadot/types';
+import type { TypeRegistry } from '@polkadot/types';
 import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
-import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import type { KeyringPair } from '@polkadot/keyring/types';
+import type { LitentryValidationData, CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
-import { bufferToU8a } from '@polkadot/util';
-import bitcore from 'bitcore-lib';
 
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     signer: CorePrimitivesIdentity,
     identity: CorePrimitivesIdentity,
-    sidechainNonce: number
-): HexString {
+    sidechainNonce: number,
+    options?: { prettifiedMessage?: boolean }
+): string {
+    const _options = { prettifiedMessage: false, ...options };
     const encodedIdentity = context.api.createType('CorePrimitivesIdentity', identity).toU8a();
     const encodedWho = context.api.createType('CorePrimitivesIdentity', signer).toU8a();
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
-    return blake2AsHex(msg, 256);
+    const hash = blake2AsHex(msg, 256);
+
+    if (_options.prettifiedMessage) {
+        return `Token: ${hash}`;
+    }
+
+    return hash;
 }
 
 export async function buildIdentityHelper(
@@ -36,96 +40,6 @@ export async function buildIdentityHelper(
         [type]: address,
     };
     return context.api.createType('CorePrimitivesIdentity', identity);
-}
-
-export async function buildIdentityFromKeypair(
-    signer: Signer,
-    context: IntegrationTestContext
-): Promise<CorePrimitivesIdentity> {
-    const type: string = (() => {
-        switch (signer.type()) {
-            case 'ethereum':
-                return 'Evm';
-            case 'sr25519':
-                return 'Substrate';
-            case 'ed25519':
-                return 'Substrate';
-            case 'ecdsa':
-                return 'Substrate';
-            case 'bitcoin':
-                return 'Bitcoin';
-            default:
-                return 'Substrate';
-        }
-    })();
-
-    const address = signer.getAddressRaw();
-    const identity = {
-        [type]: address,
-    };
-
-    return context.api.createType('CorePrimitivesIdentity', identity);
-}
-
-// If multiple transactions are built from multiple accounts, pass the signers as an array.
-// If multiple transactions are built from a single account, signers cannot be an array.
-//
-// TODO: enforce `validations` if method is `linkIdentity`
-export async function buildIdentityTxs(
-    context: IntegrationTestContext,
-    signers: KeyringPair[] | KeyringPair,
-    identities: CorePrimitivesIdentity[],
-    method: 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
-    validations?: LitentryValidationData[],
-    web3networks?: (Bytes | Vec<Web3Network>)[]
-): Promise<any[]> {
-    const txs: {
-        tx: SubmittableExtrinsic<ApiTypes>;
-        nonce: number;
-    }[] = [];
-    const api = context.api;
-    const mrEnclave = context.mrEnclave;
-    const teeShieldingKey = context.teeShieldingKey;
-    const len = Array.isArray(signers) ? signers.length : identities.length;
-    for (let k = 0; k < len; k++) {
-        const signer = Array.isArray(signers) ? signers[k] : signers;
-        const identity = identities[k];
-        let tx: SubmittableExtrinsic<ApiTypes>;
-        const ciphertextIdentity =
-            identity && encryptWithTeeShieldingKey(teeShieldingKey, identity.toU8a()).toString('hex');
-        const nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
-
-        switch (method) {
-            case 'linkIdentity': {
-                const validation = api.createType('LitentryValidationData', validations![k]).toU8a();
-                const networks = api.createType('Vec<Web3Network>', web3networks![k]).toU8a();
-                const ciphertextValidation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
-                const ciphertextNetworks = encryptWithTeeShieldingKey(teeShieldingKey, networks).toString('hex');
-
-                tx = api.tx.identityManagement.linkIdentity(
-                    mrEnclave,
-                    signer.address,
-                    `0x${ciphertextIdentity}`,
-                    `0x${ciphertextValidation}`,
-                    `0x${ciphertextNetworks}`
-                );
-                break;
-            }
-            case 'deactivateIdentity': {
-                tx = api.tx.identityManagement.deactivateIdentity(mrEnclave, `0x${ciphertextIdentity}`);
-                break;
-            }
-            case 'activateIdentity': {
-                tx = api.tx.identityManagement.activateIdentity(mrEnclave, `0x${ciphertextIdentity}`);
-                break;
-            }
-            default:
-                throw new Error(`Invalid method: ${method}`);
-        }
-        txs.push({ tx, nonce });
-    }
-
-    return txs;
 }
 
 export function parseIdGraph(
@@ -143,136 +57,179 @@ export function parseIdGraph(
     return idGraph;
 }
 
+type Web2ValidationConfig =
+    | {
+          identityType: 'Discord';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'PublicMessage' | 'OAuth2';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Twitter';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'PublicTweet';
+          validationNonce: number;
+      }
+    | {
+          identityType: 'Twitter';
+          context: IntegrationTestContext;
+          signerIdentitity: CorePrimitivesIdentity;
+          linkIdentity: CorePrimitivesIdentity;
+          verificationType: 'OAuth2';
+          validationNonce: number;
+          oauthState: string;
+      };
+
+export async function buildWeb2Validation(config: Web2ValidationConfig): Promise<LitentryValidationData> {
+    const { context, signerIdentitity, linkIdentity, validationNonce } = config;
+    const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
+    console.log(`post verification msg to ${config.identityType}:`, msg);
+
+    if (config.identityType === 'Discord') {
+        const discordValidationData = {
+            Web2Validation: {
+                Discord: {},
+            },
+        };
+
+        if (config.verificationType === 'PublicMessage') {
+            discordValidationData.Web2Validation.Discord = {
+                PublicMessage: {
+                    channel_id: `0x${Buffer.from('919848392035794945', 'utf8').toString('hex')}`,
+                    message_id: `0x${Buffer.from('1', 'utf8').toString('hex')}`,
+                    guild_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            discordValidationData.Web2Validation.Discord = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', discordValidationData);
+    } else {
+        const twitterValidationData = {
+            Web2Validation: {
+                Twitter: {},
+            },
+        };
+
+        if (config.verificationType === 'PublicTweet') {
+            twitterValidationData.Web2Validation.Twitter = {
+                PublicTweet: {
+                    tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                },
+            };
+        } else {
+            twitterValidationData.Web2Validation.Twitter = {
+                OAuth2: {
+                    code: `0x${Buffer.from('test-oauth-code', 'utf8').toString('hex')}`,
+                    state: config.oauthState,
+                    redirect_uri: `0x${Buffer.from('http://test-redirect-uri', 'utf8').toString('hex')}`,
+                },
+            };
+        }
+
+        return context.api.createType('LitentryValidationData', twitterValidationData);
+    }
+}
+
 export async function buildValidations(
     context: IntegrationTestContext,
-    signerIdentities: CorePrimitivesIdentity[],
-    identities: CorePrimitivesIdentity[],
+    signerIdentitity: CorePrimitivesIdentity,
+    linkIdentity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'bitcoinPrettified',
-    substrateSigners?: KeyringPair[] | KeyringPair,
-    evmSigners?: ethers.Wallet[],
-    bitcoinSigners?: bitcore.PrivateKey[] | bitcore.PrivateKey
-): Promise<LitentryValidationData[]> {
-    let evmSignature: HexString;
-    let substrateSignature: Uint8Array;
-    let bitcoinSignature: Uint8Array;
-    const validations: LitentryValidationData[] = [];
+    network: 'ethereum' | 'substrate' | 'bitcoin' | 'solana',
+    signer?: Signer,
+    options?: { prettifiedMessage?: boolean }
+): Promise<LitentryValidationData> {
+    const _options = { prettifiedMessage: false, ...options };
+    const validationNonce = startingSidechainNonce++;
 
-    for (let index = 0; index < identities.length; index++) {
-        const validationNonce = startingSidechainNonce + index;
-
-        const msg = generateVerificationMessage(context, signerIdentities[index], identities[index], validationNonce);
-        if (network === 'ethereum') {
-            const evmValidationData = {
-                Web3Validation: {
-                    Evm: {
-                        message: '' as HexString,
-                        signature: {
-                            Ethereum: '' as HexString,
-                        },
+    const msg = generateVerificationMessage(context, signerIdentitity, linkIdentity, validationNonce);
+    if (network === 'ethereum') {
+        const evmValidationData = {
+            Web3Validation: {
+                Evm: {
+                    message: '',
+                    signature: {
+                        Ethereum: '' as HexString,
                     },
                 },
-            };
-            console.log('post verification msg to ethereum: ', msg);
-            evmValidationData.Web3Validation.Evm.message = msg;
-            const msgHash = ethers.utils.arrayify(msg);
-            const evmSigner = evmSigners![index];
-            evmSignature = (await evmSigner.signMessage(msgHash)) as HexString;
-            console.log('evmSignature', evmSigner.address, evmSignature);
+            },
+        };
+        evmValidationData.Web3Validation.Evm.message = msg;
+        const msgHash = ethers.utils.arrayify(msg);
+        const evmSignature = u8aToHex(await signer!.sign(msgHash));
 
-            evmValidationData!.Web3Validation.Evm.signature.Ethereum = evmSignature;
-            console.log('evmValidationData', evmValidationData);
-            const encodedVerifyIdentityValidation = context.api.createType('LitentryValidationData', evmValidationData);
+        evmValidationData!.Web3Validation.Evm.signature.Ethereum = evmSignature;
 
-            validations.push(encodedVerifyIdentityValidation);
-        } else if (network === 'substrate') {
-            const substrateValidationData = {
-                Web3Validation: {
-                    Substrate: {
-                        message: '' as HexString,
-                        signature: {
-                            Sr25519: '' as HexString,
-                        },
-                    },
-                },
-            };
-            console.log('post verification msg to substrate: ', msg);
-            substrateValidationData.Web3Validation.Substrate.message = msg;
-            const substrateSigner = Array.isArray(substrateSigners!) ? substrateSigners![index] : substrateSigners!;
-            substrateSignature = substrateSigner.sign(msg) as Uint8Array;
-            substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(substrateSignature);
-            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
-                'LitentryValidationData',
-                substrateValidationData
-            );
-            validations.push(encodedVerifyIdentityValidation);
-        } else if (network === 'bitcoin') {
-            const bitcoinValidationData = {
-                Web3Validation: {
-                    Bitcoin: {
-                        message: '' as HexString,
-                        signature: {
-                            Bitcoin: '' as HexString,
-                        },
-                    },
-                },
-            };
-            console.log('post verification msg to bitcoin: ', msg);
-            bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
-            const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
-            // we need to sign the hex string without `0x` prefix, the signature is base64-encoded string
-            const sig = new bitcore.Message(msg.substring(2)).sign(bitcoinSigner);
-            bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
-            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
-            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
-            console.log('bitcoin sig (base64): ', sig);
-            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
-            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
-                'LitentryValidationData',
-                bitcoinValidationData
-            );
-            validations.push(encodedVerifyIdentityValidation);
-        } else if (network === 'bitcoinPrettified') {
-            const bitcoinValidationData = {
-                Web3Validation: {
-                    Bitcoin: {
-                        message: '' as HexString,
-                        signature: {
-                            BitcoinPrettified: '' as HexString,
-                        },
-                    },
-                },
-            };
-            console.log('post verification msg to bitcoin: ', msg);
-            bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
-            const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
-            const sig = new bitcore.Message('Litentry authorization token: ' + msg).sign(bitcoinSigner);
-            bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
-            bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
-            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
-            console.log('bitcoin sig (base64): ', sig);
-            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
-            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
-                'LitentryValidationData',
-                bitcoinValidationData
-            );
-            validations.push(encodedVerifyIdentityValidation);
-        } else if (network === 'twitter') {
-            console.log('post verification msg to twitter: ', msg);
-            const twitterValidationData = {
-                Web2Validation: {
-                    Twitter: {
-                        tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
-                    },
-                },
-            };
-
-            const encodedVerifyIdentityValidation = context.api.createType(
-                'LitentryValidationData',
-                twitterValidationData
-            );
-            validations.push(encodedVerifyIdentityValidation);
-        }
+        return context.api.createType('LitentryValidationData', evmValidationData);
     }
-    return validations;
+
+    if (network === 'substrate') {
+        const substrateValidationData = {
+            Web3Validation: {
+                Substrate: {
+                    message: '',
+                    signature: {
+                        Sr25519: '' as HexString,
+                    },
+                },
+            },
+        };
+        console.log('post verification msg to substrate: ', msg);
+        substrateValidationData.Web3Validation.Substrate.message = msg;
+        const substrateSignature = await signer!.sign(msg);
+        substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(substrateSignature);
+
+        return context.api.createType('LitentryValidationData', substrateValidationData);
+    }
+
+    if (network === 'bitcoin') {
+        const bitcoinValidationData = {
+            Web3Validation: {
+                Bitcoin: {
+                    message: '',
+                    signature: {
+                        Bitcoin: '' as HexString,
+                    },
+                },
+            },
+        };
+        bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
+        // we need to sign the hex string without `0x` prefix, the signature is base64-encoded string
+        const bitcoinSignature = await signer!.sign(msg.substring(2));
+        bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
+
+        return context.api.createType('LitentryValidationData', bitcoinValidationData);
+    }
+
+    if (network === 'solana') {
+        const solanaValidationData = {
+            Web3Validation: {
+                Solana: {
+                    message: '',
+                    signature: {
+                        Ed25519: '' as HexString,
+                    },
+                },
+            },
+        };
+        console.log('post verification msg to solana: ', msg);
+        solanaValidationData.Web3Validation.Solana.message = msg;
+        const solanaSignature = await signer!.sign(msg);
+        solanaValidationData!.Web3Validation.Solana.signature.Ed25519 = u8aToHex(solanaSignature);
+
+        return context.api.createType('LitentryValidationData', solanaValidationData);
+    }
+
+    throw new Error(`[buildValidation]: Unsupported network ${network}.`);
 }

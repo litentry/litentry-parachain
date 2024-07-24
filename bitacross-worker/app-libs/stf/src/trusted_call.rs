@@ -16,26 +16,25 @@
 */
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, get_storage_by_key_hash},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account},
 	trusted_call_result::TrustedCallResult,
 	Getter,
 };
-use codec::{Compact, Decode, Encode};
+use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_node_api_metadata::{pallet_balances::BalancesCallIndexes, pallet_proxy::ProxyCallIndexes};
-use itp_stf_interface::{ExecuteCall, SHARD_VAULT_KEY};
-pub use itp_stf_primitives::{
-	error::{StfError, StfResult},
+
+use itp_stf_interface::ExecuteCall;
+use itp_stf_primitives::{
+	error::StfError,
 	traits::{TrustedCallSigning, TrustedCallVerification},
 	types::{AccountId, KeyPair, ShardIdentifier, TrustedOperation},
 };
 use itp_types::{
-	parentchain::{ParentchainCall, ProxyType},
-	Address,
+	parentchain::{ParentchainCall, ParentchainId},
+	Moment, H256,
 };
-pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
@@ -63,7 +62,9 @@ pub enum TrustedCall {
 	#[codec(index = 53)]
 	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	#[codec(index = 54)]
-	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
+	balance_shield(Identity, AccountId, Balance, ParentchainId), // (Root, AccountIncognito, Amount, origin parentchain)
+	#[codec(index = 55)]
+	timestamp_set(Identity, Moment, ParentchainId),
 }
 
 impl TrustedCall {
@@ -74,6 +75,7 @@ impl TrustedCall {
 			Self::balance_transfer(sender_identity, ..) => sender_identity,
 			Self::balance_unshield(sender_identity, ..) => sender_identity,
 			Self::balance_shield(sender_identity, ..) => sender_identity,
+			Self::timestamp_set(sender_identity, ..) => sender_identity,
 		}
 	}
 }
@@ -195,8 +197,8 @@ where
 		self,
 		_shard: &ShardIdentifier,
 		_top_hash: H256,
-		calls: &mut Vec<ParentchainCall>,
-		node_metadata_repo: Arc<NodeMetadataRepository>,
+		_calls: &mut Vec<ParentchainCall>,
+		_node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
@@ -312,40 +314,29 @@ where
 					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
 					value,
 				)?;
-
-				let vault_pubkey: [u8; 32] = get_storage_by_key_hash(SHARD_VAULT_KEY.into())
-					.ok_or_else(|| {
-						StfError::Dispatch("shard vault key hasn't been set".to_string())
-					})?;
-				let vault_address = Address::from(AccountId::from(vault_pubkey));
-				let vault_transfer_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.transfer_keep_alive_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					Address::from(beneficiary),
-					Compact(value),
-				));
-				let proxy_call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.proxy_call_indexes())
-						.map_err(|_| StfError::InvalidMetadata)?
-						.map_err(|_| StfError::InvalidMetadata)?,
-					vault_address,
-					None::<ProxyType>,
-					vault_transfer_call,
-				));
-				calls.push(ParentchainCall::TargetA(proxy_call));
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::balance_shield(enclave_account, who, value) => {
+			TrustedCall::balance_shield(enclave_account, who, value, parentchain_id) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
-				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
+				debug!(
+					"balance_shield({}, {}, {:?})",
+					account_id_to_string(&who),
+					value,
+					parentchain_id
+				);
+				std::println!("⣿STF⣿ 🛡 will shield to {}", account_id_to_string(&who));
 				shield_funds(who, value)?;
 
-				// Litentry: we don't have publish_hash call in teebag
+				Ok(TrustedCallResult::Empty)
+			},
+			TrustedCall::timestamp_set(enclave_account, now, parentchain_id) => {
+				let account_id: AccountId32 =
+					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&account_id)?;
+				// Litentry: we don't actually set the timestamp, see `BlockMetadata`
+				warn!("unused timestamp_set({}, {:?})", now, parentchain_id);
 				Ok(TrustedCallResult::Empty)
 			},
 		}

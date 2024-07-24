@@ -26,7 +26,6 @@ export default {
                 __Unused_evm_account_codes: "Null",
                 __Unused_evm_account_storages: "Null",
                 id_graph: "(LitentryIdentity)",
-                id_graph_stats: "(LitentryIdentity)",
             },
         },
         //important
@@ -40,6 +39,7 @@ export default {
                 set_identity_networks:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
                 __Unused_remove_identity: "Null",
+                request_batch_vc: "(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)",
             },
         },
         TrustedOperationStatus: {

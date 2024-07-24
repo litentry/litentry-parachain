@@ -8,6 +8,7 @@ version = "0.1.0"
 
 [dependencies]
 # std dependencies
+base58 = { version = "0.2", default-features = false }
 thiserror = { version = "1.0.38", optional = true }
 
 # sgx dependencies

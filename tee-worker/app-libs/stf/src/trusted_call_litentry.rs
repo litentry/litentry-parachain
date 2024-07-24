@@ -24,31 +24,34 @@ use crate::{
 		verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, ShardIdentifier, StfError, StfResult, H256,
+	Arc, Vec,
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{
 	pallet_imt::{get_eligible_identities, IdentityContext},
-	BlockNumber, Parentchain, RuntimeOrigin, System,
+	BlockNumber, ParentchainLitentry, RuntimeOrigin, System,
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_types::parentchain::ParentchainCall;
+use itp_stf_primitives::{
+	error::{StfError, StfResult},
+	types::{AccountId, ShardIdentifier},
+};
+use itp_types::{parentchain::ParentchainCall, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
-	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
+	AssertionBuildRequest, RequestType, SendStfRequest, StfRequestSender,
+	Web2IdentityVerificationRequest,
 };
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
-use std::{sync::Arc, vec::Vec};
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
 
 impl TrustedCallSigned {
@@ -100,12 +103,14 @@ impl TrustedCallSigned {
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))?;
 				Ok(false)
 			},
-			ValidationData::Web3(data) => {
+			ValidationData::Web3(validation_data) => {
 				ensure!(
 					identity.is_web3(),
 					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
 				);
-				verify_web3_identity(&identity, &raw_msg, &data)?;
+
+				verify_web3_identity(&identity, &raw_msg, &validation_data)?;
+
 				Ok(true)
 			},
 		}
@@ -145,6 +150,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	pub fn request_vc_internal(
 		signer: AccountId,
 		who: Identity,
@@ -153,18 +159,20 @@ impl TrustedCallSigned {
 		req_ext_hash: H256,
 		maybe_key: Option<RequestAesKey>,
 		shard: &ShardIdentifier,
+		parachain_runtime_version: u32,
+		sidechain_runtime_version: u32,
 	) -> StfResult<()> {
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
-			_ => if_production_or!(
-				ensure!(
-					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
-				),
+			_ => if_development_or!(
 				ensure!(
 					ensure_enclave_signer_or_self(&signer, who.to_account_id())
 						|| ensure_alice(&signer),
+					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+				),
+				ensure!(
+					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 				)
 			),
@@ -188,14 +196,18 @@ impl TrustedCallSigned {
 			should_create_id_graph = true;
 		}
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
+		let identities = get_eligible_identities(
+			id_graph.as_ref(),
+			assertion_networks,
+			assertion.skip_identity_filtering(),
+		);
 
 		ensure!(
 			!identities.is_empty(),
 			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
 		);
 
-		let parachain_block_number = Parentchain::block_number();
+		let parachain_block_number = ParentchainLitentry::block_number();
 		let sidechain_block_number = System::block_number();
 
 		let assertion_build: RequestType = AssertionBuildRequest {
@@ -207,6 +219,8 @@ impl TrustedCallSigned {
 			top_hash,
 			parachain_block_number,
 			sidechain_block_number,
+			parachain_runtime_version,
+			sidechain_runtime_version,
 			maybe_key,
 			should_create_id_graph,
 			req_ext_hash,
@@ -225,18 +239,18 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 	) -> StfResult<()> {
-		if_production_or!(
-			{
-				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-				ensure_enclave_signer_account(&signer)
-					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
-			},
+		if_development_or!(
 			{
 				// In non-prod: we allow to use `Alice` as the dummy signer
 				ensure!(
 					ensure_enclave_signer_or_alice(&signer),
 					StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 				);
+			},
+			{
+				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+				ensure_enclave_signer_account(&signer)
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 			}
 		);
 		IMTCall::link_identity { who, identity, web3networks }

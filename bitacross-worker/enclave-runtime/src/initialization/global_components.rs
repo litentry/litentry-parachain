@@ -30,10 +30,12 @@ use crate::{
 	rpc::rpc_response_channel::RpcResponseChannel,
 	tls_ra::seal_handler::SealHandler,
 };
+use bc_enclave_registry::EnclaveRegistry;
+use bc_relayer_registry::RelayerRegistry;
+use bc_signer_registry::SignerRegistry;
 use ita_parentchain_interface::{integritee, target_a, target_b};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
-use itc_direct_rpc_client::DirectRpcClientFactory;
 use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
@@ -50,7 +52,6 @@ use itc_parentchain::{
 		light_validation::LightValidation, light_validation_state::LightValidationState,
 	},
 };
-use itc_peer_top_broadcaster::DirectRpcBroadcaster;
 use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 };
@@ -82,11 +83,10 @@ use itp_stf_state_observer::state_observer::StateObserver;
 use itp_top_pool::basic_pool::BasicPool;
 use itp_top_pool_author::{
 	api::SidechainApi,
-	author::{Author, AuthorTopFilter, BroadcastedTopFilter},
+	author::{Author, AuthorTopFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use lazy_static::lazy_static;
-use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
 use sp_core::{ed25519, ed25519::Pair};
@@ -171,11 +171,13 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	integritee::BitAcrossIndirectCallsFilter<integritee::ParentchainExtrinsicParser>,
 	EventCreator<integritee::FilterableEvents>,
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
@@ -214,11 +216,13 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_a::TransferToAliceShieldsFundsFilter<target_a::ParentchainExtrinsicParser>,
 	EventCreator<target_a::FilterableEvents>,
 	target_a::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
@@ -257,11 +261,13 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_b::TargetBExtrinsicFilter<target_b::ParentchainExtrinsicParser>,
 	EventCreator<target_b::FilterableEvents>,
 	target_b::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	RelayerRegistry,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 
 pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
@@ -298,19 +304,19 @@ pub type EnclaveTopPool = BasicPool<
 pub type EnclaveTopPoolAuthor = Author<
 	EnclaveTopPool,
 	AuthorTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
-	BroadcastedTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 >;
-pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<DirectRpcClientFactory>;
 pub type EnclaveSealHandler = SealHandler<
 	EnclaveShieldingKeyRepository,
 	EnclaveStateKeyRepository,
 	EnclaveStateHandler,
 	EnclaveLightClientSeal,
+	SignerRegistry,
+	EnclaveRegistry,
 >;
 pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor::Executor<
 	ParentchainBlock,
@@ -386,15 +392,6 @@ pub static GLOBAL_STATE_OBSERVER_COMPONENT: ComponentContainer<EnclaveStateObser
 pub static GLOBAL_TOP_POOL_AUTHOR_COMPONENT: ComponentContainer<EnclaveTopPoolAuthor> =
 	ComponentContainer::new("top_pool_author");
 
-/// Direct RPC broadcaster
-pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
-	EnclaveDirectRpcBroadcaster,
-> = ComponentContainer::new("direct_rpc_broadcaster");
-
-pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
-	sgx_tstd::sync::mpsc::SyncSender<BroadcastedRequest>,
-> = ComponentContainer::new("direct_rpc_request_sink");
-
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =
 	ComponentContainer::new("Attestation handler");
@@ -444,3 +441,15 @@ pub static GLOBAL_TARGET_B_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
 /// Enclave RPC WS handler.
 pub static GLOBAL_RPC_WS_HANDLER_COMPONENT: ComponentContainer<EnclaveRpcWsHandler> =
 	ComponentContainer::new("rpc_ws_handler");
+
+/// Relayer registry
+pub static GLOBAL_RELAYER_REGISTRY: ComponentContainer<RelayerRegistry> =
+	ComponentContainer::new("relayer_registry");
+
+/// Signer registry
+pub static GLOBAL_SIGNER_REGISTRY: ComponentContainer<SignerRegistry> =
+	ComponentContainer::new("signer_registry");
+
+/// Enclave registry
+pub static GLOBAL_ENCLAVE_REGISTRY: ComponentContainer<EnclaveRegistry> =
+	ComponentContainer::new("enclave_registry");

@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'pallet-evm-precompile-parachain-staking'
-version = '0.9.17'
+version = '0.1.0'
 
 [dependencies]
 log = { workspace = true }

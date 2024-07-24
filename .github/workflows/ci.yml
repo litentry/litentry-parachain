@@ -21,7 +21,7 @@ name: General CI
 # - fmt
 # - set-condition
 # - parachain-build-dev
-# - tee-build
+# - identity-build
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -119,7 +119,7 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rebuild-bitacross-docker }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
             rebuild_bitacross=true
-          fi          
+          fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
@@ -133,7 +133,7 @@ jobs:
           fi
           if [ "${{ steps.filter.outputs.bitacross_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_bitacross" = "true" ]; then
             run_bitacross_test=true
-          fi          
+          fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
           echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
@@ -153,7 +153,7 @@ jobs:
       - name: Install pre-built taplo
         run: |
           mkdir -p $HOME/.local/bin
-          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz                    
+          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz
           gzip -d taplo-linux-x86_64.gz
           cp taplo-linux-x86_64 $HOME/.local/bin/taplo
           chmod a+x $HOME/.local/bin/taplo
@@ -200,7 +200,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
   # sequentialise the workflow runs on `dev` branch
   # the if condition is applied in step level to make this job always `successful`
@@ -238,16 +238,20 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
-  tee-clippy:
+  tee-check:
     runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
       - sequentialise
-    if: needs.set-condition.outputs.rebuild_tee == 'true'
     container: "litentry/litentry-tee-dev:latest"
+    strategy:
+      matrix:
+        type:
+          - tee # TODO: switch to identity
+          - bitacross
     steps:
       - uses: actions/checkout@v4
 
@@ -256,107 +260,56 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      - name: Pallet unittests
-        working-directory: ./tee-worker
+      - name: Cargo test
+        working-directory: ./${{ matrix.type }}-worker
         run: |
-          cargo test --release -p pallet-* --lib
+          cargo test --release
 
-      - name: Tee-worker clippy
-        working-directory: ./tee-worker
+      - name: Worker common clippy
+        working-directory: ./${{ matrix.type }}-worker
+        shell: bash
         run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
+          for d in . enclave-runtime; do
+            pushd "$d"
+            echo "::group::cargo clippy all"
+            cargo clippy --release -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy development"
+            cargo clippy --release --features development -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy offchain-worker"
+            cargo clippy --release --features offchain-worker -- -D warnings
+            echo "::group::cargo clippy offchain-worker,development"
+            cargo clippy --release --features offchain-worker,development -- -D warnings
+            echo "::endgroup::"
+            popd
+          done
 
-      - name: Clean up disk
+      - name: Identity-worker specific clippy
+        if: matrix.type == 'tee'
         working-directory: ./tee-worker
+        shell: bash
         run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          cargo clean --profile release
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-
-      - name: Tee-enclave clippy
-        working-directory: ./tee-worker/enclave-runtime
-        run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
+          for d in . enclave-runtime; do
+            pushd "$d"
+            echo "::group::cargo clippy sidechain"
+            cargo clippy --release --features sidechain -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy evm"
+            cargo clippy --release --features evm -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy sidechain development"
+            cargo clippy --release --features sidechain,development -- -D warnings
+            echo "::endgroup::"
+            echo "::group::cargo clippy evm development"
+            cargo clippy --release --features evm,development -- -D warnings
+            echo "::endgroup::"
+            popd
+          done
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
-
-  bitacross-clippy:
-    runs-on: ubuntu-latest
-    needs:
-      - fmt
-      - set-condition
-      - sequentialise
-    if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-    #    todo: we might want to change this image in the future
-    container: "litentry/litentry-tee-dev:latest"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
-
-      - name: bitacross-worker clippy
-        working-directory: ./bitacross-worker
-        run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-
-      - name: Clean up disk
-        working-directory: ./bitacross-worker
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          cargo clean --profile release
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-
-      - name: bitacross-enclave clippy
-        working-directory: ./bitacross-worker/enclave-runtime
-        run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clean --profile release
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
   parachain-build-dev:
     runs-on: ubuntu-latest
@@ -389,12 +342,13 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
+          docker pull litentry/litentry-chain-aio:latest
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
 
-      - name: Upload docker image
+      - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
@@ -403,9 +357,9 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
-  tee-build:
+  identity-build:
     runs-on: ubuntu-latest
     needs:
       - fmt
@@ -469,7 +423,7 @@ jobs:
       # is "atomic" and can't be broken into layers.
       - name: Build local builder
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tee-worker/build.Dockerfile
@@ -477,6 +431,8 @@ jobs:
           target: builder
           build-args: |
             WORKER_MODE_ARG=sidechain
+            WORKER_ENV_DATA_PROVIDERS_CONFIG=1
+            WORKER_MOCK_SERVER=1
             ADDITIONAL_FEATURES_ARG=
 
       - name: Copy caches from the built image
@@ -504,27 +460,27 @@ jobs:
 
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:latest
+          tags: litentry/identity-worker:latest
           target: deployed-worker
 
       - name: Build cli
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:latest
+          tags: litentry/identity-cli:latest
           target: deployed-client
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
         run: |
-          docker pull litentry/litentry-worker:latest
-          docker pull litentry/litentry-cli:latest
+          docker pull litentry/identity-worker:latest
+          docker pull litentry/identity-cli:latest
 
       - run: docker images --all
 
@@ -532,20 +488,20 @@ jobs:
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/litentry-worker:latest test --all
+        run: docker run litentry/identity-worker:latest test --all
 
       - name: Save docker images
-        run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v4
         with:
-          name: litentry-tee
-          path: litentry-tee.tar.gz
+          name: litentry-identity
+          path: litentry-identity.tar.gz
           if-no-files-found: error
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
   parachain-ts-test:
     runs-on: ubuntu-latest
@@ -606,7 +562,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
   parachain-unit-test:
     runs-on: ubuntu-latest
@@ -633,7 +589,7 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
   parachain-runtime-test:
     runs-on: ubuntu-latest
@@ -669,28 +625,31 @@ jobs:
 
       - name: Fail early
         if: failure()
-        uses: andymckay/cancel-action@0.3
+        uses: andymckay/cancel-action@0.5
 
-  tee-single-worker-test:
+  identity-single-worker-test:
     runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-build
+      - identity-build
     strategy:
       fail-fast: false
       matrix:
         include:
           # Litentry
-          - test_name: lit-ii-vc-test
-          - test_name: lit-ii-identity-test
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
+          - test_name: lit-di-solana-identity-test
           - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
-          - test_name: lit-ii-batch-test
+          - test_name: lit-test-failed-parentchain-extrinsic
+          - test_name: lit-twitter-identity-test
+          - test_name: lit-discord-identity-test
+          - test_name: lit-assertion-contracts-test
+
     steps:
       - uses: actions/checkout@v4
 
@@ -704,12 +663,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
+          docker load < litentry-identity.tar.gz
           docker images
 
       - name: Enable corepack and pnpm
@@ -756,24 +715,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  tee-multi-worker-test:
+  identity-multi-worker-test:
     runs-on: ubuntu-latest
     continue-on-error: true
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-build
+      - identity-build
     strategy:
       fail-fast: false
       matrix:
         include:
+          - test_name: lit-di-bitcoin-identity-multiworker-test
           - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
-          - test_name: lit-ii-batch-test-multiworker
-          - test_name: lit-ii-identity-multiworker-test
-          - test_name: lit-ii-vc-multiworker-test
           - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
@@ -788,12 +746,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
+          docker load < litentry-identity.tar.gz
           docker images
 
       - name: Enable corepack and pnpm
@@ -845,7 +803,7 @@ jobs:
   #
   # Only try to push docker image when
   #   - parachain-ts-test passes
-  #   - tee-single-worker-test passes
+  #   - identity-single-worker-test passes
   #   - set-condition.outputs.push_docker is `true`
   # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
   # This is important not to overwrite any other jobs where a rebuild **was** triggered.
@@ -859,7 +817,7 @@ jobs:
     needs:
       - set-condition
       - parachain-ts-test
-      - tee-single-worker-test
+      - identity-single-worker-test
     if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
       - uses: actions/download-artifact@v4
@@ -868,13 +826,13 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: litentry-tee
+          name: litentry-identity
 
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
-
+          docker load < litentry-identity.tar.gz
+          
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:
@@ -886,10 +844,11 @@ jobs:
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
+          docker push litentry/litentry-chain-aio
 
       # only push TEE images if we rebuilt them
       - name: Push tee-worker image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
-          docker push litentry/litentry-worker
-          docker push litentry/litentry-cli
+          docker push litentry/identity-worker
+          docker push litentry/identity-cli

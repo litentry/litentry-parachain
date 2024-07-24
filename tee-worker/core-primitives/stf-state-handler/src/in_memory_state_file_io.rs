@@ -196,6 +196,19 @@ where
 			.ok_or_else(|| Error::InvalidShard(*shard_identifier))?;
 		Ok(shard_directory.keys().cloned().collect())
 	}
+
+	fn state_file_size(&self, shard: &ShardIdentifier, state_id: StateId) -> Result<u64> {
+		let directory_lock =
+			self.emulated_shard_directory.read().map_err(|_| Error::LockPoisoning)?;
+		let states_for_shard =
+			directory_lock.get(shard).ok_or_else(|| Error::InvalidShard(*shard))?;
+		let state = states_for_shard
+			.get(&state_id)
+			.map(|(_, s)| -> State { s.clone() })
+			.ok_or_else(|| Error::InvalidStateId(state_id))?;
+
+		Ok(state.encode().len() as u64)
+	}
 }
 
 pub fn create_sgx_externalities_in_memory_state_io(

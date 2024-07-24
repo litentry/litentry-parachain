@@ -45,7 +45,11 @@ enclave {
 
 		public sgx_status_t publish_wallets();
 
-		public sgx_status_t init_enclave_sidechain_components();
+		public sgx_status_t finish_enclave_init();
+
+		public sgx_status_t init_wallets(
+		    [in, size=encoded_base_dir_size] uint8_t* encoded_base_dir_str, uint32_t encoded_base_dir_size
+		);
 
 		public sgx_status_t init_direct_invocation_server(
 			[in, size=server_addr_size] uint8_t* server_addr, uint32_t server_addr_size
@@ -60,17 +64,22 @@ enclave {
 			[in, size=shard_size] uint8_t* shard, uint32_t shard_size
 		);
 
-		public sgx_status_t init_proxied_shard_vault(
-			[in, size=shard_size] uint8_t* shard, uint32_t shard_size,
-			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size
+		public sgx_status_t init_shard_creation_parentchain_header(
+		    [in, size=shard_size] uint8_t* shard, uint32_t shard_size,
+			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size,
+    		[in, size=header_size] uint8_t* header, uint32_t header_size
 		);
+
+		public sgx_status_t get_shard_creation_info(
+			[in, size=shard_size] uint8_t* shard, uint32_t shard_size,
+			[out, size=creation_size] uint8_t* creation, uint32_t creation_size);
 
 		public sgx_status_t sync_parentchain(
 			[in, size=blocks_size] uint8_t* blocks, size_t blocks_size,
 			[in, size=events_size] uint8_t* events, size_t events_size,
 			[in, size=events_proofs_size] uint8_t* events_proofs, size_t events_proofs_size,
 			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size,
-			int is_syncing
+			int immediate_import
 		);
 
 		public sgx_status_t set_nonce(
@@ -94,10 +103,6 @@ enclave {
 
 		public sgx_status_t get_ethereum_wallet_pair(
 			[out, size=pair_size] uint8_t* pair, uint32_t pair_size);
-
-		public sgx_status_t get_ecc_vault_pubkey(
-			[in, size=shard_size] uint8_t* shard, uint32_t shard_size,
-			[out, size=pubkey_size] uint8_t* pubkey, uint32_t pubkey_size);
 
 		public sgx_status_t get_mrenclave(
 			[out, size=mrenclave_size] uint8_t* mrenclave, uint32_t mrenclave_size);
@@ -168,11 +173,10 @@ enclave {
 		public size_t test_main_entrance();
 
 		public sgx_status_t migrate_shard(
-			[in, size=shard_size] uint8_t* old_shard, 
-			[in, size=shard_size] uint8_t* new_shard, 
+			[in, size=shard_size] uint8_t* new_shard,
 			uint32_t shard_size
 		);
-		
+
 		public sgx_status_t ignore_parentchain_block_import_validation_until(
 			[in] uint32_t* until
 		);

@@ -3,7 +3,7 @@
 .github/
 .githooks/
 **/target
-**/ts-tests
+**/local-setup
 
 # stuff under tee-worker/
 tee-worker/.dockerignore
@@ -13,7 +13,6 @@ tee-worker/bin/spid.txt
 tee-worker/bin/sidechain_db/
 tee-worker/docker/*.yml
 tee-worker/docs/
-tee-worker/local-setup/
 tee-worker/scripts/
 tee-worker/target/
 tee-worker/tmp/

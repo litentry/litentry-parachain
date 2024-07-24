@@ -1,6 +1,6 @@
 services:
     lit-dr-vc-multiworker-test:
-        image: litentry/litentry-cli:latest
+        image: litentry/identity-cli:latest
         container_name: litentry-dr-vc-test
         volumes:
             - ../ts-tests:/ts-tests

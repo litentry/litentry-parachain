@@ -307,7 +307,7 @@ impl<T: Config> Pallet<T> {
 						} else {
 							// must rm entire delegation if bond.amount <= less or cancel request
 							Err(<Error<T>>::DelegationBelowMin.into())
-						};
+						}
 					}
 				}
 				Err(<Error<T>>::DelegationDNE.into())
@@ -354,7 +354,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		if existing_revoke_count == state.delegations.0.len() {
-			return Err(<Error<T>>::DelegatorAlreadyLeaving.into());
+			return Err(<Error<T>>::DelegatorAlreadyLeaving.into())
 		}
 
 		updated_scheduled_requests

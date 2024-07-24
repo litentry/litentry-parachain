@@ -55,11 +55,11 @@ jobs:
           PACKAGES=$(find pallets/ -name "Cargo.toml" | while read -r f; do pn=$(grep name "$f" | \
                      tr '"' "'" | sed "s/'$//;s/.*'//"); f="file://$(pwd)/${f//\/Cargo.toml/#$pn}"; \
                      cargo pkgid "$f"; done | paste -s -d "," -)
-          cargo tarpaulin --features=skip-ias-check --no-fail-fast -o Xml -p "$PACKAGES" \
+          cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES" \
           --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/*
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: false
           verbose: true

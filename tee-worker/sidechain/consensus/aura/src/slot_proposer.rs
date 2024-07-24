@@ -17,6 +17,7 @@
 
 use codec::Encode;
 use finality_grandpa::BlockNumberOps;
+
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
@@ -155,6 +156,7 @@ impl<
 
 		// Remove all not successfully executed operations from the top pool.
 		let failed_operations = batch_execution_result.get_failed_operations();
+		let nr_failed_operations = failed_operations.len();
 		self.top_pool_author.remove_calls_from_pool(
 			self.shard,
 			failed_operations
@@ -195,10 +197,12 @@ impl<
 		};
 
 		info!(
-			"Queue/Timeslot/Transactions: {:?};{}ms;{}",
+			"Proposing sidechain block {} summary: executed {}, failed {}, from {} in queue in {}ms",
+			sidechain_block.block().header().block_number(),
+			number_executed_transactions,
+			nr_failed_operations,
 			trusted_calls.len(),
 			max_duration.as_millis(),
-			number_executed_transactions
 		);
 
 		Ok(Proposal { block: sidechain_block, parentchain_effects: parentchain_extrinsics })

@@ -26,7 +26,7 @@ use crate::{
 	handle_state::HandleState,
 	query_shard_state::QueryShardState,
 	state_initializer::InitializeState,
-	state_snapshot_repository::VersionedStateAccess,
+	state_snapshot_repository::{ShardStateFileComparison, VersionedStateAccess},
 };
 use core::fmt::Debug;
 use itp_hashing::Hash;
@@ -228,13 +228,37 @@ where
 		self.write_after_mutation(state, state_write_lock, shard)
 	}
 
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType> {
-		let (state, _) = self.load_cloned(&old_shard)?;
-		self.reset(state, &new_shard)
+	fn migrate_shard(&self, new_shard: ShardIdentifier) -> Result<Self::HashType> {
+		if self.shard_exists(&new_shard)? {
+			let (_, state_hash) = self.load_cloned(&new_shard)?;
+			return Ok(state_hash)
+		}
+		let old_shard = match self.list_shards()? {
+			shards if shards.len() == 1 => shards[0],
+			_ =>
+				return Err(Error::Other(
+					"Cannot migrate shard. There is more than 1 shard in the list".into(),
+				)),
+		};
+
+		let (old_shard_state, old_shard_state_hash) = self.load_cloned(&old_shard)?;
+		self.reset(old_shard_state, &new_shard)?;
+
+		let state_snapshot_lock =
+			self.state_snapshot_repository.read().map_err(|_| Error::LockPoisoning)?;
+		let comparison_result =
+			state_snapshot_lock.compare_shards_state_file_size(&old_shard, &new_shard)?;
+		if comparison_result != ShardStateFileComparison::Equal {
+			return Err(Error::Other("State files size do not match after migration".into()))
+		}
+
+		let (_, new_shard_state_hash) = self.load_cloned(&new_shard)?;
+
+		if new_shard_state_hash != old_shard_state_hash {
+			return Err(Error::Other("State hash does not match after migration".into()))
+		}
+
+		Ok(new_shard_state_hash)
 	}
 }
 

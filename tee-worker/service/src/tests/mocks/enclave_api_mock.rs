@@ -23,8 +23,12 @@ use itc_parentchain::primitives::{
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
 use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_stf_interface::ShardCreationInfo;
 use itp_storage::StorageProof;
-use itp_types::{EnclaveFingerprint, ShardIdentifier};
+use itp_types::{
+	parentchain::{Balance, Header},
+	EnclaveFingerprint, ShardIdentifier,
+};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
 
@@ -64,11 +68,16 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn init_proxied_shard_vault(
+	fn init_shard_creation_parentchain_header(
 		&self,
-		_shard: &ShardIdentifier,
-		_parentchain_id: &ParentchainId,
+		shard: &ShardIdentifier,
+		parentchain_id: &ParentchainId,
+		header: &Header,
 	) -> EnclaveResult<()> {
+		unimplemented!()
+	}
+
+	fn get_shard_creation_info(&self, shard: &ShardIdentifier) -> EnclaveResult<ShardCreationInfo> {
 		unimplemented!()
 	}
 
@@ -88,15 +97,11 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
-	fn get_ecc_vault_pubkey(&self, _shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
-		unreachable!()
-	}
-
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 
-	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 }

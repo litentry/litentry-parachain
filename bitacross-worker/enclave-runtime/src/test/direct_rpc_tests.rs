@@ -17,6 +17,10 @@
 */
 
 use crate::{
+	initialization::global_components::{
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+	},
 	rpc::worker_api_direct::public_api_rpc_handler,
 	test::{
 		fixtures::components::create_ocall_api,
@@ -24,6 +28,7 @@ use crate::{
 	},
 	Hash,
 };
+use bc_signer_registry::{PubKey, SignerRegistryLookup};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, PublicGetter};
 use itc_direct_rpc_server::{
@@ -32,6 +37,7 @@ use itc_direct_rpc_server::{
 };
 use itc_parentchain_test::ParentchainHeaderBuilder;
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
+use itp_component_container::ComponentGetter;
 use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
 use itp_sgx_temp_dir::TempDir;
@@ -43,6 +49,17 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::{Address32, Identity};
 use sp_core::Pair;
 use std::{string::ToString, sync::Arc, vec::Vec};
+
+struct SignerRegistryMock {}
+
+impl SignerRegistryLookup for SignerRegistryMock {
+	fn contains_key(&self, _account: &Address32) -> bool {
+		true
+	}
+	fn get_all(&self) -> Vec<(Address32, PubKey)> {
+		vec![]
+	}
+}
 
 pub fn state_get_mrenclave_works() {
 	type TestState = u64;
@@ -62,12 +79,17 @@ pub fn state_get_mrenclave_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>, Getter>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
+	let signer_lookup = Arc::new(SignerRegistryMock {});
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
 		ocall_api.into(),
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		signer_lookup,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
@@ -111,12 +133,17 @@ pub fn get_state_request_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>, Getter>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
+	let signer_lookup = Arc::new(SignerRegistryMock {});
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
 		ocall_api,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		signer_lookup,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 

@@ -28,7 +28,9 @@ fn transfer_native_is_ok() {
 	new_test_ext().execute_with(|| {
 		let dest_bridge_id: pallet_bridge::BridgeChainId = 0;
 		let resource_id = NativeTokenResourceId::get();
-		let dest_account: Vec<u8> = vec![1];
+		let mut dest_account: [u8; 64] = [0; 64];
+		dest_account[63] = 1u8;
+
 		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
 			RuntimeOrigin::root(),
 			dest_bridge_id,
@@ -43,14 +45,14 @@ fn transfer_native_is_ok() {
 			.prepare_test(
 				U8Wrapper(1u8),
 				precompile_address(),
-				EvmDataWriter::new_with_selector(Action::TransferNative)
-					.write(100u128)
-					.write(Bytes(dest_account.clone()))
-					.write(dest_bridge_id)
-					.build(),
+				PCall::<Test>::transfer_native {
+					amount: 100u128.into(),
+					receipt: dest_account.into(),
+					dest_id: dest_bridge_id,
+				},
 			)
 			.expect_no_logs()
-			.execute_returns(EvmDataWriter::new().write(true).build());
+			.execute_returns(());
 
 		assert_eq!(
 			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
@@ -70,7 +72,7 @@ fn transfer_native_is_ok() {
 				1,
 				resource_id,
 				100 - 10,
-				dest_account,
+				dest_account.to_vec(),
 			)),
 		]);
 	})

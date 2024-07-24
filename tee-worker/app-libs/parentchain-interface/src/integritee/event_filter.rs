@@ -19,9 +19,15 @@
 use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
 
+use itp_node_api::api_client::StaticEvent;
 use itp_types::{
 	parentchain::{
-		BalanceTransfer, ExtrinsicFailed, ExtrinsicStatus, ExtrinsicSuccess, FilterEvents,
+		events::{
+			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
+			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted,
+			ParentchainBlockProcessed, VCRequested,
+		},
+		FilterEvents,
 	},
 	H256,
 };
@@ -29,6 +35,23 @@ use std::vec::Vec;
 
 #[derive(Clone)]
 pub struct FilterableEvents(pub Events<H256>);
+
+impl FilterableEvents {
+	fn filter<T: StaticEvent, E>(&self) -> Result<Vec<T>, E> {
+		Ok(self
+			.to_events()
+			.iter()
+			.flatten()
+			.filter_map(|ev| match ev.as_event::<T>() {
+				Ok(maybe_event) => maybe_event,
+				Err(e) => {
+					log::error!("Could not decode event: {:?}", e);
+					None
+				},
+			})
+			.collect())
+	}
+}
 
 // todo: improve: https://github.com/integritee-network/worker/pull/1378#discussion_r1393933766
 impl ToEvents<Events<H256>> for FilterableEvents {
@@ -46,40 +69,39 @@ impl From<Events<H256>> for FilterableEvents {
 impl FilterEvents for FilterableEvents {
 	type Error = itc_parentchain_indirect_calls_executor::Error;
 
-	fn get_extrinsic_statuses(&self) -> core::result::Result<Vec<ExtrinsicStatus>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.filter_map(|ev| {
-				ev.and_then(|ev| {
-					if (ev.as_event::<ExtrinsicSuccess>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Success))
-					}
-
-					if (ev.as_event::<ExtrinsicFailed>()?).is_some() {
-						return Ok(Some(ExtrinsicStatus::Failed))
-					}
-
-					Ok(None)
-				})
-				.ok()
-				.flatten()
-			})
-			.collect())
+	fn get_link_identity_events(&self) -> Result<Vec<LinkIdentityRequested>, Self::Error> {
+		self.filter()
 	}
 
-	fn get_transfer_events(&self) -> core::result::Result<Vec<BalanceTransfer>, Self::Error> {
-		Ok(self
-			.to_events()
-			.iter()
-			.flatten() // flatten filters out the nones
-			.filter_map(|ev| match ev.as_event::<BalanceTransfer>() {
-				Ok(maybe_event) => maybe_event,
-				Err(e) => {
-					log::error!("Could not decode event: {:?}", e);
-					None
-				},
-			})
-			.collect())
+	fn get_vc_requested_events(&self) -> Result<Vec<VCRequested>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> Result<Vec<DeactivateIdentityRequested>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_activate_identity_events(&self) -> Result<Vec<ActivateIdentityRequested>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
+		self.filter()
+	}
+
+	fn get_parentchain_block_proccessed_events(
+		&self,
+	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error> {
+		self.filter()
 	}
 }

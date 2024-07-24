@@ -1,0 +1,4 @@
+.deps
+artifacts
+.prettierrc.json
+!*.sol

@@ -26,7 +26,7 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
 		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
@@ -59,14 +59,15 @@ use itc_direct_rpc_server::{
 };
 use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ed25519_self_signed_certificate,
+	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 	WebSocketServer,
 };
-use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
+use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
-	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
+	ASSERTIONS_FILE, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
@@ -85,7 +86,8 @@ use its_sidechain::{
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_data_providers::DataProviderConfig;
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use lc_vc_task_receiver::run_vc_handler_runner;
 use litentry_primitives::BroadcastedRequest;
@@ -93,6 +95,7 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
@@ -199,12 +202,21 @@ pub(crate) fn init_enclave(
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
+	if let Ok(data_provider_config) = DataProviderConfig::new() {
+		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+	} else {
+		return Err(Error::Other("data provider initialize error".into()))
+	}
+
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
+		ocall_api.clone(),
 		Some(state_handler),
+		data_provider_config,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -216,11 +228,8 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
-	if let Ok(data_provider_config) = DataProviderConfig::new() {
-		GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
-	} else {
-		return Err(Error::Other("data provider initialize error".into()))
-	}
+	let evm_assertion_repository = EvmAssertionRepository::new(ASSERTIONS_FILE)?;
+	GLOBAL_ASSERTION_REPOSITORY.initialize(evm_assertion_repository.into());
 
 	Ok(())
 }
@@ -245,6 +254,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -256,13 +266,17 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
 
 	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
@@ -273,6 +287,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
@@ -284,18 +299,30 @@ fn run_vc_issuance() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
+	let enclave_account = Arc::new(GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?);
+
 	let stf_task_context = StfTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
+		enclave_account,
 		state_handler,
 		ocall_api,
 		data_provider_config,
+		evm_assertion_repository,
 	);
-	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+
+	run_vc_handler_runner(Arc::new(stf_task_context), node_metadata_repo);
+
 	Ok(())
+}
+
+fn run_parachain_extrinsic_sender() -> Result<(), Error> {
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+
+	run_parachain_extrinsic_task_receiver(ocall_api, extrinsics_factory).map_err(|e| e.into())
 }
 
 pub(crate) fn init_enclave_sidechain_components(
@@ -308,11 +335,6 @@ pub(crate) fn init_enclave_sidechain_components(
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
-
-	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
-	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
-	let mrenclave = attestation_handler.get_mrenclave()?;
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	let parentchain_block_import_dispatcher =
 		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;
@@ -377,23 +399,40 @@ pub(crate) fn init_enclave_sidechain_components(
 		run_vc_issuance().unwrap();
 	});
 
+	std::thread::spawn(move || {
+		println!("running parentchain extrinsic sender");
+		#[allow(clippy::unwrap_used)]
+		run_parachain_extrinsic_sender().unwrap();
+	});
+
 	Ok(())
 }
 
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
+	info!("Initialize direct invocation server on {}", &server_addr);
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	let cert =
-		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	let url = url::Url::parse(&server_addr).map_err(|e| Error::Other(format!("{}", e).into()))?;
+	let maybe_config_provider = if url.scheme() == "wss" {
+		let cert = ed25519_self_signed_certificate(signer, "Enclave")
+			.map_err(|e| Error::Other(e.into()))?;
 
-	// Serialize certificate(s) and private key to PEM.
-	// PEM format is needed as a certificate chain can only be serialized into PEM.
-	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
-	let private_key = cert.serialize_private_key_pem();
+		// Serialize certificate(s) and private key to PEM.
+		// PEM format is needed as a certificate chain can only be serialized into PEM.
+		let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
+		let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
+	} else {
+		None
+	};
+
+	let web_socket_server = Arc::new(TungsteniteWsServer::new(
+		url.authority().into(),
+		maybe_config_provider,
+		rpc_handler,
+	));
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 
@@ -413,12 +452,9 @@ pub(crate) fn init_shard(shard: ShardIdentifier) -> EnclaveResult<()> {
 	Ok(())
 }
 
-pub(crate) fn migrate_shard(
-	old_shard: ShardIdentifier,
-	new_shard: ShardIdentifier,
-) -> EnclaveResult<()> {
+pub(crate) fn migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-	let _ = state_handler.migrate_shard(old_shard, new_shard)?;
+	let _ = state_handler.migrate_shard(new_shard)?;
 	Ok(())
 }
 

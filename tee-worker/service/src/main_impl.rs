@@ -1,7 +1,7 @@
 #[cfg(not(feature = "dcap"))]
 use crate::utils::check_files;
 use crate::{
-	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
+	account_funding::{setup_reasonable_account_funding, EnclaveAccountInfoProvider},
 	config::Config,
 	enclave::{
 		api::enclave_init,
@@ -23,16 +23,18 @@ use crate::{
 	sync_state, tests,
 	utils::extract_shard,
 	worker::Worker,
-	worker_peers_registry::WorkerPeersRegistry,
+	worker_peers_updater::WorkerPeersRegistry,
 };
 use base58::ToBase58;
 use clap::{load_yaml, App, ArgMatches};
 use codec::{Decode, Encode};
+use ita_parentchain_interface::integritee::{Hash, Header};
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
+	Enclave,
 };
 use itp_node_api::{
 	api_client::{AccountApi, PalletTeebagApi, ParentchainApi},
@@ -46,29 +48,29 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
-use litentry_macros::if_production_or;
+use litentry_macros::if_development_or;
 use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
-use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
 use serde_json::Value;
 use sgx_types::*;
 use sp_runtime::traits::Header as HeaderT;
 use substrate_api_client::{
-	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
-	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
+	api::XtStatus, rpc::HandleSubscription, GetAccountInformation, GetBalance, GetChainInfo,
+	SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
 use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 
+use crate::error::ServiceResult;
 use itc_parentchain::primitives::ParentchainId;
-use itp_enclave_api::Enclave;
+use itp_types::parentchain::{AccountId, Balance};
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSigner;
 use std::{
-	collections::HashSet, env, fmt::Debug, fs::File, io::Read, str, sync::Arc, thread,
+	collections::HashSet, fmt::Debug, path::PathBuf, str, str::Utf8Error, sync::Arc, thread,
 	time::Duration,
 };
 use substrate_api_client::ac_node_api::{EventRecord, Phase::ApplyExtrinsic};
@@ -78,11 +80,12 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(feature = "link-binary")]
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
-pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
 
 pub(crate) fn main() {
 	// Setup logging
-	env_logger::init();
+	env_logger::builder()
+		.format_timestamp(Some(env_logger::TimestampPrecision::Millis))
+		.init();
 
 	let yml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yml).get_matches();
@@ -93,12 +96,19 @@ pub(crate) fn main() {
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	info!("*** Starting service in SGX production mode");
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	info!("*** Starting service in SGX debug mode");
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
+
+	let mut lockfile = PathBuf::from(config.data_dir());
+	lockfile.push("worker.lock");
+	while std::fs::metadata(lockfile.clone()).is_ok() {
+		info!("lockfile is present, will wait for it to disappear {:?}", lockfile);
+		thread::sleep(std::time::Duration::from_secs(5));
+	}
 
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
@@ -179,22 +189,20 @@ pub(crate) fn main() {
 	if let Some(run_config) = config.run_config() {
 		let shard = extract_shard(run_config.shard(), enclave.as_ref());
 
-		println!("Worker Config: {:?}", config);
+		info!("Worker Config: {:?}", config);
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			if_production_or!(
-				warn!("Mock server not started. Node is running in production mode."),
-				{
-					let mock_server_port = config
-						.try_parse_mock_server_port()
-						.expect("mock server port to be a valid port number");
-					thread::spawn(move || {
-						info!("*** Starting mock server");
-						let _ = lc_mock_server::run(mock_server_port);
-					});
-				}
-			)
+			#[cfg(any(feature = "mock-server", feature = "development"))]
+			{
+				let mock_server_port = config
+					.try_parse_mock_server_port()
+					.expect("mock server port to be a valid port number");
+				thread::spawn(move || {
+					info!("*** Starting mock server");
+					let _ = lc_mock_server::run(mock_server_port);
+				});
+			}
 		}
 
 		if clean_reset {
@@ -203,15 +211,6 @@ pub(crate) fn main() {
 
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
-
-		if run_config.request_state() {
-			sync_state::sync_state::<_, _, WorkerModeProvider>(
-				&node_api,
-				&shard,
-				enclave.as_ref(),
-				run_config.skip_ra(),
-			);
-		}
 
 		start_worker::<_, _, _, _, WorkerModeProvider>(
 			config,
@@ -225,7 +224,7 @@ pub(crate) fn main() {
 			quote_size,
 		);
 	} else if let Some(smatches) = matches.subcommand_matches("request-state") {
-		println!("*** Requesting state from a registered worker \n");
+		info!("*** Requesting state from a registered worker \n");
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 		sync_state::sync_state::<_, _, WorkerModeProvider>(
@@ -253,7 +252,10 @@ pub(crate) fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		println!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		let mrenclave = enclave.get_fingerprint().unwrap();
+		let hex_value = hex::encode(mrenclave);
+		println!("MRENCLAVE hex: {}", hex_value);
+		println!("MRENCLAVE base58: {}", mrenclave.encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
@@ -261,7 +263,7 @@ pub(crate) fn main() {
 		);
 	} else if let Some(sub_matches) = matches.subcommand_matches("test") {
 		if sub_matches.is_present("provisioning-server") {
-			println!("*** Running Enclave MU-RA TLS server\n");
+			info!("*** Running Enclave MU-RA TLS server\n");
 			enclave_run_state_provisioning_server(
 				enclave.as_ref(),
 				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
@@ -270,9 +272,9 @@ pub(crate) fn main() {
 				&config.mu_ra_url(),
 				sub_matches.is_present("skip-ra"),
 			);
-			println!("[+] Done!");
+			info!("[+] Done!");
 		} else if sub_matches.is_present("provisioning-client") {
-			println!("*** Running Enclave MU-RA TLS client\n");
+			info!("*** Running Enclave MU-RA TLS client\n");
 			let shard = extract_shard(sub_matches.value_of("shard"), enclave.as_ref());
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
@@ -282,39 +284,17 @@ pub(crate) fn main() {
 				sub_matches.is_present("skip-ra"),
 			)
 			.unwrap();
-			println!("[+] Done!");
+			info!("[+] Done!");
 		} else {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
-		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
-		let old_shard = sub_matches
-			.value_of("old-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		let new_shard: ShardIdentifier = sub_matches
-			.value_of("new-shard")
-			.map(|value| {
-				let mut shard = [0u8; 32];
-				hex::decode_to_slice(value, &mut shard)
-					.expect("shard must be hex encoded without 0x");
-				ShardIdentifier::from_slice(&shard)
-			})
-			.unwrap();
-
-		if old_shard == new_shard {
-			println!("old_shard should not be the same as new_shard");
-		} else {
-			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
-		}
+		let new_shard = extract_shard(None, enclave.as_ref());
+		setup::migrate_shard(enclave.as_ref(), &new_shard);
+		let new_shard_name = new_shard.encode().to_base58();
+		setup::remove_old_shards(config.data_dir(), &new_shard_name);
 	} else {
-		println!("For options: use --help");
+		info!("For options: use --help");
 	}
 }
 
@@ -347,20 +327,20 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain")))]
 	let flavor_str = "offchain-worker";
 
-	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
+	info!("Litentry Worker for {} v{}", flavor_str, VERSION);
 
 	#[cfg(feature = "dcap")]
-	println!("  DCAP is enabled");
+	info!("  DCAP is enabled");
 	#[cfg(not(feature = "dcap"))]
-	println!("  DCAP is disabled");
-	#[cfg(feature = "production")]
-	println!("  Production Mode is enabled");
-	#[cfg(not(feature = "production"))]
-	println!("  Production Mode is disabled");
+	info!("  DCAP is disabled");
+	#[cfg(not(feature = "development"))]
+	info!("  Production Mode is enabled");
+	#[cfg(feature = "development")]
+	info!("  Production Mode is disabled");
 	#[cfg(feature = "evm")]
-	println!("  EVM is enabled");
+	info!("  EVM is enabled");
 	#[cfg(not(feature = "evm"))]
-	println!("  EVM is disabled");
+	info!("  EVM is disabled");
 
 	info!("starting worker on shard {}", shard.encode().to_base58());
 	// ------------------------------------------------------------------------
@@ -372,12 +352,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// initialize the enclave
 	let mrenclave = enclave.get_fingerprint().unwrap();
-	println!("MRENCLAVE={}", mrenclave.0.to_base58());
-	println!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
+	info!("MRENCLAVE={}", mrenclave.0.to_base58());
+	info!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
 
 	// ------------------------------------------------------------------------
 	// let new workers call us for key provisioning
-	println!("MU-RA server listening on {}", config.mu_ra_url());
+	info!("MU-RA server listening on {}", config.mu_ra_url());
 	let is_development_mode = run_config.dev();
 	let ra_url = config.mu_ra_url();
 	let enclave_api_key_prov = enclave.clone();
@@ -398,7 +378,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Get the public key of our TEE.
 	let tee_accountid = enclave_account(enclave.as_ref());
-	println!("Enclave account {:} ", &tee_accountid.to_ss58check());
+	info!("Enclave account {:} ", &tee_accountid.to_ss58check());
 
 	// ------------------------------------------------------------------------
 	// Start `is_initialized` server.
@@ -441,14 +421,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		let direct_invocation_server_addr = config.trusted_worker_url_internal();
 		let enclave_for_direct_invocation = enclave.clone();
 		thread::spawn(move || {
-			println!(
+			info!(
 				"[+] Trusted RPC direct invocation server listening on {}",
 				direct_invocation_server_addr
 			);
 			enclave_for_direct_invocation
 				.init_direct_invocation_server(direct_invocation_server_addr)
 				.unwrap();
-			println!("[+] RPC direct invocation server shut down");
+			info!("[+] RPC direct invocation server shut down");
 		});
 	}
 
@@ -465,10 +445,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 
 	// ------------------------------------------------------------------------
-	// Init parentchain specific stuff. Needed for parentchain communication.
-
-	let (parentchain_handler, last_synced_header) =
-		init_parentchain(&enclave, &litentry_rpc_api, &tee_accountid, ParentchainId::Litentry);
+	// Init parentchain specific stuff. Needed early for parentchain communication.
+	let (integritee_parentchain_handler, integritee_last_synced_header_at_last_run) =
+		init_parentchain(
+			&enclave,
+			&litentry_rpc_api,
+			&tee_accountid,
+			ParentchainId::Litentry,
+			shard,
+		);
 
 	#[cfg(feature = "dcap")]
 	register_collateral(&litentry_rpc_api, &*enclave, &tee_accountid, is_development_mode, skip_ra);
@@ -489,37 +474,27 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// Perform a remote attestation and get an unchecked extrinsic back.
 
 	if skip_ra {
-		println!(
-			"[!] skipping remote attestation. Registering enclave without attestation report."
-		);
+		info!("[!] skipping remote attestation. Registering enclave without attestation report.");
 	} else {
-		println!("[!] creating remote attestation report and create enclave register extrinsic.");
+		info!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
 
 	#[cfg(feature = "dcap")]
 	enclave.set_sgx_qpl_logging().expect("QPL logging setup failed");
 
-	let enclave2 = enclave.clone();
-	let node_api2 = litentry_rpc_api.clone();
-	let tee_accountid2 = tee_accountid.clone();
-	let trusted_url2 = trusted_url.clone();
-
-	#[cfg(not(feature = "dcap"))]
-	let register_xt = move || enclave2.generate_ias_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
-	#[cfg(feature = "dcap")]
-	let register_xt = move || enclave2.generate_dcap_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
-
-	let send_register_xt = move || {
-		println!("[+] Send register enclave extrinsic");
-		send_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
-	};
-
 	// Litentry: send the registration extrinsic regardless of being registered or not,
 	//           the reason is the mrenclave could change in between, so we rely on the
 	//           on-chain logic to handle everything.
 	//           this is the same behavior as upstream
-	let register_enclave_block_hash =
-		send_register_xt().expect("enclave RA registration must be successful to continue");
+	let register_enclave_block_hash = register_enclave(
+		enclave.clone(),
+		&litentry_rpc_api,
+		&tee_accountid,
+		&trusted_url,
+		skip_ra,
+		is_development_mode,
+	)
+	.expect("enclave RA registration must be successful to continue");
 
 	let api_register_enclave_xt_header =
 		litentry_rpc_api.get_header(Some(register_enclave_block_hash)).unwrap().unwrap();
@@ -529,12 +504,11 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
 			.expect("Can decode previously encoded header; qed");
 
-	println!(
+	info!(
 		"[+] Enclave registered at block number: {:?}, hash: {:?}",
 		register_enclave_xt_header.number(),
 		register_enclave_xt_header.hash()
 	);
-
 	// double-check
 	let my_enclave = litentry_rpc_api
 		.enclave(&tee_accountid, None)
@@ -542,126 +516,193 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.expect("our enclave should be registered at this point");
 	trace!("verified that our enclave is registered: {:?}", my_enclave);
 
-	let is_primary_enclave = match litentry_rpc_api
-		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
-		.unwrap()
-	{
-		Some(account) => account == tee_accountid,
-		None => false,
-	};
+	// Litentry:
+	// the logic differs from upstream a bit here (due to different impl in parachain pallet),
+	// theoretically the `primary_enclave_identifier_for_shard` should never be empty, unless the previous
+	// registration failed (e.g. due to unexpected mrenclave). In that case it's expected not to continue with anything.
+	//
+	// in case it's non-empty, it relies on the check of `enclave.get_shard_creation_info` to tell if this worker
+	// has run before - this is similar to upstream.
+	// There're a few cases:
+	// 1. `--clean-reset` is set, then the shard should have been initalized earlier already and it's empty state anyway
+	// 2. `--clean-reset` is not set:
+	//    2a. `get_shard_creation_info` is empty and we are primary worker => it's never run before => init everything
+	//    2b. `get_shard_creation_info` is empty and we are non-primary worker => it's never run before => request to sync state
+	//    2c. `get_shard_creation_info` is non-empty it's run before => do nothing
+	let (we_are_primary_validateer, re_init_parentchain_needed) =
+		match litentry_rpc_api
+			.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+			.unwrap()
+		{
+			Some(account) => {
+				let first_run = enclave
+					.get_shard_creation_info(shard)
+					.unwrap()
+					.for_parentchain(ParentchainId::Litentry)
+					.is_none();
+				if account == tee_accountid {
+					info!("We are the primary worker, first_run: {}", first_run);
+					if first_run {
+						enclave.init_shard(shard.encode()).unwrap();
+						enclave
+							.init_shard_creation_parentchain_header(
+								shard,
+								&ParentchainId::Litentry,
+								&register_enclave_xt_header,
+							)
+							.unwrap();
+						debug!("shard config should be initialized on litentry network now");
+						(true, true)
+					} else {
+						(true, false)
+					}
+				} else {
+					info!("We are NOT primary worker, the primary worker is {}", account);
+					if first_run {
+						// obtain provisioning from last active worker as this hasn't been done before
+						info!("my state doesn't know the creation header of the shard. will request provisioning");
+						sync_state::sync_state::<_, _, WorkerModeProvider>(
+							&litentry_rpc_api,
+							&shard,
+							enclave.as_ref(),
+							skip_ra,
+						);
 
-	if is_primary_enclave {
-		println!("[+] We are the primary enclave");
-	} else {
-		println!("[+] We are NOT the primary enclave");
-	}
-
+						info!("re-register the enclave to update the keys after provisioning");
+						register_enclave(
+							enclave.clone(),
+							&litentry_rpc_api,
+							&tee_accountid,
+							&trusted_url,
+							skip_ra,
+							is_development_mode,
+						)
+						.expect("enclave RA registration must be successful to continue");
+					}
+					(false, true)
+				}
+			},
+			None => {
+				panic!("No primary enclave account is found - was the enclave successfully registered?");
+			},
+		};
+	debug!("getting shard creation: {:?}", enclave.get_shard_creation_info(shard));
 	initialization_handler.registered_on_parentchain();
+
+	let (integritee_parentchain_handler, integritee_last_synced_header_at_last_run) =
+		if re_init_parentchain_needed {
+			// re-initialize integritee parentchain to make sure to use creation_header for fast-sync or the provisioned light client state
+			init_parentchain(
+				&enclave,
+				&litentry_rpc_api,
+				&tee_accountid,
+				ParentchainId::Litentry,
+				shard,
+			)
+		} else {
+			(integritee_parentchain_handler, integritee_last_synced_header_at_last_run)
+		};
 
 	match WorkerModeProvider::worker_mode() {
 		WorkerMode::OffChainWorker => {
-			println!("*** [+] Finished initializing light client, syncing parentchain...");
+			info!("[Litentry:OCW] Finished initializing light client, syncing parentchain...");
 
 			// Syncing all parentchain blocks, this might take a while..
-			let last_synced_header =
-				parentchain_handler.sync_parentchain(last_synced_header, 0, true).unwrap();
+			let last_synced_header = integritee_parentchain_handler
+				.sync_parentchain_until_latest_finalized(
+					integritee_last_synced_header_at_last_run,
+					0,
+					*shard,
+					true,
+				)
+				.unwrap();
 
-			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
+			start_parentchain_header_subscription_thread(
+				integritee_parentchain_handler,
+				last_synced_header,
+				*shard,
+			);
 
 			info!("skipping shard vault check because not yet supported for offchain worker");
 		},
 		WorkerMode::Sidechain => {
-			println!("*** [+] Finished initializing light client, syncing parentchain...");
+			info!("[Litentry:SCV] Finished initializing light client, syncing litentry parentchain...");
 
 			// Litentry: apply skipped parentchain block
 			let parentchain_start_block = config
 				.try_parse_parentchain_start_block()
 				.expect("parentchain start block to be a valid number");
 
-			println!(
+			let last_synced_header = if we_are_primary_validateer {
+				info!("We're the first validateer to be registered, syncing parentchain blocks until the one we have registered ourselves on.");
+				integritee_parentchain_handler
+					.await_sync_and_import_parentchain_until_at_least(
+						&integritee_last_synced_header_at_last_run,
+						&register_enclave_xt_header,
+						parentchain_start_block,
+						*shard,
+					)
+					.unwrap()
+			} else {
+				integritee_last_synced_header_at_last_run
+			};
+
+			info!(
 				"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
 				last_synced_header.number, parentchain_start_block
 			);
 
-			// ------------------------------------------------------------------------
-			// Initialize the sidechain
-			let last_synced_header = sidechain_init_block_production(
-				enclave.clone(),
-				register_enclave_xt_header,
-				is_primary_enclave,
-				parentchain_handler.clone(),
-				sidechain_storage,
-				&last_synced_header,
-				parentchain_start_block,
-				config.clone().fail_slot_mode,
-				config.fail_at,
-			)
-			.unwrap();
-
-			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
-
-			init_provided_shard_vault(shard, &enclave, is_primary_enclave);
+			start_parentchain_header_subscription_thread(
+				integritee_parentchain_handler,
+				last_synced_header,
+				*shard,
+			);
 
 			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
 		},
 	}
 
-	if let Some(url) = config.target_a_parentchain_rpc_endpoint() {
-		init_target_parentchain(
+	let maybe_target_a_rpc_api = if let Some(url) = config.target_a_parentchain_rpc_endpoint() {
+		Some(init_target_parentchain(
 			&enclave,
 			&tee_accountid,
 			url,
 			shard,
 			ParentchainId::TargetA,
 			is_development_mode,
-		)
-	}
+		))
+	} else {
+		None
+	};
 
-	if let Some(url) = config.target_b_parentchain_rpc_endpoint() {
-		init_target_parentchain(
+	let maybe_target_b_rpc_api = if let Some(url) = config.target_b_parentchain_rpc_endpoint() {
+		Some(init_target_parentchain(
 			&enclave,
 			&tee_accountid,
 			url,
 			shard,
 			ParentchainId::TargetB,
 			is_development_mode,
-		)
-	}
-
-	// ------------------------------------------------------------------------
-	// Subscribe to events and print them.
-	println!("*** [{:?}] Subscribing to events", ParentchainId::Litentry);
-	let mut subscription = litentry_rpc_api.subscribe_events().unwrap();
-	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
-	loop {
-		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-			print_events(events, ParentchainId::Litentry)
-		}
-	}
-}
-
-fn init_provided_shard_vault<E: EnclaveBase>(
-	shard: &ShardIdentifier,
-	enclave: &Arc<E>,
-	is_primary_enclave: bool,
-) {
-	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
-		println!(
-			"[Litentry] shard vault account is already initialized in state: {}",
-			shard_vault.to_ss58check()
-		);
-	} else if is_primary_enclave {
-		println!("[Litentry] initializing proxied shard vault account now");
-		enclave.init_proxied_shard_vault(shard, &ParentchainId::Litentry).unwrap();
-		println!(
-			"[Litentry] initialized shard vault account: : {}",
-			enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
-		);
+		))
 	} else {
-		panic!(
-			"[Litentry] no vault account has been initialized and we are not the primary worker"
-		);
+		None
+	};
+
+	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
+		info!("[Litentry:SCV] starting block production");
+		let last_synced_header = sidechain_init_block_production(
+			enclave.clone(),
+			sidechain_storage,
+			config.clone().fail_slot_mode,
+			config.fail_at,
+		)
+		.unwrap();
 	}
+
+	ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(
+		&litentry_rpc_api,
+		ParentchainId::Litentry,
+	);
 }
 
 fn init_target_parentchain<E>(
@@ -671,50 +712,62 @@ fn init_target_parentchain<E>(
 	shard: &ShardIdentifier,
 	parentchain_id: ParentchainId,
 	is_development_mode: bool,
-) where
+) -> ParentchainApi
+where
 	E: EnclaveBase + Sidechain,
 {
-	println!("Initializing parentchain {:?} with url: {}", parentchain_id, url);
+	info!("Initializing parentchain {:?} with url: {}", parentchain_id, url);
 	let node_api = NodeApiFactory::new(url, AccountKeyring::Alice.pair())
 		.create_api()
 		.unwrap_or_else(|_| panic!("[{:?}] Failed to create parentchain node API", parentchain_id));
 
-	// some random bytes not too small to ensure that the enclave has enough funds
-	setup_account_funding(&node_api, tee_account_id, [0u8; 100].into(), is_development_mode)
-		.unwrap_or_else(|_| {
-			panic!("[{:?}] Could not fund parentchain enclave account", parentchain_id)
-		});
+	setup_reasonable_account_funding(
+		&node_api,
+		tee_account_id,
+		parentchain_id,
+		is_development_mode,
+	)
+	.unwrap_or_else(|_| {
+		panic!("[{:?}] Could not fund parentchain enclave account", parentchain_id)
+	});
+
+	// we attempt to set shard creation for this parentchain in case it hasn't been done before
+	let api_head = node_api.get_header(None).unwrap().unwrap();
+	// TODO: #1451: Fix api-client type hacks
+	let head = Header::decode(&mut api_head.encode().as_slice())
+		.expect("Can decode previously encoded header; qed");
+	// we ignore failure
+	let _ = enclave.init_shard_creation_parentchain_header(shard, &parentchain_id, &head);
 
 	let (parentchain_handler, last_synched_header) =
-		init_parentchain(enclave, &node_api, tee_account_id, parentchain_id);
+		init_parentchain(enclave, &node_api, tee_account_id, parentchain_id, shard);
 
-	println!(
-		"*** [+] [{:?}] Finished initializing light client, syncing parentchain...",
-		parentchain_id
-	);
+	info!("[{:?}] Finished initializing light client, syncing parentchain...", parentchain_id);
 
 	// Syncing all parentchain blocks, this might take a while..
-	let last_synched_header =
-		parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
+	let last_synched_header = parentchain_handler
+		.sync_parentchain_until_latest_finalized(last_synched_header, 0, *shard, true)
+		.unwrap();
 
-	start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header);
+	start_parentchain_header_subscription_thread(
+		parentchain_handler.clone(),
+		last_synched_header,
+		*shard,
+	);
 
-	println!("[{:?}] initializing proxied shard vault account now", parentchain_id);
-	enclave.init_proxied_shard_vault(shard, &parentchain_id).unwrap();
+	let parentchain_init_params = parentchain_handler.parentchain_init_params.clone();
 
-	// Subscribe to events and print them.
-	println!("*** [{:?}] Subscribing to events...", parentchain_id);
-	let mut subscription = node_api.subscribe_events().unwrap();
-	println!("[+] [{:?}] Subscribed to events. waiting...", parentchain_id);
-
+	let node_api_clone = node_api.clone();
 	thread::Builder::new()
 		.name(format!("{:?}_parentchain_event_subscription", parentchain_id))
-		.spawn(move || loop {
-			if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-				print_events(events, parentchain_id)
-			}
+		.spawn(move || {
+			ita_parentchain_interface::event_subscriber::subscribe_to_parentchain_events(
+				&node_api_clone,
+				parentchain_id,
+			)
 		})
 		.unwrap();
+	node_api
 }
 
 fn init_parentchain<E>(
@@ -722,6 +775,7 @@ fn init_parentchain<E>(
 	node_api: &ParentchainApi,
 	tee_account_id: &AccountId32,
 	parentchain_id: ParentchainId,
+	shard: &ShardIdentifier,
 ) -> (Arc<ParentchainHandler<ParentchainApi, E>>, Header)
 where
 	E: EnclaveBase + Sidechain,
@@ -731,11 +785,12 @@ where
 			node_api.clone(),
 			enclave.clone(),
 			parentchain_id,
+			*shard,
 		)
 		.unwrap(),
 	);
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
-	println!("[{:?}] last synced parentchain block: {}", parentchain_id, last_synced_header.number);
+	info!("[{:?}] last synced parentchain block: {}", parentchain_id, last_synced_header.number);
 
 	let nonce = node_api.get_account_next_index(tee_account_id).unwrap();
 	info!("[{:?}] Enclave nonce = {:?}", parentchain_id, nonce);
@@ -781,30 +836,12 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 			) {
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
-				println!("[+] Found `WorkerForShard` on parentchain state",);
+				info!("[+] Found `WorkerForShard` on parentchain state",);
 				break
 			}
 			thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
 		}
 	});
-}
-
-fn print_events<R, H>(events: Vec<EventRecord<R, H>>, parentchain_id: ParentchainId)
-where
-	R: Debug,
-{
-	for evr in &events {
-		if evr.phase == ApplyExtrinsic(0) {
-			// not interested in intrinsics
-			continue
-		}
-		let re = Regex::new(r"\s[0-9a-f]*\s\(").unwrap();
-		let event_str = re
-			.replace_all(format!("{:?}", evr.event).as_str(), "(")
-			.replace("RuntimeEvent::", "")
-			.replace("Event::", "");
-		println!("[{}] Event: {}", parentchain_id, event_str);
-	}
 }
 
 #[cfg(feature = "attesteer")]
@@ -859,7 +896,7 @@ fn register_quotes_from_marblerun(
 	for quote in quotes {
 		match enclave.generate_dcap_ra_extrinsic_from_quote(url.clone(), &quote) {
 			Ok(xt) => {
-				send_extrinsic(xt, api, accountid, is_development_mode);
+				send_litentry_extrinsic(xt, api, accountid, is_development_mode);
 			},
 			Err(e) => {
 				error!("Extracting information from quote failed: {}", e)
@@ -879,49 +916,53 @@ fn register_collateral(
 	if !skip_ra {
 		let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
 		let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
-		println!("[>] DCAP setup: register QE collateral");
+		info!("[>] DCAP setup: register QE collateral");
 		let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
-		send_extrinsic(uxt, api, accountid, is_development_mode);
+		send_litentry_extrinsic(uxt, api, accountid, is_development_mode);
 
-		println!("[>] DCAP setup: register TCB info");
+		info!("[>] DCAP setup: register TCB info");
 		let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
-		send_extrinsic(uxt, api, accountid, is_development_mode);
+		send_litentry_extrinsic(uxt, api, accountid, is_development_mode);
 	}
 }
 
-fn send_extrinsic(
+fn send_litentry_extrinsic(
 	extrinsic: Vec<u8>,
 	api: &ParentchainApi,
 	fee_payer: &AccountId32,
 	is_development_mode: bool,
-) -> Option<Hash> {
-	// ensure account funds
-	if let Err(x) = setup_account_funding(api, fee_payer, extrinsic.clone(), is_development_mode) {
-		error!("Ensure enclave funding failed: {:?}", x);
-		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
-		return None
-	}
-
-	info!("[>] send extrinsic");
+) -> ServiceResult<Hash> {
+	let fee = crate::account_funding::estimate_fee(api, extrinsic.clone())?;
+	let ed = api.get_existential_deposit()?;
+	let free = api.get_free_balance(fee_payer)?;
+	let missing_funds = fee.saturating_add(ed).saturating_sub(free);
+	info!("[Litentry] send extrinsic");
+	debug!("fee: {:?}, ed: {:?}, free: {:?} => missing: {:?}", fee, ed, free, missing_funds);
 	trace!(
 		"  encoded extrinsic len: {}, payload: 0x{:}",
 		extrinsic.len(),
 		hex::encode(extrinsic.clone())
 	);
 
-	// fixme: wait ...until_success doesn't work due to https://github.com/scs/substrate-api-client/issues/624
-	// fixme: currently, we don't verify if the extrinsic was a success here
+	if missing_funds > 0 {
+		setup_reasonable_account_funding(
+			api,
+			fee_payer,
+			ParentchainId::Litentry,
+			is_development_mode,
+		)?
+	}
+
 	match api.submit_and_watch_opaque_extrinsic_until(&extrinsic.into(), XtStatus::Finalized) {
 		Ok(xt_report) => {
 			info!(
 				"[+] L1 extrinsic success. extrinsic hash: {:?} / status: {:?}",
 				xt_report.extrinsic_hash, xt_report.status
 			);
-			xt_report.block_hash
+			xt_report.block_hash.ok_or(Error::Custom("no extrinsic hash returned".into()))
 		},
 		Err(e) => {
-			error!("ExtrinsicFailed {:?}", e);
-			None
+			panic!("Extrinsic failed {:?} parentchain genesis: {:?}", e, api.genesis_hash());
 		},
 	}
 }
@@ -929,20 +970,21 @@ fn send_extrinsic(
 fn start_parentchain_header_subscription_thread<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	last_synced_header: Header,
+	shard: ShardIdentifier,
 ) {
 	let parentchain_id = *parentchain_handler.parentchain_id();
 	thread::Builder::new()
 		.name(format!("{:?}_parentchain_sync_loop", parentchain_id))
 		.spawn(move || {
 			if let Err(e) =
-				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
+				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header, shard)
 			{
 				error!(
 					"[{:?}] parentchain block syncing terminated with a failure: {:?}",
 					parentchain_id, e
 				);
 			}
-			println!("[!] [{:?}] parentchain block syncing has terminated", parentchain_id);
+			info!("[!] [{:?}] parentchain block syncing has terminated", parentchain_id);
 		})
 		.unwrap();
 }
@@ -952,6 +994,7 @@ fn start_parentchain_header_subscription_thread<E: EnclaveBase + Sidechain>(
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
+	shard: ShardIdentifier,
 ) -> Result<(), Error> {
 	// TODO: this should be implemented by parentchain_handler directly, and not via
 	// exposed parentchain_api
@@ -981,7 +1024,12 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 			parentchain_id, new_header.number
 		);
 
-		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header, 0, false)?;
+		last_synced_header = parentchain_handler.sync_parentchain_until_latest_finalized(
+			last_synced_header,
+			0,
+			shard,
+			false,
+		)?;
 	}
 }
 
@@ -990,4 +1038,24 @@ pub fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 	let tee_public = enclave_api.get_ecc_signing_pubkey().unwrap();
 	trace!("[+] Got ed25519 account of TEE = {}", tee_public.to_ss58check());
 	AccountId32::from(*tee_public.as_array_ref())
+}
+
+fn register_enclave<E>(
+	enclave: Arc<E>,
+	api: &ParentchainApi,
+	tee_account: &AccountId32,
+	url: &str,
+	skip_ra: bool,
+	is_development_mode: bool,
+) -> ServiceResult<Hash>
+where
+	E: EnclaveBase + DirectRequest + Sidechain + RemoteAttestation + TlsRemoteAttestation + Clone,
+{
+	#[cfg(not(feature = "dcap"))]
+	let register_xt = move || enclave.generate_ias_ra_extrinsic(url, skip_ra).unwrap();
+	#[cfg(feature = "dcap")]
+	let register_xt = move || enclave.generate_dcap_ra_extrinsic(url, skip_ra).unwrap();
+
+	info!("[+] Send register enclave extrinsic");
+	send_litentry_extrinsic(register_xt(), api, tee_account, is_development_mode)
 }

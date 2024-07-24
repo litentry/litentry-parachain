@@ -92,6 +92,7 @@ use its_sidechain::{
 };
 use lazy_static::lazy_static;
 use lc_data_providers::DataProviderConfig;
+use lc_evm_dynamic_assertions::{repository::EvmAssertionRepository, sealing::io::AssertionsSeal};
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
@@ -175,7 +176,6 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
 	EventCreator<integritee::FilterableEvents>,
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -218,7 +218,6 @@ pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_a::TransferToAliceShieldsFundsFilter<target_a::ParentchainExtrinsicParser>,
 	EventCreator<target_a::FilterableEvents>,
 	target_a::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -261,7 +260,6 @@ pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	target_b::TargetBExtrinsicFilter<target_b::ParentchainExtrinsicParser>,
 	EventCreator<target_b::FilterableEvents>,
 	target_b::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -352,6 +350,7 @@ pub type EnclaveSealHandler = SealHandler<
 	EnclaveStateKeyRepository,
 	EnclaveStateHandler,
 	EnclaveLightClientSeal,
+	AssertionsSeal,
 >;
 pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor::Executor<
 	ParentchainBlock,
@@ -429,6 +428,10 @@ pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =
 	ComponentContainer::new("Attestation handler");
+
+/// evm assertions repository
+pub static GLOBAL_ASSERTION_REPOSITORY: ComponentContainer<EvmAssertionRepository> =
+	ComponentContainer::new("EVM Assertion repository");
 
 // Parentchain component instances
 //-------------------------------------------------------------------------------------------------

@@ -35,7 +35,7 @@ use itp_stf_primitives::{
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use itp_types::RsaRequest;
+use itp_types::{parentchain::ParentchainId, RsaRequest};
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
@@ -78,6 +78,7 @@ pub fn enclave_signer_signatures_are_valid() {
 		Identity::Substrate(enclave_account.into()),
 		AccountId::new([3u8; 32]),
 		200u128,
+		ParentchainId::Litentry,
 	);
 
 	let trusted_call_signed = enclave_signer.sign_call_with_self(&trusted_call, &shard).unwrap();
@@ -113,6 +114,7 @@ pub fn nonce_is_computed_correctly() {
 		Identity::Substrate(enclave_account.clone().into()),
 		AccountId::new([1u8; 32]),
 		100u128,
+		ParentchainId::Litentry,
 	);
 	let trusted_call_1_signed =
 		enclave_signer.sign_call_with_self(&trusted_call_1, &shard).unwrap();
@@ -127,6 +129,7 @@ pub fn nonce_is_computed_correctly() {
 		Identity::Substrate(enclave_account.clone().into()),
 		AccountId::new([2u8; 32]),
 		200u128,
+		ParentchainId::Litentry,
 	);
 	let trusted_call_2_signed =
 		enclave_signer.sign_call_with_self(&trusted_call_2, &shard).unwrap();

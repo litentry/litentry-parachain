@@ -37,6 +37,10 @@
     "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
     "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5"
   ],
+  "developerCommittee": [
+    "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
+    "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5"
+  ],
   "bootNodes": [
     "/dns/rpc.rococo-parachain.litentry.io/tcp/40333/ws/p2p/12D3KooWD9t5jsf5m2g4acXfyVf2KxR5j11F9SLC5wKhv6JRquyv"
   ],

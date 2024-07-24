@@ -29,7 +29,8 @@ pub mod storage;
 
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{
-	AttestationType, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave, WorkerType,
+	AttestationType, DcapProvider, DecryptableRequest, Enclave, EnclaveFingerprint, MrEnclave,
+	WorkerType,
 };
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
@@ -82,13 +83,16 @@ pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
 	#[codec(index = 0)]
 	Ok,
+	/// Direct request could not be executed
+	#[codec(index = 1)]
+	Error,
 	/// Trusted Call Status
 	/// Litentry: embed the top hash here - TODO - use generic type?
-	#[codec(index = 1)]
-	TrustedOperationStatus(TrustedOperationStatus, H256),
-	/// Direct request could not be executed
 	#[codec(index = 2)]
-	Error,
+	TrustedOperationStatus(TrustedOperationStatus, H256),
+
+	#[codec(index = 3)]
+	Processing(H256),
 }
 
 #[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]

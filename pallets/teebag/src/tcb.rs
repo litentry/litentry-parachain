@@ -48,7 +48,7 @@ impl TcbVersionStatus {
 	pub fn verify_examinee(&self, examinee: &TcbVersionStatus) -> bool {
 		for (v, r) in self.cpusvn.iter().zip(examinee.cpusvn.iter()) {
 			if *v > *r {
-				return false;
+				return false
 			}
 		}
 		self.pcesvn <= examinee.pcesvn
@@ -74,7 +74,7 @@ impl TcbInfoOnChain {
 	pub fn verify_examinee(&self, examinee: &TcbVersionStatus) -> bool {
 		for tb in &self.tcb_levels {
 			if tb.verify_examinee(examinee) {
-				return true;
+				return true
 			}
 		}
 		false

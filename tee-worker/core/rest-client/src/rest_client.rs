@@ -19,15 +19,19 @@
 use crate::sgx_reexport_prelude::*;
 
 pub use http_req::{request::Method, response::Headers};
-pub use url::Url;
+pub use url::{form_urlencoded, Url};
 
 use crate::{
-	error::Error, http_client::SendHttpRequest, Query, RestDelete, RestGet, RestPatch, RestPath,
-	RestPost, RestPut,
+	error::Error,
+	http_client::{SendHttpRequest, SetHttpHeader},
+	Query, RestDelete, RestGet, RestPatch, RestPath, RestPost, RestPut,
 };
 
 use log::*;
-use std::string::{String, ToString};
+use std::{
+	collections::HashMap,
+	string::{String, ToString},
+};
 
 /// REST client to make HTTP GET and POST requests.
 pub struct RestClient<H> {
@@ -39,7 +43,7 @@ pub struct RestClient<H> {
 
 impl<H> RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Construct new client with default configuration to make HTTP requests.
 	///
@@ -122,6 +126,24 @@ where
 		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
 	}
 
+	pub fn post_form_urlencoded_capture<U, K>(
+		&mut self,
+		path: U,
+		data: HashMap<String, String>,
+	) -> Result<K, Error>
+	where
+		K: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		let data: String = form_urlencoded::Serializer::new(String::new())
+			.extend_pairs(data.iter())
+			.finish();
+
+		self.http_client
+			.set_header("Content-Type", "application/x-www-form-urlencoded")?;
+		let body = self.make_request::<U, K>(Method::POST, path, None, Some(data))?;
+		serde_json::from_str(body.as_str()).map_err(|err| Error::DeserializeParseError(err, body))
+	}
+
 	fn make_request<U, T>(
 		&mut self,
 		method: Method,
@@ -159,7 +181,7 @@ where
 
 impl<H> RestGet for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a GET request.
 	fn get<U, T>(&mut self, params: U) -> Result<T, Error>
@@ -184,7 +206,7 @@ where
 
 impl<H> RestPost for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a POST request.
 	fn post<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -224,11 +246,23 @@ where
 	{
 		self.post_or_put_capture_with(Method::POST, params, data, query)
 	}
+
+	/// Make a POST request with form urlencoded data and capture returned body.
+	fn post_form_urlencoded_capture<U, K>(
+		&mut self,
+		params: U,
+		data: HashMap<String, String>,
+	) -> Result<K, Error>
+	where
+		K: serde::de::DeserializeOwned + RestPath<U>,
+	{
+		self.post_form_urlencoded_capture(params, data)
+	}
 }
 
 impl<H> RestPut for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a PUT request.
 	fn put<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -272,7 +306,7 @@ where
 
 impl<H> RestPatch for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a PATCH request.
 	fn patch<U, T>(&mut self, params: U, data: &T) -> Result<(), Error>
@@ -293,7 +327,7 @@ where
 
 impl<H> RestDelete for RestClient<H>
 where
-	H: SendHttpRequest,
+	H: SendHttpRequest + SetHttpHeader,
 {
 	/// Make a DELETE request.
 	fn delete<U, T>(&mut self, params: U) -> Result<(), Error>

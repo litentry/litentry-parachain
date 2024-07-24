@@ -43,6 +43,8 @@ pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 		maybe_key: Some(key),
 		parachain_block_number: 0u32,
 		sidechain_block_number: 0u32,
+		parachain_runtime_version: 0u32,
+		sidechain_runtime_version: 0u32,
 		top_hash: H256::zero(),
 		should_create_id_graph: false,
 		req_ext_hash: H256::zero(),

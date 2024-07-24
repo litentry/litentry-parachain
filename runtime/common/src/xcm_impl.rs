@@ -71,18 +71,18 @@ impl<
 				// This involves the same db read per block, mitigating any attack based on
 				// non-supported assets
 				if !AssetIdInfoGetter::payment_is_supported(asset_type.clone()) {
-					return Err(XcmError::TooExpensive);
+					return Err(XcmError::TooExpensive)
 				}
 				if let Some(units_per_second) = AssetIdInfoGetter::get_units_per_second(asset_type)
 				{
-					let amount = units_per_second.saturating_mul(weight.ref_time() as u128)
-						/ (WEIGHT_REF_TIME_PER_SECOND as u128);
+					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
+						(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 					// We dont need to proceed if the amount is 0
 					// For cases (specially tests) where the asset is very cheap with respect
 					// to the weight needed
 					if amount.is_zero() {
-						return Ok(payment);
+						return Ok(payment)
 					}
 
 					let required = MultiAsset {
@@ -102,13 +102,12 @@ impl<
 					// In short, we only refund on the asset the trader first succesfully was able
 					// to pay for an execution
 					let new_asset = match self.1 {
-						Some((prev_id, prev_amount, units_per_second)) => {
+						Some((prev_id, prev_amount, units_per_second)) =>
 							if prev_id == id {
 								Some((id, prev_amount.saturating_add(amount), units_per_second))
 							} else {
 								None
-							}
-						},
+							},
 						None => Some((id, amount, units_per_second)),
 					};
 
@@ -169,12 +168,11 @@ impl<
 {
 	fn take_revenue(revenue: MultiAsset) {
 		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) => {
+			Ok((asset_id, amount)) =>
 				if !amount.is_zero() {
 					let ok = Assets::mint_into(asset_id, &ReceiverAccount::get(), amount).is_ok();
 					debug_assert!(ok, "`mint_into` cannot generally fail; qed");
-				}
-			},
+				},
 			Err(_) => log::debug!(
 				target: "xcm",
 				"take revenue failed matching fungible"
@@ -218,7 +216,7 @@ impl ContainsPair<MultiAsset, MultiLocation> for MultiNativeAsset {
 	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		if let Some(ref reserve) = asset.reserve() {
 			if reserve == origin {
-				return true;
+				return true
 			}
 		}
 		false
@@ -246,9 +244,8 @@ pub enum CurrencyId<R: BaseRuntimeRequirements> {
 fn convert_currency<R: BaseRuntimeRequirements>(s: &CurrencyId<R>) -> CurrencyId4Compare {
 	match s {
 		CurrencyId::<R>::SelfReserve(_) => CurrencyId4Compare::SelfReserve,
-		CurrencyId::<R>::ParachainReserve(multi) => {
-			CurrencyId4Compare::ParachainReserve(multi.clone())
-		},
+		CurrencyId::<R>::ParachainReserve(multi) =>
+			CurrencyId4Compare::ParachainReserve(multi.clone()),
 	}
 }
 
@@ -324,11 +321,9 @@ impl<I: From<MultiLocation>, R: BaseRuntimeRequirements> Get<I> for NewAnchoring
 impl<R: BaseRuntimeRequirements> From<MultiLocation> for CurrencyId<R> {
 	fn from(location: MultiLocation) -> Self {
 		match location {
-			a if (a == (OldAnchoringSelfReserve::<R>::get()))
-				| (a == (NewAnchoringSelfReserve::<R>::get())) =>
-			{
-				CurrencyId::<R>::SelfReserve(PhantomData::default())
-			},
+			a if (a == (OldAnchoringSelfReserve::<R>::get())) |
+				(a == (NewAnchoringSelfReserve::<R>::get())) =>
+				CurrencyId::<R>::SelfReserve(PhantomData),
 			_ => CurrencyId::<R>::ParachainReserve(Box::new(location)),
 		}
 	}
@@ -376,11 +371,9 @@ impl<R: BaseRuntimeRequirements> Convert<MultiLocation, Option<CurrencyId<R>>>
 {
 	fn convert(multi: MultiLocation) -> Option<CurrencyId<R>> {
 		match multi {
-			a if (a == OldAnchoringSelfReserve::<R>::get())
-				| (a == NewAnchoringSelfReserve::<R>::get()) =>
-			{
-				Some(CurrencyId::<R>::SelfReserve(PhantomData::default()))
-			},
+			a if (a == OldAnchoringSelfReserve::<R>::get()) |
+				(a == NewAnchoringSelfReserve::<R>::get()) =>
+				Some(CurrencyId::<R>::SelfReserve(PhantomData)),
 			_ => Some(CurrencyId::<R>::ParachainReserve(Box::new(multi))),
 		}
 	}

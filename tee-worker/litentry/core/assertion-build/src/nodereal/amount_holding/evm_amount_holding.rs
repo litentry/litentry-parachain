@@ -23,11 +23,12 @@ extern crate sgx_tstd as std;
 use core::result;
 
 use crate::*;
+use lc_common::abort_strategy::{loop_with_abort_strategy, AbortStrategy, LoopControls};
 use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
-		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
+		EVMAmountHoldingAssertionUpdate, EVMTokenAddress,
 	},
-	Credential,
+	Credential, IssuerRuntimeVersion,
 };
 use lc_data_providers::{
 	nodereal_jsonrpc::{
@@ -46,30 +47,37 @@ fn get_holding_balance(
 	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
 	let mut total_balance = 0_u128;
 
-	let decimals = token_type.get_decimals();
+	let decimals = token_type.token_decimals();
 
-	for address in addresses.iter() {
-		let param = GetTokenBalance20Param {
-			contract_address: token_type.get_address(address.0).unwrap_or_default().into(),
-			address: address.1.clone(),
-			block_number: "latest".into(),
-		};
-		match address.0 {
-			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
-				Ok(balance) => {
-					total_balance += balance;
+	loop_with_abort_strategy(
+		addresses,
+		|(network, address)| {
+			let param = GetTokenBalance20Param {
+				contract_address: token_type.get_address(*network).unwrap_or_default().into(),
+				address: address.clone(),
+				block_number: "latest".into(),
+			};
+			match network {
+				Web3Network::Bsc => match bsc_client.get_token_balance_20(&param, false) {
+					Ok(balance) => {
+						total_balance += balance;
+						Ok(LoopControls::Continue)
+					},
+					Err(err) => Err(err),
 				},
-				Err(err) => return Err(err),
-			},
-			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
-				Ok(balance) => {
-					total_balance += balance;
+				Web3Network::Ethereum => match eth_client.get_token_balance_20(&param, false) {
+					Ok(balance) => {
+						total_balance += balance;
+						Ok(LoopControls::Continue)
+					},
+					Err(err) => Err(err),
 				},
-				Err(err) => return Err(err),
-			},
-			_ => {},
-		}
-	}
+				_ => Ok(LoopControls::Continue),
+			}
+		},
+		AbortStrategy::FailFast::<fn(&_) -> bool>,
+	)
+	.map_err(|errors| errors[0].clone())?;
 
 	Ok((total_balance / decimals as u128) as f64
 		+ ((total_balance % decimals as u128) as f64 / decimals))
@@ -102,18 +110,25 @@ pub fn build(
 		});
 
 	match result {
-		Ok(value) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::EVMAmountHolding(token_type),
-					e.into_error_detail(),
-				))
-			},
+		Ok(value) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::EVMAmountHolding(token_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -172,7 +187,7 @@ mod tests {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_nodereal_api_chain_network_url(url);
+		data_provider_config.set_nodereal_api_chain_network_url(url).unwrap();
 		data_provider_config
 	}
 
@@ -193,6 +208,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -220,7 +237,7 @@ mod tests {
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);
@@ -248,6 +265,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -286,7 +305,7 @@ mod tests {
 	#[test]
 	fn build_evm_amount_holding_gte_max_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x90d53026a47ac20609accc3f2ddc9fb9b29bb310".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -303,6 +322,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -320,17 +341,12 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "0".into()
+								dst: "3000".into()
 							}),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::LessThan,
-								dst: "1".into()
-							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);

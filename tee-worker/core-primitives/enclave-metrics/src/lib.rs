@@ -27,6 +27,7 @@ extern crate sgx_tstd as std;
 use codec::{Decode, Encode};
 use core::time::Duration;
 use lc_stf_task_sender::RequestType;
+use litentry_primitives::Assertion;
 use std::{boxed::Box, string::String};
 
 #[derive(Encode, Decode, Debug)]
@@ -44,7 +45,8 @@ pub enum EnclaveMetric {
 	SidechainSlotStfExecutionTime(Duration),
 	SidechainSlotBlockCompositionTime(Duration),
 	SidechainBlockBroadcastingTime(Duration),
-	VCBuildTime(String, Duration),
+	VCBuildTime(Assertion, Duration),
 	SuccessfullVCIssuance,
 	FailedVCIssuance,
+	ParentchainEventProcessed(String),
 }

@@ -21,7 +21,8 @@ use codec::Decode;
 use core::fmt::Debug;
 use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_sgx_crypto::{ecdsa, schnorr};
-use itp_types::ShardIdentifier;
+use itp_stf_interface::ShardCreationInfo;
+use itp_types::{parentchain::Header, ShardIdentifier};
 use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
@@ -35,10 +36,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 		untrusted_worker_addr: &str,
 		base_dir: &str,
 	) -> EnclaveResult<()>;
-
-	/// Initialize the enclave sidechain components.
-	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()>;
-
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
 
@@ -51,12 +48,15 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// Initialize a new shard.
 	fn init_shard(&self, shard: Vec<u8>) -> EnclaveResult<()>;
 
-	/// Initialize a new shard vault account and register enclave signer as its proxy.
-	fn init_proxied_shard_vault(
+	/// Initialize parentchain checkpoint after which invocations will be processed
+	fn init_shard_creation_parentchain_header(
 		&self,
 		shard: &ShardIdentifier,
 		parentchain_id: &ParentchainId,
+		header: &Header,
 	) -> EnclaveResult<()>;
+
+	fn get_shard_creation_info(&self, shard: &ShardIdentifier) -> EnclaveResult<ShardCreationInfo>;
 
 	fn set_nonce(&self, nonce: u32, parentchain_id: ParentchainId) -> EnclaveResult<()>;
 
@@ -70,9 +70,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public>;
 
-	/// retrieve vault account from shard state
-	fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public>;
-
 	/// retrieve the btc wallet key pair, only works in non-prod
 	fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair>;
 
@@ -82,10 +79,16 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 
 	// litentry
-	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+	fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()>;
 
 	/// Publish generated wallets on parachain
 	fn publish_wallets(&self) -> EnclaveResult<()>;
+
+	/// finish enclave initialization
+	fn finish_enclave_init(&self) -> EnclaveResult<()>;
+
+	/// init custodian wallets
+	fn init_wallets(&self, base_dir: &str) -> EnclaveResult<()>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -101,7 +104,8 @@ mod impl_ffi {
 	use itp_settings::worker::{
 		HEADER_MAX_SIZE, MR_ENCLAVE_SIZE, SHIELDING_KEY_SIZE, SIGNING_KEY_SIZE,
 	};
-	use itp_types::ShardIdentifier;
+	use itp_stf_interface::ShardCreationInfo;
+	use itp_types::{parentchain::Header, ShardIdentifier};
 	use log::*;
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -133,17 +137,6 @@ mod impl_ffi {
 					encoded_base_dir.len() as u32,
 				)
 			};
-
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
-			Ok(())
-		}
-
-		fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
-
-			let result = unsafe { ffi::init_enclave_sidechain_components(self.eid, &mut retval) };
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
@@ -196,22 +189,26 @@ mod impl_ffi {
 			Ok(())
 		}
 
-		fn init_proxied_shard_vault(
+		fn init_shard_creation_parentchain_header(
 			&self,
 			shard: &ShardIdentifier,
 			parentchain_id: &ParentchainId,
+			header: &Header,
 		) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 			let parentchain_id_enc = parentchain_id.encode();
+			let header_bytes = header.encode();
 			let shard_bytes = shard.encode();
 			let result = unsafe {
-				ffi::init_proxied_shard_vault(
+				ffi::init_shard_creation_parentchain_header(
 					self.eid,
 					&mut retval,
 					shard_bytes.as_ptr(),
 					shard_bytes.len() as u32,
 					parentchain_id_enc.as_ptr(),
 					parentchain_id_enc.len() as u32,
+					header_bytes.as_ptr(),
+					header_bytes.len() as u32,
 				)
 			};
 
@@ -219,6 +216,30 @@ mod impl_ffi {
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
 			Ok(())
+		}
+
+		fn get_shard_creation_info(
+			&self,
+			shard: &ShardIdentifier,
+		) -> EnclaveResult<ShardCreationInfo> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut creation_info = [0u8; std::mem::size_of::<ShardCreationInfo>()];
+			let shard_bytes = shard.encode();
+
+			let result = unsafe {
+				ffi::get_shard_creation_info(
+					self.eid,
+					&mut retval,
+					shard_bytes.as_ptr(),
+					shard_bytes.len() as u32,
+					creation_info.as_mut_ptr(),
+					creation_info.len() as u32,
+				)
+			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			Decode::decode(&mut creation_info.as_slice()).map_err(|e| Error::Codec(e.into()))
 		}
 
 		fn set_nonce(&self, nonce: u32, parentchain_id: ParentchainId) -> EnclaveResult<()> {
@@ -311,28 +332,6 @@ mod impl_ffi {
 			Ok(ed25519::Public::from_raw(pubkey))
 		}
 
-		fn get_ecc_vault_pubkey(&self, shard: &ShardIdentifier) -> EnclaveResult<ed25519::Public> {
-			let mut retval = sgx_status_t::SGX_SUCCESS;
-			let mut pubkey = [0u8; SIGNING_KEY_SIZE];
-			let shard_bytes = shard.encode();
-
-			let result = unsafe {
-				ffi::get_ecc_vault_pubkey(
-					self.eid,
-					&mut retval,
-					shard_bytes.as_ptr(),
-					shard_bytes.len() as u32,
-					pubkey.as_mut_ptr(),
-					pubkey.len() as u32,
-				)
-			};
-
-			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
-			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-
-			Ok(ed25519::Public::from_raw(pubkey))
-		}
-
 		fn get_bitcoin_wallet_pair(&self) -> EnclaveResult<schnorr::Pair> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 			let mut private_key = [0u8; 32];
@@ -392,16 +391,15 @@ mod impl_ffi {
 			Ok(mr_enclave.into())
 		}
 
-		fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		fn migrate_shard(&self, new_shard: Vec<u8>) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let result = unsafe {
 				ffi::migrate_shard(
 					self.eid,
 					&mut retval,
-					old_shard.as_ptr(),
 					new_shard.as_ptr(),
-					old_shard.len() as u32,
+					new_shard.len() as u32,
 				)
 			};
 
@@ -415,6 +413,37 @@ mod impl_ffi {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
 			let result = unsafe { ffi::publish_wallets(self.eid, &mut retval) };
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn finish_enclave_init(&self) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let result = unsafe { ffi::finish_enclave_init(self.eid, &mut retval) };
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(())
+		}
+
+		fn init_wallets(&self, base_dir: &str) -> EnclaveResult<()> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+
+			let encoded_base_dir = base_dir.encode();
+
+			let result = unsafe {
+				ffi::init_wallets(
+					self.eid,
+					&mut retval,
+					encoded_base_dir.as_ptr(),
+					encoded_base_dir.len() as u32,
+				)
+			};
 
 			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

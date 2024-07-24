@@ -9,6 +9,10 @@ function worker_clippy() {
     cargo clippy --release --features evm -- -D warnings
     cargo clippy --release --features sidechain -- -D warnings
     cargo clippy --release --features offchain-worker -- -D warnings
+    cargo clippy --release --features development -- -D warnings
+    cargo clippy --release --features evm,development -- -D warnings
+    cargo clippy --release --features sidechain,development -- -D warnings
+    cargo clippy --release --features offchain-worker,development -- -D warnings
 }
 
 function bitacross_clippy() {
@@ -19,9 +23,7 @@ function bitacross_clippy() {
 function parachain_check() {
     make clippy
     cargo test --locked --release -p pallet-* --lib
-    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
     cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
-    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
     cargo test --locked --release -p rococo-parachain-runtime --lib
     cargo test --locked --release -p litmus-parachain-runtime --lib
     cargo test --locked --release -p litentry-parachain-runtime --lib
@@ -33,6 +35,10 @@ function clean_up() {
     cd "$root_dir/tee-worker"
     cargo clean
     cd "$root_dir/tee-worker/enclave-runtime"
+    cargo clean
+    cd "$root_dir/bitacross-worker"
+    cargo clean
+    cd "$root_dir/bitacross-worker/enclave-runtime"
     cargo clean
 }
 
@@ -56,7 +62,7 @@ cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
 
 echo "[Step 4], tee-worker cargo test"
 cd "$root_dir/tee-worker"
-RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
+RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release --features development -- --show-output
 
 echo "[Step 5], tee-worker service test"
 clean_up

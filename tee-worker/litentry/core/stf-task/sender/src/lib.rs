@@ -27,92 +27,95 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
-// TODO: the sidechain block number type is chaotic from upstream
-use itp_types::{AccountId, BlockNumber as SidechainBlockNumber, H256};
-pub mod error;
-pub mod stf_task_sender;
-use codec::{Decode, Encode};
-pub use error::Result;
-use litentry_primitives::{
-	Assertion, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
-	ShardIdentifier, Web2ValidationData, Web3Network,
+use lazy_static::lazy_static;
+use log::*;
+
+mod error;
+pub use error::*;
+
+mod request;
+pub use request::*;
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
+use std::{
+	boxed::Box,
+	error::Error as StdError,
+	sync::{
+		mpsc::{channel, Receiver, Sender},
+		Arc,
+	},
 };
-use sp_runtime::traits::ConstU32;
-use sp_std::prelude::Vec;
 
-/// Here a few Request structs are defined for asynchronously stf-tasks handling.
-/// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
-/// We use the encoded version just to avoid cyclic dependency, otherwise we have
-/// ita-stf -> lc-stf-task-sender -> ita-stf
-///
-/// In this way we make sure the state is processed "chronologically" by the StfExecutor.
-/// We can't write any state in this state, otherwise we can be trapped into a situation
-/// where the state doesn't match the apriori state that is recorded before executing any
-/// trusted calls in block production (InvalidAprioriHash error).
-///
-/// Reading state is not a problem. However, we prefer to read the required storage before
-/// sending the stf-task and pass it as parameters in `Request`, e.g. `challenge_code` below.
-/// The reason is we actually want the "snapshot" state when the preflight TrustedCall gets
-/// executed instead of the "live" state.
-///
-/// The callback TrustedCall will be appended to the end of top pool but we don't see a
-/// problem. In case some preflight TrustedCall and callback TrustedCall are going to change
-/// the same storage, we should implement them carefully and always treat it as if both
-/// TrustedCalls can get executed in any order.
-///
-/// For more information, please see:
-/// https://github.com/litentry/tee-worker/issues/110
-/// https://www.notion.so/web3builders/Sidechain-block-importer-and-block-production-28292233b4c74f4ab8110a0014f8d9df
+pub type StfSender = Sender<RequestType>;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct Web2IdentityVerificationRequest {
-	pub shard: ShardIdentifier,
-	pub who: Identity,
-	pub identity: Identity,
-	pub raw_msg: Vec<u8>,
-	pub validation_data: Web2ValidationData,
-	pub web3networks: Vec<Web3Network>,
-	pub top_hash: H256,
-	pub maybe_key: Option<RequestAesKey>,
-	pub req_ext_hash: H256,
+// Global storage of the sender. Should not be accessed directly.
+lazy_static! {
+	static ref GLOBAL_STF_REQUEST_TASK: Arc<Mutex<Option<StfTaskSender>>> =
+		Arc::new(Mutex::new(Default::default()));
 }
 
-pub type MaxIdentityLength = ConstU32<64>;
-/// TODO: adapt struct fields later
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct AssertionBuildRequest {
-	pub shard: ShardIdentifier,
-	pub signer: AccountId,
-	pub who: Identity,
-	pub assertion: Assertion,
-	pub identities: Vec<IdentityNetworkTuple>,
-	pub top_hash: H256,
-	pub parachain_block_number: ParentchainBlockNumber,
-	pub sidechain_block_number: SidechainBlockNumber,
-	pub maybe_key: Option<RequestAesKey>,
-	pub should_create_id_graph: bool,
-	pub req_ext_hash: H256,
+/// Trait to send an stf request to the stf request thread.
+pub trait SendStfRequest {
+	fn send_stf_request(&self, request: RequestType) -> Result<()>;
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub enum RequestType {
-	#[codec(index = 0)]
-	IdentityVerification(Web2IdentityVerificationRequest),
-	#[codec(index = 1)]
-	AssertionVerification(AssertionBuildRequest),
-}
-
-impl From<Web2IdentityVerificationRequest> for RequestType {
-	fn from(r: Web2IdentityVerificationRequest) -> Self {
-		RequestType::IdentityVerification(r)
+/// Struct to access the `send_stf_request` function.
+pub struct StfRequestSender {}
+impl StfRequestSender {
+	pub fn new() -> Self {
+		Self {}
 	}
 }
 
-impl From<AssertionBuildRequest> for RequestType {
-	fn from(r: AssertionBuildRequest) -> Self {
-		RequestType::AssertionVerification(r)
+impl Default for StfRequestSender {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl SendStfRequest for StfRequestSender {
+	fn send_stf_request(&self, request: RequestType) -> Result<()> {
+		debug!("send stf request: {:?}", request);
+
+		// Acquire lock on extrinsic sender
+		let mutex_guard = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
+
+		let stf_task_sender = mutex_guard.clone().ok_or(Error::ComponentNotInitialized)?;
+
+		// Release mutex lock, so we don't block the lock longer than necessary.
+		drop(mutex_guard);
+
+		// Send the request to the receiver loop.
+		stf_task_sender.send(request)
+	}
+}
+
+/// Initialization of the extrinsic sender. Needs to be called before any sender access.
+pub fn init_stf_task_sender_storage() -> Result<Receiver<RequestType>> {
+	let (sender, receiver) = channel();
+	let mut stf_task_storage = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
+	*stf_task_storage = Some(StfTaskSender::new(sender));
+	Ok(receiver)
+}
+
+/// Wrapping struct around the actual sender. Should not be accessed directly.
+#[derive(Clone, Debug)]
+struct StfTaskSender {
+	sender: StfSender,
+}
+
+impl StfTaskSender {
+	pub fn new(sender: StfSender) -> Self {
+		Self { sender }
+	}
+
+	fn send(&self, request: RequestType) -> Result<()> {
+		self.sender.send(request).map_err(|e| Error::Other(e.into()))?;
+		Ok(())
 	}
 }

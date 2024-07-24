@@ -20,10 +20,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes,
+	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
+	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -33,6 +34,7 @@ pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
 pub mod pallet_balances;
+pub mod pallet_evm_assertion;
 pub mod pallet_imp;
 pub mod pallet_proxy;
 pub mod pallet_system;
@@ -41,6 +43,8 @@ pub mod pallet_utility;
 pub mod pallet_vcmp;
 pub mod runtime_call;
 
+pub mod pallet_timestamp;
+
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
@@ -48,10 +52,12 @@ pub trait NodeMetadataTrait:
 	TeebagCallIndexes
 	+ IMPCallIndexes
 	+ VCMPCallIndexes
-	+ SystemSs58Prefix
+	+ SystemConstants
 	+ UtilityCallIndexes
 	+ ProxyCallIndexes
 	+ BalancesCallIndexes
+	+ TimestampCallIndexes
+	+ EvmAssertionsCallIndexes
 {
 }
 
@@ -59,10 +65,12 @@ impl<
 		T: TeebagCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
-			+ SystemSs58Prefix
+			+ SystemConstants
 			+ UtilityCallIndexes
 			+ ProxyCallIndexes
-			+ BalancesCallIndexes,
+			+ BalancesCallIndexes
+			+ TimestampCallIndexes
+			+ EvmAssertionsCallIndexes,
 	> NodeMetadataTrait for T
 {
 }
@@ -94,6 +102,11 @@ impl NodeMetadata {
 			runtime_transaction_version,
 		}
 	}
+
+	pub fn get_metadata(&self) -> Option<&Metadata> {
+		self.node_metadata.as_ref()
+	}
+
 	/// Return the substrate chain runtime version.
 	pub fn get_runtime_version(&self) -> u32 {
 		self.runtime_spec_version

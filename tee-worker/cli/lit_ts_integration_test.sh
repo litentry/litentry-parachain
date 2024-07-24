@@ -32,7 +32,7 @@ NPORT=${NPORT:-9912}
 NODEURL=${NODEURL:-"ws://litentry-node"}
 NODEHTTPURL=${NODEHTTPURL:-"http://litentry-node"}
 WORKER1PORT=${WORKER1PORT:-2011}
-WORKER1URL=${WORKER1URL:-"wss://litentry-worker-1"}
+WORKER1URL=${WORKER1URL:-"ws://litentry-worker-1"}
 
 CLIENT_BIN=${CLIENT_BIN:-"/usr/local/bin/litentry-cli"}
 
@@ -62,10 +62,29 @@ cd  /client-api/sidechain-api
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
 
+
 cd /client-api
 pnpm install
 pnpm run build
 
-cd /ts-tests
-pnpm install
+if [ "$TEST" = "assertion_contracts.test.ts" ]; then
+    cd /
+    ls assertion-contracts/
+    cp -r assertion-contracts /ts-tests/integration-tests/contracts
+
+    cd /ts-tests
+    curl -L https://foundry.paradigm.xyz | bash
+    source /root/.bashrc
+    apt install -y git
+    foundryup
+
+    pnpm install
+    pnpm --filter integration-tests run compile-contracts
+
+else
+    cd /ts-tests
+    pnpm install
+
+fi
+
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST

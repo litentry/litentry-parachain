@@ -20,7 +20,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials::nodereal::bnb_domain::bnb_domain_holding_amount::UpdateBnbDomainHoldingAmountCredential;
+use lc_credentials::{
+	nodereal::bnb_domain::bnb_domain_holding_amount::UpdateBnbDomainHoldingAmountCredential,
+	IssuerRuntimeVersion,
+};
 use lc_data_providers::DataProviderConfig;
 
 use super::{BnbDomainInfo, BnbDomainInfoInterface};
@@ -39,7 +42,13 @@ pub fn build(
 		.collect::<Vec<String>>();
 
 	let amount = BnbDomainInfo.get_bnb_domain_holding_amount(&addresses, data_provider_config)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_bnb_holding_amount(amount);
 			Ok(credential_unsigned)

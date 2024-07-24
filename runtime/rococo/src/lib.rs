@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
+#![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
 
@@ -71,9 +72,11 @@ pub use core_primitives::{
 	HOURS, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
+
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
+	DeveloperCommitteeMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
@@ -209,9 +212,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => {
-				call.pre_dispatch_self_contained(info, dispatch_info, len)
-			},
+			RuntimeCall::Ethereum(call) =>
+				call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -221,11 +223,10 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => {
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
 				Some(call.dispatch(RuntimeOrigin::from(
 					pallet_ethereum::RawOrigin::EthereumTransaction(info),
-				)))
-			},
+				))),
 			_ => None,
 		}
 	}
@@ -246,7 +247,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9174,
+	spec_version: 9185,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -356,27 +357,28 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
 				c,
-				RuntimeCall::Balances(..)
-					| RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				RuntimeCall::Balances(..) |
+					RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
 			ProxyType::CancelProxy => matches!(
 				c,
-				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. })
-					| RuntimeCall::Utility(..)
-					| RuntimeCall::Multisig(..)
+				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+					RuntimeCall::Utility(..) |
+					RuntimeCall::Multisig(..)
 			),
 			ProxyType::Collator => matches!(
 				c,
-				RuntimeCall::ParachainStaking(..)
-					| RuntimeCall::Utility(..)
-					| RuntimeCall::Multisig(..)
+				RuntimeCall::ParachainStaking(..) |
+					RuntimeCall::Utility(..) |
+					RuntimeCall::Multisig(..)
 			),
 			ProxyType::Governance => matches!(
 				c,
-				RuntimeCall::Democracy(..)
-					| RuntimeCall::Council(..)
-					| RuntimeCall::TechnicalCommittee(..)
-					| RuntimeCall::Treasury(..)
+				RuntimeCall::Democracy(..) |
+					RuntimeCall::Council(..) |
+					RuntimeCall::TechnicalCommittee(..) |
+					RuntimeCall::Treasury(..) |
+					RuntimeCall::DeveloperCommittee(..)
 			),
 		}
 	}
@@ -616,6 +618,32 @@ impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime
 	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
+}
+
+impl pallet_collective::Config<DeveloperCommitteeInstance> for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type MotionDuration = TechnicalMotionDuration;
+	type MaxProposals = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+impl pallet_membership::Config<DeveloperCommitteeMembershipInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
+	type MembershipInitialized = DeveloperCommittee;
+	type MembershipChanged = DeveloperCommittee;
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
@@ -965,6 +993,7 @@ impl pallet_teebag::Config for Runtime {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<5>;
 }
 
 impl pallet_identity_management::Config for Runtime {
@@ -979,6 +1008,18 @@ impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrAllCouncil;
+}
+
+impl pallet_evm_assertions::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AssertionId = H160;
+	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+}
+
+// Temporary for bitacross team to test
+impl pallet_bitacross_mimic::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
@@ -1078,7 +1119,7 @@ where
 		if let Some(author_index) = pallet_aura::Pallet::<T>::find_author(digests) {
 			let authority_id =
 				<pallet_aura::Pallet<T>>::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			return Some(H160::from_slice(&authority_id.encode()[4..24]))
 		}
 
 		None
@@ -1097,7 +1138,6 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	// Minimal effort, no precompile for now
 	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
@@ -1123,8 +1163,29 @@ impl pallet_ethereum::Config for Runtime {
 	type ExtraDataLength = ConstU32<30>;
 }
 
-impl runtime_common::BaseRuntimeRequirements for Runtime {}
+parameter_types! {
+	pub const DefaultYearlyInflation: Perbill = Perbill::from_perthousand(5);
+}
 
+pub struct IdentityAccountIdConvert;
+
+impl pallet_score_staking::AccountIdConvert<Runtime> for IdentityAccountIdConvert {
+	fn convert(account: AccountId) -> <Runtime as frame_system::Config>::AccountId {
+		account
+	}
+}
+
+impl pallet_score_staking::Config for Runtime {
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
+	type AccountIdConvert = IdentityAccountIdConvert;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
+	type YearlyInflation = DefaultYearlyInflation;
+	type MaxScoreUserCount = ConstU32<1_000_000>;
+}
+
+impl runtime_common::BaseRuntimeRequirements for Runtime {}
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
 
 construct_runtime! {
@@ -1184,7 +1245,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens = 55,
+		// 55 is saved for old pallet: Tokens: orml_tokens
+		Assets: pallet_assets = 56,
 
 		// Rococo pallets
 		ChainBridge: pallet_bridge = 60,
@@ -1196,6 +1258,14 @@ construct_runtime! {
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 		Bitacross: pallet_bitacross = 70,
+		// Temporary for bitacross team to test
+		BitacrossMimic: pallet_bitacross_mimic = 71,
+		EvmAssertions: pallet_evm_assertions = 72,
+
+		// Developer council
+		DeveloperCommittee: pallet_collective::<Instance3> = 73,
+		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
+		ScoreStaking: pallet_score_staking = 75,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
@@ -1215,17 +1285,18 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::Sudo(_)
-				| RuntimeCall::System(_)
-				| RuntimeCall::Timestamp(_)
-				| RuntimeCall::ParachainSystem(_)
-				| RuntimeCall::ExtrinsicFilter(_)
-				| RuntimeCall::Multisig(_)
-				| RuntimeCall::Council(_)
-				| RuntimeCall::TechnicalCommittee(_)
+			RuntimeCall::Sudo(_) |
+				RuntimeCall::System(_) |
+				RuntimeCall::Timestamp(_) |
+				RuntimeCall::ParachainSystem(_) |
+				RuntimeCall::ExtrinsicFilter(_) |
+				RuntimeCall::Multisig(_) |
+				RuntimeCall::Council(_) |
+				RuntimeCall::TechnicalCommittee(_) |
+				RuntimeCall::DeveloperCommittee(_)
 		) {
 			// always allow core calls
-			return true;
+			return true
 		}
 
 		pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
@@ -1257,6 +1328,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
+			RuntimeCall::DeveloperCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			RuntimeCall::Democracy(_) |
 			// Preimage
@@ -1294,7 +1366,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
-			RuntimeCall::Bitacross(_)
+			RuntimeCall::Bitacross(_) |
+			RuntimeCall::BitacrossMimic(_) |
+			RuntimeCall::EvmAssertions(_) |
+			RuntimeCall::ScoreStaking(_)
 		)
 	}
 }

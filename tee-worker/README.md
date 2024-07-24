@@ -9,7 +9,7 @@
 source /opt/intel/sgxsdk/environment
 # run clean if only SGX_MODE change
 make clean
-make SGX_MODE=SW
+make SGX_MODE=SW WORKER_DEV=1
 ./local-setup/launch.py --config local-setup/development-worker.json --parachain local-docker
 # run the ts test script below if container started
 cd ./tee-worker/ts-tests
@@ -30,7 +30,7 @@ If you think parachain-node launch too slowly, can use this branch: [litentry-ru
 
 ```bash
 # build integritee-node(not parachain-node)
-cargo build --release --features "skip-extrinsic-filtering skip-ias-check"
+cargo build --release --features "skip-extrinsic-filtering"
 ```
 
 ## Build and Run

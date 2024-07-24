@@ -32,7 +32,6 @@ mod attesteer;
 mod base_cli;
 mod benchmark;
 mod command_utils;
-mod error;
 mod trusted_base_cli;
 mod trusted_cli;
 mod trusted_command_utils;
@@ -68,7 +67,7 @@ pub struct Cli {
 	node_port: String,
 
 	/// worker url
-	#[clap(short = 'U', long, default_value_t = String::from("wss://127.0.0.1"))]
+	#[clap(short = 'U', long, default_value_t = String::from("ws://127.0.0.1"))]
 	worker_url: String,
 
 	/// worker direct invocation port

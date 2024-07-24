@@ -4,14 +4,28 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { WorkerRpcReturnValue, TrustedCallSigned, Getter, CorePrimitivesIdentity } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
+import type {
+    WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
+    CorePrimitivesIdentity,
+    TrustedGetterSigned,
+    TrustedCall,
+} from 'parachain-api';
+import {
+    encryptWithTeeShieldingKey,
+    Signer,
+    encryptWithAes,
+    sleep,
+    createLitentryMultiSignature,
+    decryptWithAes,
+} from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
-import { blake2AsHex } from '@polkadot/util-crypto';
-import { createJsonRpcRequest, nextRequestId } from './helpers';
+import { blake2AsHex, base58Encode, blake2AsU8a } from '@polkadot/util-crypto';
+import { createJsonRpcRequest, nextRequestId, stfErrorToString } from './helpers';
 
 // Send the request to worker ws
 // we should perform different actions based on the returned status:
@@ -27,34 +41,46 @@ import { createJsonRpcRequest, nextRequestId } from './helpers';
 async function sendRequest(
     wsClient: WebSocketAsPromised,
     request: JsonRpcRequest,
-    api: ApiPromise
+    api: ApiPromise,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ): Promise<WorkerRpcReturnValue> {
-    const p = new Promise<WorkerRpcReturnValue>((resolve) =>
+    const p = new Promise<WorkerRpcReturnValue>((resolve, reject) =>
         wsClient.onMessage.addListener((data) => {
             const parsed = JSON.parse(data);
-            if (parsed.id === request.id) {
-                const result = parsed.result;
-                const res = api.createType('WorkerRpcReturnValue', result);
+            if (parsed.id !== request.id) {
+                return;
+            }
 
-                console.log('Got response: ' + JSON.stringify(res.toHuman()));
+            if ('error' in parsed) {
+                const transaction = { request, response: parsed };
+                console.log('Request failed: ' + JSON.stringify(transaction, null, 2));
+                reject(new Error(parsed.error.message, { cause: transaction }));
+            }
 
-                if (res.status.isError) {
-                    console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
-                }
+            const result = parsed.result;
+            const res = api.createType('WorkerRpcReturnValue', result);
 
-                if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
-                    console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
-                }
+            if (res.status.isError) {
+                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
+            }
 
-                // resolve it once `do_watch` is false, meaning it's the final response
-                if (res.do_watch.isFalse) {
-                    // TODO: maybe only remove this listener
-                    wsClient.onMessage.removeAllListeners();
-                    resolve(res);
-                } else {
-                    // `do_watch` is true means: hold on - there's still something coming
-                    console.log('do_watch is true, continue watching ...');
-                }
+            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                const stfError = api.createType('StfError', res.value);
+                const msg = stfErrorToString(stfError);
+                console.log('TrustedOperationStatus error: ', msg);
+            }
+            // sending every response we receive from websocket
+            if (onMessageReceived) onMessageReceived(res);
+
+            // resolve it once `do_watch` is false, meaning it's the final response
+            if (res.do_watch.isFalse) {
+                // TODO: maybe only remove this listener
+                wsClient.onMessage.removeAllListeners();
+                resolve(res);
+            } else {
+                // `do_watch` is true means: hold on - there's still something coming
+                console.log('do_watch is true, continue watching ...');
             }
         })
     );
@@ -77,27 +103,37 @@ export const createSignedTrustedCall = async (
     mrenclave: string,
     nonce: Codec,
     params: any,
-    withWrappedBytes = false
+    withWrappedBytes = false,
+    withPrefix = false
 ): Promise<TrustedCallSigned> => {
     const [variant, argType] = trustedCall;
-    const call = parachainApi.createType('TrustedCall', {
+    const call: TrustedCall = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
     });
-    let payload = Uint8Array.from([
-        ...call.toU8a(),
-        ...nonce.toU8a(),
-        ...hexToU8a(mrenclave),
-        ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
-    ]);
+    let payload: string = blake2AsHex(
+        u8aConcat(
+            call.toU8a(),
+            nonce.toU8a(),
+            hexToU8a(mrenclave),
+            hexToU8a(mrenclave) // should be shard, but it's the same as MRENCLAVE in our case
+        ),
+        256
+    );
+
     if (withWrappedBytes) {
-        payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
+        payload = `<Bytes>${payload}</Bytes>`;
     }
 
-    // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
-    const signature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: u8aToHex(
-            await signer.sign(signer.type() === 'bitcoin' ? u8aToHex(payload).substring(2) : payload)
-        ),
+    if (withPrefix) {
+        const prefix = getSignatureMessagePrefix(call);
+        const msg = prefix + payload;
+        payload = msg;
+        console.log('Signing message: ', payload);
+    }
+
+    const signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
     });
 
     return parachainApi.createType('TrustedCallSigned', {
@@ -107,32 +143,44 @@ export const createSignedTrustedCall = async (
     });
 };
 
+// See TrustedCall.signature_message_prefix
+function getSignatureMessagePrefix(call: TrustedCall): string {
+    if (call.isLinkIdentity) {
+        return "By linking your identity to our platform, you're taking a step towards a more integrated experience. Please be assured, this process is safe and involves no transactions of your assets. Token: ";
+    }
+
+    if (call.isRequestBatchVc) {
+        const [, , assertions] = call.asRequestBatchVc;
+        const length = assertions.length;
+
+        return `We are going to help you generate ${length} secure credential${
+            length > 1 ? 's' : ''
+        }. Please be assured, this process is safe and involves no transactions of your assets. Token: `;
+    }
+
+    return 'Token: ';
+}
+
 export const createSignedTrustedGetter = async (
     parachainApi: ApiPromise,
     trustedGetter: [string, string],
     signer: Signer,
     params: any
-) => {
+): Promise<TrustedGetterSigned> => {
     const [variant, argType] = trustedGetter;
     const getter = parachainApi.createType('TrustedGetter', {
         [variant]: parachainApi.createType(argType, params),
     });
-    const payload = getter.toU8a();
+    const payload = blake2AsU8a(getter.toU8a(), 256);
 
-    let signature;
-    if (signer.type() === 'bitcoin') {
-        const payloadStr = u8aToHex(payload).substring(2);
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
-        });
-    } else {
-        signature = parachainApi.createType('LitentryMultiSignature', {
-            [signer.type()]: u8aToHex(await signer.sign(payload)),
-        });
-    }
+    let signature = await createLitentryMultiSignature(parachainApi, {
+        signer,
+        payload,
+    });
+
     return parachainApi.createType('TrustedGetterSigned', {
-        getter: getter,
-        signature: signature,
+        getter,
+        signature,
     });
 };
 
@@ -155,7 +203,8 @@ export async function createSignedTrustedCallLinkIdentity(
     validationData: string,
     web3networks: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return createSignedTrustedCall(
         parachainApi,
@@ -166,7 +215,9 @@ export async function createSignedTrustedCallLinkIdentity(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -202,7 +253,8 @@ export async function createSignedTrustedCallRequestVc(
     primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
-    hash: string
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
 ) {
     return await createSignedTrustedCall(
         parachainApi,
@@ -210,7 +262,35 @@ export async function createSignedTrustedCallRequestVc(
         signer,
         mrenclave,
         nonce,
-        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
+    );
+}
+
+export async function createSignedTrustedCallRequestBatchVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Signer,
+    primeIdentity: CorePrimitivesIdentity,
+    assertion: string,
+    aesKey: string,
+    hash: string,
+    options?: { withWrappedBytes?: boolean; withPrefix?: boolean }
+) {
+    return await createSignedTrustedCall(
+        parachainApi,
+        [
+            'request_batch_vc',
+            '(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)',
+        ],
+        signer,
+        mrenclave,
+        nonce,
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash],
+        options?.withWrappedBytes,
+        options?.withPrefix
     );
 }
 
@@ -269,13 +349,21 @@ export async function createSignedTrustedGetterIdGraph(
 
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
-    teeShieldingKey: KeyObject,
     primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
-    const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
-    const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    const request = createJsonRpcRequest(
+        'author_getNextNonce',
+        [base58Encode(hexToU8a(context.mrEnclave)), primeIdentity.toHex()],
+        nextRequestId(context)
+    );
+    const res = await sendRequest(context.tee, request, context.api);
+    const nonceHex = res.value.toHex();
+    let nonce = 0;
+
+    if (nonceHex) {
+        nonce = context.api.createType('Index', '0x' + nonceHex.slice(2)?.match(/../g)?.reverse().join('')).toNumber();
+    }
+
     return context.api.createType('Index', nonce);
 };
 
@@ -290,7 +378,7 @@ export const getIdGraphHash = async (
         primeIdentity.toHuman()
     );
     const getter = context.api.createType('Getter', { public: getterPublic });
-    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const res = await sendRsaRequestFromGetter(context, teeShieldingKey, getter);
     const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
     return context.api.createType('H256', hash);
 };
@@ -299,12 +387,12 @@ export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     call: TrustedCallSigned,
-    isVcDirect = false
+    isVcDirect = false,
+    onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ) => {
     // construct trusted operation
     const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
-    console.log('top: ', trustedOperation.toJSON());
-    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
+    console.log('trustedOperation: ', JSON.stringify(trustedOperation.toHuman(), null, 2));
     // create the request parameter
     const requestParam = await createAesRequest(
         context.api,
@@ -318,10 +406,11 @@ export const sendRequestFromTrustedCall = async (
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
-    return sendRequest(context.tee, request, context.api);
+    return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
-export const sendRequestFromGetter = async (
+/** @deprecated use `sendAesRequestFromGetter` instead */
+export const sendRsaRequestFromGetter = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     getter: Getter
@@ -334,6 +423,36 @@ export const sendRequestFromGetter = async (
     // hopefully we will query correct state
     await sleep(1);
     return sendRequest(context.tee, request, context.api);
+};
+
+export const sendAesRequestFromGetter = async (
+    context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    aesKey: Uint8Array,
+    getter: Getter
+): Promise<WorkerRpcReturnValue> => {
+    // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
+    //            this is what `state_executeAesGetter` expects in rust
+    const requestParam = await createAesRequest(
+        context.api,
+        context.mrEnclave,
+        teeShieldingKey,
+        aesKey,
+        getter.toU8a()
+    );
+    const request = createJsonRpcRequest('state_executeAesGetter', [u8aToHex(requestParam)], nextRequestId(context));
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
+    // hopefully we will query correct state
+    await sleep(1);
+    const res = await sendRequest(context.tee, request, context.api);
+    const aesOutput = context.api.createType('AesOutput', res.value);
+    const decryptedValue = decryptWithAes(u8aToHex(aesKey), aesOutput, 'hex');
+
+    return context.api.createType('WorkerRpcReturnValue', {
+        value: decryptedValue,
+        do_watch: res.do_watch,
+        status: res.status,
+    });
 };
 
 // get TEE's shielding key directly via RPC

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-///! EVM tracing RPC support.
+//! EVM tracing RPC support.
 use crate::evm_tracing_types::{EthApi as EthApiCmd, EvmTracingConfig};
 
 use fc_rpc::OverrideHandle;

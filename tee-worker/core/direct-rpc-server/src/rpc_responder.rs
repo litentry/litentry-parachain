@@ -92,6 +92,15 @@ where
 		// connections are per trusted call, but if we expect trusted call to have a side effect of creating another trusted call (callback)
 		// we force connection to wait for potential TOP execution
 		let do_watch = continue_watching(&status_update) || force_wait;
+		let old_status = result.status;
+		let should_be_removed = is_removable_top_status(&status_update)
+			&& matches!(
+				old_status,
+				DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::SuccessorExecuted,
+					_
+				)
+			);
 
 		// update response
 		result.do_watch = do_watch;
@@ -103,7 +112,7 @@ where
 
 		self.encode_and_send_response(connection_token, &new_response)?;
 
-		if do_watch {
+		if do_watch && !should_be_removed {
 			self.connection_registry.store(hash, connection_token, new_response, force_wait);
 		}
 
@@ -158,9 +167,11 @@ where
 		encoded_value: Vec<u8>,
 		force_wait: bool,
 	) -> DirectRpcResult<()> {
-		info!(
+		debug!(
 			"updating connection state for hash {:?}: encoded_value {:?}, force_wait: {:?}",
-			hash, encoded_value, force_wait
+			hash,
+			encoded_value.to_hex(),
+			force_wait
 		);
 
 		// withdraw removes it from the registry
@@ -182,6 +193,44 @@ where
 		Ok(())
 	}
 
+	fn send_rpc_response(
+		&self,
+		hash: Self::Hash,
+		encoded_value: Vec<u8>,
+		do_watch: bool,
+	) -> DirectRpcResult<()> {
+		debug!(
+			"Send out new rpc response, hash: {:?}, encoded_value: {:?}, watch: {:?}",
+			hash,
+			encoded_value.to_hex(),
+			do_watch
+		);
+
+		// withdraw removes it from the registry
+		let (connection_token, rpc_response, force_wait) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		let mut new_response = rpc_response.clone();
+		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
+			.map_err(|e| DirectRpcError::Other(format!("{:?}", e).into()))?;
+
+		// update response
+		result.do_watch = do_watch;
+		result.value = encoded_value;
+		new_response.result = result.to_hex();
+
+		self.encode_and_send_response(connection_token, &new_response)?;
+
+		if do_watch {
+			self.connection_registry.store(hash, connection_token, new_response, force_wait);
+		}
+
+		debug!("Send out new rpc response successfully");
+		Ok(())
+	}
+
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()> {
 		debug!("swap hash, old: {:?}, new: {:?}", old_hash, new_hash);
 
@@ -190,9 +239,51 @@ where
 			.withdraw(&old_hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
 
+		if !force_wait {
+			warn!("Unexpected force_wait = false for hash: {:?}", old_hash);
+		}
+
+		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
+			.map_err(|e| DirectRpcError::Other(format!("{:?}", e).into()))?;
+
+		let mut new_response = rpc_response.clone();
+
 		// leave `rpc_response` untouched - it should be overwritten later anyway and keep on force waiting
 		self.connection_registry
 			.store(new_hash, connection_token, rpc_response, force_wait);
+
+		// it denotes a predecessor "streamed" hash whose status is either "TopExecuted" or "InSidechainBlock",
+		// if that's the case, don't put it back
+		match result.status {
+			DirectRequestStatus::TrustedOperationStatus(top_status, h) => {
+				if is_removable_top_status(&top_status) {
+					debug!("connection with old hash {:?} will be removed", old_hash);
+				} else {
+					// the swap comes a bit earlier, we store the old_hash back and mark it as "removable"
+					// it will be deleted when it reaches `is_removable_top_status`
+					result.status = DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::SuccessorExecuted,
+						h,
+					);
+					new_response.result = result.to_hex();
+					self.connection_registry.store(
+						old_hash,
+						connection_token,
+						new_response,
+						force_wait,
+					);
+				}
+			},
+			_ => {
+				self.connection_registry.store(
+					old_hash,
+					connection_token,
+					new_response,
+					force_wait,
+				);
+			},
+		};
+
 		debug!("swap hash OK");
 		Ok(())
 	}
@@ -205,6 +296,13 @@ fn continue_watching(status: &TrustedOperationStatus) -> bool {
 			| TrustedOperationStatus::InSidechainBlock(_)
 			| TrustedOperationStatus::Finalized
 			| TrustedOperationStatus::Usurped
+	)
+}
+
+fn is_removable_top_status(status: &TrustedOperationStatus) -> bool {
+	matches!(
+		status,
+		TrustedOperationStatus::InSidechainBlock(_) | TrustedOperationStatus::TopExecuted(..)
 	)
 }
 

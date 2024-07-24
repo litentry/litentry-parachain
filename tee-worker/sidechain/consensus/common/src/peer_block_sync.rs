@@ -16,16 +16,18 @@
 */
 
 use crate::{BlockImport, ConfirmBlockImport, Error, Result};
-use core::marker::PhantomData;
+use codec::Encode;
+use core::{fmt::Debug, marker::PhantomData};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::H256;
 use its_primitives::{
 	traits::{
-		Block as BlockTrait, Header as HeaderTrait, ShardIdentifierFor,
+		Block as BlockTrait, BlockData, Header as HeaderTrait, ShardIdentifierFor,
 		SignedBlock as SignedSidechainBlockTrait,
 	},
 	types::BlockHash,
 };
+use litentry_hex_utils::hex_encode;
 use log::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
 use std::{sync::Arc, vec::Vec};
@@ -39,7 +41,13 @@ where
 	ParentchainHeader: ParentchainHeaderTrait,
 	SignedSidechainBlock: SignedSidechainBlockTrait,
 {
-	fn sync_block(
+	fn import_or_sync_block(
+		&self,
+		sidechain_block: SignedSidechainBlock,
+		last_imported_parentchain_header: &ParentchainHeader,
+	) -> Result<ParentchainHeader>;
+
+	fn import_block(
 		&self,
 		sidechain_block: SignedSidechainBlock,
 		last_imported_parentchain_header: &ParentchainHeader,
@@ -153,18 +161,21 @@ where
 	SignedSidechainBlock: SignedSidechainBlockTrait,
 	<<SignedSidechainBlock as its_primitives::traits::SignedBlock>::Block as BlockTrait>::HeaderType:
 	HeaderTrait<ShardIdentifier = H256>,
+	<<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as BlockTrait>::BlockDataType as BlockData>::Public: Encode + Debug,
 	BlockImporter: BlockImport<ParentchainBlock, SignedSidechainBlock>,
 	OCallApi: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi,
 	ImportConfirmationHandler: ConfirmBlockImport<<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as BlockTrait>::HeaderType>,
 {
-	fn sync_block(
+	fn import_or_sync_block(
 		&self,
 		sidechain_block: SignedSidechainBlock,
 		current_parentchain_header: &ParentchainBlock::Header,
 	) -> Result<ParentchainBlock::Header> {
 		let shard_identifier = sidechain_block.block().header().shard_id();
 		let sidechain_block_number = sidechain_block.block().header().block_number();
+		let sidechain_block_author = sidechain_block.block().block_data().block_author();
 		let sidechain_block_hash = sidechain_block.hash();
+		trace!("attempt to import block {} with hash {} and author {:?}", sidechain_block_number, hex_encode(sidechain_block_hash.as_ref()), sidechain_block_author);
 
 		// Attempt to import the block - in case we encounter an ancestry error, we go into
 		// peer fetching mode to fetch sidechain blocks from a peer and import those first.
@@ -194,15 +205,16 @@ where
 					self.importer.import_block(sidechain_block, &updated_parentchain_header)
 				},
 				Error::BlockAlreadyImported(to_import_block_number, last_known_block_number) => {
-					warn!("Sidechain block from queue (number: {}) was already imported (current block number: {}). Block will be ignored.", 
+					warn!("Sidechain block from queue (number: {}) was already imported (current block number: {}). Block will be ignored.",
 						to_import_block_number, last_known_block_number);
 					Ok(current_parentchain_header.clone())
 				},
 				_ => Err(e),
 			},
 			Ok(latest_parentchain_header) => {
-				info!("Successfully imported broadcast sidechain block (number: {}), based on parentchain block {:?}", 
-					sidechain_block_number, latest_parentchain_header.number());
+				info!("Imported sidechain block (number: {}, tcalls: {}, author: {}), based on parentchain block {:?}",
+					sidechain_block_number, sidechain_block.block().block_data().signed_top_hashes().len(),
+						 hex_encode(sidechain_block.block().block_data().block_author().encode().as_slice()) ,latest_parentchain_header.number());
 
 				// We confirm the successful block import. Only in this case, not when we're in
 				// on-boarding and importing blocks that were fetched from a peer.
@@ -214,6 +226,14 @@ where
 			},
 		}
 	}
+	fn import_block(
+		&self,
+		sidechain_block: SignedSidechainBlock,
+		current_parentchain_header: &ParentchainBlock::Header,
+	) -> Result<ParentchainBlock::Header> {
+		self.importer.import_block(sidechain_block, current_parentchain_header)
+	}
+
 }
 
 #[cfg(test)]
@@ -255,7 +275,9 @@ mod tests {
 		let peer_syncer =
 			create_peer_syncer(block_importer_mock.clone(), sidechain_ocall_api.clone());
 
-		peer_syncer.sync_block(signed_sidechain_block, &parentchain_header).unwrap();
+		peer_syncer
+			.import_or_sync_block(signed_sidechain_block, &parentchain_header)
+			.unwrap();
 
 		assert_eq!(1, block_importer_mock.get_imported_blocks().len());
 		assert_eq!(0, sidechain_ocall_api.number_of_fetch_calls());
@@ -277,7 +299,8 @@ mod tests {
 		let parentchain_header = ParentchainHeaderBuilder::default().build();
 		let signed_sidechain_block = SidechainBlockBuilder::default().build_signed();
 
-		let sync_result = peer_syncer.sync_block(signed_sidechain_block, &parentchain_header);
+		let sync_result =
+			peer_syncer.import_or_sync_block(signed_sidechain_block, &parentchain_header);
 
 		assert_matches!(sync_result, Err(Error::InvalidAuthority(_)));
 		assert_eq!(1, block_importer_mock.get_imported_blocks().len());
@@ -304,7 +327,9 @@ mod tests {
 		let parentchain_header = ParentchainHeaderBuilder::default().build();
 		let signed_sidechain_block = SidechainBlockBuilder::default().build_signed();
 
-		peer_syncer.sync_block(signed_sidechain_block, &parentchain_header).unwrap();
+		peer_syncer
+			.import_or_sync_block(signed_sidechain_block, &parentchain_header)
+			.unwrap();
 
 		assert_eq!(4, block_importer_mock.get_imported_blocks().len());
 		assert_eq!(1, sidechain_ocall_api.number_of_fetch_calls());

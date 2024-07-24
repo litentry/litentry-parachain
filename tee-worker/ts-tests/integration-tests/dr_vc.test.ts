@@ -1,8 +1,6 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { buildWeb2Validation, initIntegrationTestContext } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -10,15 +8,17 @@ import {
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedCallRequestBatchVc,
 } from './common/di-utils'; // @fixme move to a better place
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { CorePrimitivesIdentity } from 'parachain-api';
+import type { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
+import { mockBatchAssertion } from './common/utils/vc-helper';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { Vec, Bytes } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { defaultAssertions } from './common/utils/vc-helper';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec, Bytes } from '@polkadot/types';
+import { assert } from 'chai';
 
 describe('Test Vc (direct request)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -45,25 +45,23 @@ describe('Test Vc (direct request)', function () {
             process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
-        aliceSubstrateIdentity = await buildIdentityFromKeypair(
-            new PolkadotSigner(context.substrateWallet.alice),
-            context
-        );
+        aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
     });
 
     step('linking identities (alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const [twitterValidation] = await buildValidations(
+        const twitterValidation = await buildWeb2Validation({
+            identityType: 'Twitter',
             context,
-            [aliceSubstrateIdentity],
-            [twitterIdentity],
-            twitterNonce,
-            'twitter'
-        );
+            signerIdentitity: aliceSubstrateIdentity,
+            linkIdentity: twitterIdentity,
+            verificationType: 'PublicTweet',
+            validationNonce: twitterNonce,
+        });
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
@@ -73,15 +71,15 @@ describe('Test Vc (direct request)', function () {
         });
 
         const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-        const [evmValidation] = await buildValidations(
+
+        const evmIdentity = await context.web3Wallets.evm.Alice.getIdentity(context);
+        const evmValidation = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
-            [evmIdentity],
+            aliceSubstrateIdentity,
+            evmIdentity,
             evmNonce,
             'ethereum',
-            undefined,
-            [context.ethersWallet.alice]
+            context.web3Wallets.evm.Alice
         );
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
@@ -92,21 +90,16 @@ describe('Test Vc (direct request)', function () {
         });
 
         const bitcoinNonce = getNextNonce();
-        const bitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
-            'Bitcoin',
-            context
-        );
+
+        const bitcoinIdentity = await context.web3Wallets.bitcoin.Alice.getIdentity(context);
         console.log('bitcoin id: ', bitcoinIdentity.toHuman());
-        const [bitcoinValidation] = await buildValidations(
+        const bitcoinValidation = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
-            [bitcoinIdentity],
+            aliceSubstrateIdentity,
+            bitcoinIdentity,
             bitcoinNonce,
             'bitcoin',
-            undefined,
-            undefined,
-            context.bitcoinWallet.alice
+            context.web3Wallets.bitcoin.Alice
         );
         const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['BitcoinP2tr']);
         linkIdentityRequestParams.push({
@@ -122,7 +115,7 @@ describe('Test Vc (direct request)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
+                context.web3Wallets.substrate.Alice,
                 aliceSubstrateIdentity,
                 identity.toHex(),
                 validation.toHex(),
@@ -136,41 +129,64 @@ describe('Test Vc (direct request)', function () {
         }
     });
 
-    defaultAssertions.forEach(({ description, assertion }) => {
-        step(`request vc direct ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
+    mockBatchAssertion.forEach(({ description, assertion }) => {
+        step(`request vc payload: ${JSON.stringify(assertion)} (alice)`, async function () {
+            let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             console.log(
                 `request vc direct ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`
             );
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-            const requestVcCall = await createSignedTrustedCallRequestVc(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
+            let requestVcCall;
+            if (Array.isArray(assertion)) {
+                requestVcCall = await createSignedTrustedCallRequestBatchVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    context.web3Wallets.substrate.Alice,
+                    aliceSubstrateIdentity,
+                    context.api.createType('Vec<Assertion>', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            } else {
+                requestVcCall = await createSignedTrustedCallRequestVc(
+                    context.api,
+                    context.mrEnclave,
+                    context.api.createType('Index', nonce),
+                    context.web3Wallets.substrate.Alice,
+                    aliceSubstrateIdentity,
+                    context.api.createType('Assertion', assertion).toHex(),
+                    context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                    requestIdentifier
+                );
+            }
 
             const isVcDirect = true;
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall, isVcDirect);
-            const events = await eventsPromise;
-            const vcIssuedEvents = events
-                .map(({ event }) => event)
-                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
+            // Instead of waiting for final response we will listen all responses from the call
+            const onMessageReceived = async (res: WorkerRpcReturnValue) => {
+                // if response is a A1 or A2, etc....
+                const vcresponse = context.api.createType('RequestVcResultOrError', res.value);
+                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`);
+                if (vcresponse.result.isOk) await assertVc(context, aliceSubstrateIdentity, vcresponse.result.asOk);
+            };
 
-            assert.equal(
-                vcIssuedEvents.length,
-                1,
-                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+            // the +res+ below is the last message with "do_watch: false" property and we may not need it at all
+            const res = await sendRequestFromTrustedCall(
+                context,
+                teeShieldingKey,
+                requestVcCall,
+                isVcDirect,
+                onMessageReceived
             );
-            await assertVc(context, aliceSubstrateIdentity, res.value);
+
+            const events = (await eventsPromise).map(({ event }) => event);
+            assert.equal(events.length, Array.isArray(assertion) ? assertion.length : 1);
+
+            // @todo: assert batch vc response
         });
     });
 });

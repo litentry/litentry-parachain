@@ -40,12 +40,19 @@ use crate::{
 			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 			GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		},
-		EnclaveStfEnclaveSigner,
+		EnclaveStfEnclaveSigner, GLOBAL_ASSERTION_REPOSITORY,
 	},
+};
+use ita_parentchain_interface::{
+	integritee::ParentchainEventHandler as LitentryParentchainEventHandler,
+	target_a::ParentchainEventHandler as TargetAParentchainEventHandler,
+	target_b::ParentchainEventHandler as TargetBParentchainEventHandler,
 };
 use itp_component_container::ComponentGetter;
 use itp_nonce_cache::NonceCache;
 use itp_sgx_crypto::key_repository::AccessKey;
+use itp_stf_interface::ShardCreationInfo;
+use itp_types::parentchain::ParentchainId;
 use log::*;
 use sp_core::H256;
 use std::sync::Arc;
@@ -55,11 +62,16 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	stf_executor: Arc<EnclaveStfExecutor>,
 	extrinsics_factory: Arc<EnclaveExtrinsicsFactory>,
 	node_metadata_repository: Arc<EnclaveNodeMetadataRepository>,
+	shard_creation_info: ShardCreationInfo,
 ) -> Result<IntegriteeParentchainBlockImporter> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
+
+	let parentchain_event_handler =
+		LitentryParentchainEventHandler { assertion_repository: repository };
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -72,6 +84,8 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		stf_enclave_signer,
 		top_pool_author,
 		node_metadata_repository,
+		ParentchainId::Litentry,
+		parentchain_event_handler,
 	));
 	Ok(IntegriteeParentchainBlockImporter::new(
 		validator_access,
@@ -79,6 +93,8 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		extrinsics_factory,
 		indirect_calls_executor,
 		ocall_api,
+		shard_creation_info,
+		ParentchainId::Litentry,
 	))
 }
 
@@ -87,11 +103,13 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 	stf_executor: Arc<EnclaveStfExecutor>,
 	extrinsics_factory: Arc<EnclaveExtrinsicsFactory>,
 	node_metadata_repository: Arc<EnclaveNodeMetadataRepository>,
+	shard_creation_info: ShardCreationInfo,
 ) -> Result<TargetAParentchainBlockImporter> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let parentchain_event_handler = TargetAParentchainEventHandler {};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -104,6 +122,8 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		stf_enclave_signer,
 		top_pool_author,
 		node_metadata_repository,
+		ParentchainId::TargetA,
+		parentchain_event_handler,
 	));
 	Ok(TargetAParentchainBlockImporter::new(
 		validator_access,
@@ -111,6 +131,8 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		extrinsics_factory,
 		indirect_calls_executor,
 		ocall_api,
+		shard_creation_info,
+		ParentchainId::TargetA,
 	))
 }
 
@@ -119,11 +141,13 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 	stf_executor: Arc<EnclaveStfExecutor>,
 	extrinsics_factory: Arc<EnclaveExtrinsicsFactory>,
 	node_metadata_repository: Arc<EnclaveNodeMetadataRepository>,
+	shard_creation_info: ShardCreationInfo,
 ) -> Result<TargetBParentchainBlockImporter> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let parentchain_event_handler = TargetBParentchainEventHandler {};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
@@ -136,6 +160,8 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		stf_enclave_signer,
 		top_pool_author,
 		node_metadata_repository,
+		ParentchainId::TargetB,
+		parentchain_event_handler,
 	));
 	Ok(TargetBParentchainBlockImporter::new(
 		validator_access,
@@ -143,6 +169,8 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		extrinsics_factory,
 		indirect_calls_executor,
 		ocall_api,
+		shard_creation_info,
+		ParentchainId::TargetB,
 	))
 }
 

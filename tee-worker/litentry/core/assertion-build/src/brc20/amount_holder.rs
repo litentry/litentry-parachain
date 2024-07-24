@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::brc20::amount_holder::BRC20AmountHolderCredential;
+use lc_credentials::{brc20::amount_holder::BRC20AmountHolderCredential, IssuerRuntimeVersion};
 use lc_data_providers::{geniidata::GeniidataClient, DataProviderConfig};
 
 pub fn build(
@@ -34,10 +34,6 @@ pub fn build(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
-		error!("Generate unsigned credential failed {:?}", e);
-		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
-	})?;
 	let mut client = GeniidataClient::new(data_provider_config)
 		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
@@ -48,6 +44,17 @@ pub fn build(
 			)),
 		)
 	})?;
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	let mut credential_unsigned =
+		Credential::new(&req.who, &req.shard, &runtime_version).map_err(|e| {
+			error!("Generate unsigned credential failed {:?}", e);
+			Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+		})?;
 	credential_unsigned.update_brc20_amount_holder_credential(&response);
 
 	Ok(credential_unsigned)

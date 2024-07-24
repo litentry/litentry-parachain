@@ -16,10 +16,10 @@
 */
 
 use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
-use itp_node_api::api_client::{ApiResult, Block, ChainApi, SignedBlock};
+use itp_node_api::api_client::{ApiResult, ChainApi};
 use itp_types::{
 	parentchain::{Hash, Header, StorageProof},
-	H256,
+	Block, SignedBlock, H256,
 };
 use sp_consensus_grandpa::AuthorityList;
 
@@ -100,5 +100,12 @@ impl ChainApi for ParentchainApiMock {
 
 	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
 		Ok(Default::default())
+	}
+
+	fn get_block_by_number(
+		&self,
+		block: Self::BlockNumber,
+	) -> ApiResult<Option<itc_parentchain_test::SignedBlock<Self::Block>>> {
+		Ok(self.parentchain.get(block as usize).cloned())
 	}
 }

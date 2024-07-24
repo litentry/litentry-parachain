@@ -33,10 +33,7 @@ use codec::Encode;
 use core::marker::PhantomData;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_sgx_externalities::SgxExternalities;
-use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::duration_now;
-
 use its_block_verification::slot::slot_author;
 use its_consensus_common::{Environment, Error as ConsensusError, Proposer};
 use its_consensus_slots::{SimpleSlotWorker, Slot, SlotInfo};
@@ -45,7 +42,6 @@ use its_primitives::{
 	types::block::BlockHash,
 };
 use its_validateer_fetch::ValidateerFetch;
-use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use litentry_hex_utils::hex_encode;
 use sp_core::crypto::UncheckedFrom;
 use sp_runtime::{
@@ -75,8 +71,6 @@ pub struct Aura<
 	IntegriteeImportTrigger,
 	TargetAImportTrigger,
 	TargetBImportTrigger,
-	ScheduledEnclave,
-	StateHandler,
 > {
 	authority_pair: AuthorityPair,
 	ocall_api: OcallApi,
@@ -85,8 +79,6 @@ pub struct Aura<
 	maybe_parentchain_target_b_import_trigger: Option<Arc<TargetBImportTrigger>>,
 	environment: Environment,
 	claim_strategy: SlotClaimStrategy,
-	scheduled_enclave: Arc<ScheduledEnclave>,
-	state_handler: Arc<StateHandler>,
 	_phantom: PhantomData<(AuthorityPair, ParentchainBlock, SidechainBlock)>,
 }
 
@@ -99,8 +91,6 @@ impl<
 		IntegriteeImportTrigger,
 		TargetAImportTrigger,
 		TargetBImportTrigger,
-		ScheduledEnclave,
-		StateHandler,
 	>
 	Aura<
 		AuthorityPair,
@@ -111,11 +101,8 @@ impl<
 		IntegriteeImportTrigger,
 		TargetAImportTrigger,
 		TargetBImportTrigger,
-		ScheduledEnclave,
-		StateHandler,
 	>
 {
-	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		authority_pair: AuthorityPair,
 		ocall_api: OcallApi,
@@ -123,8 +110,6 @@ impl<
 		maybe_parentchain_target_a_import_trigger: Option<Arc<TargetAImportTrigger>>,
 		maybe_parentchain_target_b_import_trigger: Option<Arc<TargetBImportTrigger>>,
 		environment: Environment,
-		scheduled_enclave: Arc<ScheduledEnclave>,
-		state_handler: Arc<StateHandler>,
 	) -> Self {
 		Self {
 			authority_pair,
@@ -134,8 +119,6 @@ impl<
 			maybe_parentchain_target_b_import_trigger,
 			environment,
 			claim_strategy: SlotClaimStrategy::RoundRobin,
-			scheduled_enclave,
-			state_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -173,8 +156,6 @@ impl<
 		IntegriteeImportTrigger,
 		TargetAImportTrigger,
 		TargetBImportTrigger,
-		ScheduledEnclave,
-		StateHandler,
 	> SimpleSlotWorker<ParentchainBlock>
 	for Aura<
 		AuthorityPair,
@@ -185,8 +166,6 @@ impl<
 		IntegriteeImportTrigger,
 		TargetAImportTrigger,
 		TargetBImportTrigger,
-		ScheduledEnclave,
-		StateHandler,
 	> where
 	AuthorityPair: Pair,
 	AuthorityPair::Public: UncheckedFrom<[u8; 32]>,
@@ -202,23 +181,11 @@ impl<
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 	TargetBImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
-	ScheduledEnclave: ScheduledEnclaveUpdater,
-	StateHandler: HandleState<StateT = SgxExternalities>,
 {
 	type Proposer = E::Proposer;
 	type Claim = AuthorityPair::Public;
 	type EpochData = Vec<AuthorityId<AuthorityPair>>;
 	type Output = SignedSidechainBlock;
-	type ScheduledEnclave = ScheduledEnclave;
-	type StateHandler = StateHandler;
-
-	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
-		self.scheduled_enclave.clone()
-	}
-
-	fn get_state_handler(&mut self) -> Arc<Self::StateHandler> {
-		self.state_handler.clone()
-	}
 
 	fn epoch_data(
 		&self,
@@ -417,13 +384,12 @@ mod tests {
 	};
 	use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
 	use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
-	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
+	use itp_test::mock::onchain_mock::OnchainMock;
 	use itp_types::{
 		AccountId, Block as ParentchainBlock, Header as ParentchainHeader, ShardIdentifier,
 		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
-	use lc_scheduled_enclave::ScheduledEnclaveMock;
 	use sp_core::ed25519::Public;
 	use sp_keyring::ed25519::Keyring;
 
@@ -438,8 +404,6 @@ mod tests {
 			None,
 			None,
 			EnvironmentMock,
-			Arc::new(ScheduledEnclaveMock::default()),
-			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
 		)
 	}
 
@@ -454,8 +418,6 @@ mod tests {
 			None,
 			None,
 			OutdatedBlockEnvironmentMock,
-			Arc::new(ScheduledEnclaveMock::default()),
-			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
 		)
 	}
 

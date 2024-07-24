@@ -19,3 +19,9 @@ rococo-fork.json
 gethdata
 
 *.patch
+/log
+/log-backup
+**/__pycache__/
+**/.env
+
+rust-analyzer.json

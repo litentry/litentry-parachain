@@ -23,18 +23,24 @@ use crate::{
 	error::{Error as EnclaveError, Result as EnclaveResult},
 	initialization::global_components::{
 		EnclaveSealHandler, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIGNER_REGISTRY,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
+	shard_config::init_shard_config,
 	tls_ra::{seal_handler::SealStateAndKeys, ClientProvisioningRequest},
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 };
 use codec::Encode;
+
 use itp_attestation_handler::{RemoteAttestationType, DEV_HOSTNAME};
 use itp_component_container::ComponentGetter;
+
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_types::{AccountId, ShardIdentifier};
+
+use crate::initialization::global_components::GLOBAL_ENCLAVE_REGISTRY;
 use log::*;
 use rustls::{ClientConfig, ClientSession, Stream};
 use sgx_types::*;
@@ -134,6 +140,8 @@ where
 			Opcode::StateKey => self.seal_handler.seal_state_key(&bytes)?,
 			Opcode::State => self.seal_handler.seal_state(&bytes, &self.shard)?,
 			Opcode::LightClient => self.seal_handler.seal_light_client_state(&bytes)?,
+			Opcode::Signers => self.seal_handler.seal_signers(&bytes)?,
+			Opcode::Enclaves => self.seal_handler.seal_enclaves(&bytes)?,
 		};
 		Ok(Some(header.opcode))
 	}
@@ -208,11 +216,28 @@ pub unsafe extern "C" fn request_state_provisioning(
 		},
 	};
 
+	let signer_registry = match GLOBAL_SIGNER_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+	let enclave_registry = match GLOBAL_ENCLAVE_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
+		signer_registry,
+		enclave_registry,
 	);
 
 	let signing_key_repository = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {
@@ -242,6 +267,11 @@ pub unsafe extern "C" fn request_state_provisioning(
 		return e.into()
 	};
 
+	// fixme: this needs only be called in sidechain mode. no harm though
+	if let Err(e) = init_shard_config(shard) {
+		error!("touch shard error: {:?}", e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
 	sgx_status_t::SGX_SUCCESS
 }
 

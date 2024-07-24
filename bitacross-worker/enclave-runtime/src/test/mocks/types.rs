@@ -32,11 +32,7 @@ use itp_test::mock::{
 	onchain_mock::OnchainMock,
 };
 use itp_top_pool::basic_pool::BasicPool;
-use itp_top_pool_author::{
-	api::SidechainApi,
-	author::Author,
-	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
-};
+use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use primitive_types::H256;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
@@ -84,7 +80,6 @@ pub type TestTopPool = BasicPool<
 pub type TestTopPoolAuthor = Author<
 	TestTopPool,
 	AllowAllTopsFilter<TrustedCallSigned, Getter>,
-	DirectCallsOnlyFilter<TrustedCallSigned, Getter>,
 	TestStateHandler,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,

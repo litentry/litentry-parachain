@@ -15,7 +15,7 @@
 
 */
 
-#[cfg(not(feature = "production"))]
+#[cfg(feature = "development")]
 use crate::initialization::global_components::GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT;
 use crate::{
 	error::Result,
@@ -29,7 +29,7 @@ use crate::{
 		get_extrinsic_factory_from_integritee_solo_or_parachain,
 		get_extrinsic_factory_from_target_a_solo_or_parachain,
 		get_extrinsic_factory_from_target_b_solo_or_parachain,
-		get_stf_executor_from_solo_or_parachain,
+		get_stf_executor_from_integritee_solo_or_parachain,
 		get_triggered_dispatcher_from_integritee_solo_or_parachain,
 		get_triggered_dispatcher_from_target_a_solo_or_parachain,
 		get_triggered_dispatcher_from_target_b_solo_or_parachain,
@@ -52,8 +52,7 @@ use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::key_repository::AccessKey;
-use itp_sgx_externalities::SgxExternalities;
-use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
+use itp_stf_state_handler::query_shard_state::QueryShardState;
 use itp_time_utils::duration_now;
 use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
 use its_primitives::{
@@ -68,8 +67,7 @@ use its_sidechain::{
 	slots::{yield_next_slot, LastSlot, PerShardSlotWorkerScheduler, SlotInfo},
 	validateer_fetch::ValidateerFetch,
 };
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_macros::if_not_production;
+use litentry_macros::if_development;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::{crypto::UncheckedFrom, Pair};
@@ -161,19 +159,21 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 		start_time.elapsed().as_millis()
 	);
 
-	let stf_executor = get_stf_executor_from_solo_or_parachain()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+
+	let shards = state_handler.list_shards()?;
+
+	let stf_executor = get_stf_executor_from_integritee_solo_or_parachain()?;
 
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let block_composer = GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.get()?;
 
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let authority = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	let fail_on_demand = GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.get()?;
 
 	match yield_next_slot(
@@ -191,7 +191,6 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			}
 			log_remaining_slot_duration(&slot, "Before AURA");
 
-			let shards = state_handler.list_shards()?;
 			let env = ProposerFactory::<Block, _, _, _, _>::new(
 				top_pool_author,
 				stf_executor,
@@ -199,7 +198,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				ocall_api.clone(),
 			);
 
-			if_not_production!({
+			if_development!({
 				if let Some(ref fail_on_demand) = *fail_on_demand {
 					fail_on_demand.next_slot();
 					if fail_on_demand.check_before_on_slot() {
@@ -209,7 +208,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			});
 
 			let (blocks, parentchain_calls) =
-				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _, _, _>(
+				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
 					slot.clone(),
 					authority,
 					ocall_api.clone(),
@@ -218,11 +217,9 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 					maybe_target_b_parentchain_import_dispatcher,
 					env,
 					shards,
-					GLOBAL_SCHEDULED_ENCLAVE.clone(),
-					state_handler,
 				)?;
 
-			if_not_production!({
+			if_development!({
 				if let Some(ref fail_on_demand) = *fail_on_demand {
 					if fail_on_demand.check_after_on_slot() {
 						Result::Err(crate::error::Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
@@ -262,8 +259,6 @@ pub(crate) fn exec_aura_on_slot<
 	IntegriteeBlockImportTrigger,
 	TargetABlockImportTrigger,
 	TargetBBlockImportTrigger,
-	ScheduledEnclave,
-	StateHandler,
 >(
 	slot: SlotInfo<ParentchainBlock>,
 	authority: Authority,
@@ -273,8 +268,6 @@ pub(crate) fn exec_aura_on_slot<
 	maybe_target_b_block_import_trigger: Option<Arc<TargetBBlockImportTrigger>>,
 	proposer_environment: PEnvironment,
 	shards: Vec<ShardIdentifierFor<SignedSidechainBlock>>,
-	scheduled_enclave: Arc<ScheduledEnclave>,
-	state_handler: Arc<StateHandler>,
 ) -> Result<(Vec<SignedSidechainBlock>, Vec<ParentchainCall>)>
 where
 	ParentchainBlock: BlockTrait<Hash = H256>,
@@ -296,21 +289,17 @@ where
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 	TargetBBlockImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
-	ScheduledEnclave: ScheduledEnclaveUpdater,
-	StateHandler: HandleState<StateT = SgxExternalities>,
 {
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
 	let mut aura =
-		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _, _, _>::new(
+		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
 			authority,
 			ocall_api.as_ref().clone(),
 			integritee_block_import_trigger,
 			maybe_target_a_block_import_trigger,
 			maybe_target_b_block_import_trigger,
 			proposer_environment,
-			scheduled_enclave,
-			state_handler,
 		)
 		.with_claim_strategy(SlotClaimStrategy::RoundRobin);
 

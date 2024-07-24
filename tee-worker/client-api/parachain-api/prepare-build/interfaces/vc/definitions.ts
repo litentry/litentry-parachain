@@ -30,17 +30,62 @@ export default {
                 LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
                 BRC20AmountHolder: "Null",
-                CyptoSummary: "Null",
+                CryptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
+                Dynamic: "DynamicParams",
             },
         },
         AssertionSupportedNetwork: {
-            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "__UnsupportedLitentryRococo", "Khala", "__UnsupportedSubstrateTestnet", "Ethereum"],
+        },
+        DynamicParams: {
+            smart_contract_id: "[u8;20]",
+            smart_contract_params: "Option<Bytes>",
+            return_log: "bool",
         },
         RequestVCResult: {
             vc_payload: "AesOutput",
+            vc_logs: "Option<AesOutput>",
+            pre_mutated_id_graph: "AesOutput",
+            pre_id_graph_hash: "H256",
+        },
+        VCMPError: {
+            _enum: {
+                RequestVCFailed: "(Assertion, ErrorDetail)",
+                UnclassifiedError: "(ErrorDetail)",
+            },
+        },
+        RequestVcErrorDetail: {
+            _enum: {
+                UnexpectedCall: "String",
+                DuplicateAssertionRequest: "Null",
+                ShieldingKeyRetrievalFailed: "String", // Stringified itp_sgx_crypto::Error
+                RequestPayloadDecodingFailed: "Null",
+                SidechainDataRetrievalFailed: "String", // Stringified itp_stf_state_handler::Error
+                IdentityAlreadyLinked: "Null",
+                NoEligibleIdentity: "Null",
+                InvalidSignerAccount: "Null",
+                UnauthorizedSigner: "Null",
+                AssertionBuildFailed: "VCMPError",
+                MissingAesKey: "Null",
+                MrEnclaveRetrievalFailed: "Null",
+                EnclaveSignerRetrievalFailed: "Null",
+                SignatureVerificationFailed: "Null",
+                ConnectionHashNotFound: "String",
+                MetadataRetrievalFailed: "String", // Stringified itp_node_api_metadata_provider::Error
+                InvalidMetadata: "String", // Stringified itp_node_api_metadata::Error
+                TrustedCallSendingFailed: "String", // Stringified mpsc::SendError<(H256, TrustedCall)>
+                CallSendingFailed: "String",
+                ExtrinsicConstructionFailed: "String", // Stringified itp_extrinsics_factory::Error
+                ExtrinsicSendingFailed: "String", // Stringified sgx_status_t
+            },
+        },
+        RequestVcResultOrError: {
+            result: "Result<Vec<u8>, RequestVcErrorDetail>",
+            idx: "u8",
+            len: "u8",
         },
         // Achainable
         AchainableParams: {
@@ -173,15 +218,35 @@ export default {
                 "Gtc",
                 "Ton",
                 "Trx",
+                "Nfp",
+                "Sol",
+                "Mcrt",
+                "Btc",
+                "Ada",
+                "Doge",
+                "Shib",
+                "Uni",
+                "Bch",
+                "Etc",
+                "Atom",
+                "Dai",
+                "Leo",
+                "Fil",
+                "Imx",
+                "Cro",
+                "Inj",
+                "Bean",
+                "An",
+                "Tuna",
             ],
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: ["KaratDaoUser"],
+            _enum: ["KaratDao", "MagicCraftStaking", "DarenMarket"],
         },
         // Web3NftType
         Web3NftType: {
-            _enum: ["WeirdoGhostGang", "Club3Sbt"],
+            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan", "Mvp"],
         },
     },
 };

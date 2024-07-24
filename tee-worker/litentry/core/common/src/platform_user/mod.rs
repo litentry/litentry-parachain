@@ -29,7 +29,9 @@ pub trait PlatformName {
 impl PlatformName for PlatformUserType {
 	fn get_platform_name(&self) -> &'static str {
 		match self {
-			Self::KaratDaoUser => "KaratDao",
+			Self::KaratDao => "KaratDao",
+			Self::MagicCraftStaking => "MagicCraft",
+			Self::DarenMarket => "DarenMarket",
 		}
 	}
 }

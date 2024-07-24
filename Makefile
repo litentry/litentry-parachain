@@ -116,11 +116,11 @@ launch-custom-binary-rococo:
 
 .PHONY: test-cargo-all ## cargo test --all
 test-cargo-all:
-	@cargo test --release --all --features=skip-ias-check
+	@cargo test --release --all
 
 .PHONY: test-cargo-all-benchmarks ## cargo test --all --features runtime-benchmarks
 test-cargo-all-benchmarks:
-	@cargo test --release --all --features runtime-benchmarks --features=skip-ias-check
+	@cargo test --release --all --features runtime-benchmarks
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
@@ -205,8 +205,8 @@ fmt-taplo:
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
-	@cd ts-tests && pnpm run format
-	@cd tee-worker/ts-tests && pnpm run format
+	@cd ts-tests && pnpm install && pnpm run format
+	@cd tee-worker/ts-tests && pnpm install && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:

@@ -36,14 +36,14 @@ fn test_delegate_with_auto_compound_is_ok() {
 				.prepare_test(
 					U8Wrapper(2u8),
 					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegateWithAutoCompound)
-						.write(H256::from(U8Wrapper(1u8)))
-						.write(10u128)
-						.write(50u8)
-						.build(),
+					PCall::<Test>::delegate_with_auto_compound {
+						candidate: H256::from(U8Wrapper(1u8)),
+						amount: 10u128.into(),
+						auto_compound: 50u8,
+					},
 				)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(());
 
 			assert_last_event!(MetaEvent::ParachainStaking(
 				pallet_parachain_staking::Event::Delegation {
@@ -85,37 +85,37 @@ fn delegation_request_is_pending_works() {
 				.prepare_test(
 					U8Wrapper(1u8),
 					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(H256::from(U8Wrapper(2u8)))
-						.write(H256::from(U8Wrapper(1u8)))
-						.build(),
+					PCall::<Test>::delegation_request_is_pending {
+						delegator: H256::from(U8Wrapper(2u8)),
+						candidate: H256::from(U8Wrapper(1u8)),
+					},
 				)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(false).build());
+				.execute_returns(false);
 
 			// Schedule Revoke request
 			precompiles()
 				.prepare_test(
 					U8Wrapper(2u8),
 					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::ScheduleRevokeDelegation)
-						.write(H256::from(U8Wrapper(1u8)))
-						.build(),
+					PCall::<Test>::schedule_revoke_delegation {
+						candidate: H256::from(U8Wrapper(1u8)),
+					},
 				)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(());
 
 			// Assert that we have pending requests
 			precompiles()
 				.prepare_test(
 					U8Wrapper(1u8),
 					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(H256::from(U8Wrapper(2u8)))
-						.write(H256::from(U8Wrapper(1u8)))
-						.build(),
+					PCall::<Test>::delegation_request_is_pending {
+						delegator: H256::from(U8Wrapper(2u8)),
+						candidate: H256::from(U8Wrapper(1u8)),
+					},
 				)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 		})
 }

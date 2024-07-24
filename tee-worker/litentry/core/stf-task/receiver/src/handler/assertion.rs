@@ -25,15 +25,25 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
+use lc_dynamic_assertion::AssertionLogicRepository;
+use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
 };
 use log::*;
-use std::{format, string::ToString, sync::Arc, vec::Vec};
+use sp_core::{Pair, H160};
+use std::{
+	format,
+	iter::once,
+	string::{String, ToString},
+	sync::Arc,
+	vec::Vec,
+};
 
 pub(crate) struct AssertionHandler<
 	ShieldingKeyRepository,
@@ -41,16 +51,17 @@ pub(crate) struct AssertionHandler<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
 }
 
-impl<ShieldingKeyRepository, A, S, H, O> TaskHandler
-	for AssertionHandler<ShieldingKeyRepository, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O, AR> TaskHandler
+	for AssertionHandler<ShieldingKeyRepository, A, S, H, O, AR>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -59,9 +70,10 @@ where
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	type Error = VCMPError;
-	type Result = Vec<u8>; // vc_byte_array
+	type Result = (Vec<u8>, Option<Vec<u8>>); // (vc_byte_array, optional vc_log_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -77,10 +89,10 @@ where
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
-		let vc_payload = result;
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		let vc_payload = result.0;
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_payload,
@@ -102,9 +114,9 @@ where
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
-		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer.into(),
+				enclave_signer_account.into(),
 				Some(self.req.who.clone()),
 				error,
 				self.req.req_ext_hash,
@@ -133,14 +145,16 @@ pub fn create_credential_str<
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
+	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 >(
 	req: &AssertionBuildRequest,
-	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
-) -> Result<Vec<u8>, VCMPError>
+	context: &Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
+) -> Result<(Vec<u8>, Option<Vec<u8>>), VCMPError>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
+	let mut vc_logs: Option<Vec<String>> = None;
 	let mut credential = match req.assertion.clone() {
 		Assertion::A1 => {
 			#[cfg(test)]
@@ -269,11 +283,20 @@ where
 
 		Assertion::NftHolder(nft_type) =>
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
+
+		Assertion::Dynamic(params) => {
+			let result = lc_assertion_build::dynamic::build(
+				req,
+				params,
+				context.assertion_repository.clone(),
+			)?;
+			vc_logs = Some(result.1);
+			Ok(result.0)
+		},
 	}?;
 
 	// post-process the credential
-	let signer = context.enclave_signer.as_ref();
-	let enclave_account = signer.get_enclave_account().map_err(|e| {
+	let enclave_signer_account = context.enclave_signer.get_enclave_account().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -286,11 +309,12 @@ where
 	credential.credential_subject.endpoint =
 		context.data_provider_config.credential_endpoint.to_string();
 
-	credential.credential_subject.assertion_text = format!("{:?}", req.assertion);
+	if let Some(schema) = credential_schema::get_schema_url(&req.assertion) {
+		credential.credential_schema.id = schema;
+	}
 
-	credential.credential_schema.id = credential_schema::get_schema_url(&req.assertion);
-
-	credential.issuer.id = Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
+	let issuer_identity: Identity = context.enclave_account.public().into();
+	credential.issuer.id = issuer_identity.to_did().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -301,15 +325,14 @@ where
 		.to_json()
 		.map_err(|_| VCMPError::RequestVCFailed(req.assertion.clone(), ErrorDetail::ParseError))?;
 	let payload = json_string.as_bytes();
-	let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
+	let sig = context.enclave_signer.sign(payload).map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
 			ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 		)
 	})?;
-	debug!("Credential Payload signature: {:?}", sig);
 
-	credential.add_proof(&sig, &enclave_account);
+	credential.add_proof(&sig, account_id_to_string(&enclave_signer_account));
 	credential.validate().map_err(|e| {
 		VCMPError::RequestVCFailed(
 			req.assertion.clone(),
@@ -321,5 +344,11 @@ where
 		.to_json()
 		.map_err(|_| VCMPError::RequestVCFailed(req.assertion.clone(), ErrorDetail::ParseError))?;
 	debug!("Credential: {}, length: {}", credential_str, credential_str.len());
-	Ok(credential_str.as_bytes().to_vec())
+
+	Ok((
+		credential_str.as_bytes().to_vec(),
+		vc_logs.map(|v| {
+			v.iter().flat_map(|s| s.as_bytes().iter().cloned().chain(once(b'\n'))).collect()
+		}),
+	))
 }

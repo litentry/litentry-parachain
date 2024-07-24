@@ -17,11 +17,16 @@
 
 use std::collections::HashMap;
 
-use lc_data_providers::moralis::{GetNftsByWalletResult, MoralisPageResponse};
+use lc_data_providers::moralis::{
+	GetEvmTokenBalanceByWalletResponse, GetNftsByWalletResult,
+	GetSolanaNativeBalanceByWalletResponse, GetSolanaTokenBalanceByWalletResponse,
+	MoralisPageResponse,
+};
 
 use warp::{http::Response, Filter};
 
-pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub(crate) fn query_nft() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+{
 	warp::get()
 		.and(warp::path!("moralis" / String / "nft"))
 		.and(warp::query::<HashMap<String, String>>())
@@ -51,5 +56,74 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
+		})
+}
+
+pub(crate) fn query_erc20(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("moralis" / String / "erc20"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |address, _| {
+			if address == "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee" {
+				let body = vec![GetEvmTokenBalanceByWalletResponse {
+					token_address: "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".to_string(),
+					symbol: "SYM".to_string(),
+					name: "Name #1".to_string(),
+					logo: None,
+					thumbnail: None,
+					decimals: 10,
+					balance: "1000".to_string(),
+					possible_spam: false,
+					verified_contract: true,
+					total_supply: "100000000".to_string(),
+					total_supply_formatted: "100000000".to_string(),
+					percentage_relative_to_total_supply: 0.00001,
+				}];
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				let body: Vec<GetEvmTokenBalanceByWalletResponse> = vec![];
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_solana(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("moralis_solana" / "account" / "mainnet" / String / String))
+		.map(move |address: String, api: String| match api.as_str() {
+			"balance" =>
+				if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
+					let body = GetSolanaNativeBalanceByWalletResponse {
+						lamports: "5903457912".into(),
+						solana: "5.903457912".into(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				} else {
+					let body = GetSolanaNativeBalanceByWalletResponse {
+						lamports: "0".into(),
+						solana: "0".into(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+			"tokens" =>
+				if address == "EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6" {
+					let body = vec![
+						GetSolanaTokenBalanceByWalletResponse {
+							mint: "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq".into(),
+							amount: "405219.979008".into(),
+						},
+						GetSolanaTokenBalanceByWalletResponse {
+							mint: "BNrgKeLwMUwWQYovZpANYQNCC7Aw8FgvFL3GQut1gL6B".into(),
+							amount: "31".into(),
+						},
+					];
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				} else {
+					let body: Vec<GetSolanaTokenBalanceByWalletResponse> = vec![];
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+			_ => Response::builder().status(404).body(String::from("Error query")),
 		})
 }

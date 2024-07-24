@@ -151,17 +151,14 @@ subcommands:
                     long: dev
                     short: d
                     help: Set this flag if running in development mode to bootstrap enclave account on parentchain via //Alice.
-              - request-state:
-                    long: request-state
-                    short: r
-                    help: Run the worker and request key and state provisioning from another worker.
-              - marblerun-url:
+              - shielding-target:
                     required: false
-                    long: marblerun-url
-                    help: Set the URL for prometheus metrics. Probably put some meaningful description
+                    long: shielding-target
+                    short: s
+                    help: set parentchain target for shielding / unshielding. only relevant for primary worker upon first start for shard. can't be changed later for a shard
                     takes_value: true
     - request-state:
-          about: join a shard by requesting key provisioning from another worker
+          about: (DEPRECATED) join a shard by requesting key provisioning from another worker
           args:
               - shard:
                     long: shard
@@ -187,16 +184,7 @@ subcommands:
                     index: 1
                     help: shard identifier base58 encoded
     - migrate-shard:
-          about: Migrate shard
-          args:
-              - old-shard:
-                    long: old-shard
-                    help: shard identifier hex encoded
-                    takes_value: true
-              - new-shard:
-                    long: new-shard
-                    help: shard identifier hex encoded
-                    takes_value: true
+          about: Migrate state from old shards to the new(current) shard, which is identical to mrenclave
     - test:
           about: Run tests involving the enclave
           takes_value: true

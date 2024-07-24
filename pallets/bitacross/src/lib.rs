@@ -70,8 +70,9 @@ pub mod pallet {
 		AdminSet { new_admin: Option<T::AccountId> },
 		RelayerAdded { who: Identity },
 		RelayerRemoved { who: Identity },
-		BtcWalletGenerated { pub_key: PubKey },
+		BtcWalletGenerated { pub_key: PubKey, account_id: T::AccountId },
 		EthWalletGenerated { pub_key: PubKey },
+		VaultRemoved { who: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -81,6 +82,7 @@ pub mod pallet {
 		UnsupportedRelayerType,
 		BtcWalletAlreadyExist,
 		EthWalletAlreadyExist,
+		VaultNotExist,
 	}
 
 	#[pallet::genesis_config]
@@ -122,23 +124,39 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight({195_000_000})]
-		pub fn add_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+		pub fn add_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(account.is_substrate() || account.is_evm(), Error::<T>::UnsupportedRelayerType);
 			// we don't care if `account` already exists
 			Relayer::<T>::insert(account.clone(), ());
 			Self::deposit_event(Event::RelayerAdded { who: account });
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(2)]
 		#[pallet::weight({195_000_000})]
-		pub fn remove_relayer(origin: OriginFor<T>, account: Identity) -> DispatchResult {
+		pub fn remove_relayer(
+			origin: OriginFor<T>,
+			account: Identity,
+		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(Relayer::<T>::contains_key(&account), Error::<T>::RelayerNotExist);
 			Relayer::<T>::remove(account.clone());
 			Self::deposit_event(Event::RelayerRemoved { who: account });
-			Ok(())
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight({195_000_000})]
+		pub fn remove_vault(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(Vault::<T>::contains_key(&account), Error::<T>::VaultNotExist);
+			Vault::<T>::remove(account.clone());
+			Self::deposit_event(Event::VaultRemoved { who: account });
+			Ok(Pays::No.into())
 		}
 
 		/// ---------------------------------------------------
@@ -151,10 +169,10 @@ pub mod pallet {
 			pub_key: PubKey,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
-			Vault::<T>::try_mutate(tee_account, |v| {
+			Vault::<T>::try_mutate(tee_account.clone(), |v| {
 				ensure!(!v.has_btc(), Error::<T>::BtcWalletAlreadyExist);
 				v.btc = Some(pub_key);
-				Self::deposit_event(Event::BtcWalletGenerated { pub_key });
+				Self::deposit_event(Event::BtcWalletGenerated { pub_key, account_id: tee_account });
 				Ok(Pays::No.into())
 			})
 		}

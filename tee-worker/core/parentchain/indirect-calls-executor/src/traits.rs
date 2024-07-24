@@ -18,23 +18,27 @@
 use crate::{error::Result, Error};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_types::{OpaqueCall, H256};
+use sp_core::H160;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
-use std::vec::Vec;
+use std::{sync::Arc, vec::Vec};
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
 pub trait ExecuteIndirectCalls {
 	/// Scans blocks for extrinsics that ask the enclave to execute some actions.
 	/// Executes indirect invocation calls, including shielding and unshielding calls.
 	/// Returns all unshielding call confirmations as opaque calls and the hashes of executed shielding calls.
-	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
+	fn execute_indirect_calls_in_block<ParentchainBlock, OCallApi>(
 		&self,
 		block: &ParentchainBlock,
 		events: &[u8],
-	) -> Result<OpaqueCall>
+		metrics_api: Arc<OCallApi>,
+	) -> Result<Option<Vec<OpaqueCall>>>
 	where
-		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
+		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+		OCallApi: EnclaveMetricsOCallApi;
 
 	/// Creates a processed_parentchain_block extrinsic for a given parentchain block hash and the merkle executed extrinsics.
 	///
@@ -47,6 +51,10 @@ pub trait ExecuteIndirectCalls {
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
+
+	fn create_assertion_stored_call(&self, assertion_ids: Vec<H160>) -> Result<Vec<OpaqueCall>>;
+
+	fn create_assertion_voided_call(&self, assertion_ids: Vec<H160>) -> Result<Vec<OpaqueCall>>;
 }
 
 /// Trait that should be implemented on indirect calls to be executed.

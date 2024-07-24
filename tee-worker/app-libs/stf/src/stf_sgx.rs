@@ -17,19 +17,25 @@
 
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
-use crate::{helpers::enclave_signer_account, Stf, ENCLAVE_ACCOUNT_KEY};
+use crate::{
+	format,
+	helpers::{enclave_signer_account, shard_creation_info},
+	vec, Arc, Box, Debug, From, Stf, Vec, ENCLAVE_ACCOUNT_KEY,
+};
 use codec::{Decode, Encode};
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
-use ita_sgx_runtime::Executive;
+use ita_sgx_runtime::{
+	Executive, ParentchainInstanceLitentry, ParentchainInstanceTargetA, ParentchainInstanceTargetB,
+};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
 	runtime_upgrade::RuntimeUpgradeInterface,
 	sudo_pallet::SudoPalletInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
-	ExecuteCall, ExecuteGetter, InitState, ShardVaultQuery, StateCallInterface,
-	StateGetterInterface, UpdateState, SHARD_VAULT_KEY,
+	ExecuteCall, ExecuteGetter, InitState, ShardCreationInfo, ShardCreationQuery,
+	StateCallInterface, StateGetterInterface, UpdateState,
 };
 use itp_stf_primitives::{
 	error::StfError, traits::TrustedCallVerification, types::ShardIdentifier,
@@ -42,15 +48,13 @@ use itp_types::{
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
-use std::{fmt::Debug, format, prelude::v1::*, sync::Arc, vec};
 
 impl<TCS, G, State, Runtime, AccountId> InitState<State, AccountId> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait + Debug,
 	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
 	Runtime: frame_system::Config<AccountId = AccountId> + pallet_balances::Config,
-	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source:
-		std::convert::From<AccountId>,
+	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
 	AccountId: Encode,
 {
 	fn init_state(enclave_account: AccountId) -> State {
@@ -171,14 +175,12 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime> ShardVaultQuery<State> for Stf<TCS, G, State, Runtime>
+impl<TCS, G, State, Runtime> ShardCreationQuery<State> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait + Debug,
 {
-	fn get_vault(state: &mut State) -> Option<AccountId> {
-		state
-			.get(SHARD_VAULT_KEY.as_bytes())
-			.and_then(|v| Decode::decode(&mut v.clone().as_slice()).ok())
+	fn get_shard_creation_info(state: &mut State) -> ShardCreationInfo {
+		state.execute_with(shard_creation_info)
 	}
 }
 
@@ -254,24 +256,109 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime, ParentchainHeader> ParentchainPalletInterface<State, ParentchainHeader>
-	for Stf<TCS, G, State, Runtime>
+impl<TCS, G, State, Runtime, ParentchainHeader>
+	ParentchainPalletInstancesInterface<State, ParentchainHeader> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
-	Runtime: frame_system::Config<Header = ParentchainHeader> + pallet_parentchain::Config,
+	Runtime: frame_system::Config<Header = ParentchainHeader, AccountId = AccountId>
+		+ pallet_parentchain::Config<ParentchainInstanceLitentry>
+		+ pallet_parentchain::Config<ParentchainInstanceTargetA>
+		+ pallet_parentchain::Config<ParentchainInstanceTargetB>,
+	<<Runtime as frame_system::Config>::Lookup as StaticLookup>::Source: From<AccountId>,
+	ParentchainHeader: Debug,
 {
 	type Error = StfError;
 
-	fn update_parentchain_block(
+	fn update_parentchain_litentry_block(
 		state: &mut State,
 		header: ParentchainHeader,
 	) -> Result<(), Self::Error> {
+		trace!("updating litentry parentchain block : {:?}", header);
 		state.execute_with(|| {
-			pallet_parentchain::Call::<Runtime>::set_block { header }
+			pallet_parentchain::Call::<Runtime, ParentchainInstanceLitentry>::set_block { header }
 				.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
 				.map_err(|e| {
-					Self::Error::Dispatch(format!("Update parentchain block error: {:?}", e.error))
+					Self::Error::Dispatch(format!(
+						"Update parentchain litentry block error: {:?}",
+						e.error
+					))
 				})
+		})?;
+		Ok(())
+	}
+
+	fn update_parentchain_target_a_block(
+		state: &mut State,
+		header: ParentchainHeader,
+	) -> Result<(), Self::Error> {
+		trace!("updating target_a parentchain block: {:?}", header);
+		state.execute_with(|| {
+			pallet_parentchain::Call::<Runtime, ParentchainInstanceTargetA>::set_block { header }
+				.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
+				.map_err(|e| {
+					Self::Error::Dispatch(format!(
+						"Update parentchain target_a block error: {:?}",
+						e.error
+					))
+				})
+		})?;
+		Ok(())
+	}
+
+	fn update_parentchain_target_b_block(
+		state: &mut State,
+		header: ParentchainHeader,
+	) -> Result<(), Self::Error> {
+		trace!("updating target_b parentchain block: {:?}", header);
+		state.execute_with(|| {
+			pallet_parentchain::Call::<Runtime, ParentchainInstanceTargetB>::set_block { header }
+				.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
+				.map_err(|e| {
+					Self::Error::Dispatch(format!(
+						"Update parentchain target_b block error: {:?}",
+						e.error
+					))
+				})
+		})?;
+		Ok(())
+	}
+
+	fn set_creation_block(
+		state: &mut State,
+		header: ParentchainHeader,
+		parentchain_id: ParentchainId,
+	) -> Result<(), Self::Error> {
+		state.execute_with(|| match parentchain_id {
+			ParentchainId::Litentry => pallet_parentchain::Call::<
+				Runtime,
+				ParentchainInstanceLitentry,
+			>::set_creation_block {
+				header,
+			}
+			.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
+			.map_err(|e| {
+				Self::Error::Dispatch(format!("Init shard vault account error: {:?}", e.error))
+			}),
+			ParentchainId::TargetA => pallet_parentchain::Call::<
+				Runtime,
+				ParentchainInstanceTargetA,
+			>::set_creation_block {
+				header,
+			}
+			.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
+			.map_err(|e| {
+				Self::Error::Dispatch(format!("Init shard vault account error: {:?}", e.error))
+			}),
+			ParentchainId::TargetB => pallet_parentchain::Call::<
+				Runtime,
+				ParentchainInstanceTargetB,
+			>::set_creation_block {
+				header,
+			}
+			.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
+			.map_err(|e| {
+				Self::Error::Dispatch(format!("Init shard vault account error: {:?}", e.error))
+			}),
 		})?;
 		Ok(())
 	}

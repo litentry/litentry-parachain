@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::Assertion;
+use crate::{
+	alloc::{fmt, string::String},
+	assertion::Assertion,
+};
+
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -25,7 +29,7 @@ use sp_runtime::{
 pub type ErrorString = BoundedVec<u8, ConstU32<100>>;
 
 // enum to reflect the error detail from TEE-worker processing
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum ErrorDetail {
 	// error when importing the parentchain blocks and executing indirect calls
 	#[codec(index = 0)]
@@ -66,6 +70,30 @@ pub enum ErrorDetail {
 	NoEligibleIdentity,
 }
 
+impl fmt::Debug for ErrorDetail {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			ErrorDetail::ImportError => write!(f, "ImportError"),
+			ErrorDetail::UnauthorizedSigner => write!(f, "UnauthorizedSigner"),
+			ErrorDetail::StfError(error_string) => {
+				let text = String::from_utf8(error_string.to_vec()).map_err(|_| fmt::Error)?;
+				write!(f, "StfError({})", text)
+			},
+			ErrorDetail::SendStfRequestFailed => write!(f, "SendStfRequestFailed"),
+			ErrorDetail::ParseError => write!(f, "ParseError"),
+			ErrorDetail::DataProviderError(error_string) => {
+				let text = String::from_utf8(error_string.to_vec()).map_err(|_| fmt::Error)?;
+				write!(f, "DataProviderError({})", text)
+			},
+			ErrorDetail::InvalidIdentity => write!(f, "InvalidIdentity"),
+			ErrorDetail::WrongWeb2Handle => write!(f, "WrongWeb2Handle"),
+			ErrorDetail::UnexpectedMessage => write!(f, "UnexpectedMessage"),
+			ErrorDetail::VerifyWeb3SignatureFailed => write!(f, "VerifyWeb3SignatureFailed"),
+			ErrorDetail::NoEligibleIdentity => write!(f, "NoEligibleIdentity"),
+		}
+	}
+}
+
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`
 pub trait IntoErrorDetail {
 	fn into_error_detail(self) -> ErrorDetail;
@@ -102,13 +130,9 @@ pub enum IMPError {
 	DeactivateIdentityFailed(ErrorDetail),
 	#[codec(index = 2)]
 	ActivateIdentityFailed(ErrorDetail),
-	// scheduled encalve import error
-	#[codec(index = 3)]
-	ImportScheduledEnclaveFailed,
-
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	UnclassifiedError(ErrorDetail),
 }
 

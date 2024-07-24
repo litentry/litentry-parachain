@@ -48,18 +48,31 @@ ENV WORKER_MODE=$WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
 ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
+ARG IMAGE_FOR_RELEASE=false
+ENV IMAGE_FOR_RELEASE=$IMAGE_FOR_RELEASE
+
 ARG FINGERPRINT=none
+
+ARG SGX_COMMERCIAL_KEY
+ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
 
 WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
 RUN \
-  rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
-  rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
-  rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
-  rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-  make && sccache --show-stats
+  if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
+    echo "Omit cache for release image"; \
+    unset RUSTC_WRAPPER; \
+    make; \
+  else \
+    rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
+    rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
+    rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
+    rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
+    make && sccache --show-stats; \
+  fi
 
+RUN make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}' > mrenclave.txt
 RUN cargo test --release
 
 
@@ -67,7 +80,7 @@ RUN cargo test --release
 ##################################################
 FROM node:18-bookworm-slim AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 jq curl
+RUN apt update && apt install -y libssl-dev iproute2 jq curl protobuf-compiler
 RUN corepack enable && corepack prepare pnpm@8.7.6 --activate && corepack enable pnpm
 
 
@@ -120,3 +133,56 @@ RUN ldd /usr/local/bin/bitacross-worker && /usr/local/bin/bitacross-worker --ver
 
 # TODO: use entrypoint and aesm service launch, see P-295 too
 ENTRYPOINT ["/usr/local/bin/bitacross-worker"]
+
+
+### Release worker image
+##################################################
+FROM ubuntu:22.04 AS worker-release
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
+
+RUN apt update && apt install -y libssl-dev iproute2 curl protobuf-compiler
+
+# Adding default user litentry with uid 1000
+ARG UID=1000
+RUN adduser -u ${UID} --disabled-password --gecos '' litentry
+RUN adduser -u ${UID} litentry sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# to fix Multi-node distributed worker encounters SGX permission errors.
+RUN groupadd -g 121 sgx_prv && \
+    groupadd -g 108 sgx && \
+    usermod -aG sgx litentry && \
+    usermod -aG sgx_prv litentry
+
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM xterm
+ENV SGX_SDK /opt/sgxsdk
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
+ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
+ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
+
+RUN mkdir -p /origin /data
+
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/* /origin
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/mrenclave.txt /origin
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+WORKDIR /origin
+
+RUN touch spid.txt key.txt && \
+    cp ./bitacross-* /usr/local/bin/ && \
+    chmod +x /usr/local/bin/bitacross-* && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    ls -al /usr/local/bin
+
+RUN ldd /usr/local/bin/bitacross-worker && /usr/local/bin/bitacross-worker --version
+
+ENV DATA_DIR /data
+
+USER litentry
+WORKDIR /data
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -19,23 +19,26 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	error::WebSocketError, stream_state::StreamState, WebSocketConnection, WebSocketMessageHandler,
-	WebSocketResult,
+	error::WebSocketError,
+	stream_state::{MaybeServerTlsStream, StreamState},
+	WebSocketConnection, WebSocketMessageHandler, WebSocketResult,
 };
 use log::*;
 use mio::{event::Event, net::TcpStream, Poll, Ready, Token};
 use rustls::{ServerSession, Session};
 use std::{
 	format,
+	io::ErrorKind,
 	string::{String, ToString},
 	sync::Arc,
 	time::Instant,
+	vec,
 };
 use tungstenite::Message;
 
 /// A web-socket connection object.
 pub struct TungsteniteWsConnection<Handler> {
-	stream_state: StreamState,
+	stream_state: StreamState<TcpStream>,
 	connection_token: Token,
 	connection_handler: Arc<Handler>,
 	is_closed: bool,
@@ -47,78 +50,82 @@ where
 {
 	pub fn new(
 		tcp_stream: TcpStream,
-		server_session: ServerSession,
+		maybe_server_session: Option<ServerSession>,
 		connection_token: Token,
 		handler: Arc<Handler>,
 	) -> WebSocketResult<Self> {
+		let stream_state = match maybe_server_session {
+			Some(sess) => StreamState::new_rustls_stream(sess, tcp_stream),
+			None => StreamState::new_plain_stream(tcp_stream),
+		};
 		Ok(TungsteniteWsConnection {
-			stream_state: StreamState::from_stream(rustls::StreamOwned::new(
-				server_session,
-				tcp_stream,
-			)),
+			stream_state,
 			connection_token,
 			connection_handler: handler,
 			is_closed: false,
 		})
 	}
 
-	fn do_tls_read(&mut self) -> ConnectionState {
-		let tls_stream = match self.stream_state.internal_stream_mut() {
-			None => return ConnectionState::Closing,
-			Some(s) => s,
-		};
-
-		let tls_session = &mut tls_stream.sess;
-
-		match tls_session.read_tls(&mut tls_stream.sock) {
-			Ok(r) =>
-				if r == 0 {
-					return ConnectionState::Closing
-				},
-			Err(err) => {
-				if let std::io::ErrorKind::WouldBlock = err.kind() {
-					debug!("TLS session is blocked (connection {})", self.connection_token.0);
-					return ConnectionState::Blocked
+	fn maybe_do_tls_read(&mut self) -> ConnectionState {
+		match self.stream_state.internal_stream_mut() {
+			None => ConnectionState::Closing,
+			Some(MaybeServerTlsStream::Plain(_)) => ConnectionState::Alive, // noop for non-TLS ws server
+			Some(MaybeServerTlsStream::Rustls(s)) => {
+				let tls_session = &mut s.sess;
+				match tls_session.read_tls(&mut s.sock) {
+					Ok(r) =>
+						if r == 0 {
+							return ConnectionState::Closing
+						},
+					Err(err) => {
+						if let std::io::ErrorKind::WouldBlock = err.kind() {
+							debug!(
+								"TLS session is blocked (connection {})",
+								self.connection_token.0
+							);
+							return ConnectionState::Blocked
+						}
+						warn!(
+							"I/O error after reading TLS data (connection {}): {:?}",
+							self.connection_token.0, err
+						);
+						return ConnectionState::Closing
+					},
 				}
-				warn!(
-					"I/O error after reading TLS data (connection {}): {:?}",
-					self.connection_token.0, err
-				);
-				return ConnectionState::Closing
-			},
-		}
 
-		match tls_session.process_new_packets() {
-			Ok(_) => {
-				if tls_session.is_handshaking() {
-					return ConnectionState::TlsHandshake
+				match tls_session.process_new_packets() {
+					Ok(_) => {
+						if tls_session.is_handshaking() {
+							trace!("TLS session is in handshake");
+							return ConnectionState::TlsHandshake
+						}
+						ConnectionState::Alive
+					},
+					Err(e) => {
+						error!("cannot process TLS packet(s), closing connection: {:?}", e);
+						ConnectionState::Closing
+					},
 				}
-				ConnectionState::Alive
-			},
-			Err(e) => {
-				error!("cannot process TLS packet(s), closing connection: {:?}", e);
-				ConnectionState::Closing
 			},
 		}
 	}
 
-	fn do_tls_write(&mut self) -> ConnectionState {
-		let tls_stream = match self.stream_state.internal_stream_mut() {
-			None => return ConnectionState::Closing,
-			Some(s) => s,
-		};
-
-		match tls_stream.sess.write_tls(&mut tls_stream.sock) {
-			Ok(_) => {
-				trace!("TLS write successful, connection {} is alive", self.connection_token.0);
-				if tls_stream.sess.is_handshaking() {
-					return ConnectionState::TlsHandshake
-				}
-				ConnectionState::Alive
-			},
-			Err(e) => {
-				error!("TLS write error (connection {}): {:?}", self.connection_token.0, e);
-				ConnectionState::Closing
+	fn maybe_do_tls_write(&mut self) -> ConnectionState {
+		match self.stream_state.internal_stream_mut() {
+			None => ConnectionState::Closing,
+			Some(MaybeServerTlsStream::Plain(_)) => ConnectionState::Alive, // noop for non-TLS ws server
+			Some(MaybeServerTlsStream::Rustls(s)) => match s.sess.write_tls(&mut s.sock) {
+				Ok(_) => {
+					trace!("TLS write successful, connection {} is alive", self.connection_token.0);
+					if s.sess.is_handshaking() {
+						return ConnectionState::TlsHandshake
+					}
+					ConnectionState::Alive
+				},
+				Err(e) => {
+					error!("TLS write error (connection {}): {:?}", self.connection_token.0, e);
+					ConnectionState::Closing
+				},
 			},
 		}
 	}
@@ -126,31 +133,51 @@ where
 	/// Read from a web-socket, or initiate handshake if websocket is not initialized yet.
 	///
 	/// Returns a boolean 'connection should be closed'.
-	fn read_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
-		if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+	fn drain_message_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
+		if let StreamState::Established(web_socket) = &mut self.stream_state {
 			trace!(
 				"Read is possible for connection {}: {}",
 				self.connection_token.0,
 				web_socket.can_read()
 			);
-			match web_socket.read_message() {
-				Ok(m) =>
-					if let Err(e) = self.handle_message(m) {
-						error!(
-							"Failed to handle web-socket message (connection {}): {:?}",
-							self.connection_token.0, e
-						);
+
+			let mut messages = vec![];
+			let mut is_closing = false;
+
+			// Looping over 'read_message' is merely a workaround for the unexpected behavior of mio event triggering.
+			// Final solution will be applied in P-907.
+			loop {
+				match web_socket.read_message() {
+					Ok(m) => messages.push(m),
+					Err(e) => {
+						match e {
+							tungstenite::Error::Io(e)
+								if matches!(e.kind(), ErrorKind::WouldBlock) => {}, // no message to read
+							_ => {
+								trace!(
+									"Failed to read message from web-socket (connection {}): {:?}",
+									self.connection_token.0,
+									e
+								);
+								is_closing = true;
+							},
+						}
+						break
 					},
-				Err(e) => match e {
-					tungstenite::Error::ConnectionClosed => return Ok(true),
-					tungstenite::Error::AlreadyClosed => return Ok(true),
-					_ => error!(
-						"Failed to read message from web-socket (connection {}): {:?}",
-						self.connection_token.0, e
-					),
-				},
+				}
 			}
+
+			messages.into_iter().for_each(|m| {
+				if let Err(e) = self.handle_message(m) {
+					error!(
+						"Failed to handle web-socket message (connection {}): {:?}",
+						self.connection_token.0, e
+					);
+				}
+			});
+
 			trace!("Read successful for connection {}", self.connection_token.0);
+			Ok(is_closing)
 		} else {
 			trace!("Initialize connection {}", self.connection_token.0);
 			self.stream_state = std::mem::take(&mut self.stream_state).attempt_handshake();
@@ -159,9 +186,8 @@ where
 				return Ok(true)
 			}
 			debug!("Initialized connection {} successfully", self.connection_token.0);
+			Ok(false)
 		}
-
-		Ok(false)
 	}
 
 	fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
@@ -196,7 +222,7 @@ where
 					"Received close frame, driving web-socket connection {} to close",
 					self.connection_token.0
 				);
-				if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+				if let StreamState::Established(web_socket) = &mut self.stream_state {
 					// Send a close frame back and then flush the send queue.
 					if let Err(e) = web_socket.close(None) {
 						match e {
@@ -226,7 +252,7 @@ where
 
 	pub(crate) fn write_message(&mut self, message: String) -> WebSocketResult<()> {
 		match &mut self.stream_state {
-			StreamState::EstablishedWebsocket(web_socket) => {
+			StreamState::Established(web_socket) => {
 				if !web_socket.can_write() {
 					return Err(WebSocketError::ConnectionClosed)
 				}
@@ -248,15 +274,15 @@ where
 	type Socket = TcpStream;
 
 	fn socket(&self) -> Option<&Self::Socket> {
-		self.stream_state.internal_stream().map(|s| &s.sock)
+		self.stream_state.internal_stream().map(|s| s.inner())
 	}
 
 	fn get_session_readiness(&self) -> Ready {
 		match self.stream_state.internal_stream() {
 			None => mio::Ready::empty(),
 			Some(s) => {
-				let wants_read = s.sess.wants_read();
-				let wants_write = s.sess.wants_write();
+				let wants_read = s.wants_read();
+				let wants_write = s.wants_write();
 
 				if wants_read && wants_write {
 					mio::Ready::readable() | mio::Ready::writable()
@@ -275,10 +301,10 @@ where
 		if event.readiness().is_readable() {
 			trace!("Connection ({:?}) is readable", self.token());
 
-			let connection_state = self.do_tls_read();
+			let connection_state = self.maybe_do_tls_read();
 
 			if connection_state.is_alive() {
-				is_closing = self.read_or_initialize_websocket()?;
+				is_closing = self.drain_message_or_initialize_websocket()?;
 			} else {
 				is_closing = connection_state.is_closing();
 			}
@@ -287,10 +313,10 @@ where
 		if event.readiness().is_writable() {
 			trace!("Connection ({:?}) is writable", self.token());
 
-			let connection_state = self.do_tls_write();
+			let connection_state = self.maybe_do_tls_write();
 
 			if connection_state.is_alive() {
-				if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+				if let StreamState::Established(web_socket) = &mut self.stream_state {
 					trace!("Web-socket, write pending messages");
 					if let Err(e) = web_socket.write_pending() {
 						match e {

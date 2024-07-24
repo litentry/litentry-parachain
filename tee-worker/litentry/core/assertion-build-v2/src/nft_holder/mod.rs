@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials_v2::{nft_holder::NFTHolderAssertionUpdate, Credential};
+use lc_credentials_v2::{nft_holder::NFTHolderAssertionUpdate, Credential, IssuerRuntimeVersion};
 use lc_service::web3_nft::nft_holder::has_nft;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Web3Network, Web3NftType};
@@ -53,15 +53,25 @@ pub fn build(
 	});
 
 	match result {
-		Ok(has_nft) => match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_nft_holder_assertion(nft_type, has_nft);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(Assertion::NftHolder(nft_type), e.into_error_detail()))
-			},
+		Ok(has_nft) => {
+			let runtime_version = IssuerRuntimeVersion {
+				parachain: req.parachain_runtime_version,
+				sidechain: req.sidechain_runtime_version,
+			};
+
+			match Credential::new(&req.who, &req.shard, &runtime_version) {
+				Ok(mut credential_unsigned) => {
+					credential_unsigned.update_nft_holder_assertion(nft_type, has_nft);
+					Ok(credential_unsigned)
+				},
+				Err(e) => {
+					error!("Generate unsigned credential failed {:?}", e);
+					Err(Error::RequestVCFailed(
+						Assertion::NftHolder(nft_type),
+						e.into_error_detail(),
+					))
+				},
+			}
 		},
 		Err(e) => Err(e),
 	}
@@ -91,6 +101,8 @@ mod tests {
 			top_hash: Default::default(),
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
+			parachain_runtime_version: 0u32,
+			sidechain_runtime_version: 0u32,
 			maybe_key: None,
 			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
@@ -185,6 +197,28 @@ mod tests {
 		})
 	}
 
+	fn create_mfan_assertion_logic() -> Box<AssertionLogic> {
+		Box::new(AssertionLogic::Or {
+			items: vec![Box::new(AssertionLogic::And {
+				items: vec![
+					Box::new(AssertionLogic::Item {
+						src: "$network".into(),
+						op: Op::Equal,
+						dst: "polygon".into(),
+					}),
+					Box::new(AssertionLogic::Item {
+						src: "$address".into(),
+						op: Op::Equal,
+						dst: Web3NftType::MFan
+							.get_nft_address(Web3Network::Polygon)
+							.unwrap()
+							.into(),
+					}),
+				],
+			})],
+		})
+	}
+
 	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
@@ -192,9 +226,11 @@ mod tests {
 		let mut data_provider_config = DataProviderConfig::new().unwrap();
 
 		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/");
+		data_provider_config
+			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
+			.unwrap();
 		data_provider_config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/");
+		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
 		data_provider_config
 	}
 
@@ -290,6 +326,66 @@ mod tests {
 			},
 			Err(e) => {
 				panic!("build Club3Sbt holder failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_mfan_holder_works() {
+		let data_provider_config = init();
+		let mut address =
+			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap();
+		let mut identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Polygon])];
+
+		let mut req = crate_assertion_build_request(Web3NftType::MFan, identities);
+		match build(&req, Web3NftType::MFan, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build MFan holder done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3NftType::MFan),
+							create_mfan_assertion_logic(),
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+			},
+			Err(e) => {
+				panic!("build MFan holder failed with error {:?}", e);
+			},
+		}
+
+		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		identities = vec![(Identity::Evm(address), vec![Web3Network::Polygon])];
+
+		req = crate_assertion_build_request(Web3NftType::MFan, identities);
+		match build(&req, Web3NftType::MFan, &data_provider_config) {
+			Ok(credential) => {
+				log::info!("build MFan holder done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_token_assertion_logic(Web3NftType::MFan),
+							create_mfan_assertion_logic(),
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+			},
+			Err(e) => {
+				panic!("build MFan holder failed with error {:?}", e);
 			},
 		}
 	}

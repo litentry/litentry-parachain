@@ -20,8 +20,9 @@ pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::TrustedCallSigned;
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::parentchain::{AccountId, FilterEvents, HandleParentchainEvents};
+use itp_types::parentchain::{FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts};
 use log::*;
+use sp_std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
 
@@ -31,11 +32,11 @@ where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 {
 	fn handle_events(
+		&self,
 		_executor: &Executor,
 		_events: impl FilterEvents,
-		_vault_account: &AccountId,
-	) -> Result<(), Error> {
+	) -> Result<ProcessedEventsArtifacts, Error> {
 		debug!("not handling any events for target B");
-		Ok(())
+		Ok((Vec::new(), Vec::new(), Vec::new()))
 	}
 }

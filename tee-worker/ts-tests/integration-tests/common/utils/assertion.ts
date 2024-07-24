@@ -1,4 +1,3 @@
-import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
@@ -11,12 +10,13 @@ import { aesKey } from '../call';
 import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
-import { Signer, decryptWithAes } from './crypto';
+import { decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
 import * as base58 from 'micro-base58';
+import { fail } from 'assert';
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -36,36 +36,6 @@ export function assertIdGraph(
     });
 }
 
-export async function assertIdentityDeactivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
-    for (let index = 0; index < events.length; index++) {
-        const eventData = events[index].data;
-        const who = eventData.primeIdentity;
-        const signerIdentity = await signer.getIdentity(context);
-        assert.deepEqual(
-            who.toHuman(),
-            signerIdentity.toHuman(),
-            'Check IdentityDeactivated error: signer should be equal to who'
-        );
-    }
-
-    console.log(colors.green('assertIdentityDeactivated complete'));
-}
-
-export async function assertIdentityActivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
-    for (let index = 0; index < events.length; index++) {
-        const eventData = events[index].data;
-        const who = eventData.primeIdentity;
-        const signerIdentity = await signer.getIdentity(context);
-        assert.deepEqual(
-            who.toHuman(),
-            signerIdentity.toHuman(),
-            'Check IdentityActivated error: signer should be equal to who'
-        );
-    }
-
-    console.log(colors.green('assertIdentityActivated complete'));
-}
-
 export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcReturnValue) {
     assert.isTrue(
         res.status.isTrustedOperationStatus,
@@ -78,43 +48,6 @@ export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcR
         status[0].isSubmitted || status[0].isInSidechainBlock,
         `${callType} should be submitted or in sidechain block, but is ${status[0].type}`
     );
-}
-
-export async function checkErrorDetail(events: Event[], expectedDetail: string) {
-    // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
-    //       I have to JSON.stringify it to assign it to a string
-    events.map((item: any) => {
-        console.log('error detail: ', item.data.detail.toHuman());
-        const detail = JSON.stringify(item.data.detail.toHuman());
-
-        assert.isTrue(
-            detail.includes(expectedDetail),
-            `check error detail failed, expected detail is ${expectedDetail}, but got ${detail}`
-        );
-    });
-}
-
-// for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
-export async function assertIdGraphMutationEvent(
-    context: IntegrationTestContext,
-    signer: Signer,
-    events: any[],
-    idGraphHashResults: any[] | undefined,
-    expectedLength: number
-) {
-    assert.equal(events.length, expectedLength);
-    if (idGraphHashResults != undefined) {
-        assert.equal(idGraphHashResults!.length, expectedLength);
-    }
-
-    const signerIdentity = await signer.getIdentity(context);
-    events.forEach((e, i) => {
-        assert.deepEqual(signerIdentity.toHuman(), e.data.primeIdentity.toHuman());
-        if (idGraphHashResults != undefined) {
-            assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
-        }
-    });
-    console.log(colors.green('assertIdGraphMutationEvent passed'));
 }
 
 export function assertWorkerError(
@@ -151,19 +84,6 @@ export async function assertIdGraphMutationResult(
     return u8aToHex(decodedResult.id_graph_hash);
 }
 
-/*
-    assert vc
-    steps:
-    1. check vc status should be Active
-    2. compare vc payload hash(blake vc payload) with vc hash
-    3. check subject
-    4. compare vc index with vcPayload id
-    5. check vc signature
-    6. check vc schema
-
-    TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
-*/
-
 export async function assertVc(context: IntegrationTestContext, subject: CorePrimitivesIdentity, data: Bytes) {
     const results = context.api.createType('RequestVCResult', data);
     // step 1
@@ -198,43 +118,42 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     const { proof, ...vcWithoutProof } = vcPayloadJson;
 
     // step 5
-    // prepare teebag enclave registry data for further checks
-    const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
-    const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
-    const enclaveIdentifier = await apiAtVcIssuedBlock.query.teebag.enclaveIdentifier('Identity');
-    const lastRegisteredEnclave = (
-        await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveIdentifier[enclaveIdentifier.length - 1])
-    ).unwrap();
-
-    // step 6
     // check vc signature
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
     const message = Buffer.from(JSON.stringify(vcWithoutProof));
-    const vcPubkeyBytes = context.api.createType('Option<Bytes>', lastRegisteredEnclave.vcPubkey).unwrap();
-    const vcPubkey = Buffer.from(hexToU8a(vcPubkeyBytes.toHex()));
+    const vcPubkey = Buffer.from(hexToU8a(proof.verificationMethod));
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
-
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
 
-    // step 7
-    // check VC mrenclave with enclave's mrenclave from registry
+    // step 6
+    // lookup the teebag enclave regsitry to check mrenclave and vcPubkey
+    const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
+    const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
+    const enclaveAccount = trimPrefix(vcPayloadJson.issuer.id, 'did:litentry:substrate:');
+    const registeredEnclave = (await apiAtVcIssuedBlock.query.teebag.enclaveRegistry(enclaveAccount)).unwrap();
+
     assert.equal(
-        base58.encode(lastRegisteredEnclave.mrenclave),
         vcPayloadJson.issuer.mrenclave,
-        'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
+        base58.encode(registeredEnclave.mrenclave),
+        "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
+    );
+
+    assert.equal(
+        proof.verificationMethod,
+        registeredEnclave.vcPubkey,
+        "Check VC pubkey: it should equal enclave's vcPubkey from parachains enclave registry"
+    );
+
+    // step 7
+    // check runtime version is present
+    assert.deepEqual(
+        vcPayloadJson.issuer.runtimeVersion,
+        { parachain: 9185, sidechain: 109 },
+        'Check VC runtime version: it should equal the current defined versions'
     );
 
     // step 8
-    // check vc issuer id
-    assert.equal(
-        `did:litentry:substrate:${vcPubkeyBytes.toHex()}`,
-        vcPayloadJson.issuer.id,
-        'Check VC id: it should equals enclaves pubkey from parachains enclave registry'
-    );
-
-    // step 9
-    // validate VC aganist schema
-
+    // validate VC against schema
     const schemaResult = await validateVcSchema(vcPayloadJson);
 
     if (schemaResult.errors) console.log('Schema Validation errors: ', schemaResult.errors);
@@ -269,4 +188,11 @@ export async function assertIdGraphHash(
     const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
     console.log('queried id graph hash: ', queriedIdGraphHash);
     assert.equal(computedIdGraphHash, queriedIdGraphHash);
+}
+
+function trimPrefix(str: string, prefix: string): string {
+    if (str.startsWith(prefix)) {
+        return str.substring(prefix.length);
+    }
+    return str;
 }

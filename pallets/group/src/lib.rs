@@ -174,9 +174,8 @@ pub mod pallet {
 				})
 			} else {
 				o.into().and_then(|o| match o {
-					system::RawOrigin::Signed(ref who) if Pallet::<T, I>::is_group_member(who) => {
-						Ok(who.clone())
-					},
+					system::RawOrigin::Signed(ref who) if Pallet::<T, I>::is_group_member(who) =>
+						Ok(who.clone()),
 					r => Err(T::RuntimeOrigin::from(r)),
 				})
 			}

@@ -18,8 +18,8 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
-	runtime_call::RuntimeCall,
+	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
+	pallet_utility::UtilityCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -37,8 +37,8 @@ impl TryFrom<NodeMetadataMock> for Metadata {
 pub struct NodeMetadataMock {
 	// teebag
 	teebag_module: u8,
-	set_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
+	force_add_authorized_enclave: u8,
+	force_remove_authorized_enclave: u8,
 	register_enclave: u8,
 	unregister_enclave: u8,
 	register_quoting_enclave: u8,
@@ -62,6 +62,8 @@ pub struct NodeMetadataMock {
 	transfer: u8,
 	transfer_keep_alive: u8,
 	transfer_allow_death: u8,
+	timestamp_module: u8,
+	timestamp_set: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 
@@ -76,8 +78,8 @@ impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
 			teebag_module: 50u8,
-			set_scheduled_enclave: 0u8,
-			remove_scheduled_enclave: 1u8,
+			force_add_authorized_enclave: 0u8,
+			force_remove_authorized_enclave: 1u8,
 			register_enclave: 2u8,
 			unregister_enclave: 3u8,
 			register_quoting_enclave: 4u8,
@@ -101,6 +103,8 @@ impl NodeMetadataMock {
 			transfer: 7u8,
 			transfer_keep_alive: 3u8,
 			transfer_allow_death: 0u8,
+			timestamp_module: 3,
+			timestamp_set: 0,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
 
@@ -114,11 +118,11 @@ impl NodeMetadataMock {
 }
 
 impl TeebagCallIndexes for NodeMetadataMock {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.set_scheduled_enclave])
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_add_authorized_enclave])
 	}
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.remove_scheduled_enclave])
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_remove_authorized_enclave])
 	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.register_enclave])
@@ -216,5 +220,11 @@ impl BitAcrossCallIndexes for NodeMetadataMock {
 
 	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.bitacross_module, self.eth_wallet_generated])
+	}
+}
+
+impl TimestampCallIndexes for NodeMetadataMock {
+	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.timestamp_module, self.timestamp_set])
 	}
 }

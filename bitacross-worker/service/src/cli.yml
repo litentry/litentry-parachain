@@ -135,7 +135,7 @@ subcommands:
                 short: r
                 help: Run the worker and request key and state provisioning from another worker.
     - request-state:
-        about: join a shard by requesting key provisioning from another worker
+        about: (Deprecated - TODO) join a shard by requesting key provisioning from another worker
         args:
             - shard:
                 long: shard
@@ -152,6 +152,8 @@ subcommands:
         about: Perform RA and dump cert to disk
     - wallet:
         about: Print the bitcoin and ethereum custodian wallet key information, only works in non-prod
+    - init-wallet:
+        about: Init eth and btc wallets from BTC_KEY and ETH_KEY env variables, only works in non-prod
     - mrenclave:
         about: Dump mrenclave to stdout. base58 encoded.
     - init-shard:
@@ -163,16 +165,7 @@ subcommands:
                 index: 1
                 help: shard identifier base58 encoded
     - migrate-shard:
-        about: Migrate shard
-        args:
-            - old-shard:
-                long: old-shard
-                help: shard identifier hex encoded
-                takes_value: true
-            - new-shard:
-                long: new-shard
-                help: shard identifier hex encoded
-                takes_value: true
+        about: Migrate state from old shards to the new(current) shard, which is identical to mrenclave
     - test:
           about: Run tests involving the enclave
           takes_value: true

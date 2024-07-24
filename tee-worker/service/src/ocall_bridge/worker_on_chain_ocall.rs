@@ -83,7 +83,7 @@ where
 		request: Vec<u8>,
 		parentchain_id: Vec<u8>,
 	) -> OCallBridgeResult<Vec<u8>> {
-		debug!("    Entering ocall_worker_request");
+		trace!("    Entering ocall_worker_request");
 
 		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice())?;
 		if requests.is_empty() {
@@ -156,14 +156,16 @@ where
 						XtStatus::InBlock,
 					) {
 						error!(
-							"Could not send extrinsic to node: {:?}, error: {:?}",
+							"Could not send extrinsic to {:?}: {:?}, error: {:?}",
+							parentchain_id,
 							serde_json::to_string(&call),
 							e
 						);
 					}
 				} else if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
 					error!(
-						"Could not send extrinsic to node: {:?}, error: {:?}",
+						"Could not send extrinsic to {:?}: {:?}, error: {:?}",
+						parentchain_id,
 						serde_json::to_string(&call),
 						e
 					);

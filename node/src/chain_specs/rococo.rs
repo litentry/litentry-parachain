@@ -18,9 +18,10 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, RuntimeGenesisConfig,
-	SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
-	TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, RuntimeGenesisConfig, SessionConfig, SudoConfig, SystemConfig,
+	TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, VCManagementConfig,
+	UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -52,6 +53,7 @@ struct GenesisInfo {
 	endowed_accounts: Vec<(AccountId, String)>,
 	council: Vec<AccountId>,
 	technical_committee: Vec<AccountId>,
+	developer_committee: Vec<AccountId>,
 	boot_nodes: Vec<String>,
 	telemetry_endpoints: Vec<String>,
 }
@@ -91,6 +93,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
+				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				DEFAULT_PARA_ID.into(),
 			)
@@ -164,6 +167,7 @@ fn get_chain_spec_from_genesis_info(
 					.collect(),
 				genesis_info_cloned.council,
 				genesis_info_cloned.technical_committee,
+				genesis_info_cloned.developer_committee,
 				para_id,
 			)
 		},
@@ -193,6 +197,7 @@ fn generate_genesis(
 	endowed_accounts: Vec<(AccountId, Balance)>,
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,
+	developer_committee_members: Vec<AccountId>,
 	id: ParaId,
 ) -> RuntimeGenesisConfig {
 	RuntimeGenesisConfig {
@@ -231,6 +236,11 @@ fn generate_genesis(
 			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
+		developer_committee: Default::default(),
+		developer_committee_membership: DeveloperCommitteeMembershipConfig {
+			members: developer_committee_members.try_into().expect("error convert to BoundedVec"),
+			phantom: Default::default(),
+		},
 		treasury: Default::default(),
 		vesting: Default::default(),
 		aura: Default::default(),
@@ -242,7 +252,7 @@ fn generate_genesis(
 		},
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
-		tokens: Default::default(),
+		assets: Default::default(),
 		ethereum: Default::default(),
 		evm: Default::default(),
 		teebag: TeebagConfig {
@@ -251,5 +261,6 @@ fn generate_genesis(
 			mode: TeebagOperationalMode::Development,
 		},
 		bitacross: BitacrossConfig { admin: Some(root_key) },
+		score_staking: Default::default(),
 	}
 }

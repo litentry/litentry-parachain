@@ -20,6 +20,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use lc_credentials::IssuerRuntimeVersion;
+
 use crate::*;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
@@ -36,7 +38,12 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		is_web3 |= identity.is_web3();
 	}
 
-	match Credential::new(&req.who, &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A1_SUBJECT_DESCRIPTION, VC_A1_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a1(is_web2 && is_web3);

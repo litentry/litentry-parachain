@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use super::request_achainable;
 use crate::*;
-use lc_credentials::{litentry_profile::mirror::MirrorInfo, Credential};
+use lc_credentials::{litentry_profile::mirror::MirrorInfo, Credential, IssuerRuntimeVersion};
 use lc_data_providers::{achainable_names::AchainableNameMirror, DataProviderConfig};
 use litentry_primitives::AchainableMirror;
 
@@ -65,7 +65,13 @@ pub fn build_on_mirror(
 		)
 	})?;
 	let value = request_achainable(addresses, achainable_param.clone(), data_provider_config)?;
-	match Credential::new(&req.who, &req.shard) {
+
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&req.who, &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_mirror(mtype, value);
 			Ok(credential_unsigned)

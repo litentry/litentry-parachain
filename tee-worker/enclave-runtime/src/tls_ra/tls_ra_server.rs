@@ -26,7 +26,6 @@ use crate::{
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
-	shard_vault::add_shard_vault_proxy,
 	tls_ra::seal_handler::UnsealStateAndKeys,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -36,6 +35,7 @@ use itp_component_container::ComponentGetter;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_types::ShardIdentifier;
+use lc_evm_dynamic_assertions::{sealing::io::AssertionsSeal, ASSERTIONS_FILE};
 use log::*;
 use rustls::{ServerConfig, ServerSession, StreamOwned};
 use sgx_types::*;
@@ -46,6 +46,7 @@ use std::{
 	sync::Arc,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum ProvisioningPayload {
 	Everything,
@@ -55,7 +56,7 @@ enum ProvisioningPayload {
 impl From<WorkerMode> for ProvisioningPayload {
 	fn from(m: WorkerMode) -> Self {
 		match m {
-			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
+			WorkerMode::OffChainWorker => ProvisioningPayload::Everything,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
 		}
 	}
@@ -90,20 +91,7 @@ where
 		let request = self.await_shard_request_from_client()?;
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, await_shard_request_from_client() OK");
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, write_all()");
-		self.write_provisioning_payloads(&request.shard)?;
-
-		info!(
-			"will make client account 0x{} a proxy of vault for shard {:?}",
-			hex::encode(request.account.clone()),
-			request.shard
-		);
-		if let Err(e) = add_shard_vault_proxy(request.shard, &request.account) {
-			// we can't be sure that registering the proxy will succeed onchain at this point,
-			// therefore we can accept an error here as the client has to verify anyway and
-			// retry if it failed
-			error!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
-		};
-		Ok(())
+		self.write_provisioning_payloads(&request.shard)
 	}
 
 	/// Read the shard of the state the client wants to receive.
@@ -126,6 +114,7 @@ where
 				self.write_state_key()?;
 				self.write_state(shard)?;
 				self.write_light_client_state()?;
+				self.write_assertions_state()?;
 			},
 			ProvisioningPayload::ShieldingKeyAndLightClient => {
 				self.write_shielding_key()?;
@@ -158,6 +147,12 @@ where
 	fn write_light_client_state(&mut self) -> EnclaveResult<()> {
 		let state = self.seal_handler.unseal_light_client_state()?;
 		self.write(Opcode::LightClient, &state)?;
+		Ok(())
+	}
+
+	fn write_assertions_state(&mut self) -> EnclaveResult<()> {
+		let state = self.seal_handler.unseal_assertions_state()?;
+		self.write(Opcode::Assertions, &state)?;
 		Ok(())
 	}
 
@@ -224,11 +219,14 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		},
 	};
 
+	let assertions_seal = Arc::new(AssertionsSeal::new(ASSERTIONS_FILE.into()));
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
+		assertions_seal,
 	);
 
 	if let Err(e) = run_state_provisioning_server_internal::<_, WorkerModeProvider>(

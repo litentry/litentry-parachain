@@ -30,11 +30,6 @@ extern "C" {
 		encoded_base_dir_size: u32,
 	) -> sgx_status_t;
 
-	pub fn init_enclave_sidechain_components(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-	) -> sgx_status_t;
-
 	pub fn init_direct_invocation_server(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -58,13 +53,24 @@ extern "C" {
 		shard_size: u32,
 	) -> sgx_status_t;
 
-	pub fn init_proxied_shard_vault(
+	pub fn init_shard_creation_parentchain_header(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
 		shard: *const u8,
 		shard_size: u32,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		header: *const u8,
+		header_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_shard_creation_info(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		shard: *const u8,
+		shard_size: u32,
+		creation: *mut u8,
+		creation_size: u32,
 	) -> sgx_status_t;
 
 	pub fn sync_parentchain(
@@ -78,7 +84,7 @@ extern "C" {
 		events_proofs_size: usize,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
-		is_syncing: c_int,
+		immediate_import: c_int,
 	) -> sgx_status_t;
 
 	pub fn set_nonce(
@@ -108,15 +114,6 @@ extern "C" {
 	pub fn get_ecc_signing_pubkey(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		pubkey: *mut u8,
-		pubkey_size: u32,
-	) -> sgx_status_t;
-
-	pub fn get_ecc_vault_pubkey(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		shard: *const u8,
-		shard_size: u32,
 		pubkey: *mut u8,
 		pubkey_size: u32,
 	) -> sgx_status_t;
@@ -240,7 +237,6 @@ extern "C" {
 	pub fn migrate_shard(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		old_shard: *const u8,
 		new_shard: *const u8,
 		shard_size: u32,
 	) -> sgx_status_t;
@@ -252,5 +248,14 @@ extern "C" {
 	) -> sgx_status_t;
 
 	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
+	pub fn finish_enclave_init(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
+	pub fn init_wallets(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		encoded_base_dir_str: *const u8,
+		encoded_base_dir_size: u32,
+	) -> sgx_status_t;
 
 }

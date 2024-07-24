@@ -23,13 +23,15 @@ use crate::{
 	error::{Error as EnclaveError, Result as EnclaveResult},
 	initialization::global_components::{
 		EnclaveSealHandler, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIGNER_REGISTRY,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 	},
 	ocall::OcallApi,
-	shard_vault::add_shard_vault_proxy,
 	tls_ra::seal_handler::UnsealStateAndKeys,
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
+
+use crate::initialization::global_components::GLOBAL_ENCLAVE_REGISTRY;
 use codec::Decode;
 use itp_attestation_handler::RemoteAttestationType;
 use itp_component_container::ComponentGetter;
@@ -46,6 +48,7 @@ use std::{
 	sync::Arc,
 };
 
+#[allow(dead_code)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 enum ProvisioningPayload {
 	Everything,
@@ -55,7 +58,7 @@ enum ProvisioningPayload {
 impl From<WorkerMode> for ProvisioningPayload {
 	fn from(m: WorkerMode) -> Self {
 		match m {
-			WorkerMode::OffChainWorker => ProvisioningPayload::ShieldingKeyAndLightClient,
+			WorkerMode::OffChainWorker => ProvisioningPayload::Everything,
 			WorkerMode::Sidechain => ProvisioningPayload::Everything,
 		}
 	}
@@ -90,20 +93,7 @@ where
 		let request = self.await_shard_request_from_client()?;
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, await_shard_request_from_client() OK");
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, write_all()");
-		self.write_provisioning_payloads(&request.shard)?;
-
-		info!(
-			"will make client account 0x{} a proxy of vault for shard {:?}",
-			hex::encode(request.account.clone()),
-			request.shard
-		);
-		if let Err(e) = add_shard_vault_proxy(request.shard, &request.account) {
-			// we can't be sure that registering the proxy will succeed onchain at this point,
-			// therefore we can accept an error here as the client has to verify anyway and
-			// retry if it failed
-			error!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
-		};
-		Ok(())
+		self.write_provisioning_payloads(&request.shard)
 	}
 
 	/// Read the shard of the state the client wants to receive.
@@ -123,6 +113,8 @@ where
 		match self.provisioning_payload {
 			ProvisioningPayload::Everything => {
 				self.write_shielding_key()?;
+				self.write_signers()?;
+				self.write_enclaves()?;
 				self.write_state_key()?;
 				self.write_state(shard)?;
 				self.write_light_client_state()?;
@@ -140,6 +132,18 @@ where
 	fn write_shielding_key(&mut self) -> EnclaveResult<()> {
 		let shielding_key = self.seal_handler.unseal_shielding_key()?;
 		self.write(Opcode::ShieldingKey, &shielding_key)?;
+		Ok(())
+	}
+
+	fn write_signers(&mut self) -> EnclaveResult<()> {
+		let signers = self.seal_handler.unseal_signers()?;
+		self.write(Opcode::Signers, &signers)?;
+		Ok(())
+	}
+
+	fn write_enclaves(&mut self) -> EnclaveResult<()> {
+		let enclaves = self.seal_handler.unseal_enclaves()?;
+		self.write(Opcode::Enclaves, &enclaves)?;
 		Ok(())
 	}
 
@@ -224,11 +228,28 @@ pub unsafe extern "C" fn run_state_provisioning_server(
 		},
 	};
 
+	let signer_registry = match GLOBAL_SIGNER_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+	let enclave_registry = match GLOBAL_ENCLAVE_REGISTRY.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
 	let seal_handler = EnclaveSealHandler::new(
 		state_handler,
 		state_key_repository,
 		shielding_key_repository,
 		light_client_seal,
+		signer_registry,
+		enclave_registry,
 	);
 
 	if let Err(e) = run_state_provisioning_server_internal::<_>(
@@ -264,7 +285,7 @@ pub(crate) fn run_state_provisioning_server_internal<StateAndKeyUnsealer: Unseal
 	)?;
 	let (server_session, tcp_stream) = tls_server_session_stream(socket_fd, server_config)?;
 
-	let provisioning = ProvisioningPayload::ShieldingKeyAndLightClient;
+	let provisioning = ProvisioningPayload::Everything;
 
 	let mut server =
 		TlsServer::new(StreamOwned::new(server_session, tcp_stream), seal_handler, provisioning);

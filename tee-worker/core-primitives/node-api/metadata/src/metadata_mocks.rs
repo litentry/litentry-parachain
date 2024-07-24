@@ -16,14 +16,16 @@
 */
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teebag::TeebagCallIndexes, pallet_utility::UtilityCallIndexes,
-	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	error::Result, pallet_balances::BalancesCallIndexes,
+	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
+	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
 use itp_api_client_types::Metadata;
+use sp_version::RuntimeVersion;
 
 impl TryFrom<NodeMetadataMock> for Metadata {
 	type Error = ();
@@ -38,8 +40,8 @@ pub struct NodeMetadataMock {
 	// litentry
 	// teebag
 	teebag_module: u8,
-	set_scheduled_enclave: u8,
-	remove_scheduled_enclave: u8,
+	force_add_authorized_enclave: u8,
+	force_remove_authorized_enclave: u8,
 	register_enclave: u8,
 	unregister_enclave: u8,
 	register_quoting_enclave: u8,
@@ -63,6 +65,10 @@ pub struct NodeMetadataMock {
 	vcmp_request_vc: u8,
 	vcmp_vc_issued: u8,
 	vcmp_some_error: u8,
+	// EVM Assertion
+	evm_assertions_module: u8,
+	evm_assertions_store_assertion: u8,
+	evm_assertions_void_assertion: u8,
 
 	utility_module: u8,
 	utility_batch: u8,
@@ -78,6 +84,8 @@ pub struct NodeMetadataMock {
 	transfer: u8,
 	transfer_keep_alive: u8,
 	transfer_allow_death: u8,
+	timestamp_module: u8,
+	timestamp_set: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 }
@@ -87,8 +95,8 @@ impl NodeMetadataMock {
 		NodeMetadataMock {
 			// litentry
 			teebag_module: 50u8,
-			set_scheduled_enclave: 0u8,
-			remove_scheduled_enclave: 1u8,
+			force_add_authorized_enclave: 0u8,
+			force_remove_authorized_enclave: 1u8,
 			register_enclave: 2u8,
 			unregister_enclave: 3u8,
 			register_quoting_enclave: 4u8,
@@ -113,6 +121,10 @@ impl NodeMetadataMock {
 			vcmp_vc_issued: 3u8,
 			vcmp_some_error: 9u8,
 
+			evm_assertions_module: 76u8,
+			evm_assertions_store_assertion: 77u8,
+			evm_assertions_void_assertion: 78u8,
+
 			utility_module: 80u8,
 			utility_batch: 0u8,
 			utility_as_derivative: 1u8,
@@ -127,6 +139,8 @@ impl NodeMetadataMock {
 			transfer: 7u8,
 			transfer_keep_alive: 3u8,
 			transfer_allow_death: 0u8,
+			timestamp_module: 3,
+			timestamp_set: 0,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
 		}
@@ -134,11 +148,11 @@ impl NodeMetadataMock {
 }
 
 impl TeebagCallIndexes for NodeMetadataMock {
-	fn set_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.set_scheduled_enclave])
+	fn force_add_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_add_authorized_enclave])
 	}
-	fn remove_scheduled_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teebag_module, self.remove_scheduled_enclave])
+	fn force_remove_authorized_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teebag_module, self.force_remove_authorized_enclave])
 	}
 	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.register_enclave])
@@ -243,9 +257,17 @@ impl RuntimeCall for NodeMetadataMock {
 	}
 }
 
-impl SystemSs58Prefix for NodeMetadataMock {
+impl SystemConstants for NodeMetadataMock {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		Ok(131)
+	}
+
+	fn system_version(&self) -> Result<RuntimeVersion> {
+		Ok(RuntimeVersion {
+			spec_version: self.runtime_spec_version,
+			transaction_version: self.runtime_transaction_version,
+			..Default::default()
+		})
 	}
 }
 
@@ -270,5 +292,21 @@ impl BalancesCallIndexes for NodeMetadataMock {
 
 	fn transfer_allow_death_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.balances_module, self.transfer_allow_death])
+	}
+}
+
+impl TimestampCallIndexes for NodeMetadataMock {
+	fn timestamp_set_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.timestamp_module, self.timestamp_set])
+	}
+}
+
+impl EvmAssertionsCallIndexes for NodeMetadataMock {
+	fn store_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_store_assertion])
+	}
+
+	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
 	}
 }

@@ -28,7 +28,7 @@ use crate::{
 	tls_ra,
 };
 use codec::Decode;
-use ita_sgx_runtime::Parentchain;
+use ita_sgx_runtime::ParentchainLitentry;
 use ita_stf::{
 	helpers::set_block_number,
 	stf_sgx_tests,
@@ -42,7 +42,7 @@ use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
 };
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface,
+	parentchain_pallet::ParentchainPalletInstancesInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	StateCallInterface,
 };
@@ -53,7 +53,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Header};
+use itp_types::{parentchain::ParentchainId, AccountId, Header};
 use litentry_primitives::Identity;
 use sgx_tunittest::*;
 use sgx_types::size_t;
@@ -85,13 +85,18 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_sgx_crypto::tests::rsa3072_sealing_works,
 		itp_sgx_crypto::tests::using_get_rsa3072_repository_twice_initializes_key_only_once,
 		itp_sgx_crypto::tests::ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key,
+		itp_sgx_crypto::tests::ecdsa_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
 		itp_sgx_crypto::tests::ecdsa_seal_init_should_create_new_key_if_not_present,
-		itp_sgx_crypto::tests::ecdsa_seal_init_should_not_change_key_if_exists,
+		itp_sgx_crypto::tests::ecdsa_seal_init_should_seal_provided_key,
+		itp_sgx_crypto::tests::ecdsa_seal_init_should_not_change_key_if_exists_and_not_provided,
+		itp_sgx_crypto::tests::ecdsa_seal_init_with_key_should_change_current_key,
 		itp_sgx_crypto::tests::ecdsa_sign_should_produce_valid_signature,
 		itp_sgx_crypto::tests::schnorr_creating_repository_with_same_path_and_prefix_results_in_same_key,
+		itp_sgx_crypto::tests::schnorr_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
 		itp_sgx_crypto::tests::schnorr_seal_init_should_create_new_key_if_not_present,
-		itp_sgx_crypto::tests::schnorr_seal_init_should_not_change_key_if_exists,
-		itp_sgx_crypto::tests::schnorr_sign_should_produce_valid_signature,
+		itp_sgx_crypto::tests::schnorr_seal_init_should_seal_provided_key,
+		itp_sgx_crypto::tests::schnorr_seal_init_should_not_change_key_if_exists_and_not_provided,
+		itp_sgx_crypto::tests::schnorr_seal_init_with_key_should_change_key_current_key,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
 		test_differentiate_getter_and_call_works,
@@ -153,6 +158,9 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
 		itc_parentchain::light_client::io::sgx_tests::sealing_creates_backup,
 
+		// test musig ceremony
+		bc_musig2_ceremony::sgx_tests::test_full_flow_with_3_ceremonies,
+
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
 		// ipfs::test_verification_ok_for_correct_content,
@@ -182,7 +190,6 @@ fn test_submit_trusted_call_to_top_pool() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -212,7 +219,6 @@ fn test_submit_trusted_getter_to_top_pool() {
 		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -250,7 +256,6 @@ fn test_differentiate_getter_and_call_works() {
 		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 	submit_operation_to_top_pool(
@@ -258,7 +263,6 @@ fn test_differentiate_getter_and_call_works() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -293,7 +297,6 @@ fn test_executing_call_updates_account_nonce() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -323,11 +326,11 @@ fn test_call_set_update_parentchain_block() {
 		Default::default(),
 	);
 
-	TestStf::update_parentchain_block(&mut state, header.clone()).unwrap();
+	TestStf::update_parentchain_litentry_block(&mut state, header.clone()).unwrap();
 
-	assert_eq!(header.hash(), state.execute_with(Parentchain::block_hash));
-	assert_eq!(parent_hash, state.execute_with(Parentchain::parent_hash));
-	assert_eq!(block_number, state.execute_with(Parentchain::block_number));
+	assert_eq!(header.hash(), state.execute_with(ParentchainLitentry::block_hash));
+	assert_eq!(parent_hash, state.execute_with(ParentchainLitentry::parent_hash));
+	assert_eq!(block_number, state.execute_with(ParentchainLitentry::block_number));
 }
 
 fn test_signature_must_match_public_sender_in_call() {
@@ -351,7 +354,6 @@ fn test_signature_must_match_public_sender_in_call() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -382,7 +384,6 @@ fn test_invalid_nonce_call_is_not_executed() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -403,6 +404,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 		Identity::Substrate(sender_acc.clone().into()),
 		sender_acc,
 		1000,
+		ParentchainId::Litentry,
 	)
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 
@@ -411,7 +413,6 @@ fn test_non_root_shielding_call_is_not_executed() {
 		&direct_top(signed_call),
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 
@@ -433,6 +434,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 		Identity::Substrate(enclave_call_signer.public().into()),
 		sender_account,
 		1000,
+		ParentchainId::Litentry,
 	)
 	.sign(&enclave_call_signer.into(), 0, &mrenclave, &shard);
 	let trusted_operation =
@@ -443,7 +445,6 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
-		false,
 	)
 	.unwrap();
 

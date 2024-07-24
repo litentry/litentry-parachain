@@ -246,7 +246,7 @@ pub mod pallet {
 					function_name_bytes,
 				});
 			} else {
-				return Err(Error::<T>::ExtrinsicNotBlocked.into());
+				return Err(Error::<T>::ExtrinsicNotBlocked.into())
 			}
 			// do not pay the fee upon successful unblock
 			Ok(Pays::No.into())
@@ -273,7 +273,7 @@ pub mod pallet {
 				)) && !BlockedExtrinsics::<T>::contains_key((
 					pallet_name.as_bytes(),
 					Vec::<u8>::default(),
-				));
+				))
 			}
 
 			false

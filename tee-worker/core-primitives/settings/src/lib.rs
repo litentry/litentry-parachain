@@ -46,21 +46,21 @@ pub mod files {
 	pub const TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_b_lcdb";
 
 	// litentry
-	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
+	pub const ASSERTIONS_FILE: &str = "assertions_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";
 
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	pub static RA_SPID_FILE: &str = "spid_production.txt";
-	#[cfg(feature = "production")]
+	#[cfg(not(feature = "development"))]
 	pub static RA_API_KEY_FILE: &str = "key_production.txt";
 
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_SPID_FILE: &str = "spid.txt";
-	#[cfg(not(feature = "production"))]
+	#[cfg(feature = "development")]
 	pub static RA_API_KEY_FILE: &str = "key.txt";
 
 	pub const SPID_MIN_LENGTH: usize = 32;
@@ -72,19 +72,13 @@ pub mod worker {
 	// the maximum size of any extrinsic that the enclave will ever generate in B
 	pub const EXTRINSIC_MAX_SIZE: usize = 13_000;
 	// the maximum size of the header
-	// Litentry: change it to 300 after the evm pallet being fused
-	// see https://github.com/litentry/litentry-parachain/actions/runs/6168159073/job/16742757562
-	pub const HEADER_MAX_SIZE: usize = 300;
+	pub const HEADER_MAX_SIZE: usize = 512;
 	// maximum size of shielding key
 	pub const SHIELDING_KEY_SIZE: usize = 8192;
 	// maximum size of signing key
 	pub const SIGNING_KEY_SIZE: usize = 32;
 	// size of the MR enclave
 	pub const MR_ENCLAVE_SIZE: usize = 32;
-	// Factors to tune the initial amount of enclave funding:
-	// Should be set to a value that ensures that the enclave can register itself
-	// and the worker can run for a certain time. Only for development.
-	pub const EXISTENTIAL_DEPOSIT_FACTOR_FOR_INIT_FUNDS: u128 = 1_000;
 	// Should be set to a value that ensures that the enclave can register itself
 	// and that the worker can start.
 	pub const REGISTERING_FEE_FACTOR_FOR_INIT_FUNDS: u128 = 10;

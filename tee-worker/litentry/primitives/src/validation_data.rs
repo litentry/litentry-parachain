@@ -26,16 +26,23 @@ pub type ValidationString = BoundedVec<u8, ConstU32<64>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TwitterValidationData {
-	pub tweet_id: ValidationString,
+pub enum TwitterValidationData {
+	PublicTweet { tweet_id: ValidationString },
+	OAuth2 { code: ValidationString, state: ValidationString, redirect_uri: ValidationString },
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct DiscordValidationData {
-	pub channel_id: ValidationString,
-	pub message_id: ValidationString,
-	pub guild_id: ValidationString,
+pub enum DiscordValidationData {
+	PublicMessage {
+		channel_id: ValidationString,
+		message_id: ValidationString,
+		guild_id: ValidationString,
+	},
+	OAuth2 {
+		code: ValidationString,
+		redirect_uri: ValidationString,
+	},
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
@@ -65,6 +72,8 @@ pub enum Web3ValidationData {
 	Evm(Web3CommonValidationData),
 	#[codec(index = 2)]
 	Bitcoin(Web3CommonValidationData),
+	#[codec(index = 3)]
+	Solana(Web3CommonValidationData),
 }
 
 impl Web3ValidationData {
@@ -73,6 +82,7 @@ impl Web3ValidationData {
 			Self::Substrate(data) => &data.message,
 			Self::Evm(data) => &data.message,
 			Self::Bitcoin(data) => &data.message,
+			Self::Solana(data) => &data.message,
 		}
 	}
 
@@ -81,6 +91,7 @@ impl Web3ValidationData {
 			Self::Substrate(data) => &data.signature,
 			Self::Evm(data) => &data.signature,
 			Self::Bitcoin(data) => &data.signature,
+			Self::Solana(data) => &data.signature,
 		}
 	}
 }

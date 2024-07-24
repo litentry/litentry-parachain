@@ -27,7 +27,6 @@ extern crate sgx_tstd as std;
 pub mod sgx_reexport_prelude {
 	pub use rustls_sgx as rustls;
 	pub use tungstenite_sgx as tungstenite;
-	pub use url_sgx as url;
 	pub use webpki_sgx as webpki;
 }
 
@@ -40,7 +39,7 @@ use alloc::format;
 
 use core::str::FromStr;
 
-use log::debug;
+use log::{debug, error};
 
 use serde_json::from_str;
 
@@ -54,7 +53,7 @@ use std::{
 	net::TcpStream,
 	string::String,
 	sync::{
-		mpsc::{channel, Sender, SyncSender},
+		mpsc::{channel, Sender},
 		Arc,
 	},
 	time::Duration,
@@ -103,7 +102,7 @@ pub trait RpcClientFactory {
 	fn create(
 		&self,
 		url: &str,
-		response_sink: SyncSender<Response>,
+		response_sink: Sender<Response>,
 	) -> Result<Self::Client, Box<dyn Error>>;
 }
 
@@ -115,7 +114,7 @@ impl RpcClientFactory for DirectRpcClientFactory {
 	fn create(
 		&self,
 		url: &str,
-		response_sink: SyncSender<Response>,
+		response_sink: Sender<Response>,
 	) -> Result<Self::Client, Box<dyn Error>> {
 		DirectRpcClient::new(url, response_sink)
 	}
@@ -130,20 +129,19 @@ pub struct DirectRpcClient {
 }
 
 impl DirectRpcClient {
-	pub fn new(url: &str, response_sink: SyncSender<Response>) -> Result<Self, Box<dyn Error>> {
-		let ws_server_url =
+	pub fn new(url: &str, response_sink: Sender<Response>) -> Result<Self, Box<dyn Error>> {
+		let server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
 		// we need to set this cert verifier or client will fail to connect with following error
 		// HandshakeError::Failure(Io(Custom { kind: InvalidData, error: WebPKIError(UnknownIssuer) }))
 		config.dangerous().set_certificate_verifier(Arc::new(IgnoreCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let addrs = ws_server_url.socket_addrs(|| None).unwrap();
-		let stream = TcpStream::connect(&*addrs)
-			.map_err(|e| format!("Could not connect to {:?}, reason: {:?}", &addrs, e))?;
+		let stream = TcpStream::connect(server_url.authority())
+			.map_err(|e| format!("Could not connect to {:?}, reason: {:?}", url, e))?;
 
 		let (mut socket, _response) =
-			client_tls_with_config(ws_server_url, stream, None, Some(connector))
+			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
 		let (request_sender, request_receiver) = channel();
@@ -151,24 +149,26 @@ impl DirectRpcClient {
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
 
-		std::thread::spawn(move || loop {
-			// let's flush all pending requests first
-			while let Ok(request) = request_receiver.try_recv() {
-				socket.write_message(Message::Text(request)).unwrap()
-			}
-
-			if let Ok(message) = socket.read_message() {
-				if let Ok(Some(response)) = Self::handle_ws_message(message) {
-					if let Err(e) = response_sink.send(response) {
-						log::error!("Could not forward response, reason: {:?}", e)
-					};
+		std::thread::spawn(move || {
+			loop {
+				// let's flush all pending requests first
+				while let Ok(request) = request_receiver.try_recv() {
+					if let Err(e) = socket.write_message(Message::Text(request)) {
+						error!("Could not write message to socket, reason: {:?}", e)
+					}
 				}
+
+				if let Ok(message) = socket.read_message() {
+					if let Ok(Some(response)) = Self::handle_ws_message(message) {
+						if let Err(e) = response_sink.send(response) {
+							log::error!("Could not forward response, reason: {:?}", e)
+						};
+					}
+				}
+				std::thread::sleep(Duration::from_millis(1))
 			}
-			std::thread::sleep(Duration::from_millis(10))
 		});
-
 		debug!("Connected to peer: {}", url);
-
 		Ok(Self { request_sink: request_sender })
 	}
 

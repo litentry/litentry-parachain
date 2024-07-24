@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
+#![recursion_limit = "256"]
+
 use std::thread;
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
@@ -22,17 +25,20 @@ use tokio::{
 use warp::Filter;
 
 pub mod achainable;
+pub mod blockchain_info;
+pub mod daren_market;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod geniidata;
 pub mod karat_dao;
 pub mod litentry_archive;
+pub mod magic_craft;
 pub mod moralis;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
 pub mod oneblock;
 pub mod twitter_official;
 pub mod vip3;
-
 // It should only works on UNIX.
 async fn shutdown_signal() {
 	let mut hangup_stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
@@ -61,18 +67,29 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
+					.or(twitter_official::request_user_access_token())
 					.or(discord_official::query_message())
+					.or(discord_official::get_user_info())
+					.or(discord_official::request_user_access_token())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
 					.or(discord_litentry::has_role())
 					.or(nodereal_jsonrpc::query())
 					.or(karat_dao::query())
-					.or(moralis::query())
+					.or(magic_craft::query())
+					.or(daren_market::query())
+					.or(moralis::query_nft())
+					.or(moralis::query_erc20())
+					.or(moralis::query_solana())
+					.or(blockchain_info::query_rawaddr())
+					.or(blockchain_info::query_multiaddr())
 					.or(achainable::query())
+					.or(achainable::query_labels())
 					.or(litentry_archive::query_user_joined_evm_campaign())
 					.or(vip3::query_user_sbt_level())
-					.or(oneblock::query())
 					.or(nodereal::query())
+					.or(geniidata::query())
+					.or(oneblock::query())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());

@@ -10,8 +10,10 @@ use itp_test::mock::{
 	shielding_crypto_mock::ShieldingCryptoMock,
 };
 use itp_top_pool_author::mocks::AuthorApiMock;
-use lc_stf_task_sender::stf_task_sender::{SendStfRequest, StfRequestSender};
+use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use lc_stf_task_sender::{SendStfRequest, StfRequestSender};
 use litentry_primitives::Assertion;
+use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 
 #[test]
 fn test_threadpool_behaviour() {
@@ -19,16 +21,20 @@ fn test_threadpool_behaviour() {
 	let shielding_key_repository_mock = KeyRepositoryMock::new(shielding_key.clone());
 	let author_mock = AuthorApiMock::default();
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
+	let enclave_account = Ed25519Pair::from_string("//Alice", None).unwrap();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
 	let data_provider_conifg = DataProviderConfig::new().unwrap();
+	let assertion_repository = EvmAssertionRepository::new(Default::default()).unwrap();
 	let context = StfTaskContext::new(
 		Arc::new(shielding_key_repository_mock),
 		author_mock.into(),
 		stf_enclave_signer_mock.into(),
+		enclave_account.into(),
 		handle_state_mock.into(),
 		onchain_mock.into(),
 		data_provider_conifg.into(),
+		assertion_repository.into(),
 	);
 	let _handle = std::thread::spawn(move || {
 		run_stf_task_receiver(Arc::new(context)).unwrap();

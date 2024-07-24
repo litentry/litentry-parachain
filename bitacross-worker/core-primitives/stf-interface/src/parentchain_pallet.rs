@@ -15,13 +15,33 @@
 
 */
 
+use itp_types::parentchain::ParentchainId;
+
 /// Interface trait of the parentchain pallet.
-pub trait ParentchainPalletInterface<State, ParentchainHeader> {
+pub trait ParentchainPalletInstancesInterface<State, ParentchainHeader> {
 	type Error;
 
 	/// Updates the block number, block hash and parent hash of the parentchain block.
-	fn update_parentchain_block(
+	fn update_parentchain_litentry_block(
 		state: &mut State,
 		header: ParentchainHeader,
+	) -> Result<(), Self::Error>;
+
+	/// Updates the block number, block hash and parent hash of the parentchain block.
+	fn update_parentchain_target_a_block(
+		state: &mut State,
+		header: ParentchainHeader,
+	) -> Result<(), Self::Error>;
+
+	/// Updates the block number, block hash and parent hash of the parentchain block.
+	fn update_parentchain_target_b_block(
+		state: &mut State,
+		header: ParentchainHeader,
+	) -> Result<(), Self::Error>;
+
+	fn set_creation_block(
+		state: &mut State,
+		header: ParentchainHeader,
+		parentchain_id: ParentchainId,
 	) -> Result<(), Self::Error>;
 }

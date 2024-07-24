@@ -21,6 +21,32 @@ use lc_data_providers::nodereal_jsonrpc::{
 	GetNFTInventoryResultDetail, RpcResponse,
 };
 use warp::{http::Response, hyper::body::Bytes, Filter};
+const RES_BODY_OK_GET_TOKEN_HOLDINGS: &str = r#"
+{
+	"id": "1",
+	"jsonrpc": "2.0",
+	"result": {
+		"totalCount": "0x34",
+		"nativeTokenBalance": "0x0",
+		"details": [
+			{
+				"tokenAddress": "0xfcb5DF42e06A39E233dc707bb3a80311eFD11576",
+				"tokenBalance": "0x0000000000000000000000000000000000000000f",
+				"tokenName": "www.METH.co.in",
+				"tokenSymbol": "METH"
+			}
+		]
+	}
+}
+"#;
+
+const RES_BODY_OK_GET_TRANSACTION_COUNT: &str = r#"
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": "0x1"
+}
+"#;
 
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::post()
@@ -29,6 +55,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 		.map(|_, body: Bytes| {
 			let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 			let method = json.get("method").unwrap().as_str().unwrap();
+
 			let params: Vec<String> = json
 				.get("params")
 				.unwrap()
@@ -83,7 +110,18 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						"0x75438d34c9125839c8b08d21b7f3167281659e7c" => "0x15af1d78b58c400000",
 						// 2199 * 10^18
 						"0xba359c153ad11aa17c3122b05a4db8b46bb3191b" => "0x7735416132dbfc0000",
-						// 800
+						// 0
+						"0x75438d34c9125839c8b08d21b7f3167281659e0c" => "0x0",
+						// 0.01 * 10^18
+						"0x75438d34c9125839c8b08d21b7f3167281659e1c" => "0x2386f26fc10000",
+						// 20 * 10^18
+						"0x75438d34c9125839c8b08d21b7f3167281659e2c" => "0x1158e460913d00000",
+						// 5000 * 10^18
+						"0x75438d34c9125839c8b08d21b7f3167281659e3c" => "0x10f0cf064dd59200000",
+						// 120_000 * 10^18
+						"0x75438d34c9125839c8b08d21b7f3167281659e4c" => "0x1969368974c05b000000",
+						// 1_500 * 10 ^ 18
+						"0x75438d34c9125839c8b08d21b7f3167281659e5c" => "0x5150ae84a8cdf00000",
 						_ => "0x320",
 					};
 					let body = RpcResponse {
@@ -118,6 +156,10 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
+				"nr_getTokenHoldings" =>
+					Response::builder().body(RES_BODY_OK_GET_TOKEN_HOLDINGS.to_string()),
+				"eth_getTransactionCount" =>
+					Response::builder().body(RES_BODY_OK_GET_TRANSACTION_COUNT.to_string()),
 				_ => Response::builder().status(404).body(String::from("Error query")),
 			}
 		})

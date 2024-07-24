@@ -52,9 +52,7 @@ where
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
 				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
-			{
-				Ok(who)
-			},
+				Ok(who),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
@@ -161,6 +159,7 @@ impl pallet_teebag::Config for Test {
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<3>;
+	type MaxAuthorizedEnclave = ConstU32<3>;
 }
 
 impl pallet_group::Config for Test {

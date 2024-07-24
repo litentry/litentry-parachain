@@ -24,6 +24,7 @@ use crate::*;
 use codec::Decode;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use lc_credentials::IssuerRuntimeVersion;
 use litentry_primitives::Address32;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
@@ -54,7 +55,12 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		))
 	}
 
-	match Credential::new(&Address32::from(who.clone()).into(), &req.shard) {
+	let runtime_version = IssuerRuntimeVersion {
+		parachain: req.parachain_runtime_version,
+		sidechain: req.sidechain_runtime_version,
+	};
+
+	match Credential::new(&Address32::from(who.clone()).into(), &req.shard, &runtime_version) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(VC_A13_SUBJECT_DESCRIPTION, VC_A13_SUBJECT_TYPE);

@@ -26,12 +26,10 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
-	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
 	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
 }
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -47,6 +45,7 @@ pub mod a6;
 pub mod a8;
 pub mod achainable;
 pub mod brc20;
+pub mod dynamic;
 pub mod generic_discord_role;
 pub mod holding_time;
 pub mod lit_staking;
@@ -64,9 +63,9 @@ use litentry_primitives::{
 	p2pkh_address, p2sh_address, p2tr_address, p2wpkh_address, AchainableAmount,
 	AchainableAmountHolding, AchainableAmountToken, AchainableAmounts, AchainableBasic,
 	AchainableBetweenPercents, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString, Identity,
-	IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString, VCMPError as Error,
-	Web3Network,
+	AchainableParams, AchainableToken, Assertion, DynamicParams, ErrorDetail, ErrorString,
+	Identity, IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString,
+	VCMPError as Error, Web3Network,
 };
 use log::*;
 use rust_base58::ToBase58;
@@ -110,6 +109,11 @@ pub fn transpose_identity(
 				Identity::Bitcoin(address) => {
 					let address = account_id_to_string_without_prefix(address.as_ref());
 					let address = pubkey_to_address(&n, &address);
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
+				Identity::Solana(address) => {
+					let address = address.as_ref().to_base58();
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},
@@ -181,7 +185,9 @@ fn pubkey_to_address(network: &Web3Network, pubkey: &str) -> String {
 		| Web3Network::Ethereum
 		| Web3Network::Bsc
 		| Web3Network::Polygon
-		| Web3Network::Arbitrum => "".to_string(),
+		| Web3Network::Arbitrum
+		| Web3Network::Combo
+		| Web3Network::Solana => "".to_string(),
 	}
 }
 
@@ -190,6 +196,7 @@ mod tests {
 	use super::*;
 	use itp_utils::ToHexPrefixed;
 	use litentry_primitives::IdentityString;
+	use rust_base58::FromBase58;
 
 	#[test]
 	fn transpose_identity_works() {
@@ -206,21 +213,31 @@ mod tests {
 		]
 		.into();
 		let id4 = [4_u8; 20].into();
+		let id5 = Identity::Solana(
+			"EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6"
+				.from_base58()
+				.unwrap()
+				.as_slice()
+				.try_into()
+				.unwrap(),
+		);
 
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
 		let network3 = vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Kusama];
 		let network4 = vec![Web3Network::Bsc];
+		let network5 = vec![Web3Network::Solana];
 
 		identities.push((id1, network1));
 		identities.push((id2, network2));
 		identities.push((id3, network3));
 		identities.push((id4, network4));
+		identities.push((id5, network5));
 
 		let mut result = transpose_identity(&identities);
 		result.sort();
 		debug!(">> {result:?}");
-		assert_eq!(result.len(), 5);
+		assert_eq!(result.len(), 6);
 		assert_eq!(
 			result.get(0).unwrap(),
 			&(
@@ -250,6 +267,10 @@ mod tests {
 			)
 		);
 		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
+		assert_eq!(
+			result.get(5).unwrap(),
+			&(Web3Network::Solana, vec!["EJpLyTeE8XHG9CeREeHd6pr6hNhaRnTRJx4Z5DPhEJJ6".into()])
+		);
 	}
 
 	#[test]
