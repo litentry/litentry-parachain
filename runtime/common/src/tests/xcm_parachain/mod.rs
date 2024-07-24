@@ -883,7 +883,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
-						(R::UnitWeightCost::get().ref_time() * 4).into() * WEIGHT_TO_FEE_FACTOR,
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) * WEIGHT_TO_FEE_FACTOR,
 					),
 				},
 				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
