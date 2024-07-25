@@ -134,6 +134,80 @@ where
 	}
 }
 
+impl<T, I: 'static> ReplaceTreasuryStorage<T, I>
+where
+	T: pallet_treasury::Config<I>,
+	BalanceOf<T, I>: EncodeLike<BalanceOf<T, I>> + From<u128>,
+{
+	fn pre_upgrade_proposals_storage() -> Result<Vec<u8>, &'static str> {
+		let pallet_prefix: &[u8] = b"Treasury";
+		let storage_item_prefix: &[u8] = b"Proposals";
+		let stored_data: Vec<_> = storage_key_iter::<
+			ProposalIndex,
+			Proposal<T::AccountId, BalanceOf<T, I>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		let result: Vec<_> = stored_data
+			.into_iter()
+			.map(|(proposal_index, proposal)| {
+				let mut new_proposal = proposal;
+				new_proposal.value = new_proposal.value.saturating_mul(DECIMAL_CONVERTOR.into());
+				new_proposal.bond = new_proposal.bond.saturating_mul(DECIMAL_CONVERTOR.into());
+
+				(proposal_index, new_proposal)
+			})
+			.collect();
+
+		log::info!(
+			target: "ReplacePreImageStorage",
+			"Finished performing pre upgrade checks"
+		);
+
+		Ok(result.encode())
+	}
+
+	fn post_upgrade_proposals_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_result =
+			Vec::<(ProposalIndex, Proposal<T::AccountId, BalanceOf<T, I>>)>::decode(
+				&mut &state[..],
+			)
+			.map_err(|_| "Failed to decode Bounties")?;
+
+		let pallet_prefix: &[u8] = b"Treasury";
+		let storage_item_prefix: &[u8] = b"Proposals";
+		let actual_result: Vec<_> = storage_key_iter::<
+			ProposalIndex,
+			Proposal<T::AccountId, BalanceOf<T, I>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		for x in 0..actual_result.len() {
+			assert_eq!(actual_result[x], expected_result[x])
+		}
+
+		log::info!(
+			target: "ReplacePreImageStorage",
+			"Finished performing post upgrade checks"
+		);
+		Ok(())
+	}
+
+	fn pre_upgrade_deactivated_storage() -> Result<Vec<u8>, &'static str> {
+		Ok(<Deactivated<T, I>>::get().saturating_mul(DECIMAL_CONVERTOR.into()).encode())
+	}
+
+	fn post_upgrade_deactivated_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_state = BalanceOf::<T, I>::decode(&mut &state[..])
+			.map_err(|_| "Failed to decode Total Balance")?;
+		let actual_state = <Deactivated<T, I>>::get();
+		assert_eq!(expected_state, actual_state);
+		Ok(())
+	}
+}
+
 impl<T, I: 'static> OnRuntimeUpgrade for ReplaceTreasuryStorage<T, I>
 where
 	T: pallet_treasury::Config<I>,
@@ -141,16 +215,25 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		Ok(Vec::new())
+		let proposals_state_vec = Self::pre_upgrade_proposals_storage()?;
+		let deactivated_state_vec = Self::pre_upgrade_deactivated_storage()?;
+		Ok((proposals_state_vec, deactivated_state_vec).encode())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let weight = T::DbWeight::get();
-		T::DbWeight::get().reads_writes(1, 1)
+		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
+		weight += Self::replace_proposals_storage();
+		weight += Self::replace_deactivated_storage();
+
+		weight
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		let pre_vec: (Vec<u8>, Vec<u8>) =
+			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
+		Self::post_upgrade_proposals_storage(pre_vec.0)?;
+		Self::post_upgrade_deactivated_storage(pre_vec.1)?;
 		log::info!(target: "ReplaceTreasuryStorage", "Finished performing storage migrations");
 		Ok(())
 	}

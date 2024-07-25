@@ -23,11 +23,14 @@ use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 
 use crate::migration::clear_storage_prefix;
-use frame_support::{migration::storage_key_iter, Twox64Concat};
+use frame_support::{
+	migration::{put_storage_value, storage_key_iter},
+	Twox64Concat,
+};
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use pallet_treasury::BalanceOf;
-use parity_scale_codec::EncodeLike;
+use parity_scale_codec::{Decode, Encode, EncodeLike};
 use sp_runtime::Saturating;
 use sp_std::collections::btree_map::BTreeMap;
 
@@ -41,7 +44,49 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		Ok(Vec::new())
+		let pallet_prefix: &[u8] = b"Preimage";
+		let storage_item_prefix: &[u8] = b"StatusFor";
+		let stored_data: Vec<_> = storage_key_iter::<
+			T::Hash,
+			RequestStatus<T::AccountId, BalanceOf<T>>,
+			Identity,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		let result: Vec<_> = stored_data
+			.into_iter()
+			.map(|(hash, status)| {
+				let mut new_status = match status {
+					RequestStatus::Requested { deposit, count, len } => {
+						if let Some((account, balance)) = deposit {
+							RequestStatus::Requested {
+								deposit: Some((
+									account,
+									balance.saturating_mul(DECIMAL_CONVERTOR.into()),
+								)),
+								count,
+								len,
+							}
+						} else {
+							RequestStatus::Requested { deposit, count, len }
+						}
+					},
+					RequestStatus::Unrequested { deposit, len } => RequestStatus::Unrequested {
+						deposit: (deposit.0, deposit.1.saturating_mul(DECIMAL_CONVERTOR.into())),
+						len,
+					},
+				};
+
+				(hash, new_status)
+			})
+			.collect();
+
+		log::info!(
+			target: "ReplacePreImageStorage",
+			"Finished performing pre upgrade checks"
+		);
+
+		Ok(result.encode())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -77,7 +122,7 @@ where
 		.next()
 		.is_none());
 
-		for (id, status) in stored_data {
+		for (hash, status) in stored_data {
 			let mut new_status = match status {
 				RequestStatus::Requested { deposit, count, len } => {
 					if let Some((account, balance)) = deposit {
@@ -98,7 +143,15 @@ where
 					len,
 				},
 			};
-			// <StatusFor<T>>::insert(id, status);
+
+			// The storage item is using Identity so we don't need to do addtitional hashing and can
+			// directly put into storage
+			put_storage_value::<RequestStatus<T::AccountId, BalanceOf<T>>>(
+				pallet_prefix,
+				storage_item_prefix,
+				hash.as_ref(),
+				new_status,
+			);
 		}
 
 		let weight = T::DbWeight::get();
@@ -107,6 +160,28 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_result =
+			Vec::<(T::Hash, RequestStatus<T::AccountId, BalanceOf<T>>)>::decode(&mut &state[..])
+				.map_err(|_| "Failed to decode Bounties")?;
+
+		let pallet_prefix: &[u8] = b"Preimage";
+		let storage_item_prefix: &[u8] = b"StatusFor";
+		let actual_result: Vec<_> = storage_key_iter::<
+			T::Hash,
+			RequestStatus<T::AccountId, BalanceOf<T>>,
+			Identity,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		for x in 0..actual_result.len() {
+			assert_eq!(actual_result[x], expected_result[x])
+		}
+
+		log::info!(
+			target: "ReplacePreImageStorage",
+			"Finished performing post upgrade checks"
+		);
+
 		Ok(())
 	}
 }

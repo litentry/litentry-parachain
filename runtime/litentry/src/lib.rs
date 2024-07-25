@@ -133,7 +133,11 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	migration::pallet_bounty::ReplacePalletBountyStorage<Runtime>,
+	(
+		migration::pallet_bounty::ReplacePalletBountyStorage<Runtime>,
+		migration::pallet_treasury::ReplaceTreasuryStorage<Runtime>,
+		migration::pallet_preimage::ReplacePreImageStorage<Runtime>,
+	),
 >;
 
 impl_opaque_keys! {
