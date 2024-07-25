@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #[allow(unused)]
-use crate::{mock::*, Error, OidcClients, ShardIdentifier};
+use crate::{mock::*, Error, OIDCClients, ShardIdentifier};
 use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
@@ -203,9 +203,9 @@ fn register_oidc_client_works() {
 			redirect_uris
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::OidcClientRegistered { client_id: alice.clone() },
+			crate::Event::OIDCClientRegistered { client_id: alice.clone() },
 		));
-		assert!(OidcClients::<Test>::contains_key(&alice));
+		assert!(OIDCClients::<Test>::contains_key(&alice));
 	});
 }
 
@@ -234,7 +234,7 @@ fn register_oidc_client_already_registered_check_works() {
 				RuntimeOrigin::signed(alice.clone()),
 				redirect_uris
 			),
-			Error::<Test>::OidcClientAlreadyRegistered
+			Error::<Test>::OIDCClientAlreadyRegistered
 		);
 	});
 }
@@ -277,14 +277,14 @@ fn unregister_oidc_client_works() {
 			RuntimeOrigin::signed(alice.clone()),
 			redirect_uris
 		));
-		assert!(OidcClients::<Test>::contains_key(&alice));
+		assert!(OIDCClients::<Test>::contains_key(&alice));
 		assert_ok!(IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(
 			alice.clone()
 		)));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::OidcClientUnregistered { client_id: alice.clone() },
+			crate::Event::OIDCClientUnregistered { client_id: alice.clone() },
 		));
-		assert_eq!(OidcClients::<Test>::contains_key(&alice), false);
+		assert_eq!(OIDCClients::<Test>::contains_key(&alice), false);
 	});
 }
 
@@ -294,7 +294,7 @@ fn unregister_oidc_client_does_not_exists_works() {
 		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		assert_noop!(
 			IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(bob)),
-			Error::<Test>::OidcClientNotExist
+			Error::<Test>::OIDCClientDoesNotExist
 		);
 	});
 }
@@ -311,7 +311,7 @@ fn unregister_oidc_client_unauthorized_sender() {
 		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
 		assert_noop!(
 			IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(bob)),
-			Error::<Test>::OidcClientNotExist
+			Error::<Test>::OIDCClientDoesNotExist
 		);
 	});
 }

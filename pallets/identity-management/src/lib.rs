@@ -62,9 +62,9 @@ pub mod pallet {
 	#[derive(
 		Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen,
 	)]
-	#[scale_info(skip_type_params(MaxOidcClientUris, MaxRedirectUriLen))]
-	pub struct OidcClient<MaxOidcClientUris: Get<u32>, MaxRedirectUriLen: Get<u32>> {
-		redirect_uris: BoundedVec<BoundedVec<u8, MaxRedirectUriLen>, MaxOidcClientUris>,
+	#[scale_info(skip_type_params(MaxOIDCClientUris, MaxRedirectUriLen))]
+	pub struct OIDCClient<MaxOIDCClientUris: Get<u32>, MaxRedirectUriLen: Get<u32>> {
+		redirect_uris: BoundedVec<BoundedVec<u8, MaxRedirectUriLen>, MaxOIDCClientUris>,
 	}
 
 	#[pallet::pallet]
@@ -82,15 +82,15 @@ pub mod pallet {
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 		// maximum number of OIDC client URIs
 		#[pallet::constant]
-		type MaxOidcClientRedirectUris: Get<u32>;
+		type MaxOIDCClientRedirectUris: Get<u32>;
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn integrity_test() {
 			assert!(
-				<T as Config>::MaxOidcClientRedirectUris::get() > 0,
-				"MaxOidcClientUris must be greater than zero."
+				<T as Config>::MaxOIDCClientRedirectUris::get() > 0,
+				"MaxOIDCClientUris must be greater than zero."
 			);
 		}
 	}
@@ -172,10 +172,10 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		OidcClientRegistered {
+		OIDCClientRegistered {
 			client_id: T::AccountId,
 		},
-		OidcClientUnregistered {
+		OIDCClientUnregistered {
 			client_id: T::AccountId,
 		},
 	}
@@ -187,11 +187,11 @@ pub mod pallet {
 
 	// OIDC clients who can use the OIDC flow
 	#[pallet::storage]
-	pub type OidcClients<T: Config> = StorageMap<
+	pub type OIDCClients<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		OidcClient<T::MaxOidcClientRedirectUris, ConstU32<MAX_REDIRECT_URL_LEN>>,
+		OIDCClient<T::MaxOIDCClientRedirectUris, ConstU32<MAX_REDIRECT_URL_LEN>>,
 		OptionQuery,
 	>;
 
@@ -208,9 +208,9 @@ pub mod pallet {
 		/// redirect_uri exceeds the maximum length
 		RedirectUriTooLong,
 		/// OIDC client already exists
-		OidcClientAlreadyRegistered,
+		OIDCClientAlreadyRegistered,
 		/// OIDC client does not exists
-		OidcClientNotExist,
+		OIDCClientDoesNotExist,
 	}
 
 	#[pallet::call]
@@ -323,8 +323,8 @@ pub mod pallet {
 			let client_id = ensure_signed(origin)?;
 			ensure!(redirect_uris.len() > 0, Error::<T>::EmptyRedirectUris);
 			ensure!(
-				!OidcClients::<T>::contains_key(&client_id),
-				Error::<T>::OidcClientAlreadyRegistered
+				!OIDCClients::<T>::contains_key(&client_id),
+				Error::<T>::OIDCClientAlreadyRegistered
 			);
 
 			let client_redirect_uris = redirect_uris
@@ -334,15 +334,15 @@ pub mod pallet {
 				})
 				.collect::<Result<Vec<_>, _>>()?;
 
-			OidcClients::<T>::insert(
+			OIDCClients::<T>::insert(
 				&client_id,
-				OidcClient {
+				OIDCClient {
 					redirect_uris: BoundedVec::try_from(client_redirect_uris)
 						.map_err(|_| Error::<T>::TooManyRedirectUris)?,
 				},
 			);
 
-			Self::deposit_event(Event::OidcClientRegistered { client_id });
+			Self::deposit_event(Event::OIDCClientRegistered { client_id });
 
 			Ok(())
 		}
@@ -351,9 +351,9 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn unregister_oidc_client(origin: OriginFor<T>) -> DispatchResult {
 			let client_id = ensure_signed(origin)?;
-			ensure!(OidcClients::<T>::contains_key(&client_id), Error::<T>::OidcClientNotExist);
-			OidcClients::<T>::remove(&client_id);
-			Self::deposit_event(Event::OidcClientUnregistered { client_id });
+			ensure!(OIDCClients::<T>::contains_key(&client_id), Error::<T>::OIDCClientDoesNotExist);
+			OIDCClients::<T>::remove(&client_id);
+			Self::deposit_event(Event::OIDCClientUnregistered { client_id });
 
 			Ok(())
 		}
