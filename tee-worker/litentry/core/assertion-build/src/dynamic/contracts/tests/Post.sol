@@ -21,10 +21,10 @@ pragma solidity ^0.8.8;
 import "../libraries/Http.sol";
 
 contract Post {
-    function callPost(string memory url, string memory payload)
-        public
-        returns (bool, string memory)
-    {
+    function callPost(
+        string memory url,
+        string memory payload
+    ) public returns (bool, string memory) {
         HttpHeader[] memory headers = new HttpHeader[](0);
         return Http.Post(url, payload, headers);
     }

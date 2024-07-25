@@ -23,17 +23,17 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Long {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](9);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 20 * Constants.decimals_factor;
-		ranges[3] = 50 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
-		ranges[6] = 1000 * Constants.decimals_factor;
-		ranges[7] = 2000 * Constants.decimals_factor;
-		ranges[8] = 3000 * Constants.decimals_factor;
-		return ranges;
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](9);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 20 * Constants.decimals_factor;
+        ranges[3] = 50 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
+        ranges[6] = 1000 * Constants.decimals_factor;
+        ranges[7] = 2000 * Constants.decimals_factor;
+        ranges[8] = 3000 * Constants.decimals_factor;
+        return ranges;
+    }
 }
