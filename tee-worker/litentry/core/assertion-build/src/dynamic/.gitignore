@@ -18,3 +18,7 @@ ignition/deployments/chain-31337
 
 .deps
 !*.sol
+
+# Remix
+compiler_config.json
+remix-compiler.config.js
