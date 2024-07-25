@@ -639,12 +639,11 @@ jobs:
 
       - run: docker images --all
 
-# temporary disable
-#      - name: Test enclave
-#        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-#        # cargo test is not supported in the enclave
-#        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-#        run: docker run litentry/bitacross-worker:latest test --all
+      - name: Test enclave
+        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/bitacross-worker:latest test --all
 
       - name: Save docker images
         run: docker save litentry/bitacross-worker:latest litentry/bitacross-cli:latest | gzip > litentry-bitacross.tar.gz
