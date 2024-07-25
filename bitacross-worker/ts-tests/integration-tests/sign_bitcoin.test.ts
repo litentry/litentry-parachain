@@ -18,27 +18,29 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-describe('test-bitcoin', () => {
+describe('test-bitcoin', async () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
     dotenv.config({ path: `.env.${process.env.NODE_ENV || 'local'}` });
 
     const workerUrls = getWorkerUrls(process.env.NODE_ENV as string);
     console.log('Using worker urls: ' + workerUrls);
-    sleep(60 * 1000);
-    console.log('Run');
+    console.log('Start: ' + Date.now());
+    // it needs to wait for workers to be ready, todo: use is_initialized
+    await sleep(60 * 1000);
+    console.log('Run: ' + Date.now());
 
     it('should pass on all workers', async () => {
         const worker1 = new WebSocket(workerUrls[0], {
             perMessageDeflate: false,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         });
         const worker2 = new WebSocket(workerUrls[1], {
             perMessageDeflate: false,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         });
         const worker3 = new WebSocket(workerUrls[2], {
             perMessageDeflate: false,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         });
 
         let worker1Resolve: any;
