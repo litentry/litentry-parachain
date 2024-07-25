@@ -67,6 +67,7 @@ pub enum CeremonyError {
 	CeremonyInitError(CeremonyErrorReason),
 	NonceReceivingError(CeremonyErrorReason),
 	PartialSignatureReceivingError(CeremonyErrorReason),
+	Timeout,
 }
 
 #[derive(Debug, Eq, PartialEq, Encode)]

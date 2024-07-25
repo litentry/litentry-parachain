@@ -51,7 +51,7 @@ use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyError, CeremonyErrorReason,
 	CeremonyEvent, CeremonyId, CeremonyRegistry, MuSig2Ceremony, SignBitcoinPayload,
 };
-use bc_musig2_event::process_event;
+use bc_musig2_event::{process_event, DirectRequestStatus, Hash};
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use bc_task_sender::{
@@ -218,14 +218,34 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	// timeout tick
 	let ceremony_registry = context.ceremony_registry.clone();
 	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
+	let responder = context.responder.clone();
 	let time_to_live = 30u64;
 	std::thread::spawn(move || loop {
 		std::thread::sleep(Duration::from_secs(3));
 		let now = get_current_timestamp();
 		{
 			let mut ceremony_registry_write = ceremony_registry.write().unwrap();
-			ceremony_registry_write
-				.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
+			ceremony_registry_write.retain(|_, (ceremony, create_time)| {
+				let if_retain = now - *create_time < time_to_live;
+				if !if_retain {
+					let ceremony_rwlock = ceremony.clone();
+					let ceremony = ceremony_rwlock.read().unwrap();
+					let hash = blake2_256(&ceremony.get_id_ref().encode());
+					let encrypted_result = aes_encrypt_default(
+						ceremony.get_aes_key(),
+						&CeremonyError::Timeout.encode(),
+					)
+					.encode();
+					if let Err(e) = responder.send_state_with_status(
+						Hash::from_slice(&hash),
+						encrypted_result,
+						DirectRequestStatus::Error,
+					) {
+						error!("Could not send response to {:?}, reason: {:?}", &hash, e);
+					}
+				}
+				if_retain
+			});
 		}
 		{
 			let mut command_tmp_write = ceremony_command_tmp.write().unwrap();
