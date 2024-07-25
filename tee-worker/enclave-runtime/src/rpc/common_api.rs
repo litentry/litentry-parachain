@@ -26,6 +26,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use its_rpc_handler::direct_top_pool_api::add_top_pool_direct_rpc_methods;
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_data_providers::DataProviderConfig;
 use lc_identity_verification::web2::twitter;
@@ -59,6 +60,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 	State: HandleState + Send + Sync + 'static,
 	State::StateT: SgxExternalitiesTrait,
 {
+	add_top_pool_direct_rpc_methods(top_pool_author.clone(), io_handler);
+
 	let shielding_key_cloned = shielding_key.clone();
 	io_handler.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
