@@ -175,6 +175,9 @@ pub mod pallet {
 		OidcClientRegistered {
 			client_id: T::AccountId,
 		},
+		OidcClientUnregistered {
+			client_id: T::AccountId,
+		},
 	}
 
 	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
@@ -206,6 +209,8 @@ pub mod pallet {
 		RedirectUriTooLong,
 		/// OIDC client already exists
 		OidcClientAlreadyRegistered,
+		/// OIDC client does not exists
+		OidcClientNotExist,
 	}
 
 	#[pallet::call]
@@ -338,6 +343,17 @@ pub mod pallet {
 			);
 
 			Self::deposit_event(Event::OidcClientRegistered { client_id });
+
+			Ok(())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight({0})] // TODO: add weight
+		pub fn unregister_oidc_client(origin: OriginFor<T>) -> DispatchResult {
+			let client_id = ensure_signed(origin)?;
+			ensure!(OidcClients::<T>::contains_key(&client_id), Error::<T>::OidcClientNotExist);
+			OidcClients::<T>::remove(&client_id);
+			Self::deposit_event(Event::OidcClientUnregistered { client_id });
 
 			Ok(())
 		}
