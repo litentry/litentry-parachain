@@ -1446,7 +1446,6 @@ dependencies = [
  "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
- "ring 0.16.20",
  "scale-info",
  "serde",
  "sp-core",

@@ -47,13 +47,11 @@ polkadot-primitives = { workspace = true }
 polkadot-runtime-parachains = { workspace = true }
 
 core-primitives = { workspace = true }
+cumulus-test-relay-sproof-builder = { workspace = true, optional = true }
 pallet-asset-manager = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-teebag = { workspace = true }
-
-[dev-dependencies]
-cumulus-test-relay-sproof-builder = { workspace = true }
 
 [features]
 default = ["std"]
@@ -112,6 +110,7 @@ try-runtime = [
 tests = [
     "std",
     "cumulus-primitives-parachain-inherent/default",
+    "cumulus-test-relay-sproof-builder/default",
     "polkadot-primitives/default",
     "polkadot-runtime-parachains/default",
     "xcm-simulator",

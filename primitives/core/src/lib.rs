@@ -55,7 +55,7 @@ mod types {
 	pub type Amount = i128;
 
 	/// AssetId type
-	pub type AssetId = u128;
+	pub type AssetId = u32;
 
 	/// Balance of an account.
 	pub type Balance = u128;

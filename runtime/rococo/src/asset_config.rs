@@ -39,11 +39,11 @@ parameter_types! {
 
 impl AddressToAssetId<AssetId> for Runtime {
 	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		let mut data = [0u8; 16];
+		let mut data = [0u8; 4];
 		let address_bytes: [u8; 20] = address.into();
 		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
-			data.copy_from_slice(&address_bytes[4..20]);
-			Some(u128::from_be_bytes(data))
+			data.copy_from_slice(&address_bytes[16..20]);
+			Some(u32::from_be_bytes(data))
 		} else {
 			None
 		}
@@ -52,7 +52,7 @@ impl AddressToAssetId<AssetId> for Runtime {
 	fn asset_id_to_address(asset_id: AssetId) -> H160 {
 		let mut data = [0u8; 20];
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
+		data[16..20].copy_from_slice(&asset_id.to_be_bytes());
 		H160::from(data)
 	}
 }
@@ -78,6 +78,8 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = Compact<AssetId>;
 	type CallbackHandle = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl pallet_asset_manager::Config for Runtime {

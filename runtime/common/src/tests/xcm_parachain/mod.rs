@@ -955,7 +955,7 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 		// is not allowed to proccessing assets token
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
-			1u128.into(),
+			1.into(),
 			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
 			true,
 			1
@@ -1345,7 +1345,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		// is not allowed to proccessing assets token
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
-			0u128.into(),
+			0.into(),
 			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
 			true,
 			1
@@ -1369,7 +1369,7 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		// is not allowed to proccessing assets token
 		assert_ok!(Assets::<R::ParaRuntime>::force_create(
 			RawOrigin::Root.into(),
-			0u128.into(),
+			0.into(),
 			<R::ParaRuntime as frame_system::Config>::Lookup::unlookup(alice()),
 			true,
 			1
