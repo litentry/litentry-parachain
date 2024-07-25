@@ -955,7 +955,6 @@ jobs:
 
   bitacross-worker-test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     needs:
       - set-condition
       - parachain-build-dev

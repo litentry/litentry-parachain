@@ -10,7 +10,7 @@ function getWorkerUrls(env: String): String[] {
         let port = parseInt(workerEndpointParts[2]);
         return [url + ':' + port, url + ':' + (port + 10), url + ':' + (port + 20)];
     } else {
-        return ['wss://bitacross-worker-1:2101', 'wss://bitacross-worker-2:2101', 'wss://bitacross-worker-3:2101'];
+        return ['wss://bitacross-worker-1:2011', 'wss://bitacross-worker-2:2011', 'wss://bitacross-worker-3:2011'];
     }
 }
 
@@ -24,7 +24,7 @@ describe('test-bitcoin', () => {
 
     const workerUrls = getWorkerUrls(process.env.NODE_ENV as string);
     console.log('Using worker urls: ' + workerUrls);
-    sleep(1000);
+    sleep(60 * 1000);
     console.log('Run');
 
     it('should pass on all workers', async () => {
