@@ -45,7 +45,7 @@ use itp_sgx_crypto::{
 	key_repository::{AccessKey, AccessPubkey},
 	ShieldingCryptoEncrypt,
 };
-use itp_types::{DirectRequestStatus, Hash};
+pub use itp_types::{DirectRequestStatus, Hash};
 use itp_utils::hex::ToHexPrefixed;
 use lc_direct_call::CeremonyRoundCall;
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, ShardIdentifier};

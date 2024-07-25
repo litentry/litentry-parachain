@@ -49,6 +49,10 @@ pub trait ChainApi {
 		from: Self::BlockNumber,
 		to: Self::BlockNumber,
 	) -> ApiResult<Vec<GenericSignedBlock<Self::Block>>>;
+	fn get_block_by_number(
+		&self,
+		block: Self::BlockNumber,
+	) -> ApiResult<Option<GenericSignedBlock<Self::Block>>>;
 	fn is_grandpa_available(&self) -> ApiResult<bool>;
 	fn grandpa_authorities(&self, hash: Option<Self::Hash>) -> ApiResult<AuthorityList>;
 	fn grandpa_authorities_proof(&self, hash: Option<Self::Hash>) -> ApiResult<StorageProof>;
@@ -99,6 +103,16 @@ where
 			}
 		}
 		Ok(blocks)
+	}
+
+	fn get_block_by_number(
+		&self,
+		block_number: Self::BlockNumber,
+	) -> ApiResult<Option<GenericSignedBlock<Self::Block>>> {
+		match self.get_signed_block_by_num(Some(block_number))? {
+			Some(block) => Ok(Some(block.into())),
+			None => Ok(None),
+		}
 	}
 
 	fn is_grandpa_available(&self) -> ApiResult<bool> {

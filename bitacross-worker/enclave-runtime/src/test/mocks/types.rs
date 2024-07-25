@@ -28,7 +28,7 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
 use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::{
-	handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock,
+	handle_state_mock::HandleStateMock,
 	onchain_mock::OnchainMock,
 };
 use itp_top_pool::basic_pool::BasicPool;
@@ -82,7 +82,6 @@ pub type TestTopPoolAuthor = Author<
 	AllowAllTopsFilter<TrustedCallSigned, Getter>,
 	TestStateHandler,
 	TestShieldingKeyRepo,
-	MetricsOCallMock,
 	TrustedCallSigned,
 	Getter,
 >;

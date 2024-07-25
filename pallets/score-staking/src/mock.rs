@@ -24,7 +24,6 @@ use frame_support::{
 	parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
-use frame_system as system;
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::{ConstU128, ConstU32, H256};
 use sp_keyring::AccountKeyring;
@@ -193,7 +192,7 @@ pub fn charlie() -> AccountId {
 }
 
 pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> { balances: vec![(alice(), 2 * UNIT)] }
 		.assimilate_storage(&mut t)
 		.unwrap();

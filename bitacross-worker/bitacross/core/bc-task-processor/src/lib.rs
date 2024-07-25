@@ -51,7 +51,7 @@ use bc_musig2_ceremony::{
 	get_current_timestamp, CeremonyCommand, CeremonyCommandTmp, CeremonyError, CeremonyErrorReason,
 	CeremonyEvent, CeremonyId, CeremonyRegistry, MuSig2Ceremony, SignBitcoinPayload,
 };
-use bc_musig2_event::process_event;
+use bc_musig2_event::{process_event, DirectRequestStatus, Hash};
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use bc_task_sender::{
@@ -60,7 +60,6 @@ use bc_task_sender::{
 use codec::{Decode, Encode};
 use core::{ops::Deref, time::Duration};
 use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
-use futures_sgx::AsyncReadExt;
 use ita_stf::TrustedCallSigned;
 use itc_direct_rpc_client::{DirectRpcClient, DirectRpcClientFactory, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
@@ -75,7 +74,11 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use lc_direct_call::{
-	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
+	handler::{
+		kill_ceremony, nonce_share, partial_signature_share,
+		sign_bitcoin::{self, SignBitcoinError},
+		sign_ethereum,
+	},
 	CeremonyRoundCall, CeremonyRoundCallSigned, DirectCall, DirectCallSigned,
 };
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, DecryptableRequest};
@@ -220,6 +223,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	// timeout tick
 	let ceremony_registry = context.ceremony_registry.clone();
 	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
+	let responder = context.responder.clone();
 	let time_to_live = 30u64;
 	let cloned_ocall_api = context.ocall_api.clone();
 	std::thread::spawn(move || loop {
@@ -228,26 +232,36 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 		let mut timed_out_count: u8 = 0;
 		{
 			let mut ceremony_registry_write = ceremony_registry.write().unwrap();
-			ceremony_registry_write
-				.retain(|_, &mut (_, create_time)| {
-
-					if now - create_time < time_to_live {
-						true
-					} else {
-						timed_out_count += 1;
-						false
+			ceremony_registry_write.retain(|_, (ceremony, create_time)| {
+				let if_retain = now - *create_time < time_to_live;
+				if !if_retain {
+					let ceremony_rwlock = ceremony.clone();
+					let ceremony = ceremony_rwlock.read().unwrap();
+					let hash = blake2_256(&ceremony.get_id_ref().encode());
+					let encrypted_result = aes_encrypt_default(
+						ceremony.get_aes_key(),
+						&SignBitcoinError::CeremonyError.encode(),
+					)
+					.encode();
+					if let Err(e) = responder.send_state_with_status(
+						Hash::from_slice(&hash),
+						encrypted_result,
+						DirectRequestStatus::Error,
+					) {
+						error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 					}
-				});
+                    timed_out_count += 1;
+				}
+				if_retain
+			});
 		}
 		{
 			let mut command_tmp_write = ceremony_command_tmp.write().unwrap();
 			command_tmp_write.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
 		}
-
-		if timed_out_count > 0 {
-			let _ = cloned_ocall_api.update_metric(EnclaveMetric::Musig2CeremonyTimedout(timed_out_count));
-		}
-
+        if timed_out_count > 0 {
+            let _ = cloned_ocall_api.update_metric(EnclaveMetric::Musig2CeremonyTimedout(timed_out_count));
+        }
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();

@@ -26,7 +26,6 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use core::time::Duration;
-use std::string::String;
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
