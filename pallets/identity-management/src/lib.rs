@@ -347,6 +347,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Unregister an OIDC client
 		#[pallet::call_index(7)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn unregister_oidc_client(origin: OriginFor<T>) -> DispatchResult {
