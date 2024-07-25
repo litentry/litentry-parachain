@@ -51,6 +51,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::clone_on_copy)]
 #![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]

@@ -403,20 +403,9 @@ pub fn run() -> Result<()> {
 							return Err("Only dev chain should be used in benchmark".into());
 						}
 
-						// TODO: which version shall we use, evm or no_evm?
-						use crate::service::no_evm::HostFunctions;
+						use crate::service::HostFunctions;
 
-						runner.sync_run(|config| {
-							if config.chain_spec.is_litmus() {
-								cmd.run::<Block, HostFunctions>(config)
-							} else if config.chain_spec.is_litentry() {
-								cmd.run::<Block, HostFunctions>(config)
-							} else if config.chain_spec.is_rococo() {
-								cmd.run::<Block, HostFunctions>(config)
-							} else {
-								Err(UNSUPPORTED_CHAIN_MESSAGE.into())
-							}
-						})
+						runner.sync_run(|config| cmd.run::<Block, HostFunctions>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 						You can enable it with `--features runtime-benchmarks`."
@@ -452,6 +441,7 @@ pub fn run() -> Result<()> {
 			}
 		},
 		#[cfg(feature = "try-runtime")]
+		#[allow(deprecated)]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use core_primitives::MILLISECS_PER_BLOCK;
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;

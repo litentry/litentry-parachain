@@ -18,9 +18,9 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig,
-	RuntimeGenesisConfig, SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, UNIT, WASM_BINARY,
+	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, RuntimeGenesisConfig,
+	SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
+	TeebagOperationalMode, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;

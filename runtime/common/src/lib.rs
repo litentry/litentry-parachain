@@ -34,7 +34,7 @@ use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
 use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
-	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
+	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
 		Weight,
@@ -42,12 +42,8 @@ use frame_support::{
 };
 use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use sp_runtime::{
-	traits::{Bounded, TryConvert},
-	FixedPointNumber, Perbill, Perquintill,
-};
+use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
 use sp_std::marker::PhantomData;
-use xcm::latest::prelude::*;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -294,45 +290,6 @@ pub trait BaseRuntimeRequirements:
 pub trait ParaRuntimeRequirements:
 	BaseRuntimeRequirements + pallet_asset_manager::Config<AssetId = AssetId> + pallet_vesting::Config
 {
-}
-
-/// the filter account who is allowed to dispatch XCM sends
-pub struct FilterEnsureOrigin<Origin, Conversion, SpecialGroup>(
-	PhantomData<(Origin, Conversion, SpecialGroup)>,
-);
-impl<
-		Origin: OriginTrait + Clone,
-		Conversion: TryConvert<Origin, MultiLocation>,
-		SpecialGroup: EnsureOrigin<Origin>,
-	> EnsureOrigin<Origin> for FilterEnsureOrigin<Origin, Conversion, SpecialGroup>
-where
-	Origin::PalletsOrigin: PartialEq,
-{
-	type Success = MultiLocation;
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		// root can send the cross chain message
-
-		let o = match SpecialGroup::try_origin(o) {
-			Ok(_) => return Ok(Here.into()),
-			Err(o) => o,
-		};
-
-		let o = match Conversion::try_convert(o) {
-			Ok(location) => return Ok(location),
-			Err(o) => o,
-		};
-
-		if o.caller() == Origin::root().caller() {
-			Ok(Here.into())
-		} else {
-			Err(o)
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<Origin, ()> {
-		Ok(Origin::root())
-	}
 }
 
 // EnsureOrigin implementation to make sure the extrinsic origin

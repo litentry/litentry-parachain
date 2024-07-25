@@ -19,7 +19,6 @@
 use crate::{AssetMetadata, BalanceOf, Call, Config, Pallet};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
-use sp_runtime::BuildStorage;
 use xcm::latest::prelude::*;
 
 benchmarks! {
@@ -183,6 +182,7 @@ benchmarks! {
 mod tests {
 	use crate::mock::Test;
 	use sp_io::TestExternalities;
+	use sp_runtime::BuildStorage;
 
 	pub fn new_test_ext() -> TestExternalities {
 		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();

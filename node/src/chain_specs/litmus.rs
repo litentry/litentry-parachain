@@ -18,9 +18,9 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CollatorSelectionConfig,
-	CouncilMembershipConfig, GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig,
-	RuntimeGenesisConfig, SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, UNIT, WASM_BINARY,
+	CouncilMembershipConfig, ParachainInfoConfig, PolkadotXcmConfig, RuntimeGenesisConfig,
+	SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
+	TeebagOperationalMode, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;

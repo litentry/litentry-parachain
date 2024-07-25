@@ -40,7 +40,6 @@ use runtime_common::xcm_impl::{
 	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
-use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -196,7 +195,7 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Assets,
-			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+			ConvertedConcreteId<AssetId, Balance, AssetIdMultiLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -298,13 +297,7 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// We allow anyone to send any XCM to anywhere
-	// This is highly relied on if target chain properly filtered
-	// Check their Barriers implementation
-	// And for TakeWeightCredit
-	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin =
-		FilterEnsureOrigin<RuntimeOrigin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;

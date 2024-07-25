@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use parity_scale_codec::Encode;
-use polkadot_parachain_primitives::RelayChainBlockNumber;
+use polkadot_parachain_primitives::primitives::RelayChainBlockNumber;
 use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,
@@ -35,7 +35,7 @@ use xcm::prelude::{
 	MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
 	XcmError,
 };
-use xcm_executor::traits::Convert as xcmConvert;
+use xcm_executor::traits::ConvertLocation;
 use xcm_simulator::TestExt;
 
 use core_primitives::{AccountId, AssetId, Balance, Weight};
@@ -48,8 +48,6 @@ use crate::{
 };
 use sp_runtime::traits::StaticLookup;
 
-pub mod relay_sproof_builder;
-
 pub const RELAY_UNIT: u128 = 1;
 
 type XTokens<R> = orml_xtokens::Pallet<R>;
@@ -60,28 +58,29 @@ type AssetManager<R> = pallet_asset_manager::Pallet<R>;
 type ParachainSystem<R> = cumulus_pallet_parachain_system::Pallet<R>;
 type PolkadotXcm<R> = pallet_xcm::Pallet<R>;
 type System<R> = frame_system::Pallet<R>;
-// type XcmFeesAccount<R> = pallet_treasury::Pallet<R>::account_id();
 
 fn para_account(x: u32) -> AccountId32 {
-	<SovereignAccountOf as xcmConvert<MultiLocation, AccountId32>>::convert(Parachain(x).into())
-		.unwrap()
-}
-
-fn sibling_account<LocationToAccountId: xcmConvert<MultiLocation, AccountId32>>(
-	x: u32,
-) -> AccountId32 {
-	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(
-		(Parent, Parachain(x)).into(),
-	)
+	<SovereignAccountOf as ConvertLocation<AccountId32>>::convert_location(&MultiLocation::new(
+		0,
+		Parachain(x),
+	))
 	.unwrap()
 }
 
-fn relay_account<LocationToAccountId: xcmConvert<MultiLocation, AccountId32>>() -> AccountId32 {
-	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parent.into()).unwrap()
+fn sibling_account<LocationToAccountId: ConvertLocation<AccountId32>>(x: u32) -> AccountId32 {
+	let location = (Parent, Parachain(x));
+	<LocationToAccountId as ConvertLocation<AccountId32>>::convert_location(&location.into())
+		.unwrap()
+}
+
+fn relay_account<LocationToAccountId: ConvertLocation<AccountId32>>() -> AccountId32 {
+	<LocationToAccountId as ConvertLocation<AccountId32>>::convert_location(&MultiLocation::parent()).unwrap()
 }
 
 fn para_native_token_multilocation<R: ParaRuntimeRequirements>(x: u32) -> MultiLocation {
-	(Parent, Parachain(x), PalletInstance(<Balances<R> as PalletInfoAccess>::index() as u8)).into()
+	let location =
+		(Parent, Parachain(x), PalletInstance(<Balances<R> as PalletInfoAccess>::index() as u8));
+	location.into()
 }
 
 pub trait TestXCMRequirements {
@@ -111,7 +110,7 @@ pub trait TestXCMRequirements {
 		+ pallet_xcm::Config
 		+ pallet_balances::Config<Balance = Balance>;
 	type UnitWeightCost: frame_support::traits::Get<Weight>;
-	type LocationToAccountId: xcmConvert<MultiLocation, AccountId32>;
+	type LocationToAccountId: ConvertLocation<AccountId32>;
 
 	fn reset();
 }
@@ -311,10 +310,9 @@ where
 		// Not XCMP_QUEUE in production environment
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get() * 2,
-				XcmError::Unroutable,
-			))
+			pallet_xcm::Event::<R::ParaRuntime>::Attempted {
+				outcome: Outcome::Incomplete(R::UnitWeightCost::get() * 2, XcmError::Unroutable),
+			}
 			.into(),
 		);
 
@@ -348,9 +346,9 @@ where
 			2 * UNIT // Only non trpped asset is in sovereign account
 		);
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Complete(
-				R::UnitWeightCost::get() * 2,
-			))
+			pallet_xcm::Event::<R::ParaRuntime>::Attempted {
+				outcome: Outcome::Complete(R::UnitWeightCost::get() * 2),
+			}
 			.into(),
 		);
 	});
@@ -589,10 +587,12 @@ where
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		// Unlike orml_xtoken, pallet_xcm fails with event when DustLost issue happens
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get() * 2,
-				XcmError::FailedToTransactAsset(""),
-			))
+			pallet_xcm::Event::Attempted {
+				outcome: Outcome::Incomplete(
+					R::UnitWeightCost::get() * 2,
+					XcmError::FailedToTransactAsset(""),
+				),
+			}
 			.into(),
 		);
 		// Solve the DustLost
@@ -617,7 +617,10 @@ where
 			0
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
+			pallet_xcm::Event::Attempted {
+				outcome: Outcome::Complete(R::UnitWeightCost::get() * 2),
+			}
+			.into(),
 		);
 
 		assert_eq!(
@@ -648,7 +651,10 @@ where
 			WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
+			pallet_xcm::Event::Attempted {
+				outcome: Outcome::Complete(R::UnitWeightCost::get() * 2),
+			}
+			.into(),
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -1179,7 +1185,13 @@ where
 			Box::new(xcm::VersionedXcm::V3(xcm.clone())),
 		));
 		System::<R::RelayRuntime>::assert_last_event(
-			pallet_xcm::Event::Sent(Here.into(), Parachain(1).into(), xcm).into(),
+			pallet_xcm::Event::Sent {
+				origin: Here.into(),
+				destination: dest,
+				message: xcm,
+				message_id: Default::default(),
+			}
+			.into(),
 		);
 	});
 	R::ParaA::execute_with(|| {
@@ -1249,12 +1261,14 @@ where
 			Box::new(xcm::VersionedXcm::V3(xcm.clone())),
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Sent(Here.into(), Parent.into(), xcm).into(),
+			pallet_xcm::Event::Sent {
+				origin: Here.into(),
+				destination: Parent.into(),
+				message: xcm,
+				message_id: Default::default(),
+			}
+			.into(),
 		);
-		// assert_eq!(
-		// 	System::events().pop().expect("Event expected").event,
-		// 	Event::PolkadotXcm(pallet_xcm::Event::Sent(Here.into(), Parent.into(), xcm,))
-		// );
 	});
 	R::Relay::execute_with(|| {
 		// Manipulation successful
@@ -1271,18 +1285,19 @@ where
 
 fn register_channel_info<R: ParaRuntimeRequirements + cumulus_pallet_parachain_system::Config>(
 	self_para_id: u32,
-	remote_para_id: u32,
+	_remote_para_id: u32,
 ) {
 	// TODO::More striaght forward method?
 	// We mimic the consequence of HRMP Channel request for cumulus_pallet_parachain_system
 	// set_validation_data inherent_extrinsics
 
-	let mut sproof_builder = relay_sproof_builder::RelayStateSproofBuilder {
+	let sproof_builder = cumulus_test_relay_sproof_builder::RelayStateSproofBuilder {
 		para_id: ParaId::from(self_para_id),
+		included_para_head: Some(polkadot_parachain_primitives::primitives::HeadData(vec![
+			1, 2, 3,
+		])),
 		..Default::default()
 	};
-	sproof_builder.upsert_ingress_channel(ParaId::from(remote_para_id));
-	sproof_builder.upsert_egress_channel(ParaId::from(remote_para_id));
 
 	let (relay_parent_storage_root, relay_chain_state) = sproof_builder.into_state_root_and_proof();
 	let n = 1;
@@ -1297,7 +1312,6 @@ fn register_channel_info<R: ParaRuntimeRequirements + cumulus_pallet_parachain_s
 		downward_messages: Default::default(),
 		horizontal_messages: Default::default(),
 	};
-	// Add HrmpChannel Info manually
 
 	assert_ok!(ParachainSystem::<R>::set_validation_data(
 		RawOrigin::None.into(),

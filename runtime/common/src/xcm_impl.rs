@@ -405,15 +405,10 @@ where
 		if let Some(currency_id) =
 			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_type(*id)
 		{
-			if let Some(multi) = <CurrencyIdMultiLocationConvert<R> as Convert<
-				CurrencyId<R>,
-				Option<MultiLocation>,
+			<CurrencyIdMultiLocationConvert<R> as Convert<
+			CurrencyId<R>,
+			Option<MultiLocation>,
 			>>::convert(currency_id)
-			{
-				Some(multi)
-			} else {
-				None
-			}
 		} else {
 			None
 		}
@@ -430,14 +425,7 @@ where
 			Option<CurrencyId<R>>,
 		>>::convert(*multi)
 		{
-			if let Some(asset_id) =
-				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(
-					currency_id,
-				) {
-				Some(asset_id)
-			} else {
-				None
-			}
+			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(currency_id)
 		} else {
 			None
 		}

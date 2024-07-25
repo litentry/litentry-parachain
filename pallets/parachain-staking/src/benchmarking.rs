@@ -31,7 +31,7 @@ use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableC
 use frame_system::pallet_prelude::*;
 use frame_system::RawOrigin;
 use pallet_authorship::EventHandler;
-use sp_runtime::{BuildStorage, Perbill, Percent, Saturating};
+use sp_runtime::{Perbill, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Minimum collator candidate stake
@@ -1211,6 +1211,7 @@ mod tests {
 	use crate::{benchmarking::*, mock::Test};
 	use frame_support::assert_ok;
 	use sp_io::TestExternalities;
+	use sp_runtime::BuildStorage;
 
 	pub fn new_test_ext() -> TestExternalities {
 		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();

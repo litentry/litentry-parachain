@@ -43,13 +43,10 @@ use xcm_builder::{
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use core_primitives::{AccountId, Weight};
-use runtime_common::{
-	xcm_impl::{
-		AccountIdToMultiLocation, AssetIdMultiLocationConvert, CurrencyId,
-		CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset,
-		NewAnchoringSelfReserve, OldAnchoringSelfReserve, XcmFeesToAccount,
-	},
-	EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin,
+use runtime_common::xcm_impl::{
+	AccountIdToMultiLocation, AssetIdMultiLocationConvert, CurrencyId,
+	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
+	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
 #[cfg(test)]
@@ -196,7 +193,7 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Assets,
-			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+			ConvertedConcreteId<AssetId, Balance, AssetIdMultiLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -298,13 +295,7 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// We allow anyone to send any XCM to anywhere
-	// This is highly relied on if target chain properly filtered
-	// Check their Barriers implementation
-	// And for TakeWeightCredit
-	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin =
-		FilterEnsureOrigin<RuntimeOrigin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;

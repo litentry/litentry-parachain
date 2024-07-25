@@ -1,0 +1,736 @@
+SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
+⚡ Found 3 strongly connected components which includes at least one cycle each
+cycle(001) ∈ α: ApprovalVoting ~~{"DisputeCoordinatorMessage"}~~> DisputeCoordinator ~~{"ApprovalVotingMessage"}~~>  *
+cycle(002) ∈ β: CandidateBacking ~~{"StatementDistributionMessage"}~~> StatementDistribution ~~{"CandidateBackingMessage"}~~>  *
+cycle(003) ∈ γ: NetworkBridgeRx ~~{"GossipSupportMessage"}~~> GossipSupport ~~{"NetworkBridgeRxMessage"}~~>  *
+    Checking runtime-common v0.9.17 (/home/kai/litentry-parachain/runtime/common)
+    Checking litentry-parachain-runtime v0.9.17 (/home/kai/litentry-parachain/runtime/litentry)
+    Checking litmus-parachain-runtime v0.9.17 (/home/kai/litentry-parachain/runtime/litmus)
+    Checking rococo-parachain-runtime v0.9.17 (/home/kai/litentry-parachain/runtime/rococo)
+error[E0412]: cannot find type `RelayChainXcmRouter` in module `$crate::tests::setup`
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `$crate::tests::setup`
+   |
+   = help: consider importing this struct:
+           crate::tests::setup::RelayChainXcmRouter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0425]: cannot find value `Parent` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           crate::tests::setup::Parent
+           cumulus_primitives_core::Parent
+           xcm::opaque::lts::Parent
+           xcm::opaque::v2::Parent
+           xcm_builder::test_utils::Parent
+           xcm_simulator::Parent
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0405]: cannot find trait `ProcessMessage` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessage
+           xcm_simulator::ProcessMessage
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `AggregateMessageOrigin` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `WeightMeter` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::weights::WeightMeter
+           xcm_simulator::WeightMeter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `ProcessMessageError` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessageError
+           xcm_simulator::ProcessMessageError
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `AggregateMessageOrigin`
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `AggregateMessageOrigin`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `UmpQueueId`
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `UmpQueueId`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::UmpQueueId
+           xcm_simulator::UmpQueueId
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `Junction` in this scope
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `Junction`
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `Junction`
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `RelayChainXcmRouter` in module `$crate::tests::setup`
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `$crate::tests::setup`
+   |
+   = help: consider importing this struct:
+           crate::tests::setup::RelayChainXcmRouter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0425]: cannot find value `Parent` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           crate::tests::setup::Parent
+           cumulus_primitives_core::Parent
+           xcm::opaque::lts::Parent
+           xcm::opaque::v2::Parent
+           xcm_builder::test_utils::Parent
+           xcm_simulator::Parent
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0405]: cannot find trait `ProcessMessage` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessage
+           xcm_simulator::ProcessMessage
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `AggregateMessageOrigin` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `WeightMeter` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::weights::WeightMeter
+           xcm_simulator::WeightMeter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `ProcessMessageError` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessageError
+           xcm_simulator::ProcessMessageError
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `AggregateMessageOrigin`
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `AggregateMessageOrigin`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `UmpQueueId`
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `UmpQueueId`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::UmpQueueId
+           xcm_simulator::UmpQueueId
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `Junction` in this scope
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `Junction`
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `Junction`
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `RelayChainXcmRouter` in module `$crate::tests::setup`
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `$crate::tests::setup`
+   |
+   = help: consider importing this struct:
+           crate::tests::setup::RelayChainXcmRouter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0425]: cannot find value `Parent` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           crate::tests::setup::Parent
+           cumulus_primitives_core::Parent
+           xcm::opaque::lts::Parent
+           xcm::opaque::v2::Parent
+           xcm_builder::test_utils::Parent
+           xcm_simulator::Parent
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0405]: cannot find trait `ProcessMessage` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessage
+           xcm_simulator::ProcessMessage
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `AggregateMessageOrigin` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `WeightMeter` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::weights::WeightMeter
+           xcm_simulator::WeightMeter
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `ProcessMessageError` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           frame_support::traits::ProcessMessageError
+           xcm_simulator::ProcessMessageError
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `AggregateMessageOrigin`
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `AggregateMessageOrigin`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::AggregateMessageOrigin
+           xcm_simulator::AggregateMessageOrigin
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `UmpQueueId`
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `UmpQueueId`
+   |
+   = help: consider importing one of these items:
+           polkadot_runtime_parachains::inclusion::UmpQueueId
+           xcm_simulator::UmpQueueId
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0412]: cannot find type `Junction` in this scope
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0433]: failed to resolve: use of undeclared type `Junction`
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `Junction`
+   |
+   = help: consider importing one of these items:
+           cumulus_primitives_core::Junction
+           xcm::opaque::lts::Junction
+           xcm::opaque::v2::Junction
+           xcm_builder::test_utils::Junction
+           xcm_simulator::Junction
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_bridge::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/litmus_parachain_runtime-225ce5556f547d18.long-type-10224215542375853446.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `tests::setup::relay_chain::RuntimeEvent`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent: pallet_bridge::Member`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Event<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:508:11
+    |
+508 |     pub enum Event<T: Config> {
+    |              ^^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent` to implement `pallet_bridge::Member`
+note: required by a bound in `frame_system::Config::RuntimeEvent`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/system/src/lib.rs:256:6
+    |
+255 |         type RuntimeEvent: Parameter
+    |              ------------ required by a bound in this associated type
+256 |             + Member
+    |               ^^^^^^ required by this bound in `Config::RuntimeEvent`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required by a bound in `pallet_message_queue::Config::MessageProcessor`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:458:26
+    |
+458 |         type MessageProcessor: ProcessMessage;
+    |                                ^^^^^^^^^^^^^^ required by this bound in `Config::MessageProcessor`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+  --> runtime/litmus/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+   |
+   = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+             pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+             staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+             tests::setup::Relay
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/litmus/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_bridge::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/litmus_parachain_runtime-225ce5556f547d18.long-type-10224215542375853446.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `frame_support::construct_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_bridge::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/litentry_parachain_runtime-34cde6aaf58f36bb.long-type-12739863085535939483.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `tests::setup::relay_chain::RuntimeEvent`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent: pallet_bridge::Member`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Event<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:508:11
+    |
+508 |     pub enum Event<T: Config> {
+    |              ^^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent` to implement `pallet_bridge::Member`
+note: required by a bound in `frame_system::Config::RuntimeEvent`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/system/src/lib.rs:256:6
+    |
+255 |         type RuntimeEvent: Parameter
+    |              ------------ required by a bound in this associated type
+256 |             + Member
+    |               ^^^^^^ required by this bound in `Config::RuntimeEvent`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required by a bound in `pallet_message_queue::Config::MessageProcessor`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:458:26
+    |
+458 |         type MessageProcessor: ProcessMessage;
+    |                                ^^^^^^^^^^^^^^ required by this bound in `Config::MessageProcessor`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+  --> runtime/litentry/src/tests/mod.rs:21:2
+   |
+21 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+   |
+   = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+             pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+             staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+             tests::setup::Relay
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/litentry/src/tests/mod.rs:21:2
+    |
+21  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_bridge::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/litentry_parachain_runtime-34cde6aaf58f36bb.long-type-12739863085535939483.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `frame_support::construct_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+Some errors have detailed explanations: E0277, E0405, E0412, E0425, E0433.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `litmus-parachain-runtime` (lib test) due to 17 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `litentry-parachain-runtime` (lib test) due to 17 previous errors
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_group::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/rococo_parachain_runtime-ed8668d85e3ce8ed.long-type-8629255804311920421.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `tests::setup::relay_chain::RuntimeEvent`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent: pallet_group::Member`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Event<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:508:11
+    |
+508 |     pub enum Event<T: Config> {
+    |              ^^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeEvent`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: required for `<tests::setup::relay_chain::Runtime as frame_system::Config>::RuntimeEvent` to implement `pallet_group::Member`
+note: required by a bound in `frame_system::Config::RuntimeEvent`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/system/src/lib.rs:256:6
+    |
+255 |         type RuntimeEvent: Parameter
+    |              ------------ required by a bound in this associated type
+256 |             + Member
+    |               ^^^^^^ required by this bound in `Config::RuntimeEvent`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required by a bound in `pallet_message_queue::Config::MessageProcessor`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:458:26
+    |
+458 |         type MessageProcessor: ProcessMessage;
+    |                                ^^^^^^^^^^^^^^ required by this bound in `Config::MessageProcessor`
+    = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied
+  --> runtime/rococo/src/tests/mod.rs:22:2
+   |
+22 |     runtime_common::decl_test_chain!(Runtime);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`
+   |
+   = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+             pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+             staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+             tests::setup::Relay
+   = note: this error originates in the macro `runtime_common::decl_test_relay_chain_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `tests::setup::relay_chain::MessageProcessor: xcm_simulator::ProcessMessage` is not satisfied in `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ within `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`, the trait `xcm_simulator::ProcessMessage` is not implemented for `tests::setup::relay_chain::MessageProcessor`, which is required by `sp_runtime::generic::Block<sp_runtime::generic::Header<u64, sp_runtime::traits::BlakeTwo256>, sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>>: sp_api::BlockT`
+    |
+    = help: the following other types implement trait `xcm_simulator::ProcessMessage`:
+              pallet_message_queue::mock_helpers::NoopMessageProcessor<Origin, REQUIRED_WEIGHT>
+              staging_xcm_builder::ProcessXcmMessage<MessageOrigin, XcmExecutor, Call>
+              tests::setup::Relay
+note: required because it appears within the type `pallet_message_queue::Call<tests::setup::relay_chain::Runtime>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/frame/message-queue/src/lib.rs:592:12
+    |
+592 |     #[pallet::call]
+    |               ^^^^
+note: required because it appears within the type `tests::setup::relay_chain::RuntimeCall`
+   --> runtime/rococo/src/tests/mod.rs:22:2
+    |
+22  |     runtime_common::decl_test_chain!(Runtime);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: required because it appears within the type `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>`
+   --> /home/kai/.cargo/git/checkouts/polkadot-sdk-cff69157b985ed76/e51a91f/substrate/primitives/runtime/src/generic/unchecked_extrinsic.rs:49:12
+    |
+49  | pub struct UncheckedExtrinsic<Address, Call, Signature, Extra>
+    |            ^^^^^^^^^^^^^^^^^^
+    = note: required for `sp_runtime::generic::UncheckedExtrinsic<sp_runtime::AccountId32, tests::setup::relay_chain::RuntimeCall, (), ()>` to implement `pallet_group::Member`
+    = note: required for `Block<Header<u64, BlakeTwo256>, UncheckedExtrinsic<AccountId32, RuntimeCall, (), ()>>` to implement `sp_api::BlockT`
+    = note: the full name for the type has been written to '/home/kai/litentry-parachain/target/debug/deps/rococo_parachain_runtime-ed8668d85e3ce8ed.long-type-8629255804311920421.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `frame_support::construct_runtime` which comes from the expansion of the macro `runtime_common::decl_test_chain` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: could not compile `rococo-parachain-runtime` (lib test) due to 17 previous errors
+make: *** [Makefile:219: clippy] Error 101

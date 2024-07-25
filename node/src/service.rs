@@ -25,7 +25,7 @@ use crate::{
 	standalone_block_import::StandaloneBlockImport,
 	tracing::{self, RpcRequesters},
 };
-pub use core_primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
+pub use core_primitives::{AccountId, Balance, Block, Hash, Nonce};
 
 use cumulus_client_cli::CollatorOptions;
 #[allow(deprecated)]
@@ -72,11 +72,11 @@ type ParachainBackend = TFullBackend<Block>;
 type MaybeSelectChain = Option<LongestChain<ParachainBackend, Block>>;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-type HostFunctions =
+pub type HostFunctions =
 	(sp_io::SubstrateHostFunctions, moonbeam_primitives_ext::moonbeam_ext::HostFunctions);
 
 #[cfg(feature = "runtime-benchmarks")]
-type HostFunctions = (
+pub type HostFunctions = (
 	sp_io::SubstrateHostFunctions,
 	frame_benchmarking::benchmarking::HostFunctions,
 	moonbeam_primitives_ext::moonbeam_ext::HostFunctions,
@@ -831,6 +831,7 @@ where
 			import_queue,
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
+			net_config,
 		})?;
 
 	let role = parachain_config.role.clone();
