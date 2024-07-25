@@ -315,7 +315,7 @@ pub mod pallet {
 
 		/// Register an OIDC client
 		#[pallet::call_index(6)]
-		#[pallet::weight({0})] // TODO: add weight
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn register_oidc_client(
 			origin: OriginFor<T>,
 			redirect_uris: Vec<Vec<u8>>,
@@ -348,7 +348,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight({0})] // TODO: add weight
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn unregister_oidc_client(origin: OriginFor<T>) -> DispatchResult {
 			let client_id = ensure_signed(origin)?;
 			ensure!(OidcClients::<T>::contains_key(&client_id), Error::<T>::OidcClientNotExist);
