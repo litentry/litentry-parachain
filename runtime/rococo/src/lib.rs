@@ -96,6 +96,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
+
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -955,9 +958,8 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
@@ -969,8 +971,8 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TransferNativeAnyone;
-impl SortedMembers<AccountId> for TransferNativeAnyone {
+pub struct TransferAssetsAnyone;
+impl SortedMembers<AccountId> for TransferAssetsAnyone {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -986,14 +988,18 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+	type BridgeHandler = AssetsHandler;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferAssetsMembers = TransferNativeAnyone;
+	type TransferAssetsMembers = TransferAssetsAnyone;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
+}
+
+impl pallet_assets_handler for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
@@ -1290,6 +1296,9 @@ construct_runtime! {
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
 		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
 		ScoreStaking: pallet_score_staking = 75,
+
+		// New Bridge Added
+		AssetsHandler: pallet_assets_handler = 76,
 
 		// TEE
 		Teebag: pallet_teebag = 93,

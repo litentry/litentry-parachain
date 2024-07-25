@@ -259,3 +259,143 @@ fn create_successful_transfer_proposal() {
 		]);
 	})
 }
+
+
+?????????  ----below
+#[test]
+fn exceed_max_supply() {
+	new_test_ext().execute_with(|| {
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				RuntimeOrigin::signed(Bridge::account_id()),
+				RELAYER_A,
+				MAXIMUM_ISSURANCE + 1,
+				resource_id,
+			),
+			Error::<Test>::ReachMaximumSupply
+		);
+	})
+}
+
+#[test]
+fn exceed_max_supply_second() {
+	new_test_ext().execute_with(|| {
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
+
+		assert_ok!(BridgeTransfer::transfer(
+			RuntimeOrigin::signed(Bridge::account_id()),
+			RELAYER_A,
+			MAXIMUM_ISSURANCE - Balances::total_issuance(),
+			resource_id,
+		));
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				RuntimeOrigin::signed(Bridge::account_id()),
+				RELAYER_A,
+				10,
+				resource_id,
+			),
+			Error::<Test>::ReachMaximumSupply
+		);
+	})
+}
+
+#[test]
+fn test_external_balances_adjusted() {
+	new_test_ext().execute_with(|| {
+		// Set the new external_balances
+		assert_noop!(
+			BridgeTransfer::set_external_balances(
+				RuntimeOrigin::signed(Bridge::account_id()),
+				MaximumIssuance::<Test>::get() / 2
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_ok!(BridgeTransfer::set_external_balances(
+			RuntimeOrigin::root(),
+			MaximumIssuance::<Test>::get() / 2
+		));
+
+		// Check inital state
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
+		// Transfer and check result
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2);
+		assert_ok!(BridgeTransfer::transfer(
+			RuntimeOrigin::signed(Bridge::account_id()),
+			RELAYER_A,
+			10,
+			resource_id,
+		));
+		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
+
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
+
+		assert_events(vec![
+			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
+				to: RELAYER_A,
+				amount: 10,
+			}),
+		]);
+
+		// Token cross out of parachain
+		// Whitelist setup
+		let dest_chain = 0;
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_chain, 0));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_chain
+		));
+		assert_ok!(BridgeTransfer::transfer_native(
+			RuntimeOrigin::signed(RELAYER_A),
+			5,
+			vec![0u8, 0u8, 0u8, 0u8], // no meaning
+			dest_chain,
+		));
+
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 5);
+	});
+}
+
+#[test]
+fn set_maximum_issuance() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(
+			RuntimeOrigin::signed(RELAYER_A),
+			2
+		));
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
+		frame_system::Pallet::<Test>::assert_last_event(
+			crate::Event::<Test>::MaximumIssuanceChanged {
+				old_value: mock::MaximumIssuance::get(),
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn set_maximum_issuance_fails_with_unprivileged_origin() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_noop!(
+			pallet::Pallet::<Test>::set_maximum_issuance(RuntimeOrigin::signed(RELAYER_B), 2),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+	});
+}
+??????????????? ----above

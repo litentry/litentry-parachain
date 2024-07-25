@@ -88,6 +88,27 @@ pub mod pallet {
 	pub type ResourceToAssetInfo<T: Config> =
 		StorageMap<_, Twox64Concat, ResourceId, AssetInfo<AssetId<T>, BalanceOf<T>>, OptionQuery>;
 
+	#[pallet::type_value]
+	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
+		T::ExternalTotalIssuance::get()
+			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
+				<T as frame_system::Config>::AccountId,
+			>>::total_issuance())
+			.map_or_else(|| 0u32.into(), |v| v)
+	}
+
+	// Native Token External Balance
+	#[pallet::storage]
+	#[pallet::getter(fn external_balances)]
+	pub type ExternalBalances<T: Config> =
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
+	
+	// Native Token Maximum Issuance
+	#[pallet::storage]
+	#[pallet::getter(fn maximum_issuance)]
+	pub type MaximumIssuance<T: Config> =
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -128,27 +149,6 @@ pub mod pallet {
 		ReachMaximumSupply,
 		OverFlow,
 	}
-
-	#[pallet::type_value]
-	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
-		T::ExternalTotalIssuance::get()
-			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
-				<T as frame_system::Config>::AccountId,
-			>>::total_issuance())
-			.map_or_else(|| 0u32.into(), |v| v)
-	}
-
-	// Native Token External Balance
-	#[pallet::storage]
-	#[pallet::getter(fn external_balances)]
-	pub type ExternalBalances<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
-	
-	// Native Token Maximum Issuance
-	#[pallet::storage]
-	#[pallet::getter(fn maximum_issuance)]
-	pub type MaximumIssuance<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

@@ -17,7 +17,7 @@
 use super::*;
 
 use frame_support::{
-	assert_ok, derive_impl, ord_parameter_types, parameter_types,
+	assert_ok, ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64},
 };
 use frame_system::{self as system};
@@ -30,7 +30,10 @@ use sp_runtime::{
 use crate::{self as bridge, Config};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Header = generic::Header<u64, BlakeTwo256>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(

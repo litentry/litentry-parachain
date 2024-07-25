@@ -16,7 +16,7 @@
 
 use crate::{self as pallet_assets_handler};
 use frame_support::{
-	assert_ok, derive_impl, ord_parameter_types, parameter_types,
+	assert_ok, ord_parameter_types, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
@@ -28,7 +28,10 @@ use sp_runtime::{
 	BuildStorage,
 };
 pub const TEST_THRESHOLD: u32 = 2;
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Header = generic::Header<u64, BlakeTwo256>;
 
 type Balance = u64;
 // Configure a mock runtime to test the pallet.
@@ -43,6 +46,10 @@ frame_support::construct_runtime!(
 		BridgeTransfer: pallet_bridge_transfer,
 	}
 );
+
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -108,10 +115,16 @@ impl pallet_bridge::Config for Test {
 }
 
 parameter_types! {
+	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
+	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 	// TransferAssetsMembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
+}
+
+ord_parameter_types! {
+	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
 }
 
 pub struct MembersProvider;
@@ -162,10 +175,11 @@ impl pallet_assets::Config for Test {
 impl pallet_assets_handler::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type TreasuryAccount = TreasuryAccount;
+	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
+	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
-
-????????????????????
 impl pallet_bridge_transfer::Config for Test {
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Test>;
 	type TransferAssetsMembers = MembersProvider;

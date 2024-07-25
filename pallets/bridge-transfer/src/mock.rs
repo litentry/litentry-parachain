@@ -16,7 +16,7 @@
 
 use crate::{self as bridge_transfer, Config};
 use frame_support::{
-	assert_ok, derive_impl, ord_parameter_types, parameter_types,
+	assert_ok, ord_parameter_types, parameter_types,
 	traits::{
 		fungible,
 		tokens::{Fortitude, Precision},
@@ -34,13 +34,19 @@ use sp_runtime::{
 	BuildStorage, DispatchError,
 };
 pub const TEST_THRESHOLD: u32 = 2;
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Header = generic::Header<u64, BlakeTwo256>;
 
 type AccountId = u64;
 type Balance = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -48,6 +54,10 @@ frame_support::construct_runtime!(
 		BridgeTransfer: bridge_transfer,
 	}
 );
+
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;

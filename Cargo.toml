@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     'node',
     'pallets/account-fix',
+    'pallets/assets-handler',
     'pallets/bitacross',
     'pallets/bitacrossmimic',
     'pallets/bridge',
@@ -251,6 +252,7 @@ litmus-parachain-runtime = { path = "runtime/litmus", default-features = false }
 rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
+pallet-assets-handler = { path = "pallets/assets-handler", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }
 pallet-bitacross-mimic = { path = "pallets/bitacrossmimic", default-features = false }
 pallet-bridge = { path = "pallets/bridge", default-features = false }
