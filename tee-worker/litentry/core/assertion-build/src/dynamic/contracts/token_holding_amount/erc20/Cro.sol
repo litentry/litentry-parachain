@@ -22,29 +22,29 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Cro {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](7);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1000 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 20000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
-		ranges[5] = 100000 * Constants.decimals_factor;
-		ranges[6] = 300000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](7);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1000 * Constants.decimals_factor;
+        ranges[2] = 5000 * Constants.decimals_factor;
+        ranges[3] = 20000 * Constants.decimals_factor;
+        ranges[4] = 50000 * Constants.decimals_factor;
+        ranges[5] = 100000 * Constants.decimals_factor;
+        ranges[6] = 300000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](2);
-		networks[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b"
-		);
-		networks[1] = TokenInfo(
-			Web3Networks.Solana,
-			"DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA"
-		);
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory networks = new TokenInfo[](2);
+        networks[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b"
+        );
+        networks[1] = TokenInfo(
+            Web3Networks.Solana,
+            "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA"
+        );
+        return networks;
+    }
 }
