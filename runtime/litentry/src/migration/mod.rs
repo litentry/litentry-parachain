@@ -29,6 +29,9 @@ use sp_std::{
 };
 
 pub mod pallet_bounty;
+pub mod pallet_democracy;
+pub mod pallet_preimage;
+pub mod pallet_treasury;
 
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
