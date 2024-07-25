@@ -314,6 +314,7 @@ pub mod pallet {
 		}
 
 		/// Register an OIDC client
+		// TODO: take a deposit to cover the storage cost and prevent spamming
 		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn register_oidc_client(
