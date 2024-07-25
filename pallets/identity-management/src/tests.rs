@@ -192,3 +192,77 @@ fn extrinsic_whitelist_origin_works() {
 		));
 	});
 }
+
+#[test]
+fn register_oidc_client_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice.clone()),
+			redirect_uris
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::OidcClientRegistered { client_id: alice },
+		));
+	});
+}
+
+#[test]
+fn register_oidc_client_empty_redirect_uris_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), vec![]),
+			Error::<Test>::EmptyRedirectUris
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_already_registered_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice.clone()),
+			redirect_uris.clone()
+		));
+		assert_noop!(
+			IdentityManagement::register_oidc_client(
+				RuntimeOrigin::signed(alice.clone()),
+				redirect_uris
+			),
+			Error::<Test>::OidcClientAlreadyRegistered
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_redirect_uri_too_long_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec(), "https://very-long-uriiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.com".as_bytes().to_vec()];
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
+			Error::<Test>::RedirectUriTooLong
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_too_many_redirect_uris_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec![
+			"https://example1.com".as_bytes().to_vec(),
+			"https://example2.com".as_bytes().to_vec(),
+			"https://example3.com".as_bytes().to_vec(),
+			"https://example4.com".as_bytes().to_vec(),
+		];
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
+			Error::<Test>::TooManyRedirectUris
+		);
+	});
+}
