@@ -26,7 +26,6 @@ members = [
     'runtime/litmus',
     'runtime/rococo',
     'runtime/common',
-    'worker-pallets/parentchain',
 ]
 
 [profile.release]
