@@ -875,11 +875,12 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 [[package]]
 name = "core-primitives"
 version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "base58",
  "frame-support",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.9.12 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18)",
+ "litentry-macros 0.9.12 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18)",
  "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -2963,7 +2964,7 @@ dependencies = [
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
  "lc-vc-task-sender",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -3020,8 +3021,8 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.9.12",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -3155,7 +3156,6 @@ version = "0.9.0"
 dependencies = [
  "binary-merkle-tree",
  "bs58",
- "core-primitives",
  "env_logger 0.9.3",
  "futures 0.3.28",
  "futures 0.3.8",
@@ -3907,7 +3907,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "parity-scale-codec",
 ]
 
@@ -3988,7 +3988,7 @@ dependencies = [
  "its-state",
  "its-test",
  "its-validateer-fetch",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -4021,7 +4021,7 @@ dependencies = [
  "its-primitives",
  "its-state",
  "its-test",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -4478,7 +4478,7 @@ dependencies = [
  "lc-evm-dynamic-assertions",
  "lc-mock-server",
  "lc-stf-task-sender",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-parachain-staking",
@@ -4511,7 +4511,7 @@ dependencies = [
  "lc-mock-server",
  "lc-service",
  "lc-stf-task-sender",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4595,7 +4595,7 @@ dependencies = [
  "itp-utils",
  "lc-common",
  "lc-mock-server",
- "litentry-macros",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4636,7 +4636,7 @@ dependencies = [
  "itp-utils",
  "lc-dynamic-assertion",
  "lc-mock-server",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4837,7 +4837,7 @@ dependencies = [
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
- "litentry-macros",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-identity-management-tee",
@@ -5024,7 +5024,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-credentials",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -5059,8 +5059,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-hex-utils"
+version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+dependencies = [
+ "hex",
+]
+
+[[package]]
 name = "litentry-macros"
 version = "0.9.12"
+
+[[package]]
+name = "litentry-macros"
+version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 
 [[package]]
 name = "litentry-primitives"
@@ -5095,6 +5108,7 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5146,8 +5160,8 @@ dependencies = [
  "lc-data-providers",
  "lc-mock-server",
  "lc-stf-task-sender",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.9.12",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -6084,6 +6098,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "core-primitives",
  "frame-support",
@@ -6150,6 +6165,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.38",

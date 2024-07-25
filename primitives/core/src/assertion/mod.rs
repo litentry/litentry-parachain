@@ -54,11 +54,10 @@ use web3_token::Web3TokenType;
 pub mod dynamic;
 use dynamic::DynamicParams;
 
-use crate::{AccountId, ParameterString};
+use crate::{vec, AccountId, ParameterString, Vec};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]

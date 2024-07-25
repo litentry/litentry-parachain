@@ -50,7 +50,7 @@ lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false
 lc-evm-dynamic-assertions = { path = "../evm-dynamic-assertions", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-pallet-parachain-staking = { path = "../../../../pallets/parachain-staking", default-features = false }
+pallet-parachain-staking = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.18", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.10.0"

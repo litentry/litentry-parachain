@@ -27,7 +27,7 @@ itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
-pallet-teebag = { path = "../../../pallets/teebag", default-features = false }
+pallet-teebag = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.18", default-features = false }
 
 [features]
 default = []

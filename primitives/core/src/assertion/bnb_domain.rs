@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::FromStr;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_std::str::FromStr;
 
 const BNB_999_CLUB_MEMBER_LENGTH: usize = 3;
 const BNB_9999_CLUB_MEMBER_LENGTH: usize = 4;

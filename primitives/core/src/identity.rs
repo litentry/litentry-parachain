@@ -14,16 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub extern crate alloc;
-
 use crate::{
 	assertion::network::{
 		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
 		all_substrate_web3networks, Web3Network,
 	},
-	AccountId,
+	format, str, AccountId, String, Vec,
 };
-use alloc::{format, str, string::String};
 use base58::{FromBase58, ToBase58};
 use core::fmt::{Debug, Formatter};
 use litentry_hex_utils::{decode_hex, hex_encode};
@@ -40,7 +37,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
 };
-use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
 pub type IdentityInnerString = BoundedVec<u8, ConstU32<64>>;
@@ -497,7 +493,6 @@ impl From<[u8; 33]> for Identity {
 mod tests {
 	use super::*;
 	use parity_scale_codec::DecodeAll;
-	use sp_std::vec;
 	use strum::IntoEnumIterator;
 
 	#[test]

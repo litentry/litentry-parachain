@@ -17,7 +17,6 @@ scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
-sp-std = { workspace = true }
 
 litentry-hex-utils = { workspace = true }
 litentry-macros = { workspace = true }
@@ -33,7 +32,6 @@ std = [
     "frame-support/std",
     "sp-core/std",
     "sp-runtime/std",
-    "sp-std/std",
     "sp-io/std",
     "pallet-evm/std",
     "litentry-hex-utils/std",

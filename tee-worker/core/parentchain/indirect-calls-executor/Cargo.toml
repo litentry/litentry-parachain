@@ -43,7 +43,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 # litentry
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
-parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [dev-dependencies]
@@ -81,7 +80,6 @@ std = [
     # litentry
     "litentry-primitives/std",
     "itp-utils/std",
-    "parachain-core-primitives/std",
     "sp-std/std",
 ]
 sgx = [
