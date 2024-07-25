@@ -15,58 +15,21 @@
 
 */
 
-use itp_enclave_api::direct_request::DirectRequest;
-use itp_rpc::{Id, RpcRequest};
-use itp_utils::ToHexPrefixed;
 use its_peer_fetch::block_fetch_server::BlockFetchServerModuleBuilder;
 use its_primitives::types::block::SignedBlock;
-use its_rpc_handler::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
 use its_storage::interface::FetchBlocks;
-use jsonrpsee::{
-	types::error::CallError,
-	ws_server::{RpcModule, WsServerBuilder},
-};
-use log::debug;
+use jsonrpsee::{types::error::CallError, ws_server::WsServerBuilder};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::ToSocketAddrs;
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
-pub async fn run_server<Enclave, FetchSidechainBlocks>(
+pub async fn run_server<FetchSidechainBlocks>(
 	addr: impl ToSocketAddrs,
-	enclave: Arc<Enclave>,
 	sidechain_block_fetcher: Arc<FetchSidechainBlocks>,
 ) -> anyhow::Result<SocketAddr>
 where
-	Enclave: DirectRequest,
 	FetchSidechainBlocks: FetchBlocks<SignedBlock> + Send + Sync + 'static,
 {
 	let mut server = WsServerBuilder::default().build(addr).await?;
-
-	// FIXME: import block should be moved to trusted side.
-	let mut import_sidechain_block_module = RpcModule::new(enclave);
-	import_sidechain_block_module.register_method(
-		RPC_METHOD_NAME_IMPORT_BLOCKS,
-		|params, enclave| {
-			debug!("{} params: {:?}", RPC_METHOD_NAME_IMPORT_BLOCKS, params);
-
-			let enclave_req = RpcRequest::compose_jsonrpc_call(
-				Id::Text("1".to_string()),
-				RPC_METHOD_NAME_IMPORT_BLOCKS.into(),
-				vec![params.one::<Vec<SignedBlock>>()?.to_hex()],
-			)
-			.unwrap();
-
-			enclave
-				.rpc(enclave_req.as_bytes().to_vec())
-				.map_err(|e| CallError::Failed(e.into()))
-		},
-	)?;
-	server.register_module(import_sidechain_block_module).unwrap();
-
 	let fetch_sidechain_blocks_module = BlockFetchServerModuleBuilder::new(sidechain_block_fetcher)
 		.build()
 		.map_err(|e| CallError::Failed(e.to_string().into()))?; // `to_string` necessary due to no all errors implementing Send + Sync.

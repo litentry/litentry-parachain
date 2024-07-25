@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
+#![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
@@ -147,7 +148,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9182,
+	spec_version: 9185,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -927,7 +928,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens = 55,
+		// 55 is saved for old pallet: Tokens: orml_tokens
+		Assets: pallet_assets = 56,
 
 		// Litentry pallets
 		ChainBridge: pallet_bridge = 60,

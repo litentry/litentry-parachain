@@ -75,6 +75,23 @@ pub fn has_nft_721(
 						None => Ok(LoopControls::Continue),
 					}
 				},
+				Web3Network::Polygon => {
+					match check_nft_via_moralis(
+						network,
+						address.1.clone(),
+						token_address.into(),
+						data_provider_config,
+					) {
+						Ok(r) => {
+							if r {
+								result = true;
+								return Ok(LoopControls::Break)
+							}
+							Ok(LoopControls::Continue)
+						},
+						Err(err) => Err(err),
+					}
+				},
 				_ => Ok(LoopControls::Continue),
 			}
 		},
@@ -85,6 +102,50 @@ pub fn has_nft_721(
 	Ok(result)
 }
 
+pub fn check_nft_via_moralis(
+	network: Web3Network,
+	address: String,
+	token_address: String,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool, Error> {
+	let mut client = MoralisClient::new(data_provider_config);
+
+	match network {
+		Web3Network::Bsc | Web3Network::Ethereum | Web3Network::Polygon | Web3Network::Arbitrum => {
+			let mut cursor: Option<String> = None;
+			'inner: loop {
+				let param = GetNftsByWalletParam {
+					address: address.clone(),
+					chain: MoralisChainParam::new(&network),
+					token_addresses: Some(vec![token_address.clone()]),
+					limit: None,
+					cursor,
+				};
+				match client.get_nfts_by_wallet(&param, false) {
+					Ok(resp) => {
+						cursor = resp.cursor;
+						for item in &resp.result {
+							match item.amount.parse::<u32>() {
+								Ok(balance) =>
+									if balance > 0 {
+										return Ok(true)
+									},
+								Err(_) => return Err(ErrorDetail::ParseError),
+							}
+						}
+					},
+					Err(err) => return Err(err.into_error_detail()),
+				}
+				if cursor.is_none() {
+					break 'inner
+				}
+			}
+			Ok(false)
+		},
+		_ => Ok(false),
+	}
+}
+
 // support ERC1155/BEP1155 nft token
 pub fn has_nft_1155(
 	addresses: Vec<(Web3Network, String)>,
@@ -92,7 +153,6 @@ pub fn has_nft_1155(
 	data_provider_config: &DataProviderConfig,
 ) -> Result<bool, Error> {
 	let mut result = false;
-	let mut client = MoralisClient::new(data_provider_config);
 
 	loop_with_abort_strategy(
 		addresses,
@@ -105,36 +165,21 @@ pub fn has_nft_1155(
 				| Web3Network::Ethereum
 				| Web3Network::Polygon
 				| Web3Network::Arbitrum => {
-					let mut cursor: Option<String> = None;
-					'inner: loop {
-						let param = GetNftsByWalletParam {
-							address: address.1.clone(),
-							chain: MoralisChainParam::new(&network),
-							token_addresses: Some(vec![token_address.into()]),
-							limit: None,
-							cursor,
-						};
-						match client.get_nfts_by_wallet(&param, false) {
-							Ok(resp) => {
-								cursor = resp.cursor;
-								for item in &resp.result {
-									match item.amount.parse::<u32>() {
-										Ok(balance) =>
-											if balance > 0 {
-												result = true;
-												return Ok(LoopControls::Break)
-											},
-										Err(_) => return Err(ErrorDetail::ParseError),
-									}
-								}
-							},
-							Err(err) => return Err(err.into_error_detail()),
-						}
-						if cursor.is_none() {
-							break 'inner
-						}
+					match check_nft_via_moralis(
+						network,
+						address.1.clone(),
+						token_address.into(),
+						data_provider_config,
+					) {
+						Ok(r) => {
+							if r {
+								result = true;
+								return Ok(LoopControls::Break)
+							}
+							Ok(LoopControls::Continue)
+						},
+						Err(err) => Err(err),
 					}
-					Ok(LoopControls::Continue)
 				},
 				_ => Ok(LoopControls::Continue),
 			}

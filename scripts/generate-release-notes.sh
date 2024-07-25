@@ -202,7 +202,7 @@ mrenclave:                   : $MRENCLAVE
 EOF
 fi
 
-if is_identity_worker_release; then
+if is_bitacross_worker_release; then
   WORKER_VERSION=$(grep version bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_BIN=$(grep name bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_RUSTC_VERSION=$(cd bitacross-worker && rustc --version)

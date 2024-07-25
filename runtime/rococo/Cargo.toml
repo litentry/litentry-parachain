@@ -7,6 +7,7 @@ version = '0.9.17'
 [dependencies]
 hex-literal = { workspace = true }
 log = { workspace = true }
+num_enum = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
@@ -67,7 +68,6 @@ xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 
-orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
@@ -78,6 +78,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
 pallet-asset-manager = { workspace = true }
+pallet-assets = { workspace = true }
 pallet-bitacross = { workspace = true }
 pallet-bitacross-mimic = { workspace = true }
 pallet-bridge = { workspace = true }
@@ -87,14 +88,17 @@ pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
 pallet-parachain-staking = { workspace = true }
+pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
 pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
 
+fp-evm = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
+pallet-evm-precompile-assets-erc20 = { workspace = true }
 pallet-evm-precompile-blake2 = { workspace = true }
 pallet-evm-precompile-bn128 = { workspace = true }
 pallet-evm-precompile-dispatch = { workspace = true }
@@ -105,10 +109,12 @@ pallet-evm-precompile-simple = { workspace = true }
 
 pallet-evm-precompile-bridge-transfer = { workspace = true }
 pallet-evm-precompile-parachain-staking = { workspace = true }
+pallet-evm-precompile-score-staking = { workspace = true }
 
 moonbeam-evm-tracer = { workspace = true }
 moonbeam-rpc-primitives-debug = { workspace = true }
 moonbeam-rpc-primitives-txpool = { workspace = true }
+precompile-utils = { workspace = true }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
@@ -161,6 +167,7 @@ runtime-benchmarks = [
     "pallet-teebag/runtime-benchmarks",
     "pallet-vc-management/runtime-benchmarks",
     "pallet-account-fix/runtime-benchmarks",
+    "pallet-score-staking/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -183,10 +190,10 @@ std = [
     "frame-system/std",
     "frame-try-runtime?/std",
     "frame-system-rpc-runtime-api/std",
-    "orml-tokens/std",
     "orml-traits/std",
     "orml-xtokens/std",
     "pallet-asset-manager/std",
+    "pallet-assets/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -195,6 +202,7 @@ std = [
     "pallet-democracy/std",
     "pallet-ethereum/std",
     "pallet-evm/std",
+    "pallet-evm-precompile-assets-erc20/std",
     "pallet-evm-precompile-blake2/std",
     "pallet-evm-precompile-simple/std",
     "pallet-evm-precompile-bn128/std",
@@ -204,6 +212,7 @@ std = [
     "pallet-evm-precompile-sha3fips/std",
     "pallet-evm-precompile-bridge-transfer/std",
     "pallet-evm-precompile-parachain-staking/std",
+    "pallet-evm-precompile-score-staking/std",
     "pallet-identity/std",
     "pallet-membership/std",
     "pallet-multisig/std",
@@ -235,6 +244,7 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "fp-evm/std",
     "fp-rpc/std",
     "fp-self-contained/std",
     "frame-benchmarking?/std",
@@ -245,6 +255,7 @@ std = [
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
+    "pallet-score-staking/std",
     "pallet-teebag/std",
     "pallet-vc-management/std",
     "pallet-account-fix/std",
@@ -253,6 +264,7 @@ std = [
     "moonbeam-rpc-primitives-txpool/std",
     "pallet-bitacross/std",
     "pallet-bitacross-mimic/std",
+    "precompile-utils/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -265,9 +277,9 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
-    "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
+    "pallet-assets/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
@@ -278,6 +290,7 @@ try-runtime = [
     "pallet-democracy/try-runtime",
     "pallet-ethereum/try-runtime",
     "pallet-evm/try-runtime",
+    "pallet-evm-assertions/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
     "pallet-group/try-runtime",
@@ -303,4 +316,5 @@ try-runtime = [
     "pallet-account-fix/try-runtime",
     "pallet-bitacross/try-runtime",
     "pallet-bitacross-mimic/try-runtime",
+    "pallet-score-staking/try-runtime",
 ]

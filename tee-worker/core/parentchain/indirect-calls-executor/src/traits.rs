@@ -21,6 +21,7 @@ use core::fmt::Debug;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 use itp_types::{OpaqueCall, H256};
+use sp_core::H160;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
 use std::{sync::Arc, vec::Vec};
 
@@ -34,7 +35,7 @@ pub trait ExecuteIndirectCalls {
 		block: &ParentchainBlock,
 		events: &[u8],
 		metrics_api: Arc<OCallApi>,
-	) -> Result<Option<OpaqueCall>>
+	) -> Result<Option<Vec<OpaqueCall>>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 		OCallApi: EnclaveMetricsOCallApi;
@@ -50,6 +51,10 @@ pub trait ExecuteIndirectCalls {
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
+
+	fn create_assertion_stored_call(&self, assertion_ids: Vec<H160>) -> Result<Vec<OpaqueCall>>;
+
+	fn create_assertion_voided_call(&self, assertion_ids: Vec<H160>) -> Result<Vec<OpaqueCall>>;
 }
 
 /// Trait that should be implemented on indirect calls to be executed.

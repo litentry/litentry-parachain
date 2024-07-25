@@ -126,10 +126,10 @@ library Http {
         return (success, value);
     }
 
-    function Get(string memory url, HttpHeader[] memory headers)
-        internal
-        returns (bool, string memory)
-    {
+    function Get(
+        string memory url,
+        HttpHeader[] memory headers
+    ) internal returns (bool, string memory) {
         bool success;
         string memory value;
 

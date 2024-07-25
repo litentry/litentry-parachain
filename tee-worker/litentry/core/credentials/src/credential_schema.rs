@@ -107,12 +107,12 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 
 		Assertion::CryptoSummary => Some(format!("{BASE_URL}/23-crypto-summary/1-1-0.json")),
 
-		Assertion::PlatformUser(_) => Some(format!("{BASE_URL}/24-platform-user/1-1-1.json")),
+		Assertion::PlatformUser(_) => Some(format!("{BASE_URL}/24-platform-user/1-1-2.json")),
 
-		Assertion::NftHolder(_) => Some(format!("{BASE_URL}/26-nft-holder/1-1-0.json")),
+		Assertion::NftHolder(_) => Some(format!("{BASE_URL}/26-nft-holder/1-1-2.json")),
 
 		Assertion::TokenHoldingAmount(_) =>
-			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-2.json")),
+			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-3.json")),
 
 		Assertion::Dynamic(..) => None,
 	}

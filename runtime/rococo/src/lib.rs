@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
+#![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "512"]
 
@@ -245,7 +246,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9182,
+	spec_version: 9185,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1034,6 +1035,7 @@ impl pallet_evm_assertions::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AssertionId = H160;
 	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 // Temporary for bitacross team to test
@@ -1157,7 +1159,6 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	// Minimal effort, no precompile for now
 	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
@@ -1183,8 +1184,29 @@ impl pallet_ethereum::Config for Runtime {
 	type ExtraDataLength = ConstU32<30>;
 }
 
-impl runtime_common::BaseRuntimeRequirements for Runtime {}
+parameter_types! {
+	pub const DefaultYearlyInflation: Perbill = Perbill::from_perthousand(5);
+}
 
+pub struct IdentityAccountIdConvert;
+
+impl pallet_score_staking::AccountIdConvert<Runtime> for IdentityAccountIdConvert {
+	fn convert(account: AccountId) -> <Runtime as frame_system::Config>::AccountId {
+		account
+	}
+}
+
+impl pallet_score_staking::Config for Runtime {
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
+	type AccountIdConvert = IdentityAccountIdConvert;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
+	type YearlyInflation = DefaultYearlyInflation;
+	type MaxScoreUserCount = ConstU32<1_000_000>;
+}
+
+impl runtime_common::BaseRuntimeRequirements for Runtime {}
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
 
 construct_runtime! {
@@ -1247,7 +1269,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens = 55,
+		// 55 is saved for old pallet: Tokens: orml_tokens
+		Assets: pallet_assets = 56,
 
 		// Rococo pallets
 		ChainBridge: pallet_bridge = 60,
@@ -1266,6 +1289,7 @@ construct_runtime! {
 		// Developer council
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
 		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
+		ScoreStaking: pallet_score_staking = 75,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
@@ -1368,7 +1392,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::AccountFix(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::BitacrossMimic(_) |
-			RuntimeCall::EvmAssertions(_)
+			RuntimeCall::EvmAssertions(_) |
+			RuntimeCall::ScoreStaking(_)
 		)
 	}
 }

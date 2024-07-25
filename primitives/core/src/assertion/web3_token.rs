@@ -102,23 +102,30 @@ pub enum Web3TokenType {
 	Inj,
 	#[codec(index = 39)]
 	Bean,
+	#[codec(index = 40)]
+	An,
+	#[codec(index = 41)]
+	Tuna,
 }
 
 impl Web3TokenType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx | Self::Inj =>
-				vec![Web3Network::Bsc, Web3Network::Ethereum],
+			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx | Self::Inj => {
+				vec![Web3Network::Bsc, Web3Network::Ethereum]
+			},
 			Self::Lit => vec![
 				Web3Network::Bsc,
 				Web3Network::Ethereum,
 				Web3Network::Litentry,
 				Web3Network::Litmus,
 			],
-			Self::Nfp | Self::Ada | Self::Doge | Self::Bch | Self::Etc | Self::Fil =>
-				vec![Web3Network::Bsc],
-			Self::Sol | Self::Mcrt =>
-				vec![Web3Network::Bsc, Web3Network::Ethereum, Web3Network::Solana],
+			Self::Nfp | Self::Ada | Self::Doge | Self::Bch | Self::Etc | Self::Fil => {
+				vec![Web3Network::Bsc]
+			},
+			Self::Sol | Self::Mcrt => {
+				vec![Web3Network::Bsc, Web3Network::Ethereum, Web3Network::Solana]
+			},
 			Self::Btc => vec![
 				Web3Network::BitcoinP2tr,
 				Web3Network::BitcoinP2pkh,
@@ -137,6 +144,7 @@ impl Web3TokenType {
 			Self::Atom => vec![Web3Network::Ethereum, Web3Network::Bsc, Web3Network::Polygon],
 			Self::Cro => vec![Web3Network::Ethereum, Web3Network::Solana],
 			Self::Bean => vec![Web3Network::Bsc, Web3Network::Combo],
+			Self::An => vec![Web3Network::Bsc],
 			_ => vec![Web3Network::Ethereum],
 		}
 	}
