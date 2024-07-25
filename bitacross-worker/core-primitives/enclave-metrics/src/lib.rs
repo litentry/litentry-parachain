@@ -33,5 +33,5 @@ pub enum EnclaveMetric {
 	Musig2CeremonyStarted,
 	Musig2CeremonyFailed,
 	Musig2CeremonyTimedout(u8),
-	Musig2CeremonyDuration(Duration)
+	Musig2CeremonyDuration(Duration),
 }

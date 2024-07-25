@@ -63,6 +63,7 @@ use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use ita_stf::TrustedCallSigned;
 use itc_direct_rpc_client::{DirectRpcClient, DirectRpcClientFactory, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{
 	ecdsa::Pair as EcdsaPair,
@@ -95,7 +96,6 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
-use itp_enclave_metrics::EnclaveMetric;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -250,7 +250,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					) {
 						error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 					}
-                    timed_out_count += 1;
+					timed_out_count += 1;
 				}
 				if_retain
 			});
@@ -259,9 +259,10 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 			let mut command_tmp_write = ceremony_command_tmp.write().unwrap();
 			command_tmp_write.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
 		}
-        if timed_out_count > 0 {
-            let _ = cloned_ocall_api.update_metric(EnclaveMetric::Musig2CeremonyTimedout(timed_out_count));
-        }
+		if timed_out_count > 0 {
+			let _ = cloned_ocall_api
+				.update_metric(EnclaveMetric::Musig2CeremonyTimedout(timed_out_count));
+		}
 	});
 
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
@@ -385,12 +386,14 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyFailed);
 				},
 				CeremonyEvent::CeremonyEnded(_, _, _, _) => {
-					let ceremony_start_time = context.ceremony_registry.read().unwrap().get(&ceremony_id).unwrap().1;
-					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyDuration(Duration::from_millis(get_current_timestamp() - ceremony_start_time)));
-				}
-				_ => {}
+					let ceremony_start_time =
+						context.ceremony_registry.read().unwrap().get(&ceremony_id).unwrap().1;
+					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyDuration(
+						Duration::from_millis(get_current_timestamp() - ceremony_start_time),
+					));
+				},
+				_ => {},
 			}
-
 
 			match event {
 				CeremonyEvent::FirstRoundStarted(_, _, _)

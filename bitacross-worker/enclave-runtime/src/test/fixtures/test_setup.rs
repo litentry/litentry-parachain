@@ -29,8 +29,7 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
 use itp_test::mock::{
-	handle_state_mock::HandleStateMock,
-	shielding_crypto_mock::ShieldingCryptoMock,
+	handle_state_mock::HandleStateMock, shielding_crypto_mock::ShieldingCryptoMock,
 };
 use itp_top_pool::{basic_pool::BasicPool, pool::ExtrinsicHash};
 use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};

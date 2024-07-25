@@ -93,16 +93,13 @@ pub trait HandleMetrics {
 }
 
 /// Metrics handler implementation.
-pub struct MetricsHandler {
-}
+pub struct MetricsHandler {}
 
 #[async_trait]
-impl HandleMetrics for MetricsHandler
-{
+impl HandleMetrics for MetricsHandler {
 	type ReplyType = String;
 
 	async fn handle_metrics(&self) -> Result<Self::ReplyType, Rejection> {
-
 		let default_metrics = match gather_metrics_into_reply(&prometheus::gather()) {
 			Ok(r) => r,
 			Err(e) => {
@@ -114,7 +111,6 @@ impl HandleMetrics for MetricsHandler
 		Ok(default_metrics)
 	}
 }
-
 
 fn gather_metrics_into_reply(metrics: &[MetricFamily]) -> ServiceResult<String> {
 	use prometheus::Encoder;
@@ -148,12 +144,12 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::Musig2CeremonyStarted => MUSIG2_CEREMONIES_STARTED.inc(),
 			EnclaveMetric::Musig2CeremonyFailed => MUSIG2_CEREMONIES_FAILED.inc(),
-			EnclaveMetric::Musig2CeremonyTimedout(count) => {
+			EnclaveMetric::Musig2CeremonyTimedout(count) =>
 				for i in 0..count {
 					MUSIG2_CEREMONIES_TIMED_OUT.inc()
-				}
-			}
-			EnclaveMetric::Musig2CeremonyDuration(time) => MUSIG2_CEREMONY_DURATION.observe(time.as_secs_f64())
+				},
+			EnclaveMetric::Musig2CeremonyDuration(time) =>
+				MUSIG2_CEREMONY_DURATION.observe(time.as_secs_f64()),
 		}
 		Ok(())
 	}
