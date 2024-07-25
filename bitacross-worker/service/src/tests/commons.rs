@@ -57,5 +57,7 @@ pub fn local_worker_config(
 		crate::config::pwd(),
 		None,
 		"0".to_string(),
+		5,
+		10,
 	)
 }
