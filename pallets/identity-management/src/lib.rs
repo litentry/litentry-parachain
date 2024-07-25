@@ -43,16 +43,29 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
+use frame_support::traits::{ConstU32, Get};
 use pallet_teebag::ShardIdentifier;
-use sp_core::H256;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+use sp_core::{RuntimeDebug, H256};
 use sp_std::vec::Vec;
+
+const MAX_REDIRECT_URL_LEN: u32 = 256;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{ShardIdentifier, Vec, WeightInfo, H256};
+	use super::{ShardIdentifier, Vec, WeightInfo, H256, MAX_REDIRECT_URL_LEN};
 	use core_primitives::{ErrorDetail, IMPError, Identity};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+
+	#[derive(
+		Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen,
+	)]
+	#[scale_info(skip_type_params(MaxOidcClientUris, MaxRedirectUriLen))]
+	pub struct OidcClient<MaxOidcClientUris: Get<u32>, MaxRedirectUriLen: Get<u32>> {
+		redirect_uris: BoundedVec<BoundedVec<u8, MaxRedirectUriLen>, MaxOidcClientUris>,
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -67,6 +80,19 @@ pub mod pallet {
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
+		// maximum number of OIDC client URIs
+		#[pallet::constant]
+		type MaxOidcClientRedirectUris: Get<u32>;
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn integrity_test() {
+			assert!(
+				<T as Config>::MaxOidcClientRedirectUris::get() > 0,
+				"MaxOidcClientUris must be greater than zero."
+			);
+		}
 	}
 
 	#[pallet::event]
@@ -146,6 +172,9 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		OidcClientRegistered {
+			client_id: T::AccountId,
+		},
 	}
 
 	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
@@ -153,12 +182,30 @@ pub mod pallet {
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
+	// OIDC clients who can use the OIDC flow
+	#[pallet::storage]
+	pub type OidcClients<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		OidcClient<T::MaxOidcClientRedirectUris, ConstU32<MAX_REDIRECT_URL_LEN>>,
+		OptionQuery,
+	>;
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
 		/// a `link_identity` request from unauthorized user
 		UnauthorizedUser,
+		/// redirect_uris exceed the maximum length
+		TooManyRedirectUris,
+		/// redirect_uris is empty
+		EmptyRedirectUris,
+		/// redirect_uri exceeds the maximum length
+		RedirectUriTooLong,
+		/// OIDC client already exists
+		OidcClientAlreadyRegistered,
 	}
 
 	#[pallet::call]
@@ -259,6 +306,40 @@ pub mod pallet {
 				encrypted_identity,
 			});
 			Ok(().into())
+		}
+
+		/// Register an OIDC client
+		#[pallet::call_index(6)]
+		#[pallet::weight({0})] // TODO: add weight
+		pub fn register_oidc_client(
+			origin: OriginFor<T>,
+			redirect_uris: Vec<Vec<u8>>,
+		) -> DispatchResult {
+			let client_id = ensure_signed(origin)?;
+			ensure!(redirect_uris.len() > 0, Error::<T>::EmptyRedirectUris);
+			ensure!(
+				!OidcClients::<T>::contains_key(&client_id),
+				Error::<T>::OidcClientAlreadyRegistered
+			);
+
+			let client_redirect_uris = redirect_uris
+				.into_iter()
+				.map(|uri| {
+					BoundedVec::<u8, _>::try_from(uri).map_err(|_| Error::<T>::RedirectUriTooLong)
+				})
+				.collect::<Result<Vec<_>, _>>()?;
+
+			OidcClients::<T>::insert(
+				&client_id,
+				OidcClient {
+					redirect_uris: BoundedVec::try_from(client_redirect_uris)
+						.map_err(|_| Error::<T>::TooManyRedirectUris)?,
+				},
+			);
+
+			Self::deposit_event(Event::OidcClientRegistered { client_id });
+
+			Ok(())
 		}
 
 		/// ---------------------------------------------------
