@@ -30,12 +30,15 @@ describe('test-bitcoin', () => {
     it('should pass on all workers', async () => {
         const worker1 = new WebSocket(workerUrls[0], {
             perMessageDeflate: false,
+            rejectUnauthorized: false
         });
         const worker2 = new WebSocket(workerUrls[1], {
             perMessageDeflate: false,
+            rejectUnauthorized: false
         });
         const worker3 = new WebSocket(workerUrls[2], {
             perMessageDeflate: false,
+            rejectUnauthorized: false
         });
 
         let worker1Resolve: any;
