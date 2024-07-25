@@ -203,8 +203,9 @@ fn register_oidc_client_works() {
 			redirect_uris
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::OidcClientRegistered { client_id: alice },
+			crate::Event::OidcClientRegistered { client_id: alice.clone() },
 		));
+		assert!(OidcClients::<Test>::contains_key(&alice));
 	});
 }
 
