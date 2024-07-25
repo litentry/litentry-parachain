@@ -230,10 +230,7 @@ fn register_oidc_client_already_registered_check_works() {
 			redirect_uris.clone()
 		));
 		assert_noop!(
-			IdentityManagement::register_oidc_client(
-				RuntimeOrigin::signed(alice.clone()),
-				redirect_uris
-			),
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
 			Error::<Test>::OIDCClientAlreadyRegistered
 		);
 	});
@@ -284,7 +281,7 @@ fn unregister_oidc_client_works() {
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::OIDCClientUnregistered { client_id: alice.clone() },
 		));
-		assert_eq!(OIDCClients::<Test>::contains_key(&alice), false);
+		assert!(!OIDCClients::<Test>::contains_key(&alice));
 	});
 }
 
@@ -305,7 +302,7 @@ fn unregister_oidc_client_unauthorized_sender() {
 		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
 		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
 		assert_ok!(IdentityManagement::register_oidc_client(
-			RuntimeOrigin::signed(alice.clone()),
+			RuntimeOrigin::signed(alice),
 			redirect_uris
 		));
 		let bob: SystemAccountId = get_signer(BOB_PUBKEY);

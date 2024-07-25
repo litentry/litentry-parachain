@@ -43,11 +43,8 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-use frame_support::traits::{ConstU32, Get};
 use pallet_teebag::ShardIdentifier;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
-use sp_core::{RuntimeDebug, H256};
+use sp_core::H256;
 use sp_std::vec::Vec;
 
 const MAX_REDIRECT_URL_LEN: u32 = 256;
@@ -322,7 +319,7 @@ pub mod pallet {
 			redirect_uris: Vec<Vec<u8>>,
 		) -> DispatchResult {
 			let client_id = ensure_signed(origin)?;
-			ensure!(redirect_uris.len() > 0, Error::<T>::EmptyRedirectUris);
+			ensure!(!redirect_uris.is_empty(), Error::<T>::EmptyRedirectUris);
 			ensure!(
 				!OIDCClients::<T>::contains_key(&client_id),
 				Error::<T>::OIDCClientAlreadyRegistered
