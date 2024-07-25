@@ -74,7 +74,11 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use lc_direct_call::{
-	handler::{kill_ceremony, nonce_share, partial_signature_share, sign_bitcoin, sign_ethereum},
+	handler::{
+		kill_ceremony, nonce_share, partial_signature_share,
+		sign_bitcoin::{self, SignBitcoinError},
+		sign_ethereum,
+	},
 	CeremonyRoundCall, CeremonyRoundCallSigned, DirectCall, DirectCallSigned,
 };
 use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, DecryptableRequest};
@@ -233,7 +237,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					let hash = blake2_256(&ceremony.get_id_ref().encode());
 					let encrypted_result = aes_encrypt_default(
 						ceremony.get_aes_key(),
-						&CeremonyError::Timeout.encode(),
+						&SignBitcoinError::CeremonyError.encode(),
 					)
 					.encode();
 					if let Err(e) = responder.send_state_with_status(
