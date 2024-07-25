@@ -22,52 +22,31 @@ use crate::test::{
 			create_ocall_api, create_top_pool, encrypt_trusted_operation, sign_trusted_call,
 		},
 		initialize_test_state::init_state,
-		test_setup::TestStf,
 	},
 	mocks::types::{
 		TestShieldingKey, TestShieldingKeyRepo, TestSigner, TestStateHandler, TestTopPoolAuthor,
 	},
 };
-use codec::Encode;
-use ita_parentchain_interface::integritee;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
 	Getter, TrustedCall, TrustedCallSigned,
 };
-use itc_parentchain::indirect_calls_executor::{
-	mock::TestEventCreator, ExecuteIndirectCalls, IndirectCallsExecutor,
-};
-use itc_parentchain_test::{
-	parentchain_block_builder::ParentchainBlockBuilder,
-	parentchain_header_builder::ParentchainHeaderBuilder,
-};
-use itp_node_api::{
-	api_client::{
-		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
-		ParentchainUncheckedExtrinsic,
-	},
-	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
-};
+use itc_parentchain_test::parentchain_header_builder::ParentchainHeaderBuilder;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_executor::enclave_signer::StfEnclaveSigner;
-use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
-use itp_stf_state_observer::mock::ObserveStateMock;
+
+use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 	traits::AuthorApi,
 };
-use itp_types::{
-	parentchain::{Address, ParentchainId},
-	Block, RsaRequest, ShardIdentifier, H256,
-};
+use itp_types::{RsaRequest, ShardIdentifier};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
-use sp_core::{ed25519, Pair};
-use sp_runtime::{MultiSignature, OpaqueExtrinsic};
+use sp_core::Pair;
 use std::{sync::Arc, vec::Vec};
 pub fn process_indirect_call_in_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();

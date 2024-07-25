@@ -16,9 +16,7 @@
 
 */
 
-use crate::{
-	rpc::worker_api_direct::public_api_rpc_handler, test::mocks::types::TestOCallApi, Hash,
-};
+use crate::{rpc::common_api::add_common_api, test::mocks::types::TestOCallApi, Hash};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, PublicGetter};
 use itc_direct_rpc_server::{
@@ -35,6 +33,7 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
 use litentry_primitives::{Address32, Identity};
 use std::{string::ToString, sync::Arc, vec::Vec};
@@ -58,7 +57,10 @@ pub fn get_state_request_works() {
 	let data_provider_config =
 		DataProviderConfig::new().expect("Failed to create DataProviderConfig");
 
-	let io_handler = public_api_rpc_handler(
+	let mut io_handler = IoHandler::new();
+
+	add_common_api(
+		&mut io_handler,
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
@@ -66,6 +68,7 @@ pub fn get_state_request_works() {
 		None::<Arc<HandleStateMock>>,
 		Arc::new(data_provider_config),
 	);
+
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
 	let getter =

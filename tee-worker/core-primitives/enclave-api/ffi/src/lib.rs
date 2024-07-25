@@ -208,15 +208,6 @@ extern "C" {
 
 	pub fn test_main_entrance(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
-	pub fn call_rpc_methods(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		request: *const u8,
-		request_len: u32,
-		response: *mut u8,
-		response_len: u32,
-	) -> sgx_status_t;
-
 	pub fn run_state_provisioning_server(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
