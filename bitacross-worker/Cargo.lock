@@ -611,7 +611,7 @@ dependencies = [
  "itp-utils",
  "jsonrpsee",
  "lazy_static",
- "litentry-macros",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -1030,11 +1030,12 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 [[package]]
 name = "core-primitives"
 version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "base58",
  "frame-support",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.9.12 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18)",
+ "litentry-macros 0.9.12 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18)",
  "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
@@ -2901,7 +2902,7 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -2954,7 +2955,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
- "litentry-macros",
+ "litentry-macros 0.9.12",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -3778,7 +3779,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "parity-scale-codec",
 ]
 
@@ -4144,8 +4145,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-hex-utils"
+version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+dependencies = [
+ "hex",
+]
+
+[[package]]
 name = "litentry-macros"
 version = "0.9.12"
+
+[[package]]
+name = "litentry-macros"
+version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 
 [[package]]
 name = "litentry-primitives"
@@ -4156,7 +4170,7 @@ dependencies = [
  "core-primitives",
  "hex",
  "itp-sgx-crypto",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.9.12",
  "log 0.4.20",
  "pallet-teebag",
  "parity-scale-codec",
@@ -4176,6 +4190,7 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.9.12"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5078,6 +5093,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.26",
