@@ -101,4 +101,11 @@ impl ChainApi for ParentchainApiMock {
 	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
 		Ok(Default::default())
 	}
+
+	fn get_block_by_number(
+		&self,
+		block: Self::BlockNumber,
+	) -> ApiResult<Option<itc_parentchain_test::SignedBlock<Self::Block>>> {
+		Ok(self.parentchain.get(block as usize).cloned())
+	}
 }
