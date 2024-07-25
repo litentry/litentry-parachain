@@ -18,6 +18,7 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Identities.sol";
 
 import "hardhat/console.sol";
@@ -39,10 +40,7 @@ contract MockIdentityToString {
         bool success = true;
         string memory value = string(identity_value);
 
-        if (
-            keccak256(abi.encodePacked(value)) ==
-            keccak256(abi.encodePacked("identity_to_string_fail"))
-        ) {
+        if (Strings.equal(value, "identity_to_string_fail")) {
             success = false;
         }
 

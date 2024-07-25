@@ -36,6 +36,12 @@ Should use the `dynamic` as your project root path in Remix IDE as below:
 remixd -s your_repo_path/tee-worker/litentry/core/assertion-build/src/dynamic --remix-ide https://remix.ethereum.org
 ```
 
+If you have not install remixd before, rub below script to install it.
+
+```shell
+npm install -g @remix-project/remixd
+```
+
 ### Testing
 
 -   Test all: `pnpm test`.

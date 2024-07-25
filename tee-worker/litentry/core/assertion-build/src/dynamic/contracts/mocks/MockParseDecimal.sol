@@ -33,34 +33,15 @@ contract MockParseDecimal {
         bool success = true;
         uint256 value = 0;
 
-        if (
-            keccak256(abi.encodePacked(stringValue)) ==
-            keccak256(abi.encodePacked("0.1")) &&
-            decimals == 18
-        ) {
+        if (Strings.equal(stringValue, "0.1") && decimals == 18) {
             value = 1 * 10 ** 17;
-        } else if (
-            keccak256(abi.encodePacked(stringValue)) ==
-            keccak256(abi.encodePacked("1")) &&
-            decimals == 18
-        ) {
+        } else if (Strings.equal(stringValue, "1") && decimals == 18) {
             value = 1 * 10 ** 18;
-        } else if (
-            keccak256(abi.encodePacked(stringValue)) ==
-            keccak256(abi.encodePacked("1.1")) &&
-            decimals == 18
-        ) {
+        } else if (Strings.equal(stringValue, "1.1") && decimals == 18) {
             value = 11 * 10 ** 17;
-        } else if (
-            keccak256(abi.encodePacked(stringValue)) ==
-            keccak256(abi.encodePacked("600.1")) &&
-            decimals == 18
-        ) {
+        } else if (Strings.equal(stringValue, "600.1") && decimals == 18) {
             value = 6001 * 10 ** 17;
-        } else if (
-            keccak256(abi.encodePacked(stringValue)) ==
-            keccak256(abi.encodePacked("parse_decimal_fail"))
-        ) {
+        } else if (Strings.equal(stringValue, "parse_decimal_fail")) {
             success = false;
         }
 

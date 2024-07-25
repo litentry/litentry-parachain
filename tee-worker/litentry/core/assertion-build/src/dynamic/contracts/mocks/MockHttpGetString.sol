@@ -18,6 +18,7 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import { HttpHeader } from "../libraries/Http.sol";
 
 import "hardhat/console.sol";
@@ -35,56 +36,44 @@ contract MockHttpGetString {
         string memory value = "0";
 
         if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1DtMsV2JDUVccDU5V5zdV4mdBf5KRHaJ7Z"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1DtMsV2JDUVccDU5V5zdV4mdBf5KRHaJ7Z"
             )
         ) {
             value = "0.1";
         } else if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=17dUgEh3jSnGrNmtMaPrVHvVgjNiqkHHhb"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=17dUgEh3jSnGrNmtMaPrVHvVgjNiqkHHhb"
             )
         ) {
             value = "1";
         } else if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1BCtecRbWLi1NYzfj9CNszJhCh3c2LXGPd"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1BCtecRbWLi1NYzfj9CNszJhCh3c2LXGPd"
             )
         ) {
             value = "1.1";
         } else if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1MWAjD8eSqHro35WVcWV3N3VGfyzCsiMVM"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=1MWAjD8eSqHro35WVcWV3N3VGfyzCsiMVM"
             )
         ) {
             value = "600.1";
         } else if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=parse_decimal_fail"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=parse_decimal_fail"
             )
         ) {
             value = "parse_decimal_fail";
         } else if (
-            keccak256(abi.encodePacked(url)) ==
-            keccak256(
-                abi.encodePacked(
-                    "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=httt_get_string_fail"
-                )
+            Strings.equal(
+                url,
+                "https://api.geniidata.com/api/1/brc20/balance?tick=ordi&address=httt_get_string_fail"
             )
         ) {
             success = false;
