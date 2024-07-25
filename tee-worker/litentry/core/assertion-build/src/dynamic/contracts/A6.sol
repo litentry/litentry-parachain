@@ -18,7 +18,7 @@
 
 pragma solidity ^0.8.8;
 
-import "./openzeppelin/Strings.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./libraries/AssertionLogic.sol";
 import "./libraries/Http.sol";
 import "./libraries/Identities.sol";
@@ -123,22 +123,18 @@ contract A6 is DynamicAssertion {
         return (description, assertion_type, assertions, schema_url, result);
     }
 
-    function prepareHeaders(string memory apiKey)
-        private
-        pure
-        returns (HttpHeader[] memory)
-    {
+    function prepareHeaders(
+        string memory apiKey
+    ) private pure returns (HttpHeader[] memory) {
         HttpHeader[] memory headers = new HttpHeader[](1);
         // we expect first secret to be twitter api key
         headers[0] = HttpHeader("authorization", prepareAuthHeader(apiKey));
         return headers;
     }
 
-    function prepareAuthHeader(string memory apiKey)
-        private
-        pure
-        returns (string memory)
-    {
+    function prepareAuthHeader(
+        string memory apiKey
+    ) private pure returns (string memory) {
         return string(abi.encodePacked("Bearer ", apiKey));
     }
 }

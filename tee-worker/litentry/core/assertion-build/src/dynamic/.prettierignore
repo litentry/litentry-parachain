@@ -1,0 +1,8 @@
+artifacts
+cache
+node_modules
+.env
+.idea
+typechain-types
+coverage
+pnpm-lock.yaml

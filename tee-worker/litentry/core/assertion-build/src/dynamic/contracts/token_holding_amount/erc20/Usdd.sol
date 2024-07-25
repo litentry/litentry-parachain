@@ -22,33 +22,33 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Usdd {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](10);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 50 * Constants.decimals_factor;
-		ranges[3] = 100 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
-		ranges[6] = 800 * Constants.decimals_factor;
-		ranges[7] = 1200 * Constants.decimals_factor;
-		ranges[8] = 1600 * Constants.decimals_factor;
-		ranges[9] = 3000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](10);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 50 * Constants.decimals_factor;
+        ranges[3] = 100 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
+        ranges[6] = 800 * Constants.decimals_factor;
+        ranges[7] = 1200 * Constants.decimals_factor;
+        ranges[8] = 1600 * Constants.decimals_factor;
+        ranges[9] = 3000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6"
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0xd17479997f34dd9156deef8f95a52d81d265be9c"
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6"
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0xd17479997f34dd9156deef8f95a52d81d265be9c"
+        );
 
-		return tokenInfoList;
-	}
+        return tokenInfoList;
+    }
 }

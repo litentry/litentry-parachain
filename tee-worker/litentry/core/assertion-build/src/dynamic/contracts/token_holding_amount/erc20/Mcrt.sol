@@ -22,32 +22,32 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Mcrt {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 2000 * Constants.decimals_factor;
-		ranges[2] = 10000 * Constants.decimals_factor;
-		ranges[3] = 50000 * Constants.decimals_factor;
-		ranges[4] = 150000 * Constants.decimals_factor;
-		ranges[5] = 500000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 2000 * Constants.decimals_factor;
+        ranges[2] = 10000 * Constants.decimals_factor;
+        ranges[3] = 50000 * Constants.decimals_factor;
+        ranges[4] = 150000 * Constants.decimals_factor;
+        ranges[5] = 500000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](3);
-		networks[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xde16ce60804a881e9f8c4ebb3824646edecd478d"
-		);
-		networks[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f"
-		);
-		networks[2] = TokenInfo(
-			Web3Networks.Solana,
-			"FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"
-		);
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory networks = new TokenInfo[](3);
+        networks[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xde16ce60804a881e9f8c4ebb3824646edecd478d"
+        );
+        networks[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f"
+        );
+        networks[2] = TokenInfo(
+            Web3Networks.Solana,
+            "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq"
+        );
+        return networks;
+    }
 }
