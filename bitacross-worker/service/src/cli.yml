@@ -114,6 +114,18 @@ args:
         takes_value: true
         required: false
         default_value: "0"
+    - ceremony-commands-thread-count:
+          long: ceremony-commands-thread-count
+          help: Number of threads to spawn for ceremony commands handling
+          takes_value: true
+          default_value: "4"
+          required: false
+    - ceremony-events-thread-count:
+        long: ceremony-events-thread-count
+        help: Number of threads to spawn for ceremony events handling
+        takes_value: true
+        default_value: "20"
+        required: false
 
 subcommands:
     - run:
