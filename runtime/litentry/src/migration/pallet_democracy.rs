@@ -20,9 +20,11 @@ use pallet_democracy::{
 };
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use crate::migration::clear_storage_prefix;
 use frame_support::{
-	migration::storage_key_iter, pallet_prelude::*, traits::Currency, Twox64Concat,
+	migration::{clear_storage_prefix, storage_key_iter},
+	pallet_prelude::*,
+	traits::Currency,
+	Twox64Concat,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use parity_scale_codec::EncodeLike;
@@ -32,7 +34,7 @@ type BalanceOf<T> = <<T as pallet_democracy::Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
 
-use crate::migration::DECIMAL_CONVERTOR;
+pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
 /// A "prior" lock, i.e. a lock for some now-forgotten reason.
 #[derive(

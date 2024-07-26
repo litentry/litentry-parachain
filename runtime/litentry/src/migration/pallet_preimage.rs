@@ -20,14 +20,13 @@ use frame_support::{
 use pallet_preimage::RequestStatus;
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use crate::migration::clear_storage_prefix;
-use frame_support::migration::{put_storage_value, storage_key_iter};
+use frame_support::migration::{clear_storage_prefix, put_storage_value, storage_key_iter};
 use pallet_treasury::BalanceOf;
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::{Decode, Encode};
 use sp_runtime::Saturating;
 
-use crate::migration::DECIMAL_CONVERTOR;
+pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
 pub struct ReplacePreImageStorage<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for ReplacePreImageStorage<T>

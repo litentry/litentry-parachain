@@ -16,15 +16,18 @@
 use frame_support::traits::{Get, OnRuntimeUpgrade};
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use crate::migration::clear_storage_prefix;
-use frame_support::{migration::storage_key_iter, pallet_prelude::*, Twox64Concat};
+use frame_support::{
+	migration::{clear_storage_prefix, storage_key_iter},
+	pallet_prelude::*,
+	Twox64Concat,
+};
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use pallet_treasury::BalanceOf;
 use parity_scale_codec::EncodeLike;
 use sp_runtime::Saturating;
 
-use crate::migration::DECIMAL_CONVERTOR;
+pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
 // We are creating the exact same struct from the bounties pallet because the fields are private in
 // the upstream code

@@ -139,9 +139,9 @@ pub type Executive = frame_executive::Executive<
 		migration::pallet_treasury::ReplaceTreasuryStorage<Runtime>,
 		migration::pallet_preimage::ReplacePreImageStorage<Runtime>,
 		migration::pallet_democracy::ReplaceDemocracyStorage<Runtime>,
+		migration::ReplaceParachainStakingStorage<Runtime>,
+		migration::ReplaceBalancesRelatedStorage<Runtime>,
 	),
-	(migration::ReplaceParachainStakingStorage<Runtime>,),
-	(migration::ReplaceBalancesRelatedStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {

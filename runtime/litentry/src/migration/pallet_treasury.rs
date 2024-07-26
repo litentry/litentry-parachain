@@ -16,9 +16,8 @@
 use frame_support::traits::{Get, OnRuntimeUpgrade};
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use crate::migration::clear_storage_prefix;
 use frame_support::{
-	migration::{get_storage_value, storage_key_iter},
+	migration::{clear_storage_prefix, get_storage_value, storage_key_iter},
 	pallet_prelude::*,
 	Twox64Concat,
 };
@@ -26,7 +25,7 @@ use pallet_treasury::{BalanceOf, Deactivated, ProposalIndex, Proposals};
 use parity_scale_codec::EncodeLike;
 use sp_runtime::Saturating;
 
-use crate::migration::DECIMAL_CONVERTOR;
+pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
 // We are recreating the proposal struct with public fields
 #[derive(Encode, Decode, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
