@@ -68,23 +68,14 @@ pnpm install
 pnpm run build
 
 if [ "$TEST" = "assertion_contracts.test.ts" ]; then
-    cd /
-    ls assertion-contracts/
-    cp -r assertion-contracts /ts-tests/integration-tests/contracts
-
-    cd /ts-tests
-    curl -L https://foundry.paradigm.xyz | bash
-    source /root/.bashrc
-    apt install -y git
-    foundryup
-
+    cd /assertion-contracts
     pnpm install
-    pnpm --filter integration-tests run compile-contracts
-
-else
-    cd /ts-tests
-    pnpm install
-
+    # compile contracts
+    pnpm compile
+    ln -s /assertion-contracts/artifacts/contracts /ts-tests/integration-tests/contracts
 fi
+
+cd /ts-tests
+pnpm install
 
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST

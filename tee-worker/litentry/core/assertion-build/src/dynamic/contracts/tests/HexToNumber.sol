@@ -21,10 +21,9 @@ pragma solidity ^0.8.8;
 import "../libraries/Utils.sol";
 
 contract HexToNumber {
-    function callHexToNumber(string memory text)
-        public
-        returns (bool, uint256)
-    {
+    function callHexToNumber(
+        string memory text
+    ) public returns (bool, uint256) {
         return Utils.hexToNumber(text);
     }
 }

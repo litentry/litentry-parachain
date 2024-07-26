@@ -1,23 +1,5 @@
-/*
-	Copyright 2021 Integritee AG and Supercomputing Systems AG
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-		http://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-
-*/
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-use core::fmt::Debug;
 
 #[cfg(feature = "std")]
 use rust_base58::base58::FromBase58;
@@ -34,10 +16,11 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
-use log::*;
+use log::{debug, error, warn};
 use sp_core::{blake2_256, H256};
 use std::{
 	borrow::ToOwned,
+	fmt::Debug,
 	format,
 	string::{String, ToString},
 	sync::Arc,
@@ -47,9 +30,8 @@ use std::{
 
 pub fn add_top_pool_direct_rpc_methods<R, TCS, G>(
 	top_pool_author: Arc<R>,
-	mut io_handler: IoHandler,
-) -> IoHandler
-where
+	io_handler: &mut IoHandler,
+) where
 	R: AuthorApi<H256, H256, TCS, G> + Send + Sync + 'static,
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
@@ -217,7 +199,6 @@ where
 		}
 	});
 
-	let pending_author = top_pool_author;
 	io_handler.add_sync_method("author_pendingTrustedCallsFor", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_pendingTrustedCallsFor");
 		match params.parse::<(String, String)>() {
@@ -238,7 +219,7 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-				let trusted_calls = pending_author.get_pending_trusted_calls_for(shard, &account);
+				let trusted_calls = top_pool_author.get_pending_trusted_calls_for(shard, &account);
 				let json_value = RpcReturnValue {
 					do_watch: false,
 					value: trusted_calls.encode(),
@@ -253,8 +234,6 @@ where
 			},
 		}
 	});
-
-	io_handler
 }
 
 // converts the rpc methods vector to a string and adds commas and brackets for readability

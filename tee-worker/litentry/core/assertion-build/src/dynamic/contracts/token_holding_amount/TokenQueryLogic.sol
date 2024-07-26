@@ -18,6 +18,7 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
@@ -25,28 +26,27 @@ import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
 import { BlockchainInfoClient } from "./BlockchainInfoClient.sol";
 import "./MoralisClient.sol";
-import "../openzeppelin/Strings.sol";
 import "./Constants.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {
-	mapping(string => TokenInfo[]) internal tokenInfo;
+    mapping(string => TokenInfo[]) internal tokenInfo;
 
-	// TODO fix it for erc20 token, same token for different networks has different decimals.
-	function getTokenDecimals() internal pure override returns (uint8) {
-		return 18;
-	}
+    // TODO fix it for erc20 token, same token for different networks has different decimals.
+    function getTokenDecimals() internal pure override returns (uint8) {
+        return 18;
+    }
 
-	function queryBalance(
-		Identity memory identity,
-		uint32 network,
-		string[] memory secrets,
-		string memory tokenName
-	) internal override returns (uint256) {
-		(bool identityToStringSuccess, string memory identityString) = Utils
-			.identityToString(network, identity.value);
+    function queryBalance(
+        Identity memory identity,
+        uint32 network,
+        string[] memory secrets,
+        string memory tokenName
+    ) internal override returns (uint256) {
+        (bool identityToStringSuccess, string memory identityString) = Utils
+            .identityToString(network, identity.value);
 
-		if (identityToStringSuccess) {
-			uint256 totalBalance = 0;
+        if (identityToStringSuccess) {
+            uint256 totalBalance = 0;
 
 			(
 				string memory tokenContractAddress,
@@ -106,18 +106,18 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
 		return 0;
 	}
 
-	function isSupportedNetwork(
-		string memory tokenName,
-		uint32 network
-	) internal view override returns (bool) {
-		TokenInfo[] memory infoArray = tokenInfo[tokenName];
-		for (uint32 i = 0; i < infoArray.length; i++) {
-			if (network == infoArray[i].network) {
-				return true;
-			}
-		}
-		return false;
-	}
+    function isSupportedNetwork(
+        string memory tokenName,
+        uint32 network
+    ) internal view override returns (bool) {
+        TokenInfo[] memory infoArray = tokenInfo[tokenName];
+        for (uint32 i = 0; i < infoArray.length; i++) {
+            if (network == infoArray[i].network) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 	function getTokenInfo(
 		string memory tokenName,

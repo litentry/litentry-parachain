@@ -72,21 +72,17 @@ library Identities {
         return (Identity(identity_type, value, networks));
     }
 
-    function is_web3(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function is_web3(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return (is_substrate(identity_type) ||
             is_evm(identity_type) ||
             is_bitcoin(identity_type));
     }
 
-    function is_web2(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function is_web2(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return (is_twitter(identity_type) ||
             is_discord(identity_type) ||
             is_github(identity_type));
@@ -104,11 +100,9 @@ library Identities {
         return is_of_type(identity, IdentityTypes.Github);
     }
 
-    function is_substrate(Identity memory identity)
-        internal
-        pure
-        returns (bool)
-    {
+    function is_substrate(
+        Identity memory identity
+    ) internal pure returns (bool) {
         return is_of_type(identity, IdentityTypes.Substrate);
     }
 
@@ -124,11 +118,10 @@ library Identities {
         return is_of_type(identity, IdentityTypes.Solana);
     }
 
-    function is_of_type(Identity memory identity, uint32 identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function is_of_type(
+        Identity memory identity,
+        uint32 identity_type
+    ) internal pure returns (bool) {
         if (identity.identity_type == identity_type) {
             return (true);
         } else {
@@ -136,155 +129,118 @@ library Identities {
         }
     }
 
-    function has_polkadot_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_polkadot_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Polkadot);
     }
 
-    function has_kusama_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_kusama_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Kusama);
     }
 
-    function has_litentry_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_litentry_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Litentry);
     }
 
-    function has_litmus_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_litmus_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Litmus);
     }
 
-    function has_litentry_rococo_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_litentry_rococo_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.LitentryRococo);
     }
 
-    function has_khala_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_khala_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Khala);
     }
 
-    function has_substrate_testnet_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_substrate_testnet_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.SubstrateTestnet);
     }
 
-    function has_ethereum_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_ethereum_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Ethereum);
     }
 
-    function has_bsc_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bsc_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Bsc);
     }
 
-    function has_bitcoin_p2tr_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bitcoin_p2tr_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.BitcoinP2tr);
     }
 
-    function has_bitcoin_p2pkh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bitcoin_p2pkh_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.BitcoinP2pkh);
     }
 
-    function has_bitcoin_p2sh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bitcoin_p2sh_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.BitcoinP2sh);
     }
 
-    function has_bitcoin_p2wpkh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bitcoin_p2wpkh_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.BitcoinP2wpkh);
     }
 
-    function has_bitcoin_p2wsh_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_bitcoin_p2wsh_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.BitcoinP2wsh);
     }
 
-    function has_polygon_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_polygon_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Polygon);
     }
 
-    function has_arbitrum_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_arbitrum_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Arbitrum);
     }
 
-    function has_solana_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_solana_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Solana);
     }
 
-    function has_combo_network(Identity memory identity_type)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_combo_network(
+        Identity memory identity_type
+    ) internal pure returns (bool) {
         return has_network(identity_type, Web3Networks.Combo);
     }
 
-    function has_network(Identity memory identity_type, uint32 network)
-        internal
-        pure
-        returns (bool)
-    {
+    function has_network(
+        Identity memory identity_type,
+        uint32 network
+    ) internal pure returns (bool) {
         for (uint256 i = 0; i < identity_type.networks.length; i++) {
             if (identity_type.networks[i] == network) {
                 return (true);

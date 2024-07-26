@@ -22,17 +22,17 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Mcrt {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 2000 * Constants.decimals_factor;
-		ranges[2] = 10000 * Constants.decimals_factor;
-		ranges[3] = 50000 * Constants.decimals_factor;
-		ranges[4] = 150000 * Constants.decimals_factor;
-		ranges[5] = 500000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 2000 * Constants.decimals_factor;
+        ranges[2] = 10000 * Constants.decimals_factor;
+        ranges[3] = 50000 * Constants.decimals_factor;
+        ranges[4] = 150000 * Constants.decimals_factor;
+        ranges[5] = 500000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);

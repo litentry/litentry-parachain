@@ -36,8 +36,8 @@ use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
 use log::*;
 use prometheus::{
-	proto::MetricFamily, register_counter_vec, register_histogram, register_histogram_vec,
-	register_int_gauge, register_int_gauge_vec, CounterVec, Histogram, HistogramVec, IntGauge,
+	proto::MetricFamily, register_counter, register_histogram, register_histogram_vec,
+	register_int_gauge, register_int_gauge_vec, Counter, Histogram, HistogramVec, IntGauge,
 	IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
@@ -46,46 +46,22 @@ use warp::{Filter, Rejection, Reply};
 
 lazy_static! {
 	/// Register all the prometheus metrics we want to monitor (aside from the default process ones).
-
-	static ref ENCLAVE_ACCOUNT_FREE_BALANCE: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_account_free_balance", "Free balance of the enclave account")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_HEIGHT: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_sidechain_block_height", "Enclave sidechain block height")
-			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
-			.unwrap();
-	static ref ENCLAVE_STF_TASKS: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_stf_total_tasks", "Litentry Stf Tasks", &["request_type", "variant"])
-			.unwrap();
-	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
-		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
-			.unwrap();
-	static ref ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION: CounterVec =
-		register_counter_vec!("litentry_worker_enclave_successful_trusted_operation", "Litentry Successful Trusted Operation", &["call"])
-			.unwrap();
-	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: CounterVec =
-		register_counter_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
-			.unwrap();
 	static ref ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_parentchain_block_import_time", "Time taken to import parentchain block")
+		register_histogram!("bitacross_worker_enclave_parentchain_block_import_time", "Time taken to import parentchain block")
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_IMPORT_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_block_import_time", "Time taken to import sidechain block")
+	static ref MUSIG2_CEREMONIES_STARTED: Counter =
+		register_counter!("bitacross_worker_ceremonies_started", "Musig2 ceremonies started")
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_PREPARE_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_prepare_time", "Time taken to prepare sidechain extrinsics for execution")
+	static ref MUSIG2_CEREMONIES_FAILED: Counter =
+		register_counter!("bitacross_worker_ceremonies_failed", "Musig2 ceremonies failed")
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_STF_EXECUTION_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_stf_execution_time", "Time taken to execute sidechain extrinsics")
+	static ref MUSIG2_CEREMONIES_TIMED_OUT: Counter =
+		register_counter!("bitacross_worker_ceremonies_timed_out", "Musig2 ceremonies timed out")
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_slot_block_composition_time", "Time taken to compose sidechain block")
+	static ref MUSIG2_CEREMONY_DURATION: Histogram =
+		register_histogram!("bitacross_worker_ceremony_duration", "Time taken to perform musig2 ceremony", vec![0.0005, 0.005, 0.01, 0.025, 0.05, 0.1])
 			.unwrap();
-	static ref ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME: Histogram =
-		register_histogram!("litentry_worker_enclave_sidechain_block_broadcasting_time", "Time taken to broadcast sidechain block")
-			.unwrap();
+
 
 }
 
@@ -117,20 +93,13 @@ pub trait HandleMetrics {
 }
 
 /// Metrics handler implementation.
-pub struct MetricsHandler<Wallet> {
-	enclave_wallet: Arc<Wallet>,
-}
+pub struct MetricsHandler {}
 
 #[async_trait]
-impl<Wallet> HandleMetrics for MetricsHandler<Wallet>
-where
-	Wallet: EnclaveAccountInfo + Send + Sync,
-{
+impl HandleMetrics for MetricsHandler {
 	type ReplyType = String;
 
 	async fn handle_metrics(&self) -> Result<Self::ReplyType, Rejection> {
-		self.update_metrics().await;
-
 		let default_metrics = match gather_metrics_into_reply(&prometheus::gather()) {
 			Ok(r) => r,
 			Err(e) => {
@@ -140,26 +109,6 @@ where
 		};
 
 		Ok(default_metrics)
-	}
-}
-
-impl<Wallet> MetricsHandler<Wallet>
-where
-	Wallet: EnclaveAccountInfo + Send + Sync,
-{
-	pub fn new(enclave_wallet: Arc<Wallet>) -> Self {
-		MetricsHandler { enclave_wallet }
-	}
-
-	async fn update_metrics(&self) {
-		match self.enclave_wallet.free_balance() {
-			Ok(b) => {
-				ENCLAVE_ACCOUNT_FREE_BALANCE.set(b as i64);
-			},
-			Err(e) => {
-				error!("Failed to fetch free balance metric, value will not be updated: {:?}", e);
-			},
-		}
 	}
 }
 
@@ -191,39 +140,19 @@ pub struct EnclaveMetricsReceiver;
 impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	fn receive_enclave_metric(&self, metric: EnclaveMetric) -> ServiceResult<()> {
 		match metric {
-			EnclaveMetric::SetSidechainBlockHeight(h) => {
-				ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.set(h as i64);
-			},
-			EnclaveMetric::TopPoolSizeSet(pool_size) => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.set(pool_size as i64);
-			},
-			EnclaveMetric::TopPoolSizeIncrement => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.inc();
-			},
-			EnclaveMetric::TopPoolSizeDecrement => {
-				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
-			},
-			EnclaveMetric::SuccessfulTrustedOperationIncrement(metric_name) => {
-				ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[&metric_name]).inc();
-			},
-			EnclaveMetric::FailedTrustedOperationIncrement(metric_name) => {
-				ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[&metric_name]).inc();
-			},
 			EnclaveMetric::ParentchainBlockImportTime(time) =>
 				ENCLAVE_PARENTCHAIN_BLOCK_IMPORT_TIME.observe(time.as_secs_f64()),
+			EnclaveMetric::Musig2CeremonyStarted => MUSIG2_CEREMONIES_STARTED.inc(),
+			EnclaveMetric::Musig2CeremonyFailed => MUSIG2_CEREMONIES_FAILED.inc(),
+			EnclaveMetric::Musig2CeremonyTimedout(count) =>
+				for i in 0..count {
+					MUSIG2_CEREMONIES_TIMED_OUT.inc()
+				},
+			EnclaveMetric::Musig2CeremonyDuration(time) =>
+				MUSIG2_CEREMONY_DURATION.observe(time.as_secs_f64()),
 		}
 		Ok(())
 	}
-}
-
-// Function to increment STF calls with labels
-fn inc_stf_calls(category: &str, label: &str) {
-	ENCLAVE_STF_TASKS.with_label_values(&[category, label]).inc();
-}
-
-// Function to observe STF call execution time with labels
-fn observe_execution_time(category: &str, label: &str, time: f64) {
-	ENCLAVE_STF_TASKS_EXECUTION.with_label_values(&[category, label]).observe(time);
 }
 
 #[derive(Serialize, Deserialize, Debug)]

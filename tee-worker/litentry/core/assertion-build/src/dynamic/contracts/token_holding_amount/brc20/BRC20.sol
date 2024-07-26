@@ -42,6 +42,6 @@ library BRC20 {
 			);
 		}
 
-		return tokenInfoList;
-	}
+        return tokenInfoList;
+    }
 }

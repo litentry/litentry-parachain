@@ -18,10 +18,9 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Http.sol";
 import "../libraries/Json.sol";
-import "../openzeppelin/Strings.sol";
-
 
 struct DisplayItem {
     string text;
@@ -89,10 +88,9 @@ library AchainableClient {
         }
     }
 
-    function parseDisplayItems(string memory response)
-        private
-        returns (bool, DisplayItem[] memory)
-    {
+    function parseDisplayItems(
+        string memory response
+    ) private returns (bool, DisplayItem[] memory) {
         (bool displayLenSuccess, int64 displayLen) = Json.getArrayLen(
             response,
             "/display"

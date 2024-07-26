@@ -23,17 +23,17 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Mmss {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](9);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 20 * Constants.decimals_factor;
-		ranges[3] = 50 * Constants.decimals_factor;
-		ranges[4] = 100 * Constants.decimals_factor;
-		ranges[5] = 200 * Constants.decimals_factor;
-		ranges[6] = 500 * Constants.decimals_factor;
-		ranges[7] = 1000 * Constants.decimals_factor;
-		ranges[8] = 2000 * Constants.decimals_factor;
-		return ranges;
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](9);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 20 * Constants.decimals_factor;
+        ranges[3] = 50 * Constants.decimals_factor;
+        ranges[4] = 100 * Constants.decimals_factor;
+        ranges[5] = 200 * Constants.decimals_factor;
+        ranges[6] = 500 * Constants.decimals_factor;
+        ranges[7] = 1000 * Constants.decimals_factor;
+        ranges[8] = 2000 * Constants.decimals_factor;
+        return ranges;
+    }
 }

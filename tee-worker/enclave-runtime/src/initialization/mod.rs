@@ -22,11 +22,11 @@ use crate::{
 	initialization::global_components::{
 		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveLightClientSeal,
 		EnclaveOCallApi, EnclaveRpcResponder, EnclaveShieldingKeyRepository, EnclaveSidechainApi,
-		EnclaveSidechainBlockImportQueue, EnclaveSidechainBlockImportQueueWorker,
-		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
-		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
-		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
+		EnclaveSidechainBlockImportQueueWorker, EnclaveSidechainBlockImporter,
+		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
+		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
+		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
+		DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
 		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
@@ -40,7 +40,7 @@ use crate::{
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
 	ocall::OcallApi,
-	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
+	rpc::{common_api::add_common_api, rpc_response_channel::RpcResponseChannel},
 	utils::{
 		get_extrinsic_factory_from_integritee_solo_or_parachain,
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
@@ -85,6 +85,7 @@ use its_sidechain::{
 	block_composer::BlockComposer,
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
+use jsonrpc_core::IoHandler;
 use lc_data_providers::DataProviderConfig;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use lc_parachain_extrinsic_task_receiver::run_parachain_extrinsic_task_receiver;
@@ -210,7 +211,11 @@ pub(crate) fn init_enclave(
 
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
-	let io_handler = public_api_rpc_handler(
+
+	let mut io_handler = IoHandler::new();
+
+	add_common_api(
+		&mut io_handler,
 		top_pool_author,
 		getter_executor,
 		shielding_key_repository,
@@ -218,11 +223,19 @@ pub(crate) fn init_enclave(
 		Some(state_handler),
 		data_provider_config,
 	);
+
+	#[cfg(feature = "sidechain")]
+	{
+		use crate::initialization::global_components::EnclaveSidechainBlockImportQueue;
+		use its_rpc_handler::add_sidechain_api;
+		let sidechain_block_import_queue = Arc::new(EnclaveSidechainBlockImportQueue::default());
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.initialize(sidechain_block_import_queue);
+		let sidechain_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
+		add_sidechain_api(&mut io_handler, sidechain_import_queue);
+	}
+
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
-
-	let sidechain_block_import_queue = Arc::new(EnclaveSidechainBlockImportQueue::default());
-	GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.initialize(sidechain_block_import_queue);
 
 	let attestation_handler =
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));

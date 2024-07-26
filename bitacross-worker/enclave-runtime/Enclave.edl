@@ -40,7 +40,8 @@ enclave {
 		public sgx_status_t init(
 			[in, size=mu_ra_addr_size] uint8_t* mu_ra_addr, uint32_t mu_ra_addr_size,
 			[in, size=untrusted_worker_addr_size] uint8_t* untrusted_worker_addr, uint32_t untrusted_worker_addr_size,
-			[in, size=encoded_base_dir_size] uint8_t* encoded_base_dir_str, uint32_t encoded_base_dir_size
+			[in, size=encoded_base_dir_size] uint8_t* encoded_base_dir_str, uint32_t encoded_base_dir_size,
+			uint8_t ceremony_commands_thread_count, uint8_t ceremony_events_thread_count
 		);
 
 		public sgx_status_t publish_wallets();

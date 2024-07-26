@@ -25,16 +25,16 @@ struct TokenNetwork {
 	string tokenAddress;
 }
 library Bean {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](5);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1500 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 10000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](5);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1500 * Constants.decimals_factor;
+        ranges[2] = 5000 * Constants.decimals_factor;
+        ranges[3] = 10000 * Constants.decimals_factor;
+        ranges[4] = 50000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
 	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
 		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);

@@ -129,6 +129,8 @@ pub unsafe extern "C" fn init(
 	untrusted_worker_addr_size: u32,
 	encoded_base_dir_str: *const u8,
 	encoded_base_dir_size: u32,
+	ceremony_commands_thread_count: u8,
+	ceremony_events_thread_count: u8,
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
 	if_development_or!(
@@ -184,7 +186,13 @@ pub unsafe extern "C" fn init(
 	// Litentry: the default value here is only for clippy checking
 	BASE_PATH.set(path.clone()).unwrap_or(());
 
-	match initialization::init_enclave(mu_ra_url, untrusted_worker_url, path) {
+	match initialization::init_enclave(
+		mu_ra_url,
+		untrusted_worker_url,
+		path,
+		ceremony_commands_thread_count,
+		ceremony_events_thread_count,
+	) {
 		Err(e) => e.into(),
 		Ok(()) => sgx_status_t::SGX_SUCCESS,
 	}

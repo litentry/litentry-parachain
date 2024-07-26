@@ -69,6 +69,12 @@ pub struct Config {
 
 	/// the parentchain block number to start syncing with
 	pub parentchain_start_block: String,
+
+	/// Number of threads to spawn for ceremony commands handling
+	pub ceremony_commands_thread_count: u8,
+
+	/// Number of threads to spawn for ceremony events handling
+	pub ceremony_events_thread_count: u8,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -93,6 +99,8 @@ impl Config {
 		data_dir: PathBuf,
 		run_config: Option<RunConfig>,
 		parentchain_start_block: String,
+		ceremony_commands_thread_count: u8,
+		ceremony_events_thread_count: u8,
 	) -> Self {
 		Self {
 			litentry_rpc_url,
@@ -114,6 +122,8 @@ impl Config {
 			data_dir,
 			run_config,
 			parentchain_start_block,
+			ceremony_commands_thread_count,
+			ceremony_events_thread_count,
 		}
 	}
 
@@ -249,6 +259,12 @@ impl From<&ArgMatches<'_>> for Config {
 
 		let parentchain_start_block =
 			m.value_of("parentchain-start-block").unwrap_or(DEFAULT_PARENTCHAIN_START_BLOCK);
+
+		let ceremony_commands_thread_count =
+			m.value_of("ceremony-commands-thread-count").unwrap_or("4").parse().unwrap();
+		let ceremony_events_thread_count =
+			m.value_of("ceremony-events-thread-count").unwrap_or("20").parse().unwrap();
+
 		Self::new(
 			m.value_of("node-url").unwrap_or(DEFAULT_NODE_URL).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -272,6 +288,8 @@ impl From<&ArgMatches<'_>> for Config {
 			data_dir,
 			run_config,
 			parentchain_start_block.to_string(),
+			ceremony_commands_thread_count,
+			ceremony_events_thread_count,
 		)
 	}
 }
