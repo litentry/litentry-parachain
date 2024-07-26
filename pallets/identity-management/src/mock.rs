@@ -155,6 +155,7 @@ impl pallet_identity_management::Config for Test {
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type MaxOIDCClientRedirectUris = ConstU32<3>;
 }
 
 impl pallet_group::Config for Test {
