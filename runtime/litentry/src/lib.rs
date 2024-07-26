@@ -137,6 +137,7 @@ pub type Executive = frame_executive::Executive<
 		migration::pallet_bounty::ReplacePalletBountyStorage<Runtime>,
 		migration::pallet_treasury::ReplaceTreasuryStorage<Runtime>,
 		migration::pallet_preimage::ReplacePreImageStorage<Runtime>,
+		migration::pallet_democracy::ReplaceDemocracyStorage<Runtime>,
 	),
 >;
 

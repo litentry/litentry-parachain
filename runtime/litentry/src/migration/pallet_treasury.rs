@@ -13,13 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use frame_support::{
-	traits::{Get, OnRuntimeUpgrade},
-	StorageHasher, Twox128,
-};
-use sp_std::marker::PhantomData;
-#[cfg(feature = "try-runtime")]
-use sp_std::vec::Vec;
+use frame_support::traits::{Get, OnRuntimeUpgrade};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use crate::migration::clear_storage_prefix;
 use frame_support::{
@@ -27,12 +22,9 @@ use frame_support::{
 	pallet_prelude::*,
 	Twox64Concat,
 };
-use frame_system::pallet_prelude::BlockNumberFor;
-use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use pallet_treasury::{BalanceOf, Deactivated, ProposalIndex, Proposals};
 use parity_scale_codec::EncodeLike;
 use sp_runtime::Saturating;
-use sp_std::collections::btree_map::BTreeMap;
 
 use crate::migration::DECIMAL_CONVERTOR;
 
@@ -87,11 +79,6 @@ where
 				.expect("There are between 0 and 2**64 mappings stored."),
 		);
 
-		log::info!(
-			target: "ReplaceTreasuryStorage",
-			"obtained state of existing treasury data"
-		);
-
 		// Now clear previos storage
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
@@ -134,6 +121,7 @@ where
 	}
 }
 
+#[cfg(feature = "try-runtime")]
 impl<T, I: 'static> ReplaceTreasuryStorage<T, I>
 where
 	T: pallet_treasury::Config<I>,
@@ -160,11 +148,6 @@ where
 			})
 			.collect();
 
-		log::info!(
-			target: "ReplacePreImageStorage",
-			"Finished performing pre upgrade checks"
-		);
-
 		Ok(result.encode())
 	}
 
@@ -188,10 +171,6 @@ where
 			assert_eq!(actual_result[x], expected_result[x])
 		}
 
-		log::info!(
-			target: "ReplacePreImageStorage",
-			"Finished performing post upgrade checks"
-		);
 		Ok(())
 	}
 
@@ -217,6 +196,11 @@ where
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		let proposals_state_vec = Self::pre_upgrade_proposals_storage()?;
 		let deactivated_state_vec = Self::pre_upgrade_deactivated_storage()?;
+
+		log::info!(
+			target: "ReplaceTreasuryStorage",
+			"Finished performing post upgrade checks"
+		);
 		Ok((proposals_state_vec, deactivated_state_vec).encode())
 	}
 
@@ -224,6 +208,11 @@ where
 		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
 		weight += Self::replace_proposals_storage();
 		weight += Self::replace_deactivated_storage();
+
+		log::info!(
+			target: "ReplaceTreasuryStorage",
+			"Finished performing storage migration"
+		);
 
 		weight
 	}
@@ -234,7 +223,7 @@ where
 			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
 		Self::post_upgrade_proposals_storage(pre_vec.0)?;
 		Self::post_upgrade_deactivated_storage(pre_vec.1)?;
-		log::info!(target: "ReplaceTreasuryStorage", "Finished performing storage migrations");
+		log::info!(target: "ReplaceTreasuryStorage", "Finished performing post upgrade checks");
 		Ok(())
 	}
 }

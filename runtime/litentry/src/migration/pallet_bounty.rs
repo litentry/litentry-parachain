@@ -13,13 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use frame_support::{
-	traits::{Get, OnRuntimeUpgrade},
-	StorageHasher, Twox128,
-};
-use sp_std::marker::PhantomData;
-#[cfg(feature = "try-runtime")]
-use sp_std::vec::Vec;
+use frame_support::traits::{Get, OnRuntimeUpgrade};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use crate::migration::clear_storage_prefix;
 use frame_support::{migration::storage_key_iter, pallet_prelude::*, Twox64Concat};
@@ -28,7 +23,6 @@ use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use pallet_treasury::BalanceOf;
 use parity_scale_codec::EncodeLike;
 use sp_runtime::Saturating;
-use sp_std::collections::btree_map::BTreeMap;
 
 use crate::migration::DECIMAL_CONVERTOR;
 
@@ -122,11 +116,6 @@ where
 				.expect("There are between 0 and 2**64 mappings stored."),
 		);
 
-		log::info!(
-			target: "ReplacePalletBountyStorage",
-			"obtained state of existing bounties data"
-		);
-
 		// Now clear previos storage
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
@@ -152,8 +141,7 @@ where
 
 		log::info!(
 			target: "ReplacePalletBountyStorage",
-			"Performed migration for the following keys: {:?}",
-			migrated_count
+			"Finished performing storage migrations"
 		);
 
 		let weight = T::DbWeight::get();

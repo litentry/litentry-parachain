@@ -13,30 +13,20 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use frame_support::{
-	traits::{Get, OnRuntimeUpgrade},
-	StorageHasher, Twox128,
-};
+use frame_support::traits::{Get, OnRuntimeUpgrade};
 use pallet_democracy::{
 	AccountVote, BoundedCallOf, Conviction, Delegations, DepositOf, PropIndex, ReferendumIndex,
 	ReferendumInfo, ReferendumInfoOf, ReferendumStatus, Tally, VotingOf,
 };
-use sp_std::marker::PhantomData;
-#[cfg(feature = "try-runtime")]
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use crate::migration::clear_storage_prefix;
 use frame_support::{
-	migration::{get_storage_value, storage_key_iter},
-	pallet_prelude::*,
-	traits::Currency,
-	Twox64Concat,
+	migration::storage_key_iter, pallet_prelude::*, traits::Currency, Twox64Concat,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
-use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use parity_scale_codec::EncodeLike;
 use sp_runtime::Saturating;
-use sp_std::collections::btree_map::BTreeMap;
 
 type BalanceOf<T> = <<T as pallet_democracy::Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -87,6 +77,49 @@ pub enum Voting<Balance, AccountId, BlockNumber, MaxVotes: Get<u32>> {
 	},
 }
 
+/// Const<u32> doesn't implement partialeq trait, so we have to check manually
+#[cfg(feature = "try-runtime")]
+fn are_voting_instances_equal<Balance, AccountId, BlockNumber, MaxVotes: Get<u32>>(
+	a: &Voting<Balance, AccountId, BlockNumber, MaxVotes>,
+	b: &Voting<Balance, AccountId, BlockNumber, MaxVotes>,
+) -> bool
+where
+	Balance: PartialEq,
+	AccountId: PartialEq,
+	BlockNumber: PartialEq,
+{
+	match (a, b) {
+		(
+			Voting::Direct { votes: votes_a, delegations: delegations_a, prior: prior_a },
+			Voting::Direct { votes: votes_b, delegations: delegations_b, prior: prior_b },
+		) => votes_a == votes_b && delegations_a == delegations_b && prior_a == prior_b,
+
+		(
+			Voting::Delegating {
+				balance: balance_a,
+				target: target_a,
+				conviction: conviction_a,
+				delegations: delegations_a,
+				prior: prior_a,
+			},
+			Voting::Delegating {
+				balance: balance_b,
+				target: target_b,
+				conviction: conviction_b,
+				delegations: delegations_b,
+				prior: prior_b,
+			},
+		) =>
+			balance_a == balance_b &&
+				target_a == target_b &&
+				conviction_a == conviction_b &&
+				delegations_a == delegations_b &&
+				prior_a == prior_b,
+
+		_ => false,
+	}
+}
+
 // This is important when we want to insert into the storage item
 impl<AccountId, Balance, BlockNumber, MaxVotes>
 	EncodeLike<pallet_democracy::Voting<AccountId, Balance, BlockNumber, MaxVotes>>
@@ -124,11 +157,6 @@ where
 				.len()
 				.try_into()
 				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-
-		log::info!(
-			target: "ReplaceDemocracyStorage",
-			"obtained state of existing treasury data"
 		);
 
 		// Now clear previos storage
@@ -181,15 +209,15 @@ where
 
 		// Assert that old storage is empty
 		assert!(storage_key_iter::<
-			PropIndex,
-			(BoundedVec<T::AccountId, T::MaxDeposits>, BalanceOf<T>),
+			ReferendumIndex,
+			ReferendumInfo<T::BlockNumber, BoundedCallOf<T>, BalanceOf<T>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
 		.next()
 		.is_none());
 
 		for (ref_index, ref_info) in stored_data {
-			let mut new_ref_info = match ref_info {
+			let new_ref_info = match ref_info {
 				ReferendumInfo::Finished { approved, end } =>
 					ReferendumInfo::Finished { approved, end },
 				ReferendumInfo::Ongoing(ref_status) => ReferendumInfo::Ongoing(ReferendumStatus {
@@ -247,7 +275,7 @@ where
 		.is_none());
 
 		for (who, voting) in stored_data {
-			let mut new_voting = match voting {
+			let new_voting = match voting {
 				Voting::Delegating { balance, target, conviction, delegations, prior } => {
 					let new_balance = balance.saturating_mul(DECIMAL_CONVERTOR.into());
 					let new_delegation = Delegations {
@@ -268,7 +296,7 @@ where
 					let new_votes: Vec<_> = votes
 						.into_iter()
 						.map(|(id, vote)| {
-							let mut new_vote = match vote {
+							let new_vote = match vote {
 								AccountVote::Split { aye, nay } => AccountVote::Split {
 									aye: aye.saturating_mul(DECIMAL_CONVERTOR.into()),
 									nay: nay.saturating_mul(DECIMAL_CONVERTOR.into()),
@@ -306,5 +334,233 @@ where
 
 		let weight = T::DbWeight::get();
 		migrated_count.saturating_mul(weight.write + weight.read)
+	}
+}
+
+#[cfg(feature = "try-runtime")]
+impl<T: pallet_democracy::Config> ReplaceDemocracyStorage<T>
+where
+	BalanceOf<T>: From<u128>,
+{
+	fn pre_upgrade_deposit_of_storage() -> Result<Vec<u8>, &'static str> {
+		let result: Vec<_> = <DepositOf<T>>::iter()
+			.map(|(prop_index, value)| {
+				let mut new_value = value;
+				new_value.1 = new_value.1.saturating_mul(DECIMAL_CONVERTOR.into());
+
+				(prop_index, new_value)
+			})
+			.collect();
+		Ok(result.encode())
+	}
+
+	fn post_upgrade_deposit_of_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_result = Vec::<(
+			PropIndex,
+			(BoundedVec<T::AccountId, T::MaxDeposits>, BalanceOf<T>),
+		)>::decode(&mut &state[..])
+		.map_err(|_| "Failed to decode Bounties")?;
+
+		let actual_result: Vec<_> =
+			<DepositOf<T>>::iter().map(|(prop_index, value)| (prop_index, value)).collect();
+
+		for x in 0..actual_result.len() {
+			assert_eq!(actual_result[x], expected_result[x])
+		}
+
+		Ok(())
+	}
+
+	fn pre_upgrade_referendum_info_of_storage() -> Result<Vec<u8>, &'static str> {
+		let result: Vec<_> = <ReferendumInfoOf<T>>::iter()
+			.map(|(ref_index, ref_info)| {
+				let new_ref_info = match ref_info {
+					ReferendumInfo::Finished { approved, end } =>
+						ReferendumInfo::Finished { approved, end },
+					ReferendumInfo::Ongoing(ref_status) =>
+						ReferendumInfo::Ongoing(ReferendumStatus {
+							end: ref_status.end,
+							proposal: ref_status.proposal,
+							threshold: ref_status.threshold,
+							delay: ref_status.delay,
+							tally: Tally {
+								ayes: ref_status
+									.tally
+									.ayes
+									.saturating_mul(DECIMAL_CONVERTOR.into()),
+								nays: ref_status
+									.tally
+									.nays
+									.saturating_mul(DECIMAL_CONVERTOR.into()),
+								turnout: ref_status
+									.tally
+									.turnout
+									.saturating_mul(DECIMAL_CONVERTOR.into()),
+							},
+						}),
+				};
+
+				(ref_index, new_ref_info)
+			})
+			.collect();
+		Ok(result.encode())
+	}
+
+	fn post_upgrade_referendum_info_of_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_result = Vec::<(
+			ReferendumIndex,
+			ReferendumInfo<T::BlockNumber, BoundedCallOf<T>, BalanceOf<T>>,
+		)>::decode(&mut &state[..])
+		.map_err(|_| "Failed to decode Bounties")?;
+
+		let actual_result: Vec<_> = <ReferendumInfoOf<T>>::iter()
+			.map(|(ref_index, ref_info)| (ref_index, ref_info))
+			.collect();
+		for x in 0..actual_result.len() {
+			assert_eq!(actual_result[x], expected_result[x])
+		}
+		Ok(())
+	}
+
+	fn pre_upgrade_voting_of_storage() -> Result<Vec<u8>, &'static str> {
+		let pallet_prefix: &[u8] = b"Democracy";
+		let storage_item_prefix: &[u8] = b"VotingOf";
+		let stored_data: Vec<_> = storage_key_iter::<
+			T::AccountId,
+			Voting<BalanceOf<T>, T::AccountId, BlockNumberFor<T>, T::MaxVotes>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		let result: Vec<_> = stored_data
+			.into_iter()
+			.map(|(who, voting)| {
+				let new_voting = match voting {
+					Voting::Delegating { balance, target, conviction, delegations, prior } => {
+						let new_balance = balance.saturating_mul(DECIMAL_CONVERTOR.into());
+						let new_delegation = Delegations {
+							votes: delegations.votes.saturating_mul(DECIMAL_CONVERTOR.into()),
+							capital: delegations.capital.saturating_mul(DECIMAL_CONVERTOR.into()),
+						};
+						let new_prior_locks =
+							PriorLock(prior.0, prior.1.saturating_mul(DECIMAL_CONVERTOR.into()));
+						Voting::Delegating {
+							balance: new_balance,
+							target,
+							conviction,
+							delegations: new_delegation,
+							prior: new_prior_locks,
+						}
+					},
+					Voting::Direct { votes, delegations, prior } => {
+						let new_votes: Vec<_> = votes
+							.into_iter()
+							.map(|(id, vote)| {
+								let new_vote = match vote {
+									AccountVote::Split { aye, nay } => AccountVote::Split {
+										aye: aye.saturating_mul(DECIMAL_CONVERTOR.into()),
+										nay: nay.saturating_mul(DECIMAL_CONVERTOR.into()),
+									},
+									AccountVote::Standard { vote, balance } =>
+										AccountVote::Standard {
+											vote,
+											balance: balance
+												.saturating_mul(DECIMAL_CONVERTOR.into()),
+										},
+								};
+								(id, new_vote)
+							})
+							.collect();
+
+						let bounded_new_votes: BoundedVec<
+							(u32, AccountVote<BalanceOf<T>>),
+							T::MaxVotes,
+						> = new_votes.try_into().unwrap();
+
+						let new_delegation = Delegations {
+							votes: delegations.votes.saturating_mul(DECIMAL_CONVERTOR.into()),
+							capital: delegations.capital.saturating_mul(DECIMAL_CONVERTOR.into()),
+						};
+						let new_prior_locks =
+							PriorLock(prior.0, prior.1.saturating_mul(DECIMAL_CONVERTOR.into()));
+
+						Voting::Direct {
+							votes: bounded_new_votes,
+							delegations: new_delegation,
+							prior: new_prior_locks,
+						}
+					},
+				};
+				(who, new_voting)
+			})
+			.collect();
+
+		Ok(result.encode())
+	}
+
+	fn post_upgrade_voting_of_storage(state: Vec<u8>) -> Result<(), &'static str> {
+		let expected_result = Vec::<(
+			T::AccountId,
+			Voting<BalanceOf<T>, T::AccountId, BlockNumberFor<T>, T::MaxVotes>,
+		)>::decode(&mut &state[..])
+		.map_err(|_| "Failed to decode Bounties")?;
+
+		let pallet_prefix: &[u8] = b"Democracy";
+		let storage_item_prefix: &[u8] = b"VotingOf";
+		let actual_result: Vec<_> = storage_key_iter::<
+			T::AccountId,
+			Voting<BalanceOf<T>, T::AccountId, BlockNumberFor<T>, T::MaxVotes>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.collect();
+
+		for x in 0..actual_result.len() {
+			assert_eq!(actual_result[x].0, expected_result[x].0);
+			let result = are_voting_instances_equal::<
+				BalanceOf<T>,
+				T::AccountId,
+				BlockNumberFor<T>,
+				T::MaxVotes,
+			>(&actual_result[x].1, &expected_result[x].1);
+			assert_eq!(result, true);
+		}
+
+		Ok(())
+	}
+}
+
+impl<T: pallet_democracy::Config> OnRuntimeUpgrade for ReplaceDemocracyStorage<T>
+where
+	BalanceOf<T>: From<u128>,
+{
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+		let deposit_of_state_vec = Self::pre_upgrade_deposit_of_storage()?;
+		let referendum_info_of_state_vec = Self::pre_upgrade_referendum_info_of_storage()?;
+		let voting_of_state_vec = Self::pre_upgrade_voting_of_storage()?;
+
+		log::info!(target: "ReplaceTreasuryStorage", "Finished performing pre upgrade checks");
+		Ok((deposit_of_state_vec, referendum_info_of_state_vec, voting_of_state_vec).encode())
+	}
+
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
+		weight += Self::replace_deposit_of_storage();
+		weight += Self::replace_referendum_info_of_storage();
+		weight += Self::replace_voting_of_storage();
+
+		log::info!(target: "ReplaceTreasuryStorage", "Finished performing storage migrations");
+		weight
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		let pre_vec: (Vec<u8>, Vec<u8>, Vec<u8>) =
+			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
+		Self::post_upgrade_deposit_of_storage(pre_vec.0)?;
+		Self::post_upgrade_referendum_info_of_storage(pre_vec.1)?;
+		Self::post_upgrade_voting_of_storage(pre_vec.2)?;
+		log::info!(target: "ReplaceTreasuryStorage", "Finished performing post upgrade checks");
+		Ok(())
 	}
 }

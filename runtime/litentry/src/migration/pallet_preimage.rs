@@ -15,24 +15,17 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
-	Identity, StorageHasher, Twox128,
+	Identity,
 };
 use pallet_preimage::RequestStatus;
-use sp_std::marker::PhantomData;
-#[cfg(feature = "try-runtime")]
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use crate::migration::clear_storage_prefix;
-use frame_support::{
-	migration::{put_storage_value, storage_key_iter},
-	Twox64Concat,
-};
-use frame_system::pallet_prelude::BlockNumberFor;
-use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
+use frame_support::migration::{put_storage_value, storage_key_iter};
 use pallet_treasury::BalanceOf;
-use parity_scale_codec::{Decode, Encode, EncodeLike};
+#[cfg(feature = "try-runtime")]
+use parity_scale_codec::{Decode, Encode};
 use sp_runtime::Saturating;
-use sp_std::collections::btree_map::BTreeMap;
 
 use crate::migration::DECIMAL_CONVERTOR;
 
@@ -56,7 +49,7 @@ where
 		let result: Vec<_> = stored_data
 			.into_iter()
 			.map(|(hash, status)| {
-				let mut new_status = match status {
+				let new_status = match status {
 					RequestStatus::Requested { deposit, count, len } => {
 						if let Some((account, balance)) = deposit {
 							RequestStatus::Requested {
@@ -123,7 +116,7 @@ where
 		.is_none());
 
 		for (hash, status) in stored_data {
-			let mut new_status = match status {
+			let new_status = match status {
 				RequestStatus::Requested { deposit, count, len } => {
 					if let Some((account, balance)) = deposit {
 						RequestStatus::Requested {
