@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.18-11.2] - 2024-07-26
+
+### Added
+
+-   `TrustedCall`: expose `link_identity_callback`.
+
 ## [0.9.18-11] - 2024-07-19
 
 ### Added
