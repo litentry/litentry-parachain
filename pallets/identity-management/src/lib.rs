@@ -184,6 +184,7 @@ pub mod pallet {
 
 	// OIDC clients who can use the OIDC flow
 	#[pallet::storage]
+	#[pallet::getter(fn oidc_client)]
 	pub type OIDCClients<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
