@@ -539,7 +539,7 @@ where
 		let referendum_info_of_state_vec = Self::pre_upgrade_referendum_info_of_storage()?;
 		let voting_of_state_vec = Self::pre_upgrade_voting_of_storage()?;
 
-		log::info!(target: "ReplaceTreasuryStorage", "Finished performing pre upgrade checks");
+		log::info!(target: "ReplaceDemocracyStorage", "Finished performing pre upgrade checks");
 		Ok((deposit_of_state_vec, referendum_info_of_state_vec, voting_of_state_vec).encode())
 	}
 
@@ -549,7 +549,7 @@ where
 		weight += Self::replace_referendum_info_of_storage();
 		weight += Self::replace_voting_of_storage();
 
-		log::info!(target: "ReplaceTreasuryStorage", "Finished performing storage migrations");
+		log::info!(target: "ReplaceDemocracyStorage", "Finished performing storage migrations");
 		weight
 	}
 
@@ -560,7 +560,7 @@ where
 		Self::post_upgrade_deposit_of_storage(pre_vec.0)?;
 		Self::post_upgrade_referendum_info_of_storage(pre_vec.1)?;
 		Self::post_upgrade_voting_of_storage(pre_vec.2)?;
-		log::info!(target: "ReplaceTreasuryStorage", "Finished performing post upgrade checks");
+		log::info!(target: "ReplaceDemocracyStorage", "Finished performing post upgrade checks");
 		Ok(())
 	}
 }
