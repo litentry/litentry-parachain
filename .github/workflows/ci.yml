@@ -541,43 +541,6 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
-      - name: Cache worker-cache
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        uses: actions/cache@v4
-        with:
-          path: |
-            worker-cache
-          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('bitacross-worker/**/Cargo.lock', 'bitacross-worker/**/Cargo.toml') }}
-          restore-keys: |
-            worker-cache-${{ env.REF_VERSION }}-
-            worker-cache-
-
-      - name: Create cache folder if not exist
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        run: |
-          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
-            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
-            echo "hello" > worker-cache/$i/nix
-          done
-          echo "::group::List worker-cache size"
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-      # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
-      # https://github.com/moby/buildkit/issues/1512
-      # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
-      # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
-      #
-      # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
-      # sometimes it works, sometimes it results in empty cache, root cause unclear
-      #
-      # thus the persistence of rust cache (w/ sccache) is maintained manually
-      #
-      # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
-      # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
-      # is "atomic" and can't be broken into layers.
       - name: Build local builder
         if: needs.set-condition.outputs.rebuild_bitacross == 'true'
         uses: docker/build-push-action@v6
@@ -589,29 +552,6 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=offchain-worker            
             ADDITIONAL_FEATURES_ARG=
-
-      - name: Copy caches from the built image
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
-          echo "::group::copy cache out"
-          for i in 'git/db' 'registry/cache' 'registry/index'; do
-            b="${i%/*}"
-            rm -rf worker-cache/$i
-            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
-          done
-          rm -rf worker-cache/sccache
-          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::df -h ."
-          df -h .
-          echo "::endgroup::"
 
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_bitacross == 'true'

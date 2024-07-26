@@ -59,19 +59,8 @@ ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
 WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
-RUN \
-  if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
-    echo "Omit cache for release image"; \
-    unset RUSTC_WRAPPER; \
-    make; \
-  else \
-    rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
-    rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
-    rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
-    rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-    make && sccache --show-stats; \
-  fi
-
+RUN unset RUSTC_WRAPPER;
+RUN make
 RUN make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}' > mrenclave.txt
 RUN cargo test --release
 
