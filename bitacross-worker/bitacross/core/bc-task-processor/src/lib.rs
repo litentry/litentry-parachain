@@ -63,6 +63,7 @@ use frame_support::{ensure, sp_runtime::app_crypto::sp_core::blake2_256};
 use ita_stf::TrustedCallSigned;
 use itc_direct_rpc_client::{DirectRpcClient, DirectRpcClientFactory, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{
 	ecdsa::Pair as EcdsaPair,
@@ -224,9 +225,11 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	let ceremony_command_tmp = context.ceremony_command_tmp.clone();
 	let responder = context.responder.clone();
 	let time_to_live = 30u64;
+	let cloned_ocall_api = context.ocall_api.clone();
 	std::thread::spawn(move || loop {
 		std::thread::sleep(Duration::from_secs(3));
 		let now = get_current_timestamp();
+		let mut timed_out_count: u8 = 0;
 		{
 			let mut ceremony_registry_write = ceremony_registry.write().unwrap();
 			ceremony_registry_write.retain(|_, (ceremony, create_time)| {
@@ -247,6 +250,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					) {
 						error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 					}
+					timed_out_count += 1;
 				}
 				if_retain
 			});
@@ -254,6 +258,10 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 		{
 			let mut command_tmp_write = ceremony_command_tmp.write().unwrap();
 			command_tmp_write.retain(|_, &mut (_, create_time)| now - create_time < time_to_live);
+		}
+		if timed_out_count > 0 {
+			let _ = cloned_ocall_api
+				.update_metric(EnclaveMetric::Musig2CeremonyTimedout(timed_out_count));
 		}
 	});
 
@@ -281,7 +289,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 
 	command_threads_pool.join();
 	event_threads_pool.join();
-	warn!("bit_across_task_receiver loop terminated");
+	warn!("bit_across_handler_runner loop terminated");
 }
 
 #[allow(clippy::type_complexity)]
@@ -369,6 +377,24 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 		let event = process_command(context.clone(), ceremony_id.clone(), command);
 
 		if let Some(event) = event {
+			// update metrics
+			match event {
+				CeremonyEvent::FirstRoundStarted(_, _, _) => {
+					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyStarted);
+				},
+				CeremonyEvent::CeremonyError(_, _, _) => {
+					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyFailed);
+				},
+				CeremonyEvent::CeremonyEnded(_, _, _, _) => {
+					let ceremony_start_time =
+						context.ceremony_registry.read().unwrap().get(&ceremony_id).unwrap().1;
+					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyDuration(
+						Duration::from_millis(get_current_timestamp() - ceremony_start_time),
+					));
+				},
+				_ => {},
+			}
+
 			match event {
 				CeremonyEvent::FirstRoundStarted(_, _, _)
 				| CeremonyEvent::SecondRoundStarted(_, _, _) => {

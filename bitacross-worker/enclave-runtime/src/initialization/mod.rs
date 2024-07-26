@@ -24,7 +24,7 @@ use crate::{
 	get_node_metadata_repository_from_integritee_solo_or_parachain,
 	get_validator_accessor_from_integritee_solo_or_parachain,
 	initialization::global_components::{
-		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveOCallApi, EnclaveRpcResponder,
+		EnclaveGetterExecutor, EnclaveLightClientSeal, EnclaveRpcResponder,
 		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
@@ -211,7 +211,6 @@ pub(crate) fn init_enclave(
 	let top_pool_author = create_top_pool_author(
 		rpc_responder.clone(),
 		state_handler,
-		ocall_api.clone(),
 		shielding_key_repository.clone(),
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
@@ -470,7 +469,6 @@ pub(crate) fn migrate_shard(new_shard: ShardIdentifier) -> EnclaveResult<()> {
 pub fn create_top_pool_author(
 	rpc_responder: Arc<EnclaveRpcResponder>,
 	state_handler: Arc<EnclaveStateHandler>,
-	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
 ) -> Arc<EnclaveTopPoolAuthor> {
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
@@ -482,6 +480,5 @@ pub fn create_top_pool_author(
 		AuthorTopFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repository,
-		ocall_api,
 	))
 }
