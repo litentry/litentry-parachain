@@ -289,7 +289,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 
 	command_threads_pool.join();
 	event_threads_pool.join();
-	warn!("bit_across_task_receiver loop terminated");
+	warn!("bit_across_handler_runner loop terminated");
 }
 
 #[allow(clippy::type_complexity)]
