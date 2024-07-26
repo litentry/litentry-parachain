@@ -35,7 +35,6 @@ use itc_parentchain_test::ParentchainHeaderBuilder;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::TrustedOperation;
-use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
 use itp_types::{RsaRequest, ShardIdentifier};
 use jsonrpc_core::futures::executor;
@@ -66,7 +65,6 @@ pub fn process_indirect_call_in_top_pool() {
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo,
-		Arc::new(MetricsOCallMock::default()),
 	));
 
 	let encrypted_indirect_call =
@@ -107,7 +105,6 @@ pub fn submit_shielding_call_to_top_pool() {
 		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo.clone(),
-		Arc::new(MetricsOCallMock::default()),
 		Arc::new(sender),
 	));
 
