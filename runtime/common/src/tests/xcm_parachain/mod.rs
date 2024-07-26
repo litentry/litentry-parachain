@@ -14,9 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::marker::PhantomData;
+use crate::{
+	currency::{CENTS, MILLICENTS, UNIT},
+	tests::setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
+	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
+	ParaRuntimeRequirements,
+};
 
-use cumulus_primitives_core::{ParaId, PersistedValidationData};
+use cumulus_primitives_core::{AbridgedHrmpChannel, ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
@@ -24,12 +29,14 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use parity_scale_codec::Encode;
-use polkadot_parachain_primitives::primitives::RelayChainBlockNumber;
+use polkadot_parachain_primitives::primitives::{HrmpChannelId, RelayChainBlockNumber};
+use sp_runtime::traits::StaticLookup;
 use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,
 };
 use sp_std::convert::TryInto;
+use std::marker::PhantomData;
 use xcm::prelude::{
 	All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
 	MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
@@ -39,14 +46,6 @@ use xcm_executor::traits::ConvertLocation;
 use xcm_simulator::TestExt;
 
 use core_primitives::{AccountId, AssetId, Balance, Weight};
-
-use crate::{
-	currency::{CENTS, MILLICENTS, UNIT},
-	tests::setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
-	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
-	ParaRuntimeRequirements,
-};
-use sp_runtime::traits::StaticLookup;
 
 pub const RELAY_UNIT: u128 = 1;
 
@@ -1284,23 +1283,29 @@ where
 }
 
 fn register_channel_info<R: ParaRuntimeRequirements + cumulus_pallet_parachain_system::Config>(
-	self_para_id: u32,
-	_remote_para_id: u32,
+	sender: ParaId,
+	recipient: ParaId,
 ) {
-	// TODO::More striaght forward method?
-	// We mimic the consequence of HRMP Channel request for cumulus_pallet_parachain_system
-	// set_validation_data inherent_extrinsics
-
-	let sproof_builder = cumulus_test_relay_sproof_builder::RelayStateSproofBuilder {
-		para_id: ParaId::from(self_para_id),
-		included_para_head: Some(polkadot_parachain_primitives::primitives::HeadData(vec![
-			1, 2, 3,
-		])),
+	let mut sproof_builder = cumulus_test_relay_sproof_builder::RelayStateSproofBuilder {
+		para_id: sender,
+		hrmp_egress_channel_index: Some(vec![recipient]),
 		..Default::default()
 	};
 
+	sproof_builder.hrmp_channels.insert(
+		HrmpChannelId { sender, recipient },
+		AbridgedHrmpChannel {
+			max_capacity: 10,
+			max_total_size: 10_000_000_u32,
+			max_message_size: 10_000_000_u32,
+			msg_count: 0,
+			total_size: 0_u32,
+			mqc_head: None,
+		},
+	);
+
 	let (relay_parent_storage_root, relay_chain_state) = sproof_builder.into_state_root_and_proof();
-	let n = 1;
+	let n = 1u32;
 	let vfp = PersistedValidationData {
 		relay_parent_number: n as RelayChainBlockNumber,
 		relay_parent_storage_root,
@@ -1334,10 +1339,10 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		);
 	});
 	R::ParaA::execute_with(|| {
-		register_channel_info::<R::ParaRuntime>(1, 2);
+		register_channel_info::<R::ParaRuntime>(1.into(), 2.into());
 	});
 	R::ParaB::execute_with(|| {
-		register_channel_info::<R::ParaRuntime>(2, 1);
+		register_channel_info::<R::ParaRuntime>(2.into(), 1.into());
 	});
 	R::ParaA::execute_with(|| {
 		// normal create is wrong
