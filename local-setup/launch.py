@@ -35,10 +35,8 @@ mkdir_p(log_dir)
 OFFSET = 100
 PORTS = [
     "AliceWSPort",
-    "AliceRPCPort",
     "AlicePort",
     "BobWSPort",
-    "BobRPCPort",
     "BobPort",
     "TrustedWorkerPort",
     "UntrustedWorkerPort",
@@ -217,7 +215,6 @@ def add_collator_ports():
     PORTS.extend(
         [
             "CollatorWSPort",
-            "CollatorRPCPort",
             "CollatorPort",
         ]
     )    

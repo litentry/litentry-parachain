@@ -88,12 +88,12 @@ $PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > genesis-state
 $PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
 # run alice and bob as relay nodes
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936} &> "relay.alice.log" &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --rpc-port ${AliceWSPort:-9946} &> "relay.alice.log" &
 sleep 10
 
 RELAY_ALICE_IDENTITY=$(grep 'Local node identity' relay.alice.log | sed 's/^.*: //')
 
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} \
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --rpc-port ${BobWSPort:-9947} \
   --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY &> "relay.bob.log" &
 sleep 10
 
@@ -104,7 +104,7 @@ $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --state-pruning archive --blocks-pruning archive \
   --enable-evm-rpc \
   -- \
-  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
+  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --rpc-port 9943 \
   --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 

@@ -44,7 +44,7 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
     /usr/local/bin/litentry-collator --version
 
 USER litentry
-EXPOSE 30333 9933 9944 9615
+EXPOSE 30333 9944 9615
 VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/local/bin/litentry-collator"]
@@ -101,7 +101,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER litentry
 
-EXPOSE 9615 9933 9936 9937 9944 9946 9947 30332 30333 30336 30337
+EXPOSE 9615 9944 9946 9947 30332 30333 30336 30337
 VOLUME ["/opt/litentry"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
