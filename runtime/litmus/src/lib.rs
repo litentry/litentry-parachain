@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
+#![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
@@ -30,7 +31,7 @@ use frame_support::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
 		SortedMembers, WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
@@ -73,7 +74,7 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -84,9 +85,10 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
-pub mod migration;
 pub mod weights;
 pub mod xcm_config;
+
+pub mod migration;
 
 #[cfg(test)]
 mod tests;
@@ -135,6 +137,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(migration::ReplaceBalancesRelatedStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
@@ -151,7 +154,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9182,
+	spec_version: 9185,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -418,7 +421,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 impl_runtime_transaction_payment_fees!(constants);
@@ -427,7 +431,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeighToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -867,7 +871,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens = 55,
+		// 55 is saved for old pallet: Tokens: orml_tokens
+		Assets: pallet_assets = 56,
 
 		// Litmus pallets
 		ChainBridge: pallet_bridge = 60,

@@ -38,7 +38,7 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "__UnsupportedLitentryRococo", "Khala", "__UnsupportedSubstrateTestnet", "Ethereum"],
         },
         DynamicParams: {
             smart_contract_id: "[u8;20]",
@@ -242,11 +242,11 @@ export default {
         },
         // PlatformUserType
         PlatformUserType: {
-            _enum: ["KaratDaoUser", "MagicCraftStakingUser"],
+            _enum: ["KaratDao", "MagicCraftStaking", "DarenMarket"],
         },
         // Web3NftType
         Web3NftType: {
-            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan"],
+            _enum: ["WeirdoGhostGang", "Club3Sbt", "MFan", "Mvp"],
         },
     },
 };

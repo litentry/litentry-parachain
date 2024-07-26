@@ -11,10 +11,16 @@ use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::parentchain::ParentchainId;
 use lc_parachain_extrinsic_task_sender::init_parachain_extrinsic_sender_storage;
 use log::*;
-use std::{format, string::String, sync::Arc, time, vec};
+use std::{
+	format,
+	string::String,
+	sync::{mpsc::RecvTimeoutError, Arc},
+	time, vec,
+};
 
 const MAX_BATCH_SIZE: usize = 500;
 const BATCH_EXTRINSIC_INTERVAL: time::Duration = time::Duration::from_secs(6);
+const TASK_RECV_INTERVAL: time::Duration = time::Duration::from_secs(1);
 
 pub fn run_parachain_extrinsic_task_receiver<ExtrinsicsFactory, OCallApi>(
 	api: Arc<OCallApi>,
@@ -32,13 +38,18 @@ where
 	loop {
 		let start_time = time::Instant::now();
 		while start_time.elapsed() < BATCH_EXTRINSIC_INTERVAL {
-			if let Ok(call) = task_receiver.recv() {
-				calls.push(call);
-			}
-			if calls.len() == MAX_BATCH_SIZE {
-				break
+			match task_receiver.recv_timeout(TASK_RECV_INTERVAL) {
+				Ok(call) => {
+					calls.push(call);
+					if calls.len() == MAX_BATCH_SIZE {
+						break
+					}
+				},
+				Err(RecvTimeoutError::Timeout) => continue,
+				Err(RecvTimeoutError::Disconnected) => break,
 			}
 		}
+
 		if !calls.is_empty() {
 			let extrinsic =
 				match extrinsic_factory.create_batch_extrinsic(calls.drain(..).collect(), None) {

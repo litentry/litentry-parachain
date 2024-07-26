@@ -42,8 +42,8 @@ pub fn charlie() -> AccountId {
 	AccountId::from(CHARLIE)
 }
 
-pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000 * UNIT;
-pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000 * UNIT;
+pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000_000_000 * UNIT;
+pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000_000_000 * UNIT;
 
 pub struct ExtBuilder<R> {
 	phantom: sp_std::marker::PhantomData<R>,

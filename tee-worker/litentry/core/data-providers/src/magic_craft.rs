@@ -119,15 +119,15 @@ impl MagicCraftApi for MagicCraftClient {
 
 		let params = MagicCraftRequest { path: "litentry/user".into(), query: Some(query) };
 
-		debug!("user_verification, params: {:?}", params);
+		debug!("MagicCraft user_verification, params: {:?}", params);
 
 		match self.get::<UserVerificationResponse>(params, fail_fast) {
 			Ok(resp) => {
-				debug!("user_verification, response: {:?}", resp);
+				debug!("MagicCraft user_verification, response: {:?}", resp);
 				Ok(resp)
 			},
 			Err(e) => {
-				debug!("user_verification, error: {:?}", e);
+				debug!("MagicCraft user_verification, error: {:?}", e);
 				Err(e)
 			},
 		}

@@ -28,12 +28,14 @@ pub enum Web3NftType {
 	Club3Sbt,
 	#[codec(index = 2)]
 	MFan,
+	#[codec(index = 3)]
+	Mvp,
 }
 
 impl Web3NftType {
 	pub fn get_supported_networks(&self) -> Vec<Web3Network> {
 		match self {
-			Self::WeirdoGhostGang => vec![Web3Network::Ethereum],
+			Self::WeirdoGhostGang | Self::Mvp => vec![Web3Network::Ethereum],
 			Self::Club3Sbt => vec![Web3Network::Bsc, Web3Network::Polygon, Web3Network::Arbitrum],
 			Self::MFan => vec![Web3Network::Polygon],
 		}

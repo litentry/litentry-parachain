@@ -196,6 +196,7 @@ assertion_vec=(
     "nft-holder weirdo-ghost-gang"
     "nft-holder club3-sbt"
     "nft-holder mfan"
+    "nft-holder mvp"
 )
 
 assertions=()

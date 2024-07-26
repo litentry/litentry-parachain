@@ -117,7 +117,7 @@
       "polkadotXcm": {
         "safeXcmVersion": 3
       },
-      "tokens": {
+      "assets": {
         "balances": []
       },
       "identityManagement": {
