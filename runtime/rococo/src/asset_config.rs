@@ -23,6 +23,16 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![]
 }
 
+pub struct AssetsBenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl<AssetIdParameter: From<u128>> pallet_assets::BenchmarkHelper<AssetIdParameter>
+	for AssetsBenchmarkHelper
+{
+	fn create_asset_id_parameter(id: u32) -> AssetIdParameter {
+		AssetId::from(id).into()
+	}
+}
+
 parameter_types! {
 	pub LitTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -39,11 +49,11 @@ parameter_types! {
 
 impl AddressToAssetId<AssetId> for Runtime {
 	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		let mut data = [0u8; 4];
+		let mut data = [0u8; 16];
 		let address_bytes: [u8; 20] = address.into();
 		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
-			data.copy_from_slice(&address_bytes[16..20]);
-			Some(u32::from_be_bytes(data))
+			data.copy_from_slice(&address_bytes[4..20]);
+			Some(u128::from_be_bytes(data))
 		} else {
 			None
 		}
@@ -52,7 +62,7 @@ impl AddressToAssetId<AssetId> for Runtime {
 	fn asset_id_to_address(asset_id: AssetId) -> H160 {
 		let mut data = [0u8; 20];
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[16..20].copy_from_slice(&asset_id.to_be_bytes());
+		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
 		H160::from(data)
 	}
 }
@@ -79,7 +89,7 @@ impl pallet_assets::Config for Runtime {
 	type AssetIdParameter = Compact<AssetId>;
 	type CallbackHandle = ();
 	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
+	type BenchmarkHelper = AssetsBenchmarkHelper;
 }
 
 impl pallet_asset_manager::Config for Runtime {

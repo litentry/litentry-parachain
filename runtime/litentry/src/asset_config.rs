@@ -22,6 +22,16 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![]
 }
 
+pub struct AssetsBenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl<AssetIdParameter: From<u128>> pallet_assets::BenchmarkHelper<AssetIdParameter>
+	for AssetsBenchmarkHelper
+{
+	fn create_asset_id_parameter(id: u32) -> AssetIdParameter {
+		AssetId::from(id).into()
+	}
+}
+
 parameter_types! {
 	pub LitTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -58,7 +68,7 @@ impl pallet_assets::Config for Runtime {
 	type AssetIdParameter = Compact<AssetId>;
 	type CallbackHandle = ();
 	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
+	type BenchmarkHelper = AssetsBenchmarkHelper;
 }
 
 impl pallet_asset_manager::Config for Runtime {
