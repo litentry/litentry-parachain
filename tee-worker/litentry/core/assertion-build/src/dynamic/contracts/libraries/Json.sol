@@ -19,10 +19,10 @@
 pragma solidity ^0.8.8;
 
 library Json {
-    function getString(string memory json, string memory pointer)
-        internal
-        returns (bool, string memory)
-    {
+    function getString(
+        string memory json,
+        string memory pointer
+    ) internal returns (bool, string memory) {
         bool success;
         string memory value;
         bytes memory encoded_params = abi.encode(json, pointer);
@@ -52,10 +52,10 @@ library Json {
         return (success, value);
     }
 
-    function getI64(string memory json, string memory pointer)
-        internal
-        returns (bool, int64)
-    {
+    function getI64(
+        string memory json,
+        string memory pointer
+    ) internal returns (bool, int64) {
         bool success;
         int64 value;
 
@@ -85,10 +85,10 @@ library Json {
         return (success, value);
     }
 
-    function getBool(string memory json, string memory pointer)
-        internal
-        returns (bool, bool)
-    {
+    function getBool(
+        string memory json,
+        string memory pointer
+    ) internal returns (bool, bool) {
         bool success;
         bool value;
 
@@ -118,10 +118,10 @@ library Json {
         return (success, value);
     }
 
-    function getArrayLen(string memory json, string memory pointer)
-        internal
-        returns (bool, int64)
-    {
+    function getArrayLen(
+        string memory json,
+        string memory pointer
+    ) internal returns (bool, int64) {
         bool success;
         int64 value;
 

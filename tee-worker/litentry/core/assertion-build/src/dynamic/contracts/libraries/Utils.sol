@@ -19,10 +19,9 @@
 pragma solidity ^0.8.8;
 
 library Utils {
-    function toHex(bytes memory bytes_value)
-        internal
-        returns (bool success, string memory value)
-    {
+    function toHex(
+        bytes memory bytes_value
+    ) internal returns (bool success, string memory value) {
         bytes memory encoded_params = abi.encode(bytes_value);
         uint256 encoded_params_len = encoded_params.length;
 
@@ -49,10 +48,10 @@ library Utils {
         return (success, value);
     }
 
-    function identityToString(uint32 network_type, bytes memory identity_value)
-        internal
-        returns (bool success, string memory value)
-    {
+    function identityToString(
+        uint32 network_type,
+        bytes memory identity_value
+    ) internal returns (bool success, string memory value) {
         bytes memory encoded_params = abi.encode(network_type, identity_value);
         uint256 encoded_params_len = encoded_params.length;
 
@@ -79,10 +78,9 @@ library Utils {
         return (success, value);
     }
 
-    function hexToNumber(string memory string_value)
-        internal
-        returns (bool success, uint256 value)
-    {
+    function hexToNumber(
+        string memory string_value
+    ) internal returns (bool success, uint256 value) {
         bytes memory encoded_params = abi.encode(string_value);
         uint256 encoded_params_len = encoded_params.length;
 
@@ -109,10 +107,10 @@ library Utils {
         return (success, value);
     }
 
-    function parseDecimal(string memory string_value, uint8 decimals)
-        internal
-        returns (bool success, uint256 value)
-    {
+    function parseDecimal(
+        string memory string_value,
+        uint8 decimals
+    ) internal returns (bool success, uint256 value) {
         bytes memory encoded_params = abi.encode(string_value, decimals);
         uint256 encoded_params_len = encoded_params.length;
 
@@ -139,10 +137,9 @@ library Utils {
         return (success, value);
     }
 
-    function parseInt(string memory string_value)
-        internal
-        returns (bool success, uint256 value)
-    {
+    function parseInt(
+        string memory string_value
+    ) internal returns (bool success, uint256 value) {
         bytes memory encoded_params = abi.encode(string_value);
         uint256 encoded_params_len = encoded_params.length;
 

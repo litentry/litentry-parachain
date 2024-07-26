@@ -19,9 +19,9 @@
 pragma solidity ^0.8.8;
 
 library Constants {
-	uint256 constant decimals_factor = 1000;
+    uint256 constant decimals_factor = 1000;
 }
 struct TokenInfo {
-	uint32 network;
-	string tokenAddress;
+    uint32 network;
+    string tokenAddress;
 }

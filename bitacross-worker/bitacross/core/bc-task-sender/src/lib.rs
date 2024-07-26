@@ -51,9 +51,9 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct BitAcrossRequest {
-	pub sender: oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>,
-	pub request: AesRequest,
+pub enum BitAcrossRequest {
+	Request(AesRequest, oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>),
+	ShareCeremonyData(AesRequest),
 }
 
 #[derive(Encode, Decode, Clone, Debug)]
