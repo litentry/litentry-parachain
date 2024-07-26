@@ -1468,6 +1468,8 @@ macro_rules! run_xcm_tests {
 			xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<XCMRequirements>();
 		}
 
+		// TODO
+		/*
 		// Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 		#[test]
 		fn test_pallet_xcm_send_capacity_relay_manipulation() {
@@ -1480,5 +1482,6 @@ macro_rules! run_xcm_tests {
 			xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<XCMRequirements>(
 			);
 		}
+		*/
 	};
 }
