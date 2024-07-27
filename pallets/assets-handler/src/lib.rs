@@ -31,7 +31,9 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
+type BalanceOf<T> = <T as pallet_bridge::Config>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
+use pallet_parachain_staking::IssuanceAdapter;
 use sp_runtime::{traits::CheckedSub, ArithmeticError, DispatchError, FixedPointOperand};
 use sp_std::{fmt::Debug, prelude::*};
 type ResourceId = pallet_bridge::ResourceId;
@@ -49,7 +51,6 @@ pub mod pallet {
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
-	type BalanceOf<T> = <T as pallet_bridge::Config>::Balance;
 	type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 
 	#[pallet::pallet]
@@ -72,14 +73,13 @@ pub mod pallet {
 
 		/// The privileged origin to call update_maximum_issuance
 		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		
+
 		#[pallet::constant]
-		type DefaultMaximumIssuance: Get<bridge::BalanceOf<Self>>;
+		type DefaultMaximumIssuance: Get<BalanceOf<Self>>;
 
 		#[pallet::constant]
 		// In parachain local decimal format
-		type ExternalTotalIssuance: Get<bridge::BalanceOf<Self>>;
-
+		type ExternalTotalIssuance: Get<BalanceOf<Self>>;
 	}
 
 	// Resource Id of pallet assets token
@@ -89,25 +89,25 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, ResourceId, AssetInfo<AssetId<T>, BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::type_value]
-	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
+	pub fn DefaultExternalBalances<T: Config>() -> BalanceOf<T> {
 		T::ExternalTotalIssuance::get()
-			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
+			.checked_sub(&<<T as Config>::Currency as Currency<
 				<T as frame_system::Config>::AccountId,
 			>>::total_issuance())
 			.map_or_else(|| 0u32.into(), |v| v)
 	}
 
-	// Native Token External Balance
+	// Native Token External Unlocked Total Balances of outside
 	#[pallet::storage]
 	#[pallet::getter(fn external_balances)]
 	pub type ExternalBalances<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
-	
-	// Native Token Maximum Issuance
+		StorageValue<_, BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
+
+	// Native Token Maximum Issuance Limit from outside remote chain
 	#[pallet::storage]
 	#[pallet::getter(fn maximum_issuance)]
 	pub type MaximumIssuance<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
+		StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -178,6 +178,31 @@ pub mod pallet {
 			Self::deposit_event(Event::ResourceRemoved { resource_id });
 			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight({1000})]
+		pub fn set_maximum_issuance(
+			origin: OriginFor<T>,
+			maximum_issuance: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::MaximumIssuanceChanged {
+				old_value: MaximumIssuance::<T>::get(),
+			});
+			MaximumIssuance::<T>::set(maximum_issuance);
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight({1000})]
+		pub fn set_external_balances(
+			origin: OriginFor<T>,
+			external_balances: BalanceOf<T>,
+		) -> DispatchResult {
+			frame_system::ensure_root(origin)?;
+			<ExternalBalances<T>>::put(external_balances);
+			Ok(())
+		}
 	}
 }
 
@@ -206,6 +231,20 @@ where
 					to: who.clone(),
 					amount,
 				});
+
+				// Native token require maximum issuance check
+				let total_issuance = pallet_balances::Pallet::<T>::total_issuance();
+				let new_issuance =
+					total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
+				if new_issuance > MaximumIssuance::<T>::get() {
+					return Err(Error::<T>::ReachMaximumSupply.into())
+				}
+				// Native token require external balance modification
+				let external_balances = <ExternalBalances<T>>::get()
+					.checked_sub(&amount)
+					.ok_or(Error::<T>::OverFlow)?;
+				<ExternalBalances<T>>::put(external_balances);
+
 				pallet_balances::Pallet::<T>::mint_into(&who, amount)
 			},
 			// pallet assets
@@ -243,6 +282,13 @@ where
 					Fortitude::Polite,
 				)?;
 				ensure!(burn_amount > fee, Error::<T>::CannotPayAsFee);
+
+				// Native token require external balance modification
+				let external_balances = <ExternalBalances<T>>::get()
+					.checked_add(&burn_amount)
+					.ok_or(Error::<T>::OverFlow)?;
+				<ExternalBalances<T>>::put(external_balances);
+
 				pallet_balances::Pallet::<T>::mint_into(&T::TreasuryAccount::get(), fee)?;
 				Ok(burn_amount.checked_sub(&fee).ok_or(ArithmeticError::Overflow)?)
 			},
@@ -269,5 +315,11 @@ where
 				Ok(burn_amount.checked_sub(&fee).ok_or(ArithmeticError::Overflow)?)
 			},
 		}
+	}
+}
+
+impl<T: Config> IssuanceAdapter<BalanceOf<T>> for Pallet<T> {
+	fn adapted_total_issuance() -> BalanceOf<T> {
+		<ExternalBalances<T>>::get()
 	}
 }

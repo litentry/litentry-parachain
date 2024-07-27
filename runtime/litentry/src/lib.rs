@@ -134,6 +134,7 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(migration::ReplaceBridgeRelatedStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
@@ -766,7 +767,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = BridgeTransfer;
+	type IssuanceAdapter = AssetsHandler;
 }
 
 parameter_types! {

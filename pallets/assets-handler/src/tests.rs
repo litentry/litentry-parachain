@@ -260,8 +260,6 @@ fn create_successful_transfer_proposal() {
 	})
 }
 
-
-?????????  ----below
 #[test]
 fn exceed_max_supply() {
 	new_test_ext().execute_with(|| {
@@ -309,16 +307,20 @@ fn exceed_max_supply_second() {
 
 #[test]
 fn test_external_balances_adjusted() {
+	let native_token_asset_info: AssetInfo<
+		<Test as pallet_assets::Config>::AssetId,
+		<Test as pallet_assets::Config>::Balance,
+	> = AssetInfo { fee: 0u64, asset: None };
 	new_test_ext().execute_with(|| {
 		// Set the new external_balances
 		assert_noop!(
-			BridgeTransfer::set_external_balances(
+			AssetsHandler::set_external_balances(
 				RuntimeOrigin::signed(Bridge::account_id()),
 				MaximumIssuance::<Test>::get() / 2
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
-		assert_ok!(BridgeTransfer::set_external_balances(
+		assert_ok!(AssetsHandler::set_external_balances(
 			RuntimeOrigin::root(),
 			MaximumIssuance::<Test>::get() / 2
 		));
@@ -342,26 +344,32 @@ fn test_external_balances_adjusted() {
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
 
 		assert_events(vec![
-			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
-			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
+			RuntimeEvent::AssetsHandler(Event::TokenBridgeIn {
+				asset_id: None,
 				to: RELAYER_A,
 				amount: 10,
 			}),
+			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
 		]);
 
 		// Token cross out of parachain
 		// Whitelist setup
 		let dest_chain = 0;
-		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_chain, 0));
+		assert_ok!(AssetsHandler::set_resource(
+			RuntimeOrigin::root(),
+			resource_id,
+			native_token_asset_info
+		));
 		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
 			RuntimeOrigin::root(),
 			dest_chain
 		));
-		assert_ok!(BridgeTransfer::transfer_native(
+		assert_ok!(BridgeTransfer::transfer_assets(
 			RuntimeOrigin::signed(RELAYER_A),
 			5,
 			vec![0u8, 0u8, 0u8, 0u8], // no meaning
 			dest_chain,
+			resource_id,
 		));
 
 		// Check the external_balances
@@ -398,4 +406,3 @@ fn set_maximum_issuance_fails_with_unprivileged_origin() {
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
 	});
 }
-??????????????? ----above
