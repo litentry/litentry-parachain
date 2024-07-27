@@ -121,7 +121,7 @@ where
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(
 			0,
-			result.unique.into().saturating_mul(weight.write + weight.read),
+			u64::from(result.unique).saturating_mul(weight.write + weight.read),
 		)
 	}
 	pub fn relocate_external_balance_storage() -> frame_support::weights::Weight {
