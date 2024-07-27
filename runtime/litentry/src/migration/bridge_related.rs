@@ -172,7 +172,7 @@ where
 			b"BridgeTransfer.transfer".to_vec()
 		);
 
-		let fee_iter = old::BridgeFee::<T>::iter();
+		let mut fee_iter = old::BridgeFee::<T>::iter();
 		// Just For Reference
 		// Ethereum: chain_id=0
 		// substrate_Litmus: chain_id=1
@@ -189,11 +189,11 @@ where
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
 		assert!(!old::Resources::<T>::contains_key(native_token_resource_id));
 
-		let fee_iter = old::BridgeFee::<T>::iter();
+		let mut fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
 
 		// Check AssetsHandler Storage
-		let new_resource_fee_iter = <ResourceToAssetInfo<T>>::iter();
+		let mut new_resource_fee_iter = <ResourceToAssetInfo<T>>::iter();
 		let expected_asset_info = AssetInfo {
 			fee: 16_000_000_000_000u128.saturating_mul(DECIMAL_CONVERTOR),
 			asset: None,
