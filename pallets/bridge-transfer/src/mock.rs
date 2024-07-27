@@ -28,11 +28,11 @@ use frame_system as system;
 use hex_literal::hex;
 pub use pallet_balances as balances;
 use pallet_bridge::{self as bridge, ResourceId};
-use sp_core::{ConstU16, H256};
+use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage, DispatchError,
+	DispatchError,
 };
 pub const TEST_THRESHOLD: u32 = 2;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);

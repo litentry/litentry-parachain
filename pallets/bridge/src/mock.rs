@@ -21,16 +21,14 @@ use frame_support::{
 	traits::{ConstU32, ConstU64},
 };
 use frame_system::{self as system};
-use sp_core::{ConstU16, H256};
+use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage,
 };
 
 use crate::{self as bridge, Config};
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
