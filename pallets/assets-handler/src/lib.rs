@@ -24,7 +24,8 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{
-			fungible::Mutate as FMutate, fungibles::Mutate as FsMutate, Fortitude, Precision,
+			fungible::Mutate as FMutate, fungibles::Mutate as FsMutate, Currency, Fortitude,
+			Precision,
 		},
 		StorageVersion,
 	},
