@@ -133,13 +133,10 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			fee: BalanceOf<T>,
 		},
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
 		/// MaximumIssuance was changed
-		MaximumIssuanceChanged { old_value: BalanceOf<T> },
+		MaximumIssuanceChanged {
+			old_value: BalanceOf<T>,
+		},
 	}
 
 	#[pallet::error]
