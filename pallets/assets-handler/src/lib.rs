@@ -24,16 +24,17 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{
-			fungible::Mutate as FMutate, fungibles::Mutate as FsMutate, Fortitude, Precision,
+			fungible::{Inspect as FInspect, Mutate as FMutate},
+			fungibles::Mutate as FsMutate,
+			Fortitude, Precision,
 		},
-		Currency, StorageVersion,
+		StorageVersion,
 	},
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use parity_scale_codec::EncodeLike;
 type BalanceOf<T> =
-	<pallet_balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	<pallet_balances::Pallet<T> as FInspect<<T as frame_system::Config>::AccountId>>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
 use pallet_parachain_staking::IssuanceAdapter;
 use sp_runtime::{
@@ -213,7 +214,12 @@ where
 		+ pallet_bridge::Config<Balance = B>
 		+ pallet_assets::Config<Balance = B>
 		+ pallet_balances::Config<Balance = B>,
-	B: Copy + FixedPointOperand + CheckedSub + CheckedAdd + MaybeSerializeDeserialize,
+	B: Copy
+		+ FixedPointOperand
+		+ CheckedSub
+		+ CheckedAdd
+		+ MaybeSerializeDeserialize
+		+ std::fmt::Debug,
 	A: Clone,
 {
 	fn prepare_token_bridge_in(
