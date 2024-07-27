@@ -20,6 +20,7 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use pallet_assets_handler::AssetInfo;
 use sp_core::{ConstU16, H256};
@@ -36,7 +37,10 @@ type Header = generic::Header<u64, BlakeTwo256>;
 type Balance = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test
+	pub enum Test where
+	Block = Block,
+	NodeBlock = Block,
+	UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system,
 		Balances: pallet_balances,

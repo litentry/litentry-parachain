@@ -20,7 +20,7 @@ use super::{
 		NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test,
 		TreasuryAccount, ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
-	*,
+	*, MaximumIssuance as MaximumIssuanceStorage, ExternalBalances,
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
@@ -316,13 +316,13 @@ fn test_external_balances_adjusted() {
 		assert_noop!(
 			AssetsHandler::set_external_balances(
 				RuntimeOrigin::signed(Bridge::account_id()),
-				MaximumIssuance::<Test>::get() / 2
+				MaximumIssuanceStorage::<Test>::get() / 2
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		assert_ok!(AssetsHandler::set_external_balances(
 			RuntimeOrigin::root(),
-			MaximumIssuance::<Test>::get() / 2
+			MaximumIssuanceStorage::<Test>::get() / 2
 		));
 
 		// Check inital state
@@ -331,7 +331,7 @@ fn test_external_balances_adjusted() {
 		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 		// Transfer and check result
 		// Check the external_balances
-		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2);
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuanceStorage::<Test>::get() / 2);
 		assert_ok!(BridgeTransfer::transfer(
 			RuntimeOrigin::signed(Bridge::account_id()),
 			RELAYER_A,
@@ -341,7 +341,7 @@ fn test_external_balances_adjusted() {
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
 		// Check the external_balances
-		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuanceStorage::<Test>::get() / 2 - 10);
 
 		assert_events(vec![
 			RuntimeEvent::AssetsHandler(Event::TokenBridgeIn {
@@ -373,19 +373,19 @@ fn test_external_balances_adjusted() {
 		));
 
 		// Check the external_balances
-		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 5);
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuanceStorage::<Test>::get() / 2 - 5);
 	});
 }
 
 #[test]
 fn set_maximum_issuance() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_eq!(MaximumIssuanceStorage::<Test>::get(), mock::MaximumIssuance::get());
 		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(
 			RuntimeOrigin::signed(RELAYER_A),
 			2
 		));
-		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
+		assert_eq!(MaximumIssuanceStorage::<Test>::get(), 2);
 		frame_system::Pallet::<Test>::assert_last_event(
 			crate::Event::<Test>::MaximumIssuanceChanged {
 				old_value: mock::MaximumIssuance::get(),
@@ -398,11 +398,11 @@ fn set_maximum_issuance() {
 #[test]
 fn set_maximum_issuance_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_eq!(MaximumIssuanceStorage::<Test>::get(), mock::MaximumIssuance::get());
 		assert_noop!(
 			pallet::Pallet::<Test>::set_maximum_issuance(RuntimeOrigin::signed(RELAYER_B), 2),
 			sp_runtime::DispatchError::BadOrigin
 		);
-		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_eq!(MaximumIssuanceStorage::<Test>::get(), mock::MaximumIssuance::get());
 	});
 }
