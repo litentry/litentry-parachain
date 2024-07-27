@@ -242,8 +242,7 @@ where
 				});
 
 				// Native token require maximum issuance check
-				let total_issuance: BalanceOf<T> =
-					pallet_balances::Pallet::<T>::total_issuance().into();
+				let total_issuance: BalanceOf<T> = pallet_balances::Pallet::<T>::total_issuance();
 				let new_issuance =
 					total_issuance.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 				if new_issuance > MaximumIssuance::<T>::get() {
@@ -260,7 +259,7 @@ where
 			// pallet assets
 			Some(AssetInfo { fee: _, asset: Some(asset) }) => {
 				Self::deposit_event(Event::TokenBridgeIn {
-					asset_id: Some(asset.clone()),
+					asset_id: Some(asset),
 					to: who.clone(),
 					amount,
 				});
@@ -305,7 +304,7 @@ where
 			// pallet assets
 			Some(AssetInfo { fee, asset: Some(asset) }) => {
 				Self::deposit_event(Event::TokenBridgeOut {
-					asset_id: Some(asset.clone()),
+					asset_id: Some(asset),
 					to: who.clone(),
 					amount,
 					fee,
@@ -314,7 +313,7 @@ where
 				// Burn amount will always be amount exactly
 				// Otherwise
 				let burn_amount = pallet_assets::Pallet::<T>::burn_from(
-					asset.clone(),
+					asset,
 					&who,
 					amount,
 					Precision::Exact,
