@@ -25,7 +25,6 @@ use super::{
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
-use sp_runtime::ArithmeticError;
 
 fn make_transfer_proposal(to: u64, amount: u64) -> RuntimeCall {
 	let rid = NativeTokenResourceId::get();
