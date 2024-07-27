@@ -27,20 +27,20 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
 use hex_literal::hex;
-use pallet_bridge::{EnsureOrigin, Get};
+use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
 
-const MAXIMUM_ISSURANCE: u32 = 20_000;
+const UNIT_ISSURANCE: u32 = 20_000;
 const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
 	hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
 	let user: T::AccountId = account(string, n, seed);
 	bridge_transfer::<T>::transfer(
-		RawOrigin::Root.into(),
+		EnsureBridge::try_successful_origin(),
 		user.clone(),
-		(n * MAXIMUM_ISSURANCE).into(),
+		(n * UNIT_ISSURANCE).into(),
 		NATIVE_TOKEN_RESOURCE_ID,
 	);
 
@@ -49,7 +49,7 @@ fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::Account
 
 benchmarks! {
 	transfer_assets{
-		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
+		let sender:T::AccountId = create_user::<T>("sender",10u32,10u32);
 
 		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
 		let dest_chain = 0;
