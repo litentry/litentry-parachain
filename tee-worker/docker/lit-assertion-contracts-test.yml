@@ -6,7 +6,7 @@ services:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
-            - ../litentry/core/assertion-build/src/dynamic/contracts:/assertion-contracts
+            - ../litentry/core/assertion-build/src/dynamic:/assertion-contracts
 
         build:
             context: ..

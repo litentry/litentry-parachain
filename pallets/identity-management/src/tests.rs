@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #[allow(unused)]
-use crate::{mock::*, Error, ShardIdentifier};
+use crate::{mock::*, Error, OIDCClients, ShardIdentifier};
 use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
@@ -190,5 +190,125 @@ fn extrinsic_whitelist_origin_works() {
 				encrypted_web3networks: vec![1u8; 2048],
 			},
 		));
+	});
+}
+
+#[test]
+fn register_oidc_client_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice.clone()),
+			redirect_uris
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::OIDCClientRegistered { client_id: alice.clone() },
+		));
+		assert!(OIDCClients::<Test>::contains_key(&alice));
+	});
+}
+
+#[test]
+fn register_oidc_client_empty_redirect_uris_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), vec![]),
+			Error::<Test>::EmptyRedirectUris
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_already_registered_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice.clone()),
+			redirect_uris.clone()
+		));
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
+			Error::<Test>::OIDCClientAlreadyRegistered
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_redirect_uri_too_long_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec(), "https://very-long-uriiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.com".as_bytes().to_vec()];
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
+			Error::<Test>::RedirectUriTooLong
+		);
+	});
+}
+
+#[test]
+fn register_oidc_client_too_many_redirect_uris_check_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec![
+			"https://example1.com".as_bytes().to_vec(),
+			"https://example2.com".as_bytes().to_vec(),
+			"https://example3.com".as_bytes().to_vec(),
+			"https://example4.com".as_bytes().to_vec(),
+		];
+		assert_noop!(
+			IdentityManagement::register_oidc_client(RuntimeOrigin::signed(alice), redirect_uris),
+			Error::<Test>::TooManyRedirectUris
+		);
+	});
+}
+
+#[test]
+fn unregister_oidc_client_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice.clone()),
+			redirect_uris
+		));
+		assert!(OIDCClients::<Test>::contains_key(&alice));
+		assert_ok!(IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(
+			alice.clone()
+		)));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::OIDCClientUnregistered { client_id: alice.clone() },
+		));
+		assert!(!OIDCClients::<Test>::contains_key(&alice));
+	});
+}
+
+#[test]
+fn unregister_oidc_client_does_not_exists_works() {
+	new_test_ext().execute_with(|| {
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
+		assert_noop!(
+			IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(bob)),
+			Error::<Test>::OIDCClientDoesNotExist
+		);
+	});
+}
+
+#[test]
+fn unregister_oidc_client_unauthorized_sender() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = get_signer(ALICE_PUBKEY);
+		let redirect_uris = vec!["https://example.com".as_bytes().to_vec()];
+		assert_ok!(IdentityManagement::register_oidc_client(
+			RuntimeOrigin::signed(alice),
+			redirect_uris
+		));
+		let bob: SystemAccountId = get_signer(BOB_PUBKEY);
+		assert_noop!(
+			IdentityManagement::unregister_oidc_client(RuntimeOrigin::signed(bob)),
+			Error::<Test>::OIDCClientDoesNotExist
+		);
 	});
 }
