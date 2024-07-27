@@ -36,25 +36,25 @@ use storage::migration::get_storage_value;
 mod old {
 	use super::*;
 	#[frame_support::storage_alias]
-	pub type BridgeBalances<T: pallet_bridge_transfer::Config> = StorageDoubleMap<
-		pallet_bridge_transfer::Pallet<T>,
-		Twox64Concat,
-		ResourceId,
-		Twox64Concat,
-		<T as frame_system::Config>::AccountId,
-		u128,
-	>;
+	pub type BridgeBalances<T: pallet_bridge_transfer::Config<I>, I: 'static = ()> =
+		StorageDoubleMap<
+			pallet_bridge_transfer::Pallet<T, I>,
+			Twox64Concat,
+			ResourceId,
+			Twox64Concat,
+			<T as frame_system::Config>::AccountId,
+			u128,
+		>;
 
 	#[frame_support::storage_alias]
-	pub type Resources<T: pallet_bridge::Config> =
-		StorageMap<pallet_bridge::Pallet<T>, Blake2_256, ResourceId, Vec<u8>>;
+	pub type Resources<T: pallet_bridge::Config<I>, I: 'static = ()> =
+		StorageMap<pallet_bridge::Pallet<T, I>, Blake2_256, ResourceId, Vec<u8>>;
 
 	#[frame_support::storage_alias]
-	pub type BridgeFee<T: pallet_bridge::Config> =
-		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
+	pub type BridgeFee<T: pallet_bridge::Config<I>, I: 'static = ()> =
+		StorageMap<pallet_bridge::Pallet<T, I>, Twox64Concat, BridgeChainId, u128>;
 }
 
-type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 // bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 pub const native_token_resource_id: [u8; 32] =
 	hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
@@ -65,7 +65,9 @@ pub struct ReplaceBridgeRelatedStorage<T>(PhantomData<T>);
 impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
-		+ pallet_balances::Config<Balance = u128>,
+		+ pallet_balances::Config<Balance = u128>
+		+ pallet_bridge::Config
+		+ pallet_bridge_transfer::Config,
 {
 	pub fn relocate_resource_fee_storage() -> frame_support::weights::Weight {
 		log::info!(
@@ -113,9 +115,9 @@ where
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_fee, &[], None, None);
 
 		// Replace into new storage of AssetsHandler
-		let resource_id: ResourceId = stored_data_resources.0 .0;
-		let fee: u128 = stored_data_fee.0 .1.saturating_mul(DECIMAL_CONVERTOR);
-		let asset_info: AssetInfo<AssetId<T>, u128> = AssetInfo {
+		let resource_id: ResourceId = stored_data_resources[0].0;
+		let fee: u128 = stored_data_fee[0].1.saturating_mul(DECIMAL_CONVERTOR);
+		let asset_info: AssetInfo<u128, u128> = AssetInfo {
 			fee,
 			asset: None, // None for native token Asset Id
 		};
