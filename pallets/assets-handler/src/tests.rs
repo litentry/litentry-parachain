@@ -16,9 +16,10 @@
 
 use super::{
 	mock::{
-		assert_events, new_test_ext, new_test_ext_initialized, Balances, Bridge, BridgeTransfer,
-		NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test,
-		TreasuryAccount, ENDOWED_BALANCE, MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
+		assert_events, new_test_ext, new_test_ext_initialized, AssetsHandler, Balances, Bridge,
+		BridgeTransfer, NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent,
+		RuntimeOrigin, Test, TreasuryAccount, ENDOWED_BALANCE, MAXIMUM_ISSURANCE, RELAYER_A,
+		RELAYER_B, RELAYER_C,
 	},
 	ExternalBalances, MaximumIssuance as MaximumIssuanceStorage, *,
 };
@@ -349,7 +350,7 @@ fn test_external_balances_adjusted() {
 				to: RELAYER_A,
 				amount: 10,
 			}),
-			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::Balances(pallet_balances::Event::Minted { who: RELAYER_A, amount: 10 }),
 		]);
 
 		// Token cross out of parachain

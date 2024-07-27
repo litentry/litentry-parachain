@@ -31,7 +31,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-type BalanceOf<T> = <T as pallet_bridge::Config>::Balance;
+type BalanceOf<T> = <T as pallet_balances::Config>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
 use pallet_parachain_staking::IssuanceAdapter;
 use sp_runtime::{
@@ -94,9 +94,7 @@ pub mod pallet {
 	#[pallet::type_value]
 	pub fn DefaultExternalBalances<T: Config>() -> BalanceOf<T> {
 		T::ExternalTotalIssuance::get()
-			.checked_sub(&<<T as Config>::Currency as Currency<
-				<T as frame_system::Config>::AccountId,
-			>>::total_issuance())
+			.checked_sub(&pallet_balances::Pallet::<T>::total_issuance())
 			.map_or_else(|| 0u32.into(), |v| v)
 	}
 

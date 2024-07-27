@@ -23,7 +23,7 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 use pallet_assets_handler::AssetInfo;
-use sp_core::{ConstU16, H256};
+use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 	BuildStorage,
@@ -201,7 +201,7 @@ pub const ENDOWED_BALANCE: u64 = 100_000_000;
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
 	let treasury_account: u64 = 0x8;
-	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),
