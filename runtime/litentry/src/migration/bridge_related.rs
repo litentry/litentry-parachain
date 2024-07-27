@@ -36,23 +36,22 @@ use storage::migration::get_storage_value;
 mod old {
 	use super::*;
 	#[frame_support::storage_alias]
-	pub type BridgeBalances<T: pallet_bridge_transfer::Config<I>, I: 'static = ()> =
-		StorageDoubleMap<
-			pallet_bridge_transfer::Pallet<T, I>,
-			Twox64Concat,
-			ResourceId,
-			Twox64Concat,
-			<T as frame_system::Config>::AccountId,
-			u128,
-		>;
+	pub type BridgeBalances<T: pallet_bridge_transfer::Config> = StorageDoubleMap<
+		pallet_bridge_transfer::Pallet<T>,
+		Twox64Concat,
+		ResourceId,
+		Twox64Concat,
+		<T as frame_system::Config>::AccountId,
+		u128,
+	>;
 
 	#[frame_support::storage_alias]
-	pub type Resources<T: pallet_bridge::Config<I>, I: 'static = ()> =
-		StorageMap<pallet_bridge::Pallet<T, I>, Blake2_256, ResourceId, Vec<u8>>;
+	pub type Resources<T: pallet_bridge::Config> =
+		StorageMap<pallet_bridge::Pallet<T>, Blake2_256, ResourceId, Vec<u8>>;
 
 	#[frame_support::storage_alias]
-	pub type BridgeFee<T: pallet_bridge::Config<I>, I: 'static = ()> =
-		StorageMap<pallet_bridge::Pallet<T, I>, Twox64Concat, BridgeChainId, u128>;
+	pub type BridgeFee<T: pallet_bridge::Config> =
+		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
 }
 
 // bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
@@ -115,8 +114,8 @@ where
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_fee, &[], None, None);
 
 		// Replace into new storage of AssetsHandler
-		let resource_id: ResourceId = stored_data_resources[0].0;
-		let fee: u128 = stored_data_fee[0].1.saturating_mul(DECIMAL_CONVERTOR);
+		let resource_id: ResourceId = stored_data_resources.0 .0;
+		let fee: u128 = stored_data_fee.0 .1.saturating_mul(DECIMAL_CONVERTOR);
 		let asset_info: AssetInfo<u128, u128> = AssetInfo {
 			fee,
 			asset: None, // None for native token Asset Id
@@ -134,7 +133,7 @@ where
 			"running migration to Bridge Transfer Bridge Balances"
 		);
 
-		let result = <old::BridgeBalances<T>>::clear(u32::Max, None);
+		let result = old::BridgeBalances::<T>::clear(u32::Max, None);
 
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(
@@ -181,14 +180,14 @@ where
 		+ pallet_balances::Config<Balance = u128>,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
-		let resources_iter = <old::Resources<T>>::iter();
+		let resources_iter = old::Resources::<T>::iter();
 		assert_eq!(
 			resources_iter.next(),
 			Some((native_token_resource_id, b"BridgeTransfer.transfer".to_vec()))
 		);
 		assert!(resources_iter.next().is_none());
 
-		let fee_iter = <old::BridgeFee<T>>::iter();
+		let fee_iter = old::BridgeFee::<T>::iter();
 		// Just For Reference
 		// Ethereum: chain_id=0
 		// substrate_Litmus: chain_id=1
@@ -203,10 +202,10 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		let resources_iter = <old::Resources<T>>::iter();
+		let resources_iter = old::Resources::<T>::iter();
 		assert_eq!(resources_iter.next(), None);
 
-		let fee_iter = <old::BridgeFee<T>>::iter();
+		let fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
 
 		// Check AssetsHandler Storage
@@ -225,7 +224,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_bridge_balances_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(<old::BridgeBalances<T>>::iter().next().is_none());
+		assert!(old::BridgeBalances::<T>::iter().next().is_none());
 		Ok(())
 	}
 	pub fn pre_upgrade_external_balance_storage() -> Result<Vec<u8>, &'static str> {
