@@ -47,7 +47,7 @@ bitacross_src: &bitacross_src
   - 'bitacross-worker/build.Dockerfile'
   - 'bitacross-worker/enclave-runtime/**'
 
-bitacross_test: &bitacross_src
+bitacross_test: &bitacross_test
   - 'bitacross-worker/ts-tests/**'
   - 'bitacross-worker/cli/*.sh'
   - 'docker/**'

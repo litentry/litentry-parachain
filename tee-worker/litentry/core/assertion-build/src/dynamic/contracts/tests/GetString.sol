@@ -21,10 +21,10 @@ pragma solidity ^0.8.8;
 import "../libraries/Http.sol";
 
 contract GetString {
-    function callGetString(string memory url, string memory jsonPointer)
-        public
-        returns (bool, string memory)
-    {
+    function callGetString(
+        string memory url,
+        string memory jsonPointer
+    ) public returns (bool, string memory) {
         HttpHeader[] memory headers = new HttpHeader[](0);
         return Http.GetString(url, jsonPointer, headers);
     }

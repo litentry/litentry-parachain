@@ -22,29 +22,29 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Bnb {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](10);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 50 * Constants.decimals_factor;
-		ranges[3] = 100 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
-		ranges[6] = 800 * Constants.decimals_factor;
-		ranges[7] = 1200 * Constants.decimals_factor;
-		ranges[8] = 1600 * Constants.decimals_factor;
-		ranges[9] = 3000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](10);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 50 * Constants.decimals_factor;
+        ranges[3] = 100 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
+        ranges[6] = 800 * Constants.decimals_factor;
+        ranges[7] = 1200 * Constants.decimals_factor;
+        ranges[8] = 1600 * Constants.decimals_factor;
+        ranges[9] = 3000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](2);
-		networks[0] = TokenInfo(Web3Networks.Bsc, "Native Token");
-		networks[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xb8c77482e45f1f44de1745f52c74426c631bdd52"
-		);
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory networks = new TokenInfo[](2);
+        networks[0] = TokenInfo(Web3Networks.Bsc, "Native Token");
+        networks[1] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xb8c77482e45f1f44de1745f52c74426c631bdd52"
+        );
+        return networks;
+    }
 }
