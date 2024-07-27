@@ -233,7 +233,8 @@ where
 				});
 
 				// Native token require maximum issuance check
-				let total_issuance = pallet_balances::Pallet::<T>::total_issuance();
+				let total_issuance: BalanceOf<T> =
+					pallet_balances::Pallet::<T>::total_issuance().into();
 				let new_issuance =
 					total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
 				if new_issuance > MaximumIssuance::<T>::get() {
