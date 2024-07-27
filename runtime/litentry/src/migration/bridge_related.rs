@@ -54,9 +54,11 @@ mod old {
 		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
 }
 
-// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 pub const native_token_resource_id: [u8; 32] =
-	hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
+	hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+// Hard coded key of native_token_resource_id
+pub const blake2_256_key: [u8; 32] =
+	hex!("560cf5c8bfa0719141e0d1b33ae9fec279c53682ce13220d526ad79cccc8aead");
 
 // Replace Frame System Storage for Decimal Change from 12 to 18
 // Replace Balances Storage for Decimal Change from 12 to 18
@@ -64,6 +66,7 @@ pub struct ReplaceBridgeRelatedStorage<T>(PhantomData<T>);
 impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
+		+ pallet_assets::Config<AssetId = u128, Balance = u128>
 		+ pallet_balances::Config<Balance = u128>
 		+ pallet_bridge::Config
 		+ pallet_bridge_transfer::Config,
@@ -76,24 +79,14 @@ where
 
 		// We get only one resource registed
 		// Which is native tokrn
+		// Resources Storage is using Blake2_256
+		// So we can not reverse it out
+		// Must hardcode back in
 		let pallet_prefix: &[u8] = b"Bridge";
 		let storage_item_prefix_resources: &[u8] = b"Resources";
-		let stored_data_resources: Vec<_> = storage_key_iter::<ResourceId, Vec<u8>, Blake2_256>(
-			pallet_prefix,
-			storage_item_prefix_resources,
-		)
-		.collect();
-		let migrated_count_resources = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data_resources
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		assert_eq!(migrated_count_resources, 1);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_resources, &[], None, None);
+		// Must hardcode back in
+		let resource_id: ResourceId = native_token_resource_id;
 
 		// This is fee for native token
 		// There should be only 1 item
@@ -103,19 +96,10 @@ where
 			storage_item_prefix_fee,
 		)
 		.collect();
-		let migrated_count_fee = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data_fee
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		assert_eq!(migrated_count_fee, 1);
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_fee, &[], None, None);
 
 		// Replace into new storage of AssetsHandler
-		let resource_id: ResourceId = stored_data_resources.0 .0;
-		let fee: u128 = stored_data_fee.0 .1.saturating_mul(DECIMAL_CONVERTOR);
+		let fee: u128 = stored_data_fee[0].1.saturating_mul(DECIMAL_CONVERTOR);
 		let asset_info: AssetInfo<u128, u128> = AssetInfo {
 			fee,
 			asset: None, // None for native token Asset Id
@@ -123,9 +107,7 @@ where
 		<ResourceToAssetInfo<T>>::insert(&resource_id, asset_info);
 
 		let weight = T::DbWeight::get();
-		migrated_count_resources
-			.saturating_add(migrated_count_fee)
-			.saturating_mul(weight.write + weight.read)
+		frame_support::weights::Weight::from_parts(0, 2 * (weight.write + weight.read))
 	}
 	pub fn delete_bridge_balances_storage() -> frame_support::weights::Weight {
 		log::info!(
@@ -177,13 +159,16 @@ where
 impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
-		+ pallet_balances::Config<Balance = u128>,
+		+ pallet_assets::Config<AssetId = u128, Balance = u128>
+		+ pallet_balances::Config<Balance = u128>
+		+ pallet_bridge::Config
+		+ pallet_bridge_transfer::Config,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
 		let resources_iter = old::Resources::<T>::iter();
 		assert_eq!(
 			resources_iter.next(),
-			Some((native_token_resource_id, b"BridgeTransfer.transfer".to_vec()))
+			Some((blake2_256_key, b"BridgeTransfer.transfer".to_vec()))
 		);
 		assert!(resources_iter.next().is_none());
 
@@ -268,7 +253,10 @@ where
 impl<T> OnRuntimeUpgrade for ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
-		+ pallet_balances::Config<Balance = u128>,
+		+ pallet_assets::Config<AssetId = u128, Balance = u128>
+		+ pallet_balances::Config<Balance = u128>
+		+ pallet_bridge::Config
+		+ pallet_bridge_transfer::Config,
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
