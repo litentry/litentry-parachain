@@ -20,7 +20,7 @@ use super::{
 		NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test,
 		TreasuryAccount, ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
-	*, MaximumIssuance as MaximumIssuanceStorage, ExternalBalances,
+	ExternalBalances, MaximumIssuance as MaximumIssuanceStorage, *,
 };
 use frame_support::{assert_noop, assert_ok};
 use hex_literal::hex;
