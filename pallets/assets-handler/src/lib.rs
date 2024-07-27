@@ -34,7 +34,10 @@ pub use pallet::*;
 type BalanceOf<T> = <T as pallet_bridge::Config>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
 use pallet_parachain_staking::IssuanceAdapter;
-use sp_runtime::{traits::CheckedSub, ArithmeticError, DispatchError, FixedPointOperand};
+use sp_runtime::{
+	traits::{CheckedAdd, CheckedSub},
+	ArithmeticError, DispatchError, FixedPointOperand,
+};
 use sp_std::{fmt::Debug, prelude::*};
 type ResourceId = pallet_bridge::ResourceId;
 

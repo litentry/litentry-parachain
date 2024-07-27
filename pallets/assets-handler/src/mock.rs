@@ -118,6 +118,8 @@ impl pallet_bridge::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const MAXIMUM_ISSURANCE: u64 = 20_000_000_000_000;
+
 parameter_types! {
 	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
 	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
