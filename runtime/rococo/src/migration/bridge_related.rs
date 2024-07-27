@@ -67,6 +67,7 @@ impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
+		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
 		+ pallet_bridge::Config
 		+ pallet_bridge_transfer::Config,
@@ -160,17 +161,13 @@ impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
+		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
 		+ pallet_bridge::Config
 		+ pallet_bridge_transfer::Config,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
-		let resources_iter = old::Resources::<T>::iter();
-		assert_eq!(
-			resources_iter.next(),
-			Some((blake2_256_key, b"BridgeTransfer.transfer".to_vec()))
-		);
-		assert!(resources_iter.next().is_none());
+		assert!(old::Resources::<T>::hashed_key_for(native_token_resource_id));
 
 		let fee_iter = old::BridgeFee::<T>::iter();
 		// Just For Reference
@@ -181,14 +178,13 @@ where
 		// substrate_Rococo:chain_id=3
 		// substrate_Stage: chain_id=5
 		// Goerli: chain_id=6
-		assert_eq!(fee_iter.next(), Some(0u8, 16_000_000_000_000u128));
+		assert_eq!(fee_iter.next(), Some((0u8, 16_000_000_000_000u128)));
 		assert!(fee_iter.next().is_none());
 
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		let resources_iter = old::Resources::<T>::iter();
-		assert_eq!(resources_iter.next(), None);
+		assert!(!old::Resources::<T>::hashed_key_for(native_token_resource_id));
 
 		let fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
@@ -254,6 +250,7 @@ impl<T> OnRuntimeUpgrade for ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
+		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
 		+ pallet_bridge::Config
 		+ pallet_bridge_transfer::Config,
