@@ -23,6 +23,7 @@ use frame_support::{
 use frame_system::{self as system};
 use sp_core::{ConstU16, H256};
 use sp_runtime::{
+	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 	BuildStorage,
 };

@@ -31,6 +31,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
+use parity_scale_codec::EncodeLike;
 type BalanceOf<T> =
 	<pallet_balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
@@ -212,7 +213,7 @@ where
 		+ pallet_bridge::Config<Balance = B>
 		+ pallet_assets::Config<Balance = B>
 		+ pallet_balances::Config<Balance = B>,
-	B: Copy + FixedPointOperand + CheckedSub + CheckedAdd,
+	B: Copy + FixedPointOperand + CheckedSub + CheckedAdd + MaybeSerializeDeserialize,
 	A: Clone,
 {
 	fn prepare_token_bridge_in(

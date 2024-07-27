@@ -30,6 +30,7 @@ pub use pallet_balances as balances;
 use pallet_bridge::{self as bridge, ResourceId};
 use sp_core::{ConstU16, H256};
 use sp_runtime::{
+	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 	BuildStorage, DispatchError,
 };
