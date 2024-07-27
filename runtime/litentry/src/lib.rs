@@ -85,6 +85,8 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 
@@ -132,6 +134,10 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(
+		migration::ReplacePalletProxyStorage<Runtime>,
+		migration::ReplacePalletVestingStorage<Runtime>,
+	),
 >;
 
 impl_opaque_keys! {
