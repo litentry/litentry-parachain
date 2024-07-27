@@ -40,6 +40,24 @@ export default {
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
                 __Unused_remove_identity: "Null",
                 request_batch_vc: "(LitentryIdentity, LitentryIdentity, BoundedVec<Assertion, ConstU32<32>>, Option<RequestAesKey>, H256)",
+
+                __Unused_7: "Null",
+                __Unused_8: "Null",
+                __Unused_9: "Null",
+                __Unused_10: "Null",
+                __Unused_11: "Null",
+                __Unused_12: "Null",
+                __Unused_13: "Null",
+                __Unused_14: "Null",
+                __Unused_15: "Null",
+                __Unused_16: "Null",
+                __Unused_17: "Null",
+                __Unused_18: "Null",
+                __Unused_19: "Null",
+
+                // this trusted call can only be requested directly by root or enclave_signer_account
+                link_identity_callback:
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
             },
         },
         TrustedOperationStatus: {
