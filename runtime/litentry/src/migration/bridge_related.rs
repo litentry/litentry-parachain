@@ -19,12 +19,9 @@ use frame_support::{
 	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
-	Blake2_128Concat, Blake2_256, Twox64Concat,
+	Blake2_256, Twox64Concat,
 };
-use frame_system::{Account, AccountInfo};
-use pallet_assets_handler::{
-	AssetInfo, BridgeBalances, ExternalBalances, MaximumIssuance, ResourceToAssetInfo,
-};
+use pallet_assets_handler::{AssetInfo, ExternalBalances, MaximumIssuance, ResourceToAssetInfo};
 use pallet_balances::AccountData;
 use pallet_bridge::{BridgeChainId, ResourceId};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
@@ -34,8 +31,6 @@ pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 use hex_literal::hex;
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::Encode;
-#[cfg(feature = "try-runtime")]
-use sp_std::collections::btree_map::BTreeMap;
 use storage::migration::get_storage_value;
 
 mod old {
@@ -152,9 +147,8 @@ where
 		);
 		let pallet_prefix: &[u8] = b"BridgeTransfer";
 		let storage_item_prefix: &[u8] = b"ExternalBalances";
-		let stored_data =
-			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
-				.expect("Storage query fails: BridgeTransfer ExternalBalances");
+		let stored_data = get_storage_value::<u128>(pallet_prefix, storage_item_prefix, b"")
+			.expect("Storage query fails: BridgeTransfer ExternalBalances");
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
 		<ExternalBalances<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
@@ -168,9 +162,8 @@ where
 		);
 		let pallet_prefix: &[u8] = b"BridgeTransfer";
 		let storage_item_prefix: &[u8] = b"MaximumIssuance";
-		let stored_data =
-			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
-				.expect("Storage query fails: BridgeTransfer MaximumIssuance");
+		let stored_data = get_storage_value::<u128>(pallet_prefix, storage_item_prefix, b"")
+			.expect("Storage query fails: BridgeTransfer MaximumIssuance");
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
 		<MaximumIssuance<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));

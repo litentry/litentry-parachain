@@ -995,7 +995,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
-impl pallet_assets_handler for Runtime {
+impl pallet_assets_handler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;

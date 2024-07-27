@@ -67,25 +67,3 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }
-
-// For backwards compatibility and tests
-impl WeightInfo for () {
-	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
-	// Storage: ChainBridge ChainNonces (r:1 w:1)
-	// Storage: ChainBridge BridgeFee (r:1 w:0)
-	// Storage: System Account (r:2 w:2)
-	// Storage: ChainBridge BridgeEvents (r:1 w:1)
-	fn transfer_assets() -> Weight {
-		Weight::from_parts(59_963_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(6 as u64))
-			.saturating_add(RocksDbWeight::get().writes(5 as u64))
-	}
-	// Storage: BridgeTransfer MaximumIssuance (r:1 w:0)
-	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
-	// Storage: System Account (r:1 w:1)
-	fn transfer() -> Weight {
-		Weight::from_parts(29_134_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(3 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
-	}
-}
