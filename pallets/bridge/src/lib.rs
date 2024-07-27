@@ -251,7 +251,7 @@ pub mod pallet {
 		ProposalAlreadyComplete,
 		/// Lifetime of proposal has been exceeded
 		ProposalExpired,
-		NonceOverFlow,
+		NonceOverflow,
 	}
 
 	#[pallet::storage]
@@ -459,7 +459,7 @@ pub mod pallet {
 		/// Increments the deposit nonce for the specified chain ID
 		fn bump_nonce(id: BridgeChainId) -> Result<DepositNonce, Error<T>> {
 			let nonce = Self::chains(id).unwrap_or_default();
-			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverFlow);
+			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverflow);
 			if let Ok(nonce_inner) = &new_nonce {
 				ChainNonces::<T>::insert(id, nonce_inner);
 			}

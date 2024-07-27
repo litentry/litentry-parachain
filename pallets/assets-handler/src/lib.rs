@@ -149,7 +149,7 @@ pub mod pallet {
 		InvalidResourceId,
 		CannotPayAsFee,
 		ReachMaximumSupply,
-		OverFlow,
+		Overflow,
 	}
 
 	#[pallet::call]
@@ -245,14 +245,14 @@ where
 				let total_issuance: BalanceOf<T> =
 					pallet_balances::Pallet::<T>::total_issuance().into();
 				let new_issuance =
-					total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
+					total_issuance.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 				if new_issuance > MaximumIssuance::<T>::get() {
 					return Err(Error::<T>::ReachMaximumSupply.into())
 				}
 				// Native token require external balance modification
 				let external_balances = <ExternalBalances<T>>::get()
 					.checked_sub(&amount)
-					.ok_or(Error::<T>::OverFlow)?;
+					.ok_or(Error::<T>::Overflow)?;
 				<ExternalBalances<T>>::put(external_balances);
 
 				pallet_balances::Pallet::<T>::mint_into(&who, amount)
@@ -296,7 +296,7 @@ where
 				// Native token require external balance modification
 				let external_balances = <ExternalBalances<T>>::get()
 					.checked_add(&burn_amount)
-					.ok_or(Error::<T>::OverFlow)?;
+					.ok_or(Error::<T>::Overflow)?;
 				<ExternalBalances<T>>::put(external_balances);
 
 				pallet_balances::Pallet::<T>::mint_into(&T::TreasuryAccount::get(), fee)?;

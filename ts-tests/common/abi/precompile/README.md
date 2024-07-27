@@ -9,4 +9,4 @@ This folder contains Ethereum Virtual Machine (EVM) contracts converted to JSON 
 ## Included Contracts
 
 -   [ParachainStaking] precompiles/parachain-staking/StakingInterface.sol
--   [BridgeTransfer] precompiles/bridge-transfer/BridgeTransfer.sol
+-   [BridgeTransfer] precompiles/bridge-transfer/BridgeInterface.sol
