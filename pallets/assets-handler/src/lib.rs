@@ -47,9 +47,9 @@ type ResourceId = pallet_bridge::ResourceId;
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
 pub struct AssetInfo<AssetId, Balance> {
-	fee: Balance,
+	pub fee: Balance,
 	// None for native token
-	asset: Option<AssetId>,
+	pub asset: Option<AssetId>,
 }
 
 #[frame_support::pallet]

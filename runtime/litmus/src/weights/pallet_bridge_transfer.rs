@@ -45,12 +45,6 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for pallet_bridge_transfer.
-pub trait WeightInfo {
-	fn transfer_assets() -> Weight;
-	fn transfer() -> Weight;
-}
-
 /// Weights for pallet_bridge_transfer using the Litentry node and recommended hardware.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<T> {

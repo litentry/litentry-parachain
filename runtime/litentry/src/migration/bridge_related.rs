@@ -22,17 +22,42 @@ use frame_support::{
 	Blake2_128Concat, Blake2_256, Twox64Concat,
 };
 use frame_system::{Account, AccountInfo};
-use pallet_assets_handler::{AssetInfo, ExternalBalances, MaximumIssuance, ResourceToAssetInfo};
-use pallet_bridge::{BridgeChainId, BridgeFee, ResourceId, Resources};
+use pallet_assets_handler::{
+	AssetInfo, BridgeBalances, ExternalBalances, MaximumIssuance, ResourceToAssetInfo,
+};
+use pallet_balances::AccountData;
+use pallet_bridge::{BridgeChainId, ResourceId};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
+use hex_literal::hex;
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::Encode;
 #[cfg(feature = "try-runtime")]
 use sp_std::collections::btree_map::BTreeMap;
 use storage::migration::get_storage_value;
+
+mod old {
+	use super::*;
+	#[frame_support::storage_alias]
+	pub type BridgeBalances<T: pallet_bridge_transfer::Config> = StorageDoubleMap<
+		pallet_bridge_transfer::Pallet<T>,
+		Twox64Concat,
+		ResourceId,
+		Twox64Concat,
+		<T as frame_system::Config>::AccountId,
+		u128,
+	>;
+
+	#[frame_support::storage_alias]
+	pub type Resources<T: pallet_bridge::Config> =
+		StorageMap<pallet_bridge::Pallet<T>, Blake2_256, ResourceId, Vec<u8>>;
+
+	#[frame_support::storage_alias]
+	pub type BridgeFee<T: pallet_bridge::Config> =
+		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
+}
 
 type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 // bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
@@ -42,7 +67,7 @@ pub const native_token_resource_id: [u8; 32] =
 // Replace Frame System Storage for Decimal Change from 12 to 18
 // Replace Balances Storage for Decimal Change from 12 to 18
 pub struct ReplaceBridgeRelatedStorage<T>(PhantomData<T>);
-impl<T> ReplaceBalancesRelatedStorage<T>
+impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,
@@ -64,7 +89,7 @@ where
 		.collect();
 		let migrated_count_resources = frame_support::weights::Weight::from_parts(
 			0,
-			stored_data
+			stored_data_resources
 				.len()
 				.try_into()
 				.expect("There are between 0 and 2**64 mappings stored."),
@@ -73,13 +98,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_resources, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<ResourceId, Vec<u8>, Blake2_256>(
-			pallet_prefix,
-			storage_item_prefix_resources
-		)
-		.next()
-		.is_none());
 
 		// This is fee for native token
 		// There should be only 1 item
@@ -91,22 +109,13 @@ where
 		.collect();
 		let migrated_count_fee = frame_support::weights::Weight::from_parts(
 			0,
-			stored_data
+			stored_data_fee
 				.len()
 				.try_into()
 				.expect("There are between 0 and 2**64 mappings stored."),
 		);
 		assert_eq!(migrated_count_fee, 1);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_fee, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<BridgeChainId, u128, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix_fee
-		)
-		.next()
-		.is_none());
 
 		// Replace into new storage of AssetsHandler
 		let resource_id: ResourceId = stored_data_resources.0 .0;
@@ -128,10 +137,7 @@ where
 			"running migration to Bridge Transfer Bridge Balances"
 		);
 
-		let result = <BridgeBalances<T>>::clear(u32::Max, None);
-		let _ = result.maybe_cursor.ok_or("Uncleaned Storage")?;
-		// Assert that old storage is empty
-		assert!(<BridgeBalances<T>>::iter().next().is_none());
+		let result = <old::BridgeBalances<T>>::clear(u32::Max, None);
 
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(
@@ -149,6 +155,8 @@ where
 		let stored_data =
 			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
 				.expect("Storage query fails: BridgeTransfer ExternalBalances");
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+
 		<ExternalBalances<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
@@ -163,6 +171,8 @@ where
 		let stored_data =
 			get_storage_value::<BalanceOf<T>>(pallet_prefix, storage_item_prefix, b"")
 				.expect("Storage query fails: BridgeTransfer MaximumIssuance");
+		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
+
 		<MaximumIssuance<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
@@ -170,20 +180,20 @@ where
 }
 
 #[cfg(feature = "try-runtime")]
-impl<T> ReplaceBalancesRelatedStorage<T>
+impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
-		let resources_iter = <Resources<T>>::iter();
+		let resources_iter = <old::Resources<T>>::iter();
 		assert_eq!(
 			resources_iter.next(),
 			Some((native_token_resource_id, b"BridgeTransfer.transfer".to_vec()))
 		);
 		assert!(resources_iter.next().is_none());
 
-		let fee_iter = <BridgeFee<T>>::iter();
+		let fee_iter = <old::BridgeFee<T>>::iter();
 		// Just For Reference
 		// Ethereum: chain_id=0
 		// substrate_Litmus: chain_id=1
@@ -198,10 +208,10 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		let resources_iter = <Resources<T>>::iter();
+		let resources_iter = <old::Resources<T>>::iter();
 		assert_eq!(resources_iter.next(), None);
 
-		let fee_iter = <BridgeFee<T>>::iter();
+		let fee_iter = <old::BridgeFee<T>>::iter();
 		assert_eq!(fee_iter.next(), None);
 
 		// Check AssetsHandler Storage
@@ -220,7 +230,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_bridge_balances_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(<BridgeBalances<T>>::iter().next().is_none());
+		assert!(<old::BridgeBalances<T>>::iter().next().is_none());
 		Ok(())
 	}
 	pub fn pre_upgrade_external_balance_storage() -> Result<Vec<u8>, &'static str> {
@@ -261,7 +271,7 @@ where
 	}
 }
 
-impl<T> OnRuntimeUpgrade for ReplaceBalancesRelatedStorage<T>
+impl<T> OnRuntimeUpgrade for ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,

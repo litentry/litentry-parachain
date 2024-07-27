@@ -28,6 +28,7 @@ use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
+use hex_literal::hex;
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::Encode;
 #[cfg(feature = "try-runtime")]
@@ -42,7 +43,7 @@ pub const native_token_resource_id: [u8; 32] =
 // Replace Frame System Storage for Decimal Change from 12 to 18
 // Replace Balances Storage for Decimal Change from 12 to 18
 pub struct ReplaceBridgeRelatedStorage<T>(PhantomData<T>);
-impl<T> ReplaceBalancesRelatedStorage<T>
+impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,
@@ -170,7 +171,7 @@ where
 }
 
 #[cfg(feature = "try-runtime")]
-impl<T> ReplaceBalancesRelatedStorage<T>
+impl<T> ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,
@@ -261,7 +262,7 @@ where
 	}
 }
 
-impl<T> OnRuntimeUpgrade for ReplaceBalancesRelatedStorage<T>
+impl<T> OnRuntimeUpgrade for ReplaceBridgeRelatedStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
 		+ pallet_balances::Config<Balance = u128>,
