@@ -38,7 +38,7 @@ const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
 	let user: T::AccountId = account(string, n, seed);
 	bridge_transfer::<T>::transfer(
-		EnsureBridge::try_successful_origin(),
+		EnsureBridge::try_successful_origin().unwrap(),
 		user.clone(),
 		(n * UNIT_ISSURANCE).into(),
 		NATIVE_TOKEN_RESOURCE_ID,
