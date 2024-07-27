@@ -221,7 +221,8 @@ where
 		+ CheckedAdd
 		+ MaybeSerializeDeserialize
 		+ std::fmt::Debug
-		+ FullCodec,
+		+ FullCodec
+		+ 'static,
 	A: Clone,
 {
 	fn prepare_token_bridge_in(
