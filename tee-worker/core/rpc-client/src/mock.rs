@@ -103,6 +103,10 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
+	fn import_sidechain_blocks(&self, _blocks_encoded: String) -> Result<()> {
+		Ok(())
+	}
+
 	fn close(&self) -> Result<()> {
 		unimplemented!()
 	}

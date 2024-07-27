@@ -37,7 +37,14 @@ use sp_core::ed25519;
 pub struct EnclaveMock;
 
 impl EnclaveBase for EnclaveMock {
-	fn init(&self, _mu_ra_url: &str, _untrusted_url: &str, _base_dir: &str) -> EnclaveResult<()> {
+	fn init(
+		&self,
+		_mu_ra_url: &str,
+		_untrusted_url: &str,
+		_base_dir: &str,
+		_ceremony_commands_thread_count: u8,
+		_ceremony_events_thread_count: u8,
+	) -> EnclaveResult<()> {
 		Ok(())
 	}
 
