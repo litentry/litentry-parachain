@@ -422,7 +422,7 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
-	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 impl_runtime_transaction_payment_fees!(constants);
@@ -431,7 +431,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = ConstantMultiplier<Balance, WeighToFeeFactor>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
