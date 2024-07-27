@@ -21,31 +21,31 @@ pragma solidity ^0.8.8;
 import "../libraries/Json.sol";
 
 contract JsonTest {
-    function callGetString(string memory json, string memory pointer)
-        public
-        returns (bool, string memory)
-    {
+    function callGetString(
+        string memory json,
+        string memory pointer
+    ) public returns (bool, string memory) {
         return Json.getString(json, pointer);
     }
 
-    function callGetI64(string memory json, string memory pointer)
-        public
-        returns (bool, int64)
-    {
+    function callGetI64(
+        string memory json,
+        string memory pointer
+    ) public returns (bool, int64) {
         return Json.getI64(json, pointer);
     }
 
-    function callGetBool(string memory json, string memory pointer)
-        public
-        returns (bool, bool)
-    {
+    function callGetBool(
+        string memory json,
+        string memory pointer
+    ) public returns (bool, bool) {
         return Json.getBool(json, pointer);
     }
 
-    function callGetArrayLen(string memory json, string memory pointer)
-        public
-        returns (bool, int64)
-    {
+    function callGetArrayLen(
+        string memory json,
+        string memory pointer
+    ) public returns (bool, int64) {
         return Json.getArrayLen(json, pointer);
     }
 }

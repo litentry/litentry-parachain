@@ -26,15 +26,12 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use core::time::Duration;
-use std::string::String;
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
-	SetSidechainBlockHeight(u64),
-	TopPoolSizeSet(u64),
-	TopPoolSizeIncrement,
-	TopPoolSizeDecrement,
-	SuccessfulTrustedOperationIncrement(String),
-	FailedTrustedOperationIncrement(String),
 	ParentchainBlockImportTime(Duration),
+	Musig2CeremonyStarted,
+	Musig2CeremonyFailed,
+	Musig2CeremonyTimedout(u8),
+	Musig2CeremonyDuration(Duration),
 }

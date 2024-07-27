@@ -21,25 +21,25 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Doge {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](7);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1000 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 20000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
-		ranges[5] = 100000 * Constants.decimals_factor;
-		ranges[6] = 300000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](7);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1000 * Constants.decimals_factor;
+        ranges[2] = 5000 * Constants.decimals_factor;
+        ranges[3] = 20000 * Constants.decimals_factor;
+        ranges[4] = 50000 * Constants.decimals_factor;
+        ranges[5] = 100000 * Constants.decimals_factor;
+        ranges[6] = 300000 * Constants.decimals_factor;
 
-		return ranges;
-	}
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](1);
-		networks[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0xba2ae424d960c26247dd6c32edc70b295c744c43"
-		);
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory networks = new TokenInfo[](1);
+        networks[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0xba2ae424d960c26247dd6c32edc70b295c744c43"
+        );
+        return networks;
+    }
 }

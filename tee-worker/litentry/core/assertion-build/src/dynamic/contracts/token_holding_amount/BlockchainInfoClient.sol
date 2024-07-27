@@ -22,10 +22,10 @@ import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
 
 library BlockchainInfoClient {
-    function getMultiAddress(string memory url, string[] memory accounts)
-        internal
-        returns (bool, int64)
-    {
+    function getMultiAddress(
+        string memory url,
+        string[] memory accounts
+    ) internal returns (bool, int64) {
         string memory activeQueryParam = "";
 
         for (uint256 i = 0; i < accounts.length; i++) {

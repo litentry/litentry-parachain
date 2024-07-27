@@ -1,4 +1,24 @@
-.deps
+node_modules
+.env
+
+# Hardhat files
+cache
 artifacts
-.prettierrc.json
+
+# TypeChain files
+typechain
+typechain-types
+
+# solidity-coverage files
+coverage
+coverage.json
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337
+
+.deps
 !*.sol
+
+# Remix
+compiler_config.json
+remix-compiler.config.js

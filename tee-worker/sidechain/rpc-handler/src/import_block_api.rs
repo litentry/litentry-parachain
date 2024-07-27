@@ -25,10 +25,7 @@ use jsonrpc_core::{IoHandler, Params, Value};
 use log::*;
 use std::{borrow::ToOwned, fmt::Debug, string::String, vec::Vec};
 
-pub fn add_import_block_rpc_method<ImportFn, Error>(
-	import_fn: ImportFn,
-	mut io_handler: IoHandler,
-) -> IoHandler
+pub fn add_import_block_rpc_method<ImportFn, Error>(import_fn: ImportFn, io_handler: &mut IoHandler)
 where
 	ImportFn: Fn(SignedBlock) -> Result<(), Error> + Sync + Send + 'static,
 	Error: Debug,
@@ -49,7 +46,7 @@ where
 		debug!("{}. Blocks: {:?}", RPC_METHOD_NAME_IMPORT_BLOCKS, blocks);
 
 		for block in blocks {
-			debug!("Add sidechain block {} to import queue", block.block.header.block_number);
+			info!("Add block {} to import queue", block.block.header.block_number);
 			let _ = import_fn(block).map_err(|e| {
 				let error = jsonrpc_core::error::Error::invalid_params_with_details(
 					"Failed to import Block.",
@@ -61,8 +58,6 @@ where
 
 		Ok(Value::String("ok".to_owned()))
 	});
-
-	io_handler
 }
 
 #[cfg(test)]
@@ -75,8 +70,9 @@ pub mod tests {
 	}
 
 	fn io_handler() -> IoHandler {
-		let io_handler = IoHandler::new();
-		add_import_block_rpc_method::<_, String>(|_| Ok(()), io_handler)
+		let mut io_handler = IoHandler::new();
+		add_import_block_rpc_method::<_, String>(|_| Ok(()), &mut io_handler);
+		io_handler
 	}
 
 	#[test]
