@@ -29,7 +29,6 @@ use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage,
 };
 pub const TEST_THRESHOLD: u32 = 2;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);

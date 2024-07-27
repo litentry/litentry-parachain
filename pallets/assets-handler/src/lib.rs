@@ -33,6 +33,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
+use parity_scale_codec::FullCodec;
 type BalanceOf<T> =
 	<pallet_balances::Pallet<T> as FInspect<<T as frame_system::Config>::AccountId>>::Balance;
 use pallet_bridge_transfer::BridgeHandler;
@@ -219,7 +220,8 @@ where
 		+ CheckedSub
 		+ CheckedAdd
 		+ MaybeSerializeDeserialize
-		+ std::fmt::Debug,
+		+ std::fmt::Debug
+		+ FullCodec,
 	A: Clone,
 {
 	fn prepare_token_bridge_in(
