@@ -151,7 +151,7 @@ fn mint_overflow() {
 					u64::MAX,
 					resource_id,
 				),
-				ArithmeticError::Overflow
+				Error::<Test>::Overflow
 			);
 		},
 	)
