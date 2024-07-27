@@ -24,7 +24,7 @@ use frame_support::{
 use pallet_assets_handler::{AssetInfo, ExternalBalances, MaximumIssuance, ResourceToAssetInfo};
 use pallet_balances::AccountData;
 use pallet_bridge::{BridgeChainId, ResourceId};
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -116,7 +116,7 @@ where
 			"running migration to Bridge Transfer Bridge Balances"
 		);
 
-		let result = old::BridgeBalances::<T>::clear(u32::Max, None);
+		let result = old::BridgeBalances::<T>::clear(u32::MAX, None);
 
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(
@@ -167,7 +167,10 @@ where
 		+ pallet_bridge_transfer::Config,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
-		assert!(old::Resources::<T>::hashed_key_for(native_token_resource_id));
+		assert_eq!(
+			old::Resources::<T>::hashed_key_for(native_token_resource_id),
+			b"BridgeTransfer.transfer".to_vec()
+		);
 
 		let fee_iter = old::BridgeFee::<T>::iter();
 		// Just For Reference
@@ -184,7 +187,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(!old::Resources::<T>::hashed_key_for(native_token_resource_id));
+		assert!(!old::Resources::<T>::contains_key(native_token_resource_id));
 
 		let fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
