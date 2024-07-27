@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::*;
 use crate::{self as pallet_assets_handler};
+
 use frame_support::{
 	assert_ok, ord_parameter_types, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
