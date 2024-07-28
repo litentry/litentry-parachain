@@ -54,10 +54,10 @@ mod old {
 		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
 }
 
-pub const native_token_resource_id: [u8; 32] =
+pub const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
 	hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
-// Hard coded key of native_token_resource_id
-pub const blake2_256_key: [u8; 32] =
+// Hard coded key of NATIVE_TOKEN_RESOURCE_ID
+pub const BLAKE2_256_KEY: [u8; 32] =
 	hex!("560cf5c8bfa0719141e0d1b33ae9fec279c53682ce13220d526ad79cccc8aead");
 
 // Replace Frame System Storage for Decimal Change from 12 to 18
@@ -87,7 +87,7 @@ where
 		let storage_item_prefix_resources: &[u8] = b"Resources";
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_resources, &[], None, None);
 		// Must hardcode back in
-		let resource_id: ResourceId = native_token_resource_id;
+		let resource_id: ResourceId = NATIVE_TOKEN_RESOURCE_ID;
 
 		// This is fee for native token
 		// There should be only 1 item
@@ -105,7 +105,7 @@ where
 			fee,
 			asset: None, // None for native token Asset Id
 		};
-		<ResourceToAssetInfo<T>>::insert(&resource_id, asset_info);
+		<ResourceToAssetInfo<T>>::insert(resource_id, asset_info);
 
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, 2 * (weight.write + weight.read))
@@ -135,7 +135,7 @@ where
 			.expect("Storage query fails: BridgeTransfer ExternalBalances");
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
-		<ExternalBalances<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
+		<ExternalBalances<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
 	}
@@ -150,7 +150,7 @@ where
 			.expect("Storage query fails: BridgeTransfer MaximumIssuance");
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 
-		<MaximumIssuance<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR.into()));
+		<MaximumIssuance<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
 	}
@@ -168,7 +168,7 @@ where
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
 		assert_eq!(
-			old::Resources::<T>::hashed_key_for(native_token_resource_id),
+			old::Resources::<T>::hashed_key_for(NATIVE_TOKEN_RESOURCE_ID),
 			b"BridgeTransfer.transfer".to_vec()
 		);
 
@@ -187,7 +187,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(!old::Resources::<T>::contains_key(native_token_resource_id));
+		assert!(!old::Resources::<T>::contains_key(NATIVE_TOKEN_RESOURCE_ID));
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
@@ -200,7 +200,7 @@ where
 		};
 		assert_eq!(
 			new_resource_fee_iter.next(),
-			Some((native_token_resource_id, expected_asset_info))
+			Some((NATIVE_TOKEN_RESOURCE_ID, expected_asset_info))
 		);
 		Ok(())
 	}
