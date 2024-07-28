@@ -220,7 +220,7 @@ where
 		+ CheckedSub
 		+ CheckedAdd
 		+ MaybeSerializeDeserialize
-		+ std::fmt::Debug
+		+ Debug
 		+ FullCodec
 		+ 'static,
 	A: Clone,
