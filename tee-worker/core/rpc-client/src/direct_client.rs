@@ -56,6 +56,8 @@ pub trait DirectApi {
 	fn get_untrusted_worker_url(&self) -> Result<String>;
 	fn get_state_metadata(&self) -> Result<Metadata>;
 	fn send(&self, request: &str) -> Result<()>;
+	fn import_sidechain_blocks(&self, blocks_encoded: String) -> Result<()>;
+
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
 
@@ -219,6 +221,16 @@ impl DirectApi for DirectClient {
 
 	fn send(&self, request: &str) -> Result<()> {
 		self.web_socket_control.send(request)
+	}
+
+	fn import_sidechain_blocks(&self, blocks_encoded: String) -> Result<()> {
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			"sidechain_importBlock".to_owned(),
+			vec![blocks_encoded],
+		)?;
+		self.get(&jsonrpc_call)?;
+		Ok(())
 	}
 
 	fn close(&self) -> Result<()> {

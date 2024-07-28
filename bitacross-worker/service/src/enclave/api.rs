@@ -108,6 +108,8 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 		&config.mu_ra_url_external(),
 		&config.untrusted_worker_url_external(),
 		&config.data_dir().display().to_string(),
+		config.ceremony_commands_thread_count,
+		config.ceremony_events_thread_count,
 	)?;
 
 	Ok(enclave_api)
