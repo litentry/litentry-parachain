@@ -23,49 +23,49 @@ import "../libraries/Utils.sol";
 import "../libraries/Identities.sol";
 
 library BlockchainInfoClient {
-	function getMultiAddress(
-		string[] memory accounts
-	) internal returns (bool, int64) {
-		string memory url = "https://blockchain.info/multiaddr";
-		string memory activeQueryParam = "";
+    function getMultiAddress(
+        string[] memory accounts
+    ) internal returns (bool, int64) {
+        string memory url = "https://blockchain.info/multiaddr";
+        string memory activeQueryParam = "";
 
-		for (uint256 i = 0; i < accounts.length; i++) {
-			activeQueryParam = string(
-				abi.encodePacked(activeQueryParam, accounts[i])
-			);
-			if (i != accounts.length - 1) {
-				activeQueryParam = string(
-					abi.encodePacked(activeQueryParam, "|")
-				);
-			}
-		}
+        for (uint256 i = 0; i < accounts.length; i++) {
+            activeQueryParam = string(
+                abi.encodePacked(activeQueryParam, accounts[i])
+            );
+            if (i != accounts.length - 1) {
+                activeQueryParam = string(
+                    abi.encodePacked(activeQueryParam, "|")
+                );
+            }
+        }
 
-		url = string(
-			abi.encodePacked(url, "?active=", activeQueryParam, "&n=", "0")
-		);
+        url = string(
+            abi.encodePacked(url, "?active=", activeQueryParam, "&n=", "0")
+        );
 
-		HttpHeader[] memory headers = new HttpHeader[](0);
-		return Http.GetI64(url, "/wallet/final_balance", headers);
-	}
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        return Http.GetI64(url, "/wallet/final_balance", headers);
+    }
 
-	function isSupportedNetwork(uint32 network) internal pure returns (bool) {
-		return
-			network == Web3Networks.BitcoinP2tr ||
-			network == Web3Networks.BitcoinP2pkh ||
-			network == Web3Networks.BitcoinP2sh ||
-			network == Web3Networks.BitcoinP2wpkh ||
-			network == Web3Networks.BitcoinP2wsh;
-	}
+    function isSupportedNetwork(uint32 network) internal pure returns (bool) {
+        return
+            network == Web3Networks.BitcoinP2tr ||
+            network == Web3Networks.BitcoinP2pkh ||
+            network == Web3Networks.BitcoinP2sh ||
+            network == Web3Networks.BitcoinP2wpkh ||
+            network == Web3Networks.BitcoinP2wsh;
+    }
 
-	function getTokenBalance(
-		string[] memory accounts
-	) internal returns (uint256) {
-		(bool balanceSuccess, int64 balance) = BlockchainInfoClient
-			.getMultiAddress(accounts);
-		if (balanceSuccess) {
-			return uint256(uint64(balance));
-		} else {
-			return 0;
-		}
-	}
+    function getTokenBalance(
+        string[] memory accounts
+    ) internal returns (uint256) {
+        (bool balanceSuccess, int64 balance) = BlockchainInfoClient
+            .getMultiAddress(accounts);
+        if (balanceSuccess) {
+            return uint256(uint64(balance));
+        } else {
+            return 0;
+        }
+    }
 }
