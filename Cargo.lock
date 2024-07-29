@@ -5633,6 +5633,7 @@ dependencies = [
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
+ "sp-core-hashing",
  "sp-inherents",
  "sp-io",
  "sp-offchain",
