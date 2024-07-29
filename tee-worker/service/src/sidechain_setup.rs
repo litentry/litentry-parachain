@@ -21,9 +21,7 @@ use crate::{
 	parentchain_handler::HandleParentchain,
 };
 use futures::executor::block_on;
-use itp_enclave_api::{
-	direct_request::DirectRequest, enclave_base::EnclaveBase, sidechain::Sidechain,
-};
+use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_settings::{
 	files::{SIDECHAIN_PURGE_INTERVAL, SIDECHAIN_PURGE_LIMIT},
 	sidechain::SLOT_DURATION,
@@ -36,13 +34,11 @@ use log::*;
 use std::{sync::Arc, thread};
 use tokio::runtime::Handle;
 
-pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
+pub(crate) fn sidechain_start_untrusted_rpc_server<SidechainStorage>(
 	config: &Config,
-	enclave: Arc<Enclave>,
 	sidechain_storage: Arc<SidechainStorage>,
 	tokio_handle: &Handle,
 ) where
-	Enclave: DirectRequest + Clone,
 	SidechainStorage: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 {
 	let untrusted_url = config.untrusted_worker_url();
@@ -54,9 +50,7 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 	let url = url::Url::parse(&untrusted_url).unwrap();
 
 	let _untrusted_rpc_join_handle = tokio_handle.spawn(async move {
-		itc_rpc_server::run_server(url.authority(), enclave, sidechain_storage)
-			.await
-			.unwrap();
+		itc_rpc_server::run_server(url.authority(), sidechain_storage).await.unwrap();
 	});
 }
 

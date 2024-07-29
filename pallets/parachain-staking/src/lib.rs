@@ -1376,7 +1376,6 @@ pub mod pallet {
 		) -> Percent {
 			<AutoCompoundDelegations<T>>::auto_compound(candidate, delegator)
 		}
-		///???
 		/// Caller must ensure candidate is active before calling
 		pub(crate) fn update_active(candidate: T::AccountId, total: BalanceOf<T>) {
 			let mut candidates = <CandidatePool<T>>::get();

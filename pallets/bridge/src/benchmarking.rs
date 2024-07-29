@@ -18,7 +18,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 #![allow(clippy::type_complexity)]
-
+#![allow(clippy::useless_vec)]
 use super::*;
 use crate::{BridgeChainId, Call, Event, Pallet as bridge};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -41,28 +41,6 @@ benchmarks! {
 	}:_(RawOrigin::Root,i)
 	verify{
 		assert_eq!(RelayerThreshold::<T>::get(),i);
-	}
-
-	set_resource{
-		let resource_id = [1u8;32];
-		let method = vec![0u8];
-	}:_(RawOrigin::Root,resource_id,method.clone())
-	verify{
-		assert_eq!(Resources::<T>::get(resource_id),Some(method));
-	}
-
-	remove_resource{
-		let resource_id = [1u8;32];
-		let method = vec![0u8];
-
-		bridge::<T>::set_resource(
-			RawOrigin::Root.into(),
-			resource_id,
-			method,
-		)?;
-	}:_(RawOrigin::Root,resource_id)
-	verify{
-		assert!(!Resources::<T>::contains_key(resource_id));
 	}
 
 	whitelist_chain{
@@ -91,13 +69,6 @@ benchmarks! {
 		  assert!(!Relayers::<T>::contains_key(relayer_id));
 	}
 
-	update_fee{
-		let dest_id:BridgeChainId =0;
-	}:_(RawOrigin::Root,dest_id,1u32.into())
-	verify{
-		assert!(BridgeFee::<T>::contains_key(dest_id));
-	}
-
 	acknowledge_proposal{
 		let relayer_id: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let prop_id:DepositNonce = 1;
@@ -115,11 +86,6 @@ benchmarks! {
 		bridge::<T>::whitelist_chain(
 			RawOrigin::Root.into(),
 			src_id,
-		)?;
-
-		bridge::<T>::set_resource(
-			RawOrigin::Root.into(),
-			r_id,method,
 		)?;
 
 	}:_(RawOrigin::Signed(relayer_id),prop_id,src_id, r_id, Box::new(proposal))
@@ -145,12 +111,6 @@ benchmarks! {
 		bridge::<T>::whitelist_chain(
 			RawOrigin::Root.into(),
 			src_id,
-		)?;
-
-		bridge::<T>::set_resource(
-			RawOrigin::Root.into(),
-			r_id,
-			method,
 		)?;
 
 	}:_(RawOrigin::Signed(relayer_id),prop_id,src_id,r_id,Box::new(proposal))
@@ -188,12 +148,6 @@ benchmarks! {
 		bridge::<T>::whitelist_chain(
 			RawOrigin::Root.into(),
 			src_id,
-		)?;
-
-		bridge::<T>::set_resource(
-			RawOrigin::Root.into(),
-			r_id,
-			method,
 		)?;
 
 		bridge::<T>::reject_proposal(

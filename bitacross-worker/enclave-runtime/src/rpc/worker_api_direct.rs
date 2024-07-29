@@ -149,7 +149,7 @@ where
 	io.add_method("bitacross_submitRequest", move |params: Params| {
 		debug!("worker_api_direct rpc was called: bitacross_submitRequest");
 		async move {
-			let json_value = match request_bit_across_inner(params).await {
+			let json_value = match bitacross_task_create_inner(params).await {
 				Ok(value) => value.to_hex(),
 				Err(error) => RpcReturnValue {
 					value: error,
@@ -162,6 +162,18 @@ where
 		}
 	});
 
+	// btc sign task data share
+	io.add_sync_method("bitacross_btcDataShare", move |params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_btcDataShare");
+		let json_value = match bitacross_data_share_inner(params) {
+			Ok(value) => value.to_hex(),
+			Err(error) =>
+				RpcReturnValue { value: error, do_watch: false, status: DirectRequestStatus::Error }
+					.to_hex(),
+		};
+		Ok(json!(json_value))
+	});
+
 	io.add_method("bitacross_checkSignBitcoin", move |_params: Params| {
 		debug!("worker_api_direct rpc was called: bitacross_checkSignBitcoin");
 		let request = prepare_check_sign_bitcoin_request(
@@ -172,7 +184,7 @@ where
 		async move {
 			if let Ok(request) = request {
 				let params = Params::Array(vec![jsonrpc_core::Value::String(request.to_hex())]);
-				let json_value = match request_bit_across_inner(params).await {
+				let json_value = match bitacross_task_create_inner(params).await {
 					Ok(value) => value.to_hex(),
 					Err(error) => RpcReturnValue {
 						value: error,
@@ -512,15 +524,13 @@ pub enum BitacrossRequestError {
 	Other(Vec<u8>),
 }
 
-async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
-	let payload = get_request_payload(params)?;
-	let request = AesRequest::from_hex(&payload)
-		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+async fn bitacross_task_create_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
+	let request = get_request_from_params(params)?;
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
 	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
-	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
+	bit_across_request_sender.send(BitAcrossRequest::Request(request, sender))?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {
@@ -556,14 +566,24 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 	}
 }
 
+fn bitacross_data_share_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
+	let request = get_request_from_params(params)?;
+	let bit_across_request_sender = BitAcrossRequestSender::new();
+	bit_across_request_sender.send(BitAcrossRequest::ShareCeremonyData(request))?;
+	Ok(RpcReturnValue { do_watch: false, value: vec![], status: DirectRequestStatus::Ok })
+}
+
 // we expect our `params` to be "by-position array"
 // see https://www.jsonrpc.org/specification#parameter_structures
-fn get_request_payload(params: Params) -> Result<String, String> {
+fn get_request_from_params(params: Params) -> Result<AesRequest, String> {
 	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
 
 	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
-	Ok(s.to_owned())
+
+	let request =
+		AesRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+	Ok(request)
 }
 
 #[cfg(feature = "test")]

@@ -137,7 +137,10 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(migration::ReplaceBalancesRelatedStorage<Runtime>,),
+	(
+		migration::ReplaceBridgeRelatedStorage<Runtime>,
+		migration::ReplaceBalancesRelatedStorage<Runtime>,
+	),
 >;
 
 impl_opaque_keys! {
@@ -154,7 +157,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9185,
+	spec_version: 9186,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -422,7 +425,7 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
-	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 impl_runtime_transaction_payment_fees!(constants);
@@ -431,7 +434,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = ConstantMultiplier<Balance, WeighToFeeFactor>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -740,9 +743,8 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
@@ -755,8 +757,8 @@ parameter_types! {
 }
 
 // allow anyone to call transfer_native
-pub struct TransferNativeAnyone;
-impl SortedMembers<AccountId> for TransferNativeAnyone {
+pub struct TransferAssetsAnyone;
+impl SortedMembers<AccountId> for TransferAssetsAnyone {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -772,14 +774,18 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+	type BridgeHandler = AssetsHandler;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TransferNativeAnyone;
+	type TransferAssetsMembers = TransferAssetsAnyone;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
+}
+
+impl pallet_assets_handler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
@@ -881,6 +887,7 @@ construct_runtime! {
 		AssetManager: pallet_asset_manager = 65,
 		Teebag: pallet_teebag = 66,
 		Bitacross: pallet_bitacross = 67,
+		AssetsHandler: pallet_assets_handler = 68,
 	}
 }
 

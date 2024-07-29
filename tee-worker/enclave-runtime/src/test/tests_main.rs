@@ -18,14 +18,11 @@
 use crate::test::evm_pallet_tests;
 
 use crate::{
-	rpc,
 	sync::tests::{enclave_rw_lock_works, sidechain_rw_lock_works},
 	test::{
 		cert_tests::*,
 		direct_rpc_tests, enclave_signer_tests,
-		fixtures::test_setup::{
-			enclave_call_signer, test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor,
-		},
+		fixtures::test_setup::{test_setup, TestStf, TestStfExecutor, TestTopPoolAuthor},
 		mocks::types::TestStateKeyRepo,
 		sidechain_aura_tests, sidechain_event_tests, state_getter_tests, top_pool_tests,
 	},
@@ -111,7 +108,6 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		test_retrieve_events,
 		test_retrieve_event_count,
 		test_reset_events,
-		rpc::worker_api_direct::tests::test_given_io_handler_methods_then_retrieve_all_names_as_string,
 		handle_state_mock::tests::initialized_shards_list_is_empty,
 		handle_state_mock::tests::shard_exists_after_inserting,
 		handle_state_mock::tests::from_shard_works,

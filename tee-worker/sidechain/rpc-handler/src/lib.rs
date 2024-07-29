@@ -21,7 +21,6 @@
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -33,6 +32,22 @@ pub mod sgx_reexport_prelude {
 	pub use rust_base58_sgx as base58;
 }
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
+use crate::import_block_api::add_import_block_rpc_method;
+use itp_import_queue::{ImportQueue, PushToQueue};
+use its_primitives::types::SignedBlock;
+use jsonrpc_core::IoHandler;
+use std::sync::Arc;
+
 pub mod constants;
 pub mod direct_top_pool_api;
-pub mod import_block_api;
+mod import_block_api;
+
+pub fn add_sidechain_api(
+	io_handler: &mut IoHandler,
+	sidechain_import_queue: Arc<ImportQueue<SignedBlock>>,
+) {
+	add_import_block_rpc_method(move |block| sidechain_import_queue.push_single(block), io_handler);
+}

@@ -32,63 +32,63 @@
         "balances": [
           [
             "5ECCQzRn2nUqDesngcoi7FxLhJBXGSnoEmXiMDZXCj94chRP",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5H9UNkdAAQcwn8QYef64js1utmUcAgU6nJEMZCQjHTQKRNZK",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5Cu91yt9xWtv1GCrrChB4ePtyTnDLgff7Py7fAXnfH4wi6pR",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5CfqbgTaQ6ACfvSaqwBeVLhJd3eojV5tSSwa7W1YnmCpogvK",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5HTXWTCd6aB3miMxPDuhWUcQPrypov17oc7q1oeAmwQpgfVD",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5FRCtuCCFH36mRUFBMaQw5xo2gQSby6w9tF7tHKaf1oqKAer",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5FqeHwNdn4tgcHGHMoU1kMrkPoFEFDMU6P7dbKJF5ndbV9T5",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5GyC1tDbxKTeJ3oLohURTiQZLA65EfyC4LP5rtTjfuT2trDU",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5ERt9HzQRHvxXQijuzjNWtBDtw6jo8EgvD5aLAGdE8CfYGaR",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5CnwccuM2oMj6wUB7181yWrRMYqrSNpZ853AT8bir9y91WXj",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5CSkEPpxwLFgWMZitmAWPiuDn82oca2DtAwRztS6u22osFWf",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5HQqqio996LPFcExb8rh8nkZ6sPK44MA6rew8fEyrSUAKGDh",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5GeSKJ61piUpLczzF6Yi3DrRXrcyRQmjeNfjHZvRs4Hm8yRf",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5CSQ7fmY9XQK9s1ub7ENyxKsrTuYhKMeiyM7CpWXup8wQPdm",
-            100000000000000
+            100000000000000000000
           ],
           [
             "5DPSiNGHJaRZy6e6qyD6FmWnC8wj9kGALLkDH5qxnc56QcGg",
-            100000000000000
+            100000000000000000000
           ]
         ]
       },
@@ -139,7 +139,7 @@
           "5Cu91yt9xWtv1GCrrChB4ePtyTnDLgff7Py7fAXnfH4wi6pR",
           "5CfqbgTaQ6ACfvSaqwBeVLhJd3eojV5tSSwa7W1YnmCpogvK"
         ],
-        "candidacyBond": 16000000000000,
+        "candidacyBond": 16000000000000000000,
         "desiredCandidates": 0
       },
       "session": {

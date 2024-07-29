@@ -30,6 +30,7 @@ frame-system-rpc-runtime-api = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 
 pallet-assets = { workspace = true }
+pallet-assets-handler = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
@@ -116,6 +117,7 @@ runtime-benchmarks = [
     "frame-system-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "pallet-asset-manager/runtime-benchmarks",
+    "pallet-assets-handler/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
     "pallet-bounties/runtime-benchmarks",
     # This module returned an error when ran the benchmark, temporarily chose to comment it out
@@ -171,6 +173,7 @@ std = [
     "orml-xtokens/std",
     "pallet-asset-manager/std",
     "pallet-assets/std",
+    "pallet-assets-handler/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -238,6 +241,7 @@ try-runtime = [
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-assets/try-runtime",
+    "pallet-assets-handler/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",

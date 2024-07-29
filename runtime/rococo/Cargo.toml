@@ -79,6 +79,7 @@ core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
 pallet-asset-manager = { workspace = true }
 pallet-assets = { workspace = true }
+pallet-assets-handler = { workspace = true }
 pallet-bitacross = { workspace = true }
 pallet-bitacross-mimic = { workspace = true }
 pallet-bridge = { workspace = true }
@@ -137,6 +138,7 @@ runtime-benchmarks = [
     "frame-system-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "pallet-asset-manager/runtime-benchmarks",
+    "pallet-assets-handler/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
     "pallet-bounties/runtime-benchmarks",
     "pallet-collective/runtime-benchmarks",
@@ -194,6 +196,7 @@ std = [
     "orml-xtokens/std",
     "pallet-asset-manager/std",
     "pallet-assets/std",
+    "pallet-assets-handler/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -281,6 +284,7 @@ try-runtime = [
     "pallet-account-fix/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-assets/try-runtime",
+    "pallet-assets-handler/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",

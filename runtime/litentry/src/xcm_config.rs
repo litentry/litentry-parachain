@@ -174,19 +174,19 @@ parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
 	pub const MaxAssetsIntoHolding: u32 = 64;
-	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 pub type Traders = (
 	UsingComponents<
-		ConstantMultiplier<Balance, WeighToFeeFactor>,
+		ConstantMultiplier<Balance, WeightToFeeFactor>,
 		NewAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
 		DealWithFees<Runtime>,
 	>,
 	UsingComponents<
-		ConstantMultiplier<Balance, WeighToFeeFactor>,
+		ConstantMultiplier<Balance, WeightToFeeFactor>,
 		OldAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
