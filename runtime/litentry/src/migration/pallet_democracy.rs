@@ -467,7 +467,7 @@ where
 				BlockNumberFor<T>,
 				T::MaxVotes,
 			>(&actual_result[x].1, &expected_result[x].1);
-			assert_eq!(result, true);
+			assert!(true);
 		}
 
 		Ok(())
