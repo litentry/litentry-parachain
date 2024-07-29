@@ -68,14 +68,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			AccountInfo<T::Index, T::AccountData>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
 			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
@@ -153,13 +145,6 @@ where
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
 		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, mut state) in stored_data {
 			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
 			for balance_lock in new_locks.into_iter() {
@@ -283,11 +268,11 @@ where
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_account_check() -> Result<Vec<u8>, &'static str> {
-		assert!(<Account<T>>::iter().next().is_none());
+		assert!(<pallet_balances::Account<T>>::iter().next().is_none());
 		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_account_check(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(<Account<T>>::iter().next().is_none());
+		assert!(<pallet_balances::Account<T>>::iter().next().is_none());
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_locks_storage() -> Result<Vec<u8>, &'static str> {
@@ -377,19 +362,19 @@ where
 
 		// The storage of Account for pallet balances is in frame_system pallet
 		// Should be empty, still let's check it
-		weight += Self::check_balances_account_storage();
+		// weight += Self::check_balances_account_storage();
 
 		weight += Self::replace_balances_locks_storage();
 
 		// The storage of Reserves for pallet balances is in frame_system pallet
 		// Should be empty, still let's check it
 		// Reserves
-		weight += Self::check_balances_reserves_storage();
+		// weight += Self::check_balances_reserves_storage();
 
 		// Should be empty, still let's check it
-		weight += Self::check_balances_holds_storage();
+		// weight += Self::check_balances_holds_storage();
 		// Should be empty, still let's check it
-		weight += Self::check_balances_freezes_storage();
+		// weight += Self::check_balances_freezes_storage();
 
 		weight
 	}

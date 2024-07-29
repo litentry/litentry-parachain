@@ -15,7 +15,7 @@
   "protocolId": "litmus",
   "properties": {
     "ss58Format": 131,
-    "tokenDecimals": 12,
+    "tokenDecimals": 18,
     "tokenSymbol": "LIT"
   },
   "relayChain": "kusama",
