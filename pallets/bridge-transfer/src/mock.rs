@@ -126,7 +126,7 @@ impl bridge::Config for Test {
 parameter_types! {
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
-	// transfernativemembers
+	// transferassetsmembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
 }
 
