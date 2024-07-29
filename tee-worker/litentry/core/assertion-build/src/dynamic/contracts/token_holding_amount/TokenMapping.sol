@@ -118,17 +118,17 @@ contract TokenMapping is TokenQueryLogic {
             tokenInfo["sats"].push(BRC20.getBrc20TokenInfo()[i]);
         }
 
-		// Btc
-		tokenRanges["btc"] = Btc.getTokenRanges();
-		for (uint8 i = 0; i < Btc.getTokenInfo().length; i++) {
-			tokenInfo["btc"].push(Btc.getTokenInfo()[i]);
-		}
+        // Btc
+        tokenRanges["btc"] = Btc.getTokenRanges();
+        for (uint8 i = 0; i < Btc.getTokenInfo().length; i++) {
+            tokenInfo["btc"].push(Btc.getTokenInfo()[i]);
+        }
 
-		// ada
-		tokenRanges["ada"] = Ada.getTokenRanges();
-		for (uint8 i = 0; i < Ada.getTokenInfo().length; i++) {
-			tokenInfo["ada"].push(Ada.getTokenInfo()[i]);
-		}
+        // ada
+        tokenRanges["ada"] = Ada.getTokenRanges();
+        for (uint8 i = 0; i < Ada.getTokenInfo().length; i++) {
+            tokenInfo["ada"].push(Ada.getTokenInfo()[i]);
+        }
 
         // amp
         tokenRanges["amp"] = Amp.getTokenRanges();
