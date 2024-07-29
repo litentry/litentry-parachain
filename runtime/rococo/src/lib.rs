@@ -31,7 +31,7 @@ use frame_support::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
 		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
@@ -81,6 +81,7 @@ use runtime_common::{
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
 	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS,
+	WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -176,7 +177,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(migration::ReplaceBridgeRelatedStorage<Runtime>,),
+	(migration::ReplaceParachainStakingStorage<Runtime>,migration::ReplaceBalancesRelatedStorage<Runtime>,migration::ReplaceBridgeRelatedStorage<Runtime>,),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
@@ -519,7 +520,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -527,7 +529,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -1118,7 +1120,9 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// We do not want to involve Transaction Payment Multiplier here
 		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
 		// Ethereum tx
-		let weight_to_fee: u128 = 1;
+		// This is hardcoded ConstantMultiplier<Balance, WeightToFeeFactor>, WeightToFeeFactor =
+		// MILLICENTS / 10
+		let weight_to_fee: u128 = WEIGHT_TO_FEE_FACTOR;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}

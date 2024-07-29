@@ -31,7 +31,7 @@ use frame_support::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
 		SortedMembers, WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
@@ -74,7 +74,7 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -137,7 +137,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(migration::ReplaceBridgeRelatedStorage<Runtime>,),
+  (migration::ReplaceBridgeRelatedStorage<Runtime>, migration::ReplaceBalancesRelatedStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
@@ -421,7 +421,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 impl_runtime_transaction_payment_fees!(constants);
@@ -430,7 +431,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;

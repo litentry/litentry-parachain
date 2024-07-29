@@ -29,19 +29,19 @@
         "balances": [
           [
             "5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5HEdcZvZ2h9hZyCwsxrPhU2uL1B418bxiN8LV6mYzrdAfP6h",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5CSfg3iY5H1rRFY3Qpez9Jy1dMvmvurxCGsEPptsx556sEY9",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-            1000000000000000
+            1000000000000000000000
           ]
         ]
       },
@@ -83,7 +83,7 @@
           "5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ",
           "5HEdcZvZ2h9hZyCwsxrPhU2uL1B418bxiN8LV6mYzrdAfP6h"
         ],
-        "candidacyBond": 16000000000000,
+        "candidacyBond": 16000000000000000000,
         "desiredCandidates": 0
       },
       "session": {
