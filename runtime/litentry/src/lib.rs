@@ -136,7 +136,7 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 	(
 		migration::ReplacePalletIdentityStorage<Runtime>,
-		migration::ReplacePalletMultisigStorage<Runtim>,
+		migration::ReplacePalletMultisigStorage<Runtime>,
 		migration::ReplacePalletProxyStorage<Runtime>,
 		migration::ReplacePalletVestingStorage<Runtime>,
 		migration::ReplaceParachainStakingStorage<Runtime>,

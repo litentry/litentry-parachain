@@ -21,13 +21,13 @@ use frame_support::{
 	traits::{Currency, Get, OnRuntimeUpgrade},
 	Blake2_128Concat, Twox64Concat,
 };
+use parity_scale_codec::EncodeLike;
 use sp_runtime::{traits::Hash, Saturating};
 use sp_std::{
 	convert::{From, TryInto},
 	marker::PhantomData,
 	vec::Vec,
 };
-use parity_scale_codec::EncodeLike;
 
 pub const DECIMAL_CONVERTOR: u32 = 1_000_000;
 
@@ -37,13 +37,11 @@ use parity_scale_codec::Encode;
 use sp_std::collections::btree_map::BTreeMap;
 use storage::migration::get_storage_value;
 
-use pallet_multisig::{Multisigs};
+use pallet_multisig::{Multisigs, Timepoint};
 // use pallet_multisig::Multisig;
 type BalanceOf<T> = <<T as pallet_multisig::Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;
-
-
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(MaxApprovals))]
@@ -77,7 +75,7 @@ pub struct ReplacePalletMultisigStorage<T>(PhantomData<T>);
 
 impl<T> ReplacePalletMultisigStorage<T>
 where
-    T: pallet_multisig::Config,
+	T: pallet_multisig::Config,
 	BalanceOf<T>: EncodeLike<BalanceOf<T>> + From<u128>,
 {
 	// pallet_multisig
@@ -87,45 +85,45 @@ where
 			"Running migration for Multisig - Multisigs"
 		);
 
-        let mut migrated_count: u64 = 0;
-        for (account, account2, mut multisig) in Multisigs::<T>::drain() {
-            multisig.deposit = multisig.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
-            Multisigs::<T>::insert(account, account2, multisig);
-            migrated_count += 1;
-        }
+		let mut migrated_count: u64 = 0;
+		for (account, account2, mut multisig) in Multisigs::<T>::drain() {
+			multisig.deposit = multisig.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
+			Multisigs::<T>::insert(account, account2, multisig);
+			migrated_count += 1;
+		}
 
-        let weight = T::DbWeight::get();
-        weight.reads_writes(migrated_count, migrated_count)
+		let weight = T::DbWeight::get();
+		weight.reads_writes(migrated_count, migrated_count)
 	}
 }
 
 #[cfg(feature = "try-runtime")]
 impl<T> ReplacePalletMultisigStorage<T>
 where
-    T: pallet_multisig::Config,
+	T: pallet_multisig::Config,
 	BalanceOf<T>: EncodeLike<BalanceOf<T>> + From<u128>,
 {
-    pub fn pre_upgrade_multisig_multisigs_storage() -> Result<Vec<u8>, &'static str> {
+	pub fn pre_upgrade_multisig_multisigs_storage() -> Result<Vec<u8>, &'static str> {
 		let result: BTreeMap<
 			(T::AccountId, [u8; 32]),
 			Multisig<T::BlockNumber, BalanceOf<T>, T::AccountId, T::MaxSignatories>,
-		> = <Multisigs<T>>::iter().map(|(account, account2, mut multisig)| {
+		> = <Multisigs<T>>::iter()
+			.map(|(account, account2, mut multisig)| {
+				// let new_deposit = multisig.deposit().saturating_mul(DECIMAL_CONVERTOR.into());
+				// multisig.set_deposit(new_deposit);
 
-            // let new_deposit = multisig.deposit().saturating_mul(DECIMAL_CONVERTOR.into());
-            // multisig.set_deposit(new_deposit);
+				multisig.deposit = multisig.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
+				((&account, &account2), multisig)
 
-
-            multisig.deposit = multisig.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
-            ((&account, &account2), multisig)
-
-            // ((&account, &hash), Multisig {
-            //     when: multisig.when(),
-            //     deposit: multisig.deposit().saturating_mul(DECIMAL_CONVERTOR.into()),
-            //     depositor: multisig.deposit(),
-            //     approvals: multisig.approvals(),
-            // }
-            // )
-        }).collect();
+				// ((&account, &hash), Multisig {
+				//     when: multisig.when(),
+				//     deposit: multisig.deposit().saturating_mul(DECIMAL_CONVERTOR.into()),
+				//     depositor: multisig.deposit(),
+				//     approvals: multisig.approvals(),
+				// }
+				// )
+			})
+			.collect();
 		Ok(result.encode())
 	}
 
@@ -136,8 +134,8 @@ where
 		>::decode(&mut &state[..])
 		.map_err(|_| "Failed to decode Vec<ScheduledRequest>")?;
 		for (account, account2, actual_result) in <Multisigs<T>>::iter() {
-			let expected_result = expected_state
-				.get(&(account, hash))
+			let expected_result = expected_result
+				.get(&(account, account2))
 				.ok_or("Not Expected Vec<ScheduledRequest>")?
 				.clone();
 			assert_eq!(expected_result.encode(), actual_result.encode());
