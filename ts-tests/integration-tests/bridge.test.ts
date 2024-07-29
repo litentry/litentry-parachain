@@ -74,6 +74,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 handlerBalance
                     .div(BigNumber.from(1000000))
                     .add(BigNumber.from(100))
+                    // !!!!Something wrong
                     .add(BigNumber.from(AssetInfo["fee"].toString()))
                     .toString(),
                 receipt,
@@ -112,6 +113,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         );
         const erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         const AssetInfo = await context.parachainConfig.api.query.chainBridge.resourceToAssetInfo(destResourceId);
+        // !!!!Something wrong
         const fee = AssetInfo["fee"];
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
