@@ -180,6 +180,7 @@ pub type Executive = frame_executive::Executive<
 	(
 		migration::ReplaceParachainStakingStorage<Runtime>,
 		migration::ReplaceBalancesRelatedStorage<Runtime>,
+		migration::ReplaceBridgeRelatedStorage<Runtime>,
 	),
 >;
 
@@ -524,7 +525,7 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
-	pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -532,7 +533,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = ConstantMultiplier<Balance, WeighToFeeFactor>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -932,7 +933,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = BridgeTransfer;
+	type IssuanceAdapter = AssetsHandler;
 }
 
 parameter_types! {
@@ -964,9 +965,8 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
@@ -978,8 +978,8 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TransferNativeAnyone;
-impl SortedMembers<AccountId> for TransferNativeAnyone {
+pub struct TransferAssetsAnyone;
+impl SortedMembers<AccountId> for TransferAssetsAnyone {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -995,14 +995,18 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+	type BridgeHandler = AssetsHandler;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TransferNativeAnyone;
+	type TransferAssetsMembers = TransferAssetsAnyone;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
+}
+
+impl pallet_assets_handler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
@@ -1120,7 +1124,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// We do not want to involve Transaction Payment Multiplier here
 		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
 		// Ethereum tx
-		// This is hardcoded ConstantMultiplier<Balance, WeighToFeeFactor>, WeighToFeeFactor =
+		// This is hardcoded ConstantMultiplier<Balance, WeightToFeeFactor>, WeightToFeeFactor =
 		// MILLICENTS / 10
 		let weight_to_fee: u128 = WEIGHT_TO_FEE_FACTOR;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
@@ -1302,6 +1306,9 @@ construct_runtime! {
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
 		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
 		ScoreStaking: pallet_score_staking = 75,
+
+		// New Bridge Added
+		AssetsHandler: pallet_assets_handler = 76,
 
 		// TEE
 		Teebag: pallet_teebag = 93,

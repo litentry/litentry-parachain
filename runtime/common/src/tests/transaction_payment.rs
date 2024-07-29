@@ -110,14 +110,14 @@ where
 				)
 				.unwrap();
 			parameter_types! {
-				pub const WeighToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+				pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 			}
 			// This test here already assume that we use ConstantMultiplier<Balance,
-			// WeighToFeeFactor>
+			// WeightToFeeFactor>
 			let total_payment: Balance =
-				ConstantMultiplier::<Balance, WeighToFeeFactor>::weight_to_fee(
+				ConstantMultiplier::<Balance, WeightToFeeFactor>::weight_to_fee(
 					&ExtrinsicBaseWeight::get(),
-				) + ConstantMultiplier::<Balance, WeighToFeeFactor>::weight_to_fee(
+				) + ConstantMultiplier::<Balance, WeightToFeeFactor>::weight_to_fee(
 					&Weight::from_parts(dispatch_info as u64, 0),
 				) + (len as Balance) * TransactionByteFee::get();
 			assert_eq!(old_sender_balance - Balances::<R>::free_balance(&alice()), total_payment);

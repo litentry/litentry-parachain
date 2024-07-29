@@ -149,19 +149,19 @@ async function setupCrossChainTransfer(
         extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
 
-    const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
-    if (resource.toHuman() !== 'BridgeTransfer.transfer') {
+    // ?????Please check I am not sure if this will work - Minqi
+    // But we need to set AssetInfo {
+    //      fee: ...,
+    //      asset: None, // None for native token
+    // }
+    const AssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+    if (AssetInfo is not null) {
         extrinsic.push(
             await sudoWrapperGC(
                 pConfig.api,
-                pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
+                pConfig.api.tx.assetsHandler.set_resource(destResourceId, {"fee": parachainFee, "asset": null})
             )
         );
-    }
-
-    const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
-    if (!fee || fee.toString() !== parachainFee.toString()) {
-        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
     }
 
     if (extrinsic.length > 0) {

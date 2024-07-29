@@ -30,6 +30,7 @@ frame-system-rpc-runtime-api = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 
 pallet-assets = { workspace = true }
+pallet-assets-handler = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
@@ -113,6 +114,9 @@ runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
+    "pallet-account-fix/runtime-benchmarks",
+    "pallet-asset-manager/runtime-benchmarks",
+    "pallet-assets-handler/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
     "pallet-bounties/runtime-benchmarks",
     "pallet-collective/runtime-benchmarks",
@@ -138,8 +142,6 @@ runtime-benchmarks = [
     "pallet-bridge-transfer/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
-    "pallet-account-fix/runtime-benchmarks",
-    "pallet-asset-manager/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -166,6 +168,7 @@ std = [
     "pallet-account-fix/std",
     "pallet-asset-manager/std",
     "pallet-assets/std",
+    "pallet-assets-handler/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
@@ -232,6 +235,7 @@ try-runtime = [
     "pallet-account-fix/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-assets/try-runtime",
+    "pallet-assets-handler/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
