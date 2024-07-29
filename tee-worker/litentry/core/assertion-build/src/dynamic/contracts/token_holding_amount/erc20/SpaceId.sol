@@ -38,18 +38,20 @@ library SpaceId {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x2dff88a56767223a5529ea5960da7a3f5f766406",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x2dff88a56767223a5529ea5960da7a3f5f766406",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x2dff88a56767223a5529ea5960da7a3f5f766406",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x2dff88a56767223a5529ea5960da7a3f5f766406",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

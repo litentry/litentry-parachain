@@ -38,23 +38,26 @@ library Sol {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x5288738df1aeb0894713de903e1d0c001eeb7644",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x570a5d26f7765ecb712c0924e4de545b89fd43df",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[2] = TokenInfo(
-			Web3Networks.Solana,
-			"Native Token",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x5288738df1aeb0894713de903e1d0c001eeb7644",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x570a5d26f7765ecb712c0924e4de545b89fd43df",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[2] = TokenInfo(
+            Web3Networks.Solana,
+            "Native Token",
+            DataProviderTypes.MoralisClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

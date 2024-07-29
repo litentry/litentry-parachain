@@ -34,13 +34,14 @@ library Doge {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0xba2ae424d960c26247dd6c32edc70b295c744c43",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0xba2ae424d960c26247dd6c32edc70b295c744c43",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

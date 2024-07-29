@@ -38,13 +38,14 @@ library Cvx {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }

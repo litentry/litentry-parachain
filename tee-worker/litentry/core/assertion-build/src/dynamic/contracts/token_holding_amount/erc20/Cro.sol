@@ -35,18 +35,20 @@ library Cro {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Solana,
-			"DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Solana,
+            "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA",
+            DataProviderTypes.NoderealClient,
+            6
+        );
+        return tokenInfoList;
+    }
 }

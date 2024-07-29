@@ -38,13 +38,14 @@ library Gusd {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x056fd409e1d7a124bd7017459dfea2f387b6d5cd",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x056fd409e1d7a124bd7017459dfea2f387b6d5cd",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }

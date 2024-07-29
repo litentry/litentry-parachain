@@ -34,18 +34,20 @@ library Atom {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x8D983cb9388EaC77af0474fA441C4815500Cb7BB",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x0eb3a705fc54725037cc9e008bdede697f62f335",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x8D983cb9388EaC77af0474fA441C4815500Cb7BB",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x0eb3a705fc54725037cc9e008bdede697f62f335",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

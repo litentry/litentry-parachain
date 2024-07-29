@@ -38,18 +38,20 @@ library Tusd {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x0000000000085d4780b73119b644ae5ecd22b376",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x0000000000085d4780b73119b644ae5ecd22b376",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }

@@ -34,13 +34,14 @@ library Etc {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x3d6545b08693dae087e957cb1180ee38b9e3c25e",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x3d6545b08693dae087e957cb1180ee38b9e3c25e",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

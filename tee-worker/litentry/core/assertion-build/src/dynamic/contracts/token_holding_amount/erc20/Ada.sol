@@ -31,15 +31,16 @@ library Ada {
         ranges[5] = 100000 * Constants.decimals_factor;
         ranges[6] = 300000 * Constants.decimals_factor;
 
-		return ranges;
-	}
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+        return ranges;
+    }
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

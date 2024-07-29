@@ -38,18 +38,20 @@ library Matic {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0xcc42724c6683b7e57334c4e856f4c9965ed682bd",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0xcc42724c6683b7e57334c4e856f4c9965ed682bd",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }

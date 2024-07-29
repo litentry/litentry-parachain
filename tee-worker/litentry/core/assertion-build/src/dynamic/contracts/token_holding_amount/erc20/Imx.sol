@@ -36,13 +36,14 @@ library Imx {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xf57e7e7c23978c3caec3c3548e3d615c346e79ff",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }

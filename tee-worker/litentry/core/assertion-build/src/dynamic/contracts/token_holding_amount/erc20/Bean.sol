@@ -21,8 +21,8 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
 struct TokenNetwork {
-	uint32 id;
-	string tokenAddress;
+    uint32 id;
+    string tokenAddress;
 }
 library Bean {
     function getTokenRanges() internal pure returns (uint256[] memory) {
@@ -36,18 +36,20 @@ library Bean {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xba7b9936a965fac23bb7a8190364fa60622b3cff",
-			DataProviderTypes.NoderealClient
-		);
-		return tokenInfoList;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xba7b9936a965fac23bb7a8190364fa60622b3cff",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

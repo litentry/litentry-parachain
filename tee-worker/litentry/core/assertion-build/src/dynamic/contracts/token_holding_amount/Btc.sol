@@ -20,38 +20,39 @@ pragma solidity ^0.8.8;
 import "./Constants.sol";
 import { BRC20 } from "./brc20/BRC20.sol";
 library Btc {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		// [0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
-		// all ranges multiplied by decimals_factor(1000).
-		uint256[] memory ranges = new uint256[](14);
-		ranges[0] = 0;
-		ranges[1] = 1;
-		ranges[2] = 100;
-		ranges[3] = 300;
-		ranges[4] = 600;
-		ranges[5] = 1000;
-		ranges[6] = 2000;
-		ranges[7] = 5000;
-		ranges[8] = 10000;
-		ranges[9] = 15000;
-		ranges[10] = 25000;
-		ranges[11] = 30000;
-		ranges[12] = 40000;
-		ranges[12] = 50000;
-		return ranges;
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        // [0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
+        // all ranges multiplied by decimals_factor(1000).
+        uint256[] memory ranges = new uint256[](14);
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 100;
+        ranges[3] = 300;
+        ranges[4] = 600;
+        ranges[5] = 1000;
+        ranges[6] = 2000;
+        ranges[7] = 5000;
+        ranges[8] = 10000;
+        ranges[9] = 15000;
+        ranges[10] = 25000;
+        ranges[11] = 30000;
+        ranges[12] = 40000;
+        ranges[13] = 50000;
+        return ranges;
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		uint32[] memory networks = BRC20.getDefaultTokenNetworks();
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
-		for (uint i = 0; i < networks.length; i++) {
-			tokenInfoList[i] = TokenInfo(
-				networks[i],
-				"",
-				DataProviderTypes.BlockchainInfoClient
-			);
-		}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        uint32[] memory networks = BRC20.getDefaultTokenNetworks();
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
+        for (uint i = 0; i < networks.length; i++) {
+            tokenInfoList[i] = TokenInfo(
+                networks[i],
+                "",
+                DataProviderTypes.BlockchainInfoClient,
+                8
+            );
+        }
 
-		return tokenInfoList;
-	}
+        return tokenInfoList;
+    }
 }

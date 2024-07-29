@@ -38,18 +38,20 @@ library Lit {
         return ranges;
     }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
-			DataProviderTypes.NoderealClient
-		);
-		tokenInfoList[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
-			DataProviderTypes.NoderealClient
-		);
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
         return tokenInfoList;
     }
