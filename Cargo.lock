@@ -5593,6 +5593,7 @@ dependencies = [
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5691,6 +5692,7 @@ dependencies = [
  "orml-xtokens",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -6909,6 +6911,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-handler"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.4.1",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-bridge",
+ "pallet-bridge-transfer",
+ "pallet-parachain-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -7117,6 +7139,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -7132,7 +7155,6 @@ dependencies = [
  "hex-literal 0.4.1",
  "pallet-balances",
  "pallet-bridge",
- "pallet-parachain-staking",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7423,16 +7445,15 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal 0.4.1",
+ "libsecp256k1",
  "log",
  "num_enum 0.7.2",
- "pallet-balances",
- "pallet-bridge",
  "pallet-bridge-transfer",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "paste",
  "precompile-utils",
- "rustc-hex",
  "scale-info",
  "serde",
  "sha3",
@@ -10709,6 +10730,7 @@ dependencies = [
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
