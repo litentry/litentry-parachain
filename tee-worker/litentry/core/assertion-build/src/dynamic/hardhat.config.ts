@@ -1,6 +1,5 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
-import 'hardhat-gas-reporter'
 const config: HardhatUserConfig = {
     solidity: '0.8.11',
     paths: {
@@ -14,9 +13,6 @@ const config: HardhatUserConfig = {
             },
             blockGasLimit: 1000000000,
         },
-    },
-    gasReporter: {
-        enabled: true,
     },
 }
 
