@@ -21,10 +21,7 @@ use pallet_democracy::{
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
-	pallet_prelude::*,
-	traits::Currency,
-	Twox64Concat,
+	migration::storage_key_iter, pallet_prelude::*, traits::Currency, Twox64Concat,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use parity_scale_codec::EncodeLike;
@@ -146,42 +143,23 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Democracy";
 		let storage_item_prefix: &[u8] = b"DepositOf";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (prop_index, mut value) in storage_key_iter::<
 			PropIndex,
 			(BoundedVec<T::AccountId, T::MaxDeposits>, BalanceOf<T>),
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
+		.drain()
+		{
+			value.1 = value.1.saturating_mul(DECIMAL_CONVERTOR.into());
 
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
+			<DepositOf<T>>::insert(prop_index, value);
 
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			PropIndex,
-			(BoundedVec<T::AccountId, T::MaxDeposits>, BalanceOf<T>),
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-
-		for (prop_index, value) in stored_data {
-			let mut new_value = value;
-			new_value.1 = new_value.1.saturating_mul(DECIMAL_CONVERTOR.into());
-
-			<DepositOf<T>>::insert(prop_index, new_value);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	fn replace_referendum_info_of_storage() -> frame_support::weights::Weight {
@@ -191,34 +169,15 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Democracy";
 		let storage_item_prefix: &[u8] = b"ReferenceInfoOf";
-		let stored_data: Vec<_> = storage_key_iter::<
+
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+		for (ref_index, ref_info) in storage_key_iter::<
 			ReferendumIndex,
 			ReferendumInfo<T::BlockNumber, BoundedCallOf<T>, BalanceOf<T>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			ReferendumIndex,
-			ReferendumInfo<T::BlockNumber, BoundedCallOf<T>, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-
-		for (ref_index, ref_info) in stored_data {
+		.drain()
+		{
 			let new_ref_info = match ref_info {
 				ReferendumInfo::Finished { approved, end } =>
 					ReferendumInfo::Finished { approved, end },
@@ -235,11 +194,12 @@ where
 				}),
 			};
 
-			<ReferendumInfoOf<T>>::insert(ref_index, new_ref_info)
+			<ReferendumInfoOf<T>>::insert(ref_index, new_ref_info);
+
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	fn replace_voting_of_storage() -> frame_support::weights::Weight {
@@ -249,34 +209,15 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Democracy";
 		let storage_item_prefix: &[u8] = b"VotingOf";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (who, voting) in storage_key_iter::<
 			T::AccountId,
 			Voting<BalanceOf<T>, T::AccountId, BlockNumberFor<T>, T::MaxVotes>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Voting<BalanceOf<T>, T::AccountId, BlockNumberFor<T>, T::MaxVotes>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-
-		for (who, voting) in stored_data {
+		.drain()
+		{
 			let new_voting = match voting {
 				Voting::Delegating { balance, target, conviction, delegations, prior } => {
 					let new_balance = balance.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -312,6 +253,7 @@ where
 						})
 						.collect();
 
+					// This unwrap cannot fail since it is the same BoundedVec
 					let bounded_new_votes: BoundedVec<
 						(u32, AccountVote<BalanceOf<T>>),
 						T::MaxVotes,
@@ -332,10 +274,11 @@ where
 				},
 			};
 			<VotingOf<T>>::insert(who, new_voting);
+
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 }
 

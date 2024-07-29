@@ -17,7 +17,7 @@ use frame_support::traits::{Get, OnRuntimeUpgrade};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use frame_support::{
-	migration::{clear_storage_prefix, get_storage_value, storage_key_iter},
+	migration::{get_storage_value, storage_key_iter},
 	pallet_prelude::*,
 	Twox64Concat,
 };
@@ -63,43 +63,23 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Treasury";
 		let storage_item_prefix: &[u8] = b"Proposals";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (proposal_index, mut proposal) in storage_key_iter::<
 			ProposalIndex,
 			Proposal<T::AccountId, BalanceOf<T, I>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
+		.drain()
+		{
+			proposal.value = proposal.value.saturating_mul(DECIMAL_CONVERTOR.into());
+			proposal.bond = proposal.bond.saturating_mul(DECIMAL_CONVERTOR.into());
 
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
+			<Proposals<T, I>>::insert(proposal_index, proposal);
 
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			ProposalIndex,
-			Proposal<T::AccountId, BalanceOf<T, I>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-
-		for (proposal_index, proposal) in stored_data {
-			let mut new_proposal = proposal;
-			new_proposal.value = new_proposal.value.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_proposal.bond = new_proposal.bond.saturating_mul(DECIMAL_CONVERTOR.into());
-
-			<Proposals<T, I>>::insert(proposal_index, new_proposal);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	fn replace_deactivated_storage() -> frame_support::weights::Weight {

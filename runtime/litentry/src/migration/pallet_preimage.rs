@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 use frame_support::{
+	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Identity,
 };
 use pallet_preimage::RequestStatus;
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use frame_support::migration::{clear_storage_prefix, put_storage_value, storage_key_iter};
+use frame_support::migration::{put_storage_value, storage_key_iter};
 use pallet_treasury::BalanceOf;
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::{Decode, Encode};
@@ -88,33 +89,15 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Preimage";
 		let storage_item_prefix: &[u8] = b"StatusFor";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (hash, status) in storage_key_iter::<
 			T::Hash,
 			RequestStatus<T::AccountId, BalanceOf<T>>,
 			Identity,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<T::Hash, RequestStatus<T::AccountId, BalanceOf<T>>, Identity>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
-
-		for (hash, status) in stored_data {
+		.drain()
+		{
 			let new_status = match status {
 				RequestStatus::Requested { deposit, count, len } => {
 					if let Some((account, balance)) = deposit {
@@ -144,10 +127,11 @@ where
 				hash.as_ref(),
 				new_status,
 			);
+
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	#[cfg(feature = "try-runtime")]

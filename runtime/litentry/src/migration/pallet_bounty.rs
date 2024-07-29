@@ -16,11 +16,7 @@
 use frame_support::traits::{Get, OnRuntimeUpgrade};
 use sp_std::{marker::PhantomData, vec::Vec};
 
-use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
-	pallet_prelude::*,
-	Twox64Concat,
-};
+use frame_support::{migration::storage_key_iter, pallet_prelude::*, Twox64Concat};
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_bounties::{Bounties, BountyIndex, BountyStatus};
 use pallet_treasury::BalanceOf;
@@ -104,42 +100,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Bounties";
 		let storage_item_prefix: &[u8] = b"Bounties";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (bounty_index, mut bounty) in storage_key_iter::<
 			BountyIndex,
 			Bounty<T::AccountId, BalanceOf<T, I>, BlockNumberFor<T>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
+		.drain()
+		{
+			bounty.value = bounty.value.saturating_mul(DECIMAL_CONVERTOR.into());
+			bounty.fee = bounty.fee.saturating_mul(DECIMAL_CONVERTOR.into());
+			bounty.curator_deposit =
+				bounty.curator_deposit.saturating_mul(DECIMAL_CONVERTOR.into());
+			bounty.bond = bounty.bond.saturating_mul(DECIMAL_CONVERTOR.into());
 
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
+			<Bounties<T, I>>::insert(bounty_index, bounty);
 
-		// Now clear previos storage
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			BountyIndex,
-			Bounty<T::AccountId, BalanceOf<T>, BlockNumberFor<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-
-		for (bounty_index, bounty) in stored_data {
-			let mut new_bounty = bounty;
-			new_bounty.value = new_bounty.value.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_bounty.fee = new_bounty.fee.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_bounty.curator_deposit =
-				new_bounty.curator_deposit.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_bounty.bond = new_bounty.bond.saturating_mul(DECIMAL_CONVERTOR.into());
-
-			<Bounties<T, I>>::insert(bounty_index, new_bounty);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
 		log::info!(
@@ -147,8 +125,7 @@ where
 			"Finished performing storage migrations"
 		);
 
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	#[cfg(feature = "try-runtime")]
