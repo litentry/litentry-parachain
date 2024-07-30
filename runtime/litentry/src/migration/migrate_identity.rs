@@ -50,92 +50,59 @@ where
 	T: pallet_identity::Config,
 {
 	// pallet_identity
-	pub fn replace_identityof_storage() -> frame_support::weights::Weight {
+	pub fn check_identityof_storage() -> frame_support::weights::Weight {
 		log::info!(
 			target: "ReplacePalletIdentityStorage",
-			"Running migration to ParachainIdentity IdentityOf"
+			"Running check to ParachainIdentity IdentityOf"
 		);
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"IdentityOf";
-		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, mut registration) in storage_key_iter::<
+		assert!(storage_key_iter::<
 			T::AccountId,
 			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.drain()
-		{
-			registration.deposit = registration.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
-
-			put_storage_value::<Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>>(
-				pallet_prefix,
-				storage_item_prefix,
-				&twox_64(&account.encode()),
-				registration,
-			);
-
-			weight += T::DbWeight::get().reads_writes(1, 1);
-		}
-
-		weight
+		.next()
+		.is_none());
+		let weight = T::DbWeight::get();
+		frame_support::weights::Weight::from_parts(0, weight.read)
 	}
 
-	pub fn replace_subsof_storage() -> frame_support::weights::Weight {
+	pub fn check_subsof_storage() -> frame_support::weights::Weight {
 		log::info!(
 			target: "ReplacePalletIdentityStorage",
-			"Running migration to ParachainIdentity SubsOf"
+			"Running check to ParachainIdentity SubsOf"
 		);
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"SubsOf";
-		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, (balance, sub_accounts)) in storage_key_iter::<
+		assert!(storage_key_iter::<
 			T::AccountId,
-			(BalanceOf<T>, BoundedVec<T::AccountId, T::MaxSubAccounts>),
+			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.drain()
-		{
-			let new_balance = balance.saturating_mul(DECIMAL_CONVERTOR.into());
-
-			put_storage_value::<(BalanceOf<T>, BoundedVec<T::AccountId, T::MaxSubAccounts>)>(
-				pallet_prefix,
-				storage_item_prefix,
-				&twox_64(&account.encode()),
-				(new_balance, sub_accounts),
-			);
-
-			weight += T::DbWeight::get().reads_writes(1, 1);
-		}
-
-		weight
+		.next()
+		.is_none());
+		let weight = T::DbWeight::get();
+		frame_support::weights::Weight::from_parts(0, weight.read)
 	}
 
-	pub fn replace_registrars_storage() -> frame_support::weights::Weight {
+	pub fn check_registrars_storage() -> frame_support::weights::Weight {
 		log::info!(
 			target: "ReplacePalletIdentityStorage",
-			"Running migration to ParachainIdentity Registrars"
+			"Running check to ParachainIdentity Registrars"
 		);
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"Registrars";
 
-		let mut stored_data = get_storage_value::<
+		assert!(get_storage_value::<
 			BoundedVec<Option<RegistrarInfo<BalanceOf<T>, T::AccountId>>, T::MaxRegistrars>,
 		>(pallet_prefix, storage_item_prefix, b"")
-		.expect("Failed to retrieve ParachainIdentity Registrars storage");
-
-		for registrar_option in &mut stored_data {
-			if let Some(registrar) = registrar_option {
-				let new_fee = registrar.fee.saturating_mul(DECIMAL_CONVERTOR.into());
-				registrar.fee = new_fee;
-			}
-		}
-
-		put_storage_value(pallet_prefix, storage_item_prefix, b"", &stored_data);
+		.is_none());
 
 		let weight = T::DbWeight::get();
-		weight.reads(1) + weight.writes(1)
+		frame_support::weights::Weight::from_parts(0, weight.read)
 	}
 }
 
@@ -148,96 +115,53 @@ where
 	pub fn pre_upgrade_identityof_storage() -> Result<Vec<u8>, &'static str> {
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"IdentityOf";
-		let result: Vec<_> = storage_key_iter(pallet_prefix, storage_item_prefix)
-			.into_iter()
-			.map(|(account, registration)| {
-				let mut new_registration: Registration<
-					BalanceOf<T>,
-					T::MaxRegistrars,
-					T::MaxAdditionalFields,
-				> = registration;
-				new_registration.deposit =
-					registration.deposit.saturating_mul(DECIMAL_CONVERTOR.into());
-				(account, new_registration)
-			})
-			.collect();
 
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing IdentityOf pre upgrade checks"
-		);
-
-		Ok(result.encode())
-	}
-	pub fn post_upgrade_identityof_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_result = Vec::<(
-			T::AccountId,
-			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
-		)>::decode(&mut &state[..])
-		.map_err(|_| "Failed to decode Bounties")?;
-
-		let pallet_prefix: &[u8] = b"ParachainIdentity";
-		let storage_item_prefix: &[u8] = b"IdentityOf";
-		let actual_result: Vec<_> = storage_key_iter::<
+		assert!(storage_key_iter::<
 			T::AccountId,
 			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
+		.next()
+		.is_none());
+		Ok(Vec::<u8>::new())
+	}
+	pub fn post_upgrade_identityof_storage(_state: Vec<u8>) -> Result<(), &'static str> {
+		let pallet_prefix: &[u8] = b"ParachainIdentity";
+		let storage_item_prefix: &[u8] = b"IdentityOf";
 
-		for x in 0..actual_result.len() {
-			assert_eq!(actual_result[x], expected_result[x]);
-		}
-
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing IdentityOf post upgrade checks"
-		);
-
+		assert!(storage_key_iter::<
+			T::AccountId,
+			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.next()
+		.is_none());
 		Ok(())
 	}
 	pub fn pre_upgrade_subsof_storage() -> Result<Vec<u8>, &'static str> {
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"SubsOf";
-		let result: Vec<_> = storage_key_iter(pallet_prefix, storage_item_prefix)
-			.into_iter()
-			.map(|(account, (balance, sub_accounts))| {
-				let new_balance = balance.saturating_mul(DECIMAL_CONVERTOR.into());
-				(account, (new_balance, sub_accounts))
-			})
-			.collect();
 
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing SubsOf pre upgrade checks"
-		);
-
-		Ok(result.encode())
-	}
-	pub fn post_upgrade_subsof_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_result = Vec::<(
+		assert!(storage_key_iter::<
 			T::AccountId,
-			(BalanceOf<T>, BoundedVec<T::AccountId, T::MaxSubAccounts>),
-		)>::decode(&mut &state[..])
-		.map_err(|_| "Failed to decode Bounties")?;
-
-		let pallet_prefix: &[u8] = b"ParachainIdentity";
-		let storage_item_prefix: &[u8] = b"SubsOf";
-		let actual_result: Vec<_> = storage_key_iter::<
-			T::AccountId,
-			(BalanceOf<T>, BoundedVec<T::AccountId, T::MaxSubAccounts>),
+			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
+		.next()
+		.is_none());
+		Ok(Vec::<u8>::new())
+	}
+	pub fn post_upgrade_subsof_storage(_state: Vec<u8>) -> Result<(), &'static str> {
+		let pallet_prefix: &[u8] = b"ParachainIdentity";
+		let storage_item_prefix: &[u8] = b"SubsOf";
 
-		for x in 0..actual_result.len() {
-			assert_eq!(actual_result[x], expected_result[x]);
-		}
-
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing SubsOf post upgrade checks"
-		);
+		assert!(storage_key_iter::<
+			T::AccountId,
+			Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.next()
+		.is_none());
 
 		Ok(())
 	}
@@ -245,54 +169,20 @@ where
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"Registrars";
 
-		let mut stored_data = match get_storage_value::<
+		assert!(get_storage_value::<
 			BoundedVec<Option<RegistrarInfo<BalanceOf<T>, T::AccountId>>, T::MaxRegistrars>,
 		>(pallet_prefix, storage_item_prefix, b"")
-		{
-			Some(data) => data,
-			None => {
-				panic!("Failed to retrieve ParachainIdentity Registrars storage");
-			},
-		};
-
-		for registrar_option in &mut stored_data {
-			if let Some(registrar) = registrar_option {
-				registrar.fee = registrar.fee.saturating_mul(DECIMAL_CONVERTOR.into());
-			}
-		}
-
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing Registrars pre upgrade checks"
-		);
-		Ok(stored_data.encode())
+		.is_none());
+		Ok(Vec::<u8>::new())
 	}
-	pub fn post_upgrade_registrars_storage(state: Vec<u8>) -> Result<(), &'static str> {
-		let expected_result = BoundedVec::<
-			Option<RegistrarInfo<BalanceOf<T>, T::AccountId>>,
-			T::MaxRegistrars,
-		>::decode(&mut &state[..])
-		.map_err(|_| "Failed to decode Bounties")?;
-
+	pub fn post_upgrade_registrars_storage(_state: Vec<u8>) -> Result<(), &'static str> {
 		let pallet_prefix: &[u8] = b"ParachainIdentity";
 		let storage_item_prefix: &[u8] = b"Registrars";
 
-		let mut actual_result = match get_storage_value::<
+		assert!(get_storage_value::<
 			BoundedVec<Option<RegistrarInfo<BalanceOf<T>, T::AccountId>>, T::MaxRegistrars>,
 		>(pallet_prefix, storage_item_prefix, b"")
-		{
-			Some(data) => data,
-			None => {
-				panic!("Failed to retrieve ParachainIdentity Registrars storage");
-			},
-		};
-
-		assert_eq!(expected_result.encode(), actual_result.encode());
-
-		log::info!(
-			target: "ReplacePalletIdentityStorage",
-			"Finished performing Registrars post upgrade checks"
-		);
+		.is_none());
 		Ok(())
 	}
 }
@@ -314,9 +204,9 @@ where
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
 		// pallet_identity
-		weight += Self::replace_identityof_storage();
-		weight += Self::replace_subsof_storage();
-		weight += Self::replace_registrars_storage();
+		weight += Self::check_identityof_storage();
+		weight += Self::check_subsof_storage();
+		weight += Self::check_registrars_storage();
 
 		weight
 	}
