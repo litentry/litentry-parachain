@@ -16,7 +16,7 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
+	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Blake2_128Concat, WeakBoundedVec,
@@ -26,7 +26,7 @@ use pallet_balances::{
 	AccountData, BalanceLock, Freezes, Holds, IdAmount, InactiveIssuance, Locks, ReserveData,
 	Reserves, TotalIssuance,
 };
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
@@ -52,40 +52,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"System";
 		let storage_item_prefix: &[u8] = b"Account";
-		let stored_data: Vec<_> = storage_key_iter::<
-			T::AccountId,
-			AccountInfo<T::Index, T::AccountData>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			AccountInfo<T::Index, T::AccountData>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
-			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
-			new_account.data.reserved = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
-			new_account.data.frozen = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-			<Account<T>>::insert(&account, new_account)
+		for (account, mut account_info) in storage_key_iter::<
+			T::AccountId,
+			AccountInfo<T::Index, T::AccountData>,
+			Blake2_128Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.drain()
+		{
+			account_info.data.free = account_info.data.free.saturating_mul(DECIMAL_CONVERTOR);
+			account_info.data.reserved =
+				account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+			account_info.data.frozen = account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+
+			<Account<T>>::insert(&account, account_info);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 	pub fn repalce_balances_total_issuance_storage() -> frame_support::weights::Weight {
 		log::info!(
@@ -136,39 +120,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Balances";
 		let storage_item_prefix: &[u8] = b"Locks";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut locks) in storage_key_iter::<
 			T::AccountId,
 			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
 			Blake2_128Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, mut state) in stored_data {
-			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
+		.drain()
+		{
+			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut locks;
 			for balance_lock in new_locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
-			<Locks<T>>::insert(&account, new_locks)
+			<Locks<T>>::insert(&account, new_locks);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+
+		weight
 	}
 	pub fn check_balances_reserves_storage() -> frame_support::weights::Weight {
 		log::info!(
