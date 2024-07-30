@@ -46,8 +46,8 @@ library Cro {
         tokenInfoList[1] = TokenInfo(
             Web3Networks.Solana,
             "DvjMYMVeXgKxaixGKpzQThLoG98nc7HSU7eanzsdCboA",
-            DataProviderTypes.NoderealClient,
-            6
+            DataProviderTypes.MoralisClient,
+            18
         );
         return tokenInfoList;
     }
