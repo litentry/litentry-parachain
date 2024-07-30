@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use bc_musig2_ceremony::SignBitcoinPayload;
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{LitentryMultiSignature, RequestAesKey, ShardIdentifier};
+use litentry_primitives::{LitentryMultiSignature, ShardIdentifier};
 use parentchain_primitives::Identity;
 use sp_io::hashing::blake2_256;
 
@@ -49,8 +49,8 @@ impl DirectCallSigned {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum DirectCall {
-	SignBitcoin(Identity, RequestAesKey, SignBitcoinPayload),
-	SignEthereum(Identity, RequestAesKey, PrehashedEthereumMessage),
+	SignBitcoin(Identity, SignBitcoinPayload),
+	SignEthereum(Identity, PrehashedEthereumMessage),
 	CheckSignBitcoin(Identity),
 }
 
@@ -98,9 +98,9 @@ impl CeremonyRoundCallSigned {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum CeremonyRoundCall {
-	NonceShare(Identity, RequestAesKey, SignBitcoinPayload, [u8; 66]),
-	PartialSignatureShare(Identity, RequestAesKey, SignBitcoinPayload, [u8; 32]),
-	KillCeremony(Identity, RequestAesKey, SignBitcoinPayload),
+	NonceShare(Identity, SignBitcoinPayload, [u8; 66]),
+	PartialSignatureShare(Identity, SignBitcoinPayload, [u8; 32]),
+	KillCeremony(Identity, SignBitcoinPayload),
 }
 
 impl CeremonyRoundCall {

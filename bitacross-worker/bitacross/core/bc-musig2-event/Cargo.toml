@@ -30,7 +30,6 @@ litentry-primitives = { path = "../../../litentry/primitives", default-features 
 musig2 = { package = "musig2", branch = "master", git = "https://github.com/kziemianek/musig2.git", optional = true, features = ["k256"] }
 musig2_sgx = { package = "musig2", git = "https://github.com/kailai-wang/musig2.git", branch = "use-sha2-0.8", optional = true, features = ["k256"] }
 rand = { version = "0.8.5", optional = true }
-sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", default-features = false }
 sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -71,7 +70,6 @@ sgx = [
     "bc-musig2-ceremony/sgx",
     "lc-direct-call/sgx",
     "itp-sgx-crypto/sgx",
-    "sgx_crypto_helper/mesalock_sgx",
     "sgx_rand",
     "threadpool_sgx",
 ]

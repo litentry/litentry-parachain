@@ -27,7 +27,6 @@ itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-feat
 itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
 rand = { version = "0.8.5" }
@@ -42,7 +41,6 @@ std = [
     "log/std",
     "itp-types/std",
     "bc-enclave-registry/std",
-    "litentry-primitives/std",
     "itp-rpc/std",
     "itp-sgx-crypto/std",
     "rand",
@@ -52,7 +50,6 @@ sgx = [
     "musig2_sgx",
     "itc-direct-rpc-client/sgx",
     "bc-enclave-registry/sgx",
-    "litentry-primitives/sgx",
     "itp-rpc/sgx",
     "itp-sgx-crypto/sgx",
     "sgx_rand",
