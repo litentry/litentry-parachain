@@ -17,7 +17,7 @@
 use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::CeremonyCommand;
 use codec::Encode;
-use parentchain_primitives::Identity;
+use litentry_primitives::Identity;
 
 #[derive(Encode, Debug)]
 pub enum KillCeremonyError {

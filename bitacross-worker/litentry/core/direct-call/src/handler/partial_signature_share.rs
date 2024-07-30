@@ -18,8 +18,8 @@ use crate::handler::partial_signature_share::PartialSignatureShareError::Invalid
 use bc_enclave_registry::EnclaveRegistryLookup;
 use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, PartialSignature};
 use codec::Encode;
+use litentry_primitives::Identity;
 use log::debug;
-use parentchain_primitives::Identity;
 use std::sync::Arc;
 
 #[derive(Encode, Debug)]
@@ -60,7 +60,7 @@ pub mod test {
 	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
 	use bc_musig2_ceremony::SignBitcoinPayload;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
-	use parentchain_primitives::Identity;
+	use litentry_primitives::Identity;
 	use sp_core::{sr25519, Pair};
 
 	struct SignerAccess {}

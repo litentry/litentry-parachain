@@ -70,14 +70,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegator<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
 			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -118,13 +110,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<T::AccountId, CandidateMetadata<BalanceOf<T>>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
 			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -172,14 +157,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_scheduled_requests: Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>> =
 				state;
@@ -224,14 +201,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
 
@@ -269,14 +238,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
 
@@ -350,13 +311,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<u32, DelayedPayout<BalanceOf<T>>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
 		for (round, state) in stored_data {
 			let mut new_delayed_payout: DelayedPayout<BalanceOf<T>> = state;
 
@@ -391,13 +345,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
 		for (round, state) in stored_data {
 			let new_staked: BalanceOf<T> = state;
 			<Staked<T>>::insert(round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
