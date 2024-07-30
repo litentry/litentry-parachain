@@ -404,5 +404,16 @@ mod benchmarks {
 		assert_eq!(tcb_info.next_update, 1681649132000);
 	}
 
+	#[benchmark]
+	fn post_opaque_task() {
+		let who: T::AccountId = account("who", 1, 1);
+		let request = RsaRequest::default();
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(who), request.clone());
+
+		assert_last_event::<T>(Event::OpaqueTaskPosted { request }.into())
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
