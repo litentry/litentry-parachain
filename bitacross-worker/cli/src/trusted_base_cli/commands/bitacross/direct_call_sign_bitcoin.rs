@@ -47,8 +47,7 @@ impl RequestDirectCallSignBitcoinCommand {
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), &mrenclave, &shard);
 
-		let signature: Vec<u8> =
-			send_direct_request_and_watch(cli, trusted_cli, dc).unwrap();
+		let signature: Vec<u8> = send_direct_request_and_watch(cli, trusted_cli, dc).unwrap();
 		println!("Got signature: {:?}", signature);
 
 		Ok(CliResultOk::None)

@@ -417,10 +417,7 @@ where
 		&mrenclave,
 		&mrenclave.into(),
 	);
-	Ok(PlainRequest {
-		shard: mrenclave.into(),
-		payload: call.encode(),
-	})
+	Ok(PlainRequest { shard: mrenclave.into(), payload: call.encode() })
 }
 
 // Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
@@ -572,7 +569,7 @@ fn get_request_from_params(params: Params) -> Result<PlainRequest, String> {
 	debug!("Request payload: {}", s);
 
 	let request =
-	PlainRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+		PlainRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
 	Ok(request)
 }
 

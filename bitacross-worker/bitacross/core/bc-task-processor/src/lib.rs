@@ -401,8 +401,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 						commands_to_process = ceremony_command_tmp.read().unwrap().clone();
 					}
 				},
-				CeremonyEvent::CeremonyEnded(_, _, _)
-				| CeremonyEvent::CeremonyError(_, _) => {
+				CeremonyEvent::CeremonyEnded(_, _, _) | CeremonyEvent::CeremonyError(_, _) => {
 					// remove ceremony
 					{
 						let mut registry_write = context.ceremony_registry.write().unwrap();
@@ -591,7 +590,7 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let dc = DirectCallSigned::decode(&mut request.payload.as_slice()).map_err(|e|{
+	let dc = DirectCallSigned::decode(&mut request.payload.as_slice()).map_err(|e| {
 		error!("{}", e);
 		"Failed to decode payload".to_string()
 	})?;
@@ -652,9 +651,7 @@ where
 			error!("SignEthereum error: {:?}", e);
 			e.encode()
 		})
-		.map(|r| {
-			(Some(BitAcrossProcessingResult::Ok(r.encode())), None)
-		}),
+		.map(|r| (Some(BitAcrossProcessingResult::Ok(r.encode())), None)),
 	}
 }
 
@@ -677,7 +674,7 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let crc = CeremonyRoundCallSigned::decode(&mut request.payload.as_slice()).map_err(|e|{
+	let crc = CeremonyRoundCallSigned::decode(&mut request.payload.as_slice()).map_err(|e| {
 		error!("{}", e);
 		"Failed to decode payload".to_string()
 	})?;

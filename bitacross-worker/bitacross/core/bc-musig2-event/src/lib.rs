@@ -45,7 +45,7 @@ use itp_sgx_crypto::key_repository::AccessKey;
 pub use itp_types::{DirectRequestStatus, Hash};
 use itp_utils::hex::ToHexPrefixed;
 use lc_direct_call::CeremonyRoundCall;
-use litentry_primitives::{Address32, PlainRequest, Identity, ShardIdentifier};
+use litentry_primitives::{Address32, Identity, PlainRequest, ShardIdentifier};
 use log::*;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
 use std::{collections::HashMap, string::ToString, sync::Arc, vec};
@@ -70,13 +70,8 @@ pub fn process_event<OCallApi, SIGNINGAK, Responder>(
 
 	match event {
 		CeremonyEvent::FirstRoundStarted(signers, message, nonce) => {
-			let direct_call =
-				CeremonyRoundCall::NonceShare(identity, message, nonce.serialize());
-			let request = prepare_request(
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call = CeremonyRoundCall::NonceShare(identity, message, nonce.serialize());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			signers.iter().for_each(|signer_id| {
 				debug!(
@@ -102,16 +97,9 @@ pub fn process_event<OCallApi, SIGNINGAK, Responder>(
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
-			let direct_call = CeremonyRoundCall::PartialSignatureShare(
-				identity,
-				message,
-				signature.serialize(),
-			);
-			let request = prepare_request(
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call =
+				CeremonyRoundCall::PartialSignatureShare(identity, message, signature.serialize());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			signers.iter().for_each(|signer_id| {
 				debug!(
@@ -136,11 +124,7 @@ pub fn process_event<OCallApi, SIGNINGAK, Responder>(
 				}
 			});
 		},
-		CeremonyEvent::CeremonyEnded(
-			signature,
-			is_check_run,
-			verification_result,
-		) => {
+		CeremonyEvent::CeremonyEnded(signature, is_check_run, verification_result) => {
 			debug!("Ceremony {:?} ended, signature {:?}", ceremony_id, signature);
 			let hash = blake2_256(&ceremony_id.encode());
 			let result = if is_check_run {
@@ -173,13 +157,8 @@ pub fn process_event<OCallApi, SIGNINGAK, Responder>(
 				}
 			});
 
-			let direct_call =
-				CeremonyRoundCall::KillCeremony(identity, ceremony_id.clone());
-			let request = prepare_request(
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call = CeremonyRoundCall::KillCeremony(identity, ceremony_id.clone());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			//kill ceremonies on other workers
 			signers.iter().for_each(|signer_id| {
@@ -218,11 +197,9 @@ where
 {
 	let shard = ShardIdentifier::from_slice(&mr_enclave);
 	// same as above
-	let dc_signed_encoded = ceremony_round_call.sign(
-		&signing_key_access.retrieve_key().unwrap().into(),
-		&mr_enclave,
-		&shard,
-	).encode();
+	let dc_signed_encoded = ceremony_round_call
+		.sign(&signing_key_access.retrieve_key().unwrap().into(), &mr_enclave, &shard)
+		.encode();
 	let request = PlainRequest { shard, payload: dc_signed_encoded };
 	RpcRequest {
 		jsonrpc: "2.0".to_string(),

@@ -31,9 +31,7 @@ extern crate sgx_tstd as std;
 ///    `TrustedCallSigned` can exceed the limit, AES doesn't have such problem.
 ///
 /// 2. we want to efface the shielding key setup completely to achieve a better UE.
-use crate::{
-	Debug, ShardIdentifier, Vec,
-};
+use crate::{Debug, ShardIdentifier, Vec};
 use codec::{Decode, Encode};
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]

@@ -15,9 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	command_utils::get_worker_api_direct,
-	trusted_cli::TrustedCli,
-	trusted_operation::read_shard,
+	command_utils::get_worker_api_direct, trusted_cli::TrustedCli, trusted_operation::read_shard,
 	Cli,
 };
 use codec::{Decode, Encode, Input};
@@ -27,9 +25,7 @@ use itp_stf_primitives::error::StfError;
 use itp_types::{parentchain::Hash, DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use lc_direct_call::DirectCallSigned;
-use litentry_primitives::{
-	PlainRequest, ShardIdentifier,
-};
+use litentry_primitives::{PlainRequest, ShardIdentifier};
 use log::{debug, error};
 use std::sync::mpsc::channel;
 
@@ -115,10 +111,7 @@ pub fn send_direct_request_and_watch<T: Decode>(
 	}
 }
 
-pub fn get_bitacross_json_request(
-	shard: ShardIdentifier,
-	call: DirectCallSigned,
-) -> String {
+pub fn get_bitacross_json_request(shard: ShardIdentifier, call: DirectCallSigned) -> String {
 	// compose jsonrpc call
 	let request = PlainRequest { shard, payload: call.encode() };
 	RpcRequest::compose_jsonrpc_call(
