@@ -133,7 +133,8 @@ where
 			for balance_lock in locks_vec.iter_mut() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
-			let updated_locks = WeakBoundedVec::<BalanceLock<T::Balance>, T::MaxLocks>::force_from(locks_vec, None);
+			let updated_locks =
+				WeakBoundedVec::<BalanceLock<T::Balance>, T::MaxLocks>::force_from(locks_vec, None);
 			Locks::<T>::insert(&account, updated_locks);
 			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
