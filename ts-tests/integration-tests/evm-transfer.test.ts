@@ -5,10 +5,10 @@ import { signAndSend, describeLitentry, loadConfig, sudoWrapperTC } from '../com
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import { evmToAddress } from '@polkadot/util-crypto';
-import BN from 'bn.js';
+const BN = require('bn.js');
+import { Web3 } from 'web3';
 
 const BN1e18 = new BN(10).pow(new BN(18));
-const toBigNumber = (amount: number) => new BN(amount).mul(BN1e18);
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test EVM Module Transfer`);
     const config = loadConfig();
@@ -32,11 +32,9 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         console.log(`evm mapped substrate address: ${evmAccountRaw.mappedAddress}`);
-        const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-            evmAccountRaw.mappedAddress
-        );
+        const { data: evmAccountInitBalance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
 
-        console.log(`evmAccountInitBalance Balance: ${evmAccountInitBalance.free.toNumber()}`);
+        console.log(`evmAccountInitBalance Balance: ${evmAccountInitBalance.free.toBigInt()}`);
 
         let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
@@ -44,7 +42,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         console.log(`eveMappedEVMAccount: ${eveMappedEVMAccount}`);
 
         // Deposit money into substrate account's truncated EVM address's mapping substrate account
-        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, toBigNumber(30));
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, new BN('30000000000000000000')); // 30 000 000 000 000 000 000
         await signAndSend(tx_init, context.eve);
 
         // Get the initial balance of Eve and EVM external account
@@ -52,7 +50,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             context.eve.address
         );
 
-        let value = toBigNumber(20); // 20 000 000 000 000
+        let value = new BN('20000000000000000000'); // 20 000 000 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
             eveMappedEVMAccount,
@@ -60,7 +58,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             '0x',
             value,
             1000000,
-            25000,
+            25000000000,
             null,
             null,
             []
@@ -82,142 +80,141 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // it will bump 2 for nonce (one for substrate extrinsic, one for evm).
         // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account.
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-        console.log(`evmAccount Balance: ${evmAccountCurrentBalance.free.toNumber()}`);
 
-        // expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
-        //     evmAccountInitBalance.free.toBigInt() + BigInt(value)
-        // );
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
+            evmAccountInitBalance.free.toBigInt() + BigInt(value)
+        );
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
 
-    // step('Transfer some value back to Eve Mapped account from EVM external account', async function () {
-    //     // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-    //     // We do not test mode in initialization since ts-test concerns filter function too.
-    //     const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
-    //     if ('Test' !== filterMode) {
-    //         let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
-    //         let temp = await context.api.rpc.chain.getBlock();
-    //         console.log(`setMode await Before: ${temp.block.header.number}`);
-    //         await signAndSend(extrinsic, context.alice);
-    //         temp = await context.api.rpc.chain.getBlock();
-    //         console.log(`setMode await end: ${temp.block.header.number}`);
-    //     }
+    step('Transfer some value back to Eve Mapped account from EVM external account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
+            let temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await Before: ${temp.block.header.number}`);
+            await signAndSend(extrinsic, context.alice);
+            temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await end: ${temp.block.header.number}`);
+        }
 
-    //     // Get the initial balance of Eve and EVM external account
-    //     let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
-    //     let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
-    //     const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
-    //         eveMappedSustrateAccount
-    //     );
-    //     const evmAccountRaw = {
-    //         privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
-    //         address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-    //         mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
-    //     };
-    //     const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-    //         evmAccountRaw.mappedAddress
-    //     );
-    //     console.log(`evmAccount Balance: ${evmAccountInitBalance}`);
+        // Get the initial balance of Eve and EVM external account
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
+        const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
+            eveMappedSustrateAccount
+        );
+        const evmAccountRaw = {
+            privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
+            address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
+        };
+        const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
+            evmAccountRaw.mappedAddress
+        );
+        console.log(`evmAccount Balance: ${evmAccountInitBalance}`);
 
-    //     // Create Web3 instance
-    //     const web3 = new Web3(config.parachain_ws);
+        // Create Web3 instance
+        const web3 = new Web3(config.parachain_ws);
 
-    //     let value = 100000000000;
-    //     // ExistentialDeposit = 100 000 000 000 (0x174876E800)
-    //     // Sign Tx with PK
-    //     console.log(`Tx Signing with: ${evmAccountRaw.privateKey}`);
-    //     const transferTransaction = await web3.eth.accounts.signTransaction(
-    //         {
-    //             from: evmAccountRaw.address,
-    //             to: u8aToHex(eveMappedEVMAccount),
-    //             value: value, // must be higher than ExistentialDeposit
-    //             gasPrice: 25000,
-    //             gas: 1000000,
-    //         },
-    //         evmAccountRaw.privateKey
-    //     );
-    //     console.log(`Tx Signed with: ${transferTransaction.rawTransaction}`);
-    //     const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction!);
-    //     console.log(`Tx successful with hash: ${transferReceipt.transactionHash}`);
+        let value = new BN('100000000000000000'); // 0.1
+        // ExistentialDeposit = 100 000 000 000 000 000
+        // Sign Tx with PK
+        console.log(`Tx Signing with: ${evmAccountRaw.privateKey}`);
+        const transferTransaction = await web3.eth.accounts.signTransaction(
+            {
+                from: evmAccountRaw.address,
+                to: u8aToHex(eveMappedEVMAccount),
+                value: value, // must be higher than ExistentialDeposit
+                gasPrice: 25000000000,
+                gas: 1000000,
+            },
+            evmAccountRaw.privateKey
+        );
+        console.log(`Tx Signed with: ${transferTransaction.rawTransaction}`);
+        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction!);
+        console.log(`Tx successful with hash: ${transferReceipt.transactionHash}`);
 
-    //     const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
-    //         eveMappedSustrateAccount
-    //     );
-    //     const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
-    //         await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
+            eveMappedSustrateAccount
+        );
+        const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
+            await context.api.query.system.account(evmAccountRaw.mappedAddress);
 
-    //     console.log(`evmAccount Balance: ${evmAccountCurrentBalance}`);
+        console.log(`evmAccount Balance: ${evmAccountCurrentBalance}`);
 
-    //     expect(evmAccountCurrentNonce.toNumber()).to.equal(evmAccountInitNonce.toNumber() + 1);
-    //     expect(eveCurrentBalance.free.toBigInt()).to.equal(eveInitBalance.free.toBigInt() + BigInt(100000000000));
+        expect(evmAccountCurrentNonce.toNumber()).to.equal(evmAccountInitNonce.toNumber() + 1);
+        expect(eveCurrentBalance.free.toBigInt()).to.equal(eveInitBalance.free.toBigInt() + BigInt(value));
 
-    //     // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-    //     let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
-    //     await signAndSend(extrinsic, context.alice);
-    // });
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
+    });
 
-    // step('Test substrate signature can not access ultra vires evm/substrate account', async function () {
-    //     // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-    //     // We do not test mode in initialization since ts-test concerns filter function too.
-    //     const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
-    //     if ('Test' !== filterMode) {
-    //         let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
-    //         await signAndSend(extrinsic, context.alice);
-    //     }
+    step('Test substrate signature can not access ultra vires evm/substrate account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
 
-    //     // Get the initial balance of Eve and EVM external account
-    //     const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
-    //         context.eve.address
-    //     );
-    //     // EVM module transfer for substrate account
-    //     const evmAccountRaw = {
-    //         privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
-    //         address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-    //         mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
-    //     };
-    //     const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-    //         evmAccountRaw.mappedAddress
-    //     );
+        // Get the initial balance of Eve and EVM external account
+        const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
+            context.eve.address
+        );
+        // EVM module transfer for substrate account
+        const evmAccountRaw = {
+            privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
+            address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
+        };
+        const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
+            evmAccountRaw.mappedAddress
+        );
 
-    //     const evmAccount = createPair(
-    //         { toSS58: encodeAddress, type: 'ethereum' },
-    //         { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) }
-    //     );
+        const evmAccount = createPair(
+            { toSS58: encodeAddress, type: 'ethereum' },
+            { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) }
+        );
 
-    //     let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
-    //     let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
-    //     // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
-    //     // 25000 is min_gas_price setup
-    //     const tx = context.api.tx.evm.call(
-    //         evmAccountRaw.address,
-    //         eveMappedEVMAccount,
-    //         '0x',
-    //         value,
-    //         1000000,
-    //         25000,
-    //         null,
-    //         null,
-    //         []
-    //     );
-    //     await signAndSend(tx, context.eve);
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let value = new BN('100000000000000000'); // ExistentialDeposit = 100 000 000 000 000 000
+        // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
+        // 25000 is min_gas_price setup
+        const tx = context.api.tx.evm.call(
+            evmAccountRaw.address,
+            eveMappedEVMAccount,
+            '0x',
+            value,
+            1000000,
+            25000000000,
+            null,
+            null,
+            []
+        );
+        await signAndSend(tx, context.eve);
 
-    //     const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
-    //         context.eve.address
-    //     );
-    //     const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
-    //         await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
+            context.eve.address
+        );
+        const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
+            await context.api.query.system.account(evmAccountRaw.mappedAddress);
 
-    //     // Extrinsic succeed with failed origin
-    //     // So the evm transaction nonce bump will not be triggered
-    //     expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-    //     // Which means balance unchanged
-    //     expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
+        // Extrinsic succeed with failed origin
+        // So the evm transaction nonce bump will not be triggered
+        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
+        // Which means balance unchanged
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
 
-    //     // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
-    //     let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
-    //     await signAndSend(extrinsic, context.alice);
-    // });
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
+    });
 });
