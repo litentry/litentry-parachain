@@ -274,11 +274,11 @@ where
 
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, staked) in
+		for (round, staked) in
 			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
 				.drain()
 		{
-			<Staked<T>>::insert(account, staked.saturating_mul(DECIMAL_CONVERTOR.into()));
+			<Staked<T>>::insert(round, staked.saturating_mul(DECIMAL_CONVERTOR.into()));
 			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 		weight
