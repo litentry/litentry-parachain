@@ -58,7 +58,7 @@ where
 	));
 }
 
-fn register_tcb_info<T: Config>()
+fn register_tcb_info_for_testing<T: Config>()
 where
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
@@ -265,7 +265,7 @@ mod benchmarks {
 			T::Moment::saturated_from(valid_timestamp)
 		));
 		register_quoting_enclave_for_testing::<T>();
-		register_tcb_info::<T>();
+		register_tcb_info_for_testing::<T>();
 
 		let mrenclave: MrEnclave = [
 			111, 144, 18, 11, 92, 31, 3, 97, 145, 18, 234, 200, 85, 226, 157, 110, 11, 228, 243,
