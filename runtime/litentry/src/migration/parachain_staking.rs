@@ -16,17 +16,13 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
+	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Blake2_128Concat, Twox64Concat,
 };
 use sp_runtime::Saturating;
-use sp_std::{
-	convert::{From, TryInto},
-	marker::PhantomData,
-	vec::Vec,
-};
+use sp_std::{convert::From, marker::PhantomData, vec::Vec};
 
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
@@ -54,45 +50,28 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegatorState";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut delegator) in storage_key_iter::<
 			T::AccountId,
 			Delegator<T::AccountId, BalanceOf<T>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegator<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_delegator: Delegator<T::AccountId, BalanceOf<T>> = state;
-			new_delegator.total = new_delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_delegator.less_total =
-				new_delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
-			let mut sorted_inner_vector = new_delegator.delegations.0;
+		.drain()
+		{
+			delegator.total = delegator.total.saturating_mul(DECIMAL_CONVERTOR.into());
+			delegator.less_total = delegator.less_total.saturating_mul(DECIMAL_CONVERTOR.into());
+			let mut sorted_inner_vector = delegator.delegations.0;
 			for elem in sorted_inner_vector.iter_mut() {
 				elem.amount = elem.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
-			new_delegator.delegations = OrderedSet::from(sorted_inner_vector);
+			delegator.delegations = OrderedSet::from(sorted_inner_vector);
 
-			<DelegatorState<T>>::insert(&account, new_delegator)
+			<DelegatorState<T>>::insert(&account, delegator);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+
+		weight
 	}
 
 	pub fn replace_candidate_info_storage() -> frame_support::weights::Weight {
@@ -102,51 +81,35 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"CandidateInfo";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut metadata) in storage_key_iter::<
 			T::AccountId,
 			CandidateMetadata<BalanceOf<T>>,
 			Twox64Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<T::AccountId, CandidateMetadata<BalanceOf<T>>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_metadata: CandidateMetadata<BalanceOf<T>> = state;
-			new_metadata.bond = new_metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.total_counted =
-				new_metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.lowest_top_delegation_amount = new_metadata
-				.lowest_top_delegation_amount
-				.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.highest_bottom_delegation_amount = new_metadata
+		.drain()
+		{
+			metadata.bond = metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
+			metadata.total_counted =
+				metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
+			metadata.lowest_top_delegation_amount =
+				metadata.lowest_top_delegation_amount.saturating_mul(DECIMAL_CONVERTOR.into());
+			metadata.highest_bottom_delegation_amount = metadata
 				.highest_bottom_delegation_amount
 				.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_metadata.lowest_bottom_delegation_amount = new_metadata
+			metadata.lowest_bottom_delegation_amount = metadata
 				.lowest_bottom_delegation_amount
 				.saturating_mul(DECIMAL_CONVERTOR.into());
 
-			if let Some(mut i) = new_metadata.request {
+			if let Some(mut i) = metadata.request {
 				i.amount = i.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
-			<CandidateInfo<T>>::insert(&account, new_metadata)
+			<CandidateInfo<T>>::insert(&account, metadata);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+
+		weight
 	}
 
 	pub fn replace_delegation_scheduled_requests_storage() -> frame_support::weights::Weight {
@@ -156,34 +119,16 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelegationScheduledRequests";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut scheduled_requests) in storage_key_iter::<
 			T::AccountId,
 			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
 			Blake2_128Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_scheduled_requests: Vec<ScheduledRequest<T::AccountId, BalanceOf<T>>> =
-				state;
-			for scheduled_request in new_scheduled_requests.iter_mut() {
+		.drain()
+		{
+			for scheduled_request in scheduled_requests.iter_mut() {
 				match scheduled_request.action {
 					DelegationAction::Revoke(n) => {
 						scheduled_request.action =
@@ -195,10 +140,10 @@ where
 					},
 				}
 			}
-			<DelegationScheduledRequests<T>>::insert(&account, new_scheduled_requests)
+			<DelegationScheduledRequests<T>>::insert(&account, scheduled_requests);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	pub fn replace_top_delegations_storage() -> frame_support::weights::Weight {
@@ -208,42 +153,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"TopDelegations";
-		let stored_data: Vec<_> = storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
+		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-			for delegation_bond in new_delegations.delegations.iter_mut() {
+		for (account, mut delegations) in storage_key_iter::<
+			T::AccountId,
+			Delegations<T::AccountId, BalanceOf<T>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.drain()
+		{
+			for delegation_bond in delegations.delegations.iter_mut() {
 				delegation_bond.amount =
 					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 
-			<TopDelegations<T>>::insert(&account, new_delegations)
+			<TopDelegations<T>>::insert(&account, delegations);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	pub fn replace_bottom_delegations_storage() -> frame_support::weights::Weight {
@@ -253,42 +180,25 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"BottomDelegations";
-		let stored_data: Vec<_> = storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			Delegations<T::AccountId, BalanceOf<T>>,
-			Twox64Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, state) in stored_data {
-			let mut new_delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
+		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-			for delegation_bond in new_delegations.delegations.iter_mut() {
+		for (account, mut delegations) in storage_key_iter::<
+			T::AccountId,
+			Delegations<T::AccountId, BalanceOf<T>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.drain()
+		{
+			for delegation_bond in delegations.delegations.iter_mut() {
 				delegation_bond.amount =
 					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
 			}
 
-			<BottomDelegations<T>>::insert(&account, new_delegations)
+			<BottomDelegations<T>>::insert(&account, delegations);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+
+		weight
 	}
 
 	pub fn replace_total_storage() -> frame_support::weights::Weight {
@@ -334,41 +244,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"DelayedPayouts";
-		let stored_data: Vec<_> =
-			storage_key_iter::<u32, DelayedPayout<BalanceOf<T>>, Twox64Concat>(
-				pallet_prefix,
-				storage_item_prefix,
-			)
-			.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<u32, DelayedPayout<BalanceOf<T>>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
-		for (round, state) in stored_data {
-			let mut new_delayed_payout: DelayedPayout<BalanceOf<T>> = state;
+		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-			new_delayed_payout.round_issuance =
-				new_delayed_payout.round_issuance.saturating_mul(DECIMAL_CONVERTOR.into());
-			new_delayed_payout.total_staking_reward =
-				new_delayed_payout.total_staking_reward.saturating_mul(DECIMAL_CONVERTOR.into());
+		for (round, mut delayed_payout) in storage_key_iter::<
+			u32,
+			DelayedPayout<BalanceOf<T>>,
+			Twox64Concat,
+		>(pallet_prefix, storage_item_prefix)
+		.drain()
+		{
+			delayed_payout.round_issuance =
+				delayed_payout.round_issuance.saturating_mul(DECIMAL_CONVERTOR.into());
+			delayed_payout.total_staking_reward =
+				delayed_payout.total_staking_reward.saturating_mul(DECIMAL_CONVERTOR.into());
 
-			<DelayedPayouts<T>>::insert(round, new_delayed_payout)
+			<DelayedPayouts<T>>::insert(round, delayed_payout);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 
 	pub fn replace_staked_storage() -> frame_support::weights::Weight {
@@ -378,32 +271,17 @@ where
 		);
 		let pallet_prefix: &[u8] = b"ParachainStaking";
 		let storage_item_prefix: &[u8] = b"Staked";
-		let stored_data: Vec<_> =
+
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (round, staked) in
 			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
-				.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
-		for (round, state) in stored_data {
-			let new_staked: BalanceOf<T> = state;
-			<Staked<T>>::insert(round, new_staked.saturating_mul(DECIMAL_CONVERTOR.into()))
+				.drain()
+		{
+			<Staked<T>>::insert(round, staked.saturating_mul(DECIMAL_CONVERTOR.into()));
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 }
 

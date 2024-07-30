@@ -18,8 +18,8 @@ use crate::PrehashedEthereumMessage;
 use bc_relayer_registry::RelayerRegistryLookup;
 use codec::Encode;
 use itp_sgx_crypto::{ecdsa::Pair, key_repository::AccessKey};
+use litentry_primitives::Identity;
 use log::error;
-use parentchain_primitives::Identity;
 
 #[derive(Encode, Debug)]
 pub enum SignEthereumError {
@@ -54,7 +54,7 @@ pub mod test {
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, mocks::KeyRepositoryMock};
 	use k256::{ecdsa::SigningKey, elliptic_curve::rand_core};
-	use parentchain_primitives::Identity;
+	use litentry_primitives::Identity;
 	use sp_core::{sr25519, Pair};
 
 	#[test]
