@@ -16,28 +16,18 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{put_storage_value, storage_key_iter},
+	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Currency, Get, OnRuntimeUpgrade},
-	Blake2_128Concat, Twox64Concat,
+	Twox64Concat,
 };
-use sp_core_hashing::twox_64;
-use sp_runtime::{traits::Hash, Saturating};
-use sp_std::{
-	convert::{From, TryInto},
-	marker::PhantomData,
-	vec::Vec,
-};
-
-pub const DECIMAL_CONVERTOR: u32 = 1_000_000;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::{Decode, Encode};
-#[cfg(feature = "try-runtime")]
-use sp_std::collections::btree_map::BTreeMap;
-use storage::migration::get_storage_value;
 
 use pallet_identity::{RegistrarInfo, Registration};
+use storage::migration::get_storage_value;
 type BalanceOf<T> = <<T as pallet_identity::Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::Balance;

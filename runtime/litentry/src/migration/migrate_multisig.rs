@@ -16,18 +16,10 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
 	pallet_prelude::*,
-	traits::{Currency, Get, OnRuntimeUpgrade},
-	Blake2_128Concat, Twox64Concat,
+	traits::{Get, OnRuntimeUpgrade},
 };
-use parity_scale_codec::EncodeLike;
-use sp_runtime::{traits::Hash, Saturating};
-use sp_std::{
-	convert::{From, TryInto},
-	marker::PhantomData,
-	vec::Vec,
-};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 #[cfg(feature = "try-runtime")]
 use parity_scale_codec::Encode;
