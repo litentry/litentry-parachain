@@ -16,17 +16,13 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
+	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Blake2_128Concat, Twox64Concat,
 };
 use sp_runtime::Saturating;
-use sp_std::{
-	convert::{From, TryInto},
-	marker::PhantomData,
-	vec::Vec,
-};
+use sp_std::{convert::From, marker::PhantomData, vec::Vec};
 
 use pallet_parachain_staking::{
 	set::OrderedSet, BalanceOf, Bond, BottomDelegations, CandidateInfo, CandidateMetadata,
@@ -94,7 +90,6 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			let mut metadata: CandidateMetadata<BalanceOf<T>> = state;
 			metadata.bond = metadata.bond.saturating_mul(DECIMAL_CONVERTOR.into());
 			metadata.total_counted =
 				metadata.total_counted.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -167,8 +162,6 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			let mut delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
-
 			for delegation_bond in delegations.delegations.iter_mut() {
 				delegation_bond.amount =
 					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -196,8 +189,6 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			let mut delegations: Delegations<T::AccountId, BalanceOf<T>> = state;
-
 			for delegation_bond in delegations.delegations.iter_mut() {
 				delegation_bond.amount =
 					delegation_bond.amount.saturating_mul(DECIMAL_CONVERTOR.into());
@@ -255,7 +246,7 @@ where
 		let storage_item_prefix: &[u8] = b"DelayedPayouts";
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, mut delayed_payout) in storage_key_iter::<
+		for (round, mut delayed_payout) in storage_key_iter::<
 			u32,
 			DelayedPayout<BalanceOf<T>>,
 			Twox64Concat,
@@ -287,7 +278,6 @@ where
 			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
 				.drain()
 		{
-			let staked: BalanceOf<T> = state;
 			<Staked<T>>::insert(round, staked.saturating_mul(DECIMAL_CONVERTOR.into()));
 			weight += T::DbWeight::get().reads_writes(1, 1);
 		}

@@ -120,39 +120,23 @@ where
 		);
 		let pallet_prefix: &[u8] = b"Balances";
 		let storage_item_prefix: &[u8] = b"Locks";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut locks) in storage_key_iter::<
 			T::AccountId,
 			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
 			Blake2_128Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		for (account, mut state) in stored_data {
-			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut state;
-			for balance_lock in new_locks.into_iter() {
+		.drain()
+		{
+			for balance_lock in &locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
-			<Locks<T>>::insert(&account, new_locks)
+			<Locks<T>>::insert(&account, locks);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+
+		weight
 	}
 	pub fn check_balances_reserves_storage() -> frame_support::weights::Weight {
 		log::info!(
