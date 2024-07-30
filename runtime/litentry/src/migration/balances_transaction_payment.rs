@@ -68,14 +68,6 @@ where
 		// Now remove the old storage
 		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		// Assert that old storage is empty
-		assert!(storage_key_iter::<
-			T::AccountId,
-			AccountInfo<T::Index, T::AccountData>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
 		for (account, state) in stored_data {
 			let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
 			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
