@@ -274,7 +274,7 @@ where
 
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, mut staked) in
+		for (round, mut staked) in
 			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
 				.drain()
 		{

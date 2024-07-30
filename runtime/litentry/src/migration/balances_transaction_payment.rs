@@ -129,7 +129,7 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			for balance_lock in &locks.into_iter() {
+			for balance_lock in locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
 			<Locks<T>>::insert(&account, locks);
