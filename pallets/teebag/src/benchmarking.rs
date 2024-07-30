@@ -308,5 +308,38 @@ mod benchmarks {
 		)
 	}
 
+	#[benchmark]
+	fn unregister_enclave() {
+		AuthorizedEnclave::<T>::try_mutate(WorkerType::Identity, |v| {
+			v.try_push(test_util::TEST4_MRENCLAVE)
+		})
+		.expect("Failed to add authorized enclave");
+
+		assert_ok!(pallet_timestamp::Pallet::<T>::set(
+			RawOrigin::None.into(),
+			T::Moment::saturated_from(test_util::TEST4_TIMESTAMP),
+		));
+
+		let signer: T::AccountId =
+			test_util::get_signer::<T::AccountId>(test_util::TEST4_SIGNER_PUB).into();
+
+		assert_ok!(Teebag::<T>::register_enclave(
+			RawOrigin::Signed(signer.clone()).into(),
+			WorkerType::Identity,
+			WorkerMode::OffChainWorker,
+			test_util::TEST4_CERT.to_vec(),
+			test_util::URL.to_vec(),
+			None,
+			None,
+			AttestationType::Ias,
+		));
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(signer.clone()));
+
+		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
+		assert_last_event::<T>(Event::EnclaveRemoved { who: signer }.into())
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
