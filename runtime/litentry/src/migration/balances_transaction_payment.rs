@@ -52,32 +52,24 @@ where
 		);
 		let pallet_prefix: &[u8] = b"System";
 		let storage_item_prefix: &[u8] = b"Account";
-		let stored_data: Vec<_> = storage_key_iter::<
+		let mut weight: Weight = frame_support::weights::Weight::zero();
+
+		for (account, mut account_info) in storage_key_iter::<
 			T::AccountId,
 			AccountInfo<T::Index, T::AccountData>,
 			Blake2_128Concat,
 		>(pallet_prefix, storage_item_prefix)
-		.collect();
-		let migrated_count = frame_support::weights::Weight::from_parts(
-			0,
-			stored_data
-				.len()
-				.try_into()
-				.expect("There are between 0 and 2**64 mappings stored."),
-		);
-		// Now remove the old storage
-		// https://crates.parity.io/frame_support/storage/migration/fn.clear_storage_prefix.html
-		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix, &[], None, None);
-		for (account, state) in stored_data {
-			let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
-			new_account.data.free = new_account.data.free.saturating_mul(DECIMAL_CONVERTOR);
-			new_account.data.reserved = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
-			new_account.data.frozen = new_account.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+		.drain()
+		{
+			account_info.data.free = account_info.data.free.saturating_mul(DECIMAL_CONVERTOR);
+			account_info.data.reserved =
+				account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+			account_info.data.frozen = account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
 
-			<Account<T>>::insert(&account, new_account)
+			<Account<T>>::insert(&account, account_info);
+			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
-		let weight = T::DbWeight::get();
-		migrated_count.saturating_mul(weight.write + weight.read)
+		weight
 	}
 	pub fn repalce_balances_total_issuance_storage() -> frame_support::weights::Weight {
 		log::info!(
