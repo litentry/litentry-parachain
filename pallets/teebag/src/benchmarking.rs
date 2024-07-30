@@ -341,5 +341,37 @@ mod benchmarks {
 		assert_last_event::<T>(Event::EnclaveRemoved { who: signer }.into())
 	}
 
+	#[benchmark]
+	fn register_quoting_enclave() {
+		let quoting_enclave = br#"{"id":"QE","version":2,"issueDate":"2022-12-04T22:45:33Z","nextUpdate":"2023-01-03T22:45:33Z","tcbEvaluationDataNumber":13,"miscselect":"00000000","miscselectMask":"FFFFFFFF","attributes":"11000000000000000000000000000000","attributesMask":"FBFFFFFFFFFFFFFF0000000000000000","mrsigner":"8C4F5775D796503E96137F77C68A829A0056AC8DED70140B081B094490C57BFF","isvprodid":1,"tcbLevels":[{"tcb":{"isvsvn":6},"tcbDate":"2022-11-09T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"isvsvn":5},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00477"]},{"tcb":{"isvsvn":4},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00334","INTEL-SA-00477"]},{"tcb":{"isvsvn":2},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00219","INTEL-SA-00293","INTEL-SA-00334","INTEL-SA-00477"]},{"tcb":{"isvsvn":1},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00202","INTEL-SA-00219","INTEL-SA-00293","INTEL-SA-00334","INTEL-SA-00477"]}]}"#;
+		let signature = hex!("47accba321e57c20722a0d3d1db11c9b52661239857dc578ca1bde13976ee288cf39f72111ffe445c7389ef56447c79e30e6b83a8863ed9880de5bde4a8d5c91");
+		let certificate_chain =
+			include_bytes!("./sgx_verify/test/dcap/qe_identity_issuer_chain.pem");
+
+		let pubkey: [u8; 32] = [
+			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
+			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+		];
+		let signer: T::AccountId = test_util::get_signer::<T::AccountId>(&pubkey);
+		let valid_timestamp: u64 = 1671606747000;
+
+		assert_ok!(pallet_timestamp::Pallet::<T>::set(
+			RawOrigin::None.into(),
+			T::Moment::saturated_from(valid_timestamp)
+		));
+
+		assert_eq!(QuotingEnclaveRegistry::<T>::get(), QuotingEnclave::default());
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(signer),
+			quoting_enclave.to_vec(),
+			signature.to_vec(),
+			certificate_chain.to_vec(),
+		);
+
+		assert_eq!(QuotingEnclaveRegistry::<T>::get().isvprodid, 1);
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
