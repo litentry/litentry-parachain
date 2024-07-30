@@ -38,15 +38,14 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         console.log(`evmAccountInitBalance Balance: ${evmAccountInitBalance.free.toNumber()}`);
 
-
         let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
         console.log(`eve address: ${context.eve.publicKey}`);
         console.log(`eveMappedEVMAccount: ${eveMappedEVMAccount}`);
 
         // Deposit money into substrate account's truncated EVM address's mapping substrate account
-        // const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, toBigNumber(30));
-        // await signAndSend(tx_init, context.eve);
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, toBigNumber(30));
+        await signAndSend(tx_init, context.eve);
 
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
@@ -84,7 +83,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account.
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         console.log(`evmAccount Balance: ${evmAccountCurrentBalance.free.toNumber()}`);
-        
+
         // expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
         //     evmAccountInitBalance.free.toBigInt() + BigInt(value)
         // );

@@ -16,11 +16,10 @@ import { evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
+import { destResourceId } from '../common/utils/consts';
 const toBigNumber = (int: number) => int * 1e12;
 // TODO: Better use bn1e18, but we will fix it in P-895
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
-// substrate native token
-const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
 
 describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const config = loadConfig();
@@ -151,11 +150,14 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         //      fee: ...,
         //      asset: None, // None for native token
         // }
-        const updateFeeTx = await sudoWrapperGC(context.api, context.api.tx.assetsHandler.set_resource(destResourceId, {"fee": bn1e12 / 1000, "asset": null}));
+        const updateFeeTx = await sudoWrapperGC(
+            context.api,
+            context.api.tx.assetsHandler.setResource(destResourceId, { fee: bn1e12 / 1000, asset: null })
+        );
         await signAndSend(updateFeeTx, context.alice);
 
-        const AssetInfo = await context.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
-        const bridge_fee = await AssetInfo["fee"];
+        const AssetInfo = (await context.api.query.assetsHandler.resourceToAssetInfo(destResourceId)).toHuman() as any;
+        const bridge_fee = await AssetInfo.fee;
         expect(bridge_fee.toString()).to.eq((bn1e12 / 1000).toString());
 
         // set chainId to whitelist
