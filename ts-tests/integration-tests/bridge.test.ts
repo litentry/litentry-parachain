@@ -6,7 +6,7 @@ import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 import { BN } from 'bn.js';
 import { destResourceId } from '../common/utils/consts';
-const bn100e12 = new BN(10).pow(new BN(18)).mul(new BN(100));
+const bn100e18 = new BN(10).pow(new BN(18)).mul(new BN(100));
 // substrate native token
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
@@ -41,7 +41,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         console.log('after deposit: ', afterAccountData.toString());
 
         assert.equal(
-            bn100e12.add(beforeAccountData.data.free.toBn()).toString(),
+            bn100e18.add(beforeAccountData.data.free.toBn()).toString(),
             afterAccountData.data.free.toBn().toString()
         );
     });
@@ -52,7 +52,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const b: BigNumber = await erc20.balanceOf(receipt);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
-                bn100e12.toString(),
+                bn100e18.toString(),
                 receipt,
                 0,
                 destResourceId
@@ -118,7 +118,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             await context.parachainConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId)
         ).toHuman() as any;
 
-        // !!!!Something wrong
         const fee = AssetInfo.fee;
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
@@ -148,7 +147,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.wallets.bob.address,
             maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString()
         );
-        const depositAmount = numberToHex('100,000,000,000,000'.replace(/,/g, ''));
+        const depositAmount = numberToHex('100,000,000,000,000,000,000'.replace(/,/g, ''));
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
 
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
