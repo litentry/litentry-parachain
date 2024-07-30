@@ -415,5 +415,26 @@ mod benchmarks {
 		assert_last_event::<T>(Event::OpaqueTaskPosted { request }.into())
 	}
 
+	#[benchmark]
+	fn parentchain_block_processed() {
+		let who: T::AccountId = account("who", 1, 1);
+		let test_enclave = Enclave::new(WorkerType::Identity);
+		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
+		let block_number: T::BlockNumber = 10u32.into();
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(who.clone()), H256::default(), block_number.clone(), H256::default());
+
+		assert_last_event::<T>(
+			Event::ParentchainBlockProcessed {
+				who,
+				block_number,
+				block_hash: H256::default(),
+				task_merkle_root: H256::default(),
+			}
+			.into(),
+		)
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
