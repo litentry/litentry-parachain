@@ -83,7 +83,7 @@ where
 		let storage_item_prefix: &[u8] = b"CandidateInfo";
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, metadata) in storage_key_iter::<
+		for (account, mut metadata) in storage_key_iter::<
 			T::AccountId,
 			CandidateMetadata<BalanceOf<T>>,
 			Twox64Concat,
@@ -274,7 +274,7 @@ where
 
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (round, mut staked) in
+		for (round, staked) in
 			storage_key_iter::<u32, BalanceOf<T>, Twox64Concat>(pallet_prefix, storage_item_prefix)
 				.drain()
 		{

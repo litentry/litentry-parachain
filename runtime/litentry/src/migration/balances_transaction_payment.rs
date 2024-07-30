@@ -129,10 +129,11 @@ where
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			for balance_lock in locks.into_iter() {
+			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut locks;
+			for balance_lock in new_locks.into_iter() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
-			<Locks<T>>::insert(&account, locks);
+			<Locks<T>>::insert(&account, new_locks);
 			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
