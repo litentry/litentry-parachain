@@ -16,7 +16,7 @@
 #![allow(clippy::type_complexity)]
 
 use frame_support::{
-	migration::{clear_storage_prefix, storage_key_iter},
+	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 	Blake2_128Concat, WeakBoundedVec,
@@ -26,7 +26,7 @@ use pallet_balances::{
 	AccountData, BalanceLock, Freezes, Holds, IdAmount, InactiveIssuance, Locks, ReserveData,
 	Reserves, TotalIssuance,
 };
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
 
