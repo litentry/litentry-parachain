@@ -436,5 +436,35 @@ mod benchmarks {
 		)
 	}
 
+	#[benchmark]
+	fn sidechain_block_imported() {
+		let who = account("who", 1, 1);
+		let shard = H256::default();
+		let block_number = 10u64;
+		let next_finalization_candidate_block_number: u64 = 11;
+		let block_header_hash = H256::default();
+		let test_enclave =
+			Enclave::new(WorkerType::Identity).with_worker_mode(WorkerMode::Sidechain);
+		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
+		SidechainBlockFinalizationCandidate::<T>::insert(shard.clone(), 10);
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(who.clone()),
+			shard,
+			block_number.clone(),
+			next_finalization_candidate_block_number,
+			block_header_hash,
+		);
+
+		assert_eq!(
+			SidechainBlockFinalizationCandidate::<T>::get(shard),
+			next_finalization_candidate_block_number
+		);
+		assert_last_event::<T>(
+			Event::SidechainBlockFinalized { who, sidechain_block_number: block_number }.into(),
+		)
+	}
+
 	impl_benchmark_test_suite!(Teebag, super::mock::new_test_ext(false), super::mock::Test);
 }
