@@ -36,7 +36,7 @@ fn create_test_authorized_enclaves<T: Config>(n: u32, worker_type: WorkerType) {
 	}
 }
 
-fn register_quoting_enclave<T: Config>()
+fn register_quoting_enclave_for_testing<T: Config>()
 where
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
@@ -264,7 +264,7 @@ mod benchmarks {
 			RawOrigin::None.into(),
 			T::Moment::saturated_from(valid_timestamp)
 		));
-		register_quoting_enclave::<T>();
+		register_quoting_enclave_for_testing::<T>();
 		register_tcb_info::<T>();
 
 		let mrenclave: MrEnclave = [
