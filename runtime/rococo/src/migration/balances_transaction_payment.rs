@@ -23,7 +23,7 @@ use frame_support::{
 };
 use frame_system::{Account, AccountInfo};
 use pallet_balances::{
-	AccountData, BalanceLock, Freezes, Holds, IdAmount, InactiveIssuance, Locks, ReserveData,
+	Account as BAccount, AccountData, BalanceLock, Freezes, Holds, InactiveIssuance, Locks,
 	Reserves, TotalIssuance,
 };
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -96,22 +96,6 @@ where
 		<InactiveIssuance<T>>::put(stored_data.saturating_mul(DECIMAL_CONVERTOR));
 		let weight = T::DbWeight::get();
 		frame_support::weights::Weight::from_parts(0, weight.write + weight.read)
-	}
-	pub fn check_balances_account_storage() -> frame_support::weights::Weight {
-		log::info!(
-			target: "ReplaceBalancesRelatedStorage",
-			"running checking to Balances Account"
-		);
-		let pallet_prefix: &[u8] = b"Balances";
-		let storage_item_prefix: &[u8] = b"Account";
-		assert!(storage_key_iter::<T::AccountId, AccountData<u128>, Blake2_128Concat>(
-			pallet_prefix,
-			storage_item_prefix
-		)
-		.next()
-		.is_none());
-		let weight = T::DbWeight::get();
-		frame_support::weights::Weight::from_parts(0, weight.read)
 	}
 	pub fn replace_balances_locks_storage() -> frame_support::weights::Weight {
 		log::info!(
@@ -201,11 +185,11 @@ where
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_account_check() -> Result<Vec<u8>, &'static str> {
-		assert!(<Account<T>>::iter().next().is_none());
+		assert!(<BAccount<T>>::iter().next().is_none());
 		Ok(Vec::<u8>::new())
 	}
 	pub fn post_upgrade_balances_account_check(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(<Account<T>>::iter().next().is_none());
+		assert!(<BAccount<T>>::iter().next().is_none());
 		Ok(())
 	}
 	pub fn pre_upgrade_balances_locks_storage() -> Result<Vec<u8>, &'static str> {
