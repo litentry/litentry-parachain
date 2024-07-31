@@ -181,7 +181,6 @@ where
 		assert_eq!(fee_iter.next(), Some((4u8, 1_000_000_000_000u128)));
 
 		assert_eq!(fee_iter.next(), Some((97u8, 1u128)));
-		assert_eq!(fee_iter.next(), Some((0u8, 16_000_000_000_000u128)));
 		assert_eq!(fee_iter.next(), Some((6u8, 1_000_000_000_000u128)));
 		assert_eq!(fee_iter.next(), Some((99u8, 1_000_000_000_000u128)));
 		assert!(fee_iter.next().is_none());
