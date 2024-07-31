@@ -7,6 +7,7 @@ import {
     subscribeToEvents,
     sudoWrapperGC,
     sudoWrapperTC,
+    sleep,
 } from '../common/utils';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
@@ -79,7 +80,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const transferTokens = async (from: KeyringPair, to: any) => {
         const aliceEVMMappedAccount = from.publicKey.slice(0, 20); // pretend to be evm
         console.log(`alice address: ${from.publicKey}`);
-        console.log(`aliceEVMMappedAccount: ${aliceEVMMappedAccount}`);
 
         let aliceMappedSustrateAccount = evmToAddress(aliceEVMMappedAccount, 31);
 
@@ -106,6 +106,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await signAndSend(tx, from);
         let temp = await context.api.rpc.chain.getBlock();
         console.log(`evm call await end: ${temp.block.header.number}`);
+        await sleep(30);
     };
 
     const isPendingRequest = async () =>
@@ -141,10 +142,17 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     });
     step('Test precompile bridge contract', async function () {
         console.time('Test precompile bridge contract');
-
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
+            let temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await Before: ${temp.block.header.number}`);
+            await signAndSend(extrinsic, context.alice);
+            temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await end: ${temp.block.header.number}`);
+        }
         const dest_address = '0xaaafb3972b05630fccee866ec69cdadd9bac2772'; // random address
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
-        console.log('initial balance:', balance.free.toBigInt());
 
         // balance should be greater than 0.01
         if (parseInt(balance.free.toString()) < parseInt('10000000000000000')) {
@@ -163,6 +171,8 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await signAndSend(updateFeeTx, context.alice);
 
         const AssetInfo = (await context.api.query.assetsHandler.resourceToAssetInfo(destResourceId)).toHuman() as any;
+        console.log('AssetInfo:', AssetInfo);
+
         const bridge_fee = AssetInfo.fee;
         expect(bridge_fee.toString().replace(/,/g, '')).to.eq(ethers.utils.parseUnits('0.001', 18).toString());
         // set chainId to whitelist
@@ -191,7 +201,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // 0.01 - 0.001 = 0.009
         const expectedBalance = bn1e18.div(bn100).sub(bn1e18.div(bn1000));
-        expect(event_data[3].toString()).to.eq(expectedBalance);
+        expect(event_data[3].toString().replace(/,/g, '')).to.eq(expectedBalance.toString());
         expect(event_data[4]).to.eq(dest_address);
 
         console.timeEnd('Test precompile bridge contract');
