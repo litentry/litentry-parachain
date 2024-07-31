@@ -857,7 +857,7 @@ impl pallet_teebag::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<5>;
-	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_teebag::WeightInfo;
 }
 
 impl pallet_bitacross::Config for Runtime {
