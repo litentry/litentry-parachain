@@ -167,10 +167,7 @@ where
 		+ pallet_bridge_transfer::Config,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
-		assert_eq!(
-			old::Resources::<T>::get(NATIVE_TOKEN_RESOURCE_ID),
-			Some(b"aaaaaa?".to_vec())
-		);
+		assert_eq!(old::Resources::<T>::get(NATIVE_TOKEN_RESOURCE_ID), Some(b"aaaaaa?".to_vec()));
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
 		// Just For Reference
