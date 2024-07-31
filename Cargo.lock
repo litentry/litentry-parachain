@@ -5469,7 +5469,7 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "async-trait",
  "clap",
@@ -7448,8 +7448,6 @@ dependencies = [
  "libsecp256k1",
  "log",
  "num_enum 0.7.3",
- "pallet-balances",
- "pallet-bridge",
  "pallet-bridge-transfer",
  "pallet-evm",
  "pallet-timestamp",
