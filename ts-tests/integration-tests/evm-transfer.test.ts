@@ -7,8 +7,8 @@ import { createPair, encodeAddress } from '@polkadot/keyring';
 import { evmToAddress } from '@polkadot/util-crypto';
 const BN = require('bn.js');
 import { Web3 } from 'web3';
+import { ethers } from 'ethers';
 
-const BN1e18 = new BN(10).pow(new BN(18));
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test EVM Module Transfer`);
     const config = loadConfig();
@@ -122,7 +122,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // Create Web3 instance
         const web3 = new Web3(config.parachain_ws);
 
-        let value = new BN('100000000000000000'); // 0.1
+        let value = ethers.utils.parseUnits('0.1', 18).toString(); // 0.1
         // ExistentialDeposit = 100 000 000 000 000 000
         // Sign Tx with PK
         console.log(`Tx Signing with: ${evmAccountRaw.privateKey}`);
