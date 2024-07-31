@@ -83,7 +83,7 @@ where
 		// Resources Storage is using Blake2_256
 		// So we can not reverse it out
 		// Must hardcode back in
-		let pallet_prefix: &[u8] = b"Bridge";
+		let pallet_prefix: &[u8] = b"ChainBridge";
 		let storage_item_prefix_resources: &[u8] = b"Resources";
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_resources, &[], None, None);
 		// Must hardcode back in

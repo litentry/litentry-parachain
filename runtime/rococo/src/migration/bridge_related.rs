@@ -83,7 +83,7 @@ where
 		// Resources Storage is using Blake2_256
 		// So we can not reverse it out
 		// Must hardcode back in
-		let pallet_prefix: &[u8] = b"Bridge";
+		let pallet_prefix: &[u8] = b"ChainBridge";
 		let storage_item_prefix_resources: &[u8] = b"Resources";
 		let _ = clear_storage_prefix(pallet_prefix, storage_item_prefix_resources, &[], None, None);
 		// Must hardcode back in
@@ -169,7 +169,7 @@ where
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
 		assert_eq!(
 			old::Resources::<T>::get(NATIVE_TOKEN_RESOURCE_ID),
-			Some(b"BridgeTransfer.transfer".to_vec())
+			Some(b"aaaaaa?".to_vec())
 		);
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
@@ -181,7 +181,12 @@ where
 		// substrate_Rococo:chain_id=3
 		// substrate_Stage: chain_id=5
 		// Goerli: chain_id=6
+		assert_eq!(fee_iter.next(), Some((0u8, 1_000_000_000_000u128)));
+
+		assert_eq!(fee_iter.next(), Some((97u8, 1u128)));
 		assert_eq!(fee_iter.next(), Some((0u8, 16_000_000_000_000u128)));
+		assert_eq!(fee_iter.next(), Some((6u8, 1_000_000_000_000u128)));
+		assert_eq!(fee_iter.next(), Some((99u8, 1_000_000_000_000u128)));
 		assert!(fee_iter.next().is_none());
 
 		Ok(Vec::new())
@@ -195,7 +200,8 @@ where
 		// Check AssetsHandler Storage
 		let mut new_resource_fee_iter = <ResourceToAssetInfo<T>>::iter();
 		let expected_asset_info = AssetInfo {
-			fee: 16_000_000_000_000u128.saturating_mul(DECIMAL_CONVERTOR),
+			// The first one get migrated
+			fee: 1_000_000_000_000u128.saturating_mul(DECIMAL_CONVERTOR),
 			asset: None,
 		};
 		assert_eq!(
