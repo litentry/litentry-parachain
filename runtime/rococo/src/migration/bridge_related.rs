@@ -181,7 +181,7 @@ where
 		// substrate_Rococo:chain_id=3
 		// substrate_Stage: chain_id=5
 		// Goerli: chain_id=6
-		assert_eq!(fee_iter.next(), Some((0u8, 1_000_000_000_000u128)));
+		assert_eq!(fee_iter.next(), Some((4u8, 1_000_000_000_000u128)));
 
 		assert_eq!(fee_iter.next(), Some((97u8, 1u128)));
 		assert_eq!(fee_iter.next(), Some((0u8, 16_000_000_000_000u128)));
