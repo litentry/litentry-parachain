@@ -3,7 +3,6 @@ use frame_benchmarking::v2::*;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use hex_literal::hex;
-use std::time::SystemTime;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -17,11 +16,10 @@ fn create_test_enclaves<T: Config>(n: u32, mrenclave: MrEnclave) {
 	}
 }
 
-fn generate_random_mrenclave() -> MrEnclave {
-	let time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos();
-
+fn generate_random_mrenclave<T>(index: u64) -> MrEnclave {
+	let seed: u64 = 1671606747000 + index;
 	let mut mrenclave = [0u8; 32];
-	for (i, byte) in time.to_ne_bytes().iter().cycle().take(32).enumerate() {
+	for (i, byte) in seed.to_ne_bytes().iter().cycle().take(32).enumerate() {
 		mrenclave[i] = *byte;
 	}
 
@@ -29,8 +27,8 @@ fn generate_random_mrenclave() -> MrEnclave {
 }
 
 fn create_test_authorized_enclaves<T: Config>(n: u32, worker_type: WorkerType) {
-	for _ in 0..n {
-		let mrenclave = generate_random_mrenclave();
+	for i in 0..n {
+		let mrenclave = generate_random_mrenclave::<T>(i as u64);
 		AuthorizedEnclave::<T>::try_mutate(worker_type, |v| v.try_push(mrenclave))
 			.expect("Failed to add authorized enclave");
 	}
