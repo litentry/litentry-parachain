@@ -187,7 +187,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert_eq!(old::Resources::<T>::iter().count(), 0);
+		assert_eq!(old::Resources::<T>::get(NATIVE_TOKEN_RESOURCE_ID), None);
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);
