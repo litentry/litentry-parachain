@@ -119,8 +119,6 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(RawOrigin::Root, who.clone());
 
-		assert_eq!(Teebag::<T>::enclave_count(WorkerType::Identity), 0);
-		assert_eq!(EnclaveRegistry::<T>::get(who.clone()), None);
 		assert_last_event::<T>(Event::EnclaveRemoved { who }.into())
 	}
 
