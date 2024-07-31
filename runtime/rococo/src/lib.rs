@@ -1424,6 +1424,7 @@ mod benches {
 		[pallet_vc_management, VCManagement]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
+		[pallet_teebag, Teebag]
 	);
 }
 
