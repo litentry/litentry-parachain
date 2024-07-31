@@ -1,3 +1,11 @@
+pub mod migrate_identity;
+pub use migrate_identity::ReplacePalletIdentityStorage;
+pub mod migrate_multisig;
+pub use migrate_multisig::ReplacePalletMultisigStorage;
+pub mod migrate_proxy;
+pub use migrate_proxy::ReplacePalletProxyStorage;
+pub mod migrate_vesting;
+pub use migrate_vesting::ReplacePalletVestingStorage;
 pub mod bridge_related;
 pub use bridge_related::ReplaceBridgeRelatedStorage;
 pub mod parachain_staking;
