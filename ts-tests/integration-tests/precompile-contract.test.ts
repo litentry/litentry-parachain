@@ -191,7 +191,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // 0.01 - 0.001 = 0.009
         const expectedBalance = bn1e18.div(bn100).sub(bn1e18.div(bn1000));
-        expect(event_data[3].toString()).to.eq(expectedBalance.toLocaleString());
+        expect(event_data[3].toString()).to.eq(expectedBalance);
         expect(event_data[4]).to.eq(dest_address);
 
         console.timeEnd('Test precompile bridge contract');
@@ -347,7 +347,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const delegate = precompileStakingContract.interface.encodeFunctionData('delegate', [
             collatorPublicKey,
             ethers.utils.parseUnits('57', 18).toString(),
-            ,
         ]);
         await executeTransaction(delegate, precompileStakingContractAddress, 'delegate');
         const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
