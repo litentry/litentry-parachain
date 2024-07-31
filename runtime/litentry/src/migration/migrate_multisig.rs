@@ -85,7 +85,7 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let pre_vec: (Vec<u8>, Vec<u8>, Vec<u8>) =
+		let pre_vec: (Vec<u8>,) =
 			Decode::decode(&mut &state[..]).map_err(|_| "Failed to decode Tuple")?;
 
 		// pallet_multisig
