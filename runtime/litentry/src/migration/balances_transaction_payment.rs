@@ -106,18 +106,20 @@ where
 		let storage_item_prefix: &[u8] = b"Locks";
 		let mut weight: Weight = frame_support::weights::Weight::zero();
 
-		for (account, mut locks) in storage_key_iter::<
+		for (account, locks) in storage_key_iter::<
 			T::AccountId,
-			WeakBoundedVec<BalanceLock<u128>, T::MaxLocks>,
+			WeakBoundedVec<BalanceLock<T::Balance>, T::MaxLocks>,
 			Blake2_128Concat,
 		>(pallet_prefix, storage_item_prefix)
 		.drain()
 		{
-			let new_locks: &mut WeakBoundedVec<BalanceLock<u128>, T::MaxLocks> = &mut locks;
-			for balance_lock in new_locks.into_iter() {
+			let mut locks_vec = locks.into_inner();
+			for balance_lock in locks_vec.iter_mut() {
 				balance_lock.amount = balance_lock.amount.saturating_mul(DECIMAL_CONVERTOR);
 			}
-			<Locks<T>>::insert(&account, new_locks);
+			let updated_locks =
+				WeakBoundedVec::<BalanceLock<T::Balance>, T::MaxLocks>::force_from(locks_vec, None);
+			Locks::<T>::insert(&account, updated_locks);
 			weight += T::DbWeight::get().reads_writes(1, 1);
 		}
 
