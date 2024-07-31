@@ -169,7 +169,7 @@ where
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
 		assert_eq!(
 			old::Resources::<T>::get(NATIVE_TOKEN_RESOURCE_ID),
-			b"BridgeTransfer.transfer".to_vec()
+			Some(b"BridgeTransfer.transfer".to_vec())
 		);
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
