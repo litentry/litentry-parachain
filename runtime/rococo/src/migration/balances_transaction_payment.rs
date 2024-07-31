@@ -139,57 +139,6 @@ where
 
 		weight
 	}
-	pub fn check_balances_reserves_storage() -> frame_support::weights::Weight {
-		log::info!(
-			target: "ReplaceBalancesRelatedStorage",
-			"running checking to Balances Reserves"
-		);
-		let pallet_prefix: &[u8] = b"Balances";
-		let storage_item_prefix: &[u8] = b"Reserves";
-		assert!(storage_key_iter::<
-			T::AccountId,
-			BoundedVec<ReserveData<T::ReserveIdentifier, T::Balance>, T::MaxReserves>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		let weight = T::DbWeight::get();
-		frame_support::weights::Weight::from_parts(0, weight.read)
-	}
-	pub fn check_balances_holds_storage() -> frame_support::weights::Weight {
-		log::info!(
-			target: "ReplaceBalancesRelatedStorage",
-			"running checking to Balances Holds"
-		);
-		let pallet_prefix: &[u8] = b"Balances";
-		let storage_item_prefix: &[u8] = b"Holds";
-		assert!(storage_key_iter::<
-			T::AccountId,
-			BoundedVec<IdAmount<T::HoldIdentifier, T::Balance>, T::MaxHolds>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		let weight = T::DbWeight::get();
-		frame_support::weights::Weight::from_parts(0, weight.read)
-	}
-	pub fn check_balances_freezes_storage() -> frame_support::weights::Weight {
-		log::info!(
-			target: "ReplaceBalancesRelatedStorage",
-			"running checking to Balances Freezes"
-		);
-		let pallet_prefix: &[u8] = b"Balances";
-		let storage_item_prefix: &[u8] = b"Freezes";
-		assert!(storage_key_iter::<
-			T::AccountId,
-			BoundedVec<IdAmount<T::FreezeIdentifier, T::Balance>, T::MaxFreezes>,
-			Blake2_128Concat,
-		>(pallet_prefix, storage_item_prefix)
-		.next()
-		.is_none());
-		let weight = T::DbWeight::get();
-		frame_support::weights::Weight::from_parts(0, weight.read)
-	}
 }
 
 #[cfg(feature = "try-runtime")]
@@ -345,20 +294,12 @@ where
 		weight += Self::repalce_balances_inactive_issuance_storage();
 
 		// The storage of Account for pallet balances is in frame_system pallet
-		// Should be empty, still let's check it
-		weight += Self::check_balances_account_storage();
+		// Should be empty
 
 		weight += Self::replace_balances_locks_storage();
 
-		// The storage of Reserves for pallet balances is in frame_system pallet
-		// Should be empty, still let's check it
-		// Reserves
-		weight += Self::check_balances_reserves_storage();
-
-		// Should be empty, still let's check it
-		weight += Self::check_balances_holds_storage();
-		// Should be empty, still let's check it
-		weight += Self::check_balances_freezes_storage();
+		// The storage of Reserves/Holds/Freezes for pallet balances is in frame_system pallet
+		// Should be empty
 
 		weight
 	}

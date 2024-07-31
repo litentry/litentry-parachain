@@ -168,7 +168,7 @@ where
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
 		assert_eq!(
-			old::Resources::<T>::hashed_key_for(NATIVE_TOKEN_RESOURCE_ID),
+			old::Resources::<T>::hashed_key_for(BLAKE2_256_KEY),
 			b"BridgeTransfer.transfer".to_vec()
 		);
 
@@ -187,7 +187,7 @@ where
 		Ok(Vec::new())
 	}
 	pub fn post_upgrade_resource_fee_storage(_state: Vec<u8>) -> Result<(), &'static str> {
-		assert!(!old::Resources::<T>::contains_key(NATIVE_TOKEN_RESOURCE_ID));
+		assert!(!old::Resources::<T>::contains_key(BLAKE2_256_KEY));
 
 		let mut fee_iter = old::BridgeFee::<T>::iter();
 		assert_eq!(fee_iter.next(), None);

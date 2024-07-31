@@ -133,7 +133,7 @@ pub mod pallet {
 		},
 		TokenBridgeOut {
 			asset_id: Option<AssetId<T>>,
-			to: T::AccountId,
+			from: T::AccountId,
 			// Before Fee
 			amount: BalanceOf<T>,
 			fee: BalanceOf<T>,
@@ -235,12 +235,6 @@ where
 			None => Err(Error::<T>::InvalidResourceId.into()),
 			// Native token
 			Some(AssetInfo { fee: _, asset: None }) => {
-				Self::deposit_event(Event::TokenBridgeIn {
-					asset_id: None,
-					to: who.clone(),
-					amount,
-				});
-
 				// Native token require maximum issuance check
 				let total_issuance: BalanceOf<T> = pallet_balances::Pallet::<T>::total_issuance();
 				let new_issuance =
@@ -254,6 +248,11 @@ where
 					.ok_or(Error::<T>::Overflow)?;
 				<ExternalBalances<T>>::put(external_balances);
 
+				Self::deposit_event(Event::TokenBridgeIn {
+					asset_id: None,
+					to: who.clone(),
+					amount,
+				});
 				pallet_balances::Pallet::<T>::mint_into(&who, amount)
 			},
 			// pallet assets
@@ -278,12 +277,6 @@ where
 			None => Err(Error::<T>::InvalidResourceId.into()),
 			// Native token
 			Some(AssetInfo { fee, asset: None }) => {
-				Self::deposit_event(Event::TokenBridgeOut {
-					asset_id: None,
-					to: who.clone(),
-					amount,
-					fee,
-				});
 				let burn_amount = pallet_balances::Pallet::<T>::burn_from(
 					&who,
 					amount,
@@ -299,16 +292,16 @@ where
 				<ExternalBalances<T>>::put(external_balances);
 
 				pallet_balances::Pallet::<T>::mint_into(&T::TreasuryAccount::get(), fee)?;
+				Self::deposit_event(Event::TokenBridgeOut {
+					asset_id: None,
+					from: who,
+					amount: burn_amount,
+					fee,
+				});
 				Ok(burn_amount.checked_sub(&fee).ok_or(ArithmeticError::Overflow)?)
 			},
 			// pallet assets
 			Some(AssetInfo { fee, asset: Some(asset) }) => {
-				Self::deposit_event(Event::TokenBridgeOut {
-					asset_id: Some(asset),
-					to: who.clone(),
-					amount,
-					fee,
-				});
 				// Since we use Exact approach
 				// Burn amount will always be amount exactly
 				// Otherwise
@@ -321,6 +314,12 @@ where
 				)?;
 				ensure!(burn_amount > fee, Error::<T>::CannotPayAsFee);
 				pallet_assets::Pallet::<T>::mint_into(asset, &T::TreasuryAccount::get(), fee)?;
+				Self::deposit_event(Event::TokenBridgeOut {
+					asset_id: Some(asset),
+					from: who,
+					amount: burn_amount,
+					fee,
+				});
 				Ok(burn_amount.checked_sub(&fee).ok_or(ArithmeticError::Overflow)?)
 			},
 		}

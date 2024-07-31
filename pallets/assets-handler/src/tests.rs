@@ -103,12 +103,6 @@ fn transfer_assets() {
 				ENDOWED_BALANCE - 100
 			);
 			assert_events(vec![
-				RuntimeEvent::AssetsHandler(Event::TokenBridgeOut {
-					asset_id: None,
-					to: RELAYER_A,
-					amount: 100,
-					fee: 10,
-				}),
 				RuntimeEvent::Balances(pallet_balances::Event::Burned {
 					who: RELAYER_A,
 					amount: 100,
@@ -116,6 +110,12 @@ fn transfer_assets() {
 				RuntimeEvent::Balances(pallet_balances::Event::Minted {
 					who: TreasuryAccount::get(),
 					amount: 10,
+				}),
+				RuntimeEvent::AssetsHandler(Event::TokenBridgeOut {
+					asset_id: None,
+					from: RELAYER_A,
+					amount: 100,
+					fee: 10,
 				}),
 				RuntimeEvent::Bridge(pallet_bridge::Event::FungibleTransfer(
 					dest_bridge_id,
