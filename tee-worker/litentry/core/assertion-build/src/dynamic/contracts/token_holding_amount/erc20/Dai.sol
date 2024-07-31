@@ -41,15 +41,21 @@ library Dai {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0x6b175474e89094c44da98b954eedeac495271d0f"
+            "0x6b175474e89094c44da98b954eedeac495271d0f",
+            DataProviderTypes.NoderealClient,
+            18
         );
         tokenInfoList[1] = TokenInfo(
             Web3Networks.Bsc,
-            "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3"
+            "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
+            DataProviderTypes.NoderealClient,
+            18
         );
         tokenInfoList[2] = TokenInfo(
             Web3Networks.Solana,
-            "EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o"
+            "EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o",
+            DataProviderTypes.MoralisClient,
+            18
         );
 
         return tokenInfoList;

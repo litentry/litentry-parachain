@@ -38,7 +38,9 @@ library Fil {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Bsc,
-            "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153"
+            "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153",
+            DataProviderTypes.NoderealClient,
+            18
         );
 
         return tokenInfoList;
