@@ -146,9 +146,9 @@ async function setupCrossChainTransfer(
     if (!whitelist.toHuman()) {
         extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
-    const AssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
-
-    if (AssetInfo !== null) {
+    const BeforeAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+    console.log('before setResource: ', BeforeAssetInfo.toHuman());
+    if (BeforeAssetInfo !== null) {
         extrinsic.push(
             await sudoWrapperGC(
                 pConfig.api,
@@ -156,6 +156,8 @@ async function setupCrossChainTransfer(
             )
         );
     }
+    const AfterAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+    console.log('after setResource: ', AfterAssetInfo.toHuman());
 
     if (extrinsic.length > 0) {
         const tx = pConfig.api.tx.utility.batch(extrinsic);
