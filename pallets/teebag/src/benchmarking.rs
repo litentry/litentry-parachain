@@ -16,7 +16,7 @@ fn create_test_enclaves<T: Config>(n: u32, mrenclave: MrEnclave) {
 	}
 }
 
-fn generate_random_mrenclave<T>(index: u64) -> MrEnclave {
+fn generate_test_mrenclave<T>(index: u64) -> MrEnclave {
 	let seed: u64 = 1671606747000 + index;
 	let mut mrenclave = [0u8; 32];
 	for (i, byte) in seed.to_ne_bytes().iter().cycle().take(32).enumerate() {
@@ -28,7 +28,7 @@ fn generate_random_mrenclave<T>(index: u64) -> MrEnclave {
 
 fn create_test_authorized_enclaves<T: Config>(n: u32, worker_type: WorkerType) {
 	for i in 0..n {
-		let mrenclave = generate_random_mrenclave::<T>(i as u64);
+		let mrenclave = generate_test_mrenclave::<T>(i as u64);
 		AuthorizedEnclave::<T>::try_mutate(worker_type, |v| v.try_push(mrenclave))
 			.expect("Failed to add authorized enclave");
 	}
