@@ -7,9 +7,18 @@ import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { ISubmittableResult } from '@polkadot/types/types';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapperGC } from '../utils';
+import {
+    initApiPromise,
+    loadConfig,
+    ParachainConfig,
+    signAndSend,
+    sleep,
+    sudoWrapperGC,
+    sudoWrapperTC,
+} from '../utils';
 import { toWei } from 'web3-utils';
 import { destResourceId } from '../utils/consts';
+import { expect } from 'chai';
 
 const path = require('path');
 const BridgeContract = require('../abi/bridge/Bridge.json');
@@ -146,9 +155,18 @@ async function setupCrossChainTransfer(
     if (!whitelist.toHuman()) {
         extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
+
+    const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman();
+    if ('Test' !== filterMode) {
+        let extrinsic = await sudoWrapperTC(pConfig.api, pConfig.api.tx.extrinsicFilter.setMode('Test'));
+        let temp = await pConfig.api.rpc.chain.getBlock();
+        console.log(`setMode await Before: ${temp.block.header.number}`);
+        await signAndSend(extrinsic, pConfig.alice);
+        temp = await pConfig.api.rpc.chain.getBlock();
+        console.log(`setMode await end: ${temp.block.header.number}`);
+    }
     const BeforeAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
-    console.log('before setResource: ', BeforeAssetInfo.toHuman());
-    if (BeforeAssetInfo !== null) {
+    if (BeforeAssetInfo.isEmpty) {
         extrinsic.push(
             await sudoWrapperGC(
                 pConfig.api,
@@ -156,13 +174,15 @@ async function setupCrossChainTransfer(
             )
         );
     }
-    const AfterAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
-    console.log('after setResource: ', AfterAssetInfo.toHuman());
 
     if (extrinsic.length > 0) {
         const tx = pConfig.api.tx.utility.batch(extrinsic);
         await signAndSend(tx, pConfig.alice);
     }
+    const AfterAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+    console.log('AfterAssetInfo', AfterAssetInfo.toHuman());
+
+    expect(AfterAssetInfo).not.to.be.empty;
 }
 
 function generateBridgeConfig(
