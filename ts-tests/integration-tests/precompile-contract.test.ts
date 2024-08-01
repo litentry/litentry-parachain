@@ -171,7 +171,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await signAndSend(updateFeeTx, context.alice);
 
         const AssetInfo = (await context.api.query.assetsHandler.resourceToAssetInfo(destResourceId)).toHuman() as any;
-        console.log('AssetInfo:', AssetInfo);
 
         const bridge_fee = AssetInfo.fee;
         expect(bridge_fee.toString().replace(/,/g, '')).to.eq(ethers.utils.parseUnits('0.001', 18).toString());
