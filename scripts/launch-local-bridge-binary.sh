@@ -10,4 +10,3 @@ GOPATH=${HOME}/go go install github.com/litentry/ChainBridge/cmd/chainbridge@sol
 cp ${HOME}/go/bin/chainbridge $LITENTRY_PARACHAIN_DIR/chainbridge
 
 ${ROOTDIR}/scripts/geth/run_geth.sh
-
