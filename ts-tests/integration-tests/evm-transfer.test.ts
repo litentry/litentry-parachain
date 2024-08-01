@@ -34,8 +34,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         console.log(`evm mapped substrate address: ${evmAccountRaw.mappedAddress}`);
         const { data: evmAccountInitBalance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
 
-        console.log(`evmAccountInitBalance Balance: ${evmAccountInitBalance.free.toBigInt()}`);
-
         let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
         console.log(`eve address: ${context.eve.publicKey}`);
@@ -117,7 +115,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
         );
-        console.log(`evmAccount Balance: ${evmAccountInitBalance}`);
 
         // Create Web3 instance
         const web3 = new Web3(config.parachain_ws);

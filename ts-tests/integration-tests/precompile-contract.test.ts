@@ -79,7 +79,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     // and then it transfers to recepient
     const transferTokens = async (from: KeyringPair, to: any) => {
         const aliceEVMMappedAccount = from.publicKey.slice(0, 20); // pretend to be evm
-        console.log(`alice address: ${from.publicKey}`);
 
         let aliceMappedSustrateAccount = evmToAddress(aliceEVMMappedAccount, 31);
 
