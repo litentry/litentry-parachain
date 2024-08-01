@@ -14,6 +14,7 @@ import {
 describe('TokenHoldingAmount', () => {
     const deployFixture = async () => {
         await deployMockContract('MockHttpGetString')
+        await deployMockContract('MockHttpGetI64')
         await deployMockContract('MockIdentityToString')
         await deployMockContract('MockParseDecimal')
         return await deployContract('TokenMapping')
@@ -336,6 +337,96 @@ describe('TokenHoldingAmount', () => {
             await expect(val).to.be.rejectedWith(
                 Error,
                 `VM Exception while processing transaction: reverted with reason string 'Token not supported or not found'`
+            )
+        })
+    })
+
+    describe('Btc', () => {
+        const secrets = ['0x12345', '0x12345']
+        it('should return result false when amount = 0', async () => {
+            const { TokenMapping } = await loadFixture(deployFixture)
+            const val = TokenMapping.execute(
+                // identities
+                [
+                    {
+                        identity_type: IdentityType.Bitcoin,
+                        value: ethers.toUtf8Bytes(
+                            'bc1pqdk57wus42wuh989k3v700n6w584andwg7pvxnrd69ag3rs94cfq40qx2y'
+                        ),
+                        networks: [Web3Network.BitcoinP2wpkh],
+                    },
+                ],
+                // secrets
+                secrets,
+                // params
+                generateParams('btc')
+            )
+            expectResult(
+                TokenMapping,
+                val,
+                {
+                    and: [
+                        {
+                            src: '$token',
+                            op: Op.EQ,
+                            dst: 'btc',
+                        },
+                        {
+                            src: '$holding_amount',
+                            op: Op.GTE,
+                            dst: '0',
+                        },
+                        {
+                            src: '$holding_amount',
+                            op: Op.LT,
+                            dst: '0.001',
+                        },
+                    ],
+                },
+                false
+            )
+        })
+        it('should return result true when amount < 0.3', async () => {
+            const { TokenMapping } = await loadFixture(deployFixture)
+            const val = TokenMapping.execute(
+                // identities
+                [
+                    {
+                        identity_type: IdentityType.Bitcoin,
+                        value: ethers.toUtf8Bytes(
+                            'bc1pg6qjsrxwg9cvqx0gxstl0t74ynhs2528t7rp0u7acl6etwn5t6vswxrzpa'
+                        ),
+                        networks: [Web3Network.BitcoinP2wpkh],
+                    },
+                ],
+                // secrets
+                secrets,
+                // params
+                generateParams('btc')
+            )
+            await expectResult(
+                TokenMapping,
+                val,
+                {
+                    and: [
+                        {
+                            src: '$token',
+                            op: Op.EQ,
+                            dst: 'btc',
+                        },
+                        {
+                            src: '$holding_amount',
+                            op: Op.GTE,
+                            dst: '0.1',
+                        },
+                        {
+                            src: '$holding_amount',
+                            op: Op.LT,
+                            dst: '0.3',
+                        },
+                    ],
+                },
+                true
             )
         })
     })

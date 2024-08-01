@@ -55,10 +55,12 @@ export enum PrecompileAddresses {
     HTTP_GET_STRING = '0x00000000000000000000000000000000000003EA',
     IDENTITY_TO_STRING = '0x000000000000000000000000000000000000041C',
     PARSE_DECIMAL = '0x000000000000000000000000000000000000041E',
+    HTTP_GET_I64 = '0x00000000000000000000000000000000000003E8',
 }
 
 const mockContractAddressMapping: { [key: string]: string } = {
     MockHttpGetString: PrecompileAddresses.HTTP_GET_STRING,
+    MockHttpGetI64: PrecompileAddresses.HTTP_GET_I64,
     MockIdentityToString: PrecompileAddresses.IDENTITY_TO_STRING,
     MockParseDecimal: PrecompileAddresses.PARSE_DECIMAL,
 }

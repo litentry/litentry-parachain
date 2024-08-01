@@ -25,15 +25,21 @@ library Usdc {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            DataProviderTypes.NoderealClient,
+            18
         );
         tokenInfoList[1] = TokenInfo(
             Web3Networks.Bsc,
-            "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
+            "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+            DataProviderTypes.NoderealClient,
+            18
         );
         tokenInfoList[2] = TokenInfo(
             Web3Networks.Solana,
-            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            DataProviderTypes.MoralisClient,
+            18
         );
 
         return tokenInfoList;

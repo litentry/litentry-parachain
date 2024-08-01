@@ -41,11 +41,15 @@ library Grt {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0xc944e90c64b2c07662a292be6244bdf05cda44a7"
+            "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+            DataProviderTypes.NoderealClient,
+            18
         );
         tokenInfoList[1] = TokenInfo(
             Web3Networks.Bsc,
-            "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8"
+            "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8",
+            DataProviderTypes.NoderealClient,
+            18
         );
 
         return tokenInfoList;

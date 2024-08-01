@@ -42,7 +42,9 @@ library Comp {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0xc00e94cb662c3520282e6f5717214004a7f26888"
+            "0xc00e94cb662c3520282e6f5717214004a7f26888",
+            DataProviderTypes.NoderealClient,
+            18
         );
 
         return tokenInfoList;

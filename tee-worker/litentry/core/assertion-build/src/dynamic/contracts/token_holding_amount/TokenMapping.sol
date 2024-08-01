@@ -71,6 +71,9 @@ import { Usdt } from "./erc20/Usdt.sol";
 import { Wbtc } from "./erc20//Wbtc.sol";
 import { Cvx } from "./erc20/Cvx.sol";
 import { Usdd } from "./erc20/Usdd.sol";
+
+// btc
+import { Btc } from "./Btc.sol";
 contract TokenMapping is TokenQueryLogic {
     constructor() {
         // btcs
@@ -113,6 +116,12 @@ contract TokenMapping is TokenQueryLogic {
         tokenRanges["sats"] = Sats.getTokenRanges();
         for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
             tokenInfo["sats"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
+
+        // Btc
+        tokenRanges["btc"] = Btc.getTokenRanges();
+        for (uint8 i = 0; i < Btc.getTokenInfo().length; i++) {
+            tokenInfo["btc"].push(Btc.getTokenInfo()[i]);
         }
 
         // ada
