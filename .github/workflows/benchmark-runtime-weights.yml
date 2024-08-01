@@ -161,6 +161,7 @@ jobs:
             echo "copy generated weights files back ..."
             scp -o StrictHostKeychecking=no -i ./benchmark-server-key.pem "${{ env.BENCHMARK_SSH_USER }}"@"${{ steps.start_instance.outputs.remote_ip }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
+          rm -f ./benchmark-server-key.pem
           echo "======================"
           git status
 
