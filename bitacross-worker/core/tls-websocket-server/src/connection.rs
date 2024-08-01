@@ -30,9 +30,9 @@ use std::{
 	format,
 	io::ErrorKind,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::Sender, Arc},
 	time::Instant,
-	vec,
+	vec::Vec,
 };
 use tungstenite::Message;
 
@@ -133,7 +133,10 @@ where
 	/// Read from a web-socket, or initiate handshake if websocket is not initialized yet.
 	///
 	/// Returns a boolean 'connection should be closed'.
-	fn drain_message_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
+	fn drain_message_or_initialize_websocket(
+		&mut self,
+		message_sender: Sender<(Token, Vec<Message>)>,
+	) -> WebSocketResult<bool> {
 		if let StreamState::Established(web_socket) = &mut self.stream_state {
 			trace!(
 				"Read is possible for connection {}: {}",
@@ -141,7 +144,7 @@ where
 				web_socket.can_read()
 			);
 
-			let mut messages = vec![];
+			let mut messages = Vec::new();
 			let mut is_closing = false;
 
 			// Looping over 'read_message' is merely a workaround for the unexpected behavior of mio event triggering.
@@ -167,14 +170,9 @@ where
 				}
 			}
 
-			messages.into_iter().for_each(|m| {
-				if let Err(e) = self.handle_message(m) {
-					error!(
-						"Failed to handle web-socket message (connection {}): {:?}",
-						self.connection_token.0, e
-					);
-				}
-			});
+			if let Err(e) = message_sender.send((self.connection_token, messages)) {
+				error!("Failed to send messages (connection {}): {:?}", self.connection_token.0, e);
+			}
 
 			trace!("Read successful for connection {}", self.connection_token.0);
 			Ok(is_closing)
@@ -190,7 +188,7 @@ where
 		}
 	}
 
-	fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
+	pub fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
 		match message {
 			Message::Text(string_message) => {
 				trace!(
@@ -295,7 +293,12 @@ where
 		}
 	}
 
-	fn on_ready(&mut self, poll: &mut Poll, event: &Event) -> WebSocketResult<()> {
+	fn on_ready(
+		&mut self,
+		poll: &mut Poll,
+		event: &Event,
+		message_sender: Sender<(Token, Vec<Message>)>,
+	) -> WebSocketResult<()> {
 		let mut is_closing = false;
 
 		if event.readiness().is_readable() {
@@ -304,7 +307,7 @@ where
 			let connection_state = self.maybe_do_tls_read();
 
 			if connection_state.is_alive() {
-				is_closing = self.drain_message_or_initialize_websocket()?;
+				is_closing = self.drain_message_or_initialize_websocket(message_sender)?;
 			} else {
 				is_closing = connection_state.is_closing();
 			}

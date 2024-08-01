@@ -42,7 +42,8 @@ use crate::{
 	error::{WebSocketError, WebSocketResult},
 };
 use mio::{event::Evented, Token};
-use std::{fmt::Debug, string::String};
+use std::{fmt::Debug, string::String, sync::mpsc::Sender, vec::Vec};
+use tungstenite::Message;
 
 pub mod certificate_generation;
 pub mod config_provider;
@@ -113,7 +114,12 @@ pub(crate) trait WebSocketConnection: Send + Sync {
 	fn get_session_readiness(&self) -> mio::Ready;
 
 	/// Handles the ready event, the connection has work to do.
-	fn on_ready(&mut self, poll: &mut mio::Poll, ev: &mio::event::Event) -> WebSocketResult<()>;
+	fn on_ready(
+		&mut self,
+		poll: &mut mio::Poll,
+		ev: &mio::event::Event,
+		message_sender: Sender<(Token, Vec<Message>)>,
+	) -> WebSocketResult<()>;
 
 	/// True if connection was closed.
 	fn is_closed(&self) -> bool;
