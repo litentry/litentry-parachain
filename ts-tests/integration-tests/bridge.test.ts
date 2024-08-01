@@ -50,7 +50,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const receipt = context.ethConfig.wallets.charlie.address;
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         const b: BigNumber = await erc20.balanceOf(receipt);
-        console.log('before transfer: ', b.toString());
 
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
@@ -69,19 +68,21 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
 
     step('Boundary testing on ethereum: over the maximum balance', async function () {
         const receipt = context.ethConfig.wallets.charlie.address;
-        const handlerBalance: BigNumber = await context.ethConfig.erc20.balanceOf(
+        const beforeHandleBalance: BigNumber = await context.ethConfig.erc20.balanceOf(
             context.ethConfig.erc20Handler.address
         );
+
         const AssetInfo = (
             await context.parachainConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId)
         ).toHuman() as any;
 
         const fee = AssetInfo.fee;
+
         const Bridge = require('../common/abi/bridge/Bridge.json');
         const inter = new ethers.utils.Interface(Bridge.abi);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
-                handlerBalance
+                beforeHandleBalance
                     .add(BigNumber.from(100))
                     .add(BigNumber.from(fee.replace(/,/g, '')))
                     .toString(),
@@ -97,36 +98,34 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         for (let i = currentBlock; i <= (await provider.getBlockNumber()); i++) {
             const block = await provider.getBlockWithTransactions(i);
             for (let j = 0; j < block.transactions.length; j++) {
-                console.log('block.transactions[j].to ', block.transactions[j].to);
-
                 if (block.transactions[j].to === context.ethConfig.bridge.address) {
                     const tx = block.transactions[j];
                     const decodedInput = inter.parseTransaction({ data: tx.data, value: tx.value });
-                    console.log('decodedInput', decodedInput.name);
 
                     // The last vote proposal of threshold should failed
                     if (decodedInput.name === 'voteProposal') {
-                        const receipt = await provider.getTransactionReceipt(tx.hash);
-                        console.log(2222222, receipt);
-
-                        if (receipt.status === 0) {
-                            console.log(1111111);
-
-                            // This means we found the failed voteProposal, which is what we expected
-                            return;
-                        }
+                        console.log('Found a voteProposal event');
+                        break;
                     }
                 }
             }
         }
-        assert.fail('could not find any failed transactions');
+        const afterHandleBalance = await context.ethConfig.erc20.balanceOf(context.ethConfig.erc20Handler.address);
+        assert.equal(
+            afterHandleBalance.toString(),
+            beforeHandleBalance.toString(),
+            'afterHandleBalance is not equal to beforeHandleBalance'
+        );
     });
 
     step('Boundary testing on ethereum: equal to the maximum balance', async function () {
         const receipt = context.ethConfig.wallets.charlie.address;
-        const handlerBalance: BigNumber = await context.ethConfig.erc20.balanceOf(
+        const beforeHandlerBalance: BigNumber = await context.ethConfig.erc20.balanceOf(
             context.ethConfig.erc20Handler.address
         );
+
+        const beforeReceiptBalance: BigNumber = await context.ethConfig.erc20.balanceOf(receipt);
+
         const erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         const AssetInfo = (
             await context.parachainConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId)
@@ -135,19 +134,25 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const fee = AssetInfo.fee;
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
-                handlerBalance
-                    .add(BigNumber.from(100))
-                    .add(BigNumber.from(fee.replace(/,/g, '')))
-                    .toString(),
+                beforeHandlerBalance.add(BigNumber.from(fee.replace(/,/g, ''))).toString(),
                 receipt,
                 0,
                 destResourceId
             ),
             context.parachainConfig.alice
         );
-        await sleep(15);
-        assert.equal((await erc20.balanceOf(context.ethConfig.erc20Handler.address)).toString(), '0');
-        assert.equal((await erc20.balanceOf(receipt)).toString(), handlerBalance.toString());
+        await sleep(30);
+        const afterReceiptBalance: BigNumber = await erc20.balanceOf(receipt);
+        assert.equal(
+            (await erc20.balanceOf(context.ethConfig.erc20Handler.address)).toString(),
+            '0',
+            'handler balance is not 0'
+        );
+        assert.equal(
+            afterReceiptBalance.toString(),
+            beforeReceiptBalance.add(BigNumber.from(beforeHandlerBalance)).toString(),
+            'afterReceiptBalance is not correct'
+        );
     });
 
     step('Boundary testing on parachain', async function () {

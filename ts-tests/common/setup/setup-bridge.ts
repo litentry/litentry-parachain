@@ -180,7 +180,6 @@ async function setupCrossChainTransfer(
         await signAndSend(tx, pConfig.alice);
     }
     const AfterAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
-    console.log('AfterAssetInfo', AfterAssetInfo.toHuman());
 
     expect(AfterAssetInfo).not.to.be.empty;
 }
