@@ -169,9 +169,26 @@ const waitForDeploy = async (api: ApiPromise): Promise<DeployResult> => {
     })
 }
 
-function generateContractId(contractByteCodes: string, secrets: string[]) {
-    const data = contractByteCodes + secrets.join(' ')
+/**
+ * Generates a contract ID based on the provided contract byte code and secrets.
+ *
+ * Same contract byte code and secrets will get the same contractId, this can ensure dev/stg/prod has same contract ID.
+ *
+ * @param {string} contractByteCode - The byte codes of the contract.
+ * @param {string[]} secrets - An array of secret strings to be included in the hash.
+ * @returns {string} The generated contract ID.
+ */
+function generateContractId(
+    contractByteCode: string,
+    secrets: string[]
+): string {
+    // Combine the contract byte codes and secrets into a single string
+    const data = contractByteCode + secrets.join(' ')
+
+    // Create a SHA-256 hash of the combined data
     const hash = crypto.createHash('sha256').update(data).digest('hex')
+
+    // Take the first 40 characters of the hash to form the contract ID, prefixed with '0x'
     const contractId = `0x${hash.slice(0, 40)}`
     return contractId
 }
@@ -182,13 +199,21 @@ function genesisSubstrateWallet(name: string) {
     return keyPair
 }
 
-// Segment encryption, ref: https://github.com/apache/incubator-teaclave-sgx-sdk/blob/master/sgx_crypto_helper/src/rsa3072.rs#L161-L179
-function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array) {
+/**
+ * Encrypts a plaintext buffer using the provided public key in segments.
+ *
+ * Same logic as: https://github.com/apache/incubator-teaclave-sgx-sdk/blob/master/sgx_crypto_helper/src/rsa3072.rs#L161-L179
+ *
+ * @param {crypto.KeyLike} pubKey - The public key to use for encryption.
+ * @param {Uint8Array} plaintext - The plaintext buffer to encrypt.
+ * @returns {Buffer} The encrypted data.
+ */
+function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array): Buffer {
     const bs = 384 // 3072 bits = 384 bytes
     const bsPlain = bs - (2 * 256) / 8 - 2 // Maximum plaintext block size
     const count = Math.ceil(plaintext.length / bsPlain) // Use Math.ceil to ensure proper chunk count
 
-    const ciphertext = Buffer.alloc(bs * count)
+    const cipherText = Buffer.alloc(bs * count)
 
     for (let i = 0; i < count; i++) {
         const plainSlice = plaintext.slice(
@@ -204,10 +229,10 @@ function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array) {
             plainSlice
         )
 
-        cipherSlice.copy(ciphertext, i * bs)
+        cipherSlice.copy(cipherText, i * bs)
     }
 
-    return ciphertext
+    return cipherText
 }
 
 async function main() {
@@ -276,16 +301,17 @@ async function main() {
         console.log(
             `Success deploy contract: ${contract}, to chain: ${chain}, contract id: ${contractId}`
         )
+        console.log(`Check deployment result in these block details below:`)
     } else {
         console.log(
-            'Deploy failed, check the failure reason in these block detail below:'
+            'Deploy failed, check the failure reason in these block details below:'
         )
-        result.hashes.forEach((hash) => {
-            console.log(
-                `https://polkadot.js.org/apps/?rpc=${endpoint}#/explorer/query/${hash}`
-            )
-        })
     }
+    result.hashes.forEach((hash) => {
+        console.log(
+            `https://polkadot.js.org/apps/?rpc=${endpoint}#/explorer/query/${hash}`
+        )
+    })
 }
 
 main()
