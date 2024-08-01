@@ -40,7 +40,9 @@ library Shib {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce"
+            "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+            DataProviderTypes.NoderealClient,
+            18
         );
         return tokenInfoList;
     }

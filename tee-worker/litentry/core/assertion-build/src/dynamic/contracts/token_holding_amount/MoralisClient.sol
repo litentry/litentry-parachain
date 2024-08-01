@@ -22,7 +22,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Http.sol";
 import "../libraries/Json.sol";
 import "../libraries/Identities.sol";
-
+import "../libraries/Utils.sol";
 struct SolanaTokenBalance {
     string mint;
     string amount;
@@ -219,5 +219,56 @@ library MoralisClient {
         } else if (network == Web3Networks.Ethereum) {
             url = "https://deep-index.moralis.io/api/v2.2";
         }
+    }
+
+    function getTokenBalance(
+        uint32 network,
+        string memory apiKey,
+        string memory account,
+        string memory tokenContractAddress,
+        uint8 tokenDecimals
+    ) internal returns (uint256) {
+        if (Strings.equal(tokenContractAddress, "Native Token")) {
+            (bool success, string memory solanaTokenBalance) = MoralisClient
+                .getSolanaNativeBalance(network, apiKey, account);
+
+            if (success) {
+                (bool parsedStatus, uint256 parsedAmount) = Utils.parseDecimal(
+                    solanaTokenBalance,
+                    tokenDecimals
+                );
+                if (parsedStatus) {
+                    return parsedAmount;
+                }
+                return 0;
+            }
+        } else {
+            (
+                bool success,
+                SolanaTokenBalance[] memory solanaTokenBalance
+            ) = MoralisClient.getSolanaTokensBalance(network, apiKey, account);
+
+            if (success) {
+                for (uint i = 0; i < solanaTokenBalance.length; i++) {
+                    if (
+                        Strings.equal(
+                            solanaTokenBalance[i].mint,
+                            tokenContractAddress
+                        )
+                    ) {
+                        (bool parsedStatus, uint256 parsedAmount) = Utils
+                            .parseDecimal(
+                                solanaTokenBalance[i].amount,
+                                tokenDecimals
+                            );
+                        if (parsedStatus) {
+                            return parsedAmount;
+                        }
+                        return 0;
+                    }
+                }
+            }
+        }
+        return 0;
     }
 }

@@ -48,7 +48,9 @@ library Wbtc {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+            DataProviderTypes.NoderealClient,
+            18
         );
 
         return tokenInfoList;
