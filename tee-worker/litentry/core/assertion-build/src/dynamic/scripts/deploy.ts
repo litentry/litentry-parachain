@@ -1,4 +1,4 @@
-import { ethers, run } from 'hardhat'
+import { ethers } from 'hardhat'
 import WebSocket from 'ws'
 import WebSocketAsPromised from 'websocket-as-promised'
 import type Options from 'websocket-as-promised/types/options'
@@ -182,6 +182,34 @@ function genesisSubstrateWallet(name: string) {
     return keyPair
 }
 
+// Segment encryption, ref: https://github.com/apache/incubator-teaclave-sgx-sdk/blob/master/sgx_crypto_helper/src/rsa3072.rs#L161-L179
+function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array) {
+    const bs = 384 // 3072 bits = 384 bytes
+    const bsPlain = bs - (2 * 256) / 8 - 2 // Maximum plaintext block size
+    const count = Math.ceil(plaintext.length / bsPlain) // Use Math.ceil to ensure proper chunk count
+
+    const ciphertext = Buffer.alloc(bs * count)
+
+    for (let i = 0; i < count; i++) {
+        const plainSlice = plaintext.slice(
+            i * bsPlain,
+            Math.min((i + 1) * bsPlain, plaintext.length)
+        )
+        const cipherSlice = crypto.publicEncrypt(
+            {
+                key: pubKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+            },
+            plainSlice
+        )
+
+        cipherSlice.copy(ciphertext, i * bs)
+    }
+
+    return ciphertext
+}
+
 async function main() {
     const chain = process.env.CHAIN as string
     const contract = process.env.CONTRACT as string
@@ -215,14 +243,11 @@ async function main() {
         }
 
         secrets.forEach((secret) => {
-            const secretEncoded = api.createType('String', secret).toU8a()
-            const encryptedSecret = crypto.publicEncrypt(
-                {
-                    key: teeShieldingKey,
-                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: 'sha256',
-                },
-                secretEncoded
+            const encodedSecret = api.createType('String', secret).toU8a()
+            // Some secrets are too large, so need using segment encryption.
+            const encryptedSecret = encryptBuffer(
+                teeShieldingKey,
+                encodedSecret
             )
             encryptedSecrets.push(`0x${encryptedSecret.toString('hex')}`)
         })
