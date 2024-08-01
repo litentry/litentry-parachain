@@ -28,9 +28,9 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 pnpm install
 pnpm run test-filter 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 # Temporary disable ts test due to decimal change task.
-# if $bridge; then
-#     pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
-# fi
+if $bridge; then
+    pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+fi
 
 if $evm; then
     pnpm run test-evm-transfer 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"

@@ -52,7 +52,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const b: BigNumber = await erc20.balanceOf(receipt);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferAssets(
-                bn100e18.toString(),
+                ethers.utils.parseUnits('100', 18).toString(),
                 receipt,
                 0,
                 destResourceId
