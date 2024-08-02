@@ -1,5 +1,6 @@
 import { ethers } from 'hardhat'
 import WebSocket from 'ws'
+import { all, getChain } from '@litentry/chaindata'
 import WebSocketAsPromised from 'websocket-as-promised'
 import type Options from 'websocket-as-promised/types/options'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
@@ -14,40 +15,11 @@ const types = {
     },
 }
 
-enum Chain {
-    LOCAL = 'local',
-    DEV = 'dev',
-    STG = 'stg',
-    PROD = 'prod',
-}
+const chainIdPrefix = 'litentry-'
 
-const SUPPORTED_CHAINS: string[] = [
-    Chain.LOCAL,
-    Chain.DEV,
-    Chain.STG,
-    Chain.PROD,
-]
-
-const CONFIGS: {
-    [key: string]: { endpoint: string; trustedEndpoint: string }
-} = {
-    [Chain.LOCAL]: {
-        endpoint: 'ws://127.0.0.1:9944',
-        trustedEndpoint: 'ws://127.0.0.1:2000',
-    },
-    [Chain.DEV]: {
-        endpoint: 'wss://tee-dev.litentry.io',
-        trustedEndpoint: 'ws://tee-dev.litentry.io:2000',
-    },
-    [Chain.STG]: {
-        endpoint: 'wss://tee-staging.litentry.io',
-        trustedEndpoint: 'ws://tee-staging.litentry.io:2000',
-    },
-    [Chain.PROD]: {
-        endpoint: 'wss://tee-prod.litentry.io',
-        trustedEndpoint: 'ws://tee-prod.litentry.io:2000',
-    },
-}
+const SUPPORTED_CHAINS: string[] = all.map((item) =>
+    item.id.replace(chainIdPrefix, '')
+)
 
 type DeployResult = {
     success: boolean
@@ -66,6 +38,7 @@ async function retrieveTeeShieldingKey(api: ApiPromise, endpoint: string) {
             Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id,
     }))
+
     await wsp.open()
 
     const responsePromise = new Promise<any>((resolve) =>
@@ -248,10 +221,11 @@ async function main() {
         )
     }
 
-    const { endpoint, trustedEndpoint } = CONFIGS[chain]
+    const chainId = `${chainIdPrefix}${chain}`
+    const { rpcs, enclaveRpcs } = getChain(chainId)
 
     const api = await ApiPromise.create({
-        provider: new WsProvider(endpoint),
+        provider: new WsProvider(rpcs[0].url),
         types,
     })
 
@@ -261,7 +235,7 @@ async function main() {
         try {
             teeShieldingKey = await retrieveTeeShieldingKey(
                 api,
-                trustedEndpoint
+                enclaveRpcs[0].url
             )
         } catch (e) {
             throw new Error(`Fail to retrieve teeShieldingKey, error: ${e}`)
@@ -284,6 +258,7 @@ async function main() {
     console.log(
         `Begin to deploying contract: ${contract}, to chain: ${chain}, contract id: ${contractId}`
     )
+
     const waitForDeployPromise = waitForDeploy(api)
 
     const proposal = api.tx.evmAssertions.createAssertion(

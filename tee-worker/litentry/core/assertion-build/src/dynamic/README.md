@@ -58,7 +58,7 @@ pnpm run deploy-contract --contract <ContractName> --chain <ChainName> --secrets
 -   --chain: Specify the target chain environment. Supported values are:
     -   local
     -   dev
-    -   stg
+    -   staging
     -   prod
 -   --secrets: Provide the required secret values for the contract. These may include API keys, private keys, or other sensitive information needed for the deployment contract, multiple secrets must be separated by blank.
 

@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 devDependencies:
+  '@litentry/chaindata':
+    specifier: ^0.1.1
+    version: 0.1.1
   '@nomicfoundation/hardhat-ethers':
     specifier: ^3.0.6
     version: 3.0.6(ethers@6.13.1)(hardhat@2.22.6)
@@ -423,6 +426,12 @@ packages:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+    dev: true
+
+  /@litentry/chaindata@0.1.1:
+    resolution: {integrity: sha512-2v2y1teCdA0rrtYvmZE/JDS5rLZTIfQFEnHJU0Y8gsbWOzmFK04VOPFgMZK5hdiSUZKPlshnWqQ9WVLG7AGtBw==}
+    dependencies:
+      tslib: 2.6.3
     dev: true
 
   /@metamask/eth-sig-util@4.0.1:
