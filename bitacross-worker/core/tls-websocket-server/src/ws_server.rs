@@ -36,12 +36,23 @@ use log::*;
 use mio::{
 	event::{Event, Evented},
 	net::TcpListener,
-	Poll,
+	Poll, Token,
 };
 use mio_extras::channel::{channel, Receiver, Sender};
 use net::SocketAddr;
 use rustls::ServerConfig;
-use std::{collections::HashMap, format, net, string::String, sync::Arc};
+use std::{
+	collections::{HashMap, VecDeque},
+	format, net,
+	string::String,
+	sync::{
+		mpsc::{channel as std_channel, Receiver as StdReceiver, Sender as StdSender},
+		Arc,
+	},
+	thread,
+	vec::Vec,
+};
+use tungstenite::Message;
 
 // Default tokens for the server.
 pub(crate) const NEW_CONNECTIONS_LISTENER: mio::Token = mio::Token(0);
@@ -53,7 +64,7 @@ pub struct TungsteniteWsServer<Handler, ConfigProvider> {
 	maybe_config_provider: Option<Arc<ConfigProvider>>,
 	connection_handler: Arc<Handler>,
 	id_generator: ConnectionIdGenerator,
-	connections: RwLock<HashMap<mio::Token, TungsteniteWsConnection<Handler>>>,
+	connections: Arc<RwLock<HashMap<mio::Token, TungsteniteWsConnection<Handler>>>>,
 	is_running: RwLock<bool>,
 	signal_sender: Mutex<Option<Sender<ServerSignal>>>,
 }
@@ -61,7 +72,7 @@ pub struct TungsteniteWsServer<Handler, ConfigProvider> {
 impl<Handler, ConfigProvider> TungsteniteWsServer<Handler, ConfigProvider>
 where
 	ConfigProvider: ProvideServerConfig,
-	Handler: WebSocketMessageHandler,
+	Handler: WebSocketMessageHandler + 'static,
 {
 	pub fn new(
 		ws_address: String,
@@ -111,14 +122,19 @@ where
 		Ok(())
 	}
 
-	fn connection_event(&self, poll: &mut mio::Poll, event: &Event) -> WebSocketResult<()> {
+	fn connection_event(
+		&self,
+		poll: &mut mio::Poll,
+		event: &Event,
+		message_sender: StdSender<(Token, Vec<Message>)>,
+	) -> WebSocketResult<()> {
 		let token = event.token();
 
 		let mut connections_lock =
 			self.connections.write().map_err(|_| WebSocketError::LockPoisoning)?;
 
 		if let Some(connection) = connections_lock.get_mut(&token) {
-			connection.on_ready(poll, event)?;
+			connection.on_ready(poll, event, message_sender)?;
 
 			if connection.is_closed() {
 				trace!("Connection {:?} is closed, removing", token);
@@ -203,12 +219,64 @@ where
 
 		Ok(())
 	}
+
+	fn run_message_handling_thread(&self, message_receiver: StdReceiver<(Token, Vec<Message>)>) {
+		let connections = self.connections.clone();
+
+		thread::spawn(move || {
+			let mut message_queues: Vec<(Token, VecDeque<Message>)> = Vec::new();
+			let batch_size = 5u8;
+
+			while let Ok((token, messages)) = message_receiver.recv() {
+				message_queues.push((token, VecDeque::from(messages)));
+
+				while !message_queues.is_empty() {
+					for (token, queue) in message_queues.iter_mut() {
+						let mut connections_lock = connections.write().unwrap();
+						if let Some(connection) = connections_lock.get_mut(token) {
+							// take turns to handle messages from different connection
+							for _ in 0..batch_size {
+								if let Some(message) = queue.pop_front() {
+									if let Err(e) = connection.handle_message(message) {
+										error!(
+											"Failed to handle web-socket message (connection {}): {:?}",
+											token.0, e
+										);
+									};
+								} else {
+									break
+								}
+							}
+						} else {
+							// drop messages if connection not exist
+							queue.clear();
+							error!(
+								"Failed to handle web-socket message (connection {}): connection cloesd", token.0
+							);
+						}
+					}
+
+					// try recv new messages
+					while let Ok((token, messages)) = message_receiver.try_recv() {
+						if let Some(queue) = message_queues.iter_mut().find(|(t, _)| *t == token) {
+							queue.1.extend(messages);
+						} else {
+							message_queues.push((token, VecDeque::from(messages)));
+						}
+					}
+
+					// remove emtpy VecDeque
+					message_queues.retain(|(_, queue)| !queue.is_empty());
+				}
+			}
+		});
+	}
 }
 
 impl<Handler, ConfigProvider> WebSocketServer for TungsteniteWsServer<Handler, ConfigProvider>
 where
 	ConfigProvider: ProvideServerConfig,
-	Handler: WebSocketMessageHandler,
+	Handler: WebSocketMessageHandler + 'static,
 {
 	type Connection = TungsteniteWsConnection<Handler>;
 
@@ -248,6 +316,10 @@ where
 
 		*self.is_running.write().map_err(|_| WebSocketError::LockPoisoning)? = true;
 
+		// Run message handling thread
+		let (message_sender, message_receiver) = std_channel();
+		self.run_message_handling_thread(message_receiver);
+
 		// Run the event loop.
 		'outer_event_loop: loop {
 			let num_events = poll.poll(&mut events, None)?;
@@ -271,7 +343,9 @@ where
 					},
 					_ => {
 						trace!("Connection (token {:?}) activity event", event.token());
-						if let Err(e) = self.connection_event(&mut poll, &event) {
+						if let Err(e) =
+							self.connection_event(&mut poll, &event, message_sender.clone())
+						{
 							error!("Failed to process connection event: {:?}", e);
 						}
 					},
@@ -296,7 +370,7 @@ where
 impl<Handler, ConfigProvider> WebSocketResponder for TungsteniteWsServer<Handler, ConfigProvider>
 where
 	ConfigProvider: ProvideServerConfig,
-	Handler: WebSocketMessageHandler,
+	Handler: WebSocketMessageHandler + 'static,
 {
 	fn send_message(
 		&self,
