@@ -1,8 +1,6 @@
 import { ethers } from 'hardhat'
 import WebSocket from 'ws'
 import { all, getChain } from '@litentry/chaindata'
-import WebSocketAsPromised from 'websocket-as-promised'
-import type Options from 'websocket-as-promised/types/options'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 import { compactStripLength, hexToU8a, u8aToString } from '@polkadot/util'
 import crypto, { KeyObject } from 'crypto'
@@ -27,36 +25,61 @@ type DeployResult = {
     hashes: string[]
 }
 
-async function retrieveTeeShieldingKey(api: ApiPromise, endpoint: string) {
-    const wsp = new WebSocketAsPromised(endpoint, <Options>(<any>{
-        createWebSocket: (url: any) => new WebSocket(url),
-        extractMessageData: (event: any) => event,
-        packMessage: (data: any) => JSON.stringify(data),
-        unpackMessage: (data: string | ArrayBuffer | Blob) =>
-            JSON.parse(data.toString()),
-        attachRequestId: (data: any, requestId: string | number) =>
-            Object.assign({ id: requestId }, data),
-        extractRequestId: (data: any) => data && data.id,
-    }))
+function createWebSocket(endpoint: string): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+        const ws = new WebSocket(endpoint)
 
-    await wsp.open()
-
-    const responsePromise = new Promise<any>((resolve) =>
-        wsp.onMessage.addListener((data) => {
-            const parsed = JSON.parse(data)
-            wsp.onMessage.removeAllListeners()
-            resolve(parsed)
+        ws.on('open', () => {
+            console.log('WebSocket connection opened.')
+            resolve(ws)
         })
-    )
 
-    wsp.sendRequest({
+        ws.on('error', (error) => {
+            reject(error)
+        })
+
+        ws.on('close', (code, reason) => {
+            console.log(
+                `WebSocket connection closed: ${code}${(reason ?? '').length > 0 ? ` ${reason}` : ''}.`
+            )
+        })
+    })
+}
+
+function sendRequest(ws: WebSocket, request: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const messageListener = (data: any) => {
+            try {
+                const parsed = JSON.parse(data)
+                if (parsed.id === request.id) {
+                    ws.off('message', messageListener)
+                    resolve(parsed)
+                }
+            } catch (error) {
+                reject(error)
+            }
+        }
+
+        ws.on('message', messageListener)
+
+        ws.send(JSON.stringify(request), (err) => {
+            if (err) {
+                reject(err)
+            }
+        })
+    })
+}
+
+async function retrieveTeeShieldingKey(api: ApiPromise, endpoint: string) {
+    const ws = await createWebSocket(endpoint)
+
+    const resp = await sendRequest(ws, {
         jsonrpc: '2.0',
         method: 'author_getShieldingKey',
         params: Uint8Array.from([]),
-        id: 1,
+        id: new Date().getTime(),
     })
 
-    const resp = await responsePromise
     const result = resp.result
     const res: any = api.createType('WorkerRpcReturnValue', result)
 
@@ -66,6 +89,8 @@ async function retrieveTeeShieldingKey(api: ApiPromise, endpoint: string) {
         n: Uint8Array
         e: Uint8Array
     }
+
+    ws.close()
 
     return crypto.createPublicKey({
         key: {
@@ -284,7 +309,7 @@ async function main() {
     }
     result.hashes.forEach((hash) => {
         console.log(
-            `https://polkadot.js.org/apps/?rpc=${endpoint}#/explorer/query/${hash}`
+            `https://polkadot.js.org/apps/?rpc=${rpcs[0].url}#/explorer/query/${hash}`
         )
     })
 }
