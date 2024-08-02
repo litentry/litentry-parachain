@@ -7,8 +7,18 @@ import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { ISubmittableResult } from '@polkadot/types/types';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapperGC } from '../utils';
+import {
+    initApiPromise,
+    loadConfig,
+    ParachainConfig,
+    signAndSend,
+    sleep,
+    sudoWrapperGC,
+    sudoWrapperTC,
+} from '../utils';
 import { toWei } from 'web3-utils';
+import { destResourceId } from '../utils/consts';
+import { expect } from 'chai';
 
 const path = require('path');
 const BridgeContract = require('../abi/bridge/Bridge.json');
@@ -112,12 +122,11 @@ async function setupCrossChainTransfer(
     parachainRelayers: [string]
 ) {
     let opts = { gasLimit: 85000, gasPrice: 20000000000 };
-    const parachainFee = new BN(10).pow(new BN(12)); // 1 unit
+    const parachainFee = new BN(10).pow(new BN(18)); // 1 unit
     const sourceChainID = 0; //ethereum
     const destChainID = parseInt(pConfig.api.consts.chainBridge.bridgeChainId.toString()); //parachain
     const depositNonce = await pConfig.api.query.chainBridge.votes.entries(sourceChainID);
 
-    const destResourceId = pConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
     await eConfig.erc20.mint(eConfig.wallets.alice.address, toWei('100000', 'ether'));
     await eConfig.erc20.mint(eConfig.wallets.bob.address, toWei('100000', 'ether'));
     await eConfig.erc20.mint(eConfig.wallets.charlie.address, toWei('100000', 'ether'));
@@ -125,9 +134,7 @@ async function setupCrossChainTransfer(
     await eConfig.erc20.mint(eConfig.wallets.eve.address, toWei('100000', 'ether'));
     await eConfig.erc20.mint(eConfig.erc20Handler.address, toWei('300', 'ether'));
     await eConfig.bridge.adminSetResource(eConfig.erc20Handler.address, destResourceId, eConfig.erc20.address);
-    await eConfig.bridge.adminSetDecimals(eConfig.erc20Handler.address, eConfig.erc20.address, 18, 12, opts);
-    //  votes.entries equivalent to nonce
-    await eConfig.bridge.adminSetDepositNonce(destChainID, depositNonce.length, opts);
+
     for (let i = 0; i < ethRelayers.length; i++) {
         await eConfig.bridge.adminAddRelayer(ethRelayers[i]);
     }
@@ -149,25 +156,32 @@ async function setupCrossChainTransfer(
         extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
 
-    const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
-    if (resource.toHuman() !== 'BridgeTransfer.transfer') {
+    const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman();
+    if ('Test' !== filterMode) {
+        let extrinsic = await sudoWrapperTC(pConfig.api, pConfig.api.tx.extrinsicFilter.setMode('Test'));
+        let temp = await pConfig.api.rpc.chain.getBlock();
+        console.log(`setMode await Before: ${temp.block.header.number}`);
+        await signAndSend(extrinsic, pConfig.alice);
+        temp = await pConfig.api.rpc.chain.getBlock();
+        console.log(`setMode await end: ${temp.block.header.number}`);
+    }
+    const BeforeAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+    if (BeforeAssetInfo.isEmpty) {
         extrinsic.push(
             await sudoWrapperGC(
                 pConfig.api,
-                pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
+                pConfig.api.tx.assetsHandler.setResource(destResourceId, { fee: parachainFee, asset: null })
             )
         );
-    }
-
-    const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
-    if (!fee || fee.toString() !== parachainFee.toString()) {
-        extrinsic.push(await sudoWrapperGC(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
     }
 
     if (extrinsic.length > 0) {
         const tx = pConfig.api.tx.utility.batch(extrinsic);
         await signAndSend(tx, pConfig.alice);
     }
+    const AfterAssetInfo = await pConfig.api.query.assetsHandler.resourceToAssetInfo(destResourceId);
+
+    expect(AfterAssetInfo).not.to.be.empty;
 }
 
 function generateBridgeConfig(

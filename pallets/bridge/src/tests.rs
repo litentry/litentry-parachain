@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
 use super::{
 	mock::{
 		assert_events, new_test_ext, new_test_ext_initialized, Balances, Bridge, ProposalLifetime,
-		RuntimeCall, RuntimeEvent, RuntimeOrigin, System, Test, TestChainId, TreasuryAccount,
-		ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
+		RuntimeCall, RuntimeEvent, RuntimeOrigin, System, Test, TestChainId, ENDOWED_BALANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
 	},
 	pallet::Event as PalletEvent,
 	*,
@@ -90,24 +88,6 @@ fn complete_proposal_bad_threshold() {
 
 	prop.try_to_complete(3, 2);
 	assert_eq!(prop.status, ProposalStatus::Initiated);
-}
-
-#[test]
-fn setup_resources() {
-	new_test_ext().execute_with(|| {
-		let id: ResourceId = [1; 32];
-		let method = "Pallet.do_something".as_bytes().to_vec();
-		let method2 = "Pallet.do_somethingElse".as_bytes().to_vec();
-
-		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method.clone()));
-		assert_eq!(Bridge::resources(id), Some(method));
-
-		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method2.clone()));
-		assert_eq!(Bridge::resources(id), Some(method2));
-
-		assert_ok!(Bridge::remove_resource(RuntimeOrigin::root(), id));
-		assert_eq!(Bridge::resources(id), None);
-	})
 }
 
 #[test]
@@ -187,7 +167,7 @@ fn create_sucessful_proposal() {
 	let src_id = 1;
 	let r_id = derive_resource_id(src_id, b"remark");
 
-	new_test_ext_initialized(src_id, r_id, b"System.remark".to_vec()).execute_with(|| {
+	new_test_ext_initialized(src_id, r_id).execute_with(|| {
 		let prop_id = 1;
 		let proposal = make_proposal(vec![10]);
 
@@ -257,7 +237,7 @@ fn create_unsucessful_proposal() {
 	let src_id = 1;
 	let r_id = derive_resource_id(src_id, b"transfer");
 
-	new_test_ext_initialized(src_id, r_id, b"System.remark".to_vec()).execute_with(|| {
+	new_test_ext_initialized(src_id, r_id).execute_with(|| {
 		let prop_id = 1;
 		let proposal = make_proposal(vec![11]);
 
@@ -329,7 +309,7 @@ fn execute_after_threshold_change() {
 	let src_id = 1;
 	let r_id = derive_resource_id(src_id, b"transfer");
 
-	new_test_ext_initialized(src_id, r_id, b"System.remark".to_vec()).execute_with(|| {
+	new_test_ext_initialized(src_id, r_id).execute_with(|| {
 		let prop_id = 1;
 		let proposal = make_proposal(vec![11]);
 
@@ -387,7 +367,7 @@ fn proposal_expires() {
 	let src_id = 1;
 	let r_id = derive_resource_id(src_id, b"remark");
 
-	new_test_ext_initialized(src_id, r_id, b"System.remark".to_vec()).execute_with(|| {
+	new_test_ext_initialized(src_id, r_id).execute_with(|| {
 		let prop_id = 1;
 		let proposal = make_proposal(vec![10]);
 
@@ -457,53 +437,26 @@ fn proposal_expires() {
 }
 
 #[test]
-fn transfer_fungible() {
+fn signal_transfer_fungible() {
 	new_test_ext().execute_with(|| {
 		let dest_id: BridgeChainId = 0;
 		let resource_id = derive_resource_id(dest_id, b"remark");
 		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, 10));
 		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
-		assert_ok!(Pallet::<Test>::transfer_fungible(
-			RELAYER_A,
+		assert_ok!(Pallet::<Test>::signal_transfer_fungible(
 			dest_id,
 			resource_id,
 			dest_account.clone(),
 			100,
 		));
 		assert_eq!(ChainNonces::<Test>::get(dest_id), Some(1u64));
-		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
-			ENDOWED_BALANCE + 10
-		);
-		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
-		assert_events(vec![
-			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
-				who: TreasuryAccount::get(),
-				amount: 10,
-			}),
-			RuntimeEvent::Bridge(PalletEvent::FungibleTransfer(
-				dest_id,
-				1,
-				resource_id,
-				100 - 10,
-				dest_account,
-			)),
-		]);
-	})
-}
-
-#[test]
-fn transfer_fungible_no_fee() {
-	new_test_ext().execute_with(|| {
-		let dest_id: BridgeChainId = 0;
-		let resource_id = derive_resource_id(dest_id, b"remark");
-		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
-		assert_noop!(
-			Pallet::<Test>::transfer_fungible(RELAYER_A, dest_id, resource_id, dest_account, 100,),
-			Error::<Test>::CannotPayAsFee
-		);
+		assert_events(vec![RuntimeEvent::Bridge(PalletEvent::FungibleTransfer(
+			dest_id,
+			1,
+			resource_id,
+			100,
+			dest_account,
+		))]);
 	})
 }
 
@@ -514,54 +467,8 @@ fn transfer_fungible_no_whitelist() {
 		let resource_id = derive_resource_id(dest_id, b"remark");
 		let dest_account: Vec<u8> = vec![1];
 		assert_noop!(
-			Pallet::<Test>::transfer_fungible(RELAYER_A, dest_id, resource_id, dest_account, 100,),
+			Pallet::<Test>::signal_transfer_fungible(dest_id, resource_id, dest_account, 100,),
 			Error::<Test>::ChainNotWhitelisted
-		);
-	})
-}
-
-#[test]
-fn transfer_fungible_insufficient_funds_fee() {
-	new_test_ext().execute_with(|| {
-		let dest_id: BridgeChainId = 0;
-		let resource_id = derive_resource_id(dest_id, b"remark");
-		let dest_account: Vec<u8> = vec![1];
-		let fee: BalanceOf<Test> = 10;
-		let transfer_amount = fee;
-		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, fee));
-		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
-		assert_noop!(
-			Pallet::<Test>::transfer_fungible(
-				RELAYER_A,
-				dest_id,
-				resource_id,
-				dest_account,
-				transfer_amount
-			),
-			Error::<Test>::FeeTooExpensive
-		);
-	})
-}
-
-#[test]
-fn transfer_fungible_insufficient_free_balance() {
-	new_test_ext().execute_with(|| {
-		let dest_id: BridgeChainId = 0;
-		let resource_id = derive_resource_id(dest_id, b"remark");
-		let dest_account: Vec<u8> = vec![1];
-		let fee: BalanceOf<Test> = 10;
-		let transfer_amount = 100;
-		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, fee));
-		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
-		assert_noop!(
-			Pallet::<Test>::transfer_fungible(
-				0x7,
-				dest_id,
-				resource_id,
-				dest_account,
-				transfer_amount
-			),
-			Error::<Test>::InsufficientBalance
 		);
 	})
 }

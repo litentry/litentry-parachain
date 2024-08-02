@@ -48,12 +48,9 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_bridge.
 pub trait WeightInfo {
 	fn set_threshold() -> Weight;
-	fn set_resource() -> Weight;
-	fn remove_resource() -> Weight;
 	fn whitelist_chain() -> Weight;
 	fn add_relayer() -> Weight;
 	fn remove_relayer() -> Weight;
-	fn update_fee() -> Weight;
 	fn acknowledge_proposal() -> Weight;
 	fn reject_proposal() -> Weight;
 	fn eval_vote_state() -> Weight;
@@ -65,16 +62,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ChainBridge RelayerThreshold (r:0 w:1)
 	fn set_threshold() -> Weight {
 		Weight::from_parts(12_574_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	// Storage: ChainBridge Resources (r:0 w:1)
-	fn set_resource() -> Weight {
-		Weight::from_parts(5_120_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	// Storage: ChainBridge Resources (r:0 w:1)
-	fn remove_resource() -> Weight {
-		Weight::from_parts(4_819_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ChainBridge ChainNonces (r:1 w:1)
@@ -96,11 +83,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 		Weight::from_parts(18_956_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
-	}
-	// Storage: ChainBridge BridgeFee (r:0 w:1)
-	fn update_fee() -> Weight {
-		Weight::from_parts(13_085_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
 	// Storage: ChainBridge ChainNonces (r:1 w:0)
@@ -141,16 +123,6 @@ impl WeightInfo for () {
 		Weight::from_parts(12_574_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	// Storage: ChainBridge Resources (r:0 w:1)
-	fn set_resource() -> Weight {
-		Weight::from_parts(5_120_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	// Storage: ChainBridge Resources (r:0 w:1)
-	fn remove_resource() -> Weight {
-		Weight::from_parts(4_819_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
 	// Storage: ChainBridge ChainNonces (r:1 w:1)
 	fn whitelist_chain() -> Weight {
 		Weight::from_parts(15_179_000 as u64, 0)
@@ -170,11 +142,6 @@ impl WeightInfo for () {
 		Weight::from_parts(18_956_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
-	}
-	// Storage: ChainBridge BridgeFee (r:0 w:1)
-	fn update_fee() -> Weight {
-		Weight::from_parts(13_085_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
 	// Storage: ChainBridge ChainNonces (r:1 w:0)

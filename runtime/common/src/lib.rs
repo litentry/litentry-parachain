@@ -74,13 +74,16 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND / GAS_PER_SECOND;
 
+// Cosnt ratio of 1 weight = n fee
+pub const WEIGHT_TO_FEE_FACTOR: u128 = 1_000_000u128;
+
 pub mod currency {
 	use core_primitives::Balance;
 
-	pub const UNIT: Balance = 1_000_000_000_000;
-	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000
-	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
+	pub const UNIT: Balance = 1_000_000_000_000_000_000;
+	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000_000_000
+	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000_000_000
+	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000_000_000
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;

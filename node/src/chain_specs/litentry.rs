@@ -37,7 +37,7 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Get default parachain properties for Litentry which will be filled into chain spec
 fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 31)
+	parachain_properties("LIT", 18, 31)
 }
 
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
