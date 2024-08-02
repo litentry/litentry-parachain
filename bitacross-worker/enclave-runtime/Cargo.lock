@@ -2729,7 +2729,6 @@ dependencies = [
  "bc-musig2-ceremony",
  "bc-relayer-registry",
  "bc-signer-registry",
- "core-primitives",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "litentry-primitives",

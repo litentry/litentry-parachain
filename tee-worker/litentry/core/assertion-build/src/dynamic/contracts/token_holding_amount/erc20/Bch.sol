@@ -37,19 +37,15 @@ library Bch {
 
         return ranges;
     }
-    function getTokenNetworks() internal pure returns (uint32[] memory) {
-        uint32[] memory networks = new uint32[](1);
-        networks[0] = Web3Networks.Bsc;
-
-        return networks;
-    }
 
     function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory networks = new TokenInfo[](1);
-        networks[0] = TokenInfo(
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
             Web3Networks.Bsc,
-            "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf"
+            "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf",
+            DataProviderTypes.NoderealClient,
+            18
         );
-        return networks;
+        return tokenInfoList;
     }
 }

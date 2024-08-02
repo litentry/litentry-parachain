@@ -106,7 +106,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
     function calculateRange(
         uint256 balance,
         uint256[] memory ranges
-    ) private pure returns (uint256, uint256, int256) {
+    ) private view returns (uint256, uint256, int256) {
         uint256 index = ranges.length - 1;
         uint256 min = 0;
         int256 max = 0;
@@ -128,7 +128,6 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
             min = ranges[index];
             max = int256(ranges[index + 1]);
         }
-
         return (index, min, max);
     }
 
@@ -176,7 +175,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         return assertions;
     }
 
-    function getTokenDecimals() internal pure virtual returns (uint8);
+    function getTokenDecimals() internal view virtual returns (uint8);
 
     function isSupportedNetwork(
         string memory tokenName,

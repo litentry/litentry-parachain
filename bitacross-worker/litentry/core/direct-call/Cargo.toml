@@ -17,7 +17,6 @@ bc-signer-registry = { path = "../../../bitacross/core/bc-signer-registry", defa
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-parentchain-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 
 log = { version = "0.4", default-features = false }
 
@@ -33,7 +32,7 @@ itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mo
 [features]
 default = ["std"]
 development = [
-    "parentchain-primitives/development",
+    "litentry-primitives/development",
 ]
 sgx = [
     "sgx_tstd",
@@ -54,7 +53,6 @@ std = [
     "litentry-primitives/std",
     "sp-core/std",
     "sp-io/std",
-    "parentchain-primitives/std",
 ]
 test = [
     "itp-sgx-crypto/mocks",

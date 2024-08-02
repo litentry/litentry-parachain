@@ -24,15 +24,16 @@ import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
+import { BlockchainInfoClient } from "./BlockchainInfoClient.sol";
 import "./MoralisClient.sol";
 import "./Constants.sol";
 
 abstract contract TokenQueryLogic is TokenHoldingAmount {
     mapping(string => TokenInfo[]) internal tokenInfo;
+    uint8 tokenDecimals;
 
-    // TODO fix it for erc20 token, same token for different networks has different decimals.
-    function getTokenDecimals() internal pure override returns (uint8) {
-        return 18;
+    function getTokenDecimals() internal view override returns (uint8) {
+        return tokenDecimals;
     }
 
     function queryBalance(
@@ -47,20 +48,29 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
         if (identityToStringSuccess) {
             uint256 totalBalance = 0;
 
-            string memory tokenContractAddress = getTokenAddress(
-                tokenName,
-                network
-            );
+            (
+                string memory tokenContractAddress,
+                uint8 dataproviderType,
+                uint8 decimals
+            ) = getTokenInfo(tokenName, network);
+            tokenDecimals = decimals;
 
-            if (GeniidataClient.isSupportedNetwork(network)) {
+            if (
+                dataproviderType == DataProviderTypes.GeniidataClient &&
+                GeniidataClient.isSupportedNetwork(network)
+            ) {
                 uint256 balance = GeniidataClient.getTokenBalance(
                     secrets[0],
                     identityString,
                     tokenName,
                     getTokenDecimals()
                 );
+
                 totalBalance += balance;
-            } else if (NoderealClient.isSupportedNetwork(network)) {
+            } else if (
+                dataproviderType == DataProviderTypes.NoderealClient &&
+                NoderealClient.isSupportedNetwork(network)
+            ) {
                 (bool success, uint256 balance) = NoderealClient
                     .getTokenBalance(
                         network,
@@ -71,59 +81,28 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
                 if (success) {
                     totalBalance += balance;
                 }
-            } else if (MoralisClient.isSupportedNetwork(network)) {
-                if (Strings.equal(tokenContractAddress, "Native Token")) {
-                    (
-                        bool success,
-                        string memory solanaTokenBalance
-                    ) = MoralisClient.getSolanaNativeBalance(
-                            network,
-                            secrets[2],
-                            identityString
-                        );
-
-                    if (success) {
-                        (bool parsedStatus, uint256 parsedAmount) = Utils
-                            .parseDecimal(
-                                solanaTokenBalance,
-                                getTokenDecimals()
-                            );
-                        if (parsedStatus) {
-                            totalBalance += parsedAmount;
-                        }
-                    }
-                } else {
-                    (
-                        bool success,
-                        SolanaTokenBalance[] memory solanaTokenBalance
-                    ) = MoralisClient.getSolanaTokensBalance(
-                            network,
-                            secrets[2],
-                            identityString
-                        );
-
-                    if (success) {
-                        for (uint i = 0; i < solanaTokenBalance.length; i++) {
-                            if (
-                                Strings.equal(
-                                    solanaTokenBalance[i].mint,
-                                    tokenContractAddress
-                                )
-                            ) {
-                                (
-                                    bool parsedStatus,
-                                    uint256 parsedAmount
-                                ) = Utils.parseDecimal(
-                                        solanaTokenBalance[i].amount,
-                                        getTokenDecimals()
-                                    );
-                                if (parsedStatus) {
-                                    totalBalance += parsedAmount;
-                                }
-                            }
-                        }
-                    }
-                }
+            } else if (
+                dataproviderType == DataProviderTypes.MoralisClient &&
+                MoralisClient.isSupportedNetwork(network)
+            ) {
+                uint256 balance = MoralisClient.getTokenBalance(
+                    network,
+                    secrets[2],
+                    identityString,
+                    tokenContractAddress,
+                    getTokenDecimals()
+                );
+                totalBalance += balance;
+            } else if (
+                dataproviderType == DataProviderTypes.BlockchainInfoClient &&
+                BlockchainInfoClient.isSupportedNetwork(network)
+            ) {
+                string[] memory accounts = new string[](1);
+                accounts[0] = identityString;
+                uint256 balance = BlockchainInfoClient.getTokenBalance(
+                    accounts
+                );
+                totalBalance += balance;
             }
             return totalBalance;
         }
@@ -143,15 +122,21 @@ abstract contract TokenQueryLogic is TokenHoldingAmount {
         return false;
     }
 
-    function getTokenAddress(
+    function getTokenInfo(
         string memory tokenName,
         uint32 network
-    ) internal view returns (string memory) {
+    ) internal view returns (string memory, uint8, uint8) {
+        string memory tokenAddress;
+        uint8 dataProviderType;
+        uint8 decimals;
         for (uint i = 0; i < tokenInfo[tokenName].length; i++) {
             if (tokenInfo[tokenName][i].network == network) {
-                return tokenInfo[tokenName][i].tokenAddress;
+                tokenAddress = tokenInfo[tokenName][i].tokenAddress;
+                dataProviderType = tokenInfo[tokenName][i].dataprovierType;
+                decimals = tokenInfo[tokenName][i].decimals;
+                return (tokenAddress, dataProviderType, decimals);
             }
         }
-        revert("Token address not found for the specified network");
+        revert("TokenInfo not found");
     }
 }

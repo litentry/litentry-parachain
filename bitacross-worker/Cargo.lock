@@ -4010,7 +4010,6 @@ dependencies = [
  "bc-musig2-ceremony",
  "bc-relayer-registry",
  "bc-signer-registry",
- "core-primitives",
  "hex",
  "itp-sgx-crypto",
  "itp-stf-primitives",

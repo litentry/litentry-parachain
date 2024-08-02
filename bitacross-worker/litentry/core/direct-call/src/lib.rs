@@ -23,8 +23,7 @@ extern crate sgx_tstd as std;
 use bc_musig2_ceremony::SignBitcoinPayload;
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{LitentryMultiSignature, ShardIdentifier};
-use parentchain_primitives::Identity;
+use litentry_primitives::{Identity, LitentryMultiSignature, ShardIdentifier};
 use sp_io::hashing::blake2_256;
 
 pub mod handler;

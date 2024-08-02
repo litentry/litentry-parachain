@@ -19,7 +19,7 @@ use bc_musig2_ceremony::{CeremonyCommand, PublicKey, SignBitcoinPayload, Signers
 use bc_relayer_registry::RelayerRegistryLookup;
 use bc_signer_registry::SignerRegistryLookup;
 use codec::Encode;
-use parentchain_primitives::Identity;
+use litentry_primitives::Identity;
 use std::sync::Arc;
 
 #[derive(Encode, Debug)]
@@ -67,7 +67,7 @@ pub mod test {
 	use bc_relayer_registry::{RelayerRegistry, RelayerRegistryUpdater};
 	use bc_signer_registry::{PubKey, SignerRegistryLookup};
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
-	use parentchain_primitives::{Address32, Identity};
+	use litentry_primitives::{Address32, Identity};
 	use sp_core::{sr25519, Pair};
 
 	struct SignersRegistryMock {}
