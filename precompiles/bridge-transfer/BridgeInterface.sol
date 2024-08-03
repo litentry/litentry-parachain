@@ -1,20 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.3;
 
-/// @author The Litentry Team
-/// @title Pallet Bridge Transfer Interface
-/// @dev The interface through which solidity contracts will interact with Bridge Transfer
-/// We follow this same interface including four-byte function selectors, in the precompile that
-/// wraps the pallet
-interface BridgeTransfer {
-    /// @dev Transfers some amount of the native token to some recipient on a (whitelisted) destination chain
-    /// @custom:selector c7358d27
-    /// @param amount the delegator that made the delegation
-    /// @param receipt the candidate for which the delegation was made
-    /// @param dest_id a pending request exists for such delegation
-    function transferNative(
-        uint256 amount,
-        bytes calldata receipt,
-        uint8 dest_id
-    ) external;
+interface IBridgeTransfer {
+	/// @notice Used to transfer assets through token bridge.
+	/// @param amount: The amount of tokens to be transferred.
+    /// @param dest_id: The destination chain id indicator
+    /// @param resource_id: Resource indicator of type of assets transferred
+    /// @param recipient: Recipient address, typically H160/H256
+    /// @custom:selector 0x6e700f9a
+	/// 				 transferAssets(uint256,uint8,bytes32,bytes)
+    function transferAssets(uint256 amount, uint8 dest_id, bytes32 resource_id, bytes calldata recipient) external;
 }

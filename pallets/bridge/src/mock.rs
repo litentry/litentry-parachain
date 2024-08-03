@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
 use super::*;
 
 use frame_support::{
@@ -25,15 +23,16 @@ use frame_support::{
 use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
+	generic,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
 use crate::{self as bridge, Config};
-pub use pallet_balances as balances;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Header = generic::Header<u64, BlakeTwo256>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -110,9 +109,8 @@ impl Config for Test {
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = TestChainId;
-	type Currency = Balances;
+	type Balance = u64;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = ();
 }
 
@@ -143,8 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn new_test_ext_initialized(
 	src_id: BridgeChainId,
-	r_id: ResourceId,
-	resource: Vec<u8>,
+	_r_id: ResourceId,
 ) -> sp_io::TestExternalities {
 	let mut t = new_test_ext();
 	t.execute_with(|| {
@@ -157,9 +154,6 @@ pub fn new_test_ext_initialized(
 		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
 		// Whitelist chain
 		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), src_id));
-		// Set and check resource ID mapped to some junk data
-		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), r_id, resource));
-		assert!(Bridge::resource_exists(r_id));
 	});
 	t
 }
