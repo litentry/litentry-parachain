@@ -68,6 +68,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         string[] memory assertions = assembleAssertions(
             min,
             max,
+            balance,
             tokenLowercaseName
         );
 
@@ -134,12 +135,13 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
     function assembleAssertions(
         uint256 min,
         int256 max,
+        uint256 balance,
         string memory tokenName
     ) private pure returns (string[] memory) {
         string memory variable = "$holding_amount";
         AssertionLogic.CompositeCondition memory cc = AssertionLogic
             .CompositeCondition(
-                new AssertionLogic.Condition[](max > 0 ? 3 : 2),
+                new AssertionLogic.Condition[](max > 0 && balance > 0 ? 3 : 2),
                 true
             );
         AssertionLogic.andOp(
@@ -153,10 +155,12 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
             cc,
             1,
             variable,
-            AssertionLogic.Op.GreaterEq,
+            min == 0
+                ? AssertionLogic.Op.GreaterThan
+                : AssertionLogic.Op.GreaterEq,
             StringShift.toShiftedString(min, Constants.decimals_factor)
         );
-        if (max > 0) {
+        if (max > 0 && balance > 0) {
             AssertionLogic.andOp(
                 cc,
                 2,

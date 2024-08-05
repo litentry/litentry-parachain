@@ -54,13 +54,8 @@ describe('TokenHoldingAmount', () => {
                         },
                         {
                             src: '$holding_amount',
-                            op: Op.GTE,
+                            op: Op.GT,
                             dst: '0',
-                        },
-                        {
-                            src: '$holding_amount',
-                            op: Op.LT,
-                            dst: '1',
                         },
                     ],
                 },
@@ -118,7 +113,7 @@ describe('TokenHoldingAmount', () => {
                         },
                         {
                             src: '$holding_amount',
-                            op: Op.GTE,
+                            op: Op.GT,
                             dst: '0',
                         },
                         {
