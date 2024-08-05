@@ -45,7 +45,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         string
             memory description = "The amount of a particular token you are holding";
         string memory assertion_type = "Token Holding Amount";
-        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-3.json";
+        schema_url = "https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/25-token-holding-amount/1-1-4.json";
 
         string memory tokenLowercaseName = abi.decode(params, (string));
 
