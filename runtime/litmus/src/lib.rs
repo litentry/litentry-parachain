@@ -146,7 +146,6 @@ pub type Executive = frame_executive::Executive<
 		migration::ReplaceTreasuryStorage<Runtime>,
 		migration::ReplacePreImageStorage<Runtime>,
 		migration::ReplaceDemocracyStorage<Runtime>,
-		migration::ReplaceParachainStakingStorage<Runtime>,
 		migration::ReplaceBalancesRelatedStorage<Runtime>,
 		migration::ReplaceBridgeRelatedStorage<Runtime>,
 	),
