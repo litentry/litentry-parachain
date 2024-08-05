@@ -64,6 +64,9 @@ where
 			account_info.data.free = account_info.data.free.saturating_mul(DECIMAL_CONVERTOR);
 			account_info.data.reserved =
 				account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
+			// Runtime migration is wrong at first. The below code has been mistakenly applied to
+			// online rococo account_info.data.frozen =
+			// account_info.data.reserved.saturating_mul(DECIMAL_CONVERTOR);
 			account_info.data.frozen = account_info.data.frozen.saturating_mul(DECIMAL_CONVERTOR);
 
 			<Account<T>>::insert(&account, account_info);
