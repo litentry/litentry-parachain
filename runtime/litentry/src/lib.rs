@@ -876,6 +876,7 @@ impl pallet_teebag::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<5>;
+	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
 }
 
 impl pallet_bitacross::Config for Runtime {
@@ -1054,6 +1055,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
+		[pallet_teebag, Teebag]
 	);
 }
 
