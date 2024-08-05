@@ -27,7 +27,7 @@ use sp_std::{marker::PhantomData, vec::Vec};
 #[cfg(feature = "try-runtime")]
 use sp_std::collections::btree_map::BTreeMap;
 
-// Force make System Balances Storage frozen amount to 0
+// Force System Balances Storage frozen amount to 0
 pub struct ForceFixAccountFrozenStorage<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for ForceFixAccountFrozenStorage<T>
 where
