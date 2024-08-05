@@ -76,12 +76,7 @@ where
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
-		// pallet_multisig
-		// Do nothing since no panic in runtime_upgrade
-		// weight += Self::check_multisig_multisigs_storage();
-
-		weight
+		frame_support::weights::Weight::zero()
 	}
 
 	#[cfg(feature = "try-runtime")]

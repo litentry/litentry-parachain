@@ -192,14 +192,7 @@ where
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let mut weight = frame_support::weights::Weight::from_parts(0, 0);
-		// pallet_identity
-		// Do nothing since no panic in runtime_upgrade
-		// weight += Self::check_identityof_storage();
-		// weight += Self::check_subsof_storage();
-		// weight += Self::check_registrars_storage();
-
-		weight
+		frame_support::weights::Weight::zero()
 	}
 
 	#[cfg(feature = "try-runtime")]
