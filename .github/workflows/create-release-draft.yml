@@ -97,7 +97,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.66.0"
+          tag: "1.73.0"
 
       - name: Summary
         run: |
@@ -118,6 +118,14 @@ jobs:
     if: ${{ github.event.inputs.parachain_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
@@ -205,6 +213,7 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
+            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -277,6 +286,7 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
+            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -299,7 +309,6 @@ jobs:
       - name: Push worker image
         run: |
           docker push litentry/bitacross-worker:${{ env.RELEASE_TAG }}
-
 
   parachain-ts-tests:
     runs-on: ubuntu-latest

@@ -5469,7 +5469,7 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "async-trait",
  "clap",
@@ -5593,6 +5593,7 @@ dependencies = [
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5691,6 +5692,7 @@ dependencies = [
  "orml-xtokens",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -6631,11 +6633,11 @@ dependencies = [
 
 [[package]]
 name = "num_enum"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02339744ee7253741199f897151b38e72257d13802d4ee837285cc2990a90845"
+checksum = "4e613fc340b2220f734a8595782c551f1250e969d87d3be1ae0579e8d4065179"
 dependencies = [
- "num_enum_derive 0.7.2",
+ "num_enum_derive 0.7.3",
 ]
 
 [[package]]
@@ -6652,9 +6654,9 @@ dependencies = [
 
 [[package]]
 name = "num_enum_derive"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
+checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6910,6 +6912,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-assets-handler"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.4.1",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-bridge",
+ "pallet-bridge-transfer",
+ "pallet-parachain-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -7118,6 +7140,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -7133,7 +7156,6 @@ dependencies = [
  "hex-literal 0.4.1",
  "pallet-balances",
  "pallet-bridge",
- "pallet-parachain-staking",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7380,7 +7402,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "pallet-assets",
  "pallet-balances",
  "pallet-evm",
@@ -7424,16 +7446,15 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal 0.4.1",
+ "libsecp256k1",
  "log",
- "num_enum 0.7.2",
- "pallet-balances",
- "pallet-bridge",
+ "num_enum 0.7.3",
  "pallet-bridge-transfer",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "paste",
  "precompile-utils",
- "rustc-hex",
  "scale-info",
  "serde",
  "sha3",
@@ -7480,7 +7501,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "pallet-balances",
  "pallet-evm",
  "pallet-parachain-staking",
@@ -7507,7 +7528,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "pallet-balances",
  "pallet-evm",
  "pallet-parachain-staking",
@@ -9932,7 +9953,7 @@ dependencies = [
  "hex-literal 0.4.1",
  "impl-trait-for-tuples",
  "log",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "pallet-evm",
  "parity-scale-codec",
  "precompile-utils-macro-v2",
@@ -9951,7 +9972,7 @@ version = "0.1.0"
 source = "git+https://github.com/litentry/precompile-utils?branch=main#261ec953f6614bf634e86d9e8967eae3f84486a1"
 dependencies = [
  "case",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "prettyplease 0.2.20",
  "proc-macro2",
  "quote",
@@ -10704,12 +10725,13 @@ dependencies = [
  "moonbeam-evm-tracer",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-primitives-txpool",
- "num_enum 0.7.2",
+ "num_enum 0.7.3",
  "orml-traits",
  "orml-xtokens",
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
