@@ -138,6 +138,7 @@ impl pallet_teebag::Config for Test {
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<1>;
 	type MaxAuthorizedEnclave = ConstU32<2>;
+	type WeightInfo = ();
 }
 
 // This function basically just builds a genesis storage key/value store according to
