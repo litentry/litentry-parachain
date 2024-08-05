@@ -1,3 +1,13 @@
+# Migrate 
+Under files P9190
+These migration is for the follwoing task
+https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19
+(1) token decimal change from 12 to 18
+(2) New token bridge related pallet storage migration.
+
+For rococo, the initial migration contains some error code which make account.frozen = account.reserve * 10^6
+This storage error should be fixed in the following migration of rococo
+
 # MigrateCollatorSelectionIntoParachainStaking
 P9100.rs
 https://github.com/litentry/litentry-parachain/releases/tag/v0.9.10
