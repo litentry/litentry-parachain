@@ -21,15 +21,14 @@ use frame_support::{
 	traits::{Get, OnRuntimeUpgrade},
 };
 use frame_system::{Account, AccountInfo};
+use pallet_balances::AccountData;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 #[cfg(feature = "try-runtime")]
-use parity_scale_codec::Encode;
-#[cfg(feature = "try-runtime")]
 use sp_std::collections::btree_map::BTreeMap;
-use storage::migration::get_storage_value;
 
-//
+// Force make System Balances Storage frozen amount to 0
+pub struct ForceFixAccountFrozenStorage<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for ForceFixAccountFrozenStorage<T>
 where
 	T: frame_system::Config<AccountData = AccountData<u128>>
@@ -40,6 +39,7 @@ where
 		let result: BTreeMap<T::AccountId, AccountInfo<T::Index, AccountData<u128>>> =
 			<Account<T>>::iter()
 				.map(|(account, state)| {
+					let mut new_account: AccountInfo<T::Index, AccountData<u128>> = state;
 					new_account.data.frozen = 0u128;
 
 					(account, new_account)
