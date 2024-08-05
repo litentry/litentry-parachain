@@ -177,11 +177,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplaceParachainStakingStorage<Runtime>,
-		migration::ReplaceBalancesRelatedStorage<Runtime>,
-		migration::ReplaceBridgeRelatedStorage<Runtime>,
-	),
+	migration::ForceFixAccountFrozenStorage<Runtime>,
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
@@ -255,7 +251,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9190,
+	spec_version: 9191,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
