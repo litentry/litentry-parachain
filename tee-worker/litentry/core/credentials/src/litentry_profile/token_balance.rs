@@ -86,10 +86,12 @@ fn update_assertion(token: ETokenAddress, balance: f64, credential: &mut Credent
 				if index == 0 { Op::GreaterThan } else { Op::GreaterEq },
 				&min,
 			);
-			let max_item = AssertionLogic::new_item(content, Op::LessThan, &max);
 
 			assertion = assertion.add_item(min_item);
-			assertion = assertion.add_item(max_item);
+			if balance > 0_f64 {
+				let max_item = AssertionLogic::new_item(content, Op::LessThan, &max);
+				assertion = assertion.add_item(max_item);
+			}
 
 			credential.credential_subject.values.push(index != 0 || balance > 0_f64);
 		},

@@ -46,10 +46,14 @@ pub trait RangeCredentialDetail {
 					if index == 0 { Op::GreaterThan } else { Op::GreaterEq },
 					&format!("{}", min),
 				);
-				let max_item =
-					AssertionLogic::new_item(breakdown, Op::LessThan, &format!("{}", max));
 
-				vec![min_item, max_item]
+				if amount > 0 {
+					let max_item =
+						AssertionLogic::new_item(breakdown, Op::LessThan, &format!("{}", max));
+					vec![min_item, max_item]
+				} else {
+					vec![min_item]
+				}
 			},
 			None => {
 				// >= last value
