@@ -113,8 +113,11 @@ fn update_assertion(token_type: EVMTokenType, balance: f64, credential: &mut Cre
 		Some(index) => {
 			let min = format!("{}", &EVM_HOLDING_AMOUNT_RANGE[index]);
 			let max = format!("{}", &EVM_HOLDING_AMOUNT_RANGE[index + 1]);
-			let min_item =
-				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::GreaterEq, &min);
+			let min_item = AssertionLogic::new_item(
+				ASSERTION_KEYS.holding_amount,
+				if index == 0 { Op::GreaterThan } else { Op::GreaterEq },
+				&min,
+			);
 			let max_item =
 				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::LessThan, &max);
 

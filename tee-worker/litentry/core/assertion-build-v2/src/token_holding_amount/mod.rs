@@ -447,7 +447,7 @@ mod tests {
 							create_network_address_assertion_logics(Web3TokenType::Nfp),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
+								op: Op::GreaterThan,
 								dst: "0".into()
 							}),
 							Box::new(AssertionLogic::Item {
@@ -483,7 +483,7 @@ mod tests {
 							create_network_address_assertion_logics(Web3TokenType::Nfp),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
+								op: Op::GreaterThan,
 								dst: "0".into()
 							}),
 							Box::new(AssertionLogic::Item {

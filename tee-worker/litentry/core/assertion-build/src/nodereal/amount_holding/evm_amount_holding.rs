@@ -226,7 +226,7 @@ mod tests {
 							create_ton_network_assertion_logic(),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
+								op: Op::GreaterThan,
 								dst: "0".into()
 							}),
 							Box::new(AssertionLogic::Item {
