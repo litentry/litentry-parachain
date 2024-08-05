@@ -33,21 +33,19 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{fungible::Mutate, Currency, SortedMembers, StorageVersion},
+		traits::{SortedMembers, StorageVersion},
 		transactional,
 	};
 	use frame_system::pallet_prelude::*;
-	use pallet_parachain_staking::IssuanceAdapter;
-	use sp_runtime::traits::{BadOrigin, CheckedAdd, CheckedSub};
+	use sp_runtime::traits::BadOrigin;
 	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
 
-	type ResourceId = bridge::ResourceId;
+	pub type ResourceId = bridge::ResourceId;
+	pub type BridgeChainId = bridge::BridgeChainId;
 
-	pub type BalanceOf<T> = <<T as bridge::Config>::Currency as Currency<
-		<T as frame_system::Config>::AccountId,
-	>>::Balance;
+	pub type BalanceOf<T> = <T as bridge::Config>::Balance;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -58,166 +56,66 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + bridge::Config {
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
 		/// Specifies the origin check provided by the bridge for calls that can only be called by
 		/// the bridge pallet
 		type BridgeOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
-		/// The priviledged accounts to call the transfer_native
-		type TransferNativeMembers: SortedMembers<Self::AccountId>;
+		/// The priviledged accounts to call the transfer_assets
+		type TransferAssetsMembers: SortedMembers<Self::AccountId>;
 
-		/// The privileged origin to call update_maximum_issuance
-		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		#[pallet::constant]
-		type NativeTokenResourceId: Get<ResourceId>;
-
-		#[pallet::constant]
-		type DefaultMaximumIssuance: Get<bridge::BalanceOf<Self>>;
-
-		#[pallet::constant]
-		// In parachain local decimal format
-		type ExternalTotalIssuance: Get<bridge::BalanceOf<Self>>;
+		// Handler of asset transfer/burn/mint etc.
+		type BridgeHandler: BridgeHandler<BalanceOf<Self>, Self::AccountId, ResourceId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// MaximumIssuance was changed
-		MaximumIssuanceChanged { old_value: BalanceOf<T> },
-		/// A certain amount of native tokens was minted
-		NativeTokenMinted { to: T::AccountId, amount: BalanceOf<T> },
-	}
-
-	#[pallet::error]
-	pub enum Error<T> {
-		InvalidCommand,
-		InvalidResourceId,
-		ReachMaximumSupply,
-		OverFlow,
-	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn bridge_balances)]
-	pub type BridgeBalances<T: Config> = StorageDoubleMap<
-		_,
-		Twox64Concat,
-		bridge::ResourceId,
-		Twox64Concat,
-		T::AccountId,
-		bridge::BalanceOf<T>,
-	>;
-
-	#[pallet::type_value]
-	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
-		T::ExternalTotalIssuance::get()
-			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
-				<T as frame_system::Config>::AccountId,
-			>>::total_issuance())
-			.map_or_else(|| 0u32.into(), |v| v)
-	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn external_balances)]
-	pub type ExternalBalances<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn maximum_issuance)]
-	pub type MaximumIssuance<T: Config> =
-		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Transfers some amount of the native token to some recipient on a (whitelisted)
+		/// Transfers some amount of non-native token to some recipient on a (whitelisted)
 		/// destination chain.
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as Config>::WeightInfo::transfer_native())]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer_assets())]
 		#[transactional]
-		pub fn transfer_native(
+		pub fn transfer_assets(
 			origin: OriginFor<T>,
-			amount: bridge::BalanceOf<T>,
+			amount: BalanceOf<T>,
 			recipient: Vec<u8>,
-			dest_id: bridge::BridgeChainId,
+			dest_id: BridgeChainId,
+			resource_id: ResourceId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
-			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
-			let resource_id = T::NativeTokenResourceId::get();
-
-			let external_balances =
-				<ExternalBalances<T>>::get().checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
-			<ExternalBalances<T>>::put(external_balances);
-
-			<bridge::Pallet<T>>::transfer_fungible(source, dest_id, resource_id, recipient, amount)
+			ensure!(T::TransferAssetsMembers::contains(&source), BadOrigin);
+			let actual_dest_amount =
+				T::BridgeHandler::prepare_token_bridge_out(resource_id, source, amount)?;
+			<bridge::Pallet<T>>::signal_transfer_fungible(
+				dest_id,
+				resource_id,
+				recipient,
+				actual_dest_amount,
+			)
 		}
 
 		/// Executes a simple currency transfer using the bridge account as the source
+		/// Should only be called by bridge pallet
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
+		#[transactional]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
-			amount: bridge::BalanceOf<T>,
+			amount: BalanceOf<T>,
 			rid: ResourceId,
 		) -> DispatchResult {
 			T::BridgeOrigin::ensure_origin(origin)?;
-
-			let total_issuance = <T as bridge::Config>::Currency::total_issuance();
-			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
-			if new_issuance > MaximumIssuance::<T>::get() {
-				return Err(Error::<T>::ReachMaximumSupply.into())
-			}
-			if rid == T::NativeTokenResourceId::get() {
-				let external_balances = <ExternalBalances<T>>::get()
-					.checked_sub(&amount)
-					.ok_or(Error::<T>::OverFlow)?;
-				// ERC20 LIT mint
-				<T as bridge::Config>::Currency::mint_into(&to, amount)?;
-				// There is a Balances.Deposit event but many other extrinsics can
-				// trigger that event, use `NativeTokenMinted` for easier tracking
-				Self::deposit_event(Event::NativeTokenMinted { to, amount });
-				<ExternalBalances<T>>::put(external_balances);
-			} else {
-				return Err(Error::<T>::InvalidResourceId.into())
-			}
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_maximum_issuance())]
-		pub fn set_maximum_issuance(
-			origin: OriginFor<T>,
-			maximum_issuance: bridge::BalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::MaximumIssuanceChanged {
-				old_value: MaximumIssuance::<T>::get(),
-			});
-			MaximumIssuance::<T>::set(maximum_issuance);
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(3)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_external_balances())]
-		pub fn set_external_balances(
-			origin: OriginFor<T>,
-			external_balances: bridge::BalanceOf<T>,
-		) -> DispatchResult {
-			frame_system::ensure_root(origin)?;
-			<ExternalBalances<T>>::put(external_balances);
+			T::BridgeHandler::prepare_token_bridge_in(rid, to, amount)?;
 			Ok(())
 		}
 	}
 
-	impl<T: Config> Pallet<T> {}
-
-	impl<T: Config> IssuanceAdapter<BalanceOf<T>> for Pallet<T> {
-		fn adapted_total_issuance() -> BalanceOf<T> {
-			<ExternalBalances<T>>::get()
-		}
+	pub trait BridgeHandler<B, A, R> {
+		fn prepare_token_bridge_in(resource_id: R, who: A, amount: B) -> Result<B, DispatchError>;
+		// Return actual amount to target chain after deduction e.g fee
+		fn prepare_token_bridge_out(resource_id: R, who: A, amount: B) -> Result<B, DispatchError>;
 	}
 }

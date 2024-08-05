@@ -6,19 +6,19 @@
         "5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc"
       ]
     ],
-    "candidacyBond": "16000000000000",
+    "candidacyBond": "16000000000000000000",
     "endowedAccounts": [
       [
         "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-        "1000000000000000"
+        "1000000000000000000000"
       ],
       [
         "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-        "1000000000000000"
+        "1000000000000000000000"
       ],
       [
         "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-        "1000000000000000"
+        "1000000000000000000000"
       ]
     ],
     "council": [
