@@ -19,6 +19,8 @@ const SUPPORTED_CHAINS: string[] = all.map((item) =>
     item.id.replace(chainIdPrefix, '')
 )
 
+const CHAINS_WITHOUT_MNEMONIC = ['local', 'dev']
+
 type DeployResult = {
     success: boolean
     // deploy related block hash
@@ -197,6 +199,11 @@ function genesisSubstrateWallet(name: string) {
     return keyPair
 }
 
+function getSenderWallet(mnemonic: string) {
+    const keyring = new Keyring({ type: 'sr25519', ss58Format: 42 })
+    return keyring.addFromUri(mnemonic, { name: 'ss-sender' }, 'sr25519')
+}
+
 /**
  * Encrypts a plaintext buffer using the provided public key in segments.
  *
@@ -236,14 +243,21 @@ function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array): Buffer {
 async function main() {
     const chain = process.env.CHAIN as string
     const contract = process.env.CONTRACT as string
-    const secrets = (process.env.SECRETS as string)
-        .split(' ')
+    const mnemonic = process.env.MNEMONIC as string
+    const secrets = ((process.env.SECRETS as string) ?? '')
+        .split('\n')
         .filter((secret) => !!secret)
 
     if (!SUPPORTED_CHAINS.includes(chain)) {
         throw new Error(
             `Unsupported chain ${chain}, need be one of ${SUPPORTED_CHAINS}.`
         )
+    }
+
+    // mnemonic is required for staging and prod chain.
+    const needUseMnemonic = !CHAINS_WITHOUT_MNEMONIC.includes(chain)
+    if (needUseMnemonic && (mnemonic ?? '').length === 0) {
+        throw new Error(`The mnemonic is required for ${chain} chain.`)
     }
 
     const chainId = `${chainIdPrefix}${chain}`
@@ -291,7 +305,9 @@ async function main() {
         ContractFactory.bytecode,
         encryptedSecrets
     )
-    const alice = genesisSubstrateWallet('Alice')
+    const alice = needUseMnemonic
+        ? getSenderWallet(mnemonic)
+        : genesisSubstrateWallet('Alice')
     await api.tx.developerCommittee
         .execute(proposal, proposal.encodedLength)
         .signAndSend(alice)
@@ -302,7 +318,7 @@ async function main() {
             `Success deploy contract: ${contract}, to chain: ${chain}, contract id: ${contractId}`
         )
         console.log(`Check deployment result in these block details below:`)
-    } else {
+    } else if (result.hashes.length > 0) {
         console.log(
             'Deploy failed, check the failure reason in these block details below:'
         )

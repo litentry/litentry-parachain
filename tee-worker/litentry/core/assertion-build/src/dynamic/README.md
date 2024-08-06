@@ -49,7 +49,7 @@ The deployment script can be used to deploy a specific contract to the specified
 #### Command Syntax
 
 ```shell
-pnpm run deploy-contract --contract <ContractName> --chain <ChainName> --secrets <Secret1> <Secret2> ...
+pnpm run deploy-contract --contract <ContractName> --chain <ChainName> [--mnemonic <MnemonicValue>] [--secrets <Secret1> <Secret2> ...]
 ```
 
 #### Parameters
@@ -60,14 +60,15 @@ pnpm run deploy-contract --contract <ContractName> --chain <ChainName> --secrets
     -   dev
     -   staging
     -   prod
--   --secrets: Provide the required secret values for the contract. These may include API keys, private keys, or other sensitive information needed for the deployment contract, multiple secrets must be separated by blank.
+-   --mnemonic: Optional, the mnemonic string required to generate the wallet for contract deployment on the staging and production chains.
+-   --secrets: Optional, provide the required secret values for the contract. These may include API keys, private keys, or other sensitive information needed for the deployment contract, multiple secrets must be separated by blank, and the secret item does not support line breaks.
 
 #### Example
 
 To deploy the `TokenMapping` contract to the `dev` chain with specific secrets, you would run the following command:
 
 ```shell
-pnpm run deploy-contract --contract TokenMapping --chain dev --secrets abc vna poi
+pnpm run deploy-contract --contract TokenMapping --chain dev --mnemonic "angle total unfold"  --secrets "abc" "vna" "poi xyz"
 ```
 
 #### Troubleshooting
