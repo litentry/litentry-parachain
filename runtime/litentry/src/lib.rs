@@ -87,8 +87,6 @@ pub mod precompiles;
 pub mod weights;
 pub mod xcm_config;
 
-pub mod migration;
-
 #[cfg(test)]
 mod tests;
 
@@ -139,19 +137,6 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplacePalletIdentityStorage<Runtime>,
-		migration::ReplacePalletMultisigStorage<Runtime>,
-		migration::ReplacePalletProxyStorage<Runtime>,
-		migration::ReplacePalletVestingStorage<Runtime>,
-		migration::ReplacePalletBountyStorage<Runtime>,
-		migration::ReplaceTreasuryStorage<Runtime>,
-		migration::ReplacePreImageStorage<Runtime>,
-		migration::ReplaceDemocracyStorage<Runtime>,
-		migration::ReplaceParachainStakingStorage<Runtime>,
-		migration::ReplaceBalancesRelatedStorage<Runtime>,
-		migration::ReplaceBridgeRelatedStorage<Runtime>,
-	),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
