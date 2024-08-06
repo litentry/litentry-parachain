@@ -82,6 +82,7 @@ pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-parachain-staking = { workspace = true }
+pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
 runtime-common = { workspace = true }
 
@@ -89,10 +90,23 @@ fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
+pallet-evm-precompile-assets-erc20 = { workspace = true }
+pallet-evm-precompile-blake2 = { workspace = true }
+pallet-evm-precompile-bn128 = { workspace = true }
+pallet-evm-precompile-dispatch = { workspace = true }
+pallet-evm-precompile-ed25519 = { workspace = true }
+pallet-evm-precompile-modexp = { workspace = true }
+pallet-evm-precompile-sha3fips = { workspace = true }
+pallet-evm-precompile-simple = { workspace = true }
+
+pallet-evm-precompile-bridge-transfer = { workspace = true }
+pallet-evm-precompile-parachain-staking = { workspace = true }
+pallet-evm-precompile-score-staking = { workspace = true }
 
 moonbeam-evm-tracer = { workspace = true }
 moonbeam-rpc-primitives-debug = { workspace = true }
 moonbeam-rpc-primitives-txpool = { workspace = true }
+precompile-utils = { workspace = true }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
@@ -177,6 +191,17 @@ std = [
     "pallet-democracy/std",
     "pallet-ethereum/std",
     "pallet-evm/std",
+    "pallet-evm-precompile-assets-erc20/std",
+    "pallet-evm-precompile-blake2/std",
+    "pallet-evm-precompile-simple/std",
+    "pallet-evm-precompile-bn128/std",
+    "pallet-evm-precompile-dispatch/std",
+    "pallet-evm-precompile-ed25519/std",
+    "pallet-evm-precompile-modexp/std",
+    "pallet-evm-precompile-sha3fips/std",
+    "pallet-evm-precompile-bridge-transfer/std",
+    "pallet-evm-precompile-parachain-staking/std",
+    "pallet-evm-precompile-score-staking/std",
     "pallet-identity/std",
     "pallet-membership/std",
     "pallet-multisig/std",
@@ -215,10 +240,12 @@ std = [
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
     "pallet-bitacross/std",
+    "pallet-score-staking/std",
     "pallet-teebag/std",
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
+    "precompile-utils/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -264,4 +291,5 @@ try-runtime = [
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
+    "pallet-score-staking/try-runtime",
 ]
