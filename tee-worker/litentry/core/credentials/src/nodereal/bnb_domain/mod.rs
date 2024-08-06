@@ -43,7 +43,7 @@ pub trait RangeCredentialDetail {
 				let max = range[index];
 				let min_item = AssertionLogic::new_item(
 					breakdown,
-					if index == 0 { Op::GreaterThan } else { Op::GreaterEq },
+					if index == 1 { Op::GreaterThan } else { Op::GreaterEq },
 					&format!("{}", min),
 				);
 
