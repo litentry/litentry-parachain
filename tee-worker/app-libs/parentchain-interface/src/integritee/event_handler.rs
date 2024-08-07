@@ -16,29 +16,33 @@
 */
 
 use codec::{Decode, Encode};
-pub use ita_sgx_runtime::{Balance, Index};
+use frame_support::storage::storage_prefix;
+pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
-use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
+use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_stf_state_handler::handle_state::HandleState;
+use itp_storage::{key_to_account_id, storage_map_key, StorageHasher};
 use itp_types::{
 	parentchain::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError, ProcessedEventsArtifacts,
+		ParentchainEventProcessingError, ParentchainId, ProcessedEventsArtifacts,
 	},
-	RsaRequest, H256,
+	Delegator, RsaRequest, ScorePayment, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+use litentry_hex_utils::decode_hex;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
+use pallet_identity_management_tee::IdentityContext;
 use sp_core::{blake2_256, H160};
 use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
-use std::{format, string::String, sync::Arc};
+use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
 
 pub struct ParentchainEventHandler<
 	OCallApi: EnclaveOnChainOCallApi,
@@ -212,6 +216,104 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			.map_err(Error::AssertionCreatedHandling)?;
 		Ok(())
 	}
+
+	fn update_staking_scores<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+		&self,
+		executor: &Executor,
+		block_header: impl Header<Hash = H256>,
+	) -> Result<(), Error> {
+		let scores_key_prefix = storage_prefix(b"ScoreStaking", b"Scores");
+		let scores_storage_keys_response = self
+			.ocall_api
+			.get_storage_keys(scores_key_prefix.into())
+			.map_err(|_| Error::Other("Failed to get storage keys".into()))?;
+		let scores_storage_keys: Vec<Vec<u8>> = scores_storage_keys_response
+			.into_iter()
+			.filter_map(|r| {
+				let hex_key = String::decode(&mut r.as_slice()).unwrap_or_default();
+				decode_hex(hex_key).ok()
+			})
+			.collect();
+		let account_ids: Vec<AccountId> =
+			scores_storage_keys.iter().filter_map(key_to_account_id).collect();
+		let scores: Vec<ScorePayment<Balance>> = self
+			.ocall_api
+			.get_multiple_storages_verified(
+				scores_storage_keys,
+				&block_header,
+				&ParentchainId::Litentry,
+			)
+			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
+			.into_iter()
+			.filter_map(|entry| entry.into_tuple().1)
+			.collect();
+		let delegator_state_storage_keys: Vec<Vec<u8>> = account_ids
+			.iter()
+			.map(|account_id| {
+				storage_map_key(
+					"ParachainStaking",
+					"DelegatorState",
+					account_id,
+					&StorageHasher::Blake2_128Concat,
+				)
+			})
+			.collect();
+		let delegator_states: Vec<Delegator<AccountId, Balance>> = self
+			.ocall_api
+			.get_multiple_storages_verified(
+				delegator_state_storage_keys,
+				&block_header,
+				&ParentchainId::Litentry,
+			)
+			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
+			.into_iter()
+			.filter_map(|entry| entry.into_tuple().1)
+			.collect();
+
+		let id_graphs_storage_keys: Vec<Vec<u8>> = account_ids
+			.iter()
+			.map(|account_id| {
+				storage_map_key(
+					"IdentityManagement",
+					"IDGraphs",
+					&Identity::from(account_id.clone()),
+					&StorageHasher::Blake2_128Concat,
+				)
+			})
+			.collect();
+
+		let shard = executor.get_default_shard();
+
+		let graph_accounts = self
+			.state_handler
+			.execute_on_current(&shard, |state, _| {
+				let mut accounts_id_graph_accounts: BTreeMap<AccountId, Vec<AccountId>> =
+					BTreeMap::new();
+				for id_graph_storage_key in id_graphs_storage_keys.iter() {
+					let id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
+						.iter_prefix::<Identity, IdentityContext<Runtime>>(id_graph_storage_key)
+						.unwrap_or_default();
+					let graph_accounts: Vec<AccountId> = id_graph
+						.iter()
+						.filter_map(|(identity, _)| {
+							if identity.is_web2() {
+								return None
+							}
+							identity.to_account_id()
+						})
+						.collect();
+					let account_id = key_to_account_id(id_graph_storage_key).unwrap();
+					accounts_id_graph_accounts.insert(account_id, graph_accounts);
+				}
+
+				accounts_id_graph_accounts
+			})
+			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
+
+		// TODO: calculate new scores and send extrinsic to update them
+
+		Ok(())
+	}
 }
 
 impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
@@ -342,6 +444,20 @@ where
 				// This is for monitoring purposes
 				handled_events.push(hash_of(ParentchainBlockProcessed::EVENT));
 			});
+		}
+
+		if let Ok(events) = events.get_reward_distribution_started_events() {
+			println!("Handling RewardDistributionStarted events");
+			events
+				.iter()
+				.try_for_each(|event| {
+					let event_hash = hash_of(&event);
+					let result = self.update_staking_scores(executor, block_header.clone());
+					handled_events.push(event_hash);
+
+					result
+				})
+				.map_err(|_| ParentchainEventProcessingError::RewardDistributionStartedFailure)?;
 		}
 
 		Ok((handled_events, successful_assertion_ids, failed_assertion_ids))
