@@ -21,7 +21,7 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
-use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::{
@@ -41,7 +41,7 @@ use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc};
 
 pub struct ParentchainEventHandler<
-	OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
+	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 > {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
@@ -49,10 +49,8 @@ pub struct ParentchainEventHandler<
 	pub state_handler: Arc<HS>,
 }
 
-impl<
-		OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
-		HS: HandleState<StateT = SgxExternalities>,
-	> ParentchainEventHandler<OCallApi, HS>
+impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities>>
+	ParentchainEventHandler<OCallApi, HS>
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
@@ -216,10 +214,12 @@ impl<
 	}
 }
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler
+impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+	for ParentchainEventHandler<OCallApi, HS>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
+	HS: HandleState<StateT = SgxExternalities>,
 {
 	fn handle_events(
 		&self,
