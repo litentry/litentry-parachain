@@ -218,7 +218,7 @@ impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned
 	for ParentchainEventHandler<OCallApi, HS>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
-	OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
+	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 {
 	fn handle_events(
