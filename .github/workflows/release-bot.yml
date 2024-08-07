@@ -1,7 +1,6 @@
 name: 'Release bot'
 on:
-  release:
-    types: [released]
+  workflow_dispatch:
 
 jobs:
   release-bot:
