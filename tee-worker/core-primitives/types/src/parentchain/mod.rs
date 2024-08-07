@@ -158,6 +158,7 @@ pub enum ParentchainEventProcessingError {
 	OpaqueTaskPostedFailure,
 	AssertionCreatedFailure,
 	ParentchainBlockProcessedFailure,
+	RewardDistributionStartedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -181,6 +182,8 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: AssertionCreatedFailure",
 			ParentchainEventProcessingError::ParentchainBlockProcessedFailure =>
 				"Parentchain Event Processing Error: ParentchainBlockProcessedFailure",
+			ParentchainEventProcessingError::RewardDistributionStartedFailure =>
+				"Parentchain Event Processing Error: RewardDistributionStartedFailure",
 		};
 		write!(f, "{}", message)
 	}
