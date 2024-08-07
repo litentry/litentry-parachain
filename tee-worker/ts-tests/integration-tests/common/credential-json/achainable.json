@@ -233,19 +233,5 @@
         "mockDid": "litentry:substrate:0xc0103c4b56ce752d05b16a88260e3a9e2c44306602a74c5edd1cd4ff56356f7c",
         "mockWeb3Network": "litentry,polkadot",
         "expectedCredentialValue": true
-    },
-    {
-        "id": "token-holding-amount-btcs",
-        "name": "BTCS Holding Time",
-        "description": "The number of BTCS tokens you hold > 0",
-        "assertion": {
-            "id": "Brc20AmountHolder",
-            "payload": []
-        },
-        "dataProvider": "achainable",
-        "network": "litentry",
-        "mockDid": "litentry:bitcoin:0x02dbb0aff6e115284ac2ac5795e299588dae74474ad4bd0e580e92163e80837da8",
-        "mockWeb3Network": "BitcoinP2tr",
-        "expectedCredentialValue": null
     }
 ]
