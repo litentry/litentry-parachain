@@ -60,13 +60,13 @@ jobs:
     needs:
       - check-condition
       - runtime-matrix
-    if: needs.check-condition.outputs.skip_simulation == 'false'
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
     name: ${{ matrix.runtime.name }}
+    if: needs.check-condition.outputs.skip_simulation == 'false'
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
