@@ -15,9 +15,15 @@ itc-parentchain = { path = "../../core/parentchain/parentchain-crate", default-f
 itc-parentchain-indirect-calls-executor = { path = "../../core/parentchain/indirect-calls-executor", default-features = false }
 itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types", default-features = false }
 itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
+itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
+itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
+itp-stf-state-handler = { path = "../../core-primitives/stf-state-handler", default-features = false }
+itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
+pallet-identity-management-tee = { path = "../../litentry/pallets/identity-management", default-features = false }
+
 
 # no-std compatible libraries
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
@@ -28,8 +34,10 @@ regex = { optional = true, version = "1.9.5" }
 substrate-api-client = { optional = true, default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate dep
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
 
 # litentry
 lc-dynamic-assertion = { path = "../../litentry/core/dynamic-assertion", default-features = false }
@@ -65,6 +73,7 @@ std = [
     "itp-stf-executor/std",
     "itp-stf-primitives/std",
     "itp-top-pool-author/std",
+    "itp-sgx-externalities/std",
     "itp-types/std",
     "itp-utils/std",
     "log/std",
@@ -85,6 +94,7 @@ sgx = [
     "itp-node-api/sgx",
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
+    "itp-sgx-externalities/sgx",
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-dynamic-assertion/sgx",
