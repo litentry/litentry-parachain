@@ -1,7 +1,7 @@
 use super::{
 	weights, AccountId, AssetId, Balance, Balances, Runtime, RuntimeEvent, TreasuryPalletId,
 };
-use crate::constants::currency::deposit;
+use crate::{constants::currency::deposit, precompiles::ASSET_PRECOMPILE_ADDRESS_PREFIX};
 use frame_support::{
 	parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, NeverEnsureOrigin},
@@ -14,7 +14,7 @@ use runtime_common::{
 	xcm_impl::CurrencyId,
 	EnsureRootOrHalfCouncil,
 };
-use sp_core::ConstU128;
+use sp_core::{ConstU128, H160};
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
