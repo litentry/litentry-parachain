@@ -236,6 +236,9 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         //// TESTS
         const autoCompoundPercent = 20;
 
+        const collator = (await context.api.query.parachainStaking.selectedCandidates()).toHuman();
+        console.log("Selected Candidates:", collator);
+
         // delegateWithAutoCompound(collator, amount, percent)
         const delegateWithAutoCompound = precompileStakingContract.interface.encodeFunctionData(
             'delegateWithAutoCompound',
