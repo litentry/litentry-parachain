@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       runtime: ${{ steps.runtime.outputs.runtime }}
-    name: Extract tasks from matrix
+    name: Parse runtime matrix
     steps:
       - uses: actions/checkout@v4
       - id: runtime
