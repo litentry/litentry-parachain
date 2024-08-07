@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 0
     
       - name: Run ${{ matrix.runtime.name }} try-runtime check
-        uses: "paritytech/try-runtime-gha@v0.2.0"
+        uses: paritytech/try-runtime-gha@v0.2.0
         with:
           runtime-package: ${{ matrix.runtime.package }}
           node-uri: ${{ matrix.runtime.uri }}

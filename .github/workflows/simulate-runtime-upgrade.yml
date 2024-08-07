@@ -24,17 +24,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       skip_simulation: ${{ steps.check.outputs.skip_simulation }}
-      steps:
-        - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-        - id: check
-          run: |
-            if [ -z "${{ env.RELEASE_TAG }}" ]; then
-              skip_simulation=true
-            else
-              skip_simulation=false
-            fi
-            echo "skip_simulation=$skip_simulation" | tee -a $GITHUB_OUTPUT
+      - id: check
+        run: |
+          if [ -z "${{ env.RELEASE_TAG }}" ]; then
+            skip_simulation=true
+          else
+            skip_simulation=false
+          fi
+          echo "skip_simulation=$skip_simulation" | tee -a $GITHUB_OUTPUT
 
   runtime-matrix:
     runs-on: ubuntu-latest
@@ -128,7 +128,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run ${{ matrix.runtime.name }} try-runtime check
-        uses: "paritytech/try-runtime-gha@v0.2.0"
+        uses: paritytech/try-runtime-gha@v0.2.0
         with:
           runtime-package: ${{ matrix.runtime.package }}
           node-uri: ${{ matrix.runtime.uri }}
