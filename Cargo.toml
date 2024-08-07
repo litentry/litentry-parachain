@@ -5,7 +5,6 @@ members = [
     'pallets/account-fix',
     'pallets/assets-handler',
     'pallets/bitacross',
-    'pallets/bitacrossmimic',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/extrinsic-filter',
@@ -68,9 +67,9 @@ quote = { version = "1" }
 syn = { version = "2" }
 scale-info = { version = "2.11", default-features = false, features = ["derive"] }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "max-encoded-len"] }
-paste = { version = "1.0.15" }
+paste = { version = "1.0" }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0", default-features = false }
+serde_json = { version = "=1.0.103", default-features = false }
 slices = { version = "0.2.0" }
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
@@ -254,7 +253,6 @@ pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
 pallet-assets-handler = { path = "pallets/assets-handler", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }
-pallet-bitacross-mimic = { path = "pallets/bitacrossmimic", default-features = false }
 pallet-bridge = { path = "pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
 pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features = false }
