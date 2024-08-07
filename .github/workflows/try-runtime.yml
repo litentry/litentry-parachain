@@ -1,0 +1,47 @@
+name: Check try-runtime
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      runtime: ${{ steps.runtime.outputs.runtime }}
+    name: Extract tasks from matrix
+    steps:
+      - uses: actions/checkout@v4
+      - id: runtime
+        run: |
+          TASKS=$(jq '[.[] | select(.uri != null)]' .github/runtime.json)
+          SKIPPED_TASKS=$(jq '[.[] | select(.uri == null)]' .github/runtime.json)
+          echo --- Running the following tasks ---
+          echo $TASKS
+          echo --- Skipping the following tasks due to not having a uri field ---
+          echo $SKIPPED_TASKS
+          TASKS=$(echo $TASKS | jq -c .)
+          echo "runtime=$TASKS" >> $GITHUB_OUTPUT
+
+  try-runtime:
+    needs: [runtime-matrix]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+    
+      - name: Run ${{ matrix.runtime.name }} try-runtime check
+        uses: "paritytech/try-runtime-gha@v0.2.0"
+        with:
+          runtime-package: ${{ matrix.runtime.package }}
+          node-uri: ${{ matrix.runtime.uri }}
+          checks: "all"
+          extra-args: ""
