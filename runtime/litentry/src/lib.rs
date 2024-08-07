@@ -1082,7 +1082,7 @@ impl pallet_score_staking::Config for Runtime {
 	type AccountIdConvert = IdentityAccountIdConvert;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	// Temporary suspend of reward
-	type YearlyIssuance = ConstU128<0>;
+	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<1_000_000>;
 }
