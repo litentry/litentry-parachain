@@ -21,6 +21,9 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_types::{
 	parentchain::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
@@ -36,11 +39,20 @@ use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler {
+pub struct ParentchainEventHandler<
+	OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
+	HS: HandleState<StateT = SgxExternalities>,
+> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
+	pub ocall_api: Arc<OCallApi>,
+	pub state_handler: Arc<HS>,
 }
 
-impl ParentchainEventHandler {
+impl<
+		OCallApi: EnclaveOnChainOCallApi + EnclaveAttestationOCallApi,
+		HS: HandleState<StateT = SgxExternalities>,
+	> ParentchainEventHandler<OCallApi, HS>
+{
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
 		account: &AccountId,
