@@ -236,7 +236,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         //// TESTS
         const autoCompoundPercent = 20;
 
-        const collator = (await context.api.query.parachainStaking.candidateInfo(context.alice));
+        const collator = (await context.api.query.parachainStaking.candidateInfo(context.alice.address));
         console.log("Candidates Info:", collator.toHuman());
         const staking_status = (await context.api.query.parachainStaking.delegatorState(evmAccountRaw.mappedAddress)).toHuman();
         console.log("EVM Account Delegator State:", staking_status);
