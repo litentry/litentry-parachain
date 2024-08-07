@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       runtime: ${{ steps.runtime.outputs.runtime }}
-    name: Parse runtime matrix
+    name: Extract tasks from matrix
     steps:
       - uses: actions/checkout@v4
       - id: runtime
@@ -33,7 +33,6 @@ jobs:
     strategy:
       matrix:
         runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
-    name: ${{ matrix.runtime.name }}
     steps:
       - uses: actions/checkout@v4
         with:
