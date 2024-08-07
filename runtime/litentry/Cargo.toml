@@ -7,6 +7,7 @@ version = '0.9.17'
 [dependencies]
 hex-literal = { workspace = true }
 log = { workspace = true }
+num_enum = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
@@ -86,6 +87,7 @@ pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
 runtime-common = { workspace = true }
 
+fp-evm = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
@@ -231,6 +233,7 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "fp-evm/std",
     "fp-rpc/std",
     "fp-self-contained/std",
     "frame-benchmarking?/std",

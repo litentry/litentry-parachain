@@ -43,8 +43,11 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	traits::{
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		DispatchInfoOf, Dispatchable, PostDispatchInfoOf, UniqueSaturatedInto,
+	},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
@@ -68,9 +71,16 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, WEIGHT_TO_FEE_FACTOR,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
+	WEIGHT_PER_GAS, WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
+
+use pallet_ethereum::{Call::transact, PostLogContent, TransactionStatus};
+use pallet_evm::{
+	EVMCurrencyAdapter, FeeCalculator, GasWeightMapping,
+	OnChargeEVMTransaction as OnChargeEVMTransactionT, Runner,
+};
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
@@ -994,7 +1004,7 @@ parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
-	pub PrecompilesValue: Precompiles = RococoNetworkPrecompiles::<_>::new();
+	pub PrecompilesValue: Precompiles = LitentryNetworkPrecompiles::<_>::new();
 	// BlockGasLimit / MAX_POV_SIZE
 	pub GasLimitPovSizeRatio: u64 = 4;
 }
@@ -1073,7 +1083,7 @@ impl pallet_score_staking::Config for Runtime {
 	type AccountIdConvert = IdentityAccountIdConvert;
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	// Temporary suspend of reward
-	type YearlyIssuance = ConstU128<{ 0 }>;
+	type YearlyIssuance = ConstU128<0>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<1_000_000>;
 }
