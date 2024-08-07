@@ -29,7 +29,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin, Everything, FindAuthor,
-		InstanceFilter, SortedMembers, WithdrawReasons,
+		InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
