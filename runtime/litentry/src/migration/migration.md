@@ -9,7 +9,7 @@ Balances, ParachainStaking
 ChainBridge, BridgeTransfer => AssetsHandler
 
 These migration is for the follwoing task
-https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-2
+https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-02
 (1) token decimal change from 12 to 18
 (2) New token bridge related pallet storage migration.
 

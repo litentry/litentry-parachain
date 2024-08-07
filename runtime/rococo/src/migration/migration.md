@@ -1,7 +1,7 @@
 # Migrate
 Under fiels P9191
 These migration is for the follwoing task
-https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-2
+https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-02
 The leftover part of migration including the following pallets:
 Bounty, Democracy, Identity, Multisig, Preimage, Proxy, Treasury, Vesting
 
