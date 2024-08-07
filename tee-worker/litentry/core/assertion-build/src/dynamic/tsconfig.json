@@ -2,10 +2,12 @@
     "compilerOptions": {
         "target": "es2020",
         "module": "commonjs",
+        "moduleResolution": "Node",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "skipLibCheck": true,
         "resolveJsonModule": true
-    }
+    },
+    "include": ["hardhat.config.ts", "scripts", "tests"]
 }
