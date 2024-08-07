@@ -1,7 +1,7 @@
 services:
-    litentry-vc-correctness-test:
+    litentry-di-vc-correctness-test:
         image: litentry/identity-cli:latest
-        container_name: litentry-vc-correctness-test
+        container_name: litentry-di-vc-correctness-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
