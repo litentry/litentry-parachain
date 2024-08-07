@@ -28,11 +28,11 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin, Everything, InstanceFilter,
-		SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin, Everything, FindAuthor,
+		InstanceFilter, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
-	PalletId, RuntimeDebug,
+	ConsensusEngineId, PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
@@ -63,7 +63,6 @@ pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
 	HOURS, MINUTES, SLOT_DURATION,
 };
-use pallet_ethereum::TransactionStatus;
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
