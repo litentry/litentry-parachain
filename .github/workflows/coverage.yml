@@ -8,58 +8,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-file-change:
+  runtime-matrix:
     runs-on: ubuntu-latest
-    # see https://github.com/orgs/community/discussions/25722
-    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
-      coverage_src: ${{ steps.filter.outputs.coverage_src }}
+      runtime: ${{ steps.runtime.outputs.runtime }}
+    name: Extract tasks from matrix
+    steps:
+      - uses: actions/checkout@v4
+      - id: runtime
+        run: |
+          TASKS=$(jq '[.[] | select(.uri != null)]' .github/runtime.json)
+          SKIPPED_TASKS=$(jq '[.[] | select(.uri == null)]' .github/runtime.json)
+          echo --- Running the following tasks ---
+          echo $TASKS
+          echo --- Skipping the following tasks due to not having a uri field ---
+          echo $SKIPPED_TASKS
+          TASKS=$(echo $TASKS | jq -c .)
+          echo "runtime=$TASKS" >> $GITHUB_OUTPUT
+
+  try-runtime:
+    needs: [runtime-matrix]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # Checks to see if any files in the PR/commit match one of the listed file types.
-      # We can use this filter to decide whether or not to build docker images
-      - uses: dorny/paths-filter@v3
-        id: filter
+    
+      - name: Run ${{ matrix.runtime.name }} try-runtime check
+        uses: "paritytech/try-runtime-gha@v0.2.0"
         with:
-          filters: .github/file-filter.yml
-          list-files: shell
-
-  test:
-    name: Coverage Report
-    runs-on: [ubuntu-latest]
-    needs:
-      - check-file-change
-    if: >
-      needs.check-file-change.outputs.coverage_src == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install toolchain
-        run: rustup show
-
-      - name: Install additional dependencies
-        run: |
-          sudo apt update -y &&
-          sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev
-
-      - name: Install cargo-tarpaulin
-        run: |
-          cargo install cargo-tarpaulin
-
-      - name: Run cargo-tarpaulin
-        run: |
-          PACKAGES=$(find pallets/ -name "Cargo.toml" | while read -r f; do pn=$(grep name "$f" | \
-                     tr '"' "'" | sed "s/'$//;s/.*'//"); f="file://$(pwd)/${f//\/Cargo.toml/#$pn}"; \
-                     cargo pkgid "$f"; done | paste -s -d "," -)
-          cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES" \
-          --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/*
-
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v4
-        with:
-          fail_ci_if_error: false
-          verbose: true
+          runtime-package: ${{ matrix.runtime.package }}
+          node-uri: ${{ matrix.runtime.uri }}
+          checks: "all"
+          extra-args: ""
