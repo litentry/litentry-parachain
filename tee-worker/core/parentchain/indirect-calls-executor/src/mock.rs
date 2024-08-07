@@ -12,6 +12,7 @@ use itp_types::{
 	RsaRequest, H256,
 };
 use sp_core::H160;
+use sp_runtime::traits::Header;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -89,6 +90,7 @@ where
 		&self,
 		_: &Executor,
 		_: impl FilterEvents,
+		_: impl Header,
 	) -> Result<ProcessedEventsArtifacts, Error> {
 		Ok((
 			Vec::from([H256::default()]),

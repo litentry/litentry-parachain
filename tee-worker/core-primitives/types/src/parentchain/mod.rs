@@ -29,7 +29,11 @@ use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H160, H256};
-use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
+use sp_runtime::{
+	generic::Header as HeaderG,
+	traits::{BlakeTwo256, Header as HeaderT},
+	MultiAddress, MultiSignature,
+};
 
 use self::events::ParentchainBlockProcessed;
 
@@ -139,6 +143,7 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
+		block_header: impl HeaderT<Hash = H256>,
 	) -> Result<ProcessedEventsArtifacts, Error>;
 }
 

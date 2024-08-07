@@ -36,6 +36,7 @@ use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
 use sp_core::{blake2_256, H160};
+use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc};
 
@@ -224,6 +225,7 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
+		block_header: impl Header<Hash = H256>,
 	) -> Result<ProcessedEventsArtifacts, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 		let mut successful_assertion_ids: Vec<H160> = Vec::new();
