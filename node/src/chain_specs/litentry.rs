@@ -237,5 +237,6 @@ fn generate_genesis(
 			mode: TeebagOperationalMode::Development,
 		},
 		bitacross: BitacrossConfig { admin: None },
+		score_staking: Default::default(),
 	}
 }

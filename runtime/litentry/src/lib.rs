@@ -1162,6 +1162,8 @@ construct_runtime! {
 		Bitacross: pallet_bitacross = 66,
 		AssetsHandler: pallet_assets_handler = 68,
 
+		ScoreStaking: pallet_score_staking = 75,
+
 		// Frontier
 		EVM: pallet_evm = 120,
 		Ethereum: pallet_ethereum = 121,

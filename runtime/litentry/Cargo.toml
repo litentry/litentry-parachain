@@ -158,6 +158,7 @@ runtime-benchmarks = [
     "pallet-bridge-transfer/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+    "pallet-score-staking/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
