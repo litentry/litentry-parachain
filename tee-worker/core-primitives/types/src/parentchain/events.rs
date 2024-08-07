@@ -244,3 +244,17 @@ impl StaticEvent for AssertionCreated {
 	const PALLET: &'static str = "EvmAssertions";
 	const EVENT: &'static str = "AssertionCreated";
 }
+
+#[derive(Encode, Decode, Debug)]
+pub struct RewardDistributionStarted {}
+
+impl core::fmt::Display for RewardDistributionStarted {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		write!(f, "{}", RewardDistributionStarted::EVENT)
+	}
+}
+
+impl StaticEvent for RewardDistributionStarted {
+	const PALLET: &'static str = "ScoreStaking";
+	const EVENT: &'static str = "RewardDistributionStarted";
+}

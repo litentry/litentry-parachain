@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
 	ActivateIdentityRequested, DeactivateIdentityRequested, EnclaveUnauthorized,
-	LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
+	LinkIdentityRequested, OpaqueTaskPosted, RewardDistributionStarted, VCRequested,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
@@ -116,6 +116,10 @@ pub trait FilterEvents {
 	fn get_parentchain_block_proccessed_events(
 		&self,
 	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error>;
+
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<RewardDistributionStarted>, Self::Error>;
 }
 
 #[derive(Debug)]
