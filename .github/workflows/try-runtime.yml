@@ -28,11 +28,12 @@ jobs:
 
   try-runtime:
     needs: [runtime-matrix]
-    continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
+    name: ${{ matrix.runtime.name }}
     steps:
       - uses: actions/checkout@v4
         with:

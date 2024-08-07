@@ -1,5 +1,10 @@
 name: Simulate runtime upgrade
 
+# Check runtime upgradability of the released runtime.
+# We do it in two ways:
+# - by executing try-runtime-cli against the live chain
+# - by simulating a runtime upgrade against the live chain
+
 on:
   release:
     types: [released]
@@ -8,23 +13,60 @@ on:
     inputs:
       release_tag:
         description: runtime.wasm release_tag
-        required: true
+        required: false
 
 env:
   SUBWASM_VERSION: 0.19.1
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.event.release.tag_name }}
 
 jobs:
+  check-condition:
+    runs-on: ubuntu-latest
+    outputs:
+      skip_simulation: ${{ steps.check.outputs.skip_simulation }}
+      steps:
+        - uses: actions/checkout@v4
+
+        - id: check
+          run: |
+            if [ -z "${{ env.RELEASE_TAG }}" ]; then
+              skip_simulation=true
+            else
+              skip_simulation=false
+            fi
+            echo "skip_simulation=$skip_simulation" | tee -a $GITHUB_OUTPUT
+
+  runtime-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      runtime: ${{ steps.runtime.outputs.runtime }}
+    name: Parse runtime matrix
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: runtime
+        run: |
+          TASKS=$(jq '[.[] | select(.uri != null)]' .github/runtime.json)
+          SKIPPED_TASKS=$(jq '[.[] | select(.uri == null)]' .github/runtime.json)
+          echo --- Running the following tasks ---
+          echo $TASKS
+          echo --- Skipping the following tasks due to not having a uri field ---
+          echo $SKIPPED_TASKS
+          TASKS=$(echo $TASKS | jq -c .)
+          echo "runtime=$TASKS" >> $GITHUB_OUTPUT
+
   simulate-runtime-upgrade:
     runs-on: ubuntu-latest
+    needs:
+      - check-condition
+      - runtime-matrix
+    if: needs.check-condition.outputs.skip_simulation == 'false'
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        chain:
-          - litmus
-          - litentry
-          - rococo
+        runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
+    name: ${{ matrix.runtime.name }}
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
@@ -34,10 +76,10 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Fork ${{ matrix.chain }} and launch parachain
+      - name: Fork ${{ matrix.runtime.name }} and launch parachain
         timeout-minutes: 20
         run: |
-          ./scripts/fork-parachain-and-launch.sh ${{ matrix.chain }}
+          ./scripts/fork-parachain-and-launch.sh ${{ matrix.runtime.name }}
 
       - name: Install subwasm ${{ env.SUBWASM_VERSION }}
         run: |
@@ -50,7 +92,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
+          [ -z "${{ env.RELEASE_TAG }}" ] || ./scripts/runtime-upgrade.sh ${{ matrix.runtime.name }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
@@ -64,7 +106,31 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: ${{ matrix.chain }}-docker-logs
+          name: ${{ matrix.runtime.name }}-docker-logs
           path: docker-logs
           if-no-files-found: ignore
           retention-days: 3
+
+  try-runtime:
+    runs-on: ubuntu-latest
+    needs:
+      - check-condition
+      - runtime-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: ${{ fromJSON(needs.runtime-matrix.outputs.runtime) }}
+    name: ${{ matrix.runtime.name }}
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run ${{ matrix.runtime.name }} try-runtime check
+        uses: "paritytech/try-runtime-gha@v0.2.0"
+        with:
+          runtime-package: ${{ matrix.runtime.package }}
+          node-uri: ${{ matrix.runtime.uri }}
+          checks: "all"
+          extra-args: ""
