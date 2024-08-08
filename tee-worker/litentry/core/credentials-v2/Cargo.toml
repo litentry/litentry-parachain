@@ -8,9 +8,6 @@ version = "0.1.0"
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
 
-# no_std dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-
 # litentry
 lc-common = { path = "../common", default-features = false }
 lc-credentials = { path = "../credentials", default-features = false }

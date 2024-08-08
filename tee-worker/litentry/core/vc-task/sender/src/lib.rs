@@ -7,15 +7,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use futures_sgx as futures;
-}
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub use crate::sgx_reexport_prelude::*;
-
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
 use log::*;
