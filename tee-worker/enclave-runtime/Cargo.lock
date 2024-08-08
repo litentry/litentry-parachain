@@ -3097,17 +3097,11 @@ dependencies = [
 name = "lc-credentials-v2"
 version = "0.1.0"
 dependencies = [
- "itp-stf-primitives",
- "itp-time-utils",
- "itp-types",
- "itp-utils",
  "lc-common",
  "lc-credentials",
  "litentry-primitives",
- "log",
  "parity-scale-codec",
  "sgx_tstd",
- "thiserror",
 ]
 
 [[package]]
@@ -3432,9 +3426,7 @@ dependencies = [
  "core-primitives",
  "hex",
  "itp-sgx-crypto",
- "itp-utils",
  "log",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -3447,8 +3439,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "strum",
- "strum_macros",
 ]
 
 [[package]]

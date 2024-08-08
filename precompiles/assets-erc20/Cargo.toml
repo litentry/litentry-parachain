@@ -5,10 +5,6 @@ edition = '2021'
 version = '0.1.0'
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-slices = { workspace = true }
-
 precompile-utils = { workspace = true }
 
 # Substrate
@@ -16,7 +12,6 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-assets = { workspace = true }
 pallet-balances = { workspace = true }
-parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
@@ -38,7 +33,6 @@ pallet-timestamp = { workspace = true, features = ["std"] }
 [features]
 default = ["std"]
 std = [
-    "parity-scale-codec/std",
     "fp-evm/std",
     "frame-support/std",
     "frame-system/std",

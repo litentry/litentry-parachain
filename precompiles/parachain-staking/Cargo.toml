@@ -5,11 +5,6 @@ name = 'pallet-evm-precompile-parachain-staking'
 version = '0.1.0'
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-parity-scale-codec = { workspace = true }
-rustc-hex = { workspace = true }
-
 pallet-parachain-staking = { workspace = true }
 precompile-utils = { workspace = true }
 
@@ -40,7 +35,6 @@ std = [
     "frame-system/std",
     "pallet-evm/std",
     "pallet-parachain-staking/std",
-    "parity-scale-codec/std",
     "precompile-utils/std",
     "sp-core/std",
     "sp-io/std",
