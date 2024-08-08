@@ -316,21 +316,19 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			})
 			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
 
-		let mut new_scores_rewards: BTreeMap<AccountId, Balance> = BTreeMap::new();
+		let mut staking_amounts: BTreeMap<AccountId, Balance> = BTreeMap::new();
 
 		for account_id in account_ids.iter() {
 			let default_id_graph = Vec::new();
 			let id_graph = accounts_graphs.get(account_id).unwrap_or(&default_id_graph);
-			for identity in id_graph.iter() {
-				if let Some(delegator) = delegator_states.get(identity) {
-					if let Some(score_payment) = scores.get(account_id) {
-						new_scores_rewards.insert(
-							account_id.clone(),
-							score_payment.total_reward + delegator.total,
-						);
-					}
-				}
-			}
+			let staking_amount: Balance = id_graph
+				.iter()
+				.filter_map(|identity| {
+					let delegator = delegator_states.get(identity)?;
+					Some(delegator.total)
+				})
+				.sum();
+			staking_amounts.insert(account_id.clone(), staking_amount);
 		}
 
 		// let extrinsic_sender = ParachainExtrinsicSender::new();
