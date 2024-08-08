@@ -1,4 +1,4 @@
-name: Simulate runtime upgrade
+name: Check runtime upgrade
 
 # Check runtime upgradability of the released runtime.
 # We do it in two ways:
