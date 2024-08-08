@@ -153,6 +153,7 @@ impl pallet_teebag::Config for Test {
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<3>;
+	type WeightInfo = ();
 }
 
 impl pallet_identity_management::Config for Test {

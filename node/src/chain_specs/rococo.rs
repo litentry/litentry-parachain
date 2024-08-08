@@ -38,7 +38,7 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 /// Get default parachain properties for Rococo which will be filled into chain spec
 /// Currently, we use 131 as the SS58Prefix (same as Litmus)
 fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 131)
+	parachain_properties("LIT", 18, 131)
 }
 
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;

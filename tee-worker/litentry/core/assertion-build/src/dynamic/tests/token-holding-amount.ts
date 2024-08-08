@@ -29,7 +29,7 @@ describe('TokenHoldingAmount', () => {
         await expectAssertionResult(contract, val, {
             tokenType: 'Token Holding Amount',
             tokenDesc: 'The amount of a particular token you are holding',
-            schemaUrl: assembleSchemaUrl('25-token-holding-amount/1-1-3.json'),
+            schemaUrl: assembleSchemaUrl('25-token-holding-amount/1-1-4.json'),
             assertions: [assertion],
             result,
         })
@@ -54,13 +54,8 @@ describe('TokenHoldingAmount', () => {
                         },
                         {
                             src: '$holding_amount',
-                            op: Op.GTE,
+                            op: Op.GT,
                             dst: '0',
-                        },
-                        {
-                            src: '$holding_amount',
-                            op: Op.LT,
-                            dst: '1',
                         },
                     ],
                 },
@@ -118,7 +113,7 @@ describe('TokenHoldingAmount', () => {
                         },
                         {
                             src: '$holding_amount',
-                            op: Op.GTE,
+                            op: Op.GT,
                             dst: '0',
                         },
                         {
