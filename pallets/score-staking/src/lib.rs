@@ -46,6 +46,7 @@ use frame_support::{
 	traits::{Currency, Imbalance, LockableCurrency, ReservableCurrency, StorageVersion},
 };
 use pallet_parachain_staking as ParaStaking;
+use pallet_teebag as Teebag;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{traits::CheckedSub, Perbill, SaturatedConversion};
 
@@ -85,7 +86,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + ParaStaking::Config {
+	pub trait Config: frame_system::Config + ParaStaking::Config + Teebag::Config {
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>;
@@ -150,6 +151,7 @@ pub mod pallet {
 		ScoreUpdated { who: Identity, new_score: Score },
 		ScoreRemoved { who: Identity },
 		ScoreCleared {},
+		TokenStakingAmountUpdated { account: T::AccountId, amount: BalanceOf<T> },
 		RewardDistributionStarted { total: BalanceOf<T>, distributed: BalanceOf<T> },
 		RewardDistributionCompleted {},
 		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
@@ -431,6 +433,33 @@ pub mod pallet {
 			let account = ensure_signed(origin.clone())?;
 			let payment = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?;
 			Self::claim(origin, payment.unpaid_reward)
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn update_token_staking_amount(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			amount: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin.clone())?;
+
+			let _ = Teebag::Pallet::<T>::enclave_registry(&sender)
+				.ok_or(Error::<T>::UnauthorizedOrigin)?;
+
+			Scores::<T>::try_mutate(&account, |payment| {
+				let mut p = payment.take().ok_or(Error::<T>::UserNotExist)?;
+				p.token_staking_amount = amount;
+				*payment = Some(p);
+
+				Self::deposit_event(Event::TokenStakingAmountUpdated {
+					account: account.clone(),
+					amount,
+				});
+				Ok::<(), Error<T>>(())
+			})?;
+
+			Ok(Pays::No.into())
 		}
 	}
 }
