@@ -229,14 +229,11 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			.map_err(|_| Error::Other("Failed to get storage keys".into()))?;
 		let scores_storage_keys: Vec<Vec<u8>> = scores_storage_keys_response
 			.into_iter()
-			.filter_map(|r| {
-				let hex_key = String::decode(&mut r.as_slice()).unwrap_or_default();
-				decode_hex(hex_key).ok()
-			})
+			.filter_map(decode_storage_key)
 			.collect();
 		let account_ids: Vec<AccountId> =
 			scores_storage_keys.iter().filter_map(key_to_account_id).collect();
-		let scores: Vec<ScorePayment<Balance>> = self
+		let scores: BTreeMap<AccountId, ScorePayment<Balance>> = self
 			.ocall_api
 			.get_multiple_storages_verified(
 				scores_storage_keys,
@@ -245,8 +242,15 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			)
 			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
 			.into_iter()
-			.filter_map(|entry| entry.into_tuple().1)
+			.filter_map(|entry| {
+				// TODO: check of the key needs to be decoded here
+				let storage_key = decode_storage_key(entry.key)?;
+				let account_id = key_to_account_id(&storage_key)?;
+				let score_payment = entry.value?;
+				Some((account_id, score_payment))
+			})
 			.collect();
+
 		let delegator_state_storage_keys: Vec<Vec<u8>> = account_ids
 			.iter()
 			.map(|account_id| {
@@ -258,7 +262,7 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 				)
 			})
 			.collect();
-		let delegator_states: Vec<Delegator<AccountId, Balance>> = self
+		let delegator_states: BTreeMap<AccountId, Delegator<AccountId, Balance>> = self
 			.ocall_api
 			.get_multiple_storages_verified(
 				delegator_state_storage_keys,
@@ -267,7 +271,13 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			)
 			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
 			.into_iter()
-			.filter_map(|entry| entry.into_tuple().1)
+			.filter_map(|entry| {
+				// TODO: check of the key needs to be decoded here
+				let storage_key = decode_storage_key(entry.key)?;
+				let account_id = key_to_account_id(&storage_key)?;
+				let delegator = entry.value?;
+				Some((account_id, delegator))
+			})
 			.collect();
 
 		let id_graphs_storage_keys: Vec<Vec<u8>> = account_ids
@@ -314,6 +324,11 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 
 		Ok(())
 	}
+}
+
+fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
+	let hex_key = String::decode(&mut raw_key.as_slice()).unwrap_or_default();
+	decode_hex(hex_key).ok()
 }
 
 impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
