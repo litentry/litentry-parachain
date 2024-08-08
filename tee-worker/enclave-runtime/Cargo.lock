@@ -545,7 +545,7 @@ name = "chrono"
 version = "0.4.11"
 source = "git+https://github.com/mesalock-linux/chrono-sgx#f964ae7f5f65bd2c9cd6f44a067e7980afc08ca0"
 dependencies = [
- "num-integer 0.1.41",
+ "num-integer",
  "num-traits 0.2.10",
  "sgx_tstd",
 ]
@@ -3443,7 +3443,6 @@ dependencies = [
  "log",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-parachain-staking",
- "pallet-score-staking",
  "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3",
@@ -3630,7 +3629,7 @@ source = "git+https://github.com/mesalock-linux/num-sgx#22645415542cc67551890dfd
 dependencies = [
  "num-bigint",
  "num-complex",
- "num-integer 0.1.41",
+ "num-integer",
  "num-iter",
  "num-rational",
  "num-traits 0.2.10",
@@ -3642,7 +3641,7 @@ version = "0.2.5"
 source = "git+https://github.com/mesalock-linux/num-bigint-sgx#76a5bed94dc31c32bd1670dbf72877abcf9bbc09"
 dependencies = [
  "autocfg 1.1.0",
- "num-integer 0.1.41",
+ "num-integer",
  "num-traits 0.2.10",
  "sgx_tstd",
 ]
@@ -3679,20 +3678,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-integer"
-version = "0.1.46"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
-dependencies = [
- "num-traits 0.2.16",
-]
-
-[[package]]
 name = "num-iter"
 version = "0.1.39"
 source = "git+https://github.com/mesalock-linux/num-iter-sgx#f19fc44fcad0b82a040e5a24c511e5049cc04b60"
 dependencies = [
- "num-integer 0.1.41",
+ "num-integer",
  "num-traits 0.2.10",
  "sgx_tstd",
 ]
@@ -3704,7 +3694,7 @@ source = "git+https://github.com/mesalock-linux/num-rational-sgx#be65f9ce439f3c9
 dependencies = [
  "autocfg 0.1.8",
  "num-bigint",
- "num-integer 0.1.41",
+ "num-integer",
  "num-traits 0.2.10",
  "sgx_tstd",
 ]
@@ -3891,24 +3881,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-score-staking"
-version = "0.1.0"
-dependencies = [
- "core-primitives",
- "frame-support",
- "frame-system",
- "num-integer 0.1.46",
- "pallet-parachain-staking",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "serde_json 1.0.107",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

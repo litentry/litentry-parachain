@@ -31,7 +31,7 @@ use itp_types::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
 		ParentchainEventProcessingError, ParentchainId, ProcessedEventsArtifacts,
 	},
-	Delegator, RsaRequest, ScorePayment, H256,
+	Delegator, RsaRequest, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
@@ -234,23 +234,6 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			.collect();
 		let account_ids: Vec<AccountId> =
 			scores_storage_keys.iter().filter_map(key_to_account_id).collect();
-		let scores: BTreeMap<AccountId, ScorePayment<Balance>> = self
-			.ocall_api
-			.get_multiple_storages_verified(
-				scores_storage_keys,
-				&block_header,
-				&ParentchainId::Litentry,
-			)
-			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
-			.into_iter()
-			.filter_map(|entry| {
-				// TODO: check of the key needs to be decoded here
-				let storage_key = decode_storage_key(entry.key)?;
-				let account_id = key_to_account_id(&storage_key)?;
-				let score_payment = entry.value?;
-				Some((account_id, score_payment))
-			})
-			.collect();
 
 		let delegator_state_storage_keys: Vec<Vec<u8>> = account_ids
 			.iter()

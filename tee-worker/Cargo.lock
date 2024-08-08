@@ -5083,7 +5083,6 @@ dependencies = [
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-parachain-staking",
- "pallet-score-staking",
  "pallet-teebag",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -6120,24 +6119,6 @@ dependencies = [
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42)",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-score-staking"
-version = "0.1.0"
-dependencies = [
- "core-primitives",
- "frame-support",
- "frame-system",
- "num-integer 0.1.45",
- "pallet-parachain-staking",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "serde_json 1.0.103",
- "sp-core",
- "sp-runtime",
- "sp-std 5.0.0",
 ]
 
 [[package]]
