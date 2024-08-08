@@ -53,15 +53,15 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Run data-provider-test
+      - name: Run vc correctness test
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-data-provider-test.yml up --no-build --exit-code-from lit-data-provider-test lit-data-provider-test
+          docker compose -f docker-compose.yml -f lit-vc-correctness-test.yml up --no-build --exit-code-from lit-vc-correctness-test lit-vc-correctness-test
 
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-data-provider-test.yml stop
+          docker compose -f docker-compose.yml -f lit-vc-correctness-test.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -75,6 +75,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-lit-data-provider-test
+          name: logs-lit-vc-correctness-test
           path: logs
           if-no-files-found: ignore
