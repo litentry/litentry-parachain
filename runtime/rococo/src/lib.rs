@@ -1021,11 +1021,6 @@ impl pallet_evm_assertions::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
-// Temporary for bitacross team to test
-impl pallet_bitacross_mimic::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
-
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
@@ -1267,9 +1262,7 @@ construct_runtime! {
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 		Bitacross: pallet_bitacross = 70,
-		// Temporary for bitacross team to test
-		BitacrossMimic: pallet_bitacross_mimic = 71,
-		EvmAssertions: pallet_evm_assertions = 72,
+		EvmAssertions: pallet_evm_assertions = 71,
 
 		// Developer council
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
@@ -1379,7 +1372,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
 			RuntimeCall::Bitacross(_) |
-			RuntimeCall::BitacrossMimic(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)
 		)
