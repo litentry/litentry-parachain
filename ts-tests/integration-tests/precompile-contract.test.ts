@@ -242,8 +242,8 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         console.log("EVM Account Delegator State:", staking_status);
 
         if (collator === null) {
-            console.log("Alice not candidate? Try joining")
-            let join_extrinsic = context.api.tx.parachainStaking.joinCandidates(parseInt('51000000000000000000'));
+            console.log("Alice not candidate? Try joining");
+            let join_extrinsic = context.api.tx.parachainStaking.joinCandidates(ethers.utils.parseUnits('51', 18).toString());
             await signAndSend(join_extrinsic, context.alice);
         }
 
