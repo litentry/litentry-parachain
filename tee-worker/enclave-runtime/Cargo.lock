@@ -1991,6 +1991,7 @@ dependencies = [
  "itp-utils",
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
+ "lc-parachain-extrinsic-task-sender",
  "lc-vc-task-sender",
  "litentry-hex-utils",
  "litentry-primitives",

@@ -22,6 +22,7 @@ itp-stf-state-handler = { path = "../../core-primitives/stf-state-handler", defa
 itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
+lc-parachain-extrinsic-task-sender = { path = "../../litentry/core/parachain-extrinsic-task/sender", default-features = false }
 pallet-identity-management-tee = { path = "../../litentry/pallets/identity-management", default-features = false }
 
 
@@ -85,6 +86,7 @@ std = [
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
     "lc-vc-task-sender/std",
+    "lc-parachain-extrinsic-task-sender/std",
     "sp-std/std",
 ]
 sgx = [
@@ -100,4 +102,5 @@ sgx = [
     "lc-dynamic-assertion/sgx",
     "lc-evm-dynamic-assertions/sgx",
     "lc-vc-task-sender/sgx",
+    "lc-parachain-extrinsic-task-sender/sgx",
 ]
