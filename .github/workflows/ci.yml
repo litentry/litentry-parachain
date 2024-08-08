@@ -744,7 +744,6 @@ jobs:
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
           - test_name: lit-assertion-contracts-test
-          - test_name: lit-vc-correctness-test
 
     steps:
       - uses: actions/checkout@v4

@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       docker-tag:
-        description: "client tag(e.g. p1.2.0-9701-w0.0.1-101)"
+        description: "an existing docker tag (e.g. v0.9.18)"
         required: true
         default: "latest"
+  schedule:
+    - cron: '0 13 * * 4'
+    
 jobs:
   test-data-provider:
     runs-on: ubuntu-latest
@@ -15,9 +18,13 @@ jobs:
 
       - name: Set ENV
         run: |
-          # extracting parachain version and worker version from release tag
-          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}} | cut -d'-' -f1 | sed 's/p/v/')" >> $GITHUB_ENV
-          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}} | cut -d'-' -f3 | sed 's/w/v/')" >> $GITHUB_ENV
+          if  [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "DOCKER_TAG=${{ inputs.docker-tag }}" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          
+          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}}" >> $GITHUB_ENV
+          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}}" >> $GITHUB_ENV
 
       - name: Pull litentry image optionally
         run: |
