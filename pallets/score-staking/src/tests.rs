@@ -18,8 +18,9 @@
 
 use crate::{mock::*, Error, Event, PoolState, RoundInfo, RoundSetting, ScorePayment};
 use core_primitives::{DAYS, YEARS};
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use pallet_parachain_staking::Delegator;
+use pallet_teebag::{Enclave, WorkerType};
 use sp_runtime::Perbill;
 
 fn round_reward() -> Balance {
@@ -362,4 +363,84 @@ fn claim_works() {
 			Error::<Test>::InsufficientBalance
 		);
 	});
+}
+
+#[test]
+fn update_token_staking_amount_works() {
+	new_test_ext(false).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
+		run_to_block(2);
+		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
+
+		run_to_block(3);
+		pallet_parachain_staking::DelegatorState::<Test>::insert(
+			alice(),
+			Delegator::new(bob(), bob(), 900),
+		);
+
+		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), alice().into(), 500));
+		assert_eq!(
+			ScoreStaking::scores(alice()).unwrap(),
+			ScorePayment {
+				score: 500,
+				total_reward: 0,
+				last_round_reward: 0,
+				unpaid_reward: 0,
+				token_staking_amount: 0,
+			}
+		);
+
+		assert_ok!(ScoreStaking::update_token_staking_amount(
+			RuntimeOrigin::signed(alice()),
+			alice().into(),
+			1000
+		));
+
+		assert_eq!(
+			ScoreStaking::scores(alice()).unwrap(),
+			ScorePayment {
+				score: 500,
+				total_reward: 0,
+				last_round_reward: 0,
+				unpaid_reward: 0,
+				token_staking_amount: 1000,
+			}
+		);
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::TokenStakingAmountUpdated { account: alice(), amount: 1000 },
+		));
+	})
+}
+
+#[test]
+fn update_token_staking_amount_origin_check_works() {
+	new_test_ext(false).execute_with(|| {
+		assert_noop!(
+			ScoreStaking::update_token_staking_amount(
+				RuntimeOrigin::signed(alice()),
+				alice().into(),
+				1000
+			),
+			Error::<Test>::UnauthorizedOrigin
+		);
+	})
+}
+
+#[test]
+fn update_token_staking_amount_existing_user_check_works() {
+	new_test_ext(false).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
+		assert_noop!(
+			ScoreStaking::update_token_staking_amount(
+				RuntimeOrigin::signed(alice()),
+				alice().into(),
+				1000
+			),
+			Error::<Test>::UserNotExist
+		);
+	})
 }
