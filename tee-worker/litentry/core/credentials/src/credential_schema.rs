@@ -52,10 +52,10 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 
 		Assertion::Achainable(params) => match params {
 			AchainableParams::AmountHolding(_) =>
-				Some(format!("{BASE_URL}/17-token-holding-amount/1-1-0.json")),
+				Some(format!("{BASE_URL}/17-token-holding-amount/1-1-2.json")),
 
 			AchainableParams::AmountToken(_) =>
-				Some(format!("{BASE_URL}/17-token-holding-amount/1-1-0.json")),
+				Some(format!("{BASE_URL}/17-token-holding-amount/1-1-2.json")),
 
 			AchainableParams::Amount(_) => Some(format!("{BASE_URL}/11-token-holder/1-1-0.json")),
 
@@ -86,10 +86,10 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 			Some(format!("{BASE_URL}/14-generic-discord-role/1-1-0.json")),
 
 		Assertion::BnbDomainHolding =>
-			Some(format!("{BASE_URL}/15-bnb-domain-holding-amount/1-1-0.json")),
+			Some(format!("{BASE_URL}/15-bnb-domain-holding-amount/1-1-1.json")),
 
 		Assertion::BnbDigitDomainClub(_) =>
-			Some(format!("{BASE_URL}/16-bnb-3d-4d-club-domain-holding-amount/1-1-0.json")),
+			Some(format!("{BASE_URL}/16-bnb-3d-4d-club-domain-holding-amount/1-1-1.json")),
 
 		Assertion::VIP3MembershipCard(_) =>
 			Some(format!("{BASE_URL}/19-vip3-card-holder/1-1-0.json")),
@@ -97,13 +97,13 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 		Assertion::WeirdoGhostGangHolder =>
 			Some(format!("{BASE_URL}/18-weirdoghostgang-holder/1-1-0.json")),
 
-		Assertion::LITStaking => Some(format!("{BASE_URL}/17-token-holding-amount/1-1-0.json")),
+		Assertion::LITStaking => Some(format!("{BASE_URL}/17-token-holding-amount/1-1-2.json")),
 
 		Assertion::EVMAmountHolding(_) =>
-			Some(format!("{BASE_URL}/21-evm-holding-amount/1-1-0.json")),
+			Some(format!("{BASE_URL}/21-evm-holding-amount/1-1-2.json")),
 
 		Assertion::BRC20AmountHolder =>
-			Some(format!("{BASE_URL}/20-token-holding-amount-list/1-1-0.json")),
+			Some(format!("{BASE_URL}/20-token-holding-amount-list/1-1-1.json")),
 
 		Assertion::CryptoSummary => Some(format!("{BASE_URL}/23-crypto-summary/1-1-0.json")),
 
@@ -112,7 +112,7 @@ pub fn get_schema_url(assertion: &Assertion) -> Option<String> {
 		Assertion::NftHolder(_) => Some(format!("{BASE_URL}/26-nft-holder/1-1-2.json")),
 
 		Assertion::TokenHoldingAmount(_) =>
-			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-3.json")),
+			Some(format!("{BASE_URL}/25-token-holding-amount/1-1-4.json")),
 
 		Assertion::Dynamic(..) => None,
 	}
