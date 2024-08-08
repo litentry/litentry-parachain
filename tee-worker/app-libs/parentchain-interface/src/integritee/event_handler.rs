@@ -294,29 +294,24 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 
 		let shard = executor.get_default_shard();
 
-		let graph_accounts = self
+		let accounts_graphs = self
 			.state_handler
 			.execute_on_current(&shard, |state, _| {
-				let mut accounts_id_graph_accounts: BTreeMap<AccountId, Vec<AccountId>> =
-					BTreeMap::new();
+				let mut id_graphs_accounts: BTreeMap<AccountId, Vec<AccountId>> = BTreeMap::new();
 				for id_graph_storage_key in id_graphs_storage_keys.iter() {
 					let id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
 						.iter_prefix::<Identity, IdentityContext<Runtime>>(id_graph_storage_key)
 						.unwrap_or_default();
 					let graph_accounts: Vec<AccountId> = id_graph
 						.iter()
-						.filter_map(|(identity, _)| {
-							if identity.is_web2() {
-								return None
-							}
-							identity.to_account_id()
-						})
+						.filter_map(|(identity, _)| identity.to_account_id())
 						.collect();
-					let account_id = key_to_account_id(id_graph_storage_key).unwrap();
-					accounts_id_graph_accounts.insert(account_id, graph_accounts);
+					if let Some(account_id) = key_to_account_id(id_graph_storage_key) {
+						id_graphs_accounts.insert(account_id, graph_accounts);
+					}
 				}
 
-				accounts_id_graph_accounts
+				id_graphs_accounts
 			})
 			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
 
