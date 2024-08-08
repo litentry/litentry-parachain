@@ -246,11 +246,20 @@ impl StaticEvent for AssertionCreated {
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct RewardDistributionStarted {}
+pub struct RewardDistributionStarted {
+	pub total: Balance,
+	pub distributed: Balance,
+}
 
 impl core::fmt::Display for RewardDistributionStarted {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		write!(f, "{}", RewardDistributionStarted::EVENT)
+		let message = format!(
+			"{:?} :: total: {}, distributed: {}",
+			RewardDistributionStarted::EVENT,
+			self.total,
+			self.distributed
+		);
+		write!(f, "{}", message)
 	}
 }
 
