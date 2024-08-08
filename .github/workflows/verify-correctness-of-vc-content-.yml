@@ -18,10 +18,14 @@ jobs:
 
       - name: Set ENV
         run: |
-          if  [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "DOCKER_TAG=${{ inputs.docker-tag }}" >> $GITHUB_ENV
           else
             echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          fi
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
