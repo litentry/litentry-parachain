@@ -35,6 +35,7 @@ use itp_types::{
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
+// use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
@@ -315,7 +316,6 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			})
 			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
 
-		// TODO: calculate new scores and send extrinsic to update them
 		let mut new_scores_rewards: BTreeMap<AccountId, Balance> = BTreeMap::new();
 
 		for account_id in account_ids.iter() {
@@ -333,6 +333,12 @@ impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities
 			}
 		}
 
+		// let extrinsic_sender = ParachainExtrinsicSender::new();
+
+		// TODO: after the new calls are created in ScoreStaking pallet
+		// - create a call to update the scores for each account with the new rewards
+		// - submit the call to the extrinsic sender
+		// - send another extrinsic to indicate that the reward distribution has finished
 
 		Ok(())
 	}
