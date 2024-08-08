@@ -243,7 +243,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         if (collator === null) {
             console.log("Alice not candidate? Try joining")
-            let join_extrinsic = context.api.tx.parachainStaking.join_candidates(parseInt('51000000000000000000'));
+            let join_extrinsic = context.api.tx.parachainStaking.joinCandidates(parseInt('51000000000000000000'));
             await signAndSend(join_extrinsic, context.alice);
         }
 
