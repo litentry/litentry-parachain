@@ -8018,6 +8018,8 @@ dependencies = [
  "num-integer",
  "pallet-balances",
  "pallet-parachain-staking",
+ "pallet-teebag",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "serde",
