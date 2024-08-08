@@ -151,7 +151,13 @@ fn score_staking_works() {
 		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), alice().into(), 500));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
-			ScorePayment { score: 500, total_reward: 0, last_round_reward: 0, unpaid_reward: 0 }
+			ScorePayment {
+				score: 500,
+				total_reward: 0,
+				last_round_reward: 0,
+				unpaid_reward: 0,
+				token_staking_amount: 0,
+			}
 		);
 		assert_eq!(ScoreStaking::total_score(), 500);
 		assert_eq!(ScoreStaking::score_user_count(), 1);
@@ -180,6 +186,7 @@ fn score_staking_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
+				token_staking_amount: 0,
 			}
 		);
 
@@ -198,6 +205,7 @@ fn score_staking_works() {
 				total_reward: 2 * round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 2 * round_reward(),
+				token_staking_amount: 0,
 			}
 		);
 
@@ -219,6 +227,7 @@ fn score_staking_works() {
 				total_reward: 2 * round_reward() + round_reward() * 3 / 4,
 				last_round_reward: round_reward() * 3 / 4,
 				unpaid_reward: 2 * round_reward() + round_reward() * 3 / 4,
+				token_staking_amount: 0,
 			}
 		);
 
@@ -250,6 +259,7 @@ fn score_staking_works() {
 				unpaid_reward: 2 * round_reward() +
 					round_reward() * 3 / 4 +
 					round_reward() * 2 * 3 / (3 * 5),
+				token_staking_amount: 0,
 			}
 		);
 
@@ -260,6 +270,7 @@ fn score_staking_works() {
 				total_reward: round_reward() * 1 * 4 / (3 * 5),
 				last_round_reward: round_reward() * 1 * 4 / (3 * 5),
 				unpaid_reward: round_reward() * 1 * 4 / (3 * 5),
+				token_staking_amount: 0,
 			}
 		);
 
@@ -309,6 +320,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
+				token_staking_amount: 0,
 			}
 		);
 
@@ -324,6 +336,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
+				token_staking_amount: 0,
 			}
 		);
 
@@ -339,6 +352,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
+				token_staking_amount: 0,
 			}
 		);
 
