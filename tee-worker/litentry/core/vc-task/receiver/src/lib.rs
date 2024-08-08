@@ -318,7 +318,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 			send_vc_response(
 				connection_hash,
 				context.clone(),
-				Err(RequestVcErrorDetail::UnexpectedCall("Expected request_batch_vc ".to_string())),
+				Err(RequestVcErrorDetail::UnexpectedCall("Expected request_vc or request_batch_vc ".to_string())),
 				0u8,
 				0u8,
 				false,
