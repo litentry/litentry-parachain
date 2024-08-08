@@ -114,10 +114,9 @@ fn default_mint_works() {
 
 		// run to next reward distribution round
 		run_to_block(7);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: 0,
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted { total: round_reward(), distributed: 0 },
+		));
 	});
 }
 
@@ -168,10 +167,12 @@ fn score_staking_works() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward(),
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				total: round_reward(),
+				distributed: round_reward(),
+			},
+		));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -184,10 +185,12 @@ fn score_staking_works() {
 
 		// alice's winning should accumulate
 		run_to_block(12);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward(),
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				total: round_reward(),
+				distributed: round_reward(),
+			},
+		));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -203,10 +206,12 @@ fn score_staking_works() {
 		pallet_parachain_staking::Total::<Test>::put(1600);
 
 		run_to_block(17);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward() * 3 / 4,
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				total: round_reward(),
+				distributed: round_reward() * 3 / 4,
+			},
+		));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -229,7 +234,7 @@ fn score_staking_works() {
 		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
-		// System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
+		// System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardDistributionStarted {
 		// 	total: round_reward(),
 		// 	distributed: round_reward() * 2 * 3 / (3 * 5) + round_reward() * 1 * 4 / (3 * 5),
 		// }));
@@ -291,10 +296,12 @@ fn claim_works() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward(),
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				total: round_reward(),
+				distributed: round_reward(),
+			},
+		));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {

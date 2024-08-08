@@ -150,8 +150,8 @@ pub mod pallet {
 		ScoreUpdated { who: Identity, new_score: Score },
 		ScoreRemoved { who: Identity },
 		ScoreCleared {},
-		RewardDistributionStarted {},
-		RewardDistributionCompleted { total: BalanceOf<T>, distributed: BalanceOf<T> },
+		RewardDistributionStarted { total: BalanceOf<T>, distributed: BalanceOf<T> },
+		RewardDistributionCompleted {},
 		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
 	}
 
@@ -269,7 +269,10 @@ pub mod pallet {
 				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 			}
 
-			Self::deposit_event(Event::<T>::RewardDistributionStarted {});
+			Self::deposit_event(Event::<T>::RewardDistributionStarted {
+				total: round_reward,
+				distributed: all_user_reward,
+			});
 
 			weight
 		}
