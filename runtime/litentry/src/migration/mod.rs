@@ -123,7 +123,7 @@ where
 		// Check Total = sum CandidateInfo total count
 		let mut total: BalanceOf<T> = 0u128.into();
 		for (account, delegations) in <TopDelegations<T>>::iter() {
-			log::info!("Checking Top Delegations Collator: {:?}", account);
+			log::info!("Checking Top Delegations Collator: {:?}", account.encode());
 			// Start calculating collator delegation sum
 			let mut collator_delegations_sum: BalanceOf<T> = 0u128.into();
 
@@ -149,11 +149,15 @@ where
 		// Get all ordered_set of bond
 		let ordered_set = <CandidatePool<T>>::get();
 		let mut candidate_pool_sum: BalanceOf<T> = 0u128.into();
+
+		// Make sure the number of Order set is correct
+		assert_eq!(ordered_set.0.len(), 9);
 		for bond in ordered_set.0.iter() {
 			candidate_pool_sum += bond.amount;
 		}
 
 		// Check CandidatePool element's amount total = total (self bond + sum of delegation)
+		log::info!("Checking total: {:?}", total);
 		assert_eq!(total, candidate_pool_sum);
 
 		Ok(())
