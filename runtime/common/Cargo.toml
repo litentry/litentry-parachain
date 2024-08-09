@@ -38,7 +38,6 @@ xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 xcm-simulator = { workspace = true, optional = true }
 
-orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
 polkadot-parachain = { workspace = true }
@@ -88,7 +87,6 @@ std = [
     "pallet-asset-manager/std",
     "pallet-extrinsic-filter/std",
     "pallet-teebag/std",
-    "orml-traits/std",
     "orml-xtokens/std",
 ]
 
