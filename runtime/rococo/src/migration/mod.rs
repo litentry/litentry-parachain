@@ -99,7 +99,7 @@ where
 		}
 
 		// Fix CandidatePool
-		candidates.sort_by(|a, b| a.amount.cmp(&b.amount));
+		candidates.0.sort_by(|a, b| a.amount.cmp(&b.amount));
 		<CandidatePool<T>>::put(candidates);
 		// Fix Total
 		<Total<T>>::put(total);
