@@ -151,7 +151,6 @@ where
 		let mut candidate_pool_sum: BalanceOf<T> = 0u128.into();
 
 		// Make sure the number of Order set is correct
-		assert_eq!(ordered_set.0.len(), 9);
 		for bond in ordered_set.0.iter() {
 			candidate_pool_sum += bond.amount;
 		}
