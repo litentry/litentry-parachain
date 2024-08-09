@@ -265,6 +265,7 @@ jobs:
         type:
           - tee # TODO: switch to identity
           - bitacross
+    name: ${{ matrix.type }}
     steps:
       - uses: actions/checkout@v4
 
@@ -609,6 +610,7 @@ jobs:
           - litmus
           - litentry
           - rococo
+    name: ${{ matrix.chain }}
     steps:
       - uses: actions/checkout@v4
 
@@ -744,7 +746,7 @@ jobs:
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
           - test_name: lit-assertion-contracts-test
-
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -828,6 +830,7 @@ jobs:
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -904,6 +907,7 @@ jobs:
       matrix:
         include:
           - test_name: lit-sign-bitcoin
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
