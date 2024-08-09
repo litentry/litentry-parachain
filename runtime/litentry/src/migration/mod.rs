@@ -78,17 +78,17 @@ where
 			// Patching the missed total value converting
 			delegations.total = delegations.total.saturating_mul(DECIMAL_CONVERTOR.into());
 
-			// Fix TopDelegations
-			<TopDelegations<T>>::insert(&account, delegations);
-
 			// Get CandidateInfo of the same collator key
 			let mut metadata = <CandidateInfo<T>>::get(&account).unwrap();
 			// Self + delegation total
 			metadata.total_counted = metadata.bond + delegations.total;
 
+			// Fix TopDelegations
+			<TopDelegations<T>>::insert(&account, delegations);
+
 			// Bond use its owner value to determine if equal without checking its amount
 			// We need to check amount later
-			candidates.insert(Bond { owner: account, amount: metadata.total_counted });
+			candidates.insert(Bond { owner: account.clone(), amount: metadata.total_counted });
 			// Add total
 			total = total.saturating_add(metadata.total_counted);
 
@@ -115,7 +115,7 @@ where
 		// Check CandidateInfo total count = self bond + sum of delegation
 		// Check Total = sum CandidateInfo total count
 		let mut total: BalanceOf<T> = 0u128.into();
-		for (account, mut delegations) in <TopDelegations<T>>::iter() {
+		for (account, delegations) in <TopDelegations<T>>::iter() {
 			log::info!("Checking Top Delegations Collator: {}", account);
 			// Start calculating collator delegation sum
 			let mut collator_delegations_sum: BalanceOf<T> = 0u128.into();
