@@ -138,7 +138,8 @@ where
 			// Check CandidateInfo total count = self bond + sum of delegation
 			assert_eq!(metadata.total_counted, metadata.bond + collator_delegations_sum);
 
-			total += collator_delegations_sum;
+			// Collator self + Collator delegations
+			total += metadata.bond + collator_delegations_sum;
 		}
 		// Check Total = sum CandidateInfo total count
 		assert_eq!(total, <Total<T>>::get());
