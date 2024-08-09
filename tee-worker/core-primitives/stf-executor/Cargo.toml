@@ -1,6 +1,6 @@
 [package]
 name = "itp-stf-executor"
-version = "0.9.0"
+version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
@@ -12,7 +12,6 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 # local dependencies
-ita-sgx-runtime = { path = "../../app-libs/sgx-runtime", default-features = false }
 itp-enclave-metrics = { path = "../enclave-metrics", default-features = false }
 itp-node-api = { path = "../node-api", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
@@ -44,9 +43,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 itc-parentchain-test = { path = "../../core/parentchain/test", optional = true, default-features = false }
 itp-test = { path = "../test", default-features = false, optional = true }
 
-# litentry
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-
 [dev-dependencies]
 itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] }
 itp-stf-interface = { path = "../stf-interface", features = ["mocks"] }
@@ -74,8 +70,6 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
-    # litentry
-    "litentry-primitives/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -87,8 +81,6 @@ sgx = [
     "itp-top-pool-author/sgx",
     "itp-time-utils/sgx",
     "thiserror_sgx",
-    # litentry
-    "litentry-primitives/sgx",
 ]
 test = [
     "itc-parentchain-test",

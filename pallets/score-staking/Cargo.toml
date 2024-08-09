@@ -9,7 +9,6 @@ num-integer = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true, features = ["alloc"] }
 
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
@@ -31,7 +30,6 @@ default = ["std"]
 std = [
     "parity-scale-codec/std",
     "serde/std",
-    "serde_json/std",
     "num-integer/std",
     "frame-benchmarking?/std",
     "frame-support/std",

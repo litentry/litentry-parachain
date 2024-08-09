@@ -2,7 +2,7 @@
 authors = ['Trust Computing GmbH <info@litentry.com>']
 description = 'Proc-macros used by Litentry crates.'
 name = "litentry-proc-macros"
-version = "0.9.12"
+version = "0.1.0"
 edition = "2021"
 
 [lib]

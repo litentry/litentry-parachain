@@ -22,11 +22,8 @@ k256 = { version = "0.13.3", default-features = false, features = ["ecdsa-core",
 log = { version = "0.4", default-features = false }
 
 # local
-bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
-itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
-itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
-itp-types = { path = "../../../core-primitives/types", default-features = false }
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
 rand = { version = "0.8.5" }
@@ -37,20 +34,15 @@ default = ["std"]
 sgx-test = ["sgx"]
 std = [
     "musig2",
-    "itc-direct-rpc-client/std",
     "log/std",
-    "itp-types/std",
-    "bc-enclave-registry/std",
-    "itp-rpc/std",
+    "litentry-primitives/std",
     "itp-sgx-crypto/std",
     "rand",
 ]
 sgx = [
     "sgx_tstd",
     "musig2_sgx",
-    "itc-direct-rpc-client/sgx",
-    "bc-enclave-registry/sgx",
-    "itp-rpc/sgx",
+    "litentry-primitives/sgx",
     "itp-sgx-crypto/sgx",
     "sgx_rand",
 ]

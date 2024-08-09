@@ -12,7 +12,6 @@ tungstenite_sgx = { package = "tungstenite", optional = true, git = "https://git
 webpki_sgx = { package = "webpki", optional = true, git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_sgx" }
 
 # no-std dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 log = { version = "0.4", default-features = false }
 serde_json = { version = "1.0", default-features = false }
 url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
@@ -24,7 +23,6 @@ webpki = { version = "0.21", optional = true }
 
 # local dependencies
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
-itp-types = { path = "../../core-primitives/types", default-features = false }
 
 [features]
 default = ["std"]
@@ -41,6 +39,5 @@ std = [
     "tungstenite",
     "url/std",
     "itp-rpc/std",
-    "itp-types/std",
     "log/std",
 ]

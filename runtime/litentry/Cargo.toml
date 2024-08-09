@@ -2,9 +2,10 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'litentry-parachain-runtime'
-version = '0.9.17'
+version = '0.1.0'
 
 [dependencies]
+hex = { workspace = true, optional = true }
 hex-literal = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
@@ -14,6 +15,7 @@ sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-core = { workspace = true }
+sp-debug-derive = { workspace = true, features = ["force-debug"], optional = true }
 sp-inherents = { workspace = true }
 sp-io = { workspace = true }
 sp-offchain = { workspace = true }
@@ -221,6 +223,8 @@ std = [
     "moonbeam-rpc-primitives-txpool/std",
 ]
 try-runtime = [
+    "hex",
+    "sp-debug-derive/std",
     "cumulus-pallet-aura-ext/try-runtime",
     "cumulus-pallet-dmp-queue/try-runtime",
     "cumulus-pallet-parachain-system/try-runtime",
