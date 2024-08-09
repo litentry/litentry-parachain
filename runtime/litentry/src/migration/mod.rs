@@ -99,6 +99,7 @@ where
 		}
 
 		// Fix CandidatePool
+		candidates.sort_by(|a, b| a.amount.cmp(&b.amount));
 		<CandidatePool<T>>::put(candidates);
 		// Fix Total
 		<Total<T>>::put(total);
@@ -108,6 +109,7 @@ where
 
 	// Check Top Delegation total = sum, collator wise
 	// Check CandidateInfo total count = self bond + sum of delegation, collator wise
+	// Check CandidatePool =
 	// Check Total = sum CandidateInfo total count
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
@@ -116,7 +118,7 @@ where
 		// Check Total = sum CandidateInfo total count
 		let mut total: BalanceOf<T> = 0u128.into();
 		for (account, delegations) in <TopDelegations<T>>::iter() {
-			log::info!("Checking Top Delegations Collator: {}", account);
+			log::info!("Checking Top Delegations Collator: {:?}", account);
 			// Start calculating collator delegation sum
 			let mut collator_delegations_sum: BalanceOf<T> = 0u128.into();
 
@@ -129,12 +131,25 @@ where
 
 			let metadata = <CandidateInfo<T>>::get(account).unwrap();
 			// Check CandidateInfo total count = self bond + sum of delegation
-			assert_eq!(metadata.bond + metadata.total_counted, collator_delegations_sum);
+			assert_eq!(metadata.total_counted, metadata.bond + collator_delegations_sum);
 
 			total += collator_delegations_sum;
 		}
 		// Check Total = sum CandidateInfo total count
 		assert_eq!(total, <Total<T>>::get());
+
+		// It is hard to check CandidatePool without iterating vector
+		// So we just check its sum = Total
+		// Get all ordered_set of bond
+		let ordered_set = <CandidatePool<T>>::get();
+		let mut candidate_pool_sum: BalanceOf<T> = 0u128.into();
+		for bond in ordered_set.0.iter() {
+			candidate_pool_sum += bond.amount;
+		}
+
+		// Check CandidatePool element's amount total = total (self bond + sum of delegation)
+		assert_eq!(total, candidate_pool_sum);
+
 		Ok(())
 	}
 }
