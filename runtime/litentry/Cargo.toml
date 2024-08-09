@@ -15,6 +15,7 @@ sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-core = { workspace = true }
+sp-debug-derive = { workspace = true, features = ["force-debug"], optional = true }
 sp-inherents = { workspace = true }
 sp-io = { workspace = true }
 sp-offchain = { workspace = true }
@@ -223,6 +224,7 @@ std = [
 ]
 try-runtime = [
     "hex",
+    "sp-debug-derive/std",
     "cumulus-pallet-aura-ext/try-runtime",
     "cumulus-pallet-dmp-queue/try-runtime",
     "cumulus-pallet-parachain-system/try-runtime",
