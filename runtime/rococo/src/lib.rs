@@ -821,6 +821,7 @@ impl pallet_sudo::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
+	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
 }
 
 parameter_types! {
@@ -1335,8 +1336,12 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::ExtrinsicFilter(_) |
 				RuntimeCall::Multisig(_) |
 				RuntimeCall::Council(_) |
+				RuntimeCall::CouncilMembership(_) |
 				RuntimeCall::TechnicalCommittee(_) |
-				RuntimeCall::DeveloperCommittee(_)
+				RuntimeCall::TechnicalCommitteeMembership(_) |
+				RuntimeCall::Utility(_) |
+				// Temp: should be removed after the one-time burn
+				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
 		) {
 			// always allow core calls
 			return true
