@@ -5,6 +5,7 @@ name = 'litentry-parachain-runtime'
 version = '0.9.17'
 
 [dependencies]
+hex = { workspace = true, optional = true }
 hex-literal = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
@@ -221,6 +222,7 @@ std = [
     "moonbeam-rpc-primitives-txpool/std",
 ]
 try-runtime = [
+    "hex",
     "cumulus-pallet-aura-ext/try-runtime",
     "cumulus-pallet-dmp-queue/try-runtime",
     "cumulus-pallet-parachain-system/try-runtime",

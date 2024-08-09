@@ -123,7 +123,7 @@ where
 		// Check Total = sum CandidateInfo total count
 		let mut total: BalanceOf<T> = 0u128.into();
 		for (account, delegations) in <TopDelegations<T>>::iter() {
-			log::info!("Checking Top Delegations Collator: {:?}", account.encode());
+			log::info!("Checking Top Delegations Collator: {}", hex::encode(account.encode()));
 			// Start calculating collator delegation sum
 			let mut collator_delegations_sum: BalanceOf<T> = 0u128.into();
 
