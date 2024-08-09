@@ -19,22 +19,15 @@ use frame_support::{
 	migration::storage_key_iter,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
-	Blake2_128Concat, Twox64Concat,
+	Twox64Concat,
 };
 use sp_runtime::Saturating;
 use sp_std::{convert::From, marker::PhantomData, vec::Vec};
 
 use pallet_parachain_staking::{
-	set::OrderedSet, BalanceOf, Bond, CandidateInfo, CandidateMetadata, CandidatePool, Delegations,
-	TopDelegations, Total,
+	BalanceOf, Bond, CandidateInfo, CandidatePool, Delegations, TopDelegations, Total,
 };
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
-
-#[cfg(feature = "try-runtime")]
-use parity_scale_codec::Encode;
-#[cfg(feature = "try-runtime")]
-use sp_std::collections::btree_map::BTreeMap;
-use storage::migration::get_storage_value;
 
 // Fix Parachain Staking Storage for missing migrating TopDelegations total
 pub struct FixParachainStakingStorage<T>(PhantomData<T>);
@@ -89,13 +82,13 @@ where
 			<TopDelegations<T>>::insert(&account, delegations);
 
 			// Get CandidateInfo of the same collator key
-			let mut metadata = <CandidateInfo<T>>::get(&collator).unwrap();
+			let mut metadata = <CandidateInfo<T>>::get(&account).unwrap();
 			// Self + delegation total
 			metadata.total_counted = metadata.bond + delegations.total;
 
 			// Bond use its owner value to determine if equal without checking its amount
 			// We need to check amount later
-			candidates.insert(Bond { owner: candidate, amount: metadata.total_counted });
+			candidates.insert(Bond { owner: account, amount: metadata.total_counted });
 			// Add total
 			total = total.saturating_add(metadata.total_counted);
 
