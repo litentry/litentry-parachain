@@ -548,26 +548,24 @@ where
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	match request {
-		BitAcrossRequest::Request(aes_request, sender) => {
-			match handle_direct_call(aes_request, context) {
-				Ok((processing_ret, to_process)) => {
-					if let Some(processing_ret) = processing_ret {
-						if let Err(e) = sender.send(Ok(processing_ret)) {
-							warn!("Unable to submit response back to the handler: {:?}", e);
-						}
-					}
-					to_process
-				},
-				Err(e) => {
-					if let Err(e) = sender.send(Err(e)) {
+		BitAcrossRequest::Request(request, sender) => match handle_direct_call(request, context) {
+			Ok((processing_ret, to_process)) => {
+				if let Some(processing_ret) = processing_ret {
+					if let Err(e) = sender.send(Ok(processing_ret)) {
 						warn!("Unable to submit response back to the handler: {:?}", e);
 					}
-					None
-				},
-			}
+				}
+				to_process
+			},
+			Err(e) => {
+				if let Err(e) = sender.send(Err(e)) {
+					warn!("Unable to submit response back to the handler: {:?}", e);
+				}
+				None
+			},
 		},
-		BitAcrossRequest::ShareCeremonyData(aes_request) =>
-			handle_ceremony_round_call(aes_request, context).unwrap_or_default(),
+		BitAcrossRequest::ShareCeremonyData(request) =>
+			handle_ceremony_round_call(request, context).unwrap_or_default(),
 	}
 }
 

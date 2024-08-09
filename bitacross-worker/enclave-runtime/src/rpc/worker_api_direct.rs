@@ -568,8 +568,8 @@ fn get_request_from_params(params: Params) -> Result<PlainRequest, String> {
 	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
 
-	let request =
-		PlainRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+	let request = PlainRequest::from_hex(s)
+		.map_err(|e| format!("PlainRequest construction error: {:?}", e))?;
 	Ok(request)
 }
 
