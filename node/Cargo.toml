@@ -57,7 +57,6 @@ sp-transaction-pool = { workspace = true, features = ["std"] }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
-fc-consensus = { workspace = true }
 fc-db = { workspace = true }
 fc-mapping-sync = { workspace = true }
 fc-rpc = { workspace = true }

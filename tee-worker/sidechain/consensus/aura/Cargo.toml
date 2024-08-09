@@ -40,7 +40,6 @@ its-state = { path = "../../state", default-features = false }
 its-validateer-fetch = { path = "../../validateer-fetch", default-features = false }
 
 # litentry
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 
 [dev-dependencies]

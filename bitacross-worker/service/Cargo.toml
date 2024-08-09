@@ -60,7 +60,6 @@ substrate-api-client = { default-features = false, features = ["std", "sync-api"
 
 # Substrate dependencies
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", features = ["full_crypto"] }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -68,7 +67,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 # litentry
 config = "0.13.3"
-litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 
 [features]
@@ -76,7 +74,6 @@ default = []
 offchain-worker = ["itp-settings/offchain-worker"]
 development = [
     "itp-settings/development",
-    "litentry-macros/development",
     "litentry-primitives/development",
 ]
 dcap = []

@@ -7,16 +7,11 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.40"
 jsonrpsee = { version = "0.2.0-alpha.7", features = ["full"] }
-log = "0.4"
 tokio = { version = "1.6.1", features = ["full"] }
 
 # local
-itp-enclave-api = { path = "../../core-primitives/enclave-api" }
-itp-rpc = { path = "../../core-primitives/rpc" }
-itp-utils = { path = "../../core-primitives/utils" }
 its-peer-fetch = { path = "../../sidechain/peer-fetch" }
 its-primitives = { path = "../../sidechain/primitives" }
-its-rpc-handler = { path = "../../sidechain/rpc-handler" }
 its-storage = { path = "../../sidechain/storage" }
 
 [features]
