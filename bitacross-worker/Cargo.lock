@@ -558,7 +558,7 @@ dependencies = [
 
 [[package]]
 name = "bitacross-worker"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1006,7 +1006,7 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "core-primitives"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "base58",
  "frame-support",
@@ -2855,7 +2855,7 @@ dependencies = [
 
 [[package]]
 name = "ita-parentchain-interface"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
  "bc-relayer-registry",
@@ -2885,7 +2885,7 @@ dependencies = [
 
 [[package]]
 name = "ita-sgx-runtime"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -2907,7 +2907,7 @@ dependencies = [
 
 [[package]]
 name = "ita-stf"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2956,7 +2956,7 @@ dependencies = [
 
 [[package]]
 name = "itc-direct-rpc-server"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-tls-websocket-server",
  "itp-rpc",
@@ -2975,7 +2975,7 @@ dependencies = [
 
 [[package]]
 name = "itc-offchain-worker-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-light-client",
  "itp-extrinsics-factory",
@@ -2998,7 +2998,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-block-import-dispatcher",
  "itc-parentchain-block-importer",
@@ -3011,7 +3011,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-block-import-dispatcher"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-block-importer",
  "itp-import-queue",
@@ -3024,7 +3024,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-block-importer"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "ita-stf",
  "itc-parentchain-indirect-calls-executor",
@@ -3046,7 +3046,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-indirect-calls-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
  "bc-relayer-registry",
@@ -3078,7 +3078,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-light-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "finality-grandpa",
  "itc-parentchain-test",
@@ -3100,7 +3100,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-test"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "sp-runtime",
@@ -3108,7 +3108,7 @@ dependencies = [
 
 [[package]]
 name = "itc-rest-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
  "http 0.2.1",
@@ -3126,7 +3126,7 @@ dependencies = [
 
 [[package]]
 name = "itc-rpc-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "base58",
  "env_logger",
@@ -3153,7 +3153,7 @@ dependencies = [
 
 [[package]]
 name = "itc-tls-websocket-server"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bit-vec",
  "chrono 0.4.26",
@@ -3212,7 +3212,7 @@ checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 
 [[package]]
 name = "itp-api-client-extensions"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-api-client-types",
  "itp-types",
@@ -3223,7 +3223,7 @@ dependencies = [
 
 [[package]]
 name = "itp-api-client-types"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "substrate-api-client",
@@ -3279,7 +3279,7 @@ dependencies = [
 
 [[package]]
 name = "itp-enclave-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "hex",
@@ -3304,14 +3304,14 @@ dependencies = [
 
 [[package]]
 name = "itp-enclave-api-ffi"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sgx_types",
 ]
 
 [[package]]
 name = "itp-enclave-metrics"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
@@ -3319,7 +3319,7 @@ dependencies = [
 
 [[package]]
 name = "itp-extrinsics-factory"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-node-api",
  "itp-nonce-cache",
@@ -3337,7 +3337,7 @@ dependencies = [
 
 [[package]]
 name = "itp-hashing"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sp-core",
 ]
@@ -3354,14 +3354,14 @@ dependencies = [
 
 [[package]]
 name = "itp-networking-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sgx_tstd",
 ]
 
 [[package]]
 name = "itp-node-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-api-client-extensions",
  "itp-api-client-types",
@@ -3372,7 +3372,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-factory"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-api-client-types",
  "sp-core",
@@ -3381,7 +3381,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-metadata"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-api-client-types",
@@ -3392,7 +3392,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-metadata-provider"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-stf-primitives",
@@ -3412,7 +3412,7 @@ dependencies = [
 
 [[package]]
 name = "itp-ocall-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-storage",
@@ -3426,7 +3426,7 @@ dependencies = [
 
 [[package]]
 name = "itp-primitives-cache"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "lazy_static",
  "sgx_tstd",
@@ -3436,7 +3436,7 @@ dependencies = [
 
 [[package]]
 name = "itp-rpc"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "parity-scale-codec",
@@ -3447,11 +3447,11 @@ dependencies = [
 
 [[package]]
 name = "itp-settings"
-version = "0.9.0"
+version = "0.1.0"
 
 [[package]]
 name = "itp-sgx-crypto"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "aes",
  "derive_more",
@@ -3474,7 +3474,7 @@ dependencies = [
 
 [[package]]
 name = "itp-sgx-externalities"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "environmental 1.1.3",
@@ -3497,7 +3497,7 @@ dependencies = [
 
 [[package]]
 name = "itp-sgx-runtime-primitives"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-system",
  "pallet-balances",
@@ -3516,7 +3516,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "itc-parentchain-test",
@@ -3556,7 +3556,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-primitives"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-sgx-runtime-primitives",
@@ -3569,7 +3569,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-state-handler"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-hashing",
  "itp-settings",
@@ -3594,7 +3594,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-state-observer"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "log 0.4.20",
@@ -3605,7 +3605,7 @@ dependencies = [
 
 [[package]]
 name = "itp-storage"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "frame-metadata",
@@ -3625,7 +3625,7 @@ dependencies = [
 
 [[package]]
 name = "itp-test"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "itp-node-api",
@@ -3654,7 +3654,7 @@ dependencies = [
 
 [[package]]
 name = "itp-time-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.26",
@@ -3663,7 +3663,7 @@ dependencies = [
 
 [[package]]
 name = "itp-top-pool"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "byteorder 1.4.3",
  "derive_more",
@@ -3688,7 +3688,7 @@ dependencies = [
 
 [[package]]
 name = "itp-top-pool-author"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "futures 0.3.28",
@@ -3712,7 +3712,7 @@ dependencies = [
 
 [[package]]
 name = "itp-types"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-system",
  "itp-sgx-crypto",
@@ -3731,7 +3731,7 @@ dependencies = [
 
 [[package]]
 name = "itp-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "litentry-hex-utils",
@@ -4093,14 +4093,14 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 
 [[package]]
 name = "litentry-hex-utils"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "hex",
 ]
 
 [[package]]
 name = "litentry-macros"
-version = "0.9.12"
+version = "0.1.0"
 
 [[package]]
 name = "litentry-primitives"
@@ -4130,7 +4130,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-proc-macros"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5005,7 +5005,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-parentchain"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",

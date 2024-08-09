@@ -1173,7 +1173,7 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "core-primitives"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "base58",
  "frame-support",
@@ -5515,7 +5515,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-hex-utils"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "hex",
  "parity-scale-codec",
@@ -5523,11 +5523,11 @@ dependencies = [
 
 [[package]]
 name = "litentry-macros"
-version = "0.9.12"
+version = "0.1.0"
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -5617,7 +5617,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-proc-macros"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5627,7 +5627,7 @@ dependencies = [
 
 [[package]]
 name = "litmus-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -7817,7 +7817,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-parentchain"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "env_logger 0.9.3",
  "frame-support",
@@ -10621,7 +10621,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -10893,7 +10893,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-parachain-system",

@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'core-primitives'
-version = '0.9.12'
+version = '0.1.0'
 
 [dependencies]
 base58 = { workspace = true }
