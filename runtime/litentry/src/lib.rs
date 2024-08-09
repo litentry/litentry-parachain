@@ -134,19 +134,7 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplacePalletIdentityStorage<Runtime>,
-		migration::ReplacePalletMultisigStorage<Runtime>,
-		migration::ReplacePalletProxyStorage<Runtime>,
-		migration::ReplacePalletVestingStorage<Runtime>,
-		migration::ReplacePalletBountyStorage<Runtime>,
-		migration::ReplaceTreasuryStorage<Runtime>,
-		migration::ReplacePreImageStorage<Runtime>,
-		migration::ReplaceDemocracyStorage<Runtime>,
-		migration::ReplaceParachainStakingStorage<Runtime>,
-		migration::ReplaceBalancesRelatedStorage<Runtime>,
-		migration::ReplaceBridgeRelatedStorage<Runtime>,
-	),
+	(migration::FixParachainStakingStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
