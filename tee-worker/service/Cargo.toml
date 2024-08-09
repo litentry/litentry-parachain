@@ -67,8 +67,6 @@ substrate-api-client = { default-features = false, features = ["std", "sync-api"
 
 # Substrate dependencies
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", features = ["full_crypto"] }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -76,11 +74,9 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 # litentry
 config = "0.13.3"
-ita-stf = { path = "../app-libs/stf", default-features = false }
 lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false }
-litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
 litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 
@@ -90,7 +86,6 @@ evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 development = [
-    "ita-stf/development",
     "itp-settings/development",
     "lc-data-providers/development",
     "litentry-macros/development",

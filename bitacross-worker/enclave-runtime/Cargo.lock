@@ -146,12 +146,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52f63c5c1316a16a4b35eaac8b76a98248961a533f061684cb2a7cb0eafb6c6"
 
 [[package]]
-name = "array-bytes"
-version = "6.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b1c5a481ec30a5abd8dfbd94ab5cf1bb4e9a66be7f1b3b322f2f1170c200fd"
-
-[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -266,7 +260,6 @@ version = "0.1.0"
 dependencies = [
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -279,11 +272,7 @@ dependencies = [
 name = "bc-musig2-ceremony"
 version = "0.1.0"
 dependencies = [
- "bc-enclave-registry",
- "itc-direct-rpc-client",
- "itp-rpc",
  "itp-sgx-crypto",
- "itp-types",
  "k256",
  "litentry-primitives",
  "log",
@@ -297,7 +286,6 @@ dependencies = [
 name = "bc-musig2-event"
 version = "0.1.0"
 dependencies = [
- "bc-enclave-registry",
  "bc-musig2-ceremony",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
@@ -306,11 +294,9 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-types",
  "itp-utils",
- "k256",
  "lc-direct-call",
  "litentry-primitives",
  "log",
- "musig2",
  "parity-scale-codec",
  "sgx_crypto_helper",
  "sgx_rand",
@@ -325,7 +311,6 @@ version = "0.1.0"
 dependencies = [
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -340,7 +325,6 @@ version = "0.1.0"
 dependencies = [
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -361,7 +345,6 @@ dependencies = [
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
- "hex",
  "ita-stf",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
@@ -371,7 +354,6 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
- "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
  "log",
@@ -689,19 +671,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
-dependencies = [
- "derive_more",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "const-oid"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,9 +705,7 @@ dependencies = [
  "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
- "ring 0.16.20",
  "scale-info",
- "serde 1.0.204",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1006,26 +973,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "enclave-bridge-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.12.11-polkadot-v0.9.42#094b1e982b4637ebfbf5afb985100417215d49a0"
-dependencies = [
- "common-primitives",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.204",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
- "array-bytes 6.1.0",
  "bc-enclave-registry",
  "bc-musig2-ceremony",
  "bc-relayer-registry",
@@ -1034,7 +984,6 @@ dependencies = [
  "bc-task-sender",
  "cid",
  "derive_more",
- "enclave-bridge-primitives",
  "env_logger",
  "frame-support",
  "futures 0.3.8",
@@ -1043,12 +992,9 @@ dependencies = [
  "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
- "itc-direct-rpc-client",
  "itc-direct-rpc-server",
  "itc-offchain-worker-executor",
  "itc-parentchain",
- "itc-parentchain-block-import-dispatcher",
- "itc-parentchain-block-importer",
  "itc-parentchain-light-client",
  "itc-parentchain-test",
  "itc-tls-websocket-server",
@@ -1953,17 +1899,13 @@ dependencies = [
  "bc-enclave-registry",
  "bc-relayer-registry",
  "bc-signer-registry",
- "bs58",
  "ita-sgx-runtime",
  "ita-stf",
- "itc-parentchain",
  "itc-parentchain-indirect-calls-executor",
  "itp-api-client-types",
  "itp-node-api",
  "itp-stf-primitives",
  "itp-types",
- "itp-utils",
- "litentry-hex-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2006,9 +1948,7 @@ dependencies = [
  "ita-sgx-runtime",
  "itp-hashing",
  "itp-node-api",
- "itp-node-api-metadata",
  "itp-sgx-externalities",
- "itp-sgx-runtime-primitives",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-storage",
@@ -2021,9 +1961,7 @@ dependencies = [
  "pallet-parentchain",
  "pallet-sudo",
  "parity-scale-codec",
- "rlp",
  "sgx_tstd",
- "sha3 0.10.8",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -2035,9 +1973,7 @@ name = "itc-direct-rpc-client"
 version = "0.1.0"
 dependencies = [
  "itp-rpc",
- "itp-types",
  "log",
- "parity-scale-codec",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",
  "serde_json 1.0.103",
  "sgx_tstd",
@@ -2152,7 +2088,6 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
- "sp-core",
  "sp-runtime",
  "thiserror",
 ]
@@ -2242,7 +2177,6 @@ name = "itp-api-client-types"
 version = "0.1.0"
 dependencies = [
  "itp-types",
- "sp-runtime",
  "substrate-api-client",
 ]
 
@@ -2628,17 +2562,14 @@ name = "itp-top-pool-author"
 version = "0.1.0"
 dependencies = [
  "derive_more",
- "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-test",
  "itp-top-pool",
  "itp-types",
- "itp-utils",
  "jsonrpc-core",
  "lazy_static",
- "litentry-primitives",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -4494,7 +4425,7 @@ name = "sp-core"
 version = "7.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "array-bytes 4.2.0",
+ "array-bytes",
  "bitflags",
  "blake2",
  "bounded-collections",

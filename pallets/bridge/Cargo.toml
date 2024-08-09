@@ -7,7 +7,6 @@ repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.1.0'
 
 [dependencies]
-blake2-rfc = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 

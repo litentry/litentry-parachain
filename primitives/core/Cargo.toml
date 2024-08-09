@@ -7,13 +7,11 @@ version = '0.1.0'
 [dependencies]
 base58 = { workspace = true }
 parity-scale-codec = { workspace = true }
-serde = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 
 frame-support = { workspace = true }
 pallet-evm = { workspace = true }
-ring = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
@@ -27,7 +25,6 @@ litentry-proc-macros = { workspace = true }
 [features]
 default = ["std"]
 std = [
-    "serde/std",
     "strum/std",
     "parity-scale-codec/std",
     "scale-info/std",
@@ -36,7 +33,6 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "sp-io/std",
-    "ring/std",
     "pallet-evm/std",
     "litentry-hex-utils/std",
 ]

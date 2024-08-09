@@ -5,8 +5,6 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
-
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 
 itp-node-api-metadata = { path = "../node-api/metadata", default-features = false, features = ["mocks"] }
@@ -22,7 +20,5 @@ std = [
     "itp-stf-primitives/std",
     "itp-types/std",
 ]
-sgx = [
-    "sgx_tstd",
-]
+sgx = []
 mocks = []
