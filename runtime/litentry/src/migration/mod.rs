@@ -76,7 +76,12 @@ where
 		.drain()
 		{
 			// Patching the missed total value converting
-			delegations.total = delegations.total.saturating_mul(DECIMAL_CONVERTOR.into());
+			// This storage is already correpted
+			let mut collator_delegations_sum: BalanceOf<T> = 0u128.into();
+			for delegation_bond in delegations.delegations.iter() {
+				collator_delegations_sum += delegation_bond.amount;
+			}
+			delegations.total = collator_delegations_sum;
 
 			// Get CandidateInfo of the same collator key
 			let mut metadata = <CandidateInfo<T>>::get(&account).unwrap();
