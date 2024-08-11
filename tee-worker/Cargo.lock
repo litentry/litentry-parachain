@@ -874,19 +874,17 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "core-primitives"
-version = "0.9.12"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 dependencies = [
  "base58",
  "frame-support",
- "litentry-hex-utils 0.9.12",
- "litentry-macros 0.9.12",
+ "litentry-hex-utils 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
+ "litentry-macros 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
  "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
- "ring 0.16.20",
  "scale-info",
- "serde 1.0.204",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
@@ -4983,8 +4981,8 @@ dependencies = [
 
 [[package]]
 name = "litentry-hex-utils"
-version = "0.9.12"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 dependencies = [
  "hex",
 ]
@@ -4995,8 +4993,8 @@ version = "0.1.0"
 
 [[package]]
 name = "litentry-macros"
-version = "0.9.12"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 
 [[package]]
 name = "litentry-primitives"
@@ -5025,8 +5023,8 @@ dependencies = [
 
 [[package]]
 name = "litentry-proc-macros"
-version = "0.9.12"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -6012,7 +6010,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 dependencies = [
  "core-primitives",
  "frame-support",
@@ -6079,7 +6077,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.18#64c3357de2e3016b4a3d3d8eec3dfb1919f96ec8"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#ea133d42f915d6e3cbbc51304f534d0b9f42e5d3"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.38",
