@@ -32,9 +32,7 @@ substrate-api-client = { default-features = false, features = ["std", "sync-api"
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate dependencies
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -47,10 +45,8 @@ itp-node-api = { path = "../core-primitives/node-api" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
-itp-time-utils = { path = "../core-primitives/time-utils" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
-lc-credentials = { path = "../litentry/core/credentials" }
 
 # litentry
 frame-metadata = "15.0.0"

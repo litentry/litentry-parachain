@@ -97,7 +97,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.66.0"
+          tag: "1.73.0"
 
       - name: Summary
         run: |
@@ -118,6 +118,14 @@ jobs:
     if: ${{ github.event.inputs.parachain_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
@@ -143,6 +151,7 @@ jobs:
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-chain-aio:${{ env.RELEASE_TAG }} | gzip > litentry-chain-aio.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -152,6 +161,7 @@ jobs:
           path: |
             litentry-collator
             litentry-parachain-dev.tar.gz
+            litentry-chain-aio.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -205,6 +215,7 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
+            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -277,6 +288,7 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
+            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -300,7 +312,6 @@ jobs:
         run: |
           docker push litentry/bitacross-worker:${{ env.RELEASE_TAG }}
 
-
   parachain-ts-tests:
     runs-on: ubuntu-latest
     needs: build-parachain-client
@@ -322,6 +333,7 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-chain-aio.tar.gz
           docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
@@ -350,6 +362,7 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+          docker push litentry/litentry-chain-aio:${{ env.RELEASE_TAG }}
 
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}

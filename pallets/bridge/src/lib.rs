@@ -33,21 +33,19 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use frame_support::{
-		dispatch::GetDispatchInfo,
-		traits::{fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons},
-	};
+	use frame_support::dispatch::GetDispatchInfo;
 	pub use frame_support::{pallet_prelude::*, traits::StorageVersion, PalletId, Parameter};
 	use frame_system::{
 		pallet_prelude::*,
 		{self as system},
 	};
-	use parity_scale_codec::EncodeLike;
+	use parity_scale_codec::{Codec, EncodeLike};
 	use sp_runtime::{
-		traits::{AccountIdConversion, Dispatchable},
-		SaturatedConversion,
+		traits::{AccountIdConversion, AtLeast32BitUnsigned, Dispatchable},
+		FixedPointOperand, SaturatedConversion,
 	};
-	use sp_std::prelude::*;
+
+	use sp_std::{fmt::Debug, prelude::*, vec};
 
 	const DEFAULT_RELAYER_THRESHOLD: u32 = 1;
 	const MODULE_ID: PalletId = PalletId(*b"litry/bg");
@@ -55,8 +53,7 @@ pub mod pallet {
 	pub type BridgeChainId = u8;
 	pub type DepositNonce = u64;
 	pub type ResourceId = [u8; 32];
-	pub type BalanceOf<T> =
-		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	pub type BalanceOf<T> = <T as Config>::Balance;
 
 	/// Helper function to concatenate a chain ID and some bytes to produce a resource ID.
 	/// The common format is (31 bytes unique ID + 1 byte chain ID).
@@ -169,15 +166,21 @@ pub mod pallet {
 		#[pallet::constant]
 		type BridgeChainId: Get<BridgeChainId>;
 
-		/// Currency impl
-		type Currency: Currency<Self::AccountId>
-			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
+		/// The units in which we record balances.
+		type Balance: Parameter
+			+ Member
+			+ AtLeast32BitUnsigned
+			+ Codec
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ FixedPointOperand;
 
 		#[pallet::constant]
 		type ProposalLifetime: Get<BlockNumberFor<Self>>;
-
-		/// Treasury account to receive assets fee
-		type TreasuryAccount: Get<Self::AccountId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -214,8 +217,6 @@ pub mod pallet {
 		ProposalSucceeded(BridgeChainId, DepositNonce),
 		/// Execution of call failed
 		ProposalFailed(BridgeChainId, DepositNonce),
-		/// Update bridge transfer fee
-		FeeUpdated { dest_id: BridgeChainId, fee: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -250,16 +251,7 @@ pub mod pallet {
 		ProposalAlreadyComplete,
 		/// Lifetime of proposal has been exceeded
 		ProposalExpired,
-		/// Too expensive fee for withdrawn asset
-		FeeTooExpensive,
-		/// No fee with the ID was found
-		FeeDoesNotExist,
-		/// Balance too low to withdraw
-		InsufficientBalance,
-
-		CannotPayAsFee,
-
-		NonceOverFlow,
+		NonceOverflow,
 	}
 
 	#[pallet::storage]
@@ -294,20 +286,13 @@ pub mod pallet {
 		ProposalVotes<T::AccountId, BlockNumberFor<T>>,
 	>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn resources)]
-	pub type Resources<T> = StorageMap<_, Blake2_256, ResourceId, Vec<u8>>;
-
+	// TODO: !!!This storage can not be removed until Chainbridge binary switch to event Listener
 	// ChainBridge Service(https://github.com/litentry/ChainBridge) read this storage for each block,
 	// and if this storage has value, it will perform cross-chain transfer.
 	// For more details, see at: https://github.com/litentry/ChainBridge/blob/main/chains/substrate/listener.go#L186-L237
 	#[pallet::storage]
 	#[pallet::getter(fn bridge_events)]
 	pub type BridgeEvents<T> = StorageValue<_, Vec<BridgeEvent>, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn bridge_fee)]
-	pub type BridgeFee<T: Config> = StorageMap<_, Twox64Concat, BridgeChainId, BalanceOf<T>>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -335,43 +320,12 @@ pub mod pallet {
 			Self::set_relayer_threshold(threshold)
 		}
 
-		/// Stores a method name on chain under an associated resource ID.
-		///
-		/// # <weight>
-		/// - O(1) write
-		/// # </weight>
-		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_resource())]
-		pub fn set_resource(
-			origin: OriginFor<T>,
-			id: ResourceId,
-			method: Vec<u8>,
-		) -> DispatchResult {
-			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
-			Self::register_resource(id, method)
-		}
-
-		/// Removes a resource ID from the resource mapping.
-		///
-		/// After this call, bridge transfers with the associated resource ID will
-		/// be rejected.
-		///
-		/// # <weight>
-		/// - O(1) removal
-		/// # </weight>
-		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::remove_resource())]
-		pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
-			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
-			Self::unregister_resource(id)
-		}
-
 		/// Enables a chain ID as a source or destination for a bridge transfer.
 		///
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::call_index(3)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::whitelist_chain())]
 		pub fn whitelist_chain(origin: OriginFor<T>, id: BridgeChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -383,7 +337,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::call_index(4)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_relayer())]
 		pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
@@ -395,29 +349,11 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and removal
 		/// # </weight>
-		#[pallet::call_index(5)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_relayer())]
 		pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_relayer(v)
-		}
-
-		/// Change extra bridge transfer fee that user should pay
-		///
-		/// # <weight>
-		/// - O(1) lookup and insert
-		/// # </weight>
-		#[pallet::call_index(6)]
-		#[pallet::weight(<T as Config>::WeightInfo::update_fee())]
-		pub fn update_fee(
-			origin: OriginFor<T>,
-			dest_id: BridgeChainId,
-			fee: BalanceOf<T>,
-		) -> DispatchResult {
-			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
-			BridgeFee::<T>::insert(dest_id, fee);
-			Self::deposit_event(Event::FeeUpdated { dest_id, fee });
-			Ok(())
 		}
 
 		/// Commits a vote in favour of the provided proposal.
@@ -428,7 +364,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::call_index(7)]
+		#[pallet::call_index(4)]
 		#[pallet::weight({
 		let di = call.get_dispatch_info();
 		(< T as Config >::WeightInfo::acknowledge_proposal()
@@ -439,13 +375,14 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
 			src_id: BridgeChainId,
-			r_id: ResourceId,
+			// TODO: remove will require token bridge binary change
+			// Resource info is in proposal call
+			_r_id: ResourceId,
 			call: Box<<T as Config>::Proposal>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_relayer(&who), Error::<T>::MustBeRelayer);
 			ensure!(Self::chain_whitelisted(src_id), Error::<T>::ChainNotWhitelisted);
-			ensure!(Self::resource_exists(r_id), Error::<T>::ResourceDoesNotExist);
 
 			Self::vote_for(who, nonce, src_id, call)
 		}
@@ -455,19 +392,20 @@ pub mod pallet {
 		/// # <weight>
 		/// - Fixed, since execution of proposal should not be included
 		/// # </weight>
-		#[pallet::call_index(8)]
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::reject_proposal())]
 		pub fn reject_proposal(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
 			src_id: BridgeChainId,
-			r_id: ResourceId,
+			// TODO: remove will require token bridge binary change
+			// Resource info is in proposal call
+			_r_id: ResourceId,
 			call: Box<<T as Config>::Proposal>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_relayer(&who), Error::<T>::MustBeRelayer);
 			ensure!(Self::chain_whitelisted(src_id), Error::<T>::ChainNotWhitelisted);
-			ensure!(Self::resource_exists(r_id), Error::<T>::ResourceDoesNotExist);
 
 			Self::vote_against(who, nonce, src_id, call)
 		}
@@ -480,7 +418,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::call_index(9)]
+		#[pallet::call_index(6)]
 		#[pallet::weight({
 		let di = prop.get_dispatch_info();
 		(< T as Config >::WeightInfo::eval_vote_state()
@@ -513,11 +451,6 @@ pub mod pallet {
 			MODULE_ID.into_account_truncating()
 		}
 
-		/// Asserts if a resource is registered
-		pub fn resource_exists(id: ResourceId) -> bool {
-			Self::resources(id).is_some()
-		}
-
 		/// Checks if a chain exists as a whitelisted destination
 		pub fn chain_whitelisted(id: BridgeChainId) -> bool {
 			Self::chains(id).is_some()
@@ -526,7 +459,7 @@ pub mod pallet {
 		/// Increments the deposit nonce for the specified chain ID
 		fn bump_nonce(id: BridgeChainId) -> Result<DepositNonce, Error<T>> {
 			let nonce = Self::chains(id).unwrap_or_default();
-			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverFlow);
+			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverflow);
 			if let Ok(nonce) = &new_nonce {
 				ChainNonces::<T>::insert(id, nonce);
 			}
@@ -540,18 +473,6 @@ pub mod pallet {
 			ensure!(threshold > 0, Error::<T>::InvalidThreshold);
 			RelayerThreshold::<T>::put(threshold);
 			Self::deposit_event(Event::RelayerThresholdChanged(threshold));
-			Ok(())
-		}
-
-		/// Register a method for a resource Id, enabling associated transfers
-		pub fn register_resource(id: ResourceId, method: Vec<u8>) -> DispatchResult {
-			Resources::<T>::insert(id, method);
-			Ok(())
-		}
-
-		/// Removes a resource ID, disabling associated transfer
-		pub fn unregister_resource(id: ResourceId) -> DispatchResult {
-			Resources::<T>::remove(id);
 			Ok(())
 		}
 
@@ -690,45 +611,29 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Initiates a transfer of a fungible asset out of the chain. This should be called by
+		/// Initiates a singal Event for fungible asset out of the chain. This should be called by
 		/// another pallet.
-		pub fn transfer_fungible(
-			sender: T::AccountId,
+		pub fn signal_transfer_fungible(
 			dest_id: BridgeChainId,
 			resource_id: ResourceId,
 			to: Vec<u8>,
 			amount: BalanceOf<T>,
 		) -> DispatchResult {
 			ensure!(Self::chain_whitelisted(dest_id), Error::<T>::ChainNotWhitelisted);
-			let fee: BalanceOf<T> =
-				BridgeFee::<T>::get(dest_id).ok_or(Error::<T>::CannotPayAsFee)?;
-			// No need to transfer to to dest chains if it's not enough to pay fee.
-			ensure!(amount > fee, Error::<T>::FeeTooExpensive);
-
-			let actual_amount = amount - fee;
-			// Ensure we have sufficient free balance
-			let balance: BalanceOf<T> = T::Currency::free_balance(&sender);
-			ensure!(balance >= amount, Error::<T>::InsufficientBalance);
-
-			let _ = T::Currency::withdraw(&sender, amount, WithdrawReasons::TRANSFER, AllowDeath)?;
-			let _ = T::Currency::burn(amount);
-
-			// deposit fee to treasury
-			let _ = T::Currency::deposit_into_existing(&T::TreasuryAccount::get(), fee)?;
 
 			let nonce = Self::bump_nonce(dest_id)?;
 			BridgeEvents::<T>::append(BridgeEvent::FungibleTransfer(
 				dest_id,
 				nonce,
 				resource_id,
-				actual_amount.saturated_into::<u128>(),
+				amount.saturated_into::<u128>(),
 				to.clone(),
 			));
 			Self::deposit_event(Event::FungibleTransfer(
 				dest_id,
 				nonce,
 				resource_id,
-				actual_amount.saturated_into::<u128>(),
+				amount.saturated_into::<u128>(),
 				to,
 			));
 			Ok(())

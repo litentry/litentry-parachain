@@ -5,7 +5,6 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-array-bytes = { version = "6.0.0" }
 base58 = "0.2"
 chrono = "*"
 clap = { version = "=4.1.0", features = ["derive"] }
@@ -30,9 +29,7 @@ substrate-api-client = { default-features = false, features = ["std", "sync-api"
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate dependencies
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

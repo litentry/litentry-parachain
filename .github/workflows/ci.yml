@@ -265,6 +265,7 @@ jobs:
         type:
           - tee # TODO: switch to identity
           - bitacross
+    name: ${{ matrix.type }}
     steps:
       - uses: actions/checkout@v4
 
@@ -609,6 +610,7 @@ jobs:
           - litmus
           - litentry
           - rococo
+    name: ${{ matrix.chain }}
     steps:
       - uses: actions/checkout@v4
 
@@ -673,13 +675,13 @@ jobs:
       - name: Run all unittests
         run: |
           echo "::group::core-primitives unittest"
-          cargo test --locked --release -p core-primitives --lib
+          cargo test --locked -p core-primitives --lib
           echo "::endgroup::"
           echo "::group::all pallets unittest"
-          cargo test --locked --release -p pallet-* --lib
+          cargo test --locked -p pallet-* --lib
           echo "::endgroup::"
           echo "::group::all pallets unittest with runtime-benchmarks feature"
-          cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+          cargo test --locked -p pallet-* --lib --features=runtime-benchmarks
           echo "::endgroup::"
 
       - name: Fail early
@@ -709,13 +711,13 @@ jobs:
       - name: Run runtime tests
         run: |
           echo "::group::rococo runtime test"
-          cargo test --locked --release -p rococo-parachain-runtime --lib
+          cargo test --locked -p rococo-parachain-runtime --lib
           echo "::endgroup::"
           echo "::group::litmus runtime test"
-          cargo test --locked --release -p litmus-parachain-runtime --lib
+          cargo test --locked -p litmus-parachain-runtime --lib
           echo "::endgroup::"
           echo "::group::litentry runtime test"
-          cargo test --locked --release -p litentry-parachain-runtime --lib
+          cargo test --locked -p litentry-parachain-runtime --lib
           echo "::endgroup::"
 
       - name: Fail early
@@ -744,7 +746,7 @@ jobs:
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
           - test_name: lit-assertion-contracts-test
-
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -828,6 +830,7 @@ jobs:
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -904,6 +907,7 @@ jobs:
       matrix:
         include:
           - test_name: lit-sign-bitcoin
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 

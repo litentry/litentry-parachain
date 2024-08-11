@@ -59,7 +59,7 @@
 #![allow(clippy::needless_borrows_for_generic_args)]
 
 mod auto_compound;
-mod delegation_requests;
+pub mod delegation_requests;
 pub mod inflation;
 pub mod traits;
 pub mod types;
@@ -69,7 +69,7 @@ pub mod weights;
 mod benchmarking;
 #[cfg(test)]
 mod mock;
-mod set;
+pub mod set;
 #[cfg(test)]
 mod tests;
 
@@ -533,13 +533,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn candidate_info)]
 	/// Get collator candidate info associated with an account if account is candidate else None
-	pub(crate) type CandidateInfo<T: Config> =
+	pub type CandidateInfo<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, CandidateMetadata<BalanceOf<T>>, OptionQuery>;
 
 	/// Stores outstanding delegation requests per collator.
 	#[pallet::storage]
 	#[pallet::getter(fn delegation_scheduled_requests)]
-	pub(crate) type DelegationScheduledRequests<T: Config> = StorageMap<
+	pub type DelegationScheduledRequests<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::AccountId,
@@ -561,7 +561,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn top_delegations)]
 	/// Top delegations for collator candidate
-	pub(crate) type TopDelegations<T: Config> = StorageMap<
+	pub type TopDelegations<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -572,7 +572,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn bottom_delegations)]
 	/// Bottom delegations for collator candidate
-	pub(crate) type BottomDelegations<T: Config> = StorageMap<
+	pub type BottomDelegations<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -593,7 +593,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn candidate_pool)]
 	/// The pool of collator candidates, each with their total backing stake
-	pub(crate) type CandidatePool<T: Config> =
+	pub type CandidatePool<T: Config> =
 		StorageValue<_, OrderedSet<Bond<T::AccountId, BalanceOf<T>>>, ValueQuery>;
 
 	#[pallet::storage]
@@ -1380,7 +1380,6 @@ pub mod pallet {
 		) -> Percent {
 			<AutoCompoundDelegations<T>>::auto_compound(candidate, delegator)
 		}
-		///???
 		/// Caller must ensure candidate is active before calling
 		pub(crate) fn update_active(candidate: T::AccountId, total: BalanceOf<T>) {
 			let mut candidates = <CandidatePool<T>>::get();

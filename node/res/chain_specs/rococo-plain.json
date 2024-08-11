@@ -3,7 +3,7 @@
   "id": "litentry-rococo",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/rpc.rococo-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWC9WbcoS2fuaohQXfk3RwXH1hwffEG7iudbJRfNK54hTT"
+    "/dns/rpc.rococo-parachain.litentry.io/tcp/40333/ws/p2p/12D3KooWD9t5jsf5m2g4acXfyVf2KxR5j11F9SLC5wKhv6JRquyv"
   ],
   "telemetryEndpoints": [
     [
@@ -14,7 +14,7 @@
   "protocolId": "litentry-rococo",
   "properties": {
     "ss58Format": 131,
-    "tokenDecimals": 12,
+    "tokenDecimals": 18,
     "tokenSymbol": "LIT"
   },
   "relayChain": "rococo",
@@ -29,19 +29,19 @@
         "balances": [
           [
             "5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5HEdcZvZ2h9hZyCwsxrPhU2uL1B418bxiN8LV6mYzrdAfP6h",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5CSfg3iY5H1rRFY3Qpez9Jy1dMvmvurxCGsEPptsx556sEY9",
-            1000000000000000
+            1000000000000000000000
           ],
           [
             "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-            1000000000000000
+            1000000000000000000000
           ]
         ]
       },
@@ -83,7 +83,7 @@
           "5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ",
           "5HEdcZvZ2h9hZyCwsxrPhU2uL1B418bxiN8LV6mYzrdAfP6h"
         ],
-        "candidacyBond": 16000000000000,
+        "candidacyBond": 16000000000000000000,
         "desiredCandidates": 0
       },
       "session": {

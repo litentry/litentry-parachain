@@ -155,7 +155,7 @@ impl<A, B: Default> Default for CollatorSnapshot<A, B> {
 	}
 }
 
-#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 /// Info needed to make delayed payments to stakers after round end
 pub struct DelayedPayout<Balance> {
 	/// Total round reward (result of compute_issuance() at round end)
@@ -253,7 +253,7 @@ impl<AccountId, Balance: Copy + Ord + sp_std::ops::AddAssign + Zero + Saturating
 	}
 }
 
-#[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Clone, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 /// Capacity status for top or bottom delegations
 pub enum CapacityStatus {
 	/// Reached capacity
@@ -267,7 +267,7 @@ pub enum CapacityStatus {
 	Partial,
 }
 
-#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 /// All candidate info except the top and bottom delegations
 pub struct CandidateMetadata<Balance> {
 	/// This candidate's self bond amount

@@ -42,7 +42,9 @@ library Gtc {
         TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
         tokenInfoList[0] = TokenInfo(
             Web3Networks.Ethereum,
-            "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f"
+            "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f",
+            DataProviderTypes.NoderealClient,
+            18
         );
 
         return tokenInfoList;

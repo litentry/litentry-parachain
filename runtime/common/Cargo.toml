@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'runtime-common'
-version = '0.9.17'
+version = '0.1.0'
 
 [dependencies]
 log = { workspace = true }
@@ -39,7 +39,6 @@ xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 xcm-simulator = { workspace = true, optional = true }
 
-orml-traits = { workspace = true }
 orml-xtokens = { workspace = true }
 
 polkadot-parachain-primitives = { workspace = true }
@@ -62,6 +61,7 @@ std = [
     "sp-io/std",
     "sp-std/std",
     "sp-runtime/std",
+    "sp-state-machine/std",
     "frame-support/std",
     "frame-system/std",
     "pallet-assets/std",
@@ -75,6 +75,9 @@ std = [
     "pallet-transaction-payment/std",
     "pallet-treasury/std",
     "pallet-vesting/std",
+    "polkadot-primitives/std",
+    "polkadot-runtime-parachains/std",
+    "cumulus-primitives-parachain-inherent/std",
     "cumulus-pallet-parachain-system/std",
     "cumulus-primitives-core/std",
     "cumulus-test-relay-sproof-builder/std",
@@ -87,6 +90,7 @@ std = [
     "pallet-asset-manager/std",
     "pallet-extrinsic-filter/std",
     "pallet-teebag/std",
+    "orml-xtokens/std",
 ]
 
 runtime-benchmarks = [
@@ -102,6 +106,7 @@ try-runtime = [
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
     "pallet-group/try-runtime",
+    "pallet-teebag/try-runtime",
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",
     "frame-support/try-runtime",
@@ -109,13 +114,5 @@ try-runtime = [
 
 tests = [
     "std",
-    "cumulus-primitives-parachain-inherent/default",
-    "cumulus-test-relay-sproof-builder/default",
-    "polkadot-primitives/default",
-    "polkadot-runtime-parachains/default",
     "xcm-simulator",
-    "polkadot-parachain-primitives/std",
-    "orml-traits/std",
-    "orml-xtokens/std",
-    "sp-state-machine/std",
 ]

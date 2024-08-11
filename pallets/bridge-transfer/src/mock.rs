@@ -14,27 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
+use crate::{self as bridge_transfer, Config};
 use frame_support::{
-	ord_parameter_types, parameter_types,
-	traits::{ConstU64, SortedMembers},
+	assert_ok, ord_parameter_types, parameter_types,
+	traits::{
+		fungible,
+		tokens::{Fortitude, Precision},
+		ConstU64, SortedMembers,
+	},
 	PalletId,
 };
-use frame_system::{self as system, EnsureSignedBy};
+use frame_system as system;
 use hex_literal::hex;
+pub use pallet_balances as balances;
+use pallet_bridge::{self as bridge, ResourceId};
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage,
+	BuildStorage, DispatchError,
 };
 
-use crate::{self as bridge_transfer, Config};
-pub use pallet_balances as balances;
-use pallet_bridge as bridge;
-
-pub type Balance = u128;
-pub const MAXIMUM_ISSURANCE: u128 = 20_000_000_000_000;
+pub const TEST_THRESHOLD: u32 = 2;
+type AccountId = u64;
+type Balance = u64;
 
 frame_support::construct_runtime!(
 	pub enum Test
@@ -43,7 +45,6 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Bridge: bridge,
 		BridgeTransfer: bridge_transfer,
-		Timestamp: pallet_timestamp,
 	}
 );
 
@@ -77,16 +78,16 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: u128 = 1;
+ord_parameter_types! {
+	pub const One: u64 = 1;
 }
 
 impl pallet_balances::Config for Test {
 	type MaxLocks = ();
-	type Balance = u128;
+	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 	type MaxReserves = ();
@@ -99,7 +100,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const TestChainId: u8 = 5;
-	pub const ProposalLifetime: u64 = 100;
+	pub const ProposalLifetime: u64 = 50;
 	pub const TreasuryAccount:u64 = 0x8;
 }
 
@@ -108,22 +109,16 @@ impl bridge::Config for Test {
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = TestChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = ();
 }
 
 parameter_types! {
-	pub const MaximumIssuance: u128 = MAXIMUM_ISSURANCE;
-	pub const ExternalTotalIssuance: u128 = MAXIMUM_ISSURANCE;
+	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
-	// transfernativemembers
+	// transferassetsmembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
-}
-
-ord_parameter_types! {
-	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
 }
 
 pub struct MembersProvider;
@@ -148,36 +143,45 @@ impl SortedMembers<u64> for MembersProvider {
 	}
 }
 
+pub struct MockAssetsHandler;
+impl bridge_transfer::BridgeHandler<Balance, AccountId, ResourceId> for MockAssetsHandler {
+	fn prepare_token_bridge_in(
+		_: ResourceId,
+		who: AccountId,
+		amount: Balance,
+	) -> Result<Balance, DispatchError> {
+		<Balances as fungible::Mutate<AccountId>>::mint_into(&who, amount)
+	}
+	// Return actual amount to target chain after deduction e.g fee
+	fn prepare_token_bridge_out(
+		_: ResourceId,
+		who: AccountId,
+		amount: Balance,
+	) -> Result<Balance, DispatchError> {
+		<Balances as fungible::Mutate<AccountId>>::burn_from(
+			&who,
+			amount,
+			Precision::Exact,
+			Fortitude::Polite,
+		)
+	}
+}
+
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
-	type TransferNativeMembers = MembersProvider;
-	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
-	type NativeTokenResourceId = NativeTokenResourceId;
-	type DefaultMaximumIssuance = MaximumIssuance;
-	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const VerifyPRuntime: bool = false;
-	pub const VerifyRelaychainGenesisBlockHash: bool = false;
-}
-
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<1>;
+	type TransferAssetsMembers = MembersProvider;
+	type BridgeHandler = MockAssetsHandler;
 	type WeightInfo = ();
 }
 
 pub const RELAYER_A: u64 = 0x2;
 pub const RELAYER_B: u64 = 0x3;
 pub const RELAYER_C: u64 = 0x4;
-pub const ENDOWED_BALANCE: u128 = 100_000_000;
+pub const ENDOWED_BALANCE: u64 = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
+	let dest_chain = 0u8;
 	let treasury_account: u64 = 0x8;
 	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
@@ -190,7 +194,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| frame_system::Pallet::<Test>::set_block_number(1));
+	ext.execute_with(|| {
+		frame_system::Pallet::<Test>::set_block_number(1);
+		// Set and check threshold
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD));
+		assert_eq!(Bridge::relayer_threshold(), TEST_THRESHOLD);
+		// Add relayers
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_B));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
+		// Whitelist chain
+		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), dest_chain));
+	});
 	ext
 }
 

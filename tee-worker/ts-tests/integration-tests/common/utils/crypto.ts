@@ -16,14 +16,40 @@ import { isHexString } from 'ethers/lib/utils';
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
-    return crypto.publicEncrypt(
-        {
-            key: teeShieldingKey,
-            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            oaepHash: 'sha256',
-        },
-        plaintext
-    );
+    return encryptBuffer(teeShieldingKey, plaintext);
+}
+
+/**
+ * Encrypts a plaintext buffer using the provided public key in segments.
+ *
+ * Same logic as: https://github.com/apache/incubator-teaclave-sgx-sdk/blob/master/sgx_crypto_helper/src/rsa3072.rs#L161-L179
+ *
+ * @param {crypto.KeyLike} pubKey - The public key to use for encryption.
+ * @param {Uint8Array} plaintext - The plaintext buffer to encrypt.
+ * @returns {Buffer} The encrypted data.
+ */
+function encryptBuffer(pubKey: crypto.KeyLike, plaintext: Uint8Array): Buffer {
+    const bs = 384; // 3072 bits = 384 bytes
+    const bsPlain = bs - (2 * 256) / 8 - 2; // Maximum plaintext block size
+    const count = Math.ceil(plaintext.length / bsPlain); // Use Math.ceil to ensure proper chunk count
+
+    const cipherText = Buffer.alloc(bs * count);
+
+    for (let i = 0; i < count; i++) {
+        const plainSlice = plaintext.slice(i * bsPlain, Math.min((i + 1) * bsPlain, plaintext.length));
+        const cipherSlice = crypto.publicEncrypt(
+            {
+                key: pubKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256',
+            },
+            plainSlice
+        );
+
+        cipherSlice.copy(cipherText, i * bs);
+    }
+
+    return cipherText;
 }
 
 // A lazy version without aad. Append the tag to be consistent with rust implementation

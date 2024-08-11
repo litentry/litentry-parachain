@@ -32,7 +32,7 @@ use frame_support::{
 		EnsureOrigin, Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers,
 		WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	ConsensusEngineId, PalletId,
 };
 use frame_system::EnsureRoot;
@@ -82,6 +82,7 @@ use runtime_common::{
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
 	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS,
+	WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -97,6 +98,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
+
+pub mod migration;
+
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -174,6 +178,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	(migration::FixParachainStakingStorage<Runtime>,),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
@@ -249,7 +254,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9186,
+	spec_version: 9192,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -494,7 +499,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -502,7 +508,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -785,6 +791,7 @@ impl pallet_sudo::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
+	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
 }
 
 parameter_types! {
@@ -904,7 +911,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = BridgeTransfer;
+	type IssuanceAdapter = AssetsHandler;
 }
 
 parameter_types! {
@@ -936,9 +943,8 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
@@ -950,8 +956,8 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TransferNativeAnyone;
-impl SortedMembers<AccountId> for TransferNativeAnyone {
+pub struct TransferAssetsAnyone;
+impl SortedMembers<AccountId> for TransferAssetsAnyone {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -967,14 +973,18 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+	type BridgeHandler = AssetsHandler;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TransferNativeAnyone;
+	type TransferAssetsMembers = TransferAssetsAnyone;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
+}
+
+impl pallet_assets_handler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
@@ -996,6 +1006,7 @@ impl pallet_teebag::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<5>;
+	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
 }
 
 impl pallet_identity_management::Config for Runtime {
@@ -1018,11 +1029,6 @@ impl pallet_evm_assertions::Config for Runtime {
 	type AssertionId = H160;
 	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-}
-
-// Temporary for bitacross team to test
-impl pallet_bitacross_mimic::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
@@ -1092,7 +1098,9 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// We do not want to involve Transaction Payment Multiplier here
 		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
 		// Ethereum tx
-		let weight_to_fee: u128 = 1;
+		// This is hardcoded ConstantMultiplier<Balance, WeightToFeeFactor>, WeightToFeeFactor =
+		// MILLICENTS / 10
+		let weight_to_fee: u128 = WEIGHT_TO_FEE_FACTOR;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}
@@ -1261,14 +1269,15 @@ construct_runtime! {
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 		Bitacross: pallet_bitacross = 70,
-		// Temporary for bitacross team to test
-		BitacrossMimic: pallet_bitacross_mimic = 71,
-		EvmAssertions: pallet_evm_assertions = 72,
+		EvmAssertions: pallet_evm_assertions = 71,
 
 		// Developer council
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
 		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
 		ScoreStaking: pallet_score_staking = 75,
+
+		// New Bridge Added
+		AssetsHandler: pallet_assets_handler = 76,
 
 		// TEE
 		Teebag: pallet_teebag = 93,
@@ -1288,15 +1297,19 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::Sudo(_)
-				| RuntimeCall::System(_)
-				| RuntimeCall::Timestamp(_)
-				| RuntimeCall::ParachainSystem(_)
-				| RuntimeCall::ExtrinsicFilter(_)
-				| RuntimeCall::Multisig(_)
-				| RuntimeCall::Council(_)
-				| RuntimeCall::TechnicalCommittee(_)
-				| RuntimeCall::DeveloperCommittee(_)
+			RuntimeCall::Sudo(_) |
+				RuntimeCall::System(_) |
+				RuntimeCall::Timestamp(_) |
+				RuntimeCall::ParachainSystem(_) |
+				RuntimeCall::ExtrinsicFilter(_) |
+				RuntimeCall::Multisig(_) |
+				RuntimeCall::Council(_) |
+				RuntimeCall::CouncilMembership(_) |
+				RuntimeCall::TechnicalCommittee(_) |
+				RuntimeCall::TechnicalCommitteeMembership(_) |
+				RuntimeCall::Utility(_) |
+				// Temp: should be removed after the one-time burn
+				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
 		) {
 			// always allow core calls
 			return true;
@@ -1328,6 +1341,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			RuntimeCall::XTokens(orml_xtokens::Call::transfer { .. }) |
+			// collective
+			RuntimeCall::DeveloperCommittee(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
@@ -1370,7 +1385,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
 			RuntimeCall::Bitacross(_) |
-			RuntimeCall::BitacrossMimic(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)
 		)
@@ -1402,6 +1416,7 @@ mod benches {
 		[pallet_vc_management, VCManagement]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
+		[pallet_teebag, Teebag]
 	);
 }
 

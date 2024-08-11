@@ -1,37 +1,37 @@
 [package]
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
-name = 'pallet-evm-precompile-bridge-transfer'
+name = "pallet-evm-precompile-bridge-transfer"
 version = '0.1.0'
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-parity-scale-codec = { workspace = true }
-rustc-hex = { workspace = true }
-
-pallet-bridge = { workspace = true }
-pallet-bridge-transfer = { workspace = true }
 precompile-utils = { workspace = true }
 
-fp-evm = { workspace = true }
+# Substrate
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-pallet-evm = { workspace = true }
+pallet-bridge-transfer = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
+scale-info = { workspace = true, features = ["derive"] }
 sp-core = { workspace = true }
-sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+
+# Frontier
+fp-evm = { workspace = true }
+pallet-evm = { workspace = true, features = ["forbid-evm-reentrancy"] }
 
 [dev-dependencies]
 derive_more = { workspace = true }
 hex-literal = { workspace = true }
-scale-info = { workspace = true }
+libsecp256k1 = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
-precompile-utils = { workspace = true, features = ["testing"] }
-pallet-balances = { workspace = true, features = ["std", "insecure_zero_ed"] }
+precompile-utils = { workspace = true, features = ["std", "testing"] }
 pallet-timestamp = { workspace = true, features = ["std"] }
+parity-scale-codec = { workspace = true, features = ["max-encoded-len", "std"] }
+scale-info = { workspace = true, features = ["derive"] }
+sp-runtime = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]
@@ -39,12 +39,11 @@ std = [
     "fp-evm/std",
     "frame-support/std",
     "frame-system/std",
-    "pallet-bridge/std",
     "pallet-bridge-transfer/std",
-    "parity-scale-codec/std",
+    "pallet-evm/std",
+    "pallet-timestamp/std",
     "precompile-utils/std",
     "sp-core/std",
     "sp-runtime/std",
     "sp-std/std",
-    "sp-io/std",
 ]

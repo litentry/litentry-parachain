@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(test)]
-
 use super::*;
 
 use frame_support::{assert_ok, parameter_types};
@@ -101,9 +99,8 @@ impl Config for Test {
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = TestChainId;
-	type Currency = Balances;
+	type Balance = u64;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = ();
 }
 
@@ -133,8 +130,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn new_test_ext_initialized(
 	src_id: BridgeChainId,
-	r_id: ResourceId,
-	resource: Vec<u8>,
+	_r_id: ResourceId,
 ) -> sp_io::TestExternalities {
 	let mut t = new_test_ext();
 	t.execute_with(|| {
@@ -147,9 +143,6 @@ pub fn new_test_ext_initialized(
 		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
 		// Whitelist chain
 		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), src_id));
-		// Set and check resource ID mapped to some junk data
-		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), r_id, resource));
-		assert!(Bridge::resource_exists(r_id));
 	});
 	t
 }

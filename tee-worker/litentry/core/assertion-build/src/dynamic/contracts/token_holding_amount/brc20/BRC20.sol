@@ -35,7 +35,12 @@ library BRC20 {
         uint32[] memory networks = BRC20.getDefaultTokenNetworks();
         TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
         for (uint i = 0; i < networks.length; i++) {
-            tokenInfoList[i] = TokenInfo(networks[i], "");
+            tokenInfoList[i] = TokenInfo(
+                networks[i],
+                "",
+                DataProviderTypes.GeniidataClient,
+                18
+            );
         }
 
         return tokenInfoList;

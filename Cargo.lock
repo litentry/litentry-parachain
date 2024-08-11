@@ -1437,7 +1437,7 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
 name = "core-primitives"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "base58",
  "frame-support",
@@ -1447,7 +1447,6 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -3059,12 +3058,6 @@ name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
-
-[[package]]
-name = "faster-hex"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51e2ce894d53b295cf97b05685aa077950ff3e8541af83217fc720a6437169f8"
 
 [[package]]
 name = "fastrand"
@@ -5509,7 +5502,7 @@ checksum = "78b3ae25bc7c8c38cec158d1f2757ee79e9b3740fbc7ccf0e59e4b08d793fa89"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "async-trait",
  "clap",
@@ -5591,7 +5584,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-hex-utils"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "hex",
  "parity-scale-codec",
@@ -5599,11 +5592,11 @@ dependencies = [
 
 [[package]]
 name = "litentry-macros"
-version = "0.9.12"
+version = "0.1.0"
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -5625,6 +5618,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "hex",
  "hex-literal",
  "log",
  "moonbeam-evm-tracer",
@@ -5635,6 +5629,7 @@ dependencies = [
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5675,6 +5670,7 @@ dependencies = [
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
+ "sp-debug-derive",
  "sp-inherents",
  "sp-io",
  "sp-offchain",
@@ -5693,7 +5689,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-proc-macros"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5703,7 +5699,7 @@ dependencies = [
 
 [[package]]
 name = "litmus-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -5717,7 +5713,6 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "fp-rpc",
- "fp-self-contained",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -5727,13 +5722,13 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
- "moonbeam-evm-tracer",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-primitives-txpool",
  "orml-traits",
  "orml-xtokens",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5747,7 +5742,6 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-extrinsic-filter",
- "pallet-group",
  "pallet-identity",
  "pallet-identity-management",
  "pallet-membership",
@@ -5763,7 +5757,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pallet-vc-management",
  "pallet-vesting",
  "pallet-xcm",
  "parachain-info",
@@ -6689,18 +6682,18 @@ dependencies = [
 
 [[package]]
 name = "num_enum"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02339744ee7253741199f897151b38e72257d13802d4ee837285cc2990a90845"
+checksum = "4e613fc340b2220f734a8595782c551f1250e969d87d3be1ae0579e8d4065179"
 dependencies = [
  "num_enum_derive",
 ]
 
 [[package]]
 name = "num_enum_derive"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
+checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -6889,8 +6882,6 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -6925,6 +6916,26 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-assets-handler"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-bridge",
+ "pallet-bridge-transfer",
+ "pallet-parachain-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7094,23 +7105,8 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-bitacross-mimic"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7135,7 +7131,6 @@ dependencies = [
 name = "pallet-bridge"
 version = "0.1.0"
 dependencies = [
- "blake2-rfc",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7143,6 +7138,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -7158,7 +7154,6 @@ dependencies = [
  "hex-literal",
  "pallet-balances",
  "pallet-bridge",
- "pallet-parachain-staking",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7407,8 +7402,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum",
  "pallet-assets",
  "pallet-balances",
  "pallet-evm",
@@ -7418,7 +7411,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7452,21 +7444,16 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
- "log",
- "num_enum",
- "pallet-balances",
- "pallet-bridge",
+ "libsecp256k1",
  "pallet-bridge-transfer",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
  "precompile-utils",
- "rustc-hex",
  "scale-info",
  "serde",
  "sha3",
  "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7509,15 +7496,12 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum",
  "pallet-balances",
  "pallet-evm",
  "pallet-parachain-staking",
  "pallet-timestamp",
  "parity-scale-codec",
  "precompile-utils",
- "rustc-hex",
  "scale-info",
  "serde",
  "sha3",
@@ -7536,8 +7520,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum",
  "pallet-balances",
  "pallet-evm",
  "pallet-parachain-staking",
@@ -8038,7 +8020,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "serde_json",
  "sp-core",
  "sp-io",
  "sp-keyring",
@@ -10745,7 +10726,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -10779,11 +10760,11 @@ dependencies = [
  "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-assets",
+ "pallet-assets-handler",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
  "pallet-bitacross",
- "pallet-bitacross-mimic",
  "pallet-bounties",
  "pallet-bridge",
  "pallet-bridge-transfer",
@@ -10996,7 +10977,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.9.17"
+version = "0.1.0"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-parachain-system",
@@ -11006,7 +10987,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "orml-traits",
  "orml-xtokens",
  "pallet-asset-manager",
  "pallet-assets",
@@ -12724,18 +12704,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7"
 
 [[package]]
-name = "slices"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2086e458a369cdca838e9f6ed04b4cc2e3ce636d99abb80c9e2eada107749cf"
-dependencies = [
- "faster-hex",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "slot-range-helper"
 version = "1.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.1.0#e51a91fcac27d2f95ad631989622848aa8043f9e"
@@ -14380,9 +14348,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.39.1"
+version = "1.39.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d040ac2b29ab03b09d4129c2f5bbd012a3ac2f79d38ff506a4bf8dd34b0eac8a"
+checksum = "daa4fb1bc778bd6f04cbfc4bb2d06a7396a8f299dc33ea1900cedaa316f467b1"
 dependencies = [
  "backtrace",
  "bytes",

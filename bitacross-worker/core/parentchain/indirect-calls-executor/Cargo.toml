@@ -1,6 +1,6 @@
 [package]
 name = "itc-parentchain-indirect-calls-executor"
-version = "0.9.0"
+version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
@@ -35,7 +35,6 @@ log = { version = "0.4", default-features = false }
 
 # substrate dep
 binary-merkle-tree = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
@@ -70,7 +69,6 @@ std = [
     "log/std",
     #substrate
     "binary-merkle-tree/std",
-    "sp-core/std",
     "sp-runtime/std",
     "thiserror",
     # litentry
