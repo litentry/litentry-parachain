@@ -663,13 +663,15 @@ jobs:
   
   parachain-dynamic-contract-test:
     runs-on: ubuntu-latest
-    needs:
-      - fmt
     steps:
       - uses: actions/checkout@v4
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
+      
+      - name: Install npm deps
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm install
 
       - name: Run all unittests
         working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
