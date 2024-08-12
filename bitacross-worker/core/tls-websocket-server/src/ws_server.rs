@@ -58,6 +58,23 @@ use tungstenite::Message;
 pub(crate) const NEW_CONNECTIONS_LISTENER: mio::Token = mio::Token(0);
 pub(crate) const SERVER_SIGNAL_TOKEN: mio::Token = mio::Token(1);
 
+// represents events for single connection
+pub struct ConnectionEvents {
+	pub connection_token: Token,
+	pub events: VecDeque<ConnectionEvent>,
+}
+
+impl ConnectionEvents {
+	pub fn add_event(&mut self, event: ConnectionEvent) {
+		self.events.push_back(event);
+	}
+}
+
+pub enum ConnectionEvent {
+	Message(Message),
+	Close,
+}
+
 /// Websocket server implementation using the Tungstenite library.
 pub struct TungsteniteWsServer<Handler, ConfigProvider> {
 	ws_address: String,
@@ -126,7 +143,7 @@ where
 		&self,
 		poll: &mut mio::Poll,
 		event: &Event,
-		message_sender: StdSender<(Token, Vec<Message>)>,
+		message_sender: StdSender<ConnectionEvents>,
 	) -> WebSocketResult<()> {
 		let token = event.token();
 
@@ -134,17 +151,11 @@ where
 			self.connections.write().map_err(|_| WebSocketError::LockPoisoning)?;
 
 		if let Some(connection) = connections_lock.get_mut(&token) {
-			connection.on_ready(poll, event, message_sender)?;
+			connection.on_ready(poll, event, &message_sender)?;
 
 			if connection.is_closed() {
-				trace!("Connection {:?} is closed, removing", token);
+				trace!("Connection {:?} is closed, deregistering", token);
 				connection.deregister(poll)?;
-				connections_lock.remove(&token);
-				trace!(
-					"Closed {:?}, {} active connections remaining",
-					token,
-					connections_lock.len()
-				);
 			}
 		}
 
@@ -220,53 +231,65 @@ where
 		Ok(())
 	}
 
-	fn run_message_handling_thread(&self, message_receiver: StdReceiver<(Token, Vec<Message>)>) {
+	fn run_message_handling_thread(&self, events_receiver: StdReceiver<ConnectionEvents>) {
 		let connections = self.connections.clone();
 
 		thread::spawn(move || {
-			let mut message_queues: Vec<(Token, VecDeque<Message>)> = Vec::new();
+			let mut events: Vec<ConnectionEvents> = Vec::new();
 			let batch_size = 5u8;
 
-			while let Ok((token, messages)) = message_receiver.recv() {
-				message_queues.push((token, VecDeque::from(messages)));
+			while let Ok(connection_events) = events_receiver.recv() {
+				events.push(connection_events);
 
-				while !message_queues.is_empty() {
-					for (token, queue) in message_queues.iter_mut() {
+				while !events.is_empty() {
+					for connection_events in events.iter_mut() {
 						let mut connections_lock = connections.write().unwrap();
-						if let Some(connection) = connections_lock.get_mut(token) {
+						if let Some(connection) =
+							connections_lock.get_mut(&connection_events.connection_token)
+						{
 							// take turns to handle messages from different connection
 							for _ in 0..batch_size {
-								if let Some(message) = queue.pop_front() {
-									if let Err(e) = connection.handle_message(message) {
-										error!(
+								if let Some(event) = connection_events.events.pop_front() {
+									match event {
+										ConnectionEvent::Message(message) => {
+											if let Err(e) = connection.handle_message(message) {
+												error!(
 											"Failed to handle web-socket message (connection {}): {:?}",
-											token.0, e
+											connection_events.connection_token.0, e
 										);
-									};
+											};
+										},
+										ConnectionEvent::Close => {
+											//close connection
+										},
+									}
 								} else {
 									break
 								}
 							}
 						} else {
 							// drop messages if connection not exist
-							queue.clear();
+							connection_events.events.clear();
 							error!(
-								"Failed to handle web-socket message (connection {}): connection cloesd", token.0
+								"Failed to handle web-socket message (connection {}): connection closed", connection_events.connection_token.0
 							);
 						}
 					}
 
 					// try recv new messages
-					while let Ok((token, messages)) = message_receiver.try_recv() {
-						if let Some(queue) = message_queues.iter_mut().find(|(t, _)| *t == token) {
-							queue.1.extend(messages);
+					while let Ok(connection_events) = events_receiver.try_recv() {
+						if let Some(events) = events
+							.iter_mut()
+							.find(|ev| ev.connection_token == connection_events.connection_token)
+						{
+							events.events.extend(connection_events.events);
 						} else {
-							message_queues.push((token, VecDeque::from(messages)));
+							events.push(connection_events);
 						}
 					}
 
-					// remove emtpy VecDeque
-					message_queues.retain(|(_, queue)| !queue.is_empty());
+					// remove empty VecDeque
+					events.retain(|ev| !ev.events.is_empty());
 				}
 			}
 		});

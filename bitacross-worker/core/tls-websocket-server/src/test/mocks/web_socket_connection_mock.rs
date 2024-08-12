@@ -15,7 +15,7 @@
 
 */
 
-use crate::{error::WebSocketResult, WebSocketConnection};
+use crate::{error::WebSocketResult, ws_server::ConnectionEvents, WebSocketConnection};
 use mio::{Event, Evented, Poll, PollOpt, Ready, Token};
 use std::{sync::mpsc::Sender, vec::Vec};
 use tungstenite::Message;
@@ -64,7 +64,7 @@ impl WebSocketConnection for WebSocketConnectionMock {
 		&mut self,
 		_poll: &mut Poll,
 		_ev: &Event,
-		_sender: Sender<(Token, Vec<Message>)>,
+		_sender: &Sender<ConnectionEvents>,
 	) -> WebSocketResult<()> {
 		Ok(())
 	}
