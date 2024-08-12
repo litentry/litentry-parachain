@@ -660,6 +660,26 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
+  
+  parachain-dynamic-contract-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+      
+      - name: Install npm deps
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm install
+
+      - name: Run all unittests
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm run test
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.5
 
   parachain-unit-test:
     runs-on: ubuntu-latest
