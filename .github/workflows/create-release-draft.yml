@@ -79,6 +79,7 @@ jobs:
           - litmus
           - rococo
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -320,6 +321,7 @@ jobs:
         chain:
           - litmus
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
