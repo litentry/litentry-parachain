@@ -334,11 +334,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -382,11 +378,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -526,11 +518,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -696,6 +684,10 @@ jobs:
       - sequentialise
     if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: .github/actions/disk-cleanup
+
       - uses: actions/checkout@v4
 
       - name: Install toolchain

@@ -121,11 +121,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -179,11 +175,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -253,11 +245,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: .github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
