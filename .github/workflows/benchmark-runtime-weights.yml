@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: .github/actions/disk-cleanup
+        uses: ./.github/actions/disk-cleanup
 
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4

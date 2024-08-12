@@ -334,7 +334,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: .github/actions/disk-cleanup
+        uses: ./.github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -378,7 +378,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: .github/actions/disk-cleanup
+        uses: ./.github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -518,7 +518,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: .github/actions/disk-cleanup
+        uses: ./.github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
@@ -686,7 +686,7 @@ jobs:
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: .github/actions/disk-cleanup
+        uses: ./.github/actions/disk-cleanup
 
       - uses: actions/checkout@v4
 
