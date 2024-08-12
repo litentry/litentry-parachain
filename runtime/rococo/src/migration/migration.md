@@ -1,5 +1,9 @@
-# Migrate
-Under fiels P9191
+# Migrate fix of last decimal upgrade
+P9192.rs
+it fixes the missing `total` migration in TopDelegations
+
+# Migrate decimal change 12 -> 18
+P9191/ folder:
 These migration is for the follwoing task
 https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-02
 The leftover part of migration including the following pallets:

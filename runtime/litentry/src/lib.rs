@@ -134,7 +134,6 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(migration::FixParachainStakingStorage<Runtime>,),
 >;
 
 impl_opaque_keys! {
@@ -151,7 +150,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9192,
+	spec_version: 9193,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
