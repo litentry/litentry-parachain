@@ -23,7 +23,7 @@ use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
 	traits::{Everything, Nothing},
-	weights::IdentityFee,
+	weights::ConstantMultiplier,
 	PalletId,
 };
 use frame_system::EnsureRoot;
@@ -40,7 +40,7 @@ use runtime_common::xcm_impl::{
 	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
-use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
+use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin, WEIGHT_TO_FEE_FACTOR};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -56,8 +56,8 @@ use xcm_executor::{traits::JustTry, XcmExecutor};
 use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
-	AllPalletsWithSystem, AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo,
-	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
+	AllPalletsWithSystem, AssetId, AssetManager, Assets, Balance, Balances, DealWithFees,
+	ParachainInfo, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};
@@ -100,10 +100,10 @@ parameter_types! {
 	pub TempAccount: AccountId = TempPalletId::get().into_account_truncating();
 }
 // The non-reserve fungible transactor type
-// It will use orml_tokens, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
+// It will use pallet_assets, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
 pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
-	Tokens,
+	Assets,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
@@ -173,18 +173,19 @@ parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
 	pub const MaxAssetsIntoHolding: u32 = 64;
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 
 pub type Traders = (
 	UsingComponents<
-		IdentityFee<Balance>,
+		ConstantMultiplier<Balance, WeightToFeeFactor>,
 		NewAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
 		DealWithFees<Runtime>,
 	>,
 	UsingComponents<
-		IdentityFee<Balance>,
+		ConstantMultiplier<Balance, WeightToFeeFactor>,
 		OldAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
@@ -195,7 +196,7 @@ pub type Traders = (
 		CurrencyId<Runtime>,
 		AssetManager,
 		XcmFeesToAccount<
-			Tokens,
+			Assets,
 			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,

@@ -18,96 +18,125 @@
 
 pragma solidity ^0.8.8;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Identities.sol";
 import "../libraries/Utils.sol";
 import { TokenHoldingAmount } from "./TokenHoldingAmount.sol";
 import { NoderealClient } from "./NoderealClient.sol";
 import { GeniidataClient } from "./GeniidataClient.sol";
+import { BlockchainInfoClient } from "./BlockchainInfoClient.sol";
+import "./MoralisClient.sol";
+import "./Constants.sol";
+
 abstract contract TokenQueryLogic is TokenHoldingAmount {
-	mapping(uint32 => string) internal networkUrls;
-	mapping(uint32 => bool) private queriedNetworks;
-	mapping(string => mapping(uint32 => string)) tokenAddresses;
-	mapping(string => string) internal tokenBscAddress;
-	mapping(string => string) internal tokenEthereumAddress;
-	mapping(string => uint32[]) internal tokenNetworks;
+    mapping(string => TokenInfo[]) internal tokenInfo;
+    uint8 tokenDecimals;
 
-	constructor() {
-		networkUrls[Web3Networks.Bsc] = "https://bsc-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
-		networkUrls[
-			Web3Networks.Ethereum
-		] = "https://eth-mainnet.nodereal.io/v1/"; // test against mock server => "http://localhost:19530/nodereal_jsonrpc/"
+    function getTokenDecimals() internal view override returns (uint8) {
+        return tokenDecimals;
+    }
 
-		networkUrls[
-			Web3Networks.BitcoinP2tr
-		] = "https://api.geniidata.com/api/1/brc20/balance"; //  test against mock server => "http://localhost:19529/api/1/brc20/balance"
-		// Add more networks as needed
-	}
+    function queryBalance(
+        Identity memory identity,
+        uint32 network,
+        string[] memory secrets,
+        string memory tokenName
+    ) internal override returns (uint256) {
+        (bool identityToStringSuccess, string memory identityString) = Utils
+            .identityToString(network, identity.value);
 
-	function getTokenDecimals() internal pure override returns (uint8) {
-		return 18;
-	}
+        if (identityToStringSuccess) {
+            uint256 totalBalance = 0;
 
-	function queryBalance(
-		Identity memory identity,
-		uint32 network,
-		string[] memory secrets,
-		string memory tokenName
-	) internal override returns (uint256) {
-		(bool identityToStringSuccess, string memory identityString) = Utils
-			.identityToString(network, identity.value);
+            (
+                string memory tokenContractAddress,
+                uint8 dataproviderType,
+                uint8 decimals
+            ) = getTokenInfo(tokenName, network);
+            tokenDecimals = decimals;
 
-		if (identityToStringSuccess) {
-			string memory url;
-			uint32[] memory networks = tokenNetworks[tokenName];
-			uint256 totalBalance = 0;
+            if (
+                dataproviderType == DataProviderTypes.GeniidataClient &&
+                GeniidataClient.isSupportedNetwork(network)
+            ) {
+                uint256 balance = GeniidataClient.getTokenBalance(
+                    secrets[0],
+                    identityString,
+                    tokenName,
+                    getTokenDecimals()
+                );
 
-			for (uint32 i = 0; i < networks.length; i++) {
-				// Check if this network has been queried
-				url = networkUrls[networks[i]];
+                totalBalance += balance;
+            } else if (
+                dataproviderType == DataProviderTypes.NoderealClient &&
+                NoderealClient.isSupportedNetwork(network)
+            ) {
+                (bool success, uint256 balance) = NoderealClient
+                    .getTokenBalance(
+                        network,
+                        secrets[1],
+                        tokenContractAddress,
+                        identityString
+                    );
+                if (success) {
+                    totalBalance += balance;
+                }
+            } else if (
+                dataproviderType == DataProviderTypes.MoralisClient &&
+                MoralisClient.isSupportedNetwork(network)
+            ) {
+                uint256 balance = MoralisClient.getTokenBalance(
+                    network,
+                    secrets[2],
+                    identityString,
+                    tokenContractAddress,
+                    getTokenDecimals()
+                );
+                totalBalance += balance;
+            } else if (
+                dataproviderType == DataProviderTypes.BlockchainInfoClient &&
+                BlockchainInfoClient.isSupportedNetwork(network)
+            ) {
+                string[] memory accounts = new string[](1);
+                accounts[0] = identityString;
+                uint256 balance = BlockchainInfoClient.getTokenBalance(
+                    accounts
+                );
+                totalBalance += balance;
+            }
+            return totalBalance;
+        }
+        return 0;
+    }
 
-				if (!queriedNetworks[networks[i]]) {
-					string memory _tokenContractAddress = tokenAddresses[
-						tokenName
-					][networks[i]];
-					if (networks[i] == Web3Networks.BitcoinP2tr) {
-						uint256 balance = GeniidataClient.getTokenBalance(
-							secrets,
-							url,
-							identityString,
-							tokenName,
-							getTokenDecimals()
-						);
-						totalBalance += balance;
-					} else if (
-						networks[i] == Web3Networks.Bsc ||
-						networks[i] == Web3Networks.Ethereum
-					) {
-						(bool success, uint256 balance) = NoderealClient
-							.getTokenBalance(
-								url,
-								secrets,
-								_tokenContractAddress,
-								identityString
-							);
-						if (success) {
-							totalBalance += balance;
-						}
-					}
-					// Mark this network as queried
-					queriedNetworks[networks[i]] = true;
-				}
-			}
-			return totalBalance;
-		}
-		return 0;
-	}
+    function isSupportedNetwork(
+        string memory tokenName,
+        uint32 network
+    ) internal view override returns (bool) {
+        TokenInfo[] memory infoArray = tokenInfo[tokenName];
+        for (uint32 i = 0; i < infoArray.length; i++) {
+            if (network == infoArray[i].network) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	function isSupportedNetwork(
-		uint32 network
-	) internal pure override returns (bool) {
-		return
-			network == Web3Networks.Bsc ||
-			network == Web3Networks.Ethereum ||
-			network == Web3Networks.BitcoinP2tr;
-	}
+    function getTokenInfo(
+        string memory tokenName,
+        uint32 network
+    ) internal view returns (string memory, uint8, uint8) {
+        string memory tokenAddress;
+        uint8 dataProviderType;
+        uint8 decimals;
+        for (uint i = 0; i < tokenInfo[tokenName].length; i++) {
+            if (tokenInfo[tokenName][i].network == network) {
+                tokenAddress = tokenInfo[tokenName][i].tokenAddress;
+                dataProviderType = tokenInfo[tokenName][i].dataprovierType;
+                decimals = tokenInfo[tokenName][i].decimals;
+                return (tokenAddress, dataProviderType, decimals);
+            }
+        }
+        revert("TokenInfo not found");
+    }
 }

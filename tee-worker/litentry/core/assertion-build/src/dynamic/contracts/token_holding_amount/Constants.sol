@@ -18,6 +18,21 @@
 
 pragma solidity ^0.8.8;
 
+struct TokenInfo {
+    uint32 network;
+    string tokenAddress;
+    uint8 dataprovierType;
+    uint8 decimals;
+}
+
 library Constants {
-	uint256 constant decimals_factor = 1000;
+    uint256 constant decimals_factor = 1000;
+}
+
+library DataProviderTypes {
+    uint8 public constant AchainableClient = 0;
+    uint8 public constant BlockchainInfoClient = 1;
+    uint8 public constant GeniidataClient = 2;
+    uint8 public constant MoralisClient = 3;
+    uint8 public constant NoderealClient = 4;
 }

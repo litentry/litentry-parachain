@@ -21,10 +21,10 @@ pragma solidity ^0.8.8;
 import "../libraries/Utils.sol";
 
 contract ParseDecimal {
-    function callParseDecimal(string memory text, uint8 decimals)
-        public
-        returns (bool, uint256)
-    {
+    function callParseDecimal(
+        string memory text,
+        uint8 decimals
+    ) public returns (bool, uint256) {
         return Utils.parseDecimal(text, decimals);
     }
 }

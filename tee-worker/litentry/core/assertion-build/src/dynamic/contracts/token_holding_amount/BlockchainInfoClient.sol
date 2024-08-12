@@ -20,12 +20,13 @@ pragma solidity ^0.8.8;
 
 import "../libraries/Http.sol";
 import "../libraries/Utils.sol";
+import "../libraries/Identities.sol";
 
 library BlockchainInfoClient {
-    function getMultiAddress(string memory url, string[] memory accounts)
-        internal
-        returns (bool, int64)
-    {
+    function getMultiAddress(
+        string[] memory accounts
+    ) internal returns (bool, int64) {
+        string memory url = "https://blockchain.info/multiaddr";
         string memory activeQueryParam = "";
 
         for (uint256 i = 0; i < accounts.length; i++) {
@@ -45,5 +46,26 @@ library BlockchainInfoClient {
 
         HttpHeader[] memory headers = new HttpHeader[](0);
         return Http.GetI64(url, "/wallet/final_balance", headers);
+    }
+
+    function isSupportedNetwork(uint32 network) internal pure returns (bool) {
+        return
+            network == Web3Networks.BitcoinP2tr ||
+            network == Web3Networks.BitcoinP2pkh ||
+            network == Web3Networks.BitcoinP2sh ||
+            network == Web3Networks.BitcoinP2wpkh ||
+            network == Web3Networks.BitcoinP2wsh;
+    }
+
+    function getTokenBalance(
+        string[] memory accounts
+    ) internal returns (uint256) {
+        (bool balanceSuccess, int64 balance) = BlockchainInfoClient
+            .getMultiAddress(accounts);
+        if (balanceSuccess) {
+            return uint256(uint64(balance));
+        } else {
+            return 0;
+        }
     }
 }

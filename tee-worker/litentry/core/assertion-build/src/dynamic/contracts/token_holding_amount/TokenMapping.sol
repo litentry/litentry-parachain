@@ -29,6 +29,7 @@ import { Mmss } from "./brc20/Mmss.sol";
 import { Ordi } from "./brc20/Ordi.sol";
 import { Rats } from "./brc20/Rats.sol";
 import { Sats } from "./brc20/Sats.sol";
+import { BRC20 } from "./brc20/BRC20.sol";
 
 // erc20
 import { Ada } from "./erc20/Ada.sol";
@@ -70,355 +71,285 @@ import { Usdt } from "./erc20/Usdt.sol";
 import { Wbtc } from "./erc20//Wbtc.sol";
 import { Cvx } from "./erc20/Cvx.sol";
 import { Usdd } from "./erc20/Usdd.sol";
+
+// btc
+import { Btc } from "./Btc.sol";
 contract TokenMapping is TokenQueryLogic {
-	constructor() {
-		// btcs
-		tokenNames["btcs"] = Btcs.getTokenName();
-		tokenRanges["btcs"] = Btcs.getTokenRanges();
-		tokenNetworks["btcs"] = Btcs.getTokenNetworks();
+    constructor() {
+        // btcs
+        tokenRanges["btcs"] = Btcs.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["btcs"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// cats
-		tokenNames["cats"] = Cats.getTokenName();
-		tokenRanges["cats"] = Cats.getTokenRanges();
-		tokenNetworks["cats"] = Cats.getTokenNetworks();
+        // cats
+        tokenRanges["cats"] = Cats.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["cats"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// long
-		tokenNames["long"] = Long.getTokenName();
-		tokenRanges["long"] = Long.getTokenRanges();
-		tokenNetworks["long"] = Long.getTokenNetworks();
+        // long
+        tokenRanges["long"] = Long.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["long"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// long
-		tokenNames["mmss"] = Mmss.getTokenName();
-		tokenRanges["mmss"] = Mmss.getTokenRanges();
-		tokenNetworks["mmss"] = Mmss.getTokenNetworks();
+        // mmss
+        tokenRanges["mmss"] = Mmss.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["mmss"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// ordi
-		tokenNames["ordi"] = Ordi.getTokenName();
-		tokenRanges["ordi"] = Ordi.getTokenRanges();
-		tokenNetworks["ordi"] = Ordi.getTokenNetworks();
+        // ordi
+        tokenRanges["ordi"] = Ordi.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["ordi"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// rats
-		tokenNames["rats"] = Rats.getTokenName();
-		tokenRanges["rats"] = Rats.getTokenRanges();
-		tokenNetworks["rats"] = Rats.getTokenNetworks();
+        // rats
+        tokenRanges["rats"] = Rats.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["rats"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// sats
-		tokenNames["sats"] = Sats.getTokenName();
-		tokenRanges["sats"] = Sats.getTokenRanges();
-		tokenNetworks["sats"] = Sats.getTokenNetworks();
+        // sats
+        tokenRanges["sats"] = Sats.getTokenRanges();
+        for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
+            tokenInfo["sats"].push(BRC20.getBrc20TokenInfo()[i]);
+        }
 
-		// ada
-		tokenNames["ada"] = Ada.getTokenName();
-		tokenRanges["ada"] = Ada.getTokenRanges();
-		tokenNetworks["ada"] = Ada.getTokenNetworks();
-		tokenAddresses["ada"][Web3Networks.Bsc] = Ada.getTokenBscAddress();
-		tokenAddresses["ada"][Web3Networks.Ethereum] = Ada
-			.getTokenEthereumAddress();
+        // Btc
+        tokenRanges["btc"] = Btc.getTokenRanges();
+        for (uint8 i = 0; i < Btc.getTokenInfo().length; i++) {
+            tokenInfo["btc"].push(Btc.getTokenInfo()[i]);
+        }
 
-		// amp
-		tokenNames["amp"] = Amp.getTokenName();
-		tokenRanges["amp"] = Amp.getTokenRanges();
-		tokenNetworks["amp"] = Amp.getTokenNetworks();
-		tokenAddresses["amp"][Web3Networks.Bsc] = Amp.getTokenBscAddress();
-		tokenAddresses["amp"][Web3Networks.Ethereum] = Amp
-			.getTokenEthereumAddress();
+        // ada
+        tokenRanges["ada"] = Ada.getTokenRanges();
+        for (uint8 i = 0; i < Ada.getTokenInfo().length; i++) {
+            tokenInfo["ada"].push(Ada.getTokenInfo()[i]);
+        }
 
-		// atom
-		tokenNames["atom"] = Atom.getTokenName();
-		tokenRanges["atom"] = Atom.getTokenRanges();
-		tokenNetworks["atom"] = Atom.getTokenNetworks();
-		tokenAddresses["atom"][Web3Networks.Bsc] = Atom.getTokenBscAddress();
-		tokenAddresses["atom"][Web3Networks.Ethereum] = Atom
-			.getTokenEthereumAddress();
+        // amp
+        tokenRanges["amp"] = Amp.getTokenRanges();
+        for (uint8 i = 0; i < Amp.getTokenInfo().length; i++) {
+            tokenInfo["amp"].push(Amp.getTokenInfo()[i]);
+        }
 
-		// bch
-		tokenNames["bch"] = Bch.getTokenName();
-		tokenRanges["bch"] = Bch.getTokenRanges();
-		tokenNetworks["bch"] = Bch.getTokenNetworks();
-		tokenAddresses["bch"][Web3Networks.Bsc] = Bch.getTokenBscAddress();
-		tokenAddresses["bch"][Web3Networks.Ethereum] = Bch
-			.getTokenEthereumAddress();
+        // atom
+        tokenRanges["atom"] = Atom.getTokenRanges();
+        for (uint8 i = 0; i < Atom.getTokenInfo().length; i++) {
+            tokenInfo["atom"].push(Atom.getTokenInfo()[i]);
+        }
 
-		// bean
-		tokenNames["bean"] = Bean.getTokenName();
-		tokenRanges["bean"] = Bean.getTokenRanges();
-		tokenNetworks["bean"] = Bean.getTokenNetworks();
-		tokenAddresses["bean"][Web3Networks.Bsc] = Bean.getTokenBscAddress();
-		tokenAddresses["bean"][Web3Networks.Ethereum] = Bean
-			.getTokenEthereumAddress();
+        // bch
+        tokenRanges["bch"] = Bch.getTokenRanges();
+        for (uint8 i = 0; i < Bch.getTokenInfo().length; i++) {
+            tokenInfo["bch"].push(Bch.getTokenInfo()[i]);
+        }
 
-		// bnb
-		tokenNames["bnb"] = Bnb.getTokenName();
-		tokenRanges["bnb"] = Bnb.getTokenRanges();
-		tokenNetworks["bnb"] = Bnb.getTokenNetworks();
-		tokenAddresses["bnb"][Web3Networks.Bsc] = Bnb.getTokenBscAddress();
-		tokenAddresses["bnb"][Web3Networks.Ethereum] = Bnb
-			.getTokenEthereumAddress();
+        // bean
+        tokenRanges["bean"] = Bean.getTokenRanges();
+        for (uint8 i = 0; i < Bean.getTokenInfo().length; i++) {
+            tokenInfo["bean"].push(Bean.getTokenInfo()[i]);
+        }
 
-		// comp
-		tokenNames["comp"] = Comp.getTokenName();
-		tokenRanges["comp"] = Comp.getTokenRanges();
-		tokenNetworks["comp"] = Comp.getTokenNetworks();
-		tokenAddresses["comp"][Web3Networks.Bsc] = Comp.getTokenBscAddress();
-		tokenAddresses["comp"][Web3Networks.Ethereum] = Comp
-			.getTokenEthereumAddress();
+        // bnb
+        tokenRanges["bnb"] = Bnb.getTokenRanges();
+        for (uint8 i = 0; i < Bnb.getTokenInfo().length; i++) {
+            tokenInfo["bnb"].push(Bnb.getTokenInfo()[i]);
+        }
 
-		// cro
-		tokenNames["cro"] = Cro.getTokenName();
-		tokenRanges["cro"] = Cro.getTokenRanges();
-		tokenNetworks["cro"] = Cro.getTokenNetworks();
-		tokenAddresses["cro"][Web3Networks.Bsc] = Cro.getTokenBscAddress();
-		tokenAddresses["cro"][Web3Networks.Ethereum] = Cro
-			.getTokenEthereumAddress();
+        // comp
+        tokenRanges["comp"] = Comp.getTokenRanges();
+        for (uint8 i = 0; i < Comp.getTokenInfo().length; i++) {
+            tokenInfo["comp"].push(Comp.getTokenInfo()[i]);
+        }
 
-		// crv
-		tokenNames["crv"] = Crv.getTokenName();
-		tokenRanges["crv"] = Crv.getTokenRanges();
-		tokenNetworks["crv"] = Crv.getTokenNetworks();
-		tokenAddresses["crv"][Web3Networks.Bsc] = Crv.getTokenBscAddress();
-		tokenAddresses["crv"][Web3Networks.Ethereum] = Crv
-			.getTokenEthereumAddress();
+        // cro
+        tokenRanges["cro"] = Cro.getTokenRanges();
+        for (uint8 i = 0; i < Cro.getTokenInfo().length; i++) {
+            tokenInfo["cro"].push(Cro.getTokenInfo()[i]);
+        }
 
-		// cvx
-		tokenNames["cvx"] = Cvx.getTokenName();
-		tokenRanges["cvx"] = Cvx.getTokenRanges();
-		tokenNetworks["cvx"] = Cvx.getTokenNetworks();
-		tokenAddresses["cvx"][Web3Networks.Bsc] = Cvx.getTokenBscAddress();
-		tokenAddresses["cvx"][Web3Networks.Ethereum] = Cvx
-			.getTokenEthereumAddress();
+        // crv
+        tokenRanges["crv"] = Crv.getTokenRanges();
+        for (uint8 i = 0; i < Crv.getTokenInfo().length; i++) {
+            tokenInfo["crv"].push(Crv.getTokenInfo()[i]);
+        }
 
-		// dai
-		tokenNames["dai"] = Dai.getTokenName();
-		tokenRanges["dai"] = Dai.getTokenRanges();
-		tokenNetworks["dai"] = Dai.getTokenNetworks();
-		tokenAddresses["dai"][Web3Networks.Bsc] = Dai.getTokenBscAddress();
-		tokenAddresses["dai"][Web3Networks.Ethereum] = Dai
-			.getTokenEthereumAddress();
+        // dai
+        tokenRanges["dai"] = Dai.getTokenRanges();
+        for (uint8 i = 0; i < Dai.getTokenInfo().length; i++) {
+            tokenInfo["dai"].push(Dai.getTokenInfo()[i]);
+        }
 
-		// doge
-		tokenNames["doge"] = Doge.getTokenName();
-		tokenRanges["doge"] = Doge.getTokenRanges();
-		tokenNetworks["doge"] = Doge.getTokenNetworks();
-		tokenAddresses["doge"][Web3Networks.Bsc] = Doge.getTokenBscAddress();
-		tokenAddresses["doge"][Web3Networks.Ethereum] = Doge
-			.getTokenEthereumAddress();
+        // doge
+        tokenRanges["doge"] = Doge.getTokenRanges();
+        for (uint8 i = 0; i < Doge.getTokenInfo().length; i++) {
+            tokenInfo["doge"].push(Doge.getTokenInfo()[i]);
+        }
 
-		// dydx
-		tokenNames["dydx"] = Dydx.getTokenName();
-		tokenRanges["dydx"] = Dydx.getTokenRanges();
-		tokenNetworks["dydx"] = Dydx.getTokenNetworks();
-		tokenAddresses["dydx"][Web3Networks.Bsc] = Dydx.getTokenBscAddress();
-		tokenAddresses["dydx"][Web3Networks.Ethereum] = Dydx
-			.getTokenEthereumAddress();
+        // dydx
+        tokenRanges["dydx"] = Dydx.getTokenRanges();
+        for (uint8 i = 0; i < Dydx.getTokenInfo().length; i++) {
+            tokenInfo["dydx"].push(Dydx.getTokenInfo()[i]);
+        }
 
-		// etc
-		tokenNames["etc"] = Etc.getTokenName();
-		tokenRanges["etc"] = Etc.getTokenRanges();
-		tokenNetworks["etc"] = Etc.getTokenNetworks();
-		tokenAddresses["etc"][Web3Networks.Bsc] = Etc.getTokenBscAddress();
-		tokenAddresses["etc"][Web3Networks.Ethereum] = Etc
-			.getTokenEthereumAddress();
+        // etc
+        tokenRanges["etc"] = Etc.getTokenRanges();
+        for (uint8 i = 0; i < Etc.getTokenInfo().length; i++) {
+            tokenInfo["etc"].push(Etc.getTokenInfo()[i]);
+        }
 
-		// eth
-		tokenNames["eth"] = Eth.getTokenName();
-		tokenRanges["eth"] = Eth.getTokenRanges();
-		tokenNetworks["eth"] = Eth.getTokenNetworks();
-		tokenAddresses["eth"][Web3Networks.Bsc] = Eth.getTokenBscAddress();
-		tokenAddresses["eth"][Web3Networks.Ethereum] = Eth
-			.getTokenEthereumAddress();
+        // eth
+        tokenRanges["eth"] = Eth.getTokenRanges();
+        for (uint8 i = 0; i < Eth.getTokenInfo().length; i++) {
+            tokenInfo["eth"].push(Eth.getTokenInfo()[i]);
+        }
 
-		// fil
-		tokenNames["fil"] = Fil.getTokenName();
-		tokenRanges["fil"] = Fil.getTokenRanges();
-		tokenNetworks["fil"] = Fil.getTokenNetworks();
-		tokenAddresses["fil"][Web3Networks.Bsc] = Fil.getTokenBscAddress();
-		tokenAddresses["fil"][Web3Networks.Ethereum] = Fil
-			.getTokenEthereumAddress();
+        // fil
+        tokenRanges["fil"] = Fil.getTokenRanges();
+        for (uint8 i = 0; i < Fil.getTokenInfo().length; i++) {
+            tokenInfo["fil"].push(Fil.getTokenInfo()[i]);
+        }
 
-		// grt
-		tokenNames["grt"] = Grt.getTokenName();
-		tokenRanges["grt"] = Grt.getTokenRanges();
-		tokenNetworks["grt"] = Grt.getTokenNetworks();
-		tokenAddresses["grt"][Web3Networks.Bsc] = Grt.getTokenBscAddress();
-		tokenAddresses["grt"][Web3Networks.Ethereum] = Grt
-			.getTokenEthereumAddress();
+        // grt
+        tokenRanges["grt"] = Grt.getTokenRanges();
+        for (uint8 i = 0; i < Grt.getTokenInfo().length; i++) {
+            tokenInfo["grt"].push(Grt.getTokenInfo()[i]);
+        }
 
-		// gtc
-		tokenNames["gtc"] = Gtc.getTokenName();
-		tokenRanges["gtc"] = Gtc.getTokenRanges();
-		tokenNetworks["gtc"] = Gtc.getTokenNetworks();
-		tokenAddresses["gtc"][Web3Networks.Bsc] = Gtc.getTokenBscAddress();
-		tokenAddresses["gtc"][Web3Networks.Ethereum] = Gtc
-			.getTokenEthereumAddress();
+        // gtc
+        tokenRanges["gtc"] = Gtc.getTokenRanges();
+        for (uint8 i = 0; i < Gtc.getTokenInfo().length; i++) {
+            tokenInfo["gtc"].push(Gtc.getTokenInfo()[i]);
+        }
 
-		// gusd
-		tokenNames["gusd"] = Gusd.getTokenName();
-		tokenRanges["gusd"] = Gusd.getTokenRanges();
-		tokenNetworks["gusd"] = Gusd.getTokenNetworks();
-		tokenAddresses["gusd"][Web3Networks.Bsc] = Gusd.getTokenBscAddress();
-		tokenAddresses["gusd"][Web3Networks.Ethereum] = Gusd
-			.getTokenEthereumAddress();
+        // gusd
+        tokenRanges["gusd"] = Gusd.getTokenRanges();
+        for (uint8 i = 0; i < Gusd.getTokenInfo().length; i++) {
+            tokenInfo["gusd"].push(Gusd.getTokenInfo()[i]);
+        }
 
-		// imx
-		tokenNames["imx"] = Imx.getTokenName();
-		tokenRanges["imx"] = Imx.getTokenRanges();
-		tokenNetworks["imx"] = Imx.getTokenNetworks();
-		tokenAddresses["imx"][Web3Networks.Bsc] = Imx.getTokenBscAddress();
-		tokenAddresses["imx"][Web3Networks.Ethereum] = Imx
-			.getTokenEthereumAddress();
+        // imx
+        tokenRanges["imx"] = Imx.getTokenRanges();
+        for (uint8 i = 0; i < Imx.getTokenInfo().length; i++) {
+            tokenInfo["imx"].push(Imx.getTokenInfo()[i]);
+        }
 
-		// inj
-		tokenNames["inj"] = Inj.getTokenName();
-		tokenRanges["inj"] = Inj.getTokenRanges();
-		tokenNetworks["inj"] = Inj.getTokenNetworks();
-		tokenAddresses["inj"][Web3Networks.Bsc] = Inj.getTokenBscAddress();
-		tokenAddresses["inj"][Web3Networks.Ethereum] = Inj
-			.getTokenEthereumAddress();
+        // inj
+        tokenRanges["inj"] = Inj.getTokenRanges();
+        for (uint8 i = 0; i < Inj.getTokenInfo().length; i++) {
+            tokenInfo["inj"].push(Inj.getTokenInfo()[i]);
+        }
 
-		// leo
-		tokenNames["leo"] = Leo.getTokenName();
-		tokenRanges["leo"] = Leo.getTokenRanges();
-		tokenNetworks["leo"] = Leo.getTokenNetworks();
-		tokenAddresses["leo"][Web3Networks.Bsc] = Leo.getTokenBscAddress();
-		tokenAddresses["leo"][Web3Networks.Ethereum] = Leo
-			.getTokenEthereumAddress();
+        // leo
+        tokenRanges["leo"] = Leo.getTokenRanges();
+        for (uint8 i = 0; i < Leo.getTokenInfo().length; i++) {
+            tokenInfo["leo"].push(Leo.getTokenInfo()[i]);
+        }
 
-		// link
-		tokenNames["link"] = Link.getTokenName();
-		tokenRanges["link"] = Link.getTokenRanges();
-		tokenNetworks["link"] = Link.getTokenNetworks();
-		tokenAddresses["link"][Web3Networks.Bsc] = Link.getTokenBscAddress();
-		tokenAddresses["link"][Web3Networks.Ethereum] = Link
-			.getTokenEthereumAddress();
+        // link
+        tokenRanges["link"] = Link.getTokenRanges();
+        for (uint8 i = 0; i < Link.getTokenInfo().length; i++) {
+            tokenInfo["link"].push(Link.getTokenInfo()[i]);
+        }
 
-		// lit
-		tokenNames["lit"] = Lit.getTokenName();
-		tokenRanges["lit"] = Lit.getTokenRanges();
-		tokenNetworks["lit"] = Lit.getTokenNetworks();
-		tokenAddresses["lit"][Web3Networks.Bsc] = Lit.getTokenBscAddress();
-		tokenAddresses["lit"][Web3Networks.Ethereum] = Lit
-			.getTokenEthereumAddress();
+        // lit
+        tokenRanges["lit"] = Lit.getTokenRanges();
+        for (uint8 i = 0; i < Lit.getTokenInfo().length; i++) {
+            tokenInfo["lit"].push(Lit.getTokenInfo()[i]);
+        }
 
-		// matic
-		tokenNames["matic"] = Matic.getTokenName();
-		tokenRanges["matic"] = Matic.getTokenRanges();
-		tokenNetworks["matic"] = Matic.getTokenNetworks();
-		tokenAddresses["matic"][Web3Networks.Bsc] = Matic.getTokenBscAddress();
-		tokenAddresses["matic"][Web3Networks.Ethereum] = Matic
-			.getTokenEthereumAddress();
+        // matic
+        tokenRanges["matic"] = Matic.getTokenRanges();
+        for (uint8 i = 0; i < Matic.getTokenInfo().length; i++) {
+            tokenInfo["matic"].push(Matic.getTokenInfo()[i]);
+        }
 
-		// mcrt
-		tokenNames["mcrt"] = Mcrt.getTokenName();
-		tokenRanges["mcrt"] = Mcrt.getTokenRanges();
-		tokenNetworks["mcrt"] = Mcrt.getTokenNetworks();
-		tokenAddresses["mcrt"][Web3Networks.Bsc] = Mcrt.getTokenBscAddress();
-		tokenAddresses["mcrt"][Web3Networks.Ethereum] = Mcrt
-			.getTokenEthereumAddress();
+        // mcrt
+        tokenRanges["mcrt"] = Mcrt.getTokenRanges();
+        for (uint8 i = 0; i < Mcrt.getTokenInfo().length; i++) {
+            tokenInfo["mcrt"].push(Mcrt.getTokenInfo()[i]);
+        }
 
-		// nfp
-		tokenNames["nfp"] = Nfp.getTokenName();
-		tokenRanges["nfp"] = Nfp.getTokenRanges();
-		tokenNetworks["nfp"] = Nfp.getTokenNetworks();
-		tokenAddresses["nfp"][Web3Networks.Bsc] = Nfp.getTokenBscAddress();
-		tokenAddresses["nfp"][Web3Networks.Ethereum] = Nfp
-			.getTokenEthereumAddress();
+        // nfp
+        tokenRanges["nfp"] = Nfp.getTokenRanges();
+        for (uint8 i = 0; i < Nfp.getTokenInfo().length; i++) {
+            tokenInfo["nfp"].push(Nfp.getTokenInfo()[i]);
+        }
 
-		// people
-		tokenNames["people"] = People.getTokenName();
-		tokenRanges["people"] = People.getTokenRanges();
-		tokenNetworks["people"] = People.getTokenNetworks();
-		tokenAddresses["people"][Web3Networks.Bsc] = People
-			.getTokenBscAddress();
-		tokenAddresses["people"][Web3Networks.Ethereum] = People
-			.getTokenEthereumAddress();
+        // people
+        tokenRanges["people"] = People.getTokenRanges();
+        for (uint8 i = 0; i < People.getTokenInfo().length; i++) {
+            tokenInfo["people"].push(People.getTokenInfo()[i]);
+        }
 
-		// shib
-		tokenNames["shib"] = Shib.getTokenName();
-		tokenRanges["shib"] = Shib.getTokenRanges();
-		tokenNetworks["shib"] = Shib.getTokenNetworks();
-		tokenAddresses["shib"][Web3Networks.Bsc] = Shib.getTokenBscAddress();
-		tokenAddresses["shib"][Web3Networks.Ethereum] = Shib
-			.getTokenEthereumAddress();
+        // shib
+        tokenRanges["shib"] = Shib.getTokenRanges();
+        for (uint8 i = 0; i < Shib.getTokenInfo().length; i++) {
+            tokenInfo["shib"].push(Shib.getTokenInfo()[i]);
+        }
 
-		// sol
-		tokenNames["sol"] = Sol.getTokenName();
-		tokenRanges["sol"] = Sol.getTokenRanges();
-		tokenNetworks["sol"] = Sol.getTokenNetworks();
-		tokenAddresses["sol"][Web3Networks.Bsc] = Sol.getTokenBscAddress();
-		tokenAddresses["sol"][Web3Networks.Ethereum] = Sol
-			.getTokenEthereumAddress();
+        // sol
+        tokenRanges["sol"] = Sol.getTokenRanges();
+        for (uint8 i = 0; i < Sol.getTokenInfo().length; i++) {
+            tokenInfo["sol"].push(Sol.getTokenInfo()[i]);
+        }
 
-		// spaceid
-		tokenNames["spaceid"] = SpaceId.getTokenName();
-		tokenRanges["spaceid"] = SpaceId.getTokenRanges();
-		tokenNetworks["spaceid"] = SpaceId.getTokenNetworks();
-		tokenAddresses["spaceid"][Web3Networks.Bsc] = SpaceId
-			.getTokenBscAddress();
-		tokenAddresses["spaceid"][Web3Networks.Ethereum] = SpaceId
-			.getTokenEthereumAddress();
+        // spaceid
+        tokenRanges["spaceid"] = SpaceId.getTokenRanges();
+        for (uint8 i = 0; i < SpaceId.getTokenInfo().length; i++) {
+            tokenInfo["spaceid"].push(SpaceId.getTokenInfo()[i]);
+        }
 
-		// ton
-		tokenNames["ton"] = Ton.getTokenName();
-		tokenRanges["ton"] = Ton.getTokenRanges();
-		tokenNetworks["ton"] = Ton.getTokenNetworks();
-		tokenAddresses["ton"][Web3Networks.Bsc] = Ton.getTokenBscAddress();
-		tokenAddresses["ton"][Web3Networks.Ethereum] = Ton
-			.getTokenEthereumAddress();
+        // ton
+        tokenRanges["ton"] = Ton.getTokenRanges();
+        for (uint8 i = 0; i < Ton.getTokenInfo().length; i++) {
+            tokenInfo["ton"].push(Ton.getTokenInfo()[i]);
+        }
 
-		// trx
-		tokenNames["trx"] = Trx.getTokenName();
-		tokenRanges["trx"] = Trx.getTokenRanges();
-		tokenNetworks["trx"] = Trx.getTokenNetworks();
-		tokenAddresses["trx"][Web3Networks.Bsc] = Trx.getTokenBscAddress();
-		tokenAddresses["trx"][Web3Networks.Ethereum] = Trx
-			.getTokenEthereumAddress();
+        // trx
+        tokenRanges["trx"] = Trx.getTokenRanges();
+        for (uint8 i = 0; i < Trx.getTokenInfo().length; i++) {
+            tokenInfo["trx"].push(Trx.getTokenInfo()[i]);
+        }
 
-		// tusd
-		tokenNames["tusd"] = Tusd.getTokenName();
-		tokenRanges["tusd"] = Tusd.getTokenRanges();
-		tokenNetworks["tusd"] = Tusd.getTokenNetworks();
-		tokenAddresses["tusd"][Web3Networks.Bsc] = Tusd.getTokenBscAddress();
-		tokenAddresses["tusd"][Web3Networks.Ethereum] = Tusd
-			.getTokenEthereumAddress();
+        // tusd
+        tokenRanges["tusd"] = Tusd.getTokenRanges();
+        for (uint8 i = 0; i < Tusd.getTokenInfo().length; i++) {
+            tokenInfo["tusd"].push(Tusd.getTokenInfo()[i]);
+        }
 
-		// uni
-		tokenNames["uni"] = Uni.getTokenName();
-		tokenRanges["uni"] = Uni.getTokenRanges();
-		tokenNetworks["uni"] = Uni.getTokenNetworks();
-		tokenAddresses["uni"][Web3Networks.Bsc] = Uni.getTokenBscAddress();
-		tokenAddresses["uni"][Web3Networks.Ethereum] = Uni
-			.getTokenEthereumAddress();
+        // uni
+        tokenRanges["uni"] = Uni.getTokenRanges();
+        for (uint8 i = 0; i < Uni.getTokenInfo().length; i++) {
+            tokenInfo["uni"].push(Uni.getTokenInfo()[i]);
+        }
 
-		// usdc
-		tokenNames["usdc"] = Usdc.getTokenName();
-		tokenRanges["usdc"] = Usdc.getTokenRanges();
-		tokenNetworks["usdc"] = Usdc.getTokenNetworks();
-		tokenAddresses["usdc"][Web3Networks.Bsc] = Usdc.getTokenBscAddress();
-		tokenAddresses["usdc"][Web3Networks.Ethereum] = Usdc
-			.getTokenEthereumAddress();
+        // usdc
+        tokenRanges["usdc"] = Usdc.getTokenRanges();
+        for (uint8 i = 0; i < Usdc.getTokenInfo().length; i++) {
+            tokenInfo["usdc"].push(Usdc.getTokenInfo()[i]);
+        }
 
-		// usdd
-		tokenNames["usdd"] = Usdd.getTokenName();
-		tokenRanges["usdd"] = Usdd.getTokenRanges();
-		tokenNetworks["usdd"] = Usdd.getTokenNetworks();
-		tokenAddresses["usdd"][Web3Networks.Bsc] = Usdd.getTokenBscAddress();
-		tokenAddresses["usdd"][Web3Networks.Ethereum] = Usdd
-			.getTokenEthereumAddress();
+        // usdd
+        tokenRanges["usdd"] = Usdd.getTokenRanges();
+        for (uint8 i = 0; i < Usdd.getTokenInfo().length; i++) {
+            tokenInfo["usdd"].push(Usdd.getTokenInfo()[i]);
+        }
 
-		// usdt
-		tokenNames["usdt"] = Usdt.getTokenName();
-		tokenRanges["usdt"] = Usdt.getTokenRanges();
-		tokenNetworks["usdt"] = Usdt.getTokenNetworks();
-		tokenAddresses["usdt"][Web3Networks.Bsc] = Usdt.getTokenBscAddress();
-		tokenAddresses["usdt"][Web3Networks.Ethereum] = Usdt
-			.getTokenEthereumAddress();
+        // usdt
+        tokenRanges["usdt"] = Usdt.getTokenRanges();
+        for (uint8 i = 0; i < Usdt.getTokenInfo().length; i++) {
+            tokenInfo["usdt"].push(Usdt.getTokenInfo()[i]);
+        }
 
-		// wbtc
-		tokenNames["wbtc"] = Wbtc.getTokenName();
-		tokenRanges["wbtc"] = Wbtc.getTokenRanges();
-		tokenNetworks["wbtc"] = Wbtc.getTokenNetworks();
-		tokenAddresses["wbtc"][Web3Networks.Bsc] = Wbtc.getTokenBscAddress();
-		tokenAddresses["wbtc"][Web3Networks.Ethereum] = Wbtc
-			.getTokenEthereumAddress();
-	}
+        // wbtc
+        tokenRanges["wbtc"] = Wbtc.getTokenRanges();
+        for (uint8 i = 0; i < Wbtc.getTokenInfo().length; i++) {
+            tokenInfo["wbtc"].push(Wbtc.getTokenInfo()[i]);
+        }
+    }
 }

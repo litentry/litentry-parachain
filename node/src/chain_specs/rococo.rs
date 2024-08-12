@@ -38,7 +38,7 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 /// Get default parachain properties for Rococo which will be filled into chain spec
 /// Currently, we use 131 as the SS58Prefix (same as Litmus)
 fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 131)
+	parachain_properties("LIT", 18, 131)
 }
 
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
@@ -247,7 +247,7 @@ fn generate_genesis(
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
-		tokens: Default::default(),
+		assets: Default::default(),
 		ethereum: Default::default(),
 		evm: Default::default(),
 		teebag: TeebagConfig {
@@ -256,5 +256,6 @@ fn generate_genesis(
 			mode: TeebagOperationalMode::Development,
 		},
 		bitacross: BitacrossConfig { admin: Some(root_key) },
+		score_staking: Default::default(),
 	}
 }

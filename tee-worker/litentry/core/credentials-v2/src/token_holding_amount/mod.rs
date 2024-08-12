@@ -86,13 +86,18 @@ fn update_assertion(token_type: Web3TokenType, balance: f64, credential: &mut Cr
 		Some(index) => {
 			let min = format!("{}", token_holding_amount_range[index]);
 			let max = format!("{}", token_holding_amount_range[index + 1]);
-			let min_item =
-				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::GreaterEq, &min);
-			let max_item =
-				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::LessThan, &max);
+			let min_item = AssertionLogic::new_item(
+				ASSERTION_KEYS.holding_amount,
+				if index == 0 { Op::GreaterThan } else { Op::GreaterEq },
+				&min,
+			);
 
 			assertion = assertion.add_item(min_item);
-			assertion = assertion.add_item(max_item);
+			if balance > 0_f64 {
+				let max_item =
+					AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::LessThan, &max);
+				assertion = assertion.add_item(max_item);
+			}
 
 			credential.credential_subject.values.push(index != 0 || balance > 0_f64);
 		},

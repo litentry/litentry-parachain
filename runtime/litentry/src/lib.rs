@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
+#![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
@@ -30,7 +31,7 @@ use frame_support::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin, Everything, InstanceFilter,
 		SortedMembers, WithdrawReasons,
 	},
-	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
@@ -67,7 +68,7 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -83,6 +84,8 @@ pub mod asset_config;
 pub mod constants;
 pub mod weights;
 pub mod xcm_config;
+
+pub mod migration;
 
 #[cfg(test)]
 mod tests;
@@ -147,7 +150,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9183,
+	spec_version: 9193,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -411,7 +414,8 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = MILLICENTS / 10;
+	pub const TransactionByteFee: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
+	pub const WeightToFeeFactor: Balance = WEIGHT_TO_FEE_FACTOR; // 10^6
 }
 impl_runtime_transaction_payment_fees!(constants);
 
@@ -419,7 +423,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type WeightToFee = IdentityFee<Balance>;
+	type WeightToFee = ConstantMultiplier<Balance, WeightToFeeFactor>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = ConstU8<5>;
@@ -631,6 +635,7 @@ impl pallet_identity::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
+	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
 }
 
 parameter_types! {
@@ -702,8 +707,8 @@ parameter_types! {
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(33);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
-	pub const MinDelegation: Balance = 50 * DOLLARS;
-	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
+	pub const MinDelegation: Balance = 5 * DOLLARS;
+	pub const MinDelegatorStk: Balance = 5 * DOLLARS;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -763,7 +768,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = BridgeTransfer;
+	type IssuanceAdapter = AssetsHandler;
 }
 
 parameter_types! {
@@ -795,9 +800,8 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
-	type Currency = Balances;
+	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
@@ -810,8 +814,8 @@ parameter_types! {
 }
 
 // allow anyone to call transfer_native
-pub struct TransferNativeAnyone;
-impl SortedMembers<AccountId> for TransferNativeAnyone {
+pub struct TransferAssetsAnyone;
+impl SortedMembers<AccountId> for TransferAssetsAnyone {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
 	}
@@ -827,14 +831,18 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
+	type BridgeHandler = AssetsHandler;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TransferNativeAnyone;
+	type TransferAssetsMembers = TransferAssetsAnyone;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
+}
+
+impl pallet_assets_handler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
-	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
@@ -856,6 +864,7 @@ impl pallet_teebag::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<5>;
+	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
 }
 
 impl pallet_bitacross::Config for Runtime {
@@ -927,7 +936,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens = 55,
+		// 55 is saved for old pallet: Tokens: orml_tokens
+		Assets: pallet_assets = 56,
 
 		// Litentry pallets
 		ChainBridge: pallet_bridge = 60,
@@ -936,6 +946,7 @@ construct_runtime! {
 		AssetManager: pallet_asset_manager = 64,
 		Teebag: pallet_teebag = 65,
 		Bitacross: pallet_bitacross = 66,
+		AssetsHandler: pallet_assets_handler = 68,
 
 		// TMP
 		AccountFix: pallet_account_fix = 254,
@@ -953,7 +964,12 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::ExtrinsicFilter(_) |
 				RuntimeCall::Multisig(_) |
 				RuntimeCall::Council(_) |
-				RuntimeCall::TechnicalCommittee(_)
+				RuntimeCall::CouncilMembership(_) |
+				RuntimeCall::TechnicalCommittee(_) |
+				RuntimeCall::TechnicalCommitteeMembership(_) |
+				RuntimeCall::Utility(_) |
+				// Temp: should be removed after the one-time burn
+				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
 		) {
 			// always allow core calls
 			return true
@@ -1032,6 +1048,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
+		[pallet_teebag, Teebag]
 	);
 }
 

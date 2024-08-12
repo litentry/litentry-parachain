@@ -22,33 +22,27 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Fil {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 10 * Constants.decimals_factor;
+        ranges[2] = 30 * Constants.decimals_factor;
+        ranges[3] = 80 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
 
-	function getTokenName() internal pure returns (string memory) {
-		return "fil";
-	}
+        return ranges;
+    }
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 10 * Constants.decimals_factor;
-		ranges[2] = 30 * Constants.decimals_factor;
-		ranges[3] = 80 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-
-		return networks;
-	}
+        return tokenInfoList;
+    }
 }

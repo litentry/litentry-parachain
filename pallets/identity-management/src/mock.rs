@@ -153,6 +153,7 @@ impl pallet_teebag::Config for Test {
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<3>;
+	type WeightInfo = ();
 }
 
 impl pallet_identity_management::Config for Test {
@@ -161,6 +162,7 @@ impl pallet_identity_management::Config for Test {
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type MaxOIDCClientRedirectUris = ConstU32<3>;
 }
 
 impl pallet_group::Config for Test {

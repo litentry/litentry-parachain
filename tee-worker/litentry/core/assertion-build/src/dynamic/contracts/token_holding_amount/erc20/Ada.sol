@@ -19,35 +19,28 @@ pragma solidity ^0.8.8;
 
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
+
 library Ada {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](7);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1000 * Constants.decimals_factor;
+        ranges[2] = 5000 * Constants.decimals_factor;
+        ranges[3] = 20000 * Constants.decimals_factor;
+        ranges[4] = 50000 * Constants.decimals_factor;
+        ranges[5] = 100000 * Constants.decimals_factor;
+        ranges[6] = 300000 * Constants.decimals_factor;
 
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-
-	function getTokenName() internal pure returns (string memory) {
-		return "ada";
-	}
-
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](7);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1000 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 20000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
-		ranges[5] = 100000 * Constants.decimals_factor;
-		ranges[6] = 300000 * Constants.decimals_factor;
-
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-		return networks;
-	}
+        return ranges;
+    }
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

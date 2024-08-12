@@ -22,33 +22,26 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Leo {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 10 * Constants.decimals_factor;
+        ranges[2] = 30 * Constants.decimals_factor;
+        ranges[3] = 80 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
 
-	function getTokenName() internal pure returns (string memory) {
-		return "leo";
-	}
+        return ranges;
+    }
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 10 * Constants.decimals_factor;
-		ranges[2] = 30 * Constants.decimals_factor;
-		ranges[3] = 80 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
-
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x2af5d2ad76741191d15dfe7bf6ac92d4bd912ca3",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

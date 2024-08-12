@@ -44,16 +44,18 @@ use itp_sgx_crypto::{
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_stf_executor::getter_executor::ExecuteGetter;
+use itp_stf_primitives::types::KeyPair;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use litentry_primitives::{AesRequest, DecryptableRequest};
+use lc_direct_call::DirectCall;
+use litentry_primitives::{aes_encrypt_default, AesRequest, DecryptableRequest, Identity};
 use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::crypto::Pair;
 use sp_runtime::OpaqueExtrinsic;
-use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -93,6 +95,9 @@ where
 
 	let signer_lookup_cloned = signer_lookup.clone();
 	let shielding_key_cloned = shielding_key.clone();
+	let shielding_key_cloned_2 = shielding_key.clone();
+	let signing_key_repository_cloned = signing_key_repository.clone();
+	let ocall_api_cloned = ocall_api.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
 		let rsa_pubkey = match shielding_key_cloned.retrieve_pubkey() {
@@ -144,7 +149,7 @@ where
 	io.add_method("bitacross_submitRequest", move |params: Params| {
 		debug!("worker_api_direct rpc was called: bitacross_submitRequest");
 		async move {
-			let json_value = match request_bit_across_inner(params).await {
+			let json_value = match bitacross_task_create_inner(params).await {
 				Ok(value) => value.to_hex(),
 				Err(error) => RpcReturnValue {
 					value: error,
@@ -154,6 +159,49 @@ where
 				.to_hex(),
 			};
 			Ok(json!(json_value))
+		}
+	});
+
+	// btc sign task data share
+	io.add_sync_method("bitacross_btcDataShare", move |params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_btcDataShare");
+		let json_value = match bitacross_data_share_inner(params) {
+			Ok(value) => value.to_hex(),
+			Err(error) =>
+				RpcReturnValue { value: error, do_watch: false, status: DirectRequestStatus::Error }
+					.to_hex(),
+		};
+		Ok(json!(json_value))
+	});
+
+	io.add_method("bitacross_checkSignBitcoin", move |_params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_checkSignBitcoin");
+		let request = prepare_check_sign_bitcoin_request(
+			signing_key_repository_cloned.as_ref(),
+			shielding_key_cloned_2.as_ref(),
+			ocall_api_cloned.as_ref(),
+		);
+		async move {
+			if let Ok(request) = request {
+				let params = Params::Array(vec![jsonrpc_core::Value::String(request.to_hex())]);
+				let json_value = match bitacross_task_create_inner(params).await {
+					Ok(value) => value.to_hex(),
+					Err(error) => RpcReturnValue {
+						value: error,
+						do_watch: false,
+						status: DirectRequestStatus::Error,
+					}
+					.to_hex(),
+				};
+				Ok(json!(json_value))
+			} else {
+				Ok(json!(RpcReturnValue {
+					value: vec![],
+					do_watch: false,
+					status: DirectRequestStatus::Error,
+				}
+				.to_hex()))
+			}
 		}
 	});
 
@@ -356,6 +404,35 @@ where
 	io
 }
 
+fn prepare_check_sign_bitcoin_request<AccessShieldingKey, OcallApi>(
+	signing_key_repository: &EnclaveSigningKeyRepository,
+	shielding_key: &AccessShieldingKey,
+	ocall_api: &OcallApi,
+) -> Result<AesRequest, ()>
+where
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
+	<AccessShieldingKey as AccessKey>::KeyType:
+		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
+	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
+{
+	let aes_key = [0u8; 32];
+	let signer = signing_key_repository.retrieve_key().map_err(|_| ())?;
+	let shielding_key = shielding_key.retrieve_pubkey().map_err(|_| ())?;
+	let identity = Identity::Substrate(signer.public().into());
+	let mrenclave = ocall_api.get_mrenclave_of_self().map_err(|_| ())?.m;
+	let call = DirectCall::CheckSignBitcoin(identity).sign(
+		&KeyPair::Ed25519(Box::new(signer)),
+		&mrenclave,
+		&mrenclave.into(),
+	);
+	let encrypted = aes_encrypt_default(&aes_key, &call.encode());
+	Ok(AesRequest {
+		shard: mrenclave.into(),
+		key: shielding_key.encrypt(&aes_key).map_err(|_| ())?,
+		payload: encrypted,
+	})
+}
+
 // Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
 // in unencrypted, see P-183
 fn execute_getter_inner<GE: ExecuteGetter>(
@@ -447,15 +524,13 @@ pub enum BitacrossRequestError {
 	Other(Vec<u8>),
 }
 
-async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
-	let payload = get_request_payload(params)?;
-	let request = AesRequest::from_hex(&payload)
-		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+async fn bitacross_task_create_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
+	let request = get_request_from_params(params)?;
 
 	let bit_across_request_sender = BitAcrossRequestSender::new();
 	let (sender, receiver) = oneshot::channel::<Result<BitAcrossProcessingResult, Vec<u8>>>();
 
-	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
+	bit_across_request_sender.send(BitAcrossRequest::Request(request, sender))?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {
@@ -491,14 +566,24 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Vec<
 	}
 }
 
+fn bitacross_data_share_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>> {
+	let request = get_request_from_params(params)?;
+	let bit_across_request_sender = BitAcrossRequestSender::new();
+	bit_across_request_sender.send(BitAcrossRequest::ShareCeremonyData(request))?;
+	Ok(RpcReturnValue { do_watch: false, value: vec![], status: DirectRequestStatus::Ok })
+}
+
 // we expect our `params` to be "by-position array"
 // see https://www.jsonrpc.org/specification#parameter_structures
-fn get_request_payload(params: Params) -> Result<String, String> {
+fn get_request_from_params(params: Params) -> Result<AesRequest, String> {
 	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
 
 	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
-	Ok(s.to_owned())
+
+	let request =
+		AesRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+	Ok(request)
 }
 
 #[cfg(feature = "test")]

@@ -22,36 +22,37 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Tusd {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0x0000000000085d4780b73119b644ae5ecd22b376";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "tusd";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](10);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 50 * Constants.decimals_factor;
+        ranges[3] = 100 * Constants.decimals_factor;
+        ranges[4] = 200 * Constants.decimals_factor;
+        ranges[5] = 500 * Constants.decimals_factor;
+        ranges[6] = 800 * Constants.decimals_factor;
+        ranges[7] = 1200 * Constants.decimals_factor;
+        ranges[8] = 1600 * Constants.decimals_factor;
+        ranges[9] = 3000 * Constants.decimals_factor;
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](10);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 50 * Constants.decimals_factor;
-		ranges[3] = 100 * Constants.decimals_factor;
-		ranges[4] = 200 * Constants.decimals_factor;
-		ranges[5] = 500 * Constants.decimals_factor;
-		ranges[6] = 800 * Constants.decimals_factor;
-		ranges[7] = 1200 * Constants.decimals_factor;
-		ranges[8] = 1600 * Constants.decimals_factor;
-		ranges[9] = 3000 * Constants.decimals_factor;
+        return ranges;
+    }
 
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0x0000000000085d4780b73119b644ae5ecd22b376",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
-		return networks;
-	}
+        return tokenInfoList;
+    }
 }

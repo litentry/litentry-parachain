@@ -28,7 +28,6 @@ use itp_sgx_crypto::{mocks::KeyRepositoryMock, ShieldingCryptoDecrypt, Shielding
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock,
-	metrics_ocall_mock::MetricsOCallMock,
 	shielding_crypto_mock::ShieldingCryptoMock,
 	stf_mock::{
 		mock_top_direct_trusted_call_signed, mock_top_indirect_trusted_call_signed,
@@ -45,7 +44,6 @@ type TestAuthor<Filter> = Author<
 	Filter,
 	HandleStateMock,
 	KeyRepositoryMock<ShieldingCryptoMock>,
-	MetricsOCallMock,
 	TrustedCallSignedMock,
 	GetterMock,
 >;
@@ -134,16 +132,9 @@ fn create_author_with_filter<F: Filter<Value = TrustedOperationMock>>(
 	let encryption_key = ShieldingCryptoMock::default();
 	let shielding_key_repo =
 		Arc::new(KeyRepositoryMock::<ShieldingCryptoMock>::new(encryption_key.clone()));
-	let ocall_mock = Arc::new(MetricsOCallMock::default());
 
 	(
-		Author::new(
-			top_pool.clone(),
-			filter,
-			Arc::new(state_facade),
-			shielding_key_repo,
-			ocall_mock,
-		),
+		Author::new(top_pool.clone(), filter, Arc::new(state_facade), shielding_key_repo),
 		top_pool,
 		encryption_key,
 	)

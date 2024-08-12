@@ -19,42 +19,42 @@
 pragma solidity ^0.8.8;
 
 import "../../libraries/Identities.sol";
-
+import "../Constants.sol";
 library Eth {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x2170ed0880ac9a755fd29b2688956bd959f933f8";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "Native Token";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](10);
 
-	function getTokenName() internal pure returns (string memory) {
-		return "eth";
-	}
+        // all ranges multiplied by decimals_factor(1000).
+        // pub const ETH_AMOUNT_RANGE: [f64; 10] = [0.0, 0.01, 0.05, 0.2, 0.6, 1.2, 3.0, 8.0, 20.0, 50.0];
+        ranges[0] = 0;
+        ranges[1] = 10;
+        ranges[2] = 50;
+        ranges[3] = 200;
+        ranges[4] = 600;
+        ranges[5] = 1200;
+        ranges[6] = 3000;
+        ranges[7] = 8000;
+        ranges[8] = 20000;
+        ranges[9] = 50000;
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](10);
+        return ranges;
+    }
 
-		// all ranges multiplied by decimals_factor(1000).
-		// pub const ETH_AMOUNT_RANGE: [f64; 10] = [0.0, 0.01, 0.05, 0.2, 0.6, 1.2, 3.0, 8.0, 20.0, 50.0];
-		ranges[0] = 0;
-		ranges[1] = 10;
-		ranges[2] = 50;
-		ranges[3] = 200;
-		ranges[4] = 600;
-		ranges[5] = 1200;
-		ranges[6] = 3000;
-		ranges[7] = 8000;
-		ranges[8] = 20000;
-		ranges[9] = 50000;
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "Native Token",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-
-		return networks;
-	}
+        return tokenInfoList;
+    }
 }

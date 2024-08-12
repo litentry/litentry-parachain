@@ -37,7 +37,7 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Get default parachain properties for Litmus which will be filled into chain spec
 fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 131)
+	parachain_properties("LIT", 18, 131)
 }
 
 const DEV_CANDIDACY_BOND: Balance = 1;
@@ -239,7 +239,7 @@ fn generate_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		transaction_payment: Default::default(),
-		tokens: Default::default(),
+		assets: Default::default(),
 		teebag: TeebagConfig {
 			allow_sgx_debug_mode: true,
 			admin: None,

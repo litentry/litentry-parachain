@@ -18,29 +18,21 @@
 
 pragma solidity ^0.8.8;
 
-import "../Constants.sol";
 import "../../libraries/Identities.sol";
+import "../Constants.sol";
+import "./BRC20.sol";
 
 library Ordi {
-	function getTokenName() internal pure returns (string memory) {
-		return "ordi";
-	}
-
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](8);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1 * Constants.decimals_factor;
-		ranges[2] = 5 * Constants.decimals_factor;
-		ranges[3] = 20 * Constants.decimals_factor;
-		ranges[4] = 50 * Constants.decimals_factor;
-		ranges[5] = 100 * Constants.decimals_factor;
-		ranges[6] = 200 * Constants.decimals_factor;
-		ranges[7] = 500 * Constants.decimals_factor;
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](1);
-		networks[0] = Web3Networks.BitcoinP2tr;
-		return networks;
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](8);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 1 * Constants.decimals_factor;
+        ranges[2] = 5 * Constants.decimals_factor;
+        ranges[3] = 20 * Constants.decimals_factor;
+        ranges[4] = 50 * Constants.decimals_factor;
+        ranges[5] = 100 * Constants.decimals_factor;
+        ranges[6] = 200 * Constants.decimals_factor;
+        ranges[7] = 500 * Constants.decimals_factor;
+        return ranges;
+    }
 }

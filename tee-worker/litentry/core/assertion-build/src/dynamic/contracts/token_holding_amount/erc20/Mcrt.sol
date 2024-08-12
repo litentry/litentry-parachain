@@ -22,32 +22,38 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Mcrt {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f";
-	}
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "0xde16ce60804a881e9f8c4ebb3824646edecd478d";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "mcrt";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0 * Constants.decimals_factor;
+        ranges[1] = 2000 * Constants.decimals_factor;
+        ranges[2] = 10000 * Constants.decimals_factor;
+        ranges[3] = 50000 * Constants.decimals_factor;
+        ranges[4] = 150000 * Constants.decimals_factor;
+        ranges[5] = 500000 * Constants.decimals_factor;
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 2000 * Constants.decimals_factor;
-		ranges[2] = 10000 * Constants.decimals_factor;
-		ranges[3] = 50000 * Constants.decimals_factor;
-		ranges[4] = 150000 * Constants.decimals_factor;
-		ranges[5] = 500000 * Constants.decimals_factor;
+        return ranges;
+    }
 
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Ethereum,
+            "0xde16ce60804a881e9f8c4ebb3824646edecd478d",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[1] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        tokenInfoList[2] = TokenInfo(
+            Web3Networks.Solana,
+            "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq",
+            DataProviderTypes.MoralisClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }

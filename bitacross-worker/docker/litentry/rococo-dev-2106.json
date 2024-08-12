@@ -7,7 +7,7 @@
   "protocolId": "litentry-rococo",
   "properties": {
     "ss58Format": 131,
-    "tokenDecimals": 12,
+    "tokenDecimals": 18,
     "tokenSymbol": "LIT"
   },
   "relayChain": "rococo-local",
@@ -117,7 +117,7 @@
       "polkadotXcm": {
         "safeXcmVersion": 3
       },
-      "tokens": {
+      "assets": {
         "balances": []
       },
       "identityManagement": {

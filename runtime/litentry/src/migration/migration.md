@@ -1,3 +1,23 @@
+# Migrate fix of last decimal upgrade
+P9192.rs
+it fixes the missing `total` migration in TopDelegations
+However, we sorted the `CandidatePool` mistakenly by the backed stakings, which caused the same collator to be inserted twice in the vector. We've fixed that by forcefully setting the raw storage of `CandidatePool` via `system.SetStorage`.
+
+# Migrate decimal change 12 -> 18
+P9191/ folder:
+The migration including the following pallets:
+Minor pallet migration
+Bounty, Democracy, Identity, Multisig, Preimage, Proxy, Treasury, Vesting
+
+Big pallet migration:
+Balances, ParachainStaking
+ChainBridge, BridgeTransfer => AssetsHandler
+
+These migration is for the follwoing task
+https://github.com/litentry/litentry-parachain/releases/tag/v0.9.19-02
+(1) token decimal change from 12 to 18
+(2) New token bridge related pallet storage migration.
+
 # MigrateCollatorSelectionIntoParachainStaking
 P9100.rs
 https://github.com/litentry/litentry-parachain/releases/tag/v0.9.10

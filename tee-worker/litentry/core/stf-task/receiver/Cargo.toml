@@ -22,7 +22,6 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 
 # internal dependencies
 ita-stf = { path = "../../../../app-libs/stf", default-features = false }
-itc-peer-top-broadcaster = { path = "../../../../core/peer-top-broadcaster", default-features = false }
 itp-enclave-metrics = { path = "../../../../core-primitives/enclave-metrics", default-features = false }
 itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
@@ -66,7 +65,6 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "ita-stf/sgx",
-    "itc-peer-top-broadcaster/sgx",
     "itp-sgx-externalities/sgx",
     "itp-stf-executor/sgx",
     "itp-stf-state-handler/sgx",
@@ -87,7 +85,6 @@ std = [
     "log/std",
     "thiserror",
     "ita-stf/std",
-    "itc-peer-top-broadcaster/std",
     "itp-types/std",
     "itp-top-pool-author/std",
     "itp-utils/std",

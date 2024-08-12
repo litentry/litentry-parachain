@@ -130,7 +130,7 @@ pub trait RelayerRegistryUpdater {
 }
 
 pub trait RelayerRegistryLookup {
-	fn contains_key(&self, account: Identity) -> bool;
+	fn contains_key(&self, account: &Identity) -> bool;
 }
 
 impl RelayerRegistryUpdater for RelayerRegistry {
@@ -192,15 +192,15 @@ impl RelayerRegistryUpdater for RelayerRegistry {
 
 impl RelayerRegistryLookup for RelayerRegistry {
 	#[cfg(feature = "std")]
-	fn contains_key(&self, account: Identity) -> bool {
+	fn contains_key(&self, account: &Identity) -> bool {
 		let registry = self.registry.read().unwrap();
-		registry.contains_key(&account)
+		registry.contains_key(account)
 	}
 
 	#[cfg(feature = "sgx")]
-	fn contains_key(&self, account: Identity) -> bool {
+	fn contains_key(&self, account: &Identity) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
 		let registry = self.registry.read().unwrap();
-		registry.contains_key(&account)
+		registry.contains_key(account)
 	}
 }

@@ -22,37 +22,30 @@ import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
 library Bch {
-	function getTokenBscAddress() internal pure returns (string memory) {
-		return "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf";
-	}
+    function getTokenRanges() internal pure returns (uint256[] memory) {
+        uint256[] memory ranges = new uint256[](6);
 
-	function getTokenEthereumAddress() internal pure returns (string memory) {
-		return "";
-	}
-	function getTokenName() internal pure returns (string memory) {
-		return "bch";
-	}
+        // all ranges multiplied by decimals_factor(1000).
+        // pub const BCH_AMOUNT_RANGE: [f64; 6] = [0.0, 0.1, 0.5, 2.0, 6.0, 12.0];
 
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](6);
+        ranges[0] = 0;
+        ranges[1] = 100;
+        ranges[2] = 500;
+        ranges[3] = 2000;
+        ranges[4] = 6000;
+        ranges[5] = 12000;
 
-		// all ranges multiplied by decimals_factor(1000).
-		// pub const BCH_AMOUNT_RANGE: [f64; 6] = [0.0, 0.1, 0.5, 2.0, 6.0, 12.0];
+        return ranges;
+    }
 
-		ranges[0] = 0;
-		ranges[1] = 100;
-		ranges[2] = 500;
-		ranges[3] = 2000;
-		ranges[4] = 6000;
-		ranges[5] = 12000;
-
-		return ranges;
-	}
-	function getTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](2);
-		networks[0] = Web3Networks.Ethereum;
-		networks[1] = Web3Networks.Bsc;
-
-		return networks;
-	}
+    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
+        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
+        tokenInfoList[0] = TokenInfo(
+            Web3Networks.Bsc,
+            "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return tokenInfoList;
+    }
 }
