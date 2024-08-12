@@ -1,5 +1,5 @@
-# Migrate
-Under fiels P9191
+# Migrate decimal change 12 -> 18
+P9191/ folder:
 The migration including the following pallets:
 Minor pallet migration
 Bounty, Democracy, Identity, Multisig, Preimage, Proxy, Treasury, Vesting
