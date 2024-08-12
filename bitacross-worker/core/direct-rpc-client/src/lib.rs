@@ -47,7 +47,7 @@ use std::{
 	boxed::Box,
 	error::Error,
 	net::TcpStream,
-	string::{String, ToString},
+	string::String,
 	sync::{
 		mpsc::{channel, Sender},
 		Arc,
@@ -114,7 +114,6 @@ pub trait RpcClient {
 
 #[derive(Clone)]
 pub struct DirectRpcClient {
-	pub url: String,
 	request_sink: Sender<(String, Sender<bool>)>,
 }
 
@@ -140,23 +139,19 @@ impl DirectRpcClient {
 		Self::switch_to_non_blocking(&mut socket);
 
 		std::thread::spawn(move || {
-			loop {
-				// let's flush all pending requests first
-				while let Ok((request, result_sender)) = request_receiver.try_recv() {
-					let mut result = true;
-					if let Err(e) = socket.write_message(Message::Text(request)) {
-						error!("Could not write message to socket, reason: {:?}", e);
-						result = false;
-					}
-					if let Err(e) = result_sender.send(result) {
-						log::error!("Could not send rpc result back, reason: {:?}", e);
-					}
+			while let Ok((request, result_sender)) = request_receiver.recv() {
+				let mut result = true;
+				if let Err(e) = socket.write_message(Message::Text(request)) {
+					error!("Could not write message to socket, reason: {:?}", e);
+					result = false;
 				}
-				std::thread::sleep(Duration::from_millis(1))
+				if let Err(e) = result_sender.send(result) {
+					log::error!("Could not send rpc result back, reason: {:?}", e);
+				}
 			}
 		});
 		debug!("Connected to peer: {}", url);
-		Ok(Self { url: url.to_string(), request_sink: request_sender })
+		Ok(Self { request_sink: request_sender })
 	}
 
 	fn switch_to_non_blocking(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
@@ -194,7 +189,7 @@ impl RpcClient for DirectRpcClient {
 			.send((request, sender))
 			.map_err(|e| format!("Could not parse RpcRequest {:?}", e))?;
 
-		if receiver.recv().unwrap() {
+		if receiver.recv()? {
 			Ok(())
 		} else {
 			Err("Could not send request".into())

@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+use core::time::Duration;
 #[cfg(feature = "std")]
 use threadpool::ThreadPool;
 
@@ -35,7 +36,14 @@ use std::sync::Mutex;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
-use bc_musig2_ceremony::{CeremonyEvent, CeremonyId, SignerId};
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
+
+use bc_enclave_registry::EnclaveRegistryLookup;
+use bc_musig2_ceremony::{CeremonyEvent, CeremonyId, CeremonyRegistry, SignerId};
 use codec::Encode;
 use itc_direct_rpc_client::{DirectRpcClient, DirectRpcClientFactory, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::SendRpcResponse;
@@ -43,6 +51,7 @@ use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_rpc::{Id, RpcRequest};
 use itp_sgx_crypto::{
 	key_repository::{AccessKey, AccessPubkey},
+	schnorr::Pair as SchnorrPair,
 	ShieldingCryptoEncrypt,
 };
 pub use itp_types::{DirectRequestStatus, Hash};
@@ -52,23 +61,27 @@ use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, 
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
-use std::{collections::HashMap, string::ToString, sync::Arc, vec};
+use std::{collections::HashMap, string::ToString, sync::Arc, thread::sleep, vec};
 
 #[allow(clippy::too_many_arguments)]
-pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
+pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder, ECL, BKR>(
 	signing_key_access: Arc<SIGNINGAK>,
 	shielding_key_access: Arc<SHIELDAK>,
 	ocall_api: Arc<OCallApi>,
 	responder: Arc<Responder>,
+	enclave_registry_lookup: Arc<ECL>,
 	event: CeremonyEvent,
 	ceremony_id: CeremonyId,
 	event_threads_pool: ThreadPool,
 	peers_map: Arc<Mutex<HashMap<[u8; 32], DirectRpcClient>>>,
+	ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
 ) where
 	OCallApi: EnclaveAttestationOCallApi + 'static,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	SHIELDAK: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + 'static,
+	ECL: EnclaveRegistryLookup + Send + Sync + 'static,
+	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
 {
 	let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
 	let identity = Identity::Substrate(my_identity);
@@ -94,16 +107,21 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				);
 
 				let signer_id = *signer_id;
-				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				let peers_map_clone = peers_map.clone();
-				if let Some(client) = client {
-					let request = request.clone();
-					event_threads_pool.execute(move || {
-						send_request(client, signer_id, request, peers_map_clone);
-					});
-				} else {
-					error!("Fail to share nonce, unknown signer: {:?}", signer_id);
-				}
+				let request = request.clone();
+				let enclave_lookup_cloned = enclave_registry_lookup.clone();
+				let ceremony_registry_cloned = ceremony_registry.clone();
+				let ceremony_id_cloned = ceremony_id.clone();
+				event_threads_pool.execute(move || {
+					send_request(
+						signer_id,
+						&ceremony_id_cloned,
+						request,
+						peers_map_clone,
+						enclave_lookup_cloned,
+						ceremony_registry_cloned,
+					);
+				});
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
@@ -129,16 +147,21 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				);
 
 				let signer_id = *signer_id;
-				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				let peers_map_clone = peers_map.clone();
-				if let Some(client) = client {
-					let request = request.clone();
-					event_threads_pool.execute(move || {
-						send_request(client, signer_id, request, peers_map_clone);
-					});
-				} else {
-					error!("Fail to share partial signature, unknown signer: {:?}", signer_id);
-				}
+				let request = request.clone();
+				let enclave_lookup_cloned = enclave_registry_lookup.clone();
+				let ceremony_registry_cloned = ceremony_registry.clone();
+				let ceremony_id_cloned = ceremony_id.clone();
+				event_threads_pool.execute(move || {
+					send_request(
+						signer_id,
+						&ceremony_id_cloned,
+						request,
+						peers_map_clone,
+						enclave_lookup_cloned,
+						ceremony_registry_cloned,
+					);
+				});
 			});
 		},
 		CeremonyEvent::CeremonyEnded(
@@ -198,37 +221,70 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				);
 
 				let signer_id = *signer_id;
-				let client = peers_map.lock().unwrap().get(&signer_id).cloned();
 				let peers_map_clone = peers_map.clone();
-				if let Some(client) = client {
-					let request = request.clone();
-					event_threads_pool.execute(move || {
-						send_request(client, signer_id, request, peers_map_clone);
-					});
-				} else {
-					error!("Fail to share killing info, unknown signer: {:?}", signer_id);
-				}
+				let request = request.clone();
+				let enclave_lookup_cloned = enclave_registry_lookup.clone();
+				let ceremony_registry_cloned = ceremony_registry.clone();
+				let ceremony_id_cloned = ceremony_id.clone();
+				event_threads_pool.execute(move || {
+					send_request(
+						signer_id,
+						&ceremony_id_cloned,
+						request,
+						peers_map_clone,
+						enclave_lookup_cloned,
+						ceremony_registry_cloned,
+					);
+				});
 			});
 		},
 	}
 }
 
-fn send_request(
-	mut client: DirectRpcClient,
+// it will try to send request until it succeeds, the peer is removed from registry or ceremony is removed
+fn send_request<ECL, BKR>(
 	signer_id: SignerId,
+	ceremony_id: &CeremonyId,
 	request: RpcRequest,
 	peers_map: Arc<Mutex<HashMap<[u8; 32], DirectRpcClient>>>,
-) {
+	enclave_registry_lookup: Arc<ECL>,
+	ceremony_registry: Arc<RwLock<CeremonyRegistry<BKR>>>,
+) where
+	ECL: EnclaveRegistryLookup,
+	BKR: AccessKey<KeyType = SchnorrPair>,
+{
 	loop {
-		while let Err(e) = client.send(&request) {
-			error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e);
-			let mut peers_lock = peers_map.lock().unwrap();
-			peers_lock.remove(&signer_id);
-			match (DirectRpcClientFactory {}).create(&client.url) {
-				Ok(client) => {
-					peers_lock.insert(signer_id, client);
-				},
-				Err(e) => error!("Could not connect to peer {}, reason: {:?}", client.url, e),
+		let client = peers_map.lock().unwrap().get(&signer_id).cloned();
+		if let Some(mut client) = client {
+			if let Err(e) = client.send(&request) {
+				error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e);
+				sleep(Duration::from_secs(1));
+				let mut peers_lock = peers_map.lock().unwrap();
+				peers_lock.remove(&signer_id);
+			} else {
+				// finish if request was sent
+				break
+			}
+		} else {
+			// check if ceremony still exists, if not stop
+			if !ceremony_registry.read().unwrap().contains_key(ceremony_id) {
+				break
+			}
+
+			if let Some(url) = enclave_registry_lookup.get_worker_url(&Address32::from(signer_id)) {
+				match (DirectRpcClientFactory {}).create(&url) {
+					Ok(new_client) => {
+						peers_map.lock().unwrap().insert(signer_id, new_client.clone());
+					},
+					Err(e) => {
+						error!("Could not connect to peer {}, reason: {:?}", url, e);
+						sleep(Duration::from_secs(1));
+					},
+				}
+			} else {
+				error!("Could not find {:?} in registry", signer_id.to_hex());
+				// stop if peer is not found in registry
+				break
 			}
 		}
 	}
