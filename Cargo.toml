@@ -25,6 +25,7 @@ members = [
     'runtime/litentry',
     'runtime/litmus',
     'runtime/rococo',
+    'runtime/paseo',
     'runtime/common',
     'worker-pallets/parentchain',
 ]
@@ -250,6 +251,7 @@ runtime-common = { path = "runtime/common", default-features = false }
 litentry-parachain-runtime = { path = "runtime/litentry", default-features = false }
 litmus-parachain-runtime = { path = "runtime/litmus", default-features = false }
 rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
+paseo-parachain-runtime = { path = "runtime/paseo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
 pallet-assets-handler = { path = "pallets/assets-handler", default-features = false }

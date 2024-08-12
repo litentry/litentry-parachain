@@ -46,6 +46,10 @@ build-runtime-litmus:
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
+.PHONY: build-runtime-paseo ## Build paseo release runtime
+build-runtime-paseo:
+	cargo build --locked -p $(call pkgid, paseo-parachain-runtime) --release
+
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
 	@./scripts/build-wasm.sh litentry
@@ -107,6 +111,10 @@ launch-binary-litmus:
 .PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
 launch-binary-rococo:
 	@./scripts/launch-local-binary.sh rococo
+
+.PHONY: launch-binary-paseo ## Launch a local rococo-parachain network with binaries
+launch-binary-paseo:
+	@./scripts/launch-local-binary.sh paseo
 
 .PHONY: launch-custom-binary-rococo ## Launch a local rococo-parachain network with binary already built under target files
 launch-custom-binary-rococo:

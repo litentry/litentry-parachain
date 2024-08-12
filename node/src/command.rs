@@ -40,6 +40,7 @@ trait IdentifyChain {
 	fn is_litentry(&self) -> bool;
 	fn is_litmus(&self) -> bool;
 	fn is_rococo(&self) -> bool;
+	fn is_paseo(&self) -> bool;
 	fn is_dev(&self) -> bool;
 	fn is_standalone(&self) -> bool;
 }
@@ -56,6 +57,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	}
 	fn is_rococo(&self) -> bool {
 		self.id().starts_with("litentry-rococo")
+	}
+	fn is_paseo(&self) -> bool {
+		self.id().starts_with("litentry-paseo")
 	}
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")
@@ -74,6 +78,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_rococo(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_rococo(self)
+	}
+	fn is_paseo(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_paseo(self)
 	}
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
@@ -106,10 +113,18 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo.json")[..],
 		)?),
+		// Paseo
+		"paseo-dev" => Box::new(chain_specs::paseo::get_chain_spec_dev(false)),
+		"paseo-staging" => Box::new(chain_specs::paseo::get_chain_spec_staging()),
+		"paseo" => Box::new(chain_specs::paseo::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/rococo.json")[..],
+		)?),
 		// Generate res/chain_specs/litentry.json
 		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),
 		// Generate res/chain_specs/litmus.json
 		"generate-litmus" => Box::new(chain_specs::litmus::get_chain_spec_prod()),
+		// Generate res/chain_specs/paseo.json
+		"generate-paseo" => Box::new(chain_specs::paseo::get_chain_spec_prod()),
 		// Generate res/chain_specs/rococo.json
 		// Deprecated: for rococo we are using a new chain spec which was restored from an old state
 		//             see https://github.com/paritytech/subport/issues/337#issuecomment-1137882912
