@@ -119,15 +119,15 @@ jobs:
     if: ${{ github.event.inputs.parachain_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: ./.github/actions/disk-cleanup
-
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
+
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
 
       - name: Build docker image
         run: |

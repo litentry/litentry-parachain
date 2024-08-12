@@ -332,11 +332,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: ./.github/actions/disk-cleanup
-
-      - uses: actions/checkout@v4
 
       - name: Build docker image
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
@@ -376,11 +376,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: ./.github/actions/disk-cleanup
-
-      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -516,11 +516,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: ./.github/actions/disk-cleanup
-
-      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -684,11 +684,11 @@ jobs:
       - sequentialise
     if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: ./.github/actions/disk-cleanup
-
-      - uses: actions/checkout@v4
 
       - name: Install toolchain
         run: rustup show
