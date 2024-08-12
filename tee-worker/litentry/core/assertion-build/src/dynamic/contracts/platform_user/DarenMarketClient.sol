@@ -14,27 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![allow(clippy::unnecessary_cast)]
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-pub mod cumulus_pallet_xcmp_queue;
-pub mod frame_system;
-pub mod pallet_asset_manager;
-pub mod pallet_balances;
-pub mod pallet_bridge;
-pub mod pallet_bridge_transfer;
-pub mod pallet_collective;
-pub mod pallet_democracy;
-pub mod pallet_evm;
-pub mod pallet_extrinsic_filter;
-pub mod pallet_identity;
-pub mod pallet_membership;
-pub mod pallet_multisig;
-pub mod pallet_parachain_staking;
-pub mod pallet_preimage;
-pub mod pallet_proxy;
-pub mod pallet_scheduler;
-pub mod pallet_session;
-pub mod pallet_teebag;
-pub mod pallet_timestamp;
-pub mod pallet_treasury;
-pub mod pallet_utility;
+pragma solidity ^0.8.8;
+
+import "../libraries/Http.sol";
+import "../libraries/Utils.sol";
+import "../libraries/Identities.sol";
+
+library DarenMarketClient {
+    function talentAsset(string memory account) internal returns (bool, bool) {
+        string memory url = "https://daren.market/api/talent-asset?address=";
+
+        url = string(abi.encodePacked(url, account));
+
+        HttpHeader[] memory headers = new HttpHeader[](0);
+        return Http.GetBool(url, "/created", headers);
+    }
+}

@@ -68,7 +68,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 				vec![
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+						6 * DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -196,7 +196,8 @@ fn generate_genesis(
 		balances: BalancesConfig { balances: endowed_accounts },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
-			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
+			// Should be enough for both Litentry and rococo
+			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 5000 * UNIT)).collect(),
 			..Default::default()
 		},
 		session: SessionConfig {
@@ -231,11 +232,14 @@ fn generate_genesis(
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		transaction_payment: Default::default(),
 		assets: Default::default(),
+		ethereum: Default::default(),
+		evm: Default::default(),
 		teebag: TeebagConfig {
 			allow_sgx_debug_mode: true,
 			admin: None,
 			mode: TeebagOperationalMode::Development,
 		},
 		bitacross: BitacrossConfig { admin: None },
+		score_staking: Default::default(),
 	}
 }

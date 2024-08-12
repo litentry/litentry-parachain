@@ -23,7 +23,7 @@ import { HttpHeader } from "../libraries/Http.sol";
 
 import "hardhat/console.sol";
 
-contract MockHttpGetI64 {
+contract MockHttpGetBool {
     receive() external payable {}
 
     fallback() external payable {
@@ -33,26 +33,25 @@ contract MockHttpGetI64 {
         );
 
         bool success = true;
-        uint256 value = 0;
+        bool value = false;
 
         if (
             Strings.equal(
                 url,
-                "https://blockchain.info/multiaddr?active=bc1pg6qjsrxwg9cvqx0gxstl0t74ynhs2528t7rp0u7acl6etwn5t6vswxrzpa&n=0"
+                "https://daren.market/api/talent-asset?address=0x96aEb2216810C624131c51141da612808103d319"
             )
         ) {
-            // 0.1(decimal is 8)
-            value = 10000000;
+            value = true;
         } else if (
             Strings.equal(
                 url,
-                "https://blockchain.info/multiaddr?active=bc1pqdk57wus42wuh989k3v700n6w584andwg7pvxnrd69ag3rs94cfq40qx2y&n=0"
+                "https://daren.market/api/talent-asset?address=success_false"
             )
         ) {
-            value = 0;
+            success = false;
         }
 
-        console.log("http_get_i64>>", url, jsonPointer, value);
+        console.log("http_get_bool>>", url, jsonPointer, value);
 
         bytes memory encodedResult = abi.encode(success, value);
 

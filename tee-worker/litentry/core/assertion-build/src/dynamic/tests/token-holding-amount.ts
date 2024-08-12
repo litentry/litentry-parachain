@@ -311,7 +311,7 @@ describe('TokenHoldingAmount', () => {
             await expectOrdiFalseResult(TokenMapping, val)
         })
 
-        it('should throw eror if token name not exist', async () => {
+        it('should throw error if token name not exist', async () => {
             const { TokenMapping } = await loadFixture(deployFixture)
             const val = TokenMapping.execute(
                 // identities
