@@ -100,6 +100,10 @@ launch-docker-litmus: generate-docker-compose-litmus
 launch-docker-rococo: generate-docker-compose-rococo
 	@./scripts/launch-local-docker.sh rococo
 
+.PHONY: launch-docker-paseo ## Launch a local rococo-parachain network with docker
+launch-docker-paseo: generate-docker-compose-paseo
+	@./scripts/launch-local-docker.sh paseo
+
 .PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
 launch-binary-litentry:
 	@./scripts/launch-local-binary.sh litentry
@@ -142,6 +146,10 @@ test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
 test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
 	@./scripts/run-ts-test.sh rococo bridge evm
 
+.PHONY: test-ts-docker-paseo ## Run rococo ts tests with docker without clean-up
+test-ts-docker-rococo: launch-docker-paseo launch-docker-bridge
+	@./scripts/run-ts-test.sh paseo bridge evm
+
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
 	@./scripts/run-ts-test.sh litentry no_bridge no_evm
@@ -153,6 +161,10 @@ test-ts-binary-litmus: launch-binary-litmus
 .PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
 test-ts-binary-rococo: launch-binary-rococo
 	@./scripts/run-ts-test.sh rococo no_bridge evm
+
+.PHONY: test-ts-binary-paseo ## Run rococo ts tests with binary without clean-up
+test-ts-binary-rococo: launch-binary-paseo
+	@./scripts/run-ts-test.sh paseo no_bridge evm
 
 # clean up
 
@@ -185,6 +197,10 @@ generate-docker-compose-litmus:
 .PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
 generate-docker-compose-rococo:
 	@./scripts/generate-docker-files.sh rococo
+
+.PHONY: generate-docker-compose-paseo ## Generate docker-compose files for rococo local network
+generate-docker-compose-paseo:
+	@./scripts/generate-docker-files.sh paseo
 
 # update dependencies
 
