@@ -15,7 +15,6 @@ http_req = { optional = true, features = ["rust-tls"], branch = "master", git = 
 thiserror = { version = "1.0.26", optional = true }
 
 # no_std dependencies
-hex = { version = "0.4.3", default-features = false }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
@@ -24,7 +23,6 @@ url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
@@ -35,7 +33,6 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 
 # litentry
 lc-common = { path = "../common", default-features = false }
-litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
@@ -61,7 +58,6 @@ std = [
     "thiserror",
     "itc-rest-client/std",
     "itp-rpc/std",
-    "itp-utils/std",
     "log/std",
     "serde/std",
     "serde_json/std",
@@ -70,7 +66,5 @@ std = [
     "chrono",
     "lc-common/std",
 ]
-development = [
-    "litentry-macros/development",
-]
+development = []
 env-data-providers-config = []

@@ -35,7 +35,6 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
