@@ -18,7 +18,7 @@ use crate::{
 	currency::{CENTS, MILLICENTS, UNIT},
 	tests::setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
 	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
-	ParaRuntimeRequirements,
+	ParaRuntimeRequirements, WEIGHT_TO_FEE_FACTOR,
 };
 
 use cumulus_primitives_core::{AbridgedHrmpChannel, ParaId, PersistedValidationData};
