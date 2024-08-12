@@ -236,16 +236,19 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         //// TESTS
         const autoCompoundPercent = 20;
 
-        const collator = (await context.api.query.parachainStaking.candidateInfo(context.alice.address)).toHuman();
+        let collator = (await context.api.query.parachainStaking.candidateInfo(context.alice.address)).toHuman();
         console.log("Candidates Info:", collator);
         const staking_status = (await context.api.query.parachainStaking.delegatorState(evmAccountRaw.mappedAddress)).toHuman();
         console.log("EVM Account Delegator State:", staking_status);
 
         if (collator === null) {
             console.log("Alice not candidate? Try joining");
-            let join_extrinsic = context.api.tx.parachainStaking.joinCandidates(ethers.utils.parseUnits('51', 18).toString());
+            // 5001 will be big enough for both Litentry and Rococo
+            let join_extrinsic = context.api.tx.parachainStaking.joinCandidates(ethers.utils.parseUnits('5001', 18).toString());
             await signAndSend(join_extrinsic, context.alice);
         }
+        collator = (await context.api.query.parachainStaking.candidateInfo(context.alice.address)).toHuman();
+        console.log("Candidates Info:", collator);
 
         // delegateWithAutoCompound(collator, amount, percent)
         const delegateWithAutoCompound = precompileStakingContract.interface.encodeFunctionData(

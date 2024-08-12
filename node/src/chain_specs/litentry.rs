@@ -68,7 +68,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 				vec![
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+						6 * DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
