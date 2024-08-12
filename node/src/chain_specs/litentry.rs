@@ -196,7 +196,8 @@ fn generate_genesis(
 		balances: BalancesConfig { balances: endowed_accounts },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
-			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
+			// Should be enough for both Litentry and rococo
+			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 5000 * UNIT)).collect(),
 			..Default::default()
 		},
 		session: SessionConfig {
