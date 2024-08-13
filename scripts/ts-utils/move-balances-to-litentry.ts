@@ -11,7 +11,8 @@ async function encodeExtrinsic() {
     // params: source chain endpoint, destination chain endpoint
     const { sourceApi, destinationAPI } = await initApi(
         'wss://rpc.litmus-parachain.litentry.io',
-        'wss://rpc.litentry-parachain.litentry.io'
+        'wss://rpc.rococo-parachain.litentry.io'
+        // 'ws://127.0.0.1:9944'
     );
     console.log(colors.green('Fetching system accounts entries...'));
 
@@ -52,12 +53,15 @@ async function encodeExtrinsic() {
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
         const batchTxs = batch.map((entry: any) =>
-            destinationAPI.tx.accountFix.setBalance(entry.account[0], BigInt(entry.free), BigInt(entry.reserved))
+                destinationAPI.tx.accountFix.setBalance(entry.account[0], BigInt(entry.free), BigInt(entry.reserved))
         );
         txs = txs.concat(batchTxs);
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++;
-            const extrinsics = destinationAPI.tx.utility.batch(batchTxs);
+            const extrinsics =
+
+                destinationAPI.tx.utility.batch(batchTxs)
+
             hexData.push({ batch: i, extrinsics: extrinsics.toHex() });
             txs = [];
             if (data.length === 0) {
