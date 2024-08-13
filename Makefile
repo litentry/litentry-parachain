@@ -146,8 +146,8 @@ test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
 test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
 	@./scripts/run-ts-test.sh rococo bridge evm
 
-.PHONY: test-ts-docker-paseo ## Run rococo ts tests with docker without clean-up
-test-ts-docker-rococo: launch-docker-paseo launch-docker-bridge
+.PHONY: test-ts-docker-paseo ## Run paseo ts tests with docker without clean-up
+test-ts-docker-paseo: launch-docker-paseo launch-docker-bridge
 	@./scripts/run-ts-test.sh paseo bridge evm
 
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
@@ -162,8 +162,8 @@ test-ts-binary-litmus: launch-binary-litmus
 test-ts-binary-rococo: launch-binary-rococo
 	@./scripts/run-ts-test.sh rococo no_bridge evm
 
-.PHONY: test-ts-binary-paseo ## Run rococo ts tests with binary without clean-up
-test-ts-binary-rococo: launch-binary-paseo
+.PHONY: test-ts-binary-paseo ## Run paseo ts tests with binary without clean-up
+test-ts-binary-paseo: launch-binary-paseo
 	@./scripts/run-ts-test.sh paseo no_bridge evm
 
 # clean up
