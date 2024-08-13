@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const prettier = require('prettier');
 import colors from 'colors';
+import { blake2AsHex } from '@polkadot/util-crypto';
+
 //set the maximal calls are 500 per batch
 const BATCH_SIZE = 500;
 async function encodeExtrinsic() {
@@ -12,7 +14,6 @@ async function encodeExtrinsic() {
     const { sourceApi, destinationAPI } = await initApi(
         'wss://rpc.litmus-parachain.litentry.io',
         'wss://rpc.rococo-parachain.litentry.io'
-        // 'ws://127.0.0.1:9944'
     );
     console.log(colors.green('Fetching system accounts entries...'));
 
@@ -53,16 +54,16 @@ async function encodeExtrinsic() {
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
         const batchTxs = batch.map((entry: any) =>
-                destinationAPI.tx.accountFix.setBalance(entry.account[0], BigInt(entry.free), BigInt(entry.reserved))
+            destinationAPI.tx.accountFix.setBalance(entry.account[0], BigInt(entry.free), BigInt(entry.reserved))
         );
         txs = txs.concat(batchTxs);
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++;
-            const extrinsics =
+            const extrinsics = destinationAPI.tx.utility.batch(batchTxs);
+            const preimage = destinationAPI.tx.preimage.notePreimage(extrinsics.toHex()).method.toHex();
+            const preimageHash = blake2AsHex(preimage, 256);
 
-                destinationAPI.tx.utility.batch(batchTxs)
-
-            hexData.push({ batch: i, extrinsics: extrinsics.toHex() });
+            hexData.push({ batch: i, extrinsics: extrinsics.toHex(), preimageHash: preimageHash });
             txs = [];
             if (data.length === 0) {
                 const extrinsicsFilename = `extrinsics-${new Date().toISOString().slice(0, 10)}.json`;
