@@ -1292,8 +1292,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::XTokens(orml_xtokens::Call::transfer { .. }) |
 			// collective
 			RuntimeCall::DeveloperCommittee(_) |
-			// ParachainStaking
-			RuntimeCall::ParachainStaking(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
@@ -1354,8 +1352,8 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		[pallet_identity_management, IdentityManagement]
-		[pallet_vc_management, VCManagement]
+		// [pallet_identity_management, IdentityManagement]
+		// [pallet_vc_management, VCManagement]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 		[pallet_teebag, Teebag]
