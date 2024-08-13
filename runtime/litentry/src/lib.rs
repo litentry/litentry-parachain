@@ -66,12 +66,14 @@ pub use core_primitives::{
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance,
+	DeveloperCommitteeMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
-	WEIGHT_PER_GAS, WEIGHT_TO_FEE_FACTOR,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
+	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
+	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, WEIGHT_PER_GAS,
+	WEIGHT_TO_FEE_FACTOR,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -613,6 +615,32 @@ impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
+impl pallet_collective::Config<DeveloperCommitteeInstance> for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type MotionDuration = TechnicalMotionDuration;
+	type MaxProposals = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
+	type MaxProposalWeight = MaxProposalWeight;
+}
+
+impl pallet_membership::Config<DeveloperCommitteeMembershipInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
+	type MembershipInitialized = DeveloperCommittee;
+	type MembershipChanged = DeveloperCommittee;
+	type MaxMembers = CouncilDefaultMaxMembers;
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
@@ -935,10 +963,45 @@ impl pallet_teebag::Config for Runtime {
 	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
 }
 
+impl pallet_identity_management::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type MaxOIDCClientRedirectUris = ConstU32<10>;
+}
+
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+}
+
+impl pallet_evm_assertions::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AssertionId = H160;
+	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+}
+
+impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
+}
+
+impl pallet_vc_management::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+}
+
+impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 // For OnChargeEVMTransaction implementation
@@ -1089,7 +1152,6 @@ impl pallet_score_staking::Config for Runtime {
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
-
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
 
 construct_runtime! {
@@ -1162,8 +1224,16 @@ construct_runtime! {
 		Teebag: pallet_teebag = 65,
 		Bitacross: pallet_bitacross = 66,
 		AssetsHandler: pallet_assets_handler = 68,
+		EvmAssertions: pallet_evm_assertions = 71,
 
+		DeveloperCommittee: pallet_collective::<Instance3> = 73,
+		DeveloperCommitteeMembership: pallet_membership::<Instance3> = 74,
 		ScoreStaking: pallet_score_staking = 75,
+
+		IdentityManagement: pallet_identity_management = 80,
+		VCManagement: pallet_vc_management = 81,
+		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 82,
+		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 83,
 
 		// Frontier
 		EVM: pallet_evm = 120,
@@ -1220,33 +1290,43 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Bounties(_) |
 			// BridgeTransfer
 			RuntimeCall::BridgeTransfer(_) |
-			// Utility
-			RuntimeCall::Utility(_) |
-			// Session
-			RuntimeCall::Session(_) |
-			// ParachainStaking
-			RuntimeCall::ParachainStaking(_) |
+			// collective
+			RuntimeCall::DeveloperCommittee(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
+			RuntimeCall::DeveloperCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			RuntimeCall::Democracy(_) |
 			// Preimage
 			RuntimeCall::Preimage(_) |
 			// Identity
 			RuntimeCall::ParachainIdentity(_) |
+			// Utility
+			RuntimeCall::Utility(_) |
+			// Session
+			RuntimeCall::Session(_) |
 			// Balance
 			RuntimeCall::Balances(_) |
+			// IMP and VCMP
+			RuntimeCall::IdentityManagement(_) |
+			RuntimeCall::VCManagement(_) |
+			// TEE pallets
+			RuntimeCall::Teebag(_) |
+			// ParachainStaking
+			RuntimeCall::ParachainStaking(_) |
+			// Group
+			RuntimeCall::IMPExtrinsicWhitelist(_) |
+			RuntimeCall::VCMPExtrinsicWhitelist(_) |
 			// EVM
 			// Substrate EVM extrinsic not allowed
 			// So no EVM pallet
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
-			// TEE enclave management
-			RuntimeCall::Teebag(_) |
-			// Bitacross
-			RuntimeCall::Bitacross(_)
+			RuntimeCall::Bitacross(_) |
+			RuntimeCall::EvmAssertions(_) |
+			RuntimeCall::ScoreStaking(_)
 		)
 	}
 }
@@ -1265,12 +1345,15 @@ mod benches {
 		[pallet_proxy, Proxy]
 		[pallet_membership, CouncilMembership]
 		[pallet_multisig, Multisig]
+		[paleet_evm, EVM]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		// [pallet_identity_management, IdentityManagement]
+		// [pallet_vc_management, VCManagement]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 		[pallet_teebag, Teebag]
