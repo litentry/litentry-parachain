@@ -49,7 +49,9 @@ async function encodeExtrinsic() {
 
     let txs: any[] = [];
     let i = 0;
-    const hexData = [];
+    let hexData = [];
+    const extrinsicsData = [];
+    const preimageHashes = [];
 
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
@@ -62,8 +64,13 @@ async function encodeExtrinsic() {
             const extrinsics = destinationAPI.tx.utility.batch(batchTxs);
             const preimage = destinationAPI.tx.preimage.notePreimage(extrinsics.toHex()).method.toHex();
             const preimageHash = blake2AsHex(preimage, 256);
+            extrinsicsData.push({ batch: i, extrinsics: extrinsics.toHex() });
+            preimageHashes.push({
+                batch: i,
+                preimageHash: preimageHash,
+            });
 
-            hexData.push({ batch: i, extrinsics: extrinsics.toHex(), preimageHash: preimageHash });
+            hexData = [preimageHashes, extrinsicsData];
             txs = [];
             if (data.length === 0) {
                 const extrinsicsFilename = `extrinsics-${new Date().toISOString().slice(0, 10)}.json`;
