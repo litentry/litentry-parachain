@@ -18,12 +18,10 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, UNIT,
-	WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
+	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
 };
-use litentry_parachain_runtime::VCManagementConfig;
-use litentry_parachain_runtime::DeveloperCommitteeMembershipConfig;
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
