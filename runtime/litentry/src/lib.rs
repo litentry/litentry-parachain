@@ -66,12 +66,12 @@ pub use core_primitives::{
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, DeveloperCommitteeInstance, DeveloperCommitteeMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
 	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO,
-	WEIGHT_PER_GAS, WEIGHT_TO_FEE_FACTOR,
+	WEIGHT_PER_GAS, WEIGHT_TO_FEE_FACTOR,IMPExtrinsicWhitelistInstance, VCMPExtrinsicWhitelistInstance,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -990,7 +990,7 @@ impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
