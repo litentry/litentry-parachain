@@ -83,10 +83,14 @@ pallet-asset-manager = { workspace = true }
 pallet-bitacross = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
+pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
+pallet-group = { workspace = true }
+pallet-identity-management = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
+pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
 
 fp-evm = { workspace = true }
@@ -246,8 +250,10 @@ std = [
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
     "pallet-bitacross/std",
+    "pallet-identity-management/std",
     "pallet-score-staking/std",
     "pallet-teebag/std",
+    "pallet-vc-management/std",
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
@@ -282,7 +288,10 @@ try-runtime = [
     "pallet-democracy/try-runtime",
     "pallet-ethereum/try-runtime",
     "pallet-evm/try-runtime",
+    "pallet-evm-assertions/try-runtime",
     "pallet-identity/try-runtime",
+    "pallet-group/try-runtime",
+    "pallet-identity-management/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
     "pallet-membership/try-runtime",
     "pallet-multisig/try-runtime",
@@ -296,6 +305,7 @@ try-runtime = [
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",
     "pallet-utility/try-runtime",
+    "pallet-vc-management/try-runtime",
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
