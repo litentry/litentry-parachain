@@ -443,7 +443,6 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-
 			let _ = Teebag::Pallet::<T>::enclave_registry(&sender)
 				.ok_or(Error::<T>::UnauthorizedOrigin)?;
 
@@ -458,6 +457,17 @@ pub mod pallet {
 				});
 				Ok::<(), Error<T>>(())
 			})?;
+
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn complete_reward_distribution(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin.clone())?;
+			let _ = Teebag::Pallet::<T>::enclave_registry(&sender)
+				.ok_or(Error::<T>::UnauthorizedOrigin)?;
+			Self::deposit_event(Event::RewardDistributionCompleted {});
 
 			Ok(Pays::No.into())
 		}
