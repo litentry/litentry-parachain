@@ -229,10 +229,6 @@ fn score_staking_works() {
 		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
-		// System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-		// 	total: round_reward(),
-		// 	distributed: round_reward() * 2 * 3 / (3 * 5) + round_reward() * 1 * 4 / (3 * 5),
-		// }));
 
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
@@ -267,6 +263,11 @@ fn score_staking_works() {
 			ScoreStaking::update_score(RuntimeOrigin::signed(alice()), charlie().into(), 1000),
 			Error::<Test>::MaxScoreUserCountReached
 		);
+
+		// remove_score works
+		assert_ok!(ScoreStaking::remove_score(RuntimeOrigin::signed(alice()), bob().into()));
+		assert_eq!(ScoreStaking::total_score(), 2000);
+		assert_eq!(ScoreStaking::score_user_count(), 1);
 	});
 }
 

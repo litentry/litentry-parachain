@@ -378,8 +378,10 @@ pub mod pallet {
 		#[pallet::call_index(5)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_score(origin: OriginFor<T>, user: Identity) -> DispatchResultWithPostInfo {
-			// only admin can remove entries in `Scores`
-			T::AdminOrigin::ensure_origin(origin)?;
+			ensure!(
+				Some(ensure_signed(origin)?) == Self::score_feeder(),
+				Error::<T>::UnauthorizedOrigin
+			);
 			let account = T::AccountIdConvert::convert(
 				user.to_account_id().ok_or(Error::<T>::ConvertIdentityFailed)?,
 			);
