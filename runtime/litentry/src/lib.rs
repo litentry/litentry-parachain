@@ -992,7 +992,7 @@ impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
@@ -1352,8 +1352,8 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		// [pallet_identity_management, IdentityManagement]
-		// [pallet_vc_management, VCManagement]
+		[pallet_identity_management, IdentityManagement]
+		[pallet_vc_management, VCManagement]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 		[pallet_teebag, Teebag]
