@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'rococo-parachain-runtime'
-version = '0.9.17'
+version = '0.1.0'
 
 [dependencies]
 hex-literal = { workspace = true }
@@ -81,7 +81,6 @@ pallet-asset-manager = { workspace = true }
 pallet-assets = { workspace = true }
 pallet-assets-handler = { workspace = true }
 pallet-bitacross = { workspace = true }
-pallet-bitacross-mimic = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
 pallet-evm-assertions = { workspace = true }
@@ -266,7 +265,6 @@ std = [
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
     "pallet-bitacross/std",
-    "pallet-bitacross-mimic/std",
     "precompile-utils/std",
 ]
 try-runtime = [
@@ -289,7 +287,6 @@ try-runtime = [
     "pallet-authorship/try-runtime",
     "pallet-balances/try-runtime",
     "pallet-bitacross/try-runtime",
-    "pallet-bitacross-mimic/try-runtime",
     "pallet-bounties/try-runtime",
     "pallet-bridge/try-runtime",
     "pallet-bridge-transfer/try-runtime",
@@ -309,6 +306,7 @@ try-runtime = [
     "pallet-preimage/try-runtime",
     "pallet-proxy/try-runtime",
     "pallet-scheduler/try-runtime",
+    "pallet-score-staking/try-runtime",
     "pallet-session/try-runtime",
     "pallet-sudo/try-runtime",
     "pallet-teebag/try-runtime",
@@ -321,8 +319,4 @@ try-runtime = [
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
-    "pallet-account-fix/try-runtime",
-    "pallet-bitacross/try-runtime",
-    "pallet-bitacross-mimic/try-runtime",
-    "pallet-score-staking/try-runtime",
 ]

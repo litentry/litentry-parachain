@@ -52,7 +52,7 @@ contract MockHttpGetI64 {
             value = 0;
         }
 
-        console.log("http_get_i64>", url, jsonPointer, value);
+        console.log("http_get_i64>>", url, jsonPointer, value);
 
         bytes memory encodedResult = abi.encode(success, value);
 

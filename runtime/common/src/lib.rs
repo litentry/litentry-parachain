@@ -343,7 +343,7 @@ where
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teebag::Config + pallet_teebag::Config,
+	T: frame_system::Config + pallet_teebag::Config,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {

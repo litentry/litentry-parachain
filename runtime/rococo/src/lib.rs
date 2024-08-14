@@ -98,8 +98,6 @@ pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
 
-pub mod migration;
-
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -107,31 +105,6 @@ pub mod xcm_config;
 
 pub use precompiles::RococoNetworkPrecompiles;
 pub type Precompiles = RococoNetworkPrecompiles<Runtime>;
-
-#[derive(Clone)]
-pub struct TransactionConverter;
-
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		)
-	}
-}
-
-impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: pallet_ethereum::Transaction,
-	) -> opaque::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		);
-		let encoded = extrinsic.encode();
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
-}
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -177,17 +150,6 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplacePalletIdentityStorage<Runtime>,
-		migration::ReplacePalletMultisigStorage<Runtime>,
-		migration::ReplacePalletProxyStorage<Runtime>,
-		migration::ReplacePalletVestingStorage<Runtime>,
-		migration::ReplacePalletBountyStorage<Runtime>,
-		migration::ReplaceTreasuryStorage<Runtime>,
-		migration::ReplacePreImageStorage<Runtime>,
-		migration::ReplaceDemocracyStorage<Runtime>,
-		migration::ForceFixAccountFrozenStorage<Runtime>,
-	),
 >;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
@@ -261,7 +223,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9191,
+	spec_version: 9193,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -821,6 +783,7 @@ impl pallet_sudo::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
+	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
 }
 
 parameter_types! {
@@ -1057,11 +1020,6 @@ impl pallet_evm_assertions::Config for Runtime {
 	type AssertionId = H160;
 	type ContractDevOrigin = pallet_collective::EnsureMember<AccountId, DeveloperCommitteeInstance>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-}
-
-// Temporary for bitacross team to test
-impl pallet_bitacross_mimic::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
@@ -1305,9 +1263,7 @@ construct_runtime! {
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 		Bitacross: pallet_bitacross = 70,
-		// Temporary for bitacross team to test
-		BitacrossMimic: pallet_bitacross_mimic = 71,
-		EvmAssertions: pallet_evm_assertions = 72,
+		EvmAssertions: pallet_evm_assertions = 71,
 
 		// Developer council
 		DeveloperCommittee: pallet_collective::<Instance3> = 73,
@@ -1342,8 +1298,12 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::ExtrinsicFilter(_) |
 				RuntimeCall::Multisig(_) |
 				RuntimeCall::Council(_) |
+				RuntimeCall::CouncilMembership(_) |
 				RuntimeCall::TechnicalCommittee(_) |
-				RuntimeCall::DeveloperCommittee(_)
+				RuntimeCall::TechnicalCommitteeMembership(_) |
+				RuntimeCall::Utility(_) |
+				// Temp: should be removed after the one-time burn
+				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
 		) {
 			// always allow core calls
 			return true
@@ -1375,6 +1335,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			RuntimeCall::XTokens(orml_xtokens::Call::transfer { .. }) |
+			// collective
+			RuntimeCall::DeveloperCommittee(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
@@ -1417,7 +1379,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
 			RuntimeCall::Bitacross(_) |
-			RuntimeCall::BitacrossMimic(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)
 		)

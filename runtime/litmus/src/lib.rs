@@ -88,8 +88,6 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 
-pub mod migration;
-
 #[cfg(test)]
 mod tests;
 
@@ -137,18 +135,6 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplacePalletIdentityStorage<Runtime>,
-		migration::ReplacePalletMultisigStorage<Runtime>,
-		migration::ReplacePalletProxyStorage<Runtime>,
-		migration::ReplacePalletVestingStorage<Runtime>,
-		migration::ReplacePalletBountyStorage<Runtime>,
-		migration::ReplaceTreasuryStorage<Runtime>,
-		migration::ReplacePreImageStorage<Runtime>,
-		migration::ReplaceDemocracyStorage<Runtime>,
-		migration::ReplaceBalancesRelatedStorage<Runtime>,
-		migration::ReplaceBridgeRelatedStorage<Runtime>,
-	),
 >;
 
 impl_opaque_keys! {
@@ -165,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9191,
+	spec_version: 9193,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

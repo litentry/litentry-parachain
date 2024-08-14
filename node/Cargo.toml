@@ -57,7 +57,6 @@ sp-transaction-pool = { workspace = true, features = ["std"] }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
-fc-consensus = { workspace = true }
 fc-db = { workspace = true }
 fc-mapping-sync = { workspace = true }
 fc-rpc = { workspace = true }
@@ -67,8 +66,8 @@ fp-rpc = { workspace = true }
 
 moonbeam-primitives-ext = { workspace = true }
 moonbeam-rpc-debug = { workspace = true }
-moonbeam-rpc-primitives-debug = { workspace = true }
-moonbeam-rpc-primitives-txpool = { workspace = true }
+moonbeam-rpc-primitives-debug = { workspace = true, features = ["std"] }
+moonbeam-rpc-primitives-txpool = { workspace = true, features = ["std"] }
 moonbeam-rpc-trace = { workspace = true }
 moonbeam-rpc-txpool = { workspace = true }
 

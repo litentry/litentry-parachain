@@ -2,7 +2,7 @@
 authors = ['Trust Computing GmbH <info@litentry.com>']
 description = 'Litentry hex utils'
 name = "litentry-hex-utils"
-version = "0.9.12"
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
