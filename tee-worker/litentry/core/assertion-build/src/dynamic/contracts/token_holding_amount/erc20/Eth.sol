@@ -21,40 +21,44 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
 library Eth {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](10);
 
-        // all ranges multiplied by decimals_factor(1000).
+        // all ranges multiplied by decimals_factor(100).
         // pub const ETH_AMOUNT_RANGE: [f64; 10] = [0.0, 0.01, 0.05, 0.2, 0.6, 1.2, 3.0, 8.0, 20.0, 50.0];
         ranges[0] = 0;
-        ranges[1] = 10;
-        ranges[2] = 50;
-        ranges[3] = 200;
-        ranges[4] = 600;
-        ranges[5] = 1200;
-        ranges[6] = 3000;
-        ranges[7] = 8000;
-        ranges[8] = 20000;
-        ranges[9] = 50000;
+        ranges[1] = 1;
+        ranges[2] = 5;
+        ranges[3] = 20;
+        ranges[4] = 60;
+        ranges[5] = 120;
+        ranges[6] = 300;
+        ranges[7] = 800;
+        ranges[8] = 2000;
+        ranges[9] = 5000;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 2);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](2);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Ethereum,
             "Native Token",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[1] = TokenInfo(
+        networks[1] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
             DataProviderTypes.NoderealClient,
             18
         );
 
-        return tokenInfoList;
+        return networks;
     }
 }

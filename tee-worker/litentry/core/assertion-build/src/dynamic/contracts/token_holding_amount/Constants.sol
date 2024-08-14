@@ -19,14 +19,25 @@
 pragma solidity ^0.8.8;
 
 struct TokenInfo {
+    uint256[] ranges;
+    // Some ranges are decimals, need convert them to int with multiply by rangeDecimals.
+    uint256 rangeDecimals;
+    // Different networks for same token may have different decimals, need use maxDecimals as multiplier factor.
+    uint8 maxDecimals;
+    TokenInfoNetwork[] networks;
+}
+
+struct TokenInfoNetwork {
     uint32 network;
     string tokenAddress;
-    uint8 dataprovierType;
+    uint8 dataProvierType;
     uint8 decimals;
 }
 
-library Constants {
-    uint256 constant decimals_factor = 1000;
+struct TokenInfoRanges {
+    uint256[] ranges;
+    // Some ranges are decimals, need convert them to int with multiply by rangeDecimals.
+    uint256 rangeDecimals;
 }
 
 library DataProviderTypes {

@@ -20,7 +20,7 @@ pragma solidity ^0.8.8;
 import "./Constants.sol";
 import { BRC20 } from "./brc20/BRC20.sol";
 library Btc {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         // [0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
         // all ranges multiplied by decimals_factor(1000).
         uint256[] memory ranges = new uint256[](14);
@@ -38,21 +38,27 @@ library Btc {
         ranges[11] = 30000;
         ranges[12] = 40000;
         ranges[13] = 50000;
-        return ranges;
+        return TokenInfoRanges(ranges, 3);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        uint32[] memory networks = BRC20.getDefaultTokenNetworks();
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
-        for (uint i = 0; i < networks.length; i++) {
-            tokenInfoList[i] = TokenInfo(
-                networks[i],
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        uint32[] memory defaultNetworks = BRC20.getDefaultTokenNetworks();
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](
+            defaultNetworks.length
+        );
+        for (uint i = 0; i < defaultNetworks.length; i++) {
+            networks[i] = TokenInfoNetwork(
+                defaultNetworks[i],
                 "",
                 DataProviderTypes.BlockchainInfoClient,
                 8
             );
         }
 
-        return tokenInfoList;
+        return networks;
     }
 }
