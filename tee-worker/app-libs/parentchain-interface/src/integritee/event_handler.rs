@@ -21,6 +21,7 @@ pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
+use itp_node_api::metadata::provider::AccessNodeMetadata;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -48,14 +49,19 @@ use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
 pub struct ParentchainEventHandler<
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
 > {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
 	pub ocall_api: Arc<OCallApi>,
 	pub state_handler: Arc<HS>,
+	pub node_metadata_repository: Arc<NMR>,
 }
 
-impl<OCallApi: EnclaveOnChainOCallApi, HS: HandleState<StateT = SgxExternalities>>
-	ParentchainEventHandler<OCallApi, HS>
+impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
+where
+	OCallApi: EnclaveOnChainOCallApi,
+	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
@@ -330,12 +336,13 @@ fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
 	decode_hex(hex_key).ok()
 }
 
-impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler<OCallApi, HS>
+impl<Executor, OCallApi, HS, NMR> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+	for ParentchainEventHandler<OCallApi, HS, NMR>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
 {
 	fn handle_events(
 		&self,
