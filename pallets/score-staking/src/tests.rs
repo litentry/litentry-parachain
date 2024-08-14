@@ -444,3 +444,27 @@ fn update_token_staking_amount_existing_user_check_works() {
 		);
 	})
 }
+
+#[test]
+fn complete_reward_distribution_works() {
+	new_test_ext(false).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()),));
+
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionCompleted {},
+		));
+	});
+}
+
+#[test]
+fn complete_reward_distribution_origin_check_works() {
+	new_test_ext(false).execute_with(|| {
+		assert_noop!(
+			ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()),),
+			Error::<Test>::UnauthorizedOrigin
+		);
+	});
+}
