@@ -8,6 +8,5 @@ Learn more about it on [Litentry's official documentation](https://docs.litentry
 
 ## Packages
 
-- `@litentry/enclave` ([go-to](packages/enclave/README.md)): provides helpers for dApps to interact with the Litentry Protocol's Enclave
-- `@litentry/vc-sdk` ([go-to](packages/vc-sdk/README.md)): provides the common functionality to help dApps parse and validate Litentry issued Verifiable Credentials.
-- `@litentry/chain-types` (deprecated) ([go-to](packages/chain-types/README.md)): contains the Litentry Network API types and types definitions.
+-   `@litentry/enclave` ([go-to](packages/enclave/README.md)): provides helpers for dApps to interact with the Litentry Protocol's Enclave
+-   `@litentry/vc-sdk` ([go-to](packages/vc-sdk/README.md)): provides the common functionality to help dApps parse and validate Litentry issued Verifiable Credentials.
