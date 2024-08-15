@@ -244,6 +244,7 @@ fn score_staking_works() {
 		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
+
 		// System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardDistributionStarted {
 		// 	total: round_reward(),
 		// 	distributed: round_reward() * 2 * 3 / (3 * 5) + round_reward() * 1 * 4 / (3 * 5),
@@ -284,6 +285,52 @@ fn score_staking_works() {
 			ScoreStaking::update_score(RuntimeOrigin::signed(alice()), charlie().into(), 1000),
 			Error::<Test>::MaxScoreUserCountReached
 		);
+
+		run_to_block(23);
+
+		// bob unstakes
+		pallet_parachain_staking::DelegatorState::<Test>::insert(
+			bob(),
+			Delegator::new(alice(), alice(), 0),
+		);
+		pallet_parachain_staking::Total::<Test>::put(900);
+
+		run_to_block(27);
+
+		// alice should get all rewards
+		assert_eq!(
+			ScoreStaking::scores(alice()).unwrap(),
+			ScorePayment {
+				score: 2000,
+				total_reward: 3 * round_reward() +
+					round_reward() * 3 / 4 +
+					round_reward() * 2 * 3 / (3 * 5),
+				last_round_reward: round_reward(),
+				unpaid_reward: 3 * round_reward() +
+					round_reward() * 3 / 4 +
+					round_reward() * 2 * 3 / (3 * 5),
+				token_staking_amount: 0,
+			}
+		);
+
+		// bob should not participate in the reward calculation
+		assert_eq!(
+			ScoreStaking::scores(bob()).unwrap(),
+			ScorePayment {
+				score: 0, // bob's score should be cleared
+				total_reward: round_reward() * 1 * 4 / (3 * 5),
+				last_round_reward: 0,
+				unpaid_reward: round_reward() * 1 * 4 / (3 * 5),
+				token_staking_amount: 0,
+			}
+		);
+		assert_eq!(ScoreStaking::total_score(), 2000);
+		assert_eq!(ScoreStaking::score_user_count(), 2); // entry is not yet removed
+
+		// remove_score works
+		assert_ok!(ScoreStaking::remove_score(RuntimeOrigin::signed(alice()), bob().into()));
+		assert_eq!(ScoreStaking::total_score(), 2000);
+		assert_eq!(ScoreStaking::score_user_count(), 1);
 	});
 }
 

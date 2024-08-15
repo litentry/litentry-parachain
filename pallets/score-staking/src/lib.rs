@@ -250,11 +250,36 @@ pub mod pallet {
 			let round_reward_u128 = round_reward.saturated_into::<u128>();
 
 			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
-			let total_score = Self::total_score();
 			let n = Self::round_config().stake_coef_n;
 			let m = Self::round_config().stake_coef_m;
 
 			let mut all_user_reward = BalanceOf::<T>::zero();
+
+			// the score of the user who has 0 staking should be cleared, so that they don't
+			// participate in any reward calculation, nor should they affect others (`total_score`)
+			// we can't simply delete the entry as there might still be unclaimed reward
+			//
+			// TODO: optimise this, both in a structural (e.g. separate `Score` and `Payment`) and
+			// algorithmetic way
+			//
+			// TODO: when can we remove an entry from `Scores`programmatically?
+			for (a, mut p) in Scores::<T>::iter() {
+				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
+					.map(|s| s.total)
+					.unwrap_or_default()
+					.saturated_into::<u128>();
+
+				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 0));
+
+				if user_stake_u128 == 0 {
+					let _ = Self::update_total_score(p.score, 0);
+					p.score = 0;
+					Scores::<T>::insert(&a, p);
+					weight = weight.saturating_add(T::DbWeight::get().reads_writes(0, 1));
+				}
+			}
+
+			let total_score = Self::total_score();
 
 			for (a, mut p) in Scores::<T>::iter() {
 				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
@@ -383,11 +408,14 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// please use it with care, it will clear the unpaid_reward too
 		#[pallet::call_index(5)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn remove_score(origin: OriginFor<T>, user: Identity) -> DispatchResultWithPostInfo {
-			// only admin can remove entries in `Scores`
-			T::AdminOrigin::ensure_origin(origin)?;
+			ensure!(
+				Some(ensure_signed(origin)?) == Self::score_feeder(),
+				Error::<T>::UnauthorizedOrigin
+			);
 			let account = T::AccountIdConvert::convert(
 				user.to_account_id().ok_or(Error::<T>::ConvertIdentityFailed)?,
 			);
