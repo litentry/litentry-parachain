@@ -1,0 +1,22 @@
+{
+  "name": "@litentry/chain-types",
+  "version": "3.0.0-next.1",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@polkadot/typegen": "9.14.2"
+  },
+  "peerDependencies": {
+    "@polkadot/api-base": "^10.9.1",
+    "@polkadot/types": "^10.9.1",
+    "@polkadot/types-codec": "^10.9.1",
+    "@polkadot/rpc-core": "^10.9.1",
+    "tslib": "^2.3.0"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./metadata.json": "./metadata.json"
+  },
+  "typings": "./src/index.d.ts"
+}

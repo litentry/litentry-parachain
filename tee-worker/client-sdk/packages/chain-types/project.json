@@ -1,0 +1,74 @@
+{
+  "name": "chain-types",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/chain-types/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/chain-types",
+        "main": "packages/chain-types/src/index.ts",
+        "tsConfig": "packages/chain-types/tsconfig.lib.json",
+        "assets": [
+          "packages/chain-types/*.md",
+          "packages/chain-types/LICENSE",
+          "packages/chain-types/metadata.json"
+        ]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs chain-types {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/chain-types/**/*.ts",
+          "packages/chain-types/package.json"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "packages/chain-types/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "download-meta": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "./packages/chain-types",
+        "command": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' https://tee-prod.litentry.io  > metadata.json"
+      }
+    },
+    "generate-defs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "./packages/chain-types",
+        "command": "ts-node --skipProject node_modules/@polkadot/typegen/scripts/polkadot-types-from-defs.cjs --package . --input src/lib/interfaces/ --endpoint metadata.json"
+      }
+    },
+    "generate-meta": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "./packages/chain-types",
+        "command": "ts-node --skipProject node_modules/@polkadot/typegen/scripts/polkadot-types-from-chain.cjs --package . --output src/lib/interfaces/ --endpoint metadata.json --strict"
+      }
+    }
+  },
+  "tags": []
+}
