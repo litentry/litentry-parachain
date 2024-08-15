@@ -21,7 +21,10 @@ pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
-use itp_node_api::metadata::provider::AccessNodeMetadata;
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
+	provider::AccessNodeMetadata, NodeMetadataTrait,
+};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -32,11 +35,11 @@ use itp_types::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
 		ParentchainEventProcessingError, ParentchainId, ProcessedEventsArtifacts,
 	},
-	Delegator, RsaRequest, H256,
+	Delegator, OpaqueCall, RsaRequest, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-// use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
+use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
@@ -46,15 +49,11 @@ use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
 use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler<
-	OCallApi: EnclaveOnChainOCallApi,
-	HS: HandleState<StateT = SgxExternalities>,
-	NMR: AccessNodeMetadata,
-> {
+pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
 	pub ocall_api: Arc<OCallApi>,
-	pub state_handler: Arc<HS>,
-	pub node_metadata_repository: Arc<NMR>,
+	pub state_handler: Arc<HandleState>,
+	pub node_metadata_repository: Arc<NodeMetadataRepository>,
 }
 
 impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
@@ -62,6 +61,7 @@ where
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
@@ -305,7 +305,16 @@ where
 			})
 			.map_err(|_| Error::Other("Failed to get id graphs".into()))?;
 
-		let mut staking_amounts: BTreeMap<AccountId, Balance> = BTreeMap::new();
+		let extrinsic_sender = ParachainExtrinsicSender::new();
+		let update_token_staking_amount_call_index = self
+			.node_metadata_repository
+			.get_from_metadata(|m| m.update_token_staking_amount_call_indexes())
+			.map_err(|_| {
+				Error::Other(
+					"Metadata retrieval for update_token_staking_amount_call_indexes failed".into(),
+				)
+			})?
+			.map_err(|_| Error::Other("Invalid metadata".into()))?;
 
 		for account_id in account_ids.iter() {
 			let default_id_graph = Vec::new();
@@ -317,15 +326,28 @@ where
 					Some(delegator.total)
 				})
 				.sum();
-			staking_amounts.insert(account_id.clone(), staking_amount);
+			let call = OpaqueCall::from_tuple(&(
+				update_token_staking_amount_call_index.clone(),
+				account_id,
+				staking_amount,
+			));
+			extrinsic_sender.send(call);
 		}
 
-		// let extrinsic_sender = ParachainExtrinsicSender::new();
+		let complete_reward_distribution_call_index = self
+			.node_metadata_repository
+			.get_from_metadata(|m| m.complete_reward_distribution_call_indexes())
+			.map_err(|_| {
+				Error::Other(
+					"Metadata retrieval for complete_reward_distribution_call_indexes failed"
+						.into(),
+				)
+			})?
+			.map_err(|_| Error::Other("Invalid metadata".into()))?;
 
-		// TODO: after the new calls are created in ScoreStaking pallet
-		// - create a call to update the scores for each account with the new rewards
-		// - submit the call to the extrinsic sender
-		// - send another extrinsic to indicate that the reward distribution has finished
+		let complete_reward_distribution_call =
+			OpaqueCall::from_tuple(&(complete_reward_distribution_call_index.clone()));
+		extrinsic_sender.send(complete_reward_distribution_call);
 
 		Ok(())
 	}
@@ -343,6 +365,7 @@ where
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn handle_events(
 		&self,
