@@ -262,7 +262,6 @@ where
 			.map_err(|_| Error::Other("Failed to get multiple storages".into()))?
 			.into_iter()
 			.filter_map(|entry| {
-				// TODO: check of the key needs to be decoded here
 				let storage_key = decode_storage_key(entry.key)?;
 				let account_id = key_to_account_id(&storage_key)?;
 				let delegator = entry.value?;
