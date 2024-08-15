@@ -106,7 +106,7 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
 		type AccountIdConvert: AccountIdConvert<Self>;
-		/// Token staking authorization
+		/// Token staking authorizer
 		type TokenStakingAuthorizer: TokenStakingAuthorizer<Self>;
 	}
 
