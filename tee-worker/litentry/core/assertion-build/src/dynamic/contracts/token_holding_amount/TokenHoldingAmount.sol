@@ -24,9 +24,11 @@ import "../libraries/Identities.sol";
 import "../DynamicAssertion.sol";
 import "./Constants.sol";
 import "../libraries/StringShift.sol";
+import "hardhat/console.sol";
 
 abstract contract TokenHoldingAmount is DynamicAssertion {
-    mapping(string => uint256[]) internal tokenRanges;
+    mapping(string => TokenInfo) internal tokens;
+
     function execute(
         Identity[] memory identities,
         string[] memory secrets,
@@ -49,27 +51,30 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
         string memory tokenLowercaseName = abi.decode(params, (string));
 
-        require(
-            tokenRanges[tokenLowercaseName].length > 0,
-            "Token not supported or not found"
-        );
+        TokenInfo memory token = tokens[tokenLowercaseName];
+
+        require(token.networks.length > 0, "Token not supported or not found");
 
         uint256 balance = queryTotalBalance(
             identities,
             secrets,
-            tokenLowercaseName
+            tokenLowercaseName,
+            token
         );
+
+        console.log("balance>", balance);
 
         (uint256 index, uint256 min, int256 max) = calculateRange(
             balance,
-            tokenRanges[tokenLowercaseName]
+            token
         );
 
         string[] memory assertions = assembleAssertions(
             min,
             max,
             balance,
-            tokenLowercaseName
+            tokenLowercaseName,
+            token
         );
 
         bool result = index > 0 || balance > 0;
@@ -80,7 +85,8 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
     function queryTotalBalance(
         Identity[] memory identities,
         string[] memory secrets,
-        string memory tokenName
+        string memory tokenName,
+        TokenInfo memory token
     ) internal virtual returns (uint256) {
         uint256 total_balance = 0;
         uint256 identitiesLength = identities.length;
@@ -90,12 +96,13 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
             uint256 networksLength = identity.networks.length;
             for (uint32 j = 0; j < networksLength; j++) {
                 uint32 network = identity.networks[j];
-                if (isSupportedNetwork(tokenName, network)) {
+                if (isSupportedNetwork(token, network)) {
                     total_balance += queryBalance(
                         identity,
                         network,
                         secrets,
-                        tokenName
+                        tokenName,
+                        token
                     );
                 }
             }
@@ -106,16 +113,17 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
 
     function calculateRange(
         uint256 balance,
-        uint256[] memory ranges
-    ) private view returns (uint256, uint256, int256) {
+        TokenInfo memory token
+    ) private pure returns (uint256, uint256, int256) {
+        uint256[] memory ranges = token.ranges;
         uint256 index = ranges.length - 1;
         uint256 min = 0;
         int256 max = 0;
 
         for (uint32 i = 1; i < ranges.length; i++) {
             if (
-                balance * Constants.decimals_factor <
-                ranges[i] * 10 ** getTokenDecimals()
+                balance * 10 ** token.rangeDecimals <
+                ranges[i] * 10 ** token.maxDecimals
             ) {
                 index = i - 1;
                 break;
@@ -136,7 +144,8 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         uint256 min,
         int256 max,
         uint256 balance,
-        string memory tokenName
+        string memory tokenName,
+        TokenInfo memory token
     ) private pure returns (string[] memory) {
         string memory variable = "$holding_amount";
         AssertionLogic.CompositeCondition memory cc = AssertionLogic
@@ -158,7 +167,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
             min == 0
                 ? AssertionLogic.Op.GreaterThan
                 : AssertionLogic.Op.GreaterEq,
-            StringShift.toShiftedString(min, Constants.decimals_factor)
+            StringShift.toShiftedString(min, 10 ** token.rangeDecimals)
         );
         if (max > 0 && balance > 0) {
             AssertionLogic.andOp(
@@ -168,7 +177,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
                 AssertionLogic.Op.LessThan,
                 StringShift.toShiftedString(
                     uint256(max),
-                    Constants.decimals_factor
+                    10 ** token.rangeDecimals
                 )
             );
         }
@@ -179,17 +188,23 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         return assertions;
     }
 
-    function getTokenDecimals() internal view virtual returns (uint8);
-
     function isSupportedNetwork(
-        string memory tokenName,
+        TokenInfo memory token,
         uint32 network
-    ) internal view virtual returns (bool);
+    ) private pure returns (bool) {
+        for (uint32 i = 0; i < token.networks.length; i++) {
+            if (token.networks[i].network == network) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     function queryBalance(
         Identity memory identity,
         uint32 network,
         string[] memory secrets,
-        string memory tokenName
+        string memory tokenName,
+        TokenInfo memory token
     ) internal virtual returns (uint256);
 }

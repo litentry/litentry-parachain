@@ -23,17 +23,17 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Rats {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 1 * Constants.decimals_factor;
-        ranges[2] = 40000 * Constants.decimals_factor;
-        ranges[3] = 200000 * Constants.decimals_factor;
-        ranges[4] = 1000000 * Constants.decimals_factor;
-        ranges[5] = 2000000 * Constants.decimals_factor;
-        ranges[6] = 4000000 * Constants.decimals_factor;
-        ranges[7] = 10000000 * Constants.decimals_factor;
-        ranges[8] = 2000000 * Constants.decimals_factor;
-        return ranges;
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 40000;
+        ranges[3] = 200000;
+        ranges[4] = 1000000;
+        ranges[5] = 2000000;
+        ranges[6] = 4000000;
+        ranges[7] = 10000000;
+        ranges[8] = 2000000;
+        return TokenInfoRanges(ranges, 0);
     }
 }

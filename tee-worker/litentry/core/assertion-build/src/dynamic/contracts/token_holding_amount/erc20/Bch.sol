@@ -22,30 +22,34 @@ import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
 library Bch {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](6);
 
-        // all ranges multiplied by decimals_factor(1000).
+        // all ranges multiplied by decimals_factor(10).
         // pub const BCH_AMOUNT_RANGE: [f64; 6] = [0.0, 0.1, 0.5, 2.0, 6.0, 12.0];
 
         ranges[0] = 0;
-        ranges[1] = 100;
-        ranges[2] = 500;
-        ranges[3] = 2000;
-        ranges[4] = 6000;
-        ranges[5] = 12000;
+        ranges[1] = 1;
+        ranges[2] = 5;
+        ranges[3] = 20;
+        ranges[4] = 60;
+        ranges[5] = 120;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 1);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](1);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf",
             DataProviderTypes.NoderealClient,
             18
         );
-        return tokenInfoList;
+        return networks;
     }
 }
