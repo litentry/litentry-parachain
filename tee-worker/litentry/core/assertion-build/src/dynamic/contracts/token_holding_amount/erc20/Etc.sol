@@ -22,26 +22,30 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Etc {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](6);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 1 * Constants.decimals_factor;
-        ranges[2] = 5 * Constants.decimals_factor;
-        ranges[3] = 20 * Constants.decimals_factor;
-        ranges[4] = 50 * Constants.decimals_factor;
-        ranges[5] = 80 * Constants.decimals_factor;
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 5;
+        ranges[3] = 20;
+        ranges[4] = 50;
+        ranges[5] = 80;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 0);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](1);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x3d6545b08693dae087e957cb1180ee38b9e3c25e",
             DataProviderTypes.NoderealClient,
             18
         );
-        return tokenInfoList;
+        return networks;
     }
 }
