@@ -1,7 +1,7 @@
 lockfileVersion: '6.0'
 
 settings:
-  autoInstallPeers: true
+  autoInstallPeers: false
   excludeLinksFromLockfile: false
 
 importers:
@@ -12,7 +12,7 @@ importers:
     dependencies:
       '@litentry/vc-schema-validator':
         specifier: ^0.0.1
-        version: 0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2)
+        version: 0.0.1
       '@noble/ed25519':
         specifier: ^1.7.3
         version: 1.7.3
@@ -111,7 +111,7 @@ importers:
         version: 2.0.1
       ws:
         specifier: ^8.17.1
-        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        version: 8.17.1
       zx:
         specifier: ^7.2.3
         version: 7.2.3
@@ -162,11 +162,11 @@ importers:
   post-checks:
     dependencies:
       '@litentry/chaindata':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.2.0
+        version: 0.2.0
       '@litentry/enclave':
         specifier: ^4.0.0
-        version: 4.0.0(@litentry/chaindata@0.1.1)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/types-codec@10.9.1)(@polkadot/types@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)(tslib@2.6.2)
+        version: 4.0.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
       '@litentry/parachain-api':
         specifier: 0.9.18-10
         version: 0.9.18-10
@@ -214,7 +214,7 @@ importers:
         version: 5.0.4
       ws:
         specifier: ^8.17.1
-        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        version: 8.17.1
 
   stress:
     dependencies:
@@ -226,7 +226,7 @@ importers:
         version: 10.9.1
       '@polkadot/keyring':
         specifier: ^12.2.1
-        version: 12.5.1(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
+        version: 12.5.1
       '@polkadot/typegen':
         specifier: ^10.9.1
         version: 10.9.1
@@ -256,7 +256,7 @@ importers:
         version: 2.0.1
       ws:
         specifier: ^8.17.1
-        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        version: 8.17.1
       zod:
         specifier: ^3.22.3
         version: 3.22.3
@@ -398,7 +398,7 @@ importers:
         version: 2.0.1
       ws:
         specifier: ^8.17.1
-        version: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        version: 8.17.1
     devDependencies:
       '@ethersproject/providers':
         specifier: ^5.7.2
@@ -486,7 +486,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       espree: 9.6.1
       globals: 13.22.0
       ignore: 5.2.4
@@ -823,7 +823,7 @@ packages:
     engines: {node: '>=10.10.0'}
     dependencies:
       '@humanwhocodes/object-schema': 1.2.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -851,13 +851,13 @@ packages:
       '@jridgewell/resolve-uri': 3.1.1
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  /@litentry/chaindata@0.1.1:
-    resolution: {integrity: sha512-2v2y1teCdA0rrtYvmZE/JDS5rLZTIfQFEnHJU0Y8gsbWOzmFK04VOPFgMZK5hdiSUZKPlshnWqQ9WVLG7AGtBw==}
+  /@litentry/chaindata@0.2.0:
+    resolution: {integrity: sha512-WjhPPRAJvSm+K99IAsqdKyNNbm7MU06Gfl7koXdZa+Gm6Uc89nVK448jdP9ODQyW1nJaPq+HYIHgjXnC5a9GGA==}
     dependencies:
       tslib: 2.6.2
     dev: false
 
-  /@litentry/enclave@4.0.0(@litentry/chaindata@0.1.1)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/types-codec@10.9.1)(@polkadot/types@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)(tslib@2.6.2):
+  /@litentry/enclave@4.0.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1):
     resolution: {integrity: sha512-IANbdWBS6etT+vg71bQfVZLrSINXl7Zghn10LCqRBxqCpXMEODSJkHFDAGo8unoL1Lr/M3bNVVrdm1vZfh+lpg==}
     peerDependencies:
       '@litentry/chaindata': '*'
@@ -870,15 +870,12 @@ packages:
       '@polkadot/util-crypto': ^12.5.1
       tslib: ^2.3.0
     dependencies:
-      '@litentry/chaindata': 0.1.1
+      '@litentry/chaindata': 0.2.0
       '@litentry/parachain-api': 0.9.18-10
       '@litentry/sidechain-api': 0.9.18-10
       '@polkadot/api': 10.9.1
-      '@polkadot/types': 10.9.1
-      '@polkadot/types-codec': 10.9.1
       '@polkadot/util': 12.5.1
       '@polkadot/util-crypto': 12.5.1(@polkadot/util@12.5.1)
-      tslib: 2.6.2
     dev: false
 
   /@litentry/parachain-api@0.9.18-10:
@@ -927,18 +924,13 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@litentry/vc-schema-validator@0.0.1(ajv-formats@2.1.1)(ajv@8.12.0)(fast-glob@3.3.2)(tslib@2.6.2):
+  /@litentry/vc-schema-validator@0.0.1:
     resolution: {integrity: sha512-Utnu2m/IPcGbqpopNsEdB1AvRimoL300dGpk/9g/8P16OemCHYxHE8j+n2JrHS+BUvH9upDiNMy5sbZPmDAAfQ==}
     peerDependencies:
       ajv: ^8.12.0
       ajv-formats: ^2.1.1
       fast-glob: ^3.3.2
       tslib: ^2.3.0
-    dependencies:
-      ajv: 8.12.0
-      ajv-formats: 2.1.1(ajv@8.12.0)
-      fast-glob: 3.3.2
-      tslib: 2.6.2
     dev: false
 
   /@noble/curves@1.2.0:
@@ -1056,6 +1048,16 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: false
+
+  /@polkadot/keyring@12.5.1:
+    resolution: {integrity: sha512-u6b+Q7wI6WY/vwmJS9uUHy/5hKZ226nTlVNmxjkj9GvrRsQvUSwS94163yHPJwiZJiIv5xK5m0rwCMyoYu+wjA==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': 12.5.1
+      '@polkadot/util-crypto': 12.5.1
+    dependencies:
+      tslib: 2.6.2
     dev: false
 
   /@polkadot/keyring@12.5.1(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1):
@@ -1389,7 +1391,7 @@ packages:
     dependencies:
       '@polkadot/x-global': 12.5.1
       tslib: 2.6.2
-      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -1438,6 +1440,7 @@ packages:
 
   /@substrate/connect@0.7.26:
     resolution: {integrity: sha512-uuGSiroGuKWj1+38n1kY5HReer5iL9bRwPCzuoLtqAOmI1fGI0hsSI2LlNQMAbfRgr7VRHXOk5MTuQf5ulsFRw==}
+    deprecated: versions below 1.x are no longer maintained
     requiresBuild: true
     dependencies:
       '@substrate/connect-extension-protocol': 1.0.1
@@ -1562,7 +1565,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/type-utils': 5.62.0(eslint@8.50.0)(typescript@5.0.4)
       '@typescript-eslint/utils': 5.62.0(eslint@8.50.0)(typescript@5.0.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.50.0
       graphemer: 1.4.0
       ignore: 5.2.4
@@ -1587,7 +1590,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.0.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.50.0
       typescript: 5.0.4
     transitivePeerDependencies:
@@ -1614,7 +1617,7 @@ packages:
     dependencies:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.0.4)
       '@typescript-eslint/utils': 5.62.0(eslint@8.50.0)(typescript@5.0.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.50.0
       tsutils: 3.21.0(typescript@5.0.4)
       typescript: 5.0.4
@@ -1638,7 +1641,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/visitor-keys': 5.62.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.5.4
@@ -1714,17 +1717,6 @@ packages:
     engines: {node: '>= 8.0.0'}
     dependencies:
       humanize-ms: 1.2.1
-    dev: false
-
-  /ajv-formats@2.1.1(ajv@8.12.0):
-    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
-    peerDependencies:
-      ajv: ^8.0.0
-    peerDependenciesMeta:
-      ajv:
-        optional: true
-    dependencies:
-      ajv: 8.12.0
     dev: false
 
   /ajv@6.12.6:
@@ -2170,6 +2162,17 @@ packages:
     engines: {node: '>= 12'}
     dev: false
 
+  /debug@4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -2405,7 +2408,7 @@ packages:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -2557,17 +2560,6 @@ packages:
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.5
-
-  /fast-glob@3.3.2:
-    resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
-    engines: {node: '>=8.6.0'}
-    dependencies:
-      '@nodelib/fs.stat': 2.0.5
-      '@nodelib/fs.walk': 1.2.8
-      glob-parent: 5.1.2
-      merge2: 1.4.1
-      micromatch: 4.0.5
-    dev: false
 
   /fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
@@ -3309,7 +3301,7 @@ packages:
     resolution: {integrity: sha512-z+KUlILy9SK/RjpeXDiDUEAq4T94ADPHE3qaRkf66mpEhzc/ytOMm3Bwdrbq6k1tMWkbdujiKim3G2tfQARuJw==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       propagate: 2.0.1
@@ -3701,7 +3693,7 @@ packages:
     requiresBuild: true
     dependencies:
       pako: 2.1.0
-      ws: 8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.17.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4100,6 +4092,19 @@ packages:
       utf-8-validate:
         optional: true
 
+  /ws@8.17.1:
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: false
+
   /ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
     engines: {node: '>=10.0.0'}
@@ -4209,6 +4214,7 @@ packages:
   file:../client-api/parachain-api:
     resolution: {directory: ../client-api/parachain-api, type: directory}
     name: '@litentry/parachain-api'
+    version: 0.9.18-11.2
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
@@ -4233,6 +4239,7 @@ packages:
   file:../client-api/sidechain-api:
     resolution: {directory: ../client-api/sidechain-api, type: directory}
     name: '@litentry/sidechain-api'
+    version: 0.9.18-11
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
