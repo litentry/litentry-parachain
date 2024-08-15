@@ -165,14 +165,14 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@litentry/enclave':
-        specifier: ^4.0.0
-        version: 4.0.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
+        specifier: ^4.1.0
+        version: 4.1.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-11.2)(@litentry/sidechain-api@0.9.18-11)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
       '@litentry/parachain-api':
-        specifier: 0.9.18-10
-        version: 0.9.18-10
+        specifier: 0.9.18-11.2
+        version: 0.9.18-11.2
       '@litentry/sidechain-api':
-        specifier: 0.9.18-10
-        version: 0.9.18-10
+        specifier: 0.9.18-11
+        version: 0.9.18-11
       '@polkadot/api':
         specifier: ^10.9.1
         version: 10.9.1
@@ -857,12 +857,12 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@litentry/enclave@4.0.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-10)(@litentry/sidechain-api@0.9.18-10)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1):
-    resolution: {integrity: sha512-IANbdWBS6etT+vg71bQfVZLrSINXl7Zghn10LCqRBxqCpXMEODSJkHFDAGo8unoL1Lr/M3bNVVrdm1vZfh+lpg==}
+  /@litentry/enclave@4.1.0(@litentry/chaindata@0.2.0)(@litentry/parachain-api@0.9.18-11.2)(@litentry/sidechain-api@0.9.18-11)(@polkadot/api@10.9.1)(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1):
+    resolution: {integrity: sha512-YHo6CIqrAO1MofQZVCyZpsMuKB/WaM+lBu7pkxr+l3Phsu1cGwGu+7aFfI58+8qGjoxrVUvA/opGcW0rXSiLmg==}
     peerDependencies:
       '@litentry/chaindata': '*'
-      '@litentry/parachain-api': 0.9.18-10
-      '@litentry/sidechain-api': 0.0.2-10
+      '@litentry/parachain-api': 0.9.18-11.2
+      '@litentry/sidechain-api': 0.9.18-11
       '@polkadot/api': ^10.9.1
       '@polkadot/types': ^10.9.1
       '@polkadot/types-codec': ^10.9.1
@@ -871,15 +871,15 @@ packages:
       tslib: ^2.3.0
     dependencies:
       '@litentry/chaindata': 0.2.0
-      '@litentry/parachain-api': 0.9.18-10
-      '@litentry/sidechain-api': 0.9.18-10
+      '@litentry/parachain-api': 0.9.18-11.2
+      '@litentry/sidechain-api': 0.9.18-11
       '@polkadot/api': 10.9.1
       '@polkadot/util': 12.5.1
       '@polkadot/util-crypto': 12.5.1(@polkadot/util@12.5.1)
     dev: false
 
-  /@litentry/parachain-api@0.9.18-10:
-    resolution: {integrity: sha512-uzJyJcAt+JVbGWWn2uRhxF3qY7LEHVtsZRXokuSjcMErsPfy8WRR04UW+CbhFiW630zPvxoA+Q4sKY5KcrAHxw==}
+  /@litentry/parachain-api@0.9.18-11.2:
+    resolution: {integrity: sha512-nnmX2o8j9Cbi6truI0CtIZ34dyAAKNGWmTIbfS5oXU3LVq20mdHErE8o9y/0j79yN+yFJwUvLpQMqanm6nwJYQ==}
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
@@ -901,8 +901,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@litentry/sidechain-api@0.9.18-10:
-    resolution: {integrity: sha512-awLx21vKd7MTADIqPrwKNqv/+JbA1/XGP06dihOqhotGSan+M3DmvyrgeKUkytMS12FhKMuFo2DJ+UQE0WQ2iA==}
+  /@litentry/sidechain-api@0.9.18-11:
+    resolution: {integrity: sha512-iAcCyM8YkVdNjPs+CbhGpeUN2EnvTvvs8+HsiL660OTPRWHwLn7f3MuzrCcjBaHjKErtY2gJ9F/P6pskg5MOrg==}
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
