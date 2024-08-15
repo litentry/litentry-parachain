@@ -18,21 +18,13 @@
 
 pragma solidity ^0.8.8;
 
-import "../../libraries/Identities.sol";
-import "../Constants.sol";
-import "./BRC20.sol";
+import "../libraries/StringComparison.sol";
 
-library Ordi {
-    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
-        uint256[] memory ranges = new uint256[](8);
-        ranges[0] = 0;
-        ranges[1] = 1;
-        ranges[2] = 5;
-        ranges[3] = 20;
-        ranges[4] = 50;
-        ranges[5] = 100;
-        ranges[6] = 200;
-        ranges[7] = 500;
-        return TokenInfoRanges(ranges, 0);
+contract StringComparisonTest {
+    function compareStringsIgnoreCase(
+        string memory str1,
+        string memory str2
+    ) public pure returns (bool) {
+        return StringComparison.compareStringsIgnoreCase(str1, str2);
     }
 }

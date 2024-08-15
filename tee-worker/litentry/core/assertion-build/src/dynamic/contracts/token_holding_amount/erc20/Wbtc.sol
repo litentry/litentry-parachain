@@ -21,7 +21,7 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
 library Wbtc {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](14);
 
         // all ranges multiplied by decimals_factor(1000).
@@ -41,18 +41,22 @@ library Wbtc {
         ranges[12] = 40000;
         ranges[13] = 50000;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 3);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](1);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Ethereum,
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
             DataProviderTypes.NoderealClient,
             18
         );
 
-        return tokenInfoList;
+        return networks;
     }
 }
