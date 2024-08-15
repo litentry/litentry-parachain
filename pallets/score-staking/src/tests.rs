@@ -441,7 +441,7 @@ fn update_token_staking_amount_works() {
 
 		assert_ok!(ScoreStaking::update_token_staking_amount(
 			RuntimeOrigin::signed(alice()),
-			alice().into(),
+			alice(),
 			1000
 		));
 
@@ -467,7 +467,7 @@ fn update_token_staking_amount_origin_check_works() {
 		assert_noop!(
 			ScoreStaking::update_token_staking_amount(
 				RuntimeOrigin::signed(alice()),
-				alice().into(),
+				alice(),
 				1000
 			),
 			Error::<Test>::UnauthorizedOrigin
@@ -484,7 +484,7 @@ fn update_token_staking_amount_existing_user_check_works() {
 		assert_noop!(
 			ScoreStaking::update_token_staking_amount(
 				RuntimeOrigin::signed(alice()),
-				alice().into(),
+				alice(),
 				1000
 			),
 			Error::<Test>::UserNotExist

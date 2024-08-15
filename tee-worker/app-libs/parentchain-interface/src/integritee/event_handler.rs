@@ -22,8 +22,7 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
 use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
-	provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_score_staking::ScoreStakingCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
@@ -326,11 +325,13 @@ where
 				})
 				.sum();
 			let call = OpaqueCall::from_tuple(&(
-				update_token_staking_amount_call_index.clone(),
+				update_token_staking_amount_call_index,
 				account_id,
 				staking_amount,
 			));
-			extrinsic_sender.send(call);
+			extrinsic_sender
+				.send(call)
+				.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
 		}
 
 		let complete_reward_distribution_call_index = self
@@ -346,7 +347,9 @@ where
 
 		let complete_reward_distribution_call =
 			OpaqueCall::from_tuple(&(complete_reward_distribution_call_index.clone()));
-		extrinsic_sender.send(complete_reward_distribution_call);
+		extrinsic_sender.send(complete_reward_distribution_call).map_err(|_| {
+			Error::Other("Failed to send complete_reward_distribution_call extrinsic".into())
+		})?;
 
 		Ok(())
 	}
