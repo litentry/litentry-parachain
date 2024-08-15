@@ -46,7 +46,6 @@ use frame_support::{
 	traits::{Currency, Imbalance, LockableCurrency, ReservableCurrency, StorageVersion},
 };
 use pallet_parachain_staking as ParaStaking;
-use pallet_teebag as Teebag;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{traits::CheckedSub, Perbill, SaturatedConversion};
 
@@ -69,6 +68,10 @@ pub trait AccountIdConvert<T: Config> {
 	fn convert(account: AccountId32) -> T::AccountId;
 }
 
+pub trait TokenStakingAuthorizer<T: Config> {
+	fn can_update_staking(sender: &T::AccountId) -> bool;
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -86,7 +89,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + ParaStaking::Config + Teebag::Config {
+	pub trait Config: frame_system::Config + ParaStaking::Config {
 		type Currency: Currency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>;
@@ -103,6 +106,8 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
 		type AccountIdConvert: AccountIdConvert<Self>;
+		/// Token staking authorization
+		type TokenStakingAuthorizer: TokenStakingAuthorizer<Self>;
 	}
 
 	#[pallet::error]
@@ -443,8 +448,10 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			let _ = Teebag::Pallet::<T>::enclave_registry(&sender)
-				.ok_or(Error::<T>::UnauthorizedOrigin)?;
+			ensure!(
+				T::TokenStakingAuthorizer::can_update_staking(&sender),
+				Error::<T>::UnauthorizedOrigin
+			);
 
 			Scores::<T>::try_mutate(&account, |payment| {
 				let mut p = payment.take().ok_or(Error::<T>::UserNotExist)?;
@@ -465,8 +472,11 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn complete_reward_distribution(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			let _ = Teebag::Pallet::<T>::enclave_registry(&sender)
-				.ok_or(Error::<T>::UnauthorizedOrigin)?;
+			ensure!(
+				T::TokenStakingAuthorizer::can_update_staking(&sender),
+				Error::<T>::UnauthorizedOrigin
+			);
+
 			Self::deposit_event(Event::RewardDistributionCompleted {});
 
 			Ok(Pays::No.into())
