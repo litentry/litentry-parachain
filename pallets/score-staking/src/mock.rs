@@ -178,6 +178,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
+	type TokenStakingAuthorizer = pallet_teebag::Pallet<Test>;
 }
 
 parameter_types! {
@@ -204,6 +205,12 @@ impl pallet_teebag::Config for Test {
 	type MaxEnclaveIdentifier = ConstU32<1>;
 	type MaxAuthorizedEnclave = ConstU32<2>;
 	type WeightInfo = ();
+}
+
+impl pallet_score_staking::TokenStakingAuthorizer<Test> for pallet_teebag::Pallet<Test> {
+	fn can_update_staking(sender: &<Test as frame_system::Config>::AccountId) -> bool {
+		pallet_teebag::Pallet::<Test>::enclave_registry(sender).is_some()
+	}
 }
 
 pub fn alice() -> AccountId {
