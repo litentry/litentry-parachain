@@ -7479,6 +7479,7 @@ dependencies = [
  "pallet-evm",
  "pallet-parachain-staking",
  "pallet-score-staking",
+ "pallet-teebag",
  "pallet-timestamp",
  "parity-scale-codec",
  "precompile-utils",

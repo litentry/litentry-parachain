@@ -66,6 +66,7 @@ construct_runtime!(
 		Evm: pallet_evm,
 		ParachainStaking: pallet_parachain_staking,
 		ScoreStaking: pallet_score_staking,
+		Teebag: pallet_teebag,
 	}
 );
 
@@ -179,6 +180,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
+	type TokenStakingAuthorizer = pallet_teebag::Pallet<Test>;
 }
 
 pub fn precompile_address() -> H160 {
@@ -260,6 +262,25 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
+}
+
+impl pallet_teebag::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type MomentsPerDay = MomentsPerDay;
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
+	type MaxEnclaveIdentifier = ConstU32<1>;
+	type MaxAuthorizedEnclave = ConstU32<2>;
+	type WeightInfo = ();
+}
+
+impl pallet_score_staking::TokenStakingAuthorizer<Test> for pallet_teebag::Pallet<Test> {
+	fn can_update_staking(sender: &<Test as frame_system::Config>::AccountId) -> bool {
+		pallet_teebag::Pallet::<Test>::enclave_registry(sender).is_some()
+	}
+}
+
 pub fn alice() -> AccountId {
 	U8Wrapper(1u8).into()
 }
@@ -273,6 +294,13 @@ pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> { balances: vec![(alice(), 2 * UNIT)] }
 		.assimilate_storage(&mut t)
 		.unwrap();
+
+	let teebag = pallet_teebag::GenesisConfig::<Test> {
+		allow_sgx_debug_mode: true,
+		admin: Some(alice()),
+		mode: pallet_teebag::OperationalMode::Production,
+	};
+	teebag.assimilate_storage(&mut t).unwrap();
 
 	let genesis_config = pallet_score_staking::GenesisConfig {
 		state: PoolState::Stopped,
