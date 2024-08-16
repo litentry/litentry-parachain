@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@litentry/chaindata": "^0.2.0",
-    "@litentry/enclave": "^4.1.0",
-    "@litentry/parachain-api": "0.9.18-11.2",
-    "@litentry/sidechain-api": "0.9.18-11",
+    "@litentry/enclave": "^4.0.0",
+    "@litentry/parachain-api": "0.9.18-10",
+    "@litentry/sidechain-api": "0.9.18-10",
     "@polkadot/api": "^10.9.1",
     "@polkadot/util": "^12.5.1",
     "@polkadot/util-crypto": "^12.5.1",
