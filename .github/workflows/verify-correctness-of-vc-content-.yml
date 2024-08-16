@@ -11,6 +11,129 @@ on:
     - cron: '0 12 * * 3,5' # Run every Wednesday and Friday at 12:00 UTC
     
 jobs:
+  identity-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # use the docker driver to access the local image
+          # we don't need external caches or multi platforms here
+          # see https://docs.docker.com/build/drivers/
+          driver: docker
+
+      - name: Cache worker-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            worker-cache
+          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+          restore-keys: |
+            worker-cache-${{ env.REF_VERSION }}-
+            worker-cache-
+
+      - name: Create cache folder if not exist
+        run: |
+          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
+            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+            echo "hello" > worker-cache/$i/nix
+          done
+          echo "::group::List worker-cache size"
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+      # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
+      # https://github.com/moby/buildkit/issues/1512
+      # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
+      # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
+      #
+      # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
+      # sometimes it works, sometimes it results in empty cache, root cause unclear
+      #
+      # thus the persistence of rust cache (w/ sccache) is maintained manually
+      #
+      # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
+      # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
+      # is "atomic" and can't be broken into layers.
+      - name: Build local builder
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: local-builder:latest
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            WORKER_ENV_DATA_PROVIDERS_CONFIG=1
+            WORKER_MOCK_SERVER=1
+            WORKER_DEV=1
+            ADDITIONAL_FEATURES_ARG=
+
+      - name: Copy caches from the built image
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
+          echo "::group::copy cache out"
+          for i in 'git/db' 'registry/cache' 'registry/index'; do
+            b="${i%/*}"
+            rm -rf worker-cache/$i
+            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
+          done
+          rm -rf worker-cache/sccache
+          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::df -h ."
+          df -h .
+          echo "::endgroup::"
+
+      - name: Build worker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/identity-worker:latest
+          target: deployed-worker
+
+      - name: Build cli
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/identity-cli:latest
+          target: deployed-client
+
+      - run: docker images --all
+
+      - name: Save docker images
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
+
+      - name: Upload docker images
+        uses: actions/upload-artifact@v4
+        with:
+          name: litentry-identity
+          path: litentry-identity.tar.gz
+          if-no-files-found: error
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.5
+
   test-data-provider:
     runs-on: ubuntu-latest
     steps:
@@ -26,18 +149,35 @@ jobs:
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
 
-      - name: Pull litentry image optionally
+      - name: Pull polkadot image
         run: |
           docker pull parity/polkadot
-          docker pull litentry/identity-worker:$DOCKER_TAG
-          docker pull litentry/identity-cli:$DOCKER_TAG
-          docker pull litentry/litentry-parachain:$DOCKER_TAG
 
-      - name: Re-tag docker image
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-parachain-dev
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: litentry-identity
+
+      - name: Load docker image
         run: |
-          docker tag litentry/identity-worker:$DOCKER_TAG litentry/identity-worker:latest
-          docker tag litentry/identity-cli:$DOCKER_TAG litentry/identity-cli:latest
-          docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-identity.tar.gz
+
+      # - name: Pull litentry image optionally
+      #   run: |
+      #     docker pull parity/polkadot
+      #     docker pull litentry/identity-worker:$DOCKER_TAG
+      #     docker pull litentry/identity-cli:$DOCKER_TAG
+      #     docker pull litentry/litentry-parachain:$DOCKER_TAG
+
+      # - name: Re-tag docker image
+      #   run: |
+      #     docker tag litentry/identity-worker:$DOCKER_TAG litentry/identity-worker:latest
+      #     docker tag litentry/identity-cli:$DOCKER_TAG litentry/identity-cli:latest
+      #     docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
 
       - run: docker images --all
 
