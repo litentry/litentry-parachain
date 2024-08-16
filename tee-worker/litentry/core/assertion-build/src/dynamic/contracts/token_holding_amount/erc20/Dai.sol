@@ -22,42 +22,58 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Dai {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 10 * Constants.decimals_factor;
-        ranges[2] = 30 * Constants.decimals_factor;
-        ranges[3] = 80 * Constants.decimals_factor;
-        ranges[4] = 200 * Constants.decimals_factor;
-        ranges[5] = 500 * Constants.decimals_factor;
-        ranges[6] = 1000 * Constants.decimals_factor;
-        ranges[7] = 2000 * Constants.decimals_factor;
-        ranges[8] = 5000 * Constants.decimals_factor;
+        ranges[0] = 0;
+        ranges[1] = 10;
+        ranges[2] = 30;
+        ranges[3] = 80;
+        ranges[4] = 200;
+        ranges[5] = 500;
+        ranges[6] = 1000;
+        ranges[7] = 2000;
+        ranges[8] = 5000;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 0);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](5);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Ethereum,
             "0x6b175474e89094c44da98b954eedeac495271d0f",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[1] = TokenInfo(
+        networks[1] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[2] = TokenInfo(
+        networks[2] = TokenInfoNetwork(
             Web3Networks.Solana,
             "EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o",
+            DataProviderTypes.MoralisClient,
+            8
+        );
+        networks[3] = TokenInfoNetwork(
+            Web3Networks.Arbitrum,
+            "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+            DataProviderTypes.MoralisClient,
+            18
+        );
+        networks[4] = TokenInfoNetwork(
+            Web3Networks.Polygon,
+            "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
             DataProviderTypes.MoralisClient,
             18
         );
 
-        return tokenInfoList;
+        return networks;
     }
 }
