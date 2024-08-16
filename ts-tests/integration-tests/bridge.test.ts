@@ -58,7 +58,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 0,
                 destResourceId
             ),
-            context.parachainConfig.alice
+            context.parachainConfig.bob
         );
         await sleep(15);
         // This is LIT on ETH with decimal 18 already
@@ -90,9 +90,9 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 0,
                 destResourceId
             ),
-            context.parachainConfig.alice
+            context.parachainConfig.bob
         );
-        const provider = context.ethConfig.wallets.alice.provider;
+        const provider = context.ethConfig.wallets.bob.provider;
         const currentBlock = await provider.getBlockNumber();
         await sleep(15);
         for (let i = currentBlock; i <= (await provider.getBlockNumber()); i++) {
@@ -139,7 +139,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 0,
                 destResourceId
             ),
-            context.parachainConfig.alice
+            context.parachainConfig.bob
         );
         await sleep(30);
         const afterReceiptBalance: BigNumber = await erc20.balanceOf(receipt);

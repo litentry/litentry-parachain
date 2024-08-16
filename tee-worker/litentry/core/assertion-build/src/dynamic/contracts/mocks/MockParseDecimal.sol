@@ -39,6 +39,10 @@ contract MockParseDecimal {
             value = 1 * 10 ** 18;
         } else if (Strings.equal(stringValue, "1.1") && decimals == 18) {
             value = 11 * 10 ** 17;
+        } else if (Strings.equal(stringValue, "5") && decimals == 18) {
+            value = 5 * 10 ** 18;
+        } else if (Strings.equal(stringValue, "30") && decimals == 18) {
+            value = 30 * 10 ** 18;
         } else if (Strings.equal(stringValue, "600.1") && decimals == 18) {
             value = 6001 * 10 ** 17;
         } else if (Strings.equal(stringValue, "parse_decimal_fail")) {

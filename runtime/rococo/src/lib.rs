@@ -98,8 +98,6 @@ pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
 
-pub mod migration;
-
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -107,31 +105,6 @@ pub mod xcm_config;
 
 pub use precompiles::RococoNetworkPrecompiles;
 pub type Precompiles = RococoNetworkPrecompiles<Runtime>;
-
-#[derive(Clone)]
-pub struct TransactionConverter;
-
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		)
-	}
-}
-
-impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: pallet_ethereum::Transaction,
-	) -> opaque::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		);
-		let encoded = extrinsic.encode();
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
-}
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -250,7 +223,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9193,
+	spec_version: 9194,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

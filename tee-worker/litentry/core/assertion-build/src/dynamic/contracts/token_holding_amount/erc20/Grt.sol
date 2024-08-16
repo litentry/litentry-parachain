@@ -21,37 +21,41 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Grt {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](10);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 1 * Constants.decimals_factor;
-        ranges[2] = 50 * Constants.decimals_factor;
-        ranges[3] = 100 * Constants.decimals_factor;
-        ranges[4] = 200 * Constants.decimals_factor;
-        ranges[5] = 500 * Constants.decimals_factor;
-        ranges[6] = 800 * Constants.decimals_factor;
-        ranges[7] = 1200 * Constants.decimals_factor;
-        ranges[8] = 1600 * Constants.decimals_factor;
-        ranges[9] = 3000 * Constants.decimals_factor;
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 50;
+        ranges[3] = 100;
+        ranges[4] = 200;
+        ranges[5] = 500;
+        ranges[6] = 800;
+        ranges[7] = 1200;
+        ranges[8] = 1600;
+        ranges[9] = 3000;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 0);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](2);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](2);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Ethereum,
             "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[1] = TokenInfo(
+        networks[1] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x52ce071bd9b1c4b00a0b92d298c512478cad67e8",
             DataProviderTypes.NoderealClient,
             18
         );
 
-        return tokenInfoList;
+        return networks;
     }
 }

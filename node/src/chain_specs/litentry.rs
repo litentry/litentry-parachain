@@ -18,9 +18,9 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, UNIT,
-	WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
+	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -50,6 +50,7 @@ struct GenesisInfo {
 	endowed_accounts: Vec<(AccountId, String)>,
 	council: Vec<AccountId>,
 	technical_committee: Vec<AccountId>,
+	developer_committee: Vec<AccountId>,
 	boot_nodes: Vec<String>,
 	telemetry_endpoints: Vec<String>,
 }
@@ -68,7 +69,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 				vec![
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+						6 * DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -87,6 +88,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
+				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				DEFAULT_PARA_ID.into(),
 			)
@@ -159,6 +161,7 @@ fn get_chain_spec_from_genesis_info(
 					.collect(),
 				genesis_info_cloned.council,
 				genesis_info_cloned.technical_committee,
+				genesis_info_cloned.developer_committee,
 				para_id,
 			)
 		},
@@ -187,6 +190,7 @@ fn generate_genesis(
 	endowed_accounts: Vec<(AccountId, Balance)>,
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,
+	developer_committee_members: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -196,7 +200,8 @@ fn generate_genesis(
 		balances: BalancesConfig { balances: endowed_accounts },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
-			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
+			// Should be enough for both Litentry and rococo
+			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 5000 * UNIT)).collect(),
 			..Default::default()
 		},
 		session: SessionConfig {
@@ -223,19 +228,28 @@ fn generate_genesis(
 			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
+		developer_committee: Default::default(),
+		developer_committee_membership: DeveloperCommitteeMembershipConfig {
+			members: developer_committee_members.try_into().expect("error convert to BoundedVec"),
+			phantom: Default::default(),
+		},
 		treasury: Default::default(),
 		vesting: Default::default(),
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		vc_management: VCManagementConfig { admin: None },
 		transaction_payment: Default::default(),
 		assets: Default::default(),
+		ethereum: Default::default(),
+		evm: Default::default(),
 		teebag: TeebagConfig {
 			allow_sgx_debug_mode: true,
 			admin: None,
 			mode: TeebagOperationalMode::Development,
 		},
 		bitacross: BitacrossConfig { admin: None },
+		score_staking: Default::default(),
 	}
 }

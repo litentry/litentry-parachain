@@ -52,17 +52,29 @@ export enum Op {
 }
 
 export enum PrecompileAddresses {
+    HTTP_GET = '0x00000000000000000000000000000000000003EE',
     HTTP_GET_STRING = '0x00000000000000000000000000000000000003EA',
-    IDENTITY_TO_STRING = '0x000000000000000000000000000000000000041C',
-    PARSE_DECIMAL = '0x000000000000000000000000000000000000041E',
+    HTTP_POST_STRING = '0x00000000000000000000000000000000000003ED',
     HTTP_GET_I64 = '0x00000000000000000000000000000000000003E8',
+    HTTP_GET_BOOL = '0x00000000000000000000000000000000000003E9',
+    IDENTITY_TO_STRING = '0x000000000000000000000000000000000000041C',
+    HEX_TO_NUMBER = '0x000000000000000000000000000000000000041D',
+    PARSE_DECIMAL = '0x000000000000000000000000000000000000041E',
+    JSON_GET_ARRAY_LEN = '0x000000000000000000000000000000000000044F',
+    JSON_GET_STRING = '0x000000000000000000000000000000000000044C',
 }
 
 const mockContractAddressMapping: { [key: string]: string } = {
+    MockHttpGet: PrecompileAddresses.HTTP_GET,
     MockHttpGetString: PrecompileAddresses.HTTP_GET_STRING,
+    MockHttpPostString: PrecompileAddresses.HTTP_POST_STRING,
     MockHttpGetI64: PrecompileAddresses.HTTP_GET_I64,
+    MockHttpGetBool: PrecompileAddresses.HTTP_GET_BOOL,
     MockIdentityToString: PrecompileAddresses.IDENTITY_TO_STRING,
+    MockHexToNumber: PrecompileAddresses.HEX_TO_NUMBER,
     MockParseDecimal: PrecompileAddresses.PARSE_DECIMAL,
+    MockJsonGetArrayLen: PrecompileAddresses.JSON_GET_ARRAY_LEN,
+    MockJsonGetString: PrecompileAddresses.JSON_GET_STRING,
 }
 
 export async function deployMockContract(
@@ -78,6 +90,18 @@ export async function deployMockContract(
         _contractAddress,
         await ethers.provider.getCode(contract.target),
     ])
+}
+
+export async function deployAllMockContracts(): Promise<void> {
+    await deployMockContract('MockHttpGet')
+    await deployMockContract('MockHttpGetString')
+    await deployMockContract('MockHttpPostString')
+    await deployMockContract('MockHttpGetI64')
+    await deployMockContract('MockIdentityToString')
+    await deployMockContract('MockHexToNumber')
+    await deployMockContract('MockParseDecimal')
+    await deployMockContract('MockJsonGetArrayLen')
+    await deployMockContract('MockJsonGetString')
 }
 
 export async function deployContract(contract: string) {
