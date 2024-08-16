@@ -185,13 +185,22 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 		&mut LastSlot,
 	)? {
 		Some(slot) => {
-			// FIXME: To disable this checking is a temp solution for the moment.
-			// Later we need to investigate and double check again whether this is
-			// a good solution.
-			// if slot.duration_remaining().is_none() {
-			// 	warn!("No time remaining in slot, skipping AURA execution");
-			// 	return Ok(())
-			// }
+			// FIXME: To disable this checking is a temp solution for the moment. Later we need to investigate
+			// and double check again whether this is a good solution.
+			// The following `is_single_worker` is simply copied from other function within this file.
+			// No refactor/optimization applied. Because this temp solution might be changed in short time.
+			let is_single_worker = match ocall_api.get_trusted_peers_urls() {
+				Ok(urls) => urls.is_empty(),
+				Err(e) => {
+					warn!("Could not get trusted peers urls, error: {:?}", e);
+					warn!("Falling back to non single worker mode");
+					false
+				},
+			};
+			if !is_single_worker && slot.duration_remaining().is_none() {
+				warn!("No time remaining in slot, skipping AURA execution");
+				return Ok(())
+			}
 			log_remaining_slot_duration(&slot, "Before AURA");
 
 			let env = ProposerFactory::<Block, _, _, _, _>::new(
