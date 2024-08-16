@@ -2,7 +2,7 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
-import { randomSubstrateWallet } from './common/helpers';
+import { genesisSubstrateWallet, randomSubstrateWallet } from './common/helpers';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -15,24 +15,23 @@ import { CorePrimitivesIdentity } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    const substrateIdentities: CorePrimitivesIdentity[] = [];
+    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
 
     const clientDir = process.env.LITENTRY_CLI_DIR;
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
-    const keyringPairs: KeyringPair[] = [];
     let argvId = '';
 
     this.timeout(6000000);
     before(async () => {
         context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
         teeShieldingKey = await getTeeShieldingKey(context);
+        aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
     });
 
     // usage example:
@@ -51,11 +50,8 @@ describe('Test Vc (direct invocation)', function () {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
         console.log(`linking identity-${credentialDefinitions.mockDid} via cli`);
 
-        const keyringPair = randomSubstrateWallet();
-        keyringPairs.push(keyringPair);
+        const keyringPair = genesisSubstrateWallet('Alice');
         const formatAddress = u8aToHex(keyringPair.publicKey);
-        const substrateIdentity = await new PolkadotSigner(keyringPair).getIdentity(context);
-        substrateIdentities.push(substrateIdentity);
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
@@ -86,7 +82,7 @@ describe('Test Vc (direct invocation)', function () {
 
         console.log('assertion: ', assertion);
 
-        let currentNonce = (await getSidechainNonce(context, substrateIdentities[index])).toNumber();
+        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
 
@@ -95,8 +91,8 @@ describe('Test Vc (direct invocation)', function () {
             context.api,
             context.mrEnclave,
             context.api.createType('Index', nonce),
-            new PolkadotSigner(keyringPairs[index]),
-            substrateIdentities[index],
+            new PolkadotSigner(genesisSubstrateWallet('Alice')),
+            aliceSubstrateIdentity,
             context.api.createType('Assertion', assertion).toHex(),
             context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
@@ -124,7 +120,7 @@ describe('Test Vc (direct invocation)', function () {
     } else {
         credentialsJson.forEach(({ id }, index) => {
             step(`link identity && request vc with all credentials for ${id}`, async function () {
-                await linkIdentityViaCli(id);
+                // await linkIdentityViaCli(id);
                 await requestVc(id, index);
             });
         });
