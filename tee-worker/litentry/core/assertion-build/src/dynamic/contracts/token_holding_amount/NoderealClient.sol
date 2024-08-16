@@ -73,7 +73,10 @@ library NoderealClient {
     }
 
     function isSupportedNetwork(uint32 network) internal pure returns (bool) {
-        return network == Web3Networks.Bsc || network == Web3Networks.Ethereum;
+        return
+            network == Web3Networks.Bsc ||
+            network == Web3Networks.Ethereum ||
+            network == Web3Networks.Combo;
     }
 
     function getNetworkUrl(
@@ -83,6 +86,8 @@ library NoderealClient {
             url = "https://bsc-mainnet.nodereal.io/v1/";
         } else if (network == Web3Networks.Ethereum) {
             url = "https://eth-mainnet.nodereal.io/v1/";
+        } else if (network == Web3Networks.Combo) {
+            url = "https://combo-mainnet.nodereal.io/v1/";
         }
     }
 }

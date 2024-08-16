@@ -19,37 +19,34 @@
 pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
+import { HttpHeader } from "../libraries/Http.sol";
+
 import "hardhat/console.sol";
 
-contract MockParseDecimal {
+contract MockHexToNumber {
     receive() external payable {}
 
     fallback() external payable {
-        (string memory stringValue, uint8 decimals) = abi.decode(
-            msg.data,
-            (string, uint8)
-        );
+        string memory hexString = abi.decode(msg.data, (string));
 
         bool success = true;
         uint256 value = 0;
 
-        if (Strings.equal(stringValue, "0.1") && decimals == 18) {
-            value = 1 * 10 ** 17;
-        } else if (Strings.equal(stringValue, "1") && decimals == 18) {
-            value = 1 * 10 ** 18;
-        } else if (Strings.equal(stringValue, "1.1") && decimals == 18) {
-            value = 11 * 10 ** 17;
-        } else if (Strings.equal(stringValue, "5") && decimals == 18) {
-            value = 5 * 10 ** 18;
-        } else if (Strings.equal(stringValue, "30") && decimals == 18) {
-            value = 30 * 10 ** 18;
-        } else if (Strings.equal(stringValue, "600.1") && decimals == 18) {
-            value = 6001 * 10 ** 17;
-        } else if (Strings.equal(stringValue, "parse_decimal_fail")) {
-            success = false;
+        if (Strings.equal(hexString, "0x1")) {
+            value = 1;
+        } else if (Strings.equal(hexString, "0x2FAF080")) {
+            value = 50 * 10 ** 6;
+        } else if (Strings.equal(hexString, "0x5AF3107A4000")) {
+            value = 1 * 10 ** 14;
+        } else if (Strings.equal(hexString, "0x1BC16D674EC80000")) {
+            value = 2 * 10 ** 18;
+        } else if (Strings.equal(hexString, "0x5150AE84A8CDF00000")) {
+            value = 1500 * 10 ** 18;
+        } else if (Strings.equal(hexString, "0xCB49B44BA602D800000")) {
+            value = 60000 * 10 ** 18;
         }
 
-        console.log("parse_decimal>>", stringValue, decimals, value);
+        console.log("hex_to_number>", hexString, value);
 
         bytes memory encodedResult = abi.encode(success, value);
 
