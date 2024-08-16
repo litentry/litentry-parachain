@@ -25,6 +25,7 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::pallet_prelude::*;
+use litentry_macros::if_development_or;
 use parity_scale_codec::Decode;
 use sp_core::{ed25519::Public as Ed25519Public, H256};
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
