@@ -26,13 +26,13 @@ x509-cert = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+litentry-macros = { workspace = true }
 pallet-balances = { workspace = true, optional = true }
 pallet-timestamp = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
-litentry-macros = { workspace = true }
 
 [dev-dependencies]
 env_logger = { workspace = true }
