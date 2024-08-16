@@ -684,9 +684,11 @@ impl<T: Config> Pallet<T> {
 		EnclaveIdentifier::<T>::try_mutate(worker_type, |v| {
 			// FixMe: This is a temp solution to limit the maximum number of allowed identity
 			// workers to 1.
-			if worker_type == WorkerType::Identity && !v.is_empty() {
-				return Err(Error::<T>::MaxEnclaveIdentifierOverflow)
-			}
+			if_development_or!({}, {
+				if worker_type == WorkerType::Identity && !v.is_empty() {
+					return Err(Error::<T>::MaxEnclaveIdentifierOverflow)
+				}
+			});
 			ensure!(!v.contains(who), Error::<T>::EnclaveIdentifierAlreadyExist);
 			v.try_push(who.clone()).map_err(|_| Error::<T>::MaxEnclaveIdentifierOverflow)
 		})
