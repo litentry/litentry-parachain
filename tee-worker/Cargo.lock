@@ -6069,6 +6069,7 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
+ "litentry-macros",
  "log 0.4.20",
  "pallet-balances",
  "pallet-timestamp",

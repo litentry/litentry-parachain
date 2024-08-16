@@ -3846,6 +3846,7 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
+ "litentry-macros",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",

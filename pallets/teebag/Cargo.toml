@@ -32,6 +32,7 @@ sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+litentry-macros = { workspace = true }
 
 [dev-dependencies]
 env_logger = { workspace = true }
