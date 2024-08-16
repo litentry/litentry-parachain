@@ -202,7 +202,7 @@ jobs:
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
         run: pnpm run check-format
-      
+
       - name: Dynamic-contract install npm deps
         working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
         run: pnpm install
@@ -447,7 +447,7 @@ jobs:
             WORKER_MODE_ARG=sidechain
             WORKER_ENV_DATA_PROVIDERS_CONFIG=1
             WORKER_MOCK_SERVER=1
-            ADDITIONAL_FEATURES_ARG=
+            ADDITIONAL_FEATURES_ARG=development
 
       - name: Copy caches from the built image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
@@ -551,7 +551,7 @@ jobs:
           tags: local-builder:latest
           target: builder
           build-args: |
-            WORKER_MODE_ARG=offchain-worker            
+            WORKER_MODE_ARG=offchain-worker
             ADDITIONAL_FEATURES_ARG=
 
       - name: Build worker
@@ -660,7 +660,7 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
-  
+
   parachain-dynamic-contract-test:
     runs-on: ubuntu-latest
     steps:
@@ -668,7 +668,7 @@ jobs:
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
-      
+
       - name: Install npm deps
         working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
         run: pnpm install
@@ -1033,7 +1033,7 @@ jobs:
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-identity.tar.gz
           docker load < litentry-bitacross.tar.gz
-          
+
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:
