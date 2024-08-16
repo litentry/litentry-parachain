@@ -135,6 +135,7 @@ jobs:
         uses: andymckay/cancel-action@0.5
 
   test-data-provider:
+    needs: identity-build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
