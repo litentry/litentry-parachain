@@ -38,7 +38,6 @@ use codec::{Decode, Encode};
 use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 use k256::SecretKey;
 pub use k256::{elliptic_curve::sec1::FromEncodedPoint, PublicKey};
-use litentry_primitives::RequestAesKey;
 use log::*;
 use musig2::{
 	secp::{Point, Scalar},
@@ -81,7 +80,7 @@ pub enum CeremonyErrorReason {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CeremonyCommand {
-	InitCeremony([u8; 32], SignersWithKeys, SignBitcoinPayload, bool),
+	InitCeremony(SignersWithKeys, SignBitcoinPayload, bool),
 	SaveNonce(SignerId, PubNonce),
 	SavePartialSignature(SignerId, PartialSignature),
 	KillCeremony,
@@ -92,8 +91,8 @@ pub enum CeremonyCommand {
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),
 	SecondRoundStarted(Signers, CeremonyId, PartialSignature),
-	CeremonyEnded([u8; 64], RequestAesKey, bool, bool),
-	CeremonyError(Signers, CeremonyError, RequestAesKey),
+	CeremonyEnded([u8; 64], bool, bool),
+	CeremonyError(Signers, CeremonyError),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, Hash)]
@@ -111,8 +110,6 @@ pub fn generate_aggregated_public_key(mut public_keys: Vec<PublicKey>) -> Public
 
 pub struct MuSig2CeremonyData<AK: AccessKey<KeyType = SchnorrPair>> {
 	payload: SignBitcoinPayload,
-	// P-713: move to layer above, ceremony should be communication agnostic
-	aes_key: RequestAesKey,
 	me: SignerId,
 	signers: SignersWithKeys,
 	signing_key_access: Arc<AK>,
@@ -135,7 +132,6 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 	// Creates new ceremony
 	pub fn new(
 		me: SignerId,
-		aes_key: RequestAesKey,
 		mut signers: SignersWithKeys,
 		payload: SignBitcoinPayload,
 		signing_key_access: Arc<AK>,
@@ -192,7 +188,6 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 		let ceremony = Self {
 			ceremony_data: MuSig2CeremonyData {
 				payload,
-				aes_key,
 				me,
 				signers,
 				signing_key_access,
@@ -346,7 +341,6 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 						verify_single(self.ceremony_data.agg_key, signature, message).is_ok();
 					Ok(Some(CeremonyEvent::CeremonyEnded(
 						signature.to_bytes(),
-						self.ceremony_data.aes_key,
 						self.ceremony_data.check_run,
 						result,
 					)))
@@ -374,10 +368,6 @@ impl<AK: AccessKey<KeyType = SchnorrPair>> MuSig2Ceremony<AK> {
 
 	pub fn get_id_ref(&self) -> &CeremonyId {
 		&self.ceremony_data.payload
-	}
-
-	pub fn get_aes_key(&self) -> &RequestAesKey {
-		&self.ceremony_data.aes_key
 	}
 
 	pub fn is_first_round(&self) -> bool {
@@ -417,7 +407,6 @@ pub mod test {
 	use alloc::sync::Arc;
 	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
 	use k256::{elliptic_curve::PublicKey, schnorr::SigningKey};
-	use litentry_primitives::RequestAesKey;
 	use musig2::SecNonce;
 
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
@@ -471,7 +460,6 @@ pub mod test {
 		]
 	}
 
-	pub const SAMPLE_REQUEST_AES_KEY: RequestAesKey = [0u8; 32];
 	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 32] = [0u8; 32];
 
 	struct MockedSigningKeyAccess {
@@ -494,7 +482,6 @@ pub mod test {
 		// when
 		let result = MuSig2Ceremony::new(
 			MY_SIGNER_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
@@ -514,7 +501,6 @@ pub mod test {
 		// when
 		let result = MuSig2Ceremony::new(
 			MY_SIGNER_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys()[0..1].to_vec(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
@@ -531,7 +517,6 @@ pub mod test {
 		let signing_key_access = MockedSigningKeyAccess { signing_key: my_priv_key() };
 		let mut ceremony = MuSig2Ceremony::new(
 			MY_SIGNER_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
@@ -562,7 +547,6 @@ pub mod test {
 		let signing_key_access = MockedSigningKeyAccess { signing_key: my_priv_key() };
 		let mut ceremony = MuSig2Ceremony::new(
 			MY_SIGNER_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			SignBitcoinPayload::Derived(SAMPLE_SIGNATURE_PAYLOAD.to_vec()),
 			Arc::new(signing_key_access),
@@ -616,7 +600,6 @@ pub mod sgx_tests {
 	pub const MY_SIGNER_ID: SignerId = [0u8; 32];
 	pub const SIGNER_1_ID: SignerId = [1u8; 32];
 	pub const SIGNER_2_ID: SignerId = [2u8; 32];
-	pub const SAMPLE_REQUEST_AES_KEY: RequestAesKey = [0u8; 32];
 	pub const SAMPLE_SIGNATURE_PAYLOAD: [u8; 32] = [0u8; 32];
 
 	struct MockedSigningKeyAccess {
@@ -638,7 +621,6 @@ pub mod sgx_tests {
 		let my_signer_key_access = MockedSigningKeyAccess { signing_key: my_priv_key() };
 		let mut my_ceremony = MuSig2Ceremony::new(
 			MY_SIGNER_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			ceremony_id.clone(),
 			Arc::new(my_signer_key_access),
@@ -650,7 +632,6 @@ pub mod sgx_tests {
 		let signer1_key_access = MockedSigningKeyAccess { signing_key: signer1_priv_key() };
 		let mut signer1_ceremony = MuSig2Ceremony::new(
 			SIGNER_1_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			ceremony_id.clone(),
 			Arc::new(signer1_key_access),
@@ -662,7 +643,6 @@ pub mod sgx_tests {
 		let signer2_key_access = MockedSigningKeyAccess { signing_key: signer2_priv_key() };
 		let mut signer2_ceremony = MuSig2Ceremony::new(
 			SIGNER_2_ID,
-			SAMPLE_REQUEST_AES_KEY.clone(),
 			signers_with_keys(),
 			ceremony_id.clone(),
 			Arc::new(signer2_key_access),
@@ -734,7 +714,7 @@ pub mod sgx_tests {
 			.receive_partial_sign(SIGNER_2_ID, signer2_ceremony_partial_sign)
 			.unwrap();
 		let my_ceremony_final_signature = match my_ceremony_ended_ev {
-			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
 		};
 
@@ -750,7 +730,7 @@ pub mod sgx_tests {
 			.receive_partial_sign(SIGNER_2_ID, signer2_ceremony_partial_sign)
 			.unwrap();
 		let signer1_ceremony_final_signature = match signer1_ceremony_ended_ev {
-			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
 		};
 
@@ -766,7 +746,7 @@ pub mod sgx_tests {
 			.receive_partial_sign(SIGNER_1_ID, signer1_ceremony_partial_sign)
 			.unwrap();
 		let signer2_ceremony_final_signature = match signer2_ceremony_ended_ev {
-			Some(CeremonyEvent::CeremonyEnded(signature, _, _, _)) => signature,
+			Some(CeremonyEvent::CeremonyEnded(signature, _, _)) => signature,
 			ev => panic!("except Some(CeremonyEvent::CeremonyEnded) but get: {:?}", ev),
 		};
 

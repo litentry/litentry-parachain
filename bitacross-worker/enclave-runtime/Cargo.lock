@@ -299,7 +299,6 @@ dependencies = [
  "litentry-primitives",
  "log",
  "parity-scale-codec",
- "sgx_crypto_helper",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",

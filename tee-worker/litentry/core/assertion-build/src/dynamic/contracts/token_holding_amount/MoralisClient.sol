@@ -22,6 +22,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/Http.sol";
 import "../libraries/Json.sol";
 import "../libraries/Identities.sol";
+import "../libraries/StringComparison.sol";
 import "../libraries/Utils.sol";
 struct SolanaTokenBalance {
     string mint;
@@ -208,7 +209,10 @@ library MoralisClient {
         }
     }
     function isSupportedNetwork(uint32 network) internal pure returns (bool) {
-        return network == Web3Networks.Solana;
+        return
+            network == Web3Networks.Solana ||
+            network == Web3Networks.Polygon ||
+            network == Web3Networks.Arbitrum;
     }
 
     function getNetworkUrl(
@@ -216,7 +220,11 @@ library MoralisClient {
     ) internal pure returns (string memory url) {
         if (network == Web3Networks.Solana) {
             url = "https://solana-gateway.moralis.io/account/mainnet";
-        } else if (network == Web3Networks.Ethereum) {
+        } else if (
+            network == Web3Networks.Ethereum ||
+            network == Web3Networks.Polygon ||
+            network == Web3Networks.Arbitrum
+        ) {
             url = "https://deep-index.moralis.io/api/v2.2";
         }
     }
@@ -228,45 +236,80 @@ library MoralisClient {
         string memory tokenContractAddress,
         uint8 tokenDecimals
     ) internal returns (uint256) {
-        if (Strings.equal(tokenContractAddress, "Native Token")) {
-            (bool success, string memory solanaTokenBalance) = MoralisClient
-                .getSolanaNativeBalance(network, apiKey, account);
+        if (network == Web3Networks.Solana) {
+            if (Strings.equal(tokenContractAddress, "Native Token")) {
+                (bool success, string memory solanaTokenBalance) = MoralisClient
+                    .getSolanaNativeBalance(network, apiKey, account);
 
-            if (success) {
+                if (success) {
+                    (bool parsedStatus, uint256 parsedAmount) = Utils
+                        .parseDecimal(solanaTokenBalance, tokenDecimals);
+                    if (parsedStatus) {
+                        return parsedAmount;
+                    }
+                    return 0;
+                }
+            } else {
+                (
+                    bool success,
+                    SolanaTokenBalance[] memory solanaTokenBalance
+                ) = MoralisClient.getSolanaTokensBalance(
+                        network,
+                        apiKey,
+                        account
+                    );
+
+                if (success) {
+                    for (uint i = 0; i < solanaTokenBalance.length; i++) {
+                        if (
+                            Strings.equal(
+                                solanaTokenBalance[i].mint,
+                                tokenContractAddress
+                            )
+                        ) {
+                            (bool parsedStatus, uint256 parsedAmount) = Utils
+                                .parseDecimal(
+                                    solanaTokenBalance[i].amount,
+                                    tokenDecimals
+                                );
+                            if (parsedStatus) {
+                                return parsedAmount;
+                            }
+                            return 0;
+                        }
+                    }
+                }
+            }
+        } else {
+            string[] memory tokenAddresses = new string[](1);
+            tokenAddresses[0] = tokenContractAddress;
+            (
+                bool success,
+                EvmTokenBalance[] memory evmTokenBalance
+            ) = MoralisClient.getErcTokensBalance(
+                    network,
+                    apiKey,
+                    account,
+                    Identities.web3_network_to_chain(network),
+                    tokenAddresses
+                );
+
+            if (
+                success &&
+                evmTokenBalance.length > 0 &&
+                StringComparison.compareStringsIgnoreCase(
+                    evmTokenBalance[0].tokenAddress,
+                    tokenContractAddress
+                )
+            ) {
                 (bool parsedStatus, uint256 parsedAmount) = Utils.parseDecimal(
-                    solanaTokenBalance,
+                    evmTokenBalance[0].balance,
                     tokenDecimals
                 );
                 if (parsedStatus) {
                     return parsedAmount;
                 }
                 return 0;
-            }
-        } else {
-            (
-                bool success,
-                SolanaTokenBalance[] memory solanaTokenBalance
-            ) = MoralisClient.getSolanaTokensBalance(network, apiKey, account);
-
-            if (success) {
-                for (uint i = 0; i < solanaTokenBalance.length; i++) {
-                    if (
-                        Strings.equal(
-                            solanaTokenBalance[i].mint,
-                            tokenContractAddress
-                        )
-                    ) {
-                        (bool parsedStatus, uint256 parsedAmount) = Utils
-                            .parseDecimal(
-                                solanaTokenBalance[i].amount,
-                                tokenDecimals
-                            );
-                        if (parsedStatus) {
-                            return parsedAmount;
-                        }
-                        return 0;
-                    }
-                }
             }
         }
         return 0;
