@@ -227,39 +227,17 @@ impl EnclaveRegistryUpdater for EnclaveRegistry {
 }
 
 impl EnclaveRegistryLookup for EnclaveRegistry {
-	#[cfg(feature = "std")]
-	fn contains_key(&self, account: &Address32) -> bool {
-		let registry = self.registry.read().unwrap();
-		registry.contains_key(account)
-	}
-
-	#[cfg(feature = "std")]
 	fn get_all(&self) -> Vec<(Address32, String)> {
 		let registry = self.registry.read().unwrap();
 		registry.iter().map(|(k, v)| (*k, v.clone())).collect()
 	}
 
-	#[cfg(feature = "std")]
-	fn get_worker_url(&self, account: &Address32) -> Option<String> {
-		let registry = self.registry.read().unwrap();
-		registry.get(account).cloned()
-	}
-
-	#[cfg(feature = "sgx")]
 	fn contains_key(&self, account: &Address32) -> bool {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
 		let registry = self.registry.read().unwrap();
 		registry.contains_key(account)
 	}
 
-	#[cfg(feature = "sgx")]
-	fn get_all(&self) -> Vec<(Address32, String)> {
-		// Using unwrap becaused poisoned locks are unrecoverable errors
-		let registry = self.registry.read().unwrap();
-		registry.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
-	}
-
-	#[cfg(feature = "sgx")]
 	fn get_worker_url(&self, account: &Address32) -> Option<String> {
 		// Using unwrap becaused poisoned locks are unrecoverable errors
 		let registry = self.registry.read().unwrap();

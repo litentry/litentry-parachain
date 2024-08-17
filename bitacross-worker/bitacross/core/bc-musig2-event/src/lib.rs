@@ -219,7 +219,7 @@ fn send_request<ECL, BKR>(
 		if let Some(mut client) = client {
 			if let Err(e) = client.send(&request) {
 				error!("Could not send request to signer: {:?}, reason: {:?}", signer_id, e);
-				sleep(Duration::from_secs(1));
+				sleep(Duration::from_secs(5));
 				let mut peers_lock = peers_map.lock().unwrap();
 				peers_lock.remove(&signer_id);
 			} else {
@@ -239,7 +239,7 @@ fn send_request<ECL, BKR>(
 					},
 					Err(e) => {
 						error!("Could not connect to peer {}, reason: {:?}", url, e);
-						sleep(Duration::from_secs(1));
+						sleep(Duration::from_secs(5));
 					},
 				}
 			} else {
