@@ -17,10 +17,10 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-
 use crate::{
 	error::WebSocketError,
 	stream_state::{MaybeServerTlsStream, StreamState},
+	ws_server::{ConnectionEvent, ConnectionEvents},
 	WebSocketConnection, WebSocketMessageHandler, WebSocketResult,
 };
 use log::*;
@@ -30,9 +30,9 @@ use std::{
 	format,
 	io::ErrorKind,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::Sender, Arc},
 	time::Instant,
-	vec,
+	vec::Vec,
 };
 use tungstenite::Message;
 
@@ -133,7 +133,9 @@ where
 	/// Read from a web-socket, or initiate handshake if websocket is not initialized yet.
 	///
 	/// Returns a boolean 'connection should be closed'.
-	fn drain_message_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
+	fn drain_message_or_initialize_websocket(
+		&mut self,
+	) -> WebSocketResult<(Option<ConnectionEvents>, bool)> {
 		if let StreamState::Established(web_socket) = &mut self.stream_state {
 			trace!(
 				"Read is possible for connection {}: {}",
@@ -141,14 +143,14 @@ where
 				web_socket.can_read()
 			);
 
-			let mut messages = vec![];
+			let mut messages = Vec::new();
 			let mut is_closing = false;
 
 			// Looping over 'read_message' is merely a workaround for the unexpected behavior of mio event triggering.
 			// Final solution will be applied in P-907.
 			loop {
 				match web_socket.read_message() {
-					Ok(m) => messages.push(m),
+					Ok(m) => messages.push(ConnectionEvent::Message(m)),
 					Err(e) => {
 						match e {
 							tungstenite::Error::Io(e)
@@ -167,30 +169,34 @@ where
 				}
 			}
 
-			messages.into_iter().for_each(|m| {
-				if let Err(e) = self.handle_message(m) {
-					error!(
-						"Failed to handle web-socket message (connection {}): {:?}",
-						self.connection_token.0, e
-					);
-				}
-			});
+			// if let Err(e) = message_sender.send(ConnectionEvents {
+			// 	connection_token: self.connection_token,
+			// 	events: messages.into(),
+			// }) {
+			// 	error!("Failed to send messages (connection {}): {:?}", self.connection_token.0, e);
+			// }
 
 			trace!("Read successful for connection {}", self.connection_token.0);
-			Ok(is_closing)
+			Ok((
+				Some(ConnectionEvents {
+					connection_token: self.connection_token,
+					events: messages.into(),
+				}),
+				is_closing,
+			))
 		} else {
 			trace!("Initialize connection {}", self.connection_token.0);
 			self.stream_state = std::mem::take(&mut self.stream_state).attempt_handshake();
 			if self.stream_state.is_invalid() {
 				warn!("Web-socket connection ({:?}) failed, closing", self.connection_token);
-				return Ok(true)
+				return Ok((None, true))
 			}
 			debug!("Initialized connection {} successfully", self.connection_token.0);
-			Ok(false)
+			Ok((None, false))
 		}
 	}
 
-	fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
+	pub fn handle_message(&mut self, message: Message) -> WebSocketResult<()> {
 		match message {
 			Message::Text(string_message) => {
 				trace!(
@@ -295,8 +301,14 @@ where
 		}
 	}
 
-	fn on_ready(&mut self, poll: &mut Poll, event: &Event) -> WebSocketResult<()> {
+	fn on_ready(
+		&mut self,
+		poll: &mut Poll,
+		event: &Event,
+		message_sender: &Sender<ConnectionEvents>,
+	) -> WebSocketResult<()> {
 		let mut is_closing = false;
+		let mut connection_events = None;
 
 		if event.readiness().is_readable() {
 			trace!("Connection ({:?}) is readable", self.token());
@@ -304,7 +316,7 @@ where
 			let connection_state = self.maybe_do_tls_read();
 
 			if connection_state.is_alive() {
-				is_closing = self.drain_message_or_initialize_websocket()?;
+				(connection_events, is_closing) = self.drain_message_or_initialize_websocket()?;
 			} else {
 				is_closing = connection_state.is_closing();
 			}
@@ -338,6 +350,16 @@ where
 			// Re-register with the poll.
 			self.reregister(poll)?;
 		}
+
+		if let Some(mut events) = connection_events {
+			if self.is_closed {
+				events.add_event(ConnectionEvent::Close)
+			}
+			if let Err(e) = message_sender.send(events) {
+				error!("Failed to send messages (connection {}): {:?}", self.connection_token.0, e);
+			}
+		}
+
 		Ok(())
 	}
 
