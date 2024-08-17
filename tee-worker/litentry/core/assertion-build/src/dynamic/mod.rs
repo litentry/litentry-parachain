@@ -14,25 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{dynamic::repository::SmartContractByteCode, *};
+use crate::*;
 use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
-use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
-use lc_evm_dynamic_assertions::EvmAssertionExecutor;
+use lc_dynamic_assertion::AssertionExecutor;
+use lc_evm_dynamic_assertions::AssertionParams;
 use lc_stf_task_sender::AssertionBuildRequest;
 use log::error;
 use primitive_types::H160;
 
 pub mod repository;
 
-pub fn build<
-	SC: AssertionLogicRepository<Id = H160, Item = (SmartContractByteCode, Vec<String>)>,
->(
+pub fn build<E: AssertionExecutor<H160, AssertionParams>>(
 	req: &AssertionBuildRequest,
 	params: DynamicParams,
-	repository: Arc<SC>,
+	executor: &mut E,
 ) -> Result<(Credential, Vec<String>)> {
-	let executor = EvmAssertionExecutor { assertion_repository: repository };
 	let execution_params = params.clone();
 	let result = executor
 		.execute(
@@ -85,7 +82,9 @@ pub fn build<
 #[cfg(test)]
 pub mod assertion_test {
 	use crate::dynamic::{build, repository::InMemorySmartContractRepo};
+	use codec::alloc::sync::RwLock;
 	use itp_types::Assertion;
+	use lc_evm_dynamic_assertions::EvmAssertionExecutor;
 	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
 	use litentry_hex_utils::decode_hex;
@@ -131,9 +130,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let state = RwLock::new(Default::default());
+		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
 
 		// when
-		let (credential, vc_logs) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, vc_logs) = build(&request, dynamic_params, &mut executor).unwrap();
 
 		for log in &vc_logs {
 			println!("{}", log);
@@ -174,9 +175,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let state = RwLock::new(Default::default());
+		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -215,9 +218,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let state = RwLock::new(Default::default());
+		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -253,9 +258,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let state = RwLock::new(Default::default());
+		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);
@@ -304,9 +311,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let state = RwLock::new(Default::default());
+		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
 
 		println!("Credential is: {:?}", credential);
 

@@ -145,6 +145,8 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
+lc-dynamic-assertion = { path = "../litentry/core/dynamic-assertion", default-features = false, features = ["sgx"] }
+
 lc-evm-dynamic-assertions = { path = "../litentry/core/evm-dynamic-assertions", default-features = false, features = ["sgx"] }
 lc-identity-verification = { path = "../litentry/core/identity-verification", default-features = false, features = ["sgx"] }
 lc-parachain-extrinsic-task-receiver = { path = "../litentry/core/parachain-extrinsic-task/receiver", default-features = false, features = ["sgx"] }

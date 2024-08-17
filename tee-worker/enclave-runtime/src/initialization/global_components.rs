@@ -20,11 +20,16 @@
 //! This allows the crates themselves to stay as generic as possible
 //! and ensures that the global instances are initialized once.
 use crate::{
-	initialization::parentchain::{
-		integritee_parachain::IntegriteeParachainHandler,
-		integritee_solochain::IntegriteeSolochainHandler,
-		target_a_parachain::TargetAParachainHandler, target_a_solochain::TargetASolochainHandler,
-		target_b_parachain::TargetBParachainHandler, target_b_solochain::TargetBSolochainHandler,
+	initialization::{
+		parentchain::{
+			integritee_parachain::IntegriteeParachainHandler,
+			integritee_solochain::IntegriteeSolochainHandler,
+			target_a_parachain::TargetAParachainHandler,
+			target_a_solochain::TargetASolochainHandler,
+			target_b_parachain::TargetBParachainHandler,
+			target_b_solochain::TargetBSolochainHandler,
+		},
+		EvmAssertionRepository,
 	},
 	ocall::OcallApi,
 	rpc::rpc_response_channel::RpcResponseChannel,
@@ -92,12 +97,16 @@ use its_sidechain::{
 };
 use lazy_static::lazy_static;
 use lc_data_providers::DataProviderConfig;
-use lc_evm_dynamic_assertions::{repository::EvmAssertionRepository, sealing::io::AssertionsSeal};
+use lc_evm_dynamic_assertions::{sealing::io::AssertionsSeal, MemoryAccount};
 use litentry_primitives::BroadcastedRequest;
+use primitive_types::H160;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
 use sp_core::{ed25519, ed25519::Pair};
-use std::sync::Arc;
+use std::{
+	collections::BTreeMap,
+	sync::{Arc, SgxRwLock as RwLock},
+};
 
 pub type EnclaveParentchainSigner =
 	itp_node_api::api_client::StaticExtrinsicSigner<Pair, PairSignature>;
@@ -432,6 +441,9 @@ pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttes
 /// evm assertions repository
 pub static GLOBAL_ASSERTION_REPOSITORY: ComponentContainer<EvmAssertionRepository> =
 	ComponentContainer::new("EVM Assertion repository");
+
+pub static GLOBAL_EVM_ASSERTIONS_STATE: ComponentContainer<RwLock<BTreeMap<H160, MemoryAccount>>> =
+	ComponentContainer::new("EVM assertions state");
 
 // Parentchain component instances
 //-------------------------------------------------------------------------------------------------

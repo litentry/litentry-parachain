@@ -23,11 +23,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 pub use litentry_primitives::{Identity, IdentityNetworkTuple, Web3Network};
-use std::{string::String, vec::Vec};
+use std::{hash::Hash, string::String, vec::Vec};
 
 // Used to retrieve assertion logic and secrets
 pub trait AssertionLogicRepository {
-	type Id;
+	type Id: Eq + Hash + Clone;
 	type Item;
 
 	#[allow(clippy::type_complexity)]
@@ -46,7 +46,7 @@ pub struct AssertionResult {
 
 pub trait AssertionExecutor<I, P> {
 	fn execute(
-		&self,
+		&mut self,
 		assertion_id: I,
 		assertion_params: P,
 		identities: &[IdentityNetworkTuple],

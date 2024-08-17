@@ -186,6 +186,7 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 			let node_metadata_repo_pool = node_metadata_repo.clone();
 			let tc_sender_pool = tc_sender.clone();
 			let req_registry_pool = req_registry.clone();
+
 			pool.spawn_ok(async move {
 				let response = process_single_request(
 					shard_pool,

@@ -26,6 +26,7 @@ fn test_threadpool_behaviour() {
 	let onchain_mock = OnchainMock::default();
 	let data_provider_conifg = DataProviderConfig::new().unwrap();
 	let assertion_repository = EvmAssertionRepository::new(Default::default()).unwrap();
+	let assertion_state = RwLock::new(Default::default());
 	let context = StfTaskContext::new(
 		Arc::new(shielding_key_repository_mock),
 		author_mock.into(),
@@ -35,6 +36,7 @@ fn test_threadpool_behaviour() {
 		onchain_mock.into(),
 		data_provider_conifg.into(),
 		assertion_repository.into(),
+		assertion_state.into(),
 	);
 	let _handle = std::thread::spawn(move || {
 		run_stf_task_receiver(Arc::new(context)).unwrap();

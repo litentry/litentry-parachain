@@ -24,6 +24,7 @@ use crate::{
 	sealing::io::{seal_state, unseal_state},
 	AssertionId, SmartContractByteCode,
 };
+use ethabi::ethereum_types::H160;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use std::{
 	collections::HashMap,
@@ -94,6 +95,26 @@ impl AssertionLogicRepository for EvmAssertionRepository {
 				.remove(&id);
 			return Err(format!("Could not seal assertions state: {:?}", e))
 		}
+		Ok(())
+	}
+}
+
+#[allow(clippy::type_complexity)]
+#[derive(Default)]
+pub struct InMemorySmartContractRepo {
+	map: Mutex<HashMap<H160, (Vec<u8>, Vec<String>)>>,
+}
+
+impl AssertionLogicRepository for InMemorySmartContractRepo {
+	type Id = H160;
+	type Item = (Vec<u8>, Vec<String>);
+
+	fn get(&self, id: &H160) -> Result<Option<Self::Item>, String> {
+		Ok(self.map.lock().unwrap().get(id).cloned())
+	}
+
+	fn save(&self, id: Self::Id, item: Self::Item) -> Result<(), String> {
+		self.map.lock().unwrap().insert(id, item);
 		Ok(())
 	}
 }

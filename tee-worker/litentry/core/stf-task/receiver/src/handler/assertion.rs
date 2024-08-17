@@ -29,7 +29,7 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
-use lc_evm_dynamic_assertions::AssertionRepositoryItem;
+use lc_evm_dynamic_assertions::{AssertionRepositoryItem, EvmAssertionExecutor};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
@@ -285,11 +285,11 @@ where
 			lc_assertion_build_v2::nft_holder::build(req, nft_type, &context.data_provider_config),
 
 		Assertion::Dynamic(params) => {
-			let result = lc_assertion_build::dynamic::build(
-				req,
-				params,
+			let mut executor = EvmAssertionExecutor::new(
 				context.assertion_repository.clone(),
-			)?;
+				context.assertion_state.clone(),
+			);
+			let result = lc_assertion_build::dynamic::build(req, params, &mut executor)?;
 			vc_logs = Some(result.1);
 			Ok(result.0)
 		},

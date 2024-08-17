@@ -32,6 +32,12 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::sync::SgxRwLock as RwLock;
+
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+
 pub mod handler;
 
 use codec::Encode;
@@ -53,12 +59,13 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
-use lc_evm_dynamic_assertions::AssertionRepositoryItem;
+use lc_evm_dynamic_assertions::{AssertionRepositoryItem, MemoryAccount};
 use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
 use log::*;
 use sp_core::{ed25519::Pair as Ed25519Pair, H160};
 use std::{
 	boxed::Box,
+	collections::BTreeMap,
 	format,
 	string::{String, ToString},
 	sync::{mpsc::channel, Arc},
@@ -104,6 +111,7 @@ pub struct StfTaskContext<
 	pub ocall_api: Arc<O>,
 	pub data_provider_config: Arc<DataProviderConfig>,
 	pub assertion_repository: Arc<AR>,
+	pub assertion_state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
 }
 
 impl<
@@ -129,6 +137,7 @@ where
 		ocall_api: Arc<O>,
 		data_provider_config: Arc<DataProviderConfig>,
 		assertion_repository: Arc<AR>,
+		assertion_state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
 	) -> Self {
 		Self {
 			shielding_key,
@@ -139,6 +148,7 @@ where
 			ocall_api,
 			data_provider_config,
 			assertion_repository,
+			assertion_state,
 		}
 	}
 
