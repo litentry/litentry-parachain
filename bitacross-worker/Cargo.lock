@@ -389,7 +389,6 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "rand 0.8.5",
- "sgx_crypto_helper",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",

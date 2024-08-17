@@ -25,7 +25,6 @@ itp-utils = { path = "../../../core-primitives/utils", default-features = false 
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 rand = { version = "0.8.5", optional = true }
-sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", default-features = false }
 sgx_rand = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -60,7 +59,6 @@ sgx = [
     "bc-musig2-ceremony/sgx",
     "lc-direct-call/sgx",
     "itp-sgx-crypto/sgx",
-    "sgx_crypto_helper/mesalock_sgx",
     "sgx_rand",
     "threadpool_sgx",
 ]

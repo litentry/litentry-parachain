@@ -41,23 +41,18 @@ use itc_direct_rpc_client::{DirectRpcClient, RpcClient};
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_rpc::{Id, RpcRequest};
-use itp_sgx_crypto::{
-	key_repository::{AccessKey, AccessPubkey},
-	ShieldingCryptoEncrypt,
-};
+use itp_sgx_crypto::key_repository::AccessKey;
 pub use itp_types::{DirectRequestStatus, Hash};
 use itp_utils::hex::ToHexPrefixed;
 use lc_direct_call::CeremonyRoundCall;
-use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, Identity, ShardIdentifier};
+use litentry_primitives::{Address32, Identity, PlainRequest, ShardIdentifier};
 use log::*;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{blake2_256, ed25519, Pair as SpCorePair, H256};
 use std::{collections::HashMap, string::ToString, sync::Arc, vec};
 
 #[allow(clippy::too_many_arguments)]
-pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
+pub fn process_event<OCallApi, SIGNINGAK, Responder>(
 	signing_key_access: Arc<SIGNINGAK>,
-	shielding_key_access: Arc<SHIELDAK>,
 	ocall_api: Arc<OCallApi>,
 	responder: Arc<Responder>,
 	event: CeremonyEvent,
@@ -67,7 +62,6 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 ) where
 	OCallApi: EnclaveAttestationOCallApi + 'static,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
-	SHIELDAK: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	Responder: SendRpcResponse<Hash = H256> + 'static,
 {
 	let my_identity: Address32 = signing_key_access.retrieve_key().unwrap().public().0.into();
@@ -76,16 +70,8 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 
 	match event {
 		CeremonyEvent::FirstRoundStarted(signers, message, nonce) => {
-			let aes_key = random_aes_key();
-			let direct_call =
-				CeremonyRoundCall::NonceShare(identity, aes_key, message, nonce.serialize());
-			let request = prepare_request(
-				aes_key,
-				shielding_key_access.as_ref(),
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call = CeremonyRoundCall::NonceShare(identity, message, nonce.serialize());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			signers.iter().for_each(|signer_id| {
 				debug!(
@@ -111,20 +97,9 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 			});
 		},
 		CeremonyEvent::SecondRoundStarted(signers, message, signature) => {
-			let aes_key = random_aes_key();
-			let direct_call = CeremonyRoundCall::PartialSignatureShare(
-				identity,
-				aes_key,
-				message,
-				signature.serialize(),
-			);
-			let request = prepare_request(
-				aes_key,
-				shielding_key_access.as_ref(),
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call =
+				CeremonyRoundCall::PartialSignatureShare(identity, message, signature.serialize());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			signers.iter().for_each(|signer_id| {
 				debug!(
@@ -149,19 +124,14 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				}
 			});
 		},
-		CeremonyEvent::CeremonyEnded(
-			signature,
-			request_aes_key,
-			is_check_run,
-			verification_result,
-		) => {
+		CeremonyEvent::CeremonyEnded(signature, is_check_run, verification_result) => {
 			debug!("Ceremony {:?} ended, signature {:?}", ceremony_id, signature);
 			let hash = blake2_256(&ceremony_id.encode());
 			let result = if is_check_run {
 				verification_result.encode()
 			} else {
 				let result = signature;
-				aes_encrypt_default(&request_aes_key, &result.encode()).encode()
+				result.encode()
 			};
 			event_threads_pool.execute(move || {
 				if let Err(e) = responder.send_state_with_status(
@@ -173,30 +143,22 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 				}
 			});
 		},
-		CeremonyEvent::CeremonyError(signers, error, request_aes_key) => {
+		CeremonyEvent::CeremonyError(signers, error) => {
 			debug!("Ceremony {:?} error {:?}", ceremony_id, error);
 			let hash = blake2_256(&ceremony_id.encode());
-			let encrypted_result = aes_encrypt_default(&request_aes_key, &error.encode()).encode();
+			let encoded_result = error.encode();
 			event_threads_pool.execute(move || {
 				if let Err(e) = responder.send_state_with_status(
 					Hash::from_slice(&hash),
-					encrypted_result,
+					encoded_result,
 					DirectRequestStatus::Error,
 				) {
 					error!("Could not send response to {:?}, reason: {:?}", &hash, e);
 				}
 			});
 
-			let aes_key = random_aes_key();
-			let direct_call =
-				CeremonyRoundCall::KillCeremony(identity, aes_key, ceremony_id.clone());
-			let request = prepare_request(
-				aes_key,
-				shielding_key_access.as_ref(),
-				signing_key_access.as_ref(),
-				mr_enclave,
-				direct_call,
-			);
+			let direct_call = CeremonyRoundCall::KillCeremony(identity, ceremony_id.clone());
+			let request = prepare_request(signing_key_access.as_ref(), mr_enclave, direct_call);
 
 			//kill ceremonies on other workers
 			signers.iter().for_each(|signer_id| {
@@ -225,53 +187,24 @@ pub fn process_event<OCallApi, SIGNINGAK, SHIELDAK, Responder>(
 	}
 }
 
-fn prepare_request<SHIELDAK, SIGNINGAK>(
-	aes_key: [u8; 32],
-	shielding_key_access: &SHIELDAK,
+fn prepare_request<SIGNINGAK>(
 	signing_key_access: &SIGNINGAK,
 	mr_enclave: [u8; 32],
 	ceremony_round_call: CeremonyRoundCall,
 ) -> RpcRequest
 where
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
-	SHIELDAK: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 {
-	// this should never panic, if pub key is poisoned the state is corrupted
-	let aes_key_encrypted =
-		shielding_key_access.retrieve_pubkey().unwrap().encrypt(&aes_key).unwrap();
-
 	let shard = ShardIdentifier::from_slice(&mr_enclave);
 	// same as above
-	let dc_signed = ceremony_round_call.sign(
-		&signing_key_access.retrieve_key().unwrap().into(),
-		&mr_enclave,
-		&shard,
-	);
-	let encrypted_dc = aes_encrypt_default(&aes_key, &dc_signed.encode());
-	let request = AesRequest { shard, key: aes_key_encrypted, payload: encrypted_dc };
+	let dc_signed_encoded = ceremony_round_call
+		.sign(&signing_key_access.retrieve_key().unwrap().into(), &mr_enclave, &shard)
+		.encode();
+	let request = PlainRequest { shard, payload: dc_signed_encoded };
 	RpcRequest {
 		jsonrpc: "2.0".to_string(),
 		method: "bitacross_btcDataShare".to_string(),
 		params: vec![request.to_hex()],
 		id: Id::Number(1),
 	}
-}
-
-#[cfg(feature = "std")]
-fn random_aes_key() -> [u8; 32] {
-	use rand::{thread_rng, RngCore};
-
-	let mut seed = [0u8; 32];
-	let mut rand = thread_rng();
-	rand.fill_bytes(&mut seed);
-	seed
-}
-
-#[cfg(feature = "sgx")]
-fn random_aes_key() -> [u8; 32] {
-	use sgx_rand::{Rng, StdRng};
-	let mut seed = [0u8; 32];
-	let mut rand = StdRng::new().unwrap();
-	rand.fill_bytes(&mut seed);
-	seed
 }
