@@ -114,7 +114,7 @@ pub trait RpcClient {
 
 #[derive(Clone)]
 pub struct DirectRpcClient {
-	request_sink: Sender<String>,
+	request_sink: Sender<(String, Sender<bool>)>,
 }
 
 impl DirectRpcClient {
@@ -133,20 +133,21 @@ impl DirectRpcClient {
 			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
-		let (request_sender, request_receiver) = channel();
+		let (request_sender, request_receiver) = channel::<(String, Sender<bool>)>();
 
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
 
 		std::thread::spawn(move || {
-			loop {
-				// let's flush all pending requests first
-				while let Ok(request) = request_receiver.try_recv() {
-					if let Err(e) = socket.write_message(Message::Text(request)) {
-						error!("Could not write message to socket, reason: {:?}", e)
-					}
+			while let Ok((request, result_sender)) = request_receiver.recv() {
+				let mut result = true;
+				if let Err(e) = socket.write_message(Message::Text(request)) {
+					error!("Could not write message to socket, reason: {:?}", e);
+					result = false;
 				}
-				std::thread::sleep(Duration::from_millis(1))
+				if let Err(e) = result_sender.send(result) {
+					log::error!("Could not send rpc result back, reason: {:?}", e);
+				}
 			}
 		});
 		debug!("Connected to peer: {}", url);
@@ -183,8 +184,15 @@ impl RpcClient for DirectRpcClient {
 	fn send(&mut self, request: &RpcRequest) -> Result<(), Box<dyn Error>> {
 		let request = serde_json::to_string(request)
 			.map_err(|e| format!("Could not parse RpcRequest {:?}", e))?;
+		let (sender, receiver) = channel();
 		self.request_sink
-			.send(request)
-			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
+			.send((request, sender))
+			.map_err(|e| format!("Could not parse RpcRequest {:?}", e))?;
+
+		if receiver.recv()? {
+			Ok(())
+		} else {
+			Err("Could not send request".into())
+		}
 	}
 }

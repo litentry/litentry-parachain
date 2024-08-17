@@ -86,7 +86,7 @@ pub enum CeremonyCommand {
 	KillCeremony,
 }
 
-// commands are created by ceremony and executed by runner
+// events are created by ceremony and executed by runner
 #[derive(Debug, Eq, PartialEq)]
 pub enum CeremonyEvent {
 	FirstRoundStarted(Signers, CeremonyId, PubNonce),

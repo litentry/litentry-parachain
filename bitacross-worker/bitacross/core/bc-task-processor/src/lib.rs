@@ -417,10 +417,12 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 				context.signing_key_access.clone(),
 				context.ocall_api.clone(),
 				context.responder.clone(),
+				context.enclave_registry_lookup.clone(),
 				event,
 				ceremony_id.clone(),
 				event_threads_pool.clone(),
 				peers_map.clone(),
+				context.ceremony_registry.clone(),
 			);
 		}
 	}
