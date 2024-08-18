@@ -20,14 +20,12 @@ use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
 	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
 	PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
+	TeebagConfig, TeebagOperationalMode, VCManagementConfig, ROCOCO_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
-
-const DEFAULT_PARA_ID: u32 = 2106;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -94,7 +92,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				DEFAULT_PARA_ID.into(),
+				ROCOCO_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -102,7 +100,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 		Some("litentry-rococo"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: ROCOCO_PARA_ID },
 	)
 }
 
@@ -118,7 +116,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litentry-rococo-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		DEFAULT_PARA_ID.into(),
+		ROCOCO_PARA_ID.into(),
 	)
 }
 
@@ -129,7 +127,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litentry-rococo",
 		ChainType::Live,
 		"rococo".into(),
-		DEFAULT_PARA_ID.into(),
+		ROCOCO_PARA_ID.into(),
 	)
 }
 

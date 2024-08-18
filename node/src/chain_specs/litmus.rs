@@ -19,15 +19,13 @@ use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CollatorSelectionConfig,
 	CouncilMembershipConfig, GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, UNIT,
-	WASM_BINARY,
+	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode,
+	LITMUS_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
-
-const DEFAULT_PARA_ID: u32 = 2106;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -93,7 +91,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				DEFAULT_PARA_ID.into(),
+				LITMUS_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -101,7 +99,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		Some("litmus"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: LITMUS_PARA_ID },
 	)
 }
 
@@ -117,7 +115,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litmus-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		DEFAULT_PARA_ID.into(),
+		LITMUS_PARA_ID.into(),
 	)
 }
 
@@ -128,7 +126,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litmus",
 		ChainType::Live,
 		"kusama".into(),
-		DEFAULT_PARA_ID.into(),
+		LITMUS_PARA_ID.into(),
 	)
 }
 
