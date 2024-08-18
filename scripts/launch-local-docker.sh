@@ -17,7 +17,7 @@ function print_divider() {
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
-PARACHAIN_ID=$(grep -i "$CHAIN_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
+PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
 export PARACHAIN_ID
 
 cd "$ROOTDIR/docker/generated-$CHAIN/"

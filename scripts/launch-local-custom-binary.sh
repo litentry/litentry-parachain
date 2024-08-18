@@ -32,7 +32,7 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
-PARACHAIN_ID=$(grep -i "$CHAIN_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
+PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
 export PARACHAIN_ID
 
 function print_divider() {
