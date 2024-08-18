@@ -409,7 +409,7 @@ function stop_services {
 function register_parachain {
   echo "Register parathread now ..."
   cd "$ROOTDIR" || exit
-  export PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
+  export PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
   cd "$ROOTDIR/ts-tests" || exit 
   if [[ -z "$NODE_ENV" ]]; then
       echo "NODE_ENV=ci" > .env
