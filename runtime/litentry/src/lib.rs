@@ -1063,7 +1063,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
 	// It will be the best if we can implement this in a more professional way
-	pub ChainId: u64 = 2106u64;
+	pub ChainId: u64 = 2013u64;
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
