@@ -82,6 +82,10 @@ pub use traits::*;
 pub use types::*;
 pub use RoundIndex;
 
+pub trait ScoreUpdater<T: Config> {
+	fn clear_score(delegator: &T::AccountId) -> Result<(), &str>;
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
@@ -89,7 +93,8 @@ pub mod pallet {
 		set::OrderedSet,
 		traits::*,
 		types::*,
-		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, Range, WeightInfo,
+		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, Range, ScoreUpdater,
+		WeightInfo,
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -194,6 +199,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		/// The source for adjusted inflation base.
 		type IssuanceAdapter: IssuanceAdapter<BalanceOf<Self>>;
+		/// ScoreStaking updater
+		type ScoreUpdater: ScoreUpdater<Self>;
 	}
 
 	#[pallet::error]
@@ -1021,6 +1028,7 @@ pub mod pallet {
 						// since it is assumed that they were removed incrementally before only the
 						// last delegation was left.
 						<DelegatorState<T>>::remove(&bond.owner);
+						let _ = T::ScoreUpdater::clear_score(&bond.owner);
 					} else {
 						<DelegatorState<T>>::insert(&bond.owner, delegator);
 					}

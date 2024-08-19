@@ -26,7 +26,7 @@ use crate::{
 		Event, Pallet, Round, RoundIndex, Total,
 	},
 	weights::WeightInfo,
-	AutoCompoundDelegations, Delegator,
+	AutoCompoundDelegations, Delegator, ScoreUpdater,
 };
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
@@ -248,6 +248,7 @@ impl<T: Config> Pallet<T> {
 				<DelegationScheduledRequests<T>>::insert(collator, scheduled_requests);
 				if leaving {
 					<DelegatorState<T>>::remove(&delegator);
+					let _ = T::ScoreUpdater::clear_score(&delegator);
 					Self::deposit_event(Event::DelegatorLeft {
 						delegator,
 						unstaked_amount: amount,
@@ -475,6 +476,7 @@ impl<T: Config> Pallet<T> {
 		<DelegatorState<T>>::remove(&delegator);
 		let actual_weight =
 			Some(T::WeightInfo::execute_leave_delegators(state.delegations.0.len() as u32));
+		let _ = T::ScoreUpdater::clear_score(&delegator);
 		Ok(actual_weight.into())
 	}
 
