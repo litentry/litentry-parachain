@@ -122,7 +122,7 @@ jobs:
       - run: docker images --all
 
       - name: Save docker images
-        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
+        run: docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
