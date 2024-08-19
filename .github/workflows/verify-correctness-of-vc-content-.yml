@@ -130,7 +130,7 @@ jobs:
           name: litentry-identity
           path: litentry-identity.tar.gz
           if-no-files-found: error
-          
+
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
@@ -161,7 +161,6 @@ jobs:
 
       - name: Load docker image
         run: |
-          docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-identity.tar.gz
 
       # - name: Pull litentry image optionally
