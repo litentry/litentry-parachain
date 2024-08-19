@@ -122,14 +122,15 @@ jobs:
       - run: docker images --all
 
       - name: Save docker images
-        run: docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
 
-      - name: Upload parachain docker image
+      - name: Upload docker images
         uses: actions/upload-artifact@v4
         with:
-          name: litentry-parachain-dev
-          path: litentry-parachain-dev.tar.gz
+          name: litentry-identity
+          path: litentry-identity.tar.gz
           if-no-files-found: error
+          
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
@@ -153,10 +154,6 @@ jobs:
       - name: Pull polkadot image
         run: |
           docker pull parity/polkadot
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: litentry-parachain-dev
 
       - uses: actions/download-artifact@v4
         with:
