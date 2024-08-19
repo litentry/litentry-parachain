@@ -11,7 +11,16 @@ on:
     - cron: '0 12 * * 3,5' # Run every Wednesday and Friday at 12:00 UTC
     
 jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set ENV
+        run: |
+          export WORKER_DEV=1
+          env | grep WORKER_DEV
+
   identity-build:
+    needs: set-env
     runs-on: ubuntu-latest
     steps:
       - name: Free up disk space
@@ -78,7 +87,6 @@ jobs:
             WORKER_MODE_ARG=sidechain
             WORKER_ENV_DATA_PROVIDERS_CONFIG=1
             WORKER_MOCK_SERVER=1
-            WORKER_DEV=1
             ADDITIONAL_FEATURES_ARG=
 
       - name: Copy caches from the built image
