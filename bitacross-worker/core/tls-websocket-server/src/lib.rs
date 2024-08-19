@@ -20,6 +20,7 @@
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+extern crate alloc;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -40,9 +41,10 @@ use crate::sgx_reexport_prelude::*;
 use crate::{
 	connection_id_generator::{ConnectionId, ConnectionIdGenerator},
 	error::{WebSocketError, WebSocketResult},
+	ws_server::ConnectionEvents,
 };
 use mio::{event::Evented, Token};
-use std::{fmt::Debug, string::String};
+use std::{fmt::Debug, string::String, sync::mpsc::Sender};
 
 pub mod certificate_generation;
 pub mod config_provider;
@@ -113,7 +115,12 @@ pub(crate) trait WebSocketConnection: Send + Sync {
 	fn get_session_readiness(&self) -> mio::Ready;
 
 	/// Handles the ready event, the connection has work to do.
-	fn on_ready(&mut self, poll: &mut mio::Poll, ev: &mio::event::Event) -> WebSocketResult<()>;
+	fn on_ready(
+		&mut self,
+		poll: &mut mio::Poll,
+		ev: &mio::event::Event,
+		message_sender: &Sender<ConnectionEvents>,
+	) -> WebSocketResult<()>;
 
 	/// True if connection was closed.
 	fn is_closed(&self) -> bool;

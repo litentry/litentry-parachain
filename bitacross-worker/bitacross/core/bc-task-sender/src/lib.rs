@@ -35,7 +35,7 @@ pub use crate::sgx_reexport_prelude::*;
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
 use lazy_static::lazy_static;
-use litentry_primitives::AesRequest;
+use litentry_primitives::PlainRequest;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 #[cfg(feature = "sgx")]
@@ -52,8 +52,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum BitAcrossRequest {
-	Request(AesRequest, oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>),
-	ShareCeremonyData(AesRequest),
+	Request(PlainRequest, oneshot::Sender<Result<BitAcrossProcessingResult, Vec<u8>>>),
+	ShareCeremonyData(PlainRequest),
 }
 
 #[derive(Encode, Decode, Clone, Debug)]

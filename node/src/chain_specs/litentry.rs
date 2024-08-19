@@ -20,14 +20,12 @@ use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
 	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
 	PolkadotXcmConfig, SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
+	TeebagConfig, TeebagOperationalMode, VCManagementConfig, LITENTRY_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
-
-const DEFAULT_PARA_ID: u32 = 2013;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -90,7 +88,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				DEFAULT_PARA_ID.into(),
+				LITENTRY_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -98,7 +96,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		Some("litentry"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: LITENTRY_PARA_ID },
 	)
 }
 
@@ -114,7 +112,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litentry-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		DEFAULT_PARA_ID.into(),
+		LITENTRY_PARA_ID.into(),
 	)
 }
 
@@ -125,7 +123,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litentry",
 		ChainType::Live,
 		"polkadot".into(),
-		DEFAULT_PARA_ID.into(),
+		LITENTRY_PARA_ID.into(),
 	)
 }
 
