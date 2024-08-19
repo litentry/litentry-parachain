@@ -23,6 +23,12 @@ jobs:
     needs: set-env
     runs-on: ubuntu-latest
     steps:
+
+      - name: Set ENV
+        run: |
+          export WORKER_DEV=1
+          env | grep WORKER_DEV
+          
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: jlumbroso/free-disk-space@main
