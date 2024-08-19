@@ -1128,7 +1128,7 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DefaultYearlyInflation: Perbill = Perbill::from_perthousand(5);
+	pub const DefaultYearlyInflation: Perbill = Perbill::from_perthousand(1);
 }
 
 pub struct IdentityAccountIdConvert;
