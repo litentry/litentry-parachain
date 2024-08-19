@@ -119,11 +119,9 @@ jobs:
           tags: litentry/identity-cli:latest
           target: deployed-client
 
-      - name: Pull parachain image
-        run: |
-          docker pull litentry/litentry-parachain:latest
-
-      - run: docker images --all
+      - name: Save docker images
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
+             docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v4
