@@ -31,18 +31,25 @@ library BRC20 {
         networks[4] = Web3Networks.BitcoinP2wsh;
         return networks;
     }
-    function getBrc20TokenInfo() internal pure returns (TokenInfo[] memory) {
-        uint32[] memory networks = BRC20.getDefaultTokenNetworks();
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
-        for (uint i = 0; i < networks.length; i++) {
-            tokenInfoList[i] = TokenInfo(
-                networks[i],
+
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        uint32[] memory defaultNetworks = BRC20.getDefaultTokenNetworks();
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](
+            defaultNetworks.length
+        );
+        for (uint i = 0; i < defaultNetworks.length; i++) {
+            networks[i] = TokenInfoNetwork(
+                defaultNetworks[i],
                 "",
                 DataProviderTypes.GeniidataClient,
                 18
             );
         }
 
-        return tokenInfoList;
+        return networks;
     }
 }

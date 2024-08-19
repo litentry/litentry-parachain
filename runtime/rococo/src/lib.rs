@@ -68,7 +68,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
-	HOURS, MINUTES, SLOT_DURATION,
+	HOURS, MINUTES, ROCOCO_PARA_ID, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 
@@ -98,8 +98,6 @@ pub mod asset_config;
 pub mod constants;
 pub mod precompiles;
 
-pub mod migration;
-
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -107,31 +105,6 @@ pub mod xcm_config;
 
 pub use precompiles::RococoNetworkPrecompiles;
 pub type Precompiles = RococoNetworkPrecompiles<Runtime>;
-
-#[derive(Clone)]
-pub struct TransactionConverter;
-
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		)
-	}
-}
-
-impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(
-		&self,
-		transaction: pallet_ethereum::Transaction,
-	) -> opaque::UncheckedExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
-		);
-		let encoded = extrinsic.encode();
-		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
-			.expect("Encoded extrinsic is always valid")
-	}
-}
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -250,7 +223,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9193,
+	spec_version: 9194,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1126,8 +1099,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	// It will be the best if we can implement this in a more professional way
-	pub ChainId: u64 = 2106u64;
+	pub ChainId: u64 = ROCOCO_PARA_ID.into();
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
