@@ -474,9 +474,9 @@ impl<T: Config> Pallet<T> {
 			unstaked_amount: state.total,
 		});
 		<DelegatorState<T>>::remove(&delegator);
+		let _ = T::ScoreUpdater::clear_score(&delegator);
 		let actual_weight =
 			Some(T::WeightInfo::execute_leave_delegators(state.delegations.0.len() as u32));
-		let _ = T::ScoreUpdater::clear_score(&delegator);
 		Ok(actual_weight.into())
 	}
 
