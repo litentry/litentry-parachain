@@ -50,7 +50,7 @@ use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_direct_call::DirectCall;
-use litentry_primitives::{aes_encrypt_default, AesRequest, DecryptableRequest, Identity};
+use litentry_primitives::{Identity, PlainRequest};
 use log::{debug, error};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::crypto::Pair;
@@ -95,7 +95,6 @@ where
 
 	let signer_lookup_cloned = signer_lookup.clone();
 	let shielding_key_cloned = shielding_key.clone();
-	let shielding_key_cloned_2 = shielding_key.clone();
 	let signing_key_repository_cloned = signing_key_repository.clone();
 	let ocall_api_cloned = ocall_api.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
@@ -178,7 +177,6 @@ where
 		debug!("worker_api_direct rpc was called: bitacross_checkSignBitcoin");
 		let request = prepare_check_sign_bitcoin_request(
 			signing_key_repository_cloned.as_ref(),
-			shielding_key_cloned_2.as_ref(),
 			ocall_api_cloned.as_ref(),
 		);
 		async move {
@@ -404,20 +402,14 @@ where
 	io
 }
 
-fn prepare_check_sign_bitcoin_request<AccessShieldingKey, OcallApi>(
+fn prepare_check_sign_bitcoin_request<OcallApi>(
 	signing_key_repository: &EnclaveSigningKeyRepository,
-	shielding_key: &AccessShieldingKey,
 	ocall_api: &OcallApi,
-) -> Result<AesRequest, ()>
+) -> Result<PlainRequest, ()>
 where
-	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
-	<AccessShieldingKey as AccessKey>::KeyType:
-		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
 	OcallApi: EnclaveAttestationOCallApi + Send + Sync + 'static,
 {
-	let aes_key = [0u8; 32];
 	let signer = signing_key_repository.retrieve_key().map_err(|_| ())?;
-	let shielding_key = shielding_key.retrieve_pubkey().map_err(|_| ())?;
 	let identity = Identity::Substrate(signer.public().into());
 	let mrenclave = ocall_api.get_mrenclave_of_self().map_err(|_| ())?.m;
 	let call = DirectCall::CheckSignBitcoin(identity).sign(
@@ -425,12 +417,7 @@ where
 		&mrenclave,
 		&mrenclave.into(),
 	);
-	let encrypted = aes_encrypt_default(&aes_key, &call.encode());
-	Ok(AesRequest {
-		shard: mrenclave.into(),
-		key: shielding_key.encrypt(&aes_key).map_err(|_| ())?,
-		payload: encrypted,
-	})
+	Ok(PlainRequest { shard: mrenclave.into(), payload: call.encode() })
 }
 
 // Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
@@ -444,8 +431,8 @@ fn execute_getter_inner<GE: ExecuteGetter>(
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let request = RsaRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
-	let shard: ShardIdentifier = request.shard();
-	let encoded_trusted_getter: Vec<u8> = request.payload().to_vec();
+	let shard: ShardIdentifier = request.shard;
+	let encoded_trusted_getter: Vec<u8> = request.payload.to_vec();
 
 	let getter_result = getter_executor
 		.execute_getter(&shard, encoded_trusted_getter)
@@ -575,14 +562,14 @@ fn bitacross_data_share_inner(params: Params) -> Result<RpcReturnValue, Vec<u8>>
 
 // we expect our `params` to be "by-position array"
 // see https://www.jsonrpc.org/specification#parameter_structures
-fn get_request_from_params(params: Params) -> Result<AesRequest, String> {
+fn get_request_from_params(params: Params) -> Result<PlainRequest, String> {
 	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
 
 	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
 	debug!("Request payload: {}", s);
 
-	let request =
-		AesRequest::from_hex(s).map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+	let request = PlainRequest::from_hex(s)
+		.map_err(|e| format!("PlainRequest construction error: {:?}", e))?;
 	Ok(request)
 }
 

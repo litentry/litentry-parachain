@@ -22,38 +22,42 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Mcrt {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](6);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 2000 * Constants.decimals_factor;
-        ranges[2] = 10000 * Constants.decimals_factor;
-        ranges[3] = 50000 * Constants.decimals_factor;
-        ranges[4] = 150000 * Constants.decimals_factor;
-        ranges[5] = 500000 * Constants.decimals_factor;
+        ranges[0] = 0;
+        ranges[1] = 2000;
+        ranges[2] = 10000;
+        ranges[3] = 50000;
+        ranges[4] = 150000;
+        ranges[5] = 500000;
 
-        return ranges;
+        return TokenInfoRanges(ranges, 0);
     }
 
-    function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-        TokenInfo[] memory tokenInfoList = new TokenInfo[](3);
-        tokenInfoList[0] = TokenInfo(
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](3);
+        networks[0] = TokenInfoNetwork(
             Web3Networks.Ethereum,
             "0xde16ce60804a881e9f8c4ebb3824646edecd478d",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[1] = TokenInfo(
+        networks[1] = TokenInfoNetwork(
             Web3Networks.Bsc,
             "0x4b8285aB433D8f69CB48d5Ad62b415ed1a221e4f",
             DataProviderTypes.NoderealClient,
             18
         );
-        tokenInfoList[2] = TokenInfo(
+        networks[2] = TokenInfoNetwork(
             Web3Networks.Solana,
             "FADm4QuSUF1K526LvTjvbJjKzeeipP6bj5bSzp3r6ipq",
             DataProviderTypes.MoralisClient,
             18
         );
-        return tokenInfoList;
+        return networks;
     }
 }

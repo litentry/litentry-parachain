@@ -23,17 +23,17 @@ import "../Constants.sol";
 import "./BRC20.sol";
 
 library Btcs {
-    function getTokenRanges() internal pure returns (uint256[] memory) {
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
         uint256[] memory ranges = new uint256[](9);
-        ranges[0] = 0 * Constants.decimals_factor;
-        ranges[1] = 1 * Constants.decimals_factor;
-        ranges[2] = 5 * Constants.decimals_factor;
-        ranges[3] = 20 * Constants.decimals_factor;
-        ranges[4] = 50 * Constants.decimals_factor;
-        ranges[5] = 100 * Constants.decimals_factor;
-        ranges[6] = 200 * Constants.decimals_factor;
-        ranges[7] = 500 * Constants.decimals_factor;
-        ranges[8] = 800 * Constants.decimals_factor;
-        return ranges;
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 5;
+        ranges[3] = 20;
+        ranges[4] = 50;
+        ranges[5] = 100;
+        ranges[6] = 200;
+        ranges[7] = 500;
+        ranges[8] = 800;
+        return TokenInfoRanges(ranges, 0);
     }
 }
