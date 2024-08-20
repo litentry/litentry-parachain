@@ -16,10 +16,10 @@
 
 #![allow(dead_code, unused_imports)]
 
-use crate::{mock::*, Error, Event, PoolState, RoundInfo, RoundSetting, ScorePayment};
-use core_primitives::{DAYS, YEARS};
+use crate::{mock::*, Error, Event, PoolState, RoundInfo, RoundSetting, ScorePayment, Scores};
+use core_primitives::{Identity, DAYS, YEARS};
 use frame_support::{assert_err, assert_ok};
-use pallet_parachain_staking::Delegator;
+use pallet_parachain_staking::{Delegator, ScoreUpdater};
 use sp_runtime::Perbill;
 
 fn round_reward() -> Balance {
@@ -380,5 +380,29 @@ fn claim_works() {
 			ScoreStaking::claim(RuntimeOrigin::signed(alice()), 100),
 			Error::<Test>::InsufficientBalance
 		);
+	});
+}
+
+#[test]
+fn clear_score_for_works() {
+	new_test_ext(true).execute_with(|| {
+		let bob = bob();
+		pallet_parachain_staking::DelegatorState::<Test>::insert(
+			bob.clone(),
+			Delegator::new(alice(), alice(), 1600),
+		);
+		assert_ok!(ScoreStaking::update_score(
+			RuntimeOrigin::signed(alice()),
+			Identity::from(bob.clone()),
+			1000
+		));
+
+		assert_eq!(ScoreStaking::total_score(), 1000);
+		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 1000);
+
+		// clear_score works
+		assert_ok!(ScoreStaking::clear_score_for(&bob));
+		assert_eq!(ScoreStaking::total_score(), 0);
+		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 0);
 	});
 }
