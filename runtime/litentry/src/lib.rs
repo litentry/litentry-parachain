@@ -865,6 +865,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
 	type IssuanceAdapter = AssetsHandler;
+	type ScoreUpdater = pallet_score_staking::Pallet<Runtime>;
 }
 
 parameter_types! {
