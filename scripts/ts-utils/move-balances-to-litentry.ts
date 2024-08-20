@@ -7,8 +7,8 @@ const prettier = require('prettier');
 import colors from 'colors';
 import { blake2AsHex } from '@polkadot/util-crypto';
 
-//set the maximal calls are 500 per batch
-const BATCH_SIZE = 500;
+// maximal calls are 1000 per batch
+const BATCH_SIZE = 1000;
 async function encodeExtrinsic() {
     // params: source chain endpoint, destination chain endpoint
     const { sourceApi, destinationAPI } = await initApi(
@@ -61,7 +61,7 @@ async function encodeExtrinsic() {
         txs = txs.concat(batchTxs);
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++;
-            const extrinsics = destinationAPI.tx.utility.batch(batchTxs);
+            const extrinsics = destinationAPI.tx.utility.forceBatch(batchTxs);
             const preimage = destinationAPI.tx.preimage.notePreimage(extrinsics.toHex()).method.toHex();
             const preimageHash = blake2AsHex(preimage, 256);
             extrinsicsData.push({ batch: i, extrinsics: extrinsics.toHex() });
