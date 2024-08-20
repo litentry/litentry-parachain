@@ -221,7 +221,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9195,
+	spec_version: 9200,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1223,16 +1223,16 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::System(_) |
-				RuntimeCall::Timestamp(_) |
-				RuntimeCall::ParachainSystem(_) |
-				RuntimeCall::ExtrinsicFilter(_) |
-				RuntimeCall::Multisig(_) |
-				RuntimeCall::Council(_) |
-				RuntimeCall::CouncilMembership(_) |
-				RuntimeCall::TechnicalCommittee(_) |
-				RuntimeCall::TechnicalCommitteeMembership(_) |
-				RuntimeCall::Utility(_)
+			RuntimeCall::System(_)
+				| RuntimeCall::Timestamp(_)
+				| RuntimeCall::ParachainSystem(_)
+				| RuntimeCall::ExtrinsicFilter(_)
+				| RuntimeCall::Multisig(_)
+				| RuntimeCall::Council(_)
+				| RuntimeCall::CouncilMembership(_)
+				| RuntimeCall::TechnicalCommittee(_)
+				| RuntimeCall::TechnicalCommitteeMembership(_)
+				| RuntimeCall::Utility(_)
 		) {
 			// always allow core calls
 			return true;
