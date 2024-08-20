@@ -153,7 +153,7 @@ impl Config for Test {
 }
 
 impl pallet_parachain_staking::ScoreUpdater<Test> for () {
-	fn clear_score(_delegator: &<Test as frame_system::Config>::AccountId) -> Result<(), &str> {
+	fn clear_score_for(_delegator: &<Test as frame_system::Config>::AccountId) -> Result<(), &str> {
 		Ok(())
 	}
 }
