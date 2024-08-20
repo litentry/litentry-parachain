@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set WORKER_DEV
+        run: |
+          export WORKER_DEV=1
+          env | grep WORKER_DEV
       - name: Set ENV
         env:
           NODEREAL_API_KEY: c99123cec85643da879f63654f0c642f
@@ -25,6 +30,11 @@ jobs:
     needs: set-env
     runs-on: ubuntu-latest
     steps:
+
+      - name: Set ENV
+        run: |
+          export WORKER_DEV=1
+          env | grep WORKER_DEV
           
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
