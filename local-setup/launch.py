@@ -194,7 +194,7 @@ def get_flags(index, worker):
 
     return list(filter(None, [
         "--clean-reset",
-        "-T", "ws://localhost",
+        "-T", "wss://localhost" if worker == "bitacross" else "ws://localhost",
         "-P", ports['trusted_worker_port'],
         "-w", ports['untrusted_worker_port'],
         "-r", ports['mura_port'],

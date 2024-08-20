@@ -1,11 +1,6 @@
 package main
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -16,10 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/itering/scale.go/source"
 	"github.com/itering/scale.go/types/scaleBytes"
-	"io"
 	"io/ioutil"
-	"math/big"
-	"slices"
 )
 import "github.com/gorilla/websocket"
 import "crypto/tls"
@@ -45,12 +37,6 @@ type rpcResult struct {
 	Status   map[string]interface{} `json:"status"`
 }
 
-type aesOutput struct {
-	Ciphertext string `json:"ciphertext"`
-	Aad        string `json:"aad"`
-	Nonce      string `json:"nonce"`
-}
-
 type Rsa3072PubKey struct {
 	N [384]byte `json:"n"`
 	E [4]byte   `json:"e"`
@@ -68,10 +54,6 @@ func main() {
 	//** request shielding key
 	requestAuthorGetShieldingKey(*c)
 	res := read_response(*c)
-
-	// ** decode response and parse shielding key
-	getShieldingKeyResult, _ := decodeRpcReturnValue(res.Result)
-	pubKey := parseShieldingKey(getShieldingKeyResult)
 
 	//** request aggregated public key
 	requestAggregatedPublicKey(*c)
@@ -103,13 +85,13 @@ func main() {
 	}
 
 	//** prepare SignEthereum direct call
-	//generate random aes key :)
-	aesKey := []byte("AES256Key-1234123412341234123412")
 	prehashedEthereumMessage := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64}
 
 	//** prepare signed direct call
-	directCall := prepareSignEthereumDirectCall(identity, aesKey, prehashedEthereumMessage)
+	directCall := prepareSignEthereumDirectCall(identity, prehashedEthereumMessage)
 	encodedDirectCall := types.Encode("DirectCall", directCall)
+
+	fmt.Println(encodedDirectCall)
 
 	encodedMrEnclave := types.Encode("[u8; 32]", getStateMrEnclaveResult)
 
@@ -120,26 +102,29 @@ func main() {
 	sig, _ := secp256k1.Sign(payloadHash, math.PaddedBigBytes(key.D, key.Params().BitSize/8))
 
 	directCallSigned := prepareSignedDirectCall(directCall, sig)
+	fmt.Println("Direct call signed: ")
+	fmt.Println(directCallSigned)
 	encodedDirectCallSigned := types.Encode("DirectCallSigned", directCallSigned)
+	fmt.Println("Encoded Direct call signed: ")
+	fmt.Println(encodedDirectCallSigned)
 
-	//** aes encrypt signed direct call
-	ciphertext, aad, nonce := aesEncrypt(aesKey, encodedDirectCallSigned)
-	aesOutput := prepareAesOutputObject(ciphertext, aad, nonce)
-	encryptedAesKey := encryptAesKeyWithShieldingKey(aesKey, pubKey)
-
-	//** create AesRequest
-	aesRequest := map[string]interface{}{
+	//** create PlainRequest
+	plainRequest := map[string]interface{}{
 		"shard":   getStateMrEnclaveResult,
-		"key":     hexutil.Encode(encryptedAesKey),
-		"payload": aesOutput,
+		"payload": hexutil.Encode(utiles.HexToBytes(encodedDirectCallSigned)),
 	}
-	encodedAesRequest := types.Encode("AesRequest", aesRequest)
 
-	// ** create rpc request with hex encoded scale encoded aes request
+	fmt.Println(plainRequest)
+
+	encodedPlainRequest := types.Encode("PlainRequest", plainRequest)
+	fmt.Println("Encoded plain request:")
+	fmt.Println(encodedPlainRequest)
+
+	// ** create rpc request with hex encoded scale encoded request
 	signRequest := request{
 		Jsonrpc: "2.0",
 		Method:  "bitacross_submitRequest",
-		Params:  []string{encodedAesRequest},
+		Params:  []string{encodedPlainRequest},
 		Id:      1,
 	}
 	serializedRequest, srErr := json.Marshal(signRequest)
@@ -152,83 +137,19 @@ func main() {
 	sendRequest(*c, serializedRequest)
 
 	// ** decode response and parse shielding key, status 0 means success
-
 	signResp := read_response(*c)
-
 	signResult, signStatus := decodeRpcReturnValue(signResp.Result)
-	resultAesOutput := decodeAesOutput(signResult)
-	decryptedResult := aesDecrypt(aesKey, utiles.HexToBytes(resultAesOutput.Ciphertext), utiles.HexToBytes(resultAesOutput.Nonce), utiles.HexToBytes(resultAesOutput.Aad))
 
-	fmt.Println("Decrypted result")
-	fmt.Println(decryptedResult)
+	fmt.Println("Result")
+	fmt.Println(signResult)
 
 	if _, ok := signStatus["Error"]; ok {
-		signBitcoinError := decodeSignEthereumError(decryptedResult)
-		fmt.Println("Got SignEthereumError")
-		fmt.Println(signBitcoinError)
+		fmt.Println(signResult)
 	} else {
-		signature := decryptedResult
+		signature := signResult
 		fmt.Println("Got signature:")
 		fmt.Println(signature)
 	}
-}
-
-func prepareAesOutputObject(cipher []byte, aad []byte, nonce []byte) map[string]interface{} {
-	return map[string]interface{}{
-		"ciphertext": hexutil.Encode(cipher),
-		"aad":        hexutil.Encode(aad),
-		"nonce":      hexutil.Encode(nonce),
-	}
-}
-
-func encryptAesKeyWithShieldingKey(aesKey []byte, shieldingKey Rsa3072PubKey) []byte {
-	nBytes := shieldingKey.N[:]
-	eBytes := shieldingKey.E[:]
-	slices.Reverse(nBytes)
-	slices.Reverse(eBytes)
-	rsaPubKey := rsa.PublicKey{
-		N: big.NewInt(1).SetBytes(nBytes),
-		E: int(big.NewInt(0).SetBytes(eBytes).Uint64()),
-	}
-
-	encryptedAesKey, encryptAesError := rsa.EncryptOAEP(sha256.New(), rand.Reader, &rsaPubKey, aesKey, nil)
-	if encryptAesError != nil {
-		fmt.Println("encrypt aes key error")
-		fmt.Println(encryptAesError)
-	}
-	return encryptedAesKey
-}
-
-func aesEncrypt(aesKey []byte, encodedCall string) ([]byte, []byte, []byte) {
-	block, err := aes.NewCipher(aesKey)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	nonce := make([]byte, 12)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		panic(err.Error())
-	}
-
-	aesgcm, err := cipher.NewGCM(block)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	additionalData := []byte{}
-	return aesgcm.Seal(nil, nonce, utiles.HexToBytes(encodedCall), additionalData), additionalData, nonce
-}
-
-func aesDecrypt(aesKey []byte, ciphertext []byte, nonce []byte, aad []byte) []byte {
-	block, err := aes.NewCipher(aesKey)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	aesgcm, err := cipher.NewGCM(block)
-
-	decrypted, _ := aesgcm.Open(nil, nonce, ciphertext, aad)
-	return decrypted
 }
 
 func prepareDirectCallSignaturePayload(directCallScaleEncoded string, mrEnclaveScaleEncoded string) []byte {
@@ -248,11 +169,10 @@ func prepareSignedDirectCall(directCall map[string]interface{}, signature []byte
 	}
 }
 
-func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byte, prehashedEthereumMessage []byte) map[string]interface{} {
+func prepareSignEthereumDirectCall(identity map[string]interface{}, prehashedEthereumMessage []byte) map[string]interface{} {
 	signEthereumDirectCall := map[string]interface{}{
 		"col1": identity,
-		"col2": utiles.BytesToHex(aesKey),
-		"col3": utiles.BytesToHex(prehashedEthereumMessage),
+		"col2": utiles.BytesToHex(prehashedEthereumMessage),
 	}
 
 	return map[string]interface{}{
@@ -261,7 +181,7 @@ func prepareSignEthereumDirectCall(identity map[string]interface{}, aesKey []byt
 
 }
 
-func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
+func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"TaprootSpendable": map[string]interface{}{
 			"col1": string(bitcoinPayload),
@@ -271,8 +191,7 @@ func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{
 
 	signBitcoinDirectCall := map[string]interface{}{
 		"col1": identity,
-		"col2": utiles.BytesToHex(aesKey),
-		"col3": payload,
+		"col2": payload,
 	}
 
 	return map[string]interface{}{
@@ -280,7 +199,7 @@ func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{
 	}
 }
 
-func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte, tweakBytes [32]byte, tweakIsXOnly bool) map[string]interface{} {
+func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, bitcoinPayload []byte, tweakBytes [32]byte, tweakIsXOnly bool) map[string]interface{} {
 	tweaks := []map[string]interface{}{
 		map[string]interface{}{
 			"col1": utiles.BytesToHex(tweakBytes[:]),
@@ -297,8 +216,7 @@ func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, aesK
 
 	directCall := map[string]interface{}{
 		"col1": identity,
-		"col2": utiles.BytesToHex(aesKey),
-		"col3": payload,
+		"col2": payload,
 	}
 
 	return map[string]interface{}{
@@ -306,15 +224,14 @@ func prepareSignBitcoinWithTweakDirectCall(identity map[string]interface{}, aesK
 	}
 }
 
-func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interface{}, bitcoinPayload []byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"TaprootUnspendable": string(bitcoinPayload),
 	}
 
 	signBitcoinDirectCall := map[string]interface{}{
 		"col1": identity,
-		"col2": utiles.BytesToHex(aesKey),
-		"col3": payload,
+		"col2": payload,
 	}
 
 	return map[string]interface{}{
@@ -323,15 +240,14 @@ func prepareSignBitcoinTaprootUnspendableDirectCall(identity map[string]interfac
 
 }
 
-func prepareSignBitcoinDerivedDirectCall(identity map[string]interface{}, aesKey []byte, bitcoinPayload []byte) map[string]interface{} {
+func prepareSignBitcoinDerivedDirectCall(identity map[string]interface{}, bitcoinPayload []byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"Derived": string(bitcoinPayload),
 	}
 
 	signBitcoinDirectCall := map[string]interface{}{
 		"col1": identity,
-		"col2": utiles.BytesToHex(aesKey),
-		"col3": payload,
+		"col2": payload,
 	}
 
 	return map[string]interface{}{
@@ -398,20 +314,6 @@ func decodeRpcReturnValue(hexEncoded string) (string, map[string]interface{}) {
 	return rpcResult.Value, rpcResult.Status
 }
 
-func decodeAesOutput(hexEncoded string) aesOutput {
-	bytes := scaleBytes.ScaleBytes{Data: utiles.HexToBytes(hexEncoded)}
-	m := types.ScaleDecoder{}
-	m.Init(bytes, nil)
-	var output aesOutput
-	err := utiles.UnmarshalAny(m.ProcessAndUpdateData("AesOutput").(interface{}), &output)
-
-	if err != nil {
-		fmt.Println("Unmarshall error!")
-		fmt.Println(err)
-	}
-	return output
-}
-
 func decodeSignBitcoinError(encoded []byte) map[string]interface{} {
 	bytes := scaleBytes.ScaleBytes{Data: encoded}
 	m := types.ScaleDecoder{}
@@ -461,7 +363,7 @@ func read_response(c websocket.Conn) response {
 func create_conn(port string) *websocket.Conn {
 
 	dialer := *websocket.DefaultDialer
-	url := "ws://localhost:" + port
+	url := "wss://localhost:" + port
 	fmt.Println("Connecting to worker:")
 	fmt.Println(url)
 

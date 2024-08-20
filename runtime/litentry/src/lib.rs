@@ -60,7 +60,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
-	HOURS, MINUTES, SLOT_DURATION,
+	HOURS, LITENTRY_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -1038,8 +1038,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	// It will be the best if we can implement this in a more professional way
-	pub ChainId: u64 = 2106u64;
+	pub ChainId: u64 = LITENTRY_PARA_ID.into();
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);

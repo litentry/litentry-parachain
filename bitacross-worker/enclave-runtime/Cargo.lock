@@ -286,6 +286,7 @@ dependencies = [
 name = "bc-musig2-event"
 version = "0.1.0"
 dependencies = [
+ "bc-enclave-registry",
  "bc-musig2-ceremony",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
@@ -298,7 +299,6 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.21",
  "parity-scale-codec",
- "sgx_crypto_helper",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",

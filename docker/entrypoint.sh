@@ -79,7 +79,7 @@ run_relay_bob(){
 register_parachain(){
     echo "Register parathread now ..."
     cd "$REPO_DIR" || exit
-    export PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
+    export PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
     cd "$REPO_DIR/ts-tests" || exit
     if [[ -z "$NODE_ENV" ]]; then
         echo "NODE_ENV=ci" > .env

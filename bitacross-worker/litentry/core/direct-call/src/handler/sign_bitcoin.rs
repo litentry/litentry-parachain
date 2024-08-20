@@ -32,7 +32,6 @@ pub enum SignBitcoinError {
 pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveRegistryLookup>(
 	signer: Identity,
 	payload: SignBitcoinPayload,
-	aes_key: [u8; 32],
 	relayer_registry: &RRL,
 	signer_registry: Arc<SR>,
 	enclave_registry: &ER,
@@ -53,7 +52,7 @@ pub fn handle<RRL: RelayerRegistryLookup, SR: SignerRegistryLookup, ER: EnclaveR
 			})
 			.collect();
 
-		Ok(CeremonyCommand::InitCeremony(aes_key, signers?, payload, check_run))
+		Ok(CeremonyCommand::InitCeremony(signers?, payload, check_run))
 	} else {
 		Err(SignBitcoinError::InvalidSigner)
 	}
@@ -129,7 +128,6 @@ pub mod test {
 		let result = handle(
 			relayer_account,
 			SignBitcoinPayload::Derived(vec![]),
-			[0u8; 32],
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
@@ -154,7 +152,6 @@ pub mod test {
 		let result = handle(
 			enclave_account,
 			SignBitcoinPayload::Derived(vec![]),
-			[0u8; 32],
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
@@ -179,7 +176,6 @@ pub mod test {
 		let result = handle(
 			non_relayer_account,
 			SignBitcoinPayload::Derived(vec![]),
-			[0u8; 32],
 			&relayer_registry,
 			signers_registry,
 			&enclave_registry,
