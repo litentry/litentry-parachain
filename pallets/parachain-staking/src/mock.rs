@@ -149,6 +149,13 @@ impl Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type ScoreUpdater = ();
+}
+
+impl pallet_parachain_staking::ScoreUpdater<Test> for () {
+	fn clear_score(_delegator: &<Test as frame_system::Config>::AccountId) -> Result<(), &str> {
+		Ok(())
+	}
 }
 
 pub(crate) struct ExtBuilder {
