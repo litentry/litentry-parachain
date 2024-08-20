@@ -50,18 +50,20 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_balances::Config {
 		type Currency: ReservableCurrency<Self::AccountId>;
+		type IncConsumerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type AddBalanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		type BurnOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(Weight::from_parts(20_000_000u64 * (who.len() as u64), 0))]
+		#[pallet::weight(Weight::from_parts(195_000_000 * (who.len() as u64), 0))]
 		pub fn inc_consumers(
 			origin: OriginFor<T>,
 			who: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			let _ = T::IncConsumerOrigin::ensure_origin(origin)?;
 			for i in &who {
 				frame_system::Pallet::<T>::inc_consumers(i)?;
 			}
@@ -70,14 +72,14 @@ pub mod pallet {
 
 		/// add some balance of an existing account
 		#[pallet::call_index(1)]
-		#[pallet::weight({10_000})]
-		pub fn set_balance(
+		#[pallet::weight({195_000_000})]
+		pub fn add_balance(
 			origin: OriginFor<T>,
 			who: AccountIdLookupOf<T>,
 			#[pallet::compact] add_free: BalanceOf<T>,
 			#[pallet::compact] add_reserved: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			let _ = T::AddBalanceOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 			let add_total = add_free + add_reserved;
 
