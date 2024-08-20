@@ -221,7 +221,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9194,
+	spec_version: 9195,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -706,7 +706,9 @@ impl pallet_identity::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
-	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
+	type IncConsumerOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
+	type AddBalanceOrigin = EnsureRoot<AccountId>;
+	type BurnOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -1230,9 +1232,7 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::CouncilMembership(_) |
 				RuntimeCall::TechnicalCommittee(_) |
 				RuntimeCall::TechnicalCommitteeMembership(_) |
-				RuntimeCall::Utility(_) |
-				// Temp: should be removed after the one-time burn
-				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
+				RuntimeCall::Utility(_)
 		) {
 			// always allow core calls
 			return true;
