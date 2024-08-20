@@ -14,11 +14,18 @@ jobs:
   set-env:
     runs-on: ubuntu-latest
     steps:
-      - name: Set ENV
+      - uses: actions/checkout@v4
+
+      - name: Set WORKER_DEV
         run: |
           export WORKER_DEV=1
           env | grep WORKER_DEV
-
+      - name: Set ENV
+        env:
+          NODEREAL_API_KEY: c99123cec85643da879f63654f0c642f
+        run:
+          echo "NODEREAL_API_KEY=${NODEREAL_API_KEY}" >> .env
+          docker-compose up -d
   identity-build:
     needs: set-env
     runs-on: ubuntu-latest
