@@ -84,6 +84,18 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
+	impl<T: Config> pallet_parachain_staking::ScoreUpdater<T> for Pallet<T> {
+		fn clear_score(delegator: &<T>::AccountId) -> Result<(), &str> {
+			if let Some(mut s) = Scores::<T>::get(delegator) {
+				let _ = Self::update_total_score(s.score, 0);
+				s.score = 0;
+				Scores::<T>::insert(delegator, s);
+			}
+
+			Ok(())
+		}
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + ParaStaking::Config {
 		type Currency: Currency<Self::AccountId>
