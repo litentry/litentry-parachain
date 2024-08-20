@@ -83,7 +83,7 @@ pub use types::*;
 pub use RoundIndex;
 
 pub trait ScoreUpdater<T: Config> {
-	fn clear_score(delegator: &T::AccountId) -> Result<(), &str>;
+	fn clear_score_for(delegator: &T::AccountId) -> Result<(), &str>;
 }
 
 #[frame_support::pallet]
@@ -1028,7 +1028,7 @@ pub mod pallet {
 						// since it is assumed that they were removed incrementally before only the
 						// last delegation was left.
 						<DelegatorState<T>>::remove(&bond.owner);
-						let _ = T::ScoreUpdater::clear_score(&bond.owner);
+						let _ = T::ScoreUpdater::clear_score_for(&bond.owner);
 					} else {
 						<DelegatorState<T>>::insert(&bond.owner, delegator);
 					}
