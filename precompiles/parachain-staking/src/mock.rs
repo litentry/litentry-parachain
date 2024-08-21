@@ -148,6 +148,13 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type ScoreUpdater = ();
+}
+
+impl pallet_parachain_staking::ScoreUpdater<Test> for () {
+	fn clear_score_for(_delegator: &<Test as frame_system::Config>::AccountId) -> Result<(), &str> {
+		Ok(())
+	}
 }
 
 pub fn precompile_address() -> H160 {

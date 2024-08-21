@@ -165,6 +165,13 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type ScoreUpdater = ();
+}
+
+impl pallet_parachain_staking::ScoreUpdater<Test> for () {
+	fn clear_score_for(_delegator: &<Test as frame_system::Config>::AccountId) -> Result<(), &str> {
+		Ok(())
+	}
 }
 
 parameter_types! {
