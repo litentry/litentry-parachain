@@ -28,10 +28,13 @@ describe('Test Vc (direct invocation)', function () {
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
-
+    const teeDevNode = 'wss://tee-dev.litentry.io:443';
+    const teeDevWorker = 'wss://enclave-dev.litentry.io:443';
+    const teeDevNodePort = '443';
+    const teeDevWorkerPort = '443';
     this.timeout(6000000);
     before(async () => {
-        context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
+        context = await initIntegrationTestContext(teeDevWorker, teeDevNode);
         teeShieldingKey = await getTeeShieldingKey(context);
     });
 
@@ -42,10 +45,9 @@ describe('Test Vc (direct invocation)', function () {
     argvId = process.argv[idIndex + 1];
     const {
         protocol: workerProtocal,
-        hostname: workerHostname,
-        port: workerPort,
-    } = new URL(process.env.WORKER_ENDPOINT!);
-    const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
+        hostname: workerHostname
+    } = new URL(teeDevWorker);
+    const { protocol: nodeProtocal, hostname: nodeHostname } = new URL(teeDevNode);
 
     async function linkIdentityViaCli(id: string) {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
@@ -59,7 +61,7 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
+            const commandPromise = zx`${clientDir} -p ${teeDevNodePort} -P ${teeDevWorkerPort} -u ${
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
                   trusted -d link-identity did:litentry:substrate:${formatAddress}\
