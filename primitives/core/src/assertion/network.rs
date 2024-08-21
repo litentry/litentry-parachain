@@ -31,7 +31,7 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Evm(EvmNetwork),
 /// }
 ///
-/// TODO: theoretically this should the the union of the supported networks of all data providers
+/// TODO: theoretically this should the union of the supported networks of all data providers
 ///
 /// Since the incorporation of Bitcoin network, the name `Web3Network` might not be the best word,
 /// as different kinds of bitcoin types (BitcoinP2tr, BitcoinP2pkh, ...) still belong to the same
