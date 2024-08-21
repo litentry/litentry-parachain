@@ -50,7 +50,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 		// we need the combined condition as the id in our rococo spec starts with `litentry-rococo`
 		// simply renaming `litentry-rococo` to `rococo` everywhere would have an impact on the
 		// existing litentry-rococo chain
-		self.id().starts_with("litentry") && !self.id().starts_with("litentry-rococo")
+		self.id().starts_with("litentry") &&
+			!self.id().starts_with("litentry-rococo") &&
+			!self.id().starts_with("litentry-paseo")
 	}
 	fn is_litmus(&self) -> bool {
 		self.id().starts_with("litmus")
@@ -181,6 +183,8 @@ impl SubstrateCli for Cli {
 			&litmus_parachain_runtime::VERSION
 		} else if chain_spec.is_rococo() {
 			&rococo_parachain_runtime::VERSION
+		} else if chain_spec.is_paseo() {
+			&paseo_parachain_runtime::VERSION
 		} else {
 			// By default litentry is used
 			&litentry_parachain_runtime::VERSION
@@ -271,6 +275,20 @@ macro_rules! construct_benchmark_partials {
 				>,
 			)?;
 			$code
+		} else if $config.chain_spec.is_paseo() {
+			let $partials = new_partial::<
+				paseo_parachain_runtime::RuntimeApi,
+				PaseoParachainRuntimeExecutor,
+				_,
+			>(
+				&$config,
+				false,
+				crate::service::build_import_queue::<
+					paseo_parachain_runtime::RuntimeApi,
+					PaseoParachainRuntimeExecutor,
+				>,
+			)?;
+			$code
 		} else {
 			panic!("{}", UNSUPPORTED_CHAIN_MESSAGE)
 		}
@@ -323,7 +341,22 @@ macro_rules! construct_async_run {
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
-		} else {
+		} else if runner.config().chain_spec.is_paseo() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					paseo_parachain_runtime::RuntimeApi,
+					PaseoParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					false,
+					crate::service::build_import_queue::<paseo_parachain_runtime::RuntimeApi, PaseoParachainRuntimeExecutor>,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		}
+		else {
 			panic!("{}", UNSUPPORTED_CHAIN_MESSAGE)
 		}
 	}}
@@ -332,7 +365,6 @@ macro_rules! construct_async_run {
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
-
 	match &cli.subcommand {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -388,6 +420,7 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|_config| {
 				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
 				let state_version = Cli::native_runtime_version(&spec).state_version();
+				println!("State Version: {:?}", state_version);
 				cmd.run::<Block>(&*spec, state_version)
 			})
 		},
@@ -417,6 +450,8 @@ pub fn run() -> Result<()> {
 								cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
 							} else if config.chain_spec.is_rococo() {
 								cmd.run::<Block, RococoParachainRuntimeExecutor>(config)
+							} else if config.chain_spec.is_paseo() {
+								cmd.run::<Block, PaseoParachainRuntimeExecutor>(config)
 							} else {
 								Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 							}
@@ -607,6 +642,18 @@ pub fn run() -> Result<()> {
 					.map_err(Into::into)
 				} else if config.chain_spec.is_rococo() {
 					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						additional_config,
+						hwbench,
+					)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
+				} else if config.chain_spec.is_paseo() {
+					crate::service::start_node::<paseo_parachain_runtime::RuntimeApi, PaseoParachainRuntimeExecutor>(
 						config,
 						polkadot_config,
 						collator_options,

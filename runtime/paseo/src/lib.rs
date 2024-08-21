@@ -246,8 +246,8 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// Note:
 	// It's important to match `rococo-parachain-runtime`, which is runtime pkg name
-	spec_name: create_runtime_str!("rococo-parachain"),
-	impl_name: create_runtime_str!("rococo-parachain"),
+	spec_name: create_runtime_str!("paseo-parachain"),
+	impl_name: create_runtime_str!("paseo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
 	spec_version: 9193,

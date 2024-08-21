@@ -126,6 +126,21 @@ impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
 	}
 }
 
+// Native executor instance.
+pub struct PaseoParachainRuntimeExecutor;
+
+impl sc_executor::NativeExecutionDispatch for PaseoParachainRuntimeExecutor {
+	type ExtendHostFunctions = HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		paseo_parachain_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		paseo_parachain_runtime::native_version()
+	}
+}
+
 type ParachainClient<RuntimeApi, Executor> =
 	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 
