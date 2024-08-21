@@ -137,6 +137,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 				Box::new(chain_specs::litmus::ChainSpec::from_json_file(path.into())?)
 			} else if chain_spec.is_rococo() {
 				Box::new(chain_specs::rococo::ChainSpec::from_json_file(path.into())?)
+			} else if chain_spec.is_paseo() {
+				Box::new(chain_specs::paseo::ChainSpec::from_json_file(path.into())?)
 			} else {
 				// Fallback: use Litentry chain spec
 				Box::new(chain_spec)
