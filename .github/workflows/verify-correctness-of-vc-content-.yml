@@ -8,10 +8,10 @@ on:
         required: true
         default: "latest"
   schedule:
-    - cron: '0 12 * * 3,5' # Run every Wednesday and Friday at 12:00 UTC
+    - cron: '0 12 * * 3,6' # Run every Wednesday and Saturday at 12:00 UTC
     
 jobs:
-  test-data-provider:
+  test-vc-correctness:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
