@@ -265,6 +265,7 @@ jobs:
         type:
           - tee # TODO: switch to identity
           - bitacross
+    name: ${{ matrix.type }}
     steps:
       - uses: actions/checkout@v4
 
@@ -609,6 +610,7 @@ jobs:
           - litmus
           - litentry
           - rococo
+    name: ${{ matrix.chain }}
     steps:
       - uses: actions/checkout@v4
 
@@ -654,6 +656,26 @@ jobs:
           path: /tmp/parachain_dev/
           if-no-files-found: ignore
           retention-days: 3
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.5
+  
+  parachain-dynamic-contract-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+      
+      - name: Install npm deps
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm install
+
+      - name: Run all unittests
+        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+        run: pnpm run test
 
       - name: Fail early
         if: failure()
@@ -744,7 +766,7 @@ jobs:
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
           - test_name: lit-assertion-contracts-test
-
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -828,6 +850,7 @@ jobs:
           - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -904,6 +927,7 @@ jobs:
       matrix:
         include:
           - test_name: lit-sign-bitcoin
+    name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
 

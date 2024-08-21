@@ -79,6 +79,7 @@ jobs:
           - litmus
           - rococo
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -151,6 +152,7 @@ jobs:
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-chain-aio:${{ env.RELEASE_TAG }} | gzip > litentry-chain-aio.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -160,6 +162,7 @@ jobs:
           path: |
             litentry-collator
             litentry-parachain-dev.tar.gz
+            litentry-chain-aio.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -318,6 +321,7 @@ jobs:
         chain:
           - litmus
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
@@ -331,6 +335,7 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-chain-aio.tar.gz
           docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
@@ -359,6 +364,7 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+          docker push litentry/litentry-chain-aio:${{ env.RELEASE_TAG }}
 
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}

@@ -204,12 +204,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52f63c5c1316a16a4b35eaac8b76a98248961a533f061684cb2a7cb0eafb6c6"
 
 [[package]]
-name = "array-bytes"
-version = "6.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b1c5a481ec30a5abd8dfbd94ab5cf1bb4e9a66be7f1b3b322f2f1170c200fd"
-
-[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -352,7 +346,6 @@ dependencies = [
  "base64 0.13.1",
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -366,11 +359,7 @@ dependencies = [
 name = "bc-musig2-ceremony"
 version = "0.1.0"
 dependencies = [
- "bc-enclave-registry",
- "itc-direct-rpc-client",
- "itp-rpc",
  "itp-sgx-crypto",
- "itp-types",
  "k256",
  "litentry-primitives",
  "log 0.4.20",
@@ -396,15 +385,11 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-types",
  "itp-utils",
- "k256",
  "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
- "musig2 0.0.8 (git+https://github.com/kziemianek/musig2.git?branch=master)",
- "musig2 0.0.8 (git+https://github.com/kailai-wang/musig2.git?branch=use-sha2-0.8)",
  "parity-scale-codec",
  "rand 0.8.5",
- "sgx_crypto_helper",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",
@@ -419,7 +404,6 @@ dependencies = [
  "base64 0.13.1",
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -436,7 +420,6 @@ dependencies = [
  "base64 0.13.1",
  "itp-settings",
  "itp-sgx-io",
- "lazy_static",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -458,7 +441,6 @@ dependencies = [
  "bc-task-sender",
  "frame-support",
  "futures 0.3.8",
- "hex",
  "ita-stf",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
@@ -468,7 +450,6 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
- "itp-utils",
  "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
@@ -537,7 +518,6 @@ checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 name = "bitacross-cli"
 version = "0.0.1"
 dependencies = [
- "array-bytes 6.1.0",
  "base58",
  "bc-musig2-ceremony",
  "chrono 0.4.26",
@@ -557,7 +537,6 @@ dependencies = [
  "lc-direct-call",
  "litentry-primitives",
  "log 0.4.20",
- "pallet-balances",
  "parity-scale-codec",
  "rand 0.8.5",
  "rayon",
@@ -567,7 +546,6 @@ dependencies = [
  "serde_json 1.0.103",
  "sgx_crypto_helper",
  "sp-application-crypto",
- "sp-consensus-aura",
  "sp-core",
  "sp-keyring",
  "sp-keystore",
@@ -580,7 +558,7 @@ dependencies = [
 
 [[package]]
 name = "bitacross-worker"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -612,7 +590,6 @@ dependencies = [
  "itp-utils",
  "jsonrpsee",
  "lazy_static",
- "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -628,7 +605,6 @@ dependencies = [
  "serde_json 1.0.103",
  "sgx_crypto_helper",
  "sgx_types",
- "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
  "sp-keyring",
@@ -1030,7 +1006,7 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "core-primitives"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "base58",
  "frame-support",
@@ -1039,9 +1015,7 @@ dependencies = [
  "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
- "ring 0.16.20",
  "scale-info",
- "serde 1.0.193",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
@@ -2881,16 +2855,14 @@ dependencies = [
 
 [[package]]
 name = "ita-parentchain-interface"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
  "bc-relayer-registry",
  "bc-signer-registry",
- "bs58",
  "env_logger",
  "ita-sgx-runtime",
  "ita-stf",
- "itc-parentchain",
  "itc-parentchain-indirect-calls-executor",
  "itc-parentchain-test",
  "itp-api-client-types",
@@ -2901,12 +2873,9 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
- "itp-utils",
- "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
- "regex 1.9.5",
  "sgx_tstd",
  "sp-core",
  "sp-runtime",
@@ -2916,7 +2885,7 @@ dependencies = [
 
 [[package]]
 name = "ita-sgx-runtime"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -2938,7 +2907,7 @@ dependencies = [
 
 [[package]]
 name = "ita-stf"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2947,9 +2916,7 @@ dependencies = [
  "ita-sgx-runtime",
  "itp-hashing",
  "itp-node-api",
- "itp-node-api-metadata",
  "itp-sgx-externalities",
- "itp-sgx-runtime-primitives",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-storage",
@@ -2962,9 +2929,7 @@ dependencies = [
  "pallet-parentchain",
  "pallet-sudo",
  "parity-scale-codec",
- "rlp",
  "sgx_tstd",
- "sha3",
  "sp-core",
  "sp-io 7.0.0",
  "sp-keyring",
@@ -2977,9 +2942,7 @@ name = "itc-direct-rpc-client"
 version = "0.1.0"
 dependencies = [
  "itp-rpc",
- "itp-types",
  "log 0.4.20",
- "parity-scale-codec",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",
  "rustls 0.19.1",
  "serde_json 1.0.103",
@@ -2993,7 +2956,7 @@ dependencies = [
 
 [[package]]
 name = "itc-direct-rpc-server"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-tls-websocket-server",
  "itp-rpc",
@@ -3012,7 +2975,7 @@ dependencies = [
 
 [[package]]
 name = "itc-offchain-worker-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-light-client",
  "itp-extrinsics-factory",
@@ -3035,7 +2998,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-block-import-dispatcher",
  "itc-parentchain-block-importer",
@@ -3048,7 +3011,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-block-import-dispatcher"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itc-parentchain-block-importer",
  "itp-import-queue",
@@ -3061,7 +3024,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-block-importer"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "ita-stf",
  "itc-parentchain-indirect-calls-executor",
@@ -3083,7 +3046,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-indirect-calls-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bc-enclave-registry",
  "bc-relayer-registry",
@@ -3108,7 +3071,6 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
- "sp-core",
  "sp-runtime",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -3116,7 +3078,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-light-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "finality-grandpa",
  "itc-parentchain-test",
@@ -3138,7 +3100,7 @@ dependencies = [
 
 [[package]]
 name = "itc-parentchain-test"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "sp-runtime",
@@ -3146,7 +3108,7 @@ dependencies = [
 
 [[package]]
 name = "itc-rest-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
  "http 0.2.1",
@@ -3164,7 +3126,7 @@ dependencies = [
 
 [[package]]
 name = "itc-rpc-client"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "base58",
  "env_logger",
@@ -3191,7 +3153,7 @@ dependencies = [
 
 [[package]]
 name = "itc-tls-websocket-server"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "bit-vec",
  "chrono 0.4.26",
@@ -3250,23 +3212,20 @@ checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 
 [[package]]
 name = "itp-api-client-extensions"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
- "hex",
  "itp-api-client-types",
  "itp-types",
  "sp-consensus-grandpa",
- "sp-core",
  "sp-runtime",
  "substrate-api-client",
 ]
 
 [[package]]
 name = "itp-api-client-types"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
- "sp-runtime",
  "substrate-api-client",
 ]
 
@@ -3320,7 +3279,7 @@ dependencies = [
 
 [[package]]
 name = "itp-enclave-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "hex",
@@ -3345,14 +3304,14 @@ dependencies = [
 
 [[package]]
 name = "itp-enclave-api-ffi"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sgx_types",
 ]
 
 [[package]]
 name = "itp-enclave-metrics"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
@@ -3360,7 +3319,7 @@ dependencies = [
 
 [[package]]
 name = "itp-extrinsics-factory"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-node-api",
  "itp-nonce-cache",
@@ -3378,7 +3337,7 @@ dependencies = [
 
 [[package]]
 name = "itp-hashing"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sp-core",
 ]
@@ -3395,14 +3354,14 @@ dependencies = [
 
 [[package]]
 name = "itp-networking-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "sgx_tstd",
 ]
 
 [[package]]
 name = "itp-node-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-api-client-extensions",
  "itp-api-client-types",
@@ -3413,7 +3372,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-factory"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-api-client-types",
  "sp-core",
@@ -3422,7 +3381,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-metadata"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-api-client-types",
@@ -3433,7 +3392,7 @@ dependencies = [
 
 [[package]]
 name = "itp-node-api-metadata-provider"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-stf-primitives",
@@ -3453,7 +3412,7 @@ dependencies = [
 
 [[package]]
 name = "itp-ocall-api"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-storage",
@@ -3467,7 +3426,7 @@ dependencies = [
 
 [[package]]
 name = "itp-primitives-cache"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "lazy_static",
  "sgx_tstd",
@@ -3477,7 +3436,7 @@ dependencies = [
 
 [[package]]
 name = "itp-rpc"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "parity-scale-codec",
@@ -3488,11 +3447,11 @@ dependencies = [
 
 [[package]]
 name = "itp-settings"
-version = "0.9.0"
+version = "0.1.0"
 
 [[package]]
 name = "itp-sgx-crypto"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "aes",
  "derive_more",
@@ -3515,7 +3474,7 @@ dependencies = [
 
 [[package]]
 name = "itp-sgx-externalities"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "environmental 1.1.3",
@@ -3538,7 +3497,7 @@ dependencies = [
 
 [[package]]
 name = "itp-sgx-runtime-primitives"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-system",
  "pallet-balances",
@@ -3557,7 +3516,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-executor"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "itc-parentchain-test",
@@ -3597,7 +3556,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-primitives"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "itp-sgx-runtime-primitives",
@@ -3610,7 +3569,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-state-handler"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-hashing",
  "itp-settings",
@@ -3635,7 +3594,7 @@ dependencies = [
 
 [[package]]
 name = "itp-stf-state-observer"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "itp-types",
  "log 0.4.20",
@@ -3646,7 +3605,7 @@ dependencies = [
 
 [[package]]
 name = "itp-storage"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "frame-metadata",
@@ -3666,7 +3625,7 @@ dependencies = [
 
 [[package]]
 name = "itp-test"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "itp-node-api",
@@ -3695,7 +3654,7 @@ dependencies = [
 
 [[package]]
 name = "itp-time-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.26",
@@ -3704,7 +3663,7 @@ dependencies = [
 
 [[package]]
 name = "itp-top-pool"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "byteorder 1.4.3",
  "derive_more",
@@ -3729,22 +3688,19 @@ dependencies = [
 
 [[package]]
 name = "itp-top-pool-author"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "derive_more",
  "futures 0.3.28",
- "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-test",
  "itp-top-pool",
  "itp-types",
- "itp-utils",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
  "lazy_static",
- "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_crypto_helper",
@@ -3756,7 +3712,7 @@ dependencies = [
 
 [[package]]
 name = "itp-types"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-system",
  "itp-sgx-crypto",
@@ -3775,7 +3731,7 @@ dependencies = [
 
 [[package]]
 name = "itp-utils"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "hex",
  "litentry-hex-utils",
@@ -4137,14 +4093,14 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 
 [[package]]
 name = "litentry-hex-utils"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "hex",
 ]
 
 [[package]]
 name = "litentry-macros"
-version = "0.9.12"
+version = "0.1.0"
 
 [[package]]
 name = "litentry-primitives"
@@ -4174,7 +4130,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-proc-macros"
-version = "0.9.12"
+version = "0.1.0"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -5049,7 +5005,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-parentchain"
-version = "0.9.0"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6271,7 +6227,7 @@ name = "sc-keystore"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "array-bytes 4.2.0",
+ "array-bytes",
  "async-trait",
  "parking_lot 0.12.1",
  "serde_json 1.0.103",
@@ -7097,39 +7053,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "async-trait",
- "futures 0.3.28",
- "log 0.4.20",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-state-machine",
- "thiserror 1.0.44",
-]
-
-[[package]]
-name = "sp-consensus-aura"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "scale-info",
- "sp-api",
- "sp-application-crypto",
- "sp-consensus",
- "sp-consensus-slots",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
-]
-
-[[package]]
 name = "sp-consensus-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
@@ -7148,23 +7071,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-slots"
-version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.193",
- "sp-std",
- "sp-timestamp",
-]
-
-[[package]]
 name = "sp-core"
 version = "7.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "array-bytes 4.2.0",
+ "array-bytes",
  "bitflags 1.3.2",
  "blake2",
  "bounded-collections",
@@ -7713,7 +7624,7 @@ name = "substrate-client-keystore"
 version = "0.9.1"
 source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.14.0#e4ed74b0fb6c2fd5585f55c2702b97b56d99c7f6"
 dependencies = [
- "array-bytes 4.2.0",
+ "array-bytes",
  "async-trait",
  "parking_lot 0.12.1",
  "sc-keystore",

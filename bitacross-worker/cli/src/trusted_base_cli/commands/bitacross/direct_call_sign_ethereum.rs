@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	trusted_base_cli::commands::bitacross::utils::{random_aes_key, send_direct_request},
+	trusted_base_cli::commands::bitacross::utils::send_direct_request,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	Cli, CliResult, CliResultOk,
@@ -35,17 +35,16 @@ impl RequestDirectCallSignEthereumCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
-		let key: [u8; 32] = random_aes_key();
 		let msg: PrehashedEthereumMessage =
 			self.payload.clone().try_into().expect("Unable to convert payload to [u8; 32]");
 
-		let dc = DirectCall::SignEthereum(alice.public().into(), key, msg).sign(
+		let dc = DirectCall::SignEthereum(alice.public().into(), msg).sign(
 			&KeyPair::Sr25519(Box::new(alice)),
 			&mrenclave,
 			&shard,
 		);
 
-		let result: String = send_direct_request(cli, trusted_cli, dc, key).unwrap();
+		let result: String = send_direct_request(cli, trusted_cli, dc).unwrap();
 		let response: RpcResponse = serde_json::from_str(&result).unwrap();
 		if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 			println!("Got return value: {:?}", return_value);

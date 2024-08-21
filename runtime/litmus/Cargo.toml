@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'litmus-parachain-runtime'
-version = '0.9.17'
+version = '0.1.0'
 
 [dependencies]
 hex-literal = { workspace = true }
@@ -81,18 +81,14 @@ pallet-asset-manager = { workspace = true }
 pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
-pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
 pallet-teebag = { workspace = true }
-pallet-vc-management = { workspace = true }
 runtime-common = { workspace = true }
 
 fp-rpc = { workspace = true }
-fp-self-contained = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
 
-moonbeam-evm-tracer = { workspace = true }
 moonbeam-rpc-primitives-debug = { workspace = true }
 moonbeam-rpc-primitives-txpool = { workspace = true }
 
@@ -143,9 +139,7 @@ runtime-benchmarks = [
     "pallet-bridge-transfer/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
-    "pallet-group/runtime-benchmarks",
     "pallet-identity-management/runtime-benchmarks",
-    "pallet-vc-management/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -212,18 +206,14 @@ std = [
     "xcm-builder/std",
     "xcm-executor/std",
     "fp-rpc/std",
-    "fp-self-contained/std",
     "frame-benchmarking?/std",
     'runtime-common/std',
     "pallet-bridge/std",
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
-    "pallet-group/std",
     "pallet-identity-management/std",
-    "pallet-vc-management/std",
     "pallet-bitacross/std",
     "pallet-teebag/std",
-    "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
 ]
@@ -237,7 +227,6 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
-    "fp-self-contained/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-assets/try-runtime",
@@ -256,7 +245,6 @@ try-runtime = [
     "pallet-evm/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
-    "pallet-group/try-runtime",
     "pallet-identity-management/try-runtime",
     "pallet-membership/try-runtime",
     "pallet-multisig/try-runtime",
@@ -269,7 +257,6 @@ try-runtime = [
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",
     "pallet-utility/try-runtime",
-    "pallet-vc-management/try-runtime",
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",

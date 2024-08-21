@@ -64,7 +64,7 @@ pub struct RpcResponse {
 	pub id: Id,
 }
 
-#[derive(Clone, Encode, Decode, Serialize, Deserialize)]
+#[derive(Clone, Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct RpcRequest {
 	pub jsonrpc: String,
 	pub method: String,

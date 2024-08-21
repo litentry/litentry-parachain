@@ -1,7 +1,7 @@
 [package]
 name = "pallet-parentchain"
 description = "The remote attestation registry and verification pallet for litentry blockchains and parachains"
-version = "0.9.0"
+version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'

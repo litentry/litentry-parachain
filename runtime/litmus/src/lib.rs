@@ -65,7 +65,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
-	HOURS, MINUTES, SLOT_DURATION,
+	HOURS, LITMUS_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -87,8 +87,6 @@ pub mod asset_config;
 pub mod constants;
 pub mod weights;
 pub mod xcm_config;
-
-pub mod migration;
 
 #[cfg(test)]
 mod tests;
@@ -137,10 +135,6 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	(
-		migration::ReplaceBridgeRelatedStorage<Runtime>,
-		migration::ReplaceBalancesRelatedStorage<Runtime>,
-	),
 >;
 
 impl_opaque_keys! {
@@ -157,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9190,
+	spec_version: 9194,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -807,6 +801,7 @@ impl pallet_teebag::Config for Runtime {
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type MaxEnclaveIdentifier = ConstU32<3>;
 	type MaxAuthorizedEnclave = ConstU32<5>;
+	type WeightInfo = weights::pallet_teebag::WeightInfo<Runtime>;
 }
 
 impl pallet_bitacross::Config for Runtime {
@@ -983,6 +978,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
+		[pallet_teebag, Teebag]
 	);
 }
 
