@@ -18,6 +18,10 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
+import { byId } from '@litentry/chaindata';
+
+// Change this to the environment you want to test
+const chain = byId['litentry-dev'];
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -28,14 +32,18 @@ describe('Test Vc (direct invocation)', function () {
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
-    const teeDevNode = 'wss://tee-dev.litentry.io';
-    const teeDevWorker = 'wss://enclave-dev.litentry.io';
-    const teeDevNodePort = '443';
-    const teeDevWorkerPort = '443';
+
+    const nodeEndpoint: string = chain.rpcs[0].url;
+    const enclaveEndpoint: string = chain.enclaveRpcs[0].url;
+    console.log(`[node] ${nodeEndpoint}`);
+    console.log(`[worker] ${enclaveEndpoint}`);
+
+    const teeDevNodePort = 443;
+    const teeDevWorkerPort = 443;
     const errorArray: { id: string; index: number; assertion: any; error: any }[] = [];
     this.timeout(6000000);
     before(async () => {
-        context = await initIntegrationTestContext(teeDevWorker, teeDevNode);
+        context = await initIntegrationTestContext(enclaveEndpoint, nodeEndpoint);
         teeShieldingKey = await getTeeShieldingKey(context);
     });
 
@@ -44,8 +52,8 @@ describe('Test Vc (direct invocation)', function () {
     // `pnpm run test-data-providers:local` for all tests
     const idIndex = process.argv.indexOf('--id');
     argvId = process.argv[idIndex + 1];
-    const { protocol: workerProtocal, hostname: workerHostname } = new URL(teeDevWorker);
-    const { protocol: nodeProtocal, hostname: nodeHostname } = new URL(teeDevNode);
+    const { protocol: workerProtocal, hostname: workerHostname } = new URL(enclaveEndpoint);
+    const { protocol: nodeProtocal, hostname: nodeHostname } = new URL(nodeEndpoint);
 
     async function linkIdentityViaCli(id: string) {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
