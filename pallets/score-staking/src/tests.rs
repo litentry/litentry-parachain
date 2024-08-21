@@ -200,7 +200,7 @@ fn score_staking_works() {
 		// alice's winning should accumulate
 		run_to_block(12);
 		// total reward round 2
-		alice_total_reward = alice_total_reward + round_reward();
+		alice_total_reward += round_reward();
 
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
 			total: round_reward(),
@@ -222,7 +222,7 @@ fn score_staking_works() {
 
 		run_to_block(17);
 		// total reward round 3
-		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 2000, 900, 1600);
+		alice_total_reward += calculate_round_reward(2000, 2000, 900, 1600);
 
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
 			total: round_reward(),
@@ -248,7 +248,7 @@ fn score_staking_works() {
 
 		run_to_block(22);
 		// total rewards round 4
-		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 3000, 900, 3200);
+		alice_total_reward += calculate_round_reward(2000, 3000, 900, 3200);
 		let mut bob_total_reward = calculate_round_reward(1000, 3000, 1600, 3200);
 
 		assert_eq!(
@@ -289,12 +289,12 @@ fn score_staking_works() {
 
 		run_to_block(25);
 		// total rewards round 5
-		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 3000, 900, 3200);
-		bob_total_reward = bob_total_reward + calculate_round_reward(1000, 3000, 1600, 3200);
+		alice_total_reward += calculate_round_reward(2000, 3000, 900, 3200);
+		bob_total_reward += calculate_round_reward(1000, 3000, 1600, 3200);
 
 		run_to_block(30);
 		// total reward round 6
-		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 2000, 900, 900);
+		alice_total_reward += calculate_round_reward(2000, 2000, 900, 900);
 
 		assert_ok!(ParachainStaking::execute_delegation_request(
 			RuntimeOrigin::signed(bob()),
