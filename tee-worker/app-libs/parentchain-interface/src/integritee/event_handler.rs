@@ -317,7 +317,7 @@ where
 			let trusted_operation =
 				TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-			executor.submit_trusted_call(shard.clone(), encrypted_trusted_call);
+			executor.submit_trusted_call(shard, encrypted_trusted_call);
 		}
 
 		let trusted_call = TrustedCall::reward_distribution_completed(enclave_account_id.into());
@@ -325,7 +325,7 @@ where
 		let trusted_operation =
 			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
 		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-		executor.submit_trusted_call(shard.clone(), encrypted_trusted_call);
+		executor.submit_trusted_call(shard, encrypted_trusted_call);
 
 		Ok(())
 	}
