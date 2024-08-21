@@ -26,6 +26,19 @@ fn round_reward() -> Balance {
 	(Perbill::from_perthousand(5) * 100_000_000 * UNIT / (YEARS as u128)) * 5
 }
 
+fn calculate_round_reward(
+	user_score: u128,
+	total_score: u128,
+	user_stake: Balance,
+	total_stake: Balance,
+) -> Balance {
+	round_reward()
+		.saturating_mul(user_score)
+		.saturating_div(total_score)
+		.saturating_mul(num_integer::Roots::sqrt(&user_stake))
+		.saturating_div(num_integer::Roots::sqrt(&total_stake))
+}
+
 #[test]
 fn default_state_works() {
 	new_test_ext(false).execute_with(|| {
@@ -138,7 +151,7 @@ fn score_update_checks_staking() {
 #[test]
 #[allow(clippy::identity_op)]
 fn score_staking_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext_with_parachain_staking().execute_with(|| {
 		run_to_block(2);
 		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
 
@@ -172,18 +185,23 @@ fn score_staking_works() {
 			total: round_reward(),
 			distributed: round_reward(),
 		}));
+		// total reward round 1
+		let mut alice_total_reward = round_reward();
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: round_reward(),
-				last_round_reward: round_reward(),
-				unpaid_reward: round_reward(),
+				total_reward: alice_total_reward,
+				last_round_reward: alice_total_reward,
+				unpaid_reward: alice_total_reward,
 			}
 		);
 
 		// alice's winning should accumulate
 		run_to_block(12);
+		// total reward round 2
+		alice_total_reward = alice_total_reward + round_reward();
+
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
 			total: round_reward(),
 			distributed: round_reward(),
@@ -192,9 +210,9 @@ fn score_staking_works() {
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: 2 * round_reward(),
+				total_reward: alice_total_reward,
 				last_round_reward: round_reward(),
-				unpaid_reward: 2 * round_reward(),
+				unpaid_reward: alice_total_reward,
 			}
 		);
 
@@ -203,54 +221,52 @@ fn score_staking_works() {
 		pallet_parachain_staking::Total::<Test>::put(1600);
 
 		run_to_block(17);
+		// total reward round 3
+		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 2000, 900, 1600);
+
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
 			total: round_reward(),
-			distributed: round_reward() * 3 / 4,
+			distributed: calculate_round_reward(2000, 2000, 900, 1600),
 		}));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: 2 * round_reward() + round_reward() * 3 / 4,
-				last_round_reward: round_reward() * 3 / 4,
-				unpaid_reward: 2 * round_reward() + round_reward() * 3 / 4,
+				total_reward: alice_total_reward,
+				last_round_reward: calculate_round_reward(2000, 2000, 900, 1600),
+				unpaid_reward: alice_total_reward,
 			}
 		);
 
 		// add bob's score
 		run_to_block(18);
-		pallet_parachain_staking::DelegatorState::<Test>::insert(
-			bob(),
-			Delegator::new(alice(), alice(), 1600),
-		);
+		assert_ok!(ParachainStaking::delegate(RuntimeOrigin::signed(bob()), alice(), 1600));
+		assert_eq!(pallet_parachain_staking::Total::<Test>::get(), 3200);
 		assert_ok!(ScoreStaking::update_score(RuntimeOrigin::signed(alice()), bob().into(), 1000));
-		pallet_parachain_staking::Total::<Test>::put(2500);
 		assert_eq!(ScoreStaking::total_score(), 3000);
 		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
+		// total rewards round 4
+		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 3000, 900, 3200);
+		let mut bob_total_reward = calculate_round_reward(1000, 3000, 1600, 3200);
 
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: 2 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
-				last_round_reward: round_reward() * 2 * 3 / (3 * 5),
-				unpaid_reward: 2 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
+				total_reward: alice_total_reward,
+				last_round_reward: calculate_round_reward(2000, 3000, 900, 3200),
+				unpaid_reward: alice_total_reward,
 			}
 		);
-
 		assert_eq!(
 			ScoreStaking::scores(bob()).unwrap(),
 			ScorePayment {
 				score: 1000,
-				total_reward: round_reward() * 1 * 4 / (3 * 5),
-				last_round_reward: round_reward() * 1 * 4 / (3 * 5),
-				unpaid_reward: round_reward() * 1 * 4 / (3 * 5),
+				total_reward: bob_total_reward,
+				last_round_reward: bob_total_reward,
+				unpaid_reward: bob_total_reward,
 			}
 		);
 
@@ -266,27 +282,39 @@ fn score_staking_works() {
 
 		run_to_block(23);
 
-		// bob unstakes
-		pallet_parachain_staking::DelegatorState::<Test>::insert(
+		assert_ok!(ParachainStaking::schedule_revoke_delegation(
+			RuntimeOrigin::signed(bob()),
+			alice()
+		));
+
+		run_to_block(25);
+		// total rewards round 5
+		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 3000, 900, 3200);
+		bob_total_reward = bob_total_reward + calculate_round_reward(1000, 3000, 1600, 3200);
+
+		run_to_block(30);
+		// total reward round 6
+		alice_total_reward = alice_total_reward + calculate_round_reward(2000, 2000, 900, 900);
+
+		assert_ok!(ParachainStaking::execute_delegation_request(
+			RuntimeOrigin::signed(bob()),
 			bob(),
-			Delegator::new(alice(), alice(), 0),
-		);
+			alice()
+		));
+
+		// remove increased stake (keep only alice's stake)
 		pallet_parachain_staking::Total::<Test>::put(900);
 
-		run_to_block(27);
+		run_to_block(32);
 
 		// alice should get all rewards
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
 				score: 2000,
-				total_reward: 3 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
+				total_reward: alice_total_reward,
 				last_round_reward: round_reward(),
-				unpaid_reward: 3 * round_reward() +
-					round_reward() * 3 / 4 +
-					round_reward() * 2 * 3 / (3 * 5),
+				unpaid_reward: alice_total_reward,
 			}
 		);
 
@@ -295,9 +323,9 @@ fn score_staking_works() {
 			ScoreStaking::scores(bob()).unwrap(),
 			ScorePayment {
 				score: 0, // bob's score should be cleared
-				total_reward: round_reward() * 1 * 4 / (3 * 5),
+				total_reward: bob_total_reward,
 				last_round_reward: 0,
-				unpaid_reward: round_reward() * 1 * 4 / (3 * 5),
+				unpaid_reward: bob_total_reward,
 			}
 		);
 		assert_eq!(ScoreStaking::total_score(), 2000);

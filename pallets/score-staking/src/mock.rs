@@ -217,6 +217,51 @@ pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
 	ext
 }
 
+pub fn new_test_ext_with_parachain_staking() -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.expect("Frame system builds valid default genesis config");
+
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![(alice(), 2 * UNIT), (bob(), 10 * UNIT)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+	pallet_parachain_staking::GenesisConfig::<Test> {
+		candidates: vec![(alice(), 10)],
+		delegations: vec![],
+		inflation_config: pallet_parachain_staking::InflationInfo {
+			expect: pallet_parachain_staking::Range { min: 700, ideal: 700, max: 700 },
+			// not used
+			annual: pallet_parachain_staking::Range {
+				min: Perbill::from_percent(50),
+				ideal: Perbill::from_percent(50),
+				max: Perbill::from_percent(50),
+			},
+			// unrealistically high parameterization, only for testing
+			round: pallet_parachain_staking::Range {
+				min: Perbill::from_percent(5),
+				ideal: Perbill::from_percent(5),
+				max: Perbill::from_percent(5),
+			},
+		},
+	}
+	.assimilate_storage(&mut t)
+	.expect("Parachain Staking's storage can be assimilated");
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(ScoreStaking::set_score_feeder(RuntimeOrigin::root(), alice()));
+		assert_ok!(ScoreStaking::set_round_config(
+			RuntimeOrigin::root(),
+			RoundSetting { interval: 5, stake_coef_n: 1, stake_coef_m: 2 }
+		));
+	});
+
+	ext
+}
+
 /// Run until a particular block.
 pub fn run_to_block(n: u32) {
 	while System::block_number() < n {
