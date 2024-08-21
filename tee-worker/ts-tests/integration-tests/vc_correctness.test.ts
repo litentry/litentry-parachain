@@ -26,6 +26,7 @@ describe('Test Vc (direct invocation)', function () {
     const clientDir = process.env.LITENTRY_CLI_DIR;
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     let argvId = '';
+    const errorArray:any=[]
 
     this.timeout(6000000);
     before(async () => {
@@ -33,7 +34,7 @@ describe('Test Vc (direct invocation)', function () {
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
     });
-
+    
     // usage example:
     // `pnpm run test-data-providers:local --id=vip3-membership-card-gold` for single test
     // `pnpm run test-data-providers:local` for all tests
@@ -44,9 +45,12 @@ describe('Test Vc (direct invocation)', function () {
         hostname: workerHostname,
         port: workerPort,
     } = new URL(process.env.WORKER_ENDPOINT!);
+
+    
     const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
+
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
         console.log(`linking identity-${credentialDefinitions.mockDid} via cli`);
 
@@ -55,7 +59,7 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
+            const commandPromise = zx`${clientDir} -p 443 -P 443 -u ${
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
                   trusted -d link-identity did:litentry:substrate:${formatAddress}\
@@ -74,42 +78,55 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
-        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
-        const assertion = {
-            [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
-        };
-        console.log('vc description: ', credentialDefinitions.description);
+           try {
+               const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
+               const assertion = {
+                   [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
+               };
+               console.log('vc description: ', credentialDefinitions.description);
 
-        console.log('assertion: ', assertion);
+               console.log('assertion: ', assertion);
 
-        let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const nonce = getNextNonce();
+               let currentNonce = (await getSidechainNonce(context, aliceSubstrateIdentity)).toNumber();
+               const getNextNonce = () => currentNonce++;
+               const nonce = getNextNonce();
 
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const requestVcCall = await createSignedTrustedCallRequestVc(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', nonce),
-            new PolkadotSigner(genesisSubstrateWallet('Alice')),
-            aliceSubstrateIdentity,
-            context.api.createType('Assertion', assertion).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-        await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+               const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+               const requestVcCall = await createSignedTrustedCallRequestVc(
+                   context.api,
+                   context.mrEnclave,
+                   context.api.createType('Index', nonce),
+                   new PolkadotSigner(genesisSubstrateWallet('Alice')),
+                   aliceSubstrateIdentity,
+                   context.api.createType('Assertion', assertion).toHex(),
+                   context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                   requestIdentifier
+               );
+               const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
+               await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
 
-        const vcResults = context.api.createType('RequestVCResult', res.value);
-        const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
-        const vcPayloadJson = JSON.parse(decryptVcPayload);
-        console.log('vcPayload: ', vcPayloadJson);
+               const vcResults = context.api.createType('RequestVCResult', res.value);
+               const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
+               const vcPayloadJson = JSON.parse(decryptVcPayload);
+               console.log('vcPayload: ', vcPayloadJson);
 
-        assert.equal(
-            vcPayloadJson.credentialSubject.values[0],
-            credentialDefinitions.expectedCredentialValue,
-            "credential value doesn't match, please check the credential json expectedCredentialValue"
-        );
+               assert.equal(
+                   vcPayloadJson.credentialSubject.values[0],
+                   credentialDefinitions.expectedCredentialValue,
+                   "credential value doesn't match, please check the credential json expectedCredentialValue"
+               );
+           } catch (error) {
+               const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
+               
+               errorArray.push({
+                   id: id,
+                   index: index,
+                   assertion: credentialDefinitions.assertion.payload,
+                    error: error
+               });
+               console.error(`Error in requestVc for id ${id} at index ${index}:`, error);
+           }
+        
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
@@ -123,6 +140,13 @@ describe('Test Vc (direct invocation)', function () {
                 await linkIdentityViaCli(id);
                 await requestVc(id, index);
             });
+        });
+
+        after(async function () {
+            if (errorArray.length > 0) {
+                console.log('errorArray:', errorArray);
+                throw new Error(`${errorArray.length} tests failed. See above for details.`);
+            }
         });
     }
 });

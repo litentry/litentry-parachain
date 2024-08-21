@@ -1,5 +1,20 @@
 [
     {
+        "id": "bnb-domain-holding-amount",
+        "name": ".bnb Holding Amount",
+        "description": "You are holding a certain amount of bnb domain names",
+
+        "assertion": {
+            "id": "BnbDomainHolding",
+            "payload": []
+        },
+        "dataProvider": "nodereal",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x6A9c371dB67992444cA55D32eA4219dd264b8DD3",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
         "id": "token-holding-amount-amp",
         "name": "AMP Holding Amount",
         "description": "The number of AMP tokens you hold > 0",

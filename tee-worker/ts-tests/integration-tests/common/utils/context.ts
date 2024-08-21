@@ -31,6 +31,9 @@ export async function initIntegrationTestContext(
     workerEndpoint: string,
     substrateEndpoint: string
 ): Promise<IntegrationTestContext> {
+    console.log('workerEndpoint', workerEndpoint);
+    console.log('substrateEndpoint', substrateEndpoint);
+    
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
 
