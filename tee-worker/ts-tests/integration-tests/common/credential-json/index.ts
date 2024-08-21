@@ -12,6 +12,8 @@ import litentryJson from './litentry.json' assert { type: 'json' };
 import twitterJson from './twitter.json' assert { type: 'json' };
 import oneblockJson from './oneblock.json' assert { type: 'json' };
 import geniidataJson from './geniidata.json' assert { type: 'json' };
+import moralisJson from './moralis.json' assert { type: 'json' };
+import blockchaininfoJson from './blockchaininfo.json' assert { type: 'json' };
 export const vip3 = vip3Json as unknown as CredentialDefinition[];
 export const achainable = achainableJson as unknown as CredentialDefinition[];
 export const nodereal = noderealJson as unknown as CredentialDefinition[];
@@ -20,8 +22,20 @@ export const litentry = litentryJson as unknown as CredentialDefinition[];
 export const twitter = twitterJson as unknown as CredentialDefinition[];
 export const oneblock = oneblockJson as unknown as CredentialDefinition[];
 export const geniidata = geniidataJson as unknown as CredentialDefinition[];
-// export const credentialsJson = [...vip3, ...achainable, ...nodereal, ...litentry, ...twitter, ...oneblock, ...discord, ...geniidata];
-export const credentialsJson = [...nodereal, ...geniidata, ...achainable];
+export const moralis = moralisJson as unknown as CredentialDefinition[];
+export const blockchaininfo = blockchaininfoJson as unknown as CredentialDefinition[];
+export const credentialsJson = [
+    ...nodereal,
+    ...geniidata,
+    ...moralis,
+    ...achainable,
+    ...litentry,
+    ...twitter,
+    ...oneblock,
+    ...discord,
+    ...vip3,
+    ...blockchaininfo,
+];
 
 export interface CredentialDefinition {
     id: string;
