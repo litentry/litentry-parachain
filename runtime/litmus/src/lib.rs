@@ -65,7 +65,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
-	HOURS, MINUTES, SLOT_DURATION,
+	HOURS, LITMUS_PARA_ID, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 use runtime_common::{

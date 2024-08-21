@@ -654,7 +654,7 @@ where
 			}
 		}
 
-		// check if the given hash is equal or a a descendent of any root, if we
+		// check if the given hash is equal or a descendent of any root, if we
 		// find a valid root that passes the predicate then we must ensure that
 		// we're not finalizing past any children node.
 		let mut position = None;
