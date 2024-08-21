@@ -104,7 +104,7 @@ use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
 use sp_core::{ed25519, ed25519::Pair};
 use std::{
-	collections::BTreeMap,
+	collections::{BTreeMap, HashMap},
 	sync::{Arc, SgxRwLock as RwLock},
 };
 
@@ -444,6 +444,9 @@ pub static GLOBAL_ASSERTION_REPOSITORY: ComponentContainer<EvmAssertionRepositor
 
 pub static GLOBAL_EVM_ASSERTIONS_STATE: ComponentContainer<RwLock<BTreeMap<H160, MemoryAccount>>> =
 	ComponentContainer::new("EVM assertions state");
+
+pub static GLOBAL_EVM_ASSERTIONS_ADDRESSES: ComponentContainer<RwLock<HashMap<H160, H160>>> =
+	ComponentContainer::new("EVM assertions addresses");
 
 // Parentchain component instances
 //-------------------------------------------------------------------------------------------------

@@ -287,6 +287,7 @@ where
 		Assertion::Dynamic(params) => {
 			let mut executor = EvmAssertionExecutor::new(
 				context.assertion_repository.clone(),
+				context.assertion_addresses.clone(),
 				context.assertion_state.clone(),
 			);
 			let result = lc_assertion_build::dynamic::build(req, params, &mut executor)?;

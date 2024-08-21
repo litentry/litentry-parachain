@@ -131,7 +131,9 @@ pub mod assertion_test {
 
 		let repository = InMemorySmartContractRepo::new();
 		let state = RwLock::new(Default::default());
-		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
+		let addresses = RwLock::new(Default::default());
+		let mut executor =
+			EvmAssertionExecutor::new(repository.into(), addresses.into(), state.into());
 
 		// when
 		let (credential, vc_logs) = build(&request, dynamic_params, &mut executor).unwrap();
@@ -176,7 +178,9 @@ pub mod assertion_test {
 
 		let repository = InMemorySmartContractRepo::new();
 		let state = RwLock::new(Default::default());
-		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
+		let addresses = RwLock::new(Default::default());
+		let mut executor =
+			EvmAssertionExecutor::new(repository.into(), addresses.into(), state.into());
 
 		// when
 		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
@@ -219,7 +223,9 @@ pub mod assertion_test {
 
 		let repository = InMemorySmartContractRepo::new();
 		let state = RwLock::new(Default::default());
-		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
+		let addresses = RwLock::new(Default::default());
+		let mut executor =
+			EvmAssertionExecutor::new(repository.into(), addresses.into(), state.into());
 
 		// when
 		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
@@ -259,7 +265,9 @@ pub mod assertion_test {
 
 		let repository = InMemorySmartContractRepo::new();
 		let state = RwLock::new(Default::default());
-		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
+		let addresses = RwLock::new(Default::default());
+		let mut executor =
+			EvmAssertionExecutor::new(repository.into(), addresses.into(), state.into());
 
 		// when
 		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();
@@ -312,7 +320,9 @@ pub mod assertion_test {
 
 		let repository = InMemorySmartContractRepo::new();
 		let state = RwLock::new(Default::default());
-		let mut executor = EvmAssertionExecutor::new(repository.into(), state.into());
+		let addresses = RwLock::new(Default::default());
+		let mut executor =
+			EvmAssertionExecutor::new(repository.into(), addresses.into(), state.into());
 
 		// when
 		let (credential, _) = build(&request, dynamic_params, &mut executor).unwrap();

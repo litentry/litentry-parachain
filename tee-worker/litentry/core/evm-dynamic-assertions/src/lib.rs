@@ -81,7 +81,7 @@ pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
 pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 	pub assertion_repository: Arc<A>,
-	deployment_registry: HashMap<A::Id, H160>,
+	deployment_registry: Arc<RwLock<HashMap<A::Id, H160>>>,
 	// state used only for CREATE, no CALL leftovers
 	state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
 }
@@ -89,46 +89,60 @@ pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
 impl<A: AssertionLogicRepository> EvmAssertionExecutor<A> {
 	pub fn new(
 		assertion_repository: Arc<A>,
+		deployment_registry: Arc<RwLock<HashMap<A::Id, H160>>>,
 		state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
 	) -> Self {
-		Self { assertion_repository, deployment_registry: HashMap::new(), state }
+		Self { assertion_repository, deployment_registry, state }
 	}
 
 	fn is_deployed(&self, assertion_id: &A::Id) -> bool {
-		self.deployment_registry.contains_key(assertion_id)
+		self.deployment_registry.read().unwrap().contains_key(assertion_id)
 	}
 
 	fn deploy_assertion(&mut self, assertion_id: A::Id, init_code: Vec<u8>) {
+		// let's hold lock for whole deployment process - to prevent dirty writes (particulary nonce)
+		let mut global_state = self.state.write().unwrap();
+		let deployer_account = hash(5);
+
+		let mut state = BTreeMap::new();
+		// copy deployer account if exists in global state, we can remove it as it will be added later
+		if let Some(account) = global_state.remove(&deployer_account) {
+			state.insert(deployer_account, account);
+		}
+
 		// prepare EVM runtime
 		let config = prepare_config();
 		let vicinity = prepare_memory();
-		let mut backend = MemoryBackend::new(&vicinity, Default::default());
+		let mut backend = MemoryBackend::new(&vicinity, state);
 		let metadata = StackSubstateMetadata::new(u64::MAX, &config);
 		let state = MemoryStackState::new(metadata, &mut backend);
 		let precompiles = Precompiles { contract_logs: Vec::new().into() };
 
 		let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
-		// caller, just an unused account
-		let caller = hash(5); //0x05
-
 		// deploy assertion smart contract
-		let address = executor.create_address(evm::CreateScheme::Legacy { caller });
+		let address =
+			executor.create_address(evm::CreateScheme::Legacy { caller: deployer_account });
 		std::println!("Assertion deployment address is: {:?}", address);
 
-		let _create_result =
-			executor.transact_create(caller, U256::zero(), init_code, u64::MAX, Vec::new());
+		let _create_result = executor.transact_create(
+			deployer_account,
+			U256::zero(),
+			init_code,
+			u64::MAX,
+			Vec::new(),
+		);
 		std::println!("Create reason: {:?}", _create_result.0);
-		self.deployment_registry.insert(assertion_id, address);
+		self.deployment_registry.write().unwrap().insert(assertion_id, address);
 		let apply = executor.into_state().deconstruct();
+
 		backend.apply(apply.0, apply.1, true);
 
+		let backend_state = backend.state_mut();
+		//store changed deployment account (nonce increased) - it's used by address generation
+		global_state.insert(hash(5), backend_state.remove(&hash(5)).unwrap());
 		//store newly deployed SC in shared state
-		self.state
-			.write()
-			.unwrap()
-			.insert(address, backend.state_mut().remove(&address).unwrap());
-		// std::println!("Code from state: {:?}", self.state.get_mut(&address));
+		global_state.insert(address, backend.state_mut().remove(&address).unwrap());
 	}
 
 	fn execute_assertion(
@@ -139,7 +153,7 @@ impl<A: AssertionLogicRepository> EvmAssertionExecutor<A> {
 		// prepare EVM runtime
 		let config = prepare_config();
 		let vicinity = prepare_memory();
-		let address = *self.deployment_registry.get(&assertion_id).unwrap();
+		let address = *self.deployment_registry.read().unwrap().get(&assertion_id).unwrap();
 
 		let mut state = BTreeMap::new();
 		// copy previously created assertion account containing bytecode to freshly created state, we only need this one account
@@ -155,11 +169,6 @@ impl<A: AssertionLogicRepository> EvmAssertionExecutor<A> {
 		// caller, just an unused account
 		let caller = hash(5); //0x05
 
-		// call assertion smart contract
-		// std::println!("Code from state: {:?}", self.state.get_mut(&address));
-		// std::println!("Assertion contract address: {:?}", address);
-		// std::println!("Code at zero: {:?}", executor.state().code_hash(H160::zero()));
-		// std::println!("Code at sc address: {:?}", executor.state().code_hash(address));
 		let (reason, data) =
 			executor.transact_call(caller, address, U256::zero(), input_data, u64::MAX, Vec::new());
 
@@ -215,6 +224,7 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 
 		// if it was not deployed before, deploy it
 		if !self.is_deployed(&assertion_id) {
+			std::println!("KZ: Deploying assertion");
 			self.deploy_assertion(assertion_id, smart_contract_byte_code);
 		}
 

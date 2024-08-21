@@ -65,7 +65,7 @@ use log::*;
 use sp_core::{ed25519::Pair as Ed25519Pair, H160};
 use std::{
 	boxed::Box,
-	collections::BTreeMap,
+	collections::{BTreeMap, HashMap},
 	format,
 	string::{String, ToString},
 	sync::{mpsc::channel, Arc},
@@ -112,6 +112,7 @@ pub struct StfTaskContext<
 	pub data_provider_config: Arc<DataProviderConfig>,
 	pub assertion_repository: Arc<AR>,
 	pub assertion_state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
+	pub assertion_addresses: Arc<RwLock<HashMap<AR::Id, H160>>>,
 }
 
 impl<
@@ -138,6 +139,7 @@ where
 		data_provider_config: Arc<DataProviderConfig>,
 		assertion_repository: Arc<AR>,
 		assertion_state: Arc<RwLock<BTreeMap<H160, MemoryAccount>>>,
+		assertion_addresses: Arc<RwLock<HashMap<AR::Id, H160>>>,
 	) -> Self {
 		Self {
 			shielding_key,
@@ -149,6 +151,7 @@ where
 			data_provider_config,
 			assertion_repository,
 			assertion_state,
+			assertion_addresses,
 		}
 	}
 

@@ -28,14 +28,15 @@ use crate::{
 		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
 		DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_ASSERTION_REPOSITORY,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
-		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_EVM_ASSERTIONS_STATE,
-		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
-		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_EVM_ASSERTIONS_ADDRESSES,
+		GLOBAL_EVM_ASSERTIONS_STATE, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
@@ -252,6 +253,9 @@ pub(crate) fn init_enclave(
 	let evm_assertions_state = Arc::new(RwLock::new(BTreeMap::new()));
 	GLOBAL_EVM_ASSERTIONS_STATE.initialize(evm_assertions_state);
 
+	let evm_assertions_addresses = Arc::new(RwLock::new(HashMap::new()));
+	GLOBAL_EVM_ASSERTIONS_ADDRESSES.initialize(evm_assertions_addresses);
+
 	Ok(())
 }
 
@@ -277,6 +281,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 	let evm_assertion_state = GLOBAL_EVM_ASSERTIONS_STATE.get()?;
+	let evm_assertion_addresses = GLOBAL_EVM_ASSERTIONS_ADDRESSES.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -300,6 +305,7 @@ fn run_stf_task_handler() -> Result<(), Error> {
 		data_provider_config,
 		evm_assertion_repository,
 		evm_assertion_state,
+		evm_assertion_addresses,
 	);
 
 	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
@@ -312,6 +318,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 	let evm_assertion_repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
 	let evm_assertion_state = GLOBAL_EVM_ASSERTIONS_STATE.get()?;
+	let evm_assertion_addresses = GLOBAL_EVM_ASSERTIONS_ADDRESSES.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
@@ -335,6 +342,7 @@ fn run_vc_issuance() -> Result<(), Error> {
 		data_provider_config,
 		evm_assertion_repository,
 		evm_assertion_state,
+		evm_assertion_addresses,
 	);
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 
