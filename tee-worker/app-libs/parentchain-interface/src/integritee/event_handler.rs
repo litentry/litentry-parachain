@@ -21,9 +21,6 @@ pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
-use itp_node_api::metadata::{
-	pallet_score_staking::ScoreStakingCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
-};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
@@ -34,11 +31,10 @@ use itp_types::{
 		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
 		ParentchainEventProcessingError, ParentchainId, ProcessedEventsArtifacts,
 	},
-	Delegator, OpaqueCall, RsaRequest, H256,
+	Delegator, RsaRequest, H256,
 };
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::repository::EvmAssertionRepository;
-use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use litentry_hex_utils::decode_hex;
 use litentry_primitives::{Assertion, Identity, ValidationData, Web3Network};
 use log::*;
@@ -48,19 +44,16 @@ use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
 use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository> {
+pub struct ParentchainEventHandler<OCallApi, HandleState> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
 	pub ocall_api: Arc<OCallApi>,
 	pub state_handler: Arc<HandleState>,
-	pub node_metadata_repository: Arc<NodeMetadataRepository>,
 }
 
-impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
+impl<OCallApi, HS> ParentchainEventHandler<OCallApi, HS>
 where
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
-	NMR: AccessNodeMetadata,
-	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
@@ -343,14 +336,12 @@ fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
 	decode_hex(hex_key).ok()
 }
 
-impl<Executor, OCallApi, HS, NMR> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler<OCallApi, HS, NMR>
+impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+	for ParentchainEventHandler<OCallApi, HS>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
-	NMR: AccessNodeMetadata,
-	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn handle_events(
 		&self,

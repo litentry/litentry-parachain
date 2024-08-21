@@ -75,7 +75,6 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		assertion_repository: repository,
 		ocall_api: ocall_api.clone(),
 		state_handler,
-		node_metadata_repository: node_metadata_repository.clone(),
 	};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
