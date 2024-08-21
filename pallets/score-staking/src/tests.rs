@@ -293,14 +293,15 @@ fn score_staking_works() {
 		bob_total_reward += calculate_round_reward(1000, 3000, 1600, 3200);
 
 		run_to_block(30);
-		// total reward round 6
-		alice_total_reward += calculate_round_reward(2000, 2000, 900, 900);
-
 		assert_ok!(ParachainStaking::execute_delegation_request(
 			RuntimeOrigin::signed(bob()),
 			bob(),
 			alice()
 		));
+
+		run_to_block(31);
+		// total reward round 6
+		alice_total_reward += calculate_round_reward(2000, 2000, 900, 900);
 
 		// remove increased stake (keep only alice's stake)
 		pallet_parachain_staking::Total::<Test>::put(900);
