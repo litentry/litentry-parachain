@@ -40,7 +40,8 @@ pub use ita_sgx_runtime::{
 	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
 use itp_node_api::metadata::{
-	pallet_system::SystemConstants, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_score_staking::ScoreStakingCallIndexes, pallet_system::SystemConstants,
+	provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
@@ -142,6 +143,10 @@ pub enum TrustedCall {
 	send_erroneous_parentchain_call(Identity),
 	#[codec(index = 25)]
 	maybe_create_id_graph(Identity, Identity),
+	#[codec(index = 26)]
+	update_token_staking_amount(Identity, AccountId, Balance),
+	#[codec(index = 27)]
+	reward_distribution_completed(Identity),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -228,6 +233,8 @@ impl TrustedCall {
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
+			Self::update_token_staking_amount(sender_identity, ..) => sender_identity,
+			Self::reward_distribution_completed(sender_identity) => sender_identity,
 			#[cfg(feature = "development")]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 			Self::request_batch_vc(sender_identity, ..) => sender_identity,
@@ -972,6 +979,33 @@ where
 					Ok(()) => info!("maybe_create_id_graph OK"),
 					Err(e) => warn!("maybe_create_id_graph NOK: {:?}", e),
 				};
+
+				Ok(TrustedCallResult::Empty)
+			},
+			TrustedCall::update_token_staking_amount(signer, account_id, staking_amount) => {
+				let signer_account: AccountId32 =
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&signer_account)?;
+
+				let call = OpaqueCall::from_tuple(&(
+					node_metadata_repo
+						.get_from_metadata(|m| m.update_token_staking_amount_call_indexes())??,
+					account_id,
+					staking_amount,
+				));
+				calls.push(ParentchainCall::Litentry(call));
+
+				Ok(TrustedCallResult::Empty)
+			},
+			TrustedCall::reward_distribution_completed(signer) => {
+				let signer_account: AccountId32 =
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&signer_account)?;
+				let call = OpaqueCall::from_tuple(
+					&(node_metadata_repo
+						.get_from_metadata(|m| m.complete_reward_distribution_call_indexes())??),
+				);
+				calls.push(ParentchainCall::Litentry(call));
 
 				Ok(TrustedCallResult::Empty)
 			},
