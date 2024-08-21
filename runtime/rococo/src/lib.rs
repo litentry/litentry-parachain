@@ -68,7 +68,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
-	HOURS, MINUTES, SLOT_DURATION,
+	HOURS, MINUTES, ROCOCO_PARA_ID, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 
@@ -223,7 +223,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9194,
+	spec_version: 9195,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -783,7 +783,9 @@ impl pallet_sudo::Config for Runtime {
 
 impl pallet_account_fix::Config for Runtime {
 	type Currency = Balances;
-	type BurnOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
+	type IncConsumerOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
+	type AddBalanceOrigin = EnsureRoot<AccountId>;
+	type BurnOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -1099,8 +1101,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	// It will be the best if we can implement this in a more professional way
-	pub ChainId: u64 = 2106u64;
+	pub ChainId: u64 = ROCOCO_PARA_ID.into();
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
@@ -1301,9 +1302,7 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::CouncilMembership(_) |
 				RuntimeCall::TechnicalCommittee(_) |
 				RuntimeCall::TechnicalCommitteeMembership(_) |
-				RuntimeCall::Utility(_) |
-				// Temp: should be removed after the one-time burn
-				RuntimeCall::AccountFix(pallet_account_fix::Call::burn { .. })
+				RuntimeCall::Utility(_)
 		) {
 			// always allow core calls
 			return true

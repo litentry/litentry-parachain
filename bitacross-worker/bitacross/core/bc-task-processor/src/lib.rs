@@ -82,14 +82,12 @@ use lc_direct_call::{
 	},
 	CeremonyRoundCall, CeremonyRoundCallSigned, DirectCall, DirectCallSigned,
 };
-use litentry_primitives::{aes_encrypt_default, Address32, AesRequest, DecryptableRequest};
+use litentry_primitives::{Address32, PlainRequest};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::{ed25519, Pair, H256};
 use std::{
-	boxed::Box,
 	collections::HashMap,
-	format,
 	string::{String, ToString},
 	sync::Arc,
 	vec,
@@ -238,11 +236,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 					let ceremony_rwlock = ceremony.clone();
 					let ceremony = ceremony_rwlock.read().unwrap();
 					let hash = blake2_256(&ceremony.get_id_ref().encode());
-					let encrypted_result = aes_encrypt_default(
-						ceremony.get_aes_key(),
-						&SignBitcoinError::CeremonyError.encode(),
-					)
-					.encode();
+					let encrypted_result = SignBitcoinError::CeremonyError.encode();
 					if let Err(e) = responder.send_state_with_status(
 						Hash::from_slice(&hash),
 						encrypted_result,
@@ -324,7 +318,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 			.map(|(c, _)| c.read().unwrap().is_first_round())
 	};
 	match (is_first_round, &command) {
-		(None, CeremonyCommand::InitCeremony(_, _, _, _))
+		(None, CeremonyCommand::InitCeremony(_, _, _))
 		| (Some(true), CeremonyCommand::SaveNonce(_, _))
 		| (Some(false), CeremonyCommand::SavePartialSignature(_, _))
 		| (_, CeremonyCommand::KillCeremony) => {},
@@ -382,10 +376,10 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 				CeremonyEvent::FirstRoundStarted(_, _, _) => {
 					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyStarted);
 				},
-				CeremonyEvent::CeremonyError(_, _, _) => {
+				CeremonyEvent::CeremonyError(_, _) => {
 					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyFailed);
 				},
-				CeremonyEvent::CeremonyEnded(_, _, _, _) => {
+				CeremonyEvent::CeremonyEnded(_, _, _) => {
 					let ceremony_start_time =
 						context.ceremony_registry.read().unwrap().get(&ceremony_id).unwrap().1;
 					let _ = context.ocall_api.update_metric(EnclaveMetric::Musig2CeremonyDuration(
@@ -407,8 +401,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 						commands_to_process = ceremony_command_tmp.read().unwrap().clone();
 					}
 				},
-				CeremonyEvent::CeremonyEnded(_, _, _, _)
-				| CeremonyEvent::CeremonyError(_, _, _) => {
+				CeremonyEvent::CeremonyEnded(_, _, _) | CeremonyEvent::CeremonyError(_, _) => {
 					// remove ceremony
 					{
 						let mut registry_write = context.ceremony_registry.write().unwrap();
@@ -422,13 +415,14 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 
 			process_event(
 				context.signing_key_access.clone(),
-				context.shielding_key.clone(),
 				context.ocall_api.clone(),
 				context.responder.clone(),
+				context.enclave_registry_lookup.clone(),
 				event,
 				ceremony_id.clone(),
 				event_threads_pool.clone(),
 				peers_map.clone(),
+				context.ceremony_registry.clone(),
 			);
 		}
 	}
@@ -456,11 +450,10 @@ where
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	match command {
-		CeremonyCommand::InitCeremony(aes_key, signers, payload, check_run) => {
+		CeremonyCommand::InitCeremony(signers, payload, check_run) => {
 			// InitCeremony should create ceremony first
 			let result = MuSig2Ceremony::new(
 				context.signing_key_pub,
-				aes_key,
 				signers,
 				payload,
 				context.bitcoin_key_repository.clone(),
@@ -474,7 +467,7 @@ where
 						if registry_write.contains_key(&ceremony_id) {
 							let error =
 								CeremonyError::CeremonyInitError(CeremonyErrorReason::AlreadyExist);
-							return Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
+							return Some(CeremonyEvent::CeremonyError(vec![], error))
 						}
 						registry_write.insert(
 							ceremony_id,
@@ -487,7 +480,7 @@ where
 					error!("Could not start ceremony, error: {:?}", e);
 					let error =
 						CeremonyError::CeremonyInitError(CeremonyErrorReason::CreateCeremonyError);
-					Some(CeremonyEvent::CeremonyError(vec![], error, aes_key))
+					Some(CeremonyEvent::CeremonyError(vec![], error))
 				},
 			}
 		},
@@ -502,7 +495,6 @@ where
 					Err(e) => Some(CeremonyEvent::CeremonyError(
 						ceremony_write_lock.get_signers_except_self(),
 						e,
-						*ceremony_write_lock.get_aes_key(),
 					)),
 				}
 			} else {
@@ -520,7 +512,6 @@ where
 					Err(e) => Some(CeremonyEvent::CeremonyError(
 						ceremony_write_lock.get_signers_except_self(),
 						e,
-						*ceremony_write_lock.get_aes_key(),
 					)),
 				}
 			} else {
@@ -559,32 +550,30 @@ where
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
 	match request {
-		BitAcrossRequest::Request(mut aes_request, sender) => {
-			match handle_direct_call(&mut aes_request, context) {
-				Ok((processing_ret, to_process)) => {
-					if let Some(processing_ret) = processing_ret {
-						if let Err(e) = sender.send(Ok(processing_ret)) {
-							warn!("Unable to submit response back to the handler: {:?}", e);
-						}
-					}
-					to_process
-				},
-				Err(e) => {
-					if let Err(e) = sender.send(Err(e)) {
+		BitAcrossRequest::Request(request, sender) => match handle_direct_call(request, context) {
+			Ok((processing_ret, to_process)) => {
+				if let Some(processing_ret) = processing_ret {
+					if let Err(e) = sender.send(Ok(processing_ret)) {
 						warn!("Unable to submit response back to the handler: {:?}", e);
 					}
-					None
-				},
-			}
+				}
+				to_process
+			},
+			Err(e) => {
+				if let Err(e) = sender.send(Err(e)) {
+					warn!("Unable to submit response back to the handler: {:?}", e);
+				}
+				None
+			},
 		},
-		BitAcrossRequest::ShareCeremonyData(mut aes_request) =>
-			handle_ceremony_round_call(&mut aes_request, context).unwrap_or_default(),
+		BitAcrossRequest::ShareCeremonyData(request) =>
+			handle_ceremony_round_call(request, context).unwrap_or_default(),
 	}
 }
 
 #[allow(clippy::type_complexity)]
 fn handle_direct_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	request: &mut AesRequest,
+	request: PlainRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) -> Result<(Option<BitAcrossProcessingResult>, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
 where
@@ -601,20 +590,10 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
-		let err = format!("Failed to retrieve shielding key: {:?}", e);
-		error!("{}", err);
-		err
+	let dc = DirectCallSigned::decode(&mut request.payload.as_slice()).map_err(|e| {
+		error!("{}", e);
+		"Failed to decode payload".to_string()
 	})?;
-	let dc = request
-		.decrypt(Box::new(enclave_shielding_key))
-		.ok()
-		.and_then(|v| DirectCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| {
-			let err = "Failed to decode payload".to_string();
-			error!("{}", err);
-			err
-		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
@@ -627,12 +606,11 @@ where
 	debug!("Direct call is: {:?}", dc);
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	match dc.call {
-		DirectCall::SignBitcoin(signer, aes_key, payload) => {
+		DirectCall::SignBitcoin(signer, payload) => {
 			let hash = blake2_256(&payload.encode());
 			let command = sign_bitcoin::handle(
 				signer,
 				payload.clone(),
-				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),
 				context.enclave_registry_lookup.as_ref(),
@@ -640,19 +618,17 @@ where
 			)
 			.map_err(|e| {
 				error!("SignBitcoin error: {:?}", e);
-				aes_encrypt_default(&aes_key, &e.encode()).encode()
+				e.encode()
 			})?;
 			let ret = BitAcrossProcessingResult::Submitted(hash);
 			Ok((Some(ret), Some((payload, command))))
 		},
 		DirectCall::CheckSignBitcoin(signer) => {
 			let payload = SignBitcoinPayload::Derived([0u8; 32].to_vec());
-			let aes_key = [0u8; 32];
 			let hash = blake2_256(&payload.encode());
 			let command = sign_bitcoin::handle(
 				signer,
 				payload.clone(),
-				aes_key,
 				context.relayer_registry_lookup.deref(),
 				context.signer_registry_lookup.clone(),
 				context.enclave_registry_lookup.as_ref(),
@@ -660,12 +636,12 @@ where
 			)
 			.map_err(|e| {
 				error!("SignBitcoinCheck error: {:?}", e);
-				aes_encrypt_default(&aes_key, &e.encode()).encode()
+				e.encode()
 			})?;
 			let ret = BitAcrossProcessingResult::Submitted(hash);
 			Ok((Some(ret), Some((payload, command))))
 		},
-		DirectCall::SignEthereum(signer, aes_key, msg) => sign_ethereum::handle(
+		DirectCall::SignEthereum(signer, msg) => sign_ethereum::handle(
 			signer,
 			msg,
 			context.relayer_registry_lookup.deref(),
@@ -673,17 +649,15 @@ where
 		)
 		.map_err(|e| {
 			error!("SignEthereum error: {:?}", e);
-			aes_encrypt_default(&aes_key, &e.encode()).encode()
+			e.encode()
 		})
-		.map(|r| {
-			(Some(BitAcrossProcessingResult::Ok(aes_encrypt_default(&aes_key, &r).encode())), None)
-		}),
+		.map(|r| (Some(BitAcrossProcessingResult::Ok(r.encode())), None)),
 	}
 }
 
 #[allow(clippy::type_complexity)]
 fn handle_ceremony_round_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	request: &mut AesRequest,
+	request: PlainRequest,
 	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
 ) -> Result<Option<(CeremonyId, CeremonyCommand)>, Vec<u8>>
 where
@@ -700,20 +674,10 @@ where
 	SRL: SignerRegistryLookup + 'static,
 	Responder: SendRpcResponse<Hash = H256> + Send + Sync + 'static,
 {
-	let enclave_shielding_key = context.shielding_key.retrieve_key().map_err(|e| {
-		let err = format!("Failed to retrieve shielding key: {:?}", e);
-		error!("{}", err);
-		err
+	let crc = CeremonyRoundCallSigned::decode(&mut request.payload.as_slice()).map_err(|e| {
+		error!("{}", e);
+		"Failed to decode payload".to_string()
 	})?;
-	let crc = request
-		.decrypt(Box::new(enclave_shielding_key))
-		.ok()
-		.and_then(|v| CeremonyRoundCallSigned::decode(&mut v.as_slice()).ok())
-		.ok_or_else(|| {
-			let err = "Failed to decode payload".to_string();
-			error!("{}", err);
-			err
-		})?;
 
 	let mrenclave = match context.ocall_api.get_mrenclave_of_self() {
 		Ok(m) => m.m,
@@ -726,14 +690,14 @@ where
 	debug!("Ceremony round call is: {:?}", crc);
 	ensure!(crc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	match crc.call {
-		CeremonyRoundCall::NonceShare(signer, aes_key, message, nonce) =>
+		CeremonyRoundCall::NonceShare(signer, message, nonce) =>
 			nonce_share::handle(signer, &message, nonce, context.enclave_registry_lookup.clone())
 				.map_err(|e| {
 					error!("NonceShare error: {:?}", e);
-					aes_encrypt_default(&aes_key, &e.encode()).encode()
+					e.encode()
 				})
 				.map(|command| Some((message, command))),
-		CeremonyRoundCall::PartialSignatureShare(signer, aes_key, message, signature) =>
+		CeremonyRoundCall::PartialSignatureShare(signer, message, signature) =>
 			partial_signature_share::handle(
 				signer,
 				&message,
@@ -742,14 +706,14 @@ where
 			)
 			.map_err(|e| {
 				error!("PartialSignatureShare error: {:?}", e);
-				aes_encrypt_default(&aes_key, &e.encode()).encode()
+				e.encode()
 			})
 			.map(|command| Some((message, command))),
-		CeremonyRoundCall::KillCeremony(signer, aes_key, message) =>
+		CeremonyRoundCall::KillCeremony(signer, message) =>
 			kill_ceremony::handle(signer, context.enclave_registry_lookup.as_ref())
 				.map_err(|e| {
 					error!("KillCeremony error: {:?}", e);
-					aes_encrypt_default(&aes_key, &e.encode()).encode()
+					e.encode()
 				})
 				.map(|command| Some((message, command))),
 	}

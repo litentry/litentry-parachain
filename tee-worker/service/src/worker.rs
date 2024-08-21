@@ -23,6 +23,7 @@
 use crate::{config::Config, error::Error, initialized_service::TrackInitialization};
 use async_trait::async_trait;
 use codec::{Decode, Encode};
+use futures::future::join_all;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
@@ -119,19 +120,22 @@ where
 
 		let nr_peers = peers.len();
 
-		for url in peers {
+		let futures = peers.iter().map(|url| {
 			let encoded_blocks_cloned = encoded_blocks.clone();
-			tokio::spawn(async move {
-				let client = DirectWorkerApi::new(url.trusted.to_string());
-
+			let url = url.trusted.clone();
+			tokio::task::spawn_blocking(move || {
+				let client = DirectWorkerApi::new(url.to_string());
 				if let Err(e) = client.import_sidechain_blocks(encoded_blocks_cloned) {
 					error!(
 						"Broadcast block request ({}) to {} failed: {:?}",
-						RPC_METHOD_NAME_IMPORT_BLOCKS, url.trusted, e
+						RPC_METHOD_NAME_IMPORT_BLOCKS, url, e
 					);
 				}
-			});
-		}
+			})
+		});
+
+		join_all(futures).await;
+
 		info!("broadcast {} block(s) to {} peers", nr_blocks, nr_peers);
 		Ok(())
 	}
