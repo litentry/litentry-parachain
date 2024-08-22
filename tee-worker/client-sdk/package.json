@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "test": "nx affected --target=test --plain",
-    "lint": "nx affected --target=lint --plain",
+    "test": "nx affected --base=dev --target=test --plain",
+    "lint": "nx affected --base=dev --target=lint --plain",
     "clean": "pnpm clean:dist; pnpm clean:packages",
     "clean:dist": "rm -rf dist",
     "clean:packages": "rm -rf node_modules && pnpm -r exec rm -rf node_modules && pnpm i"
