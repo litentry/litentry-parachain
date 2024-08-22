@@ -8,7 +8,7 @@
             "payload": {
                 "Basic": {
                     "name": "BAB token holder",
-                    "chain": "Bsc"
+                    "chain": ["Bsc"]
                 }
             }
         },
@@ -27,7 +27,7 @@
             "payload": {
                 "Basic": {
                     "name": "Uniswap V2/V3 user",
-                    "chain": "Ethereum"
+                    "chain": ["Ethereum"]
                 }
             }
         },
@@ -40,10 +40,10 @@
     {
         "id": "dot-holder",
         "name": "DOT Holding Time",
-        "description": "The length of time a user continues to hold DOT token (threshold DOT > 5)",
+        "description": "The length of time a user continues to hold DOT token (threshold DOT > 1)",
         "assertion": {
             "id": "A7",
-            "payload": "5"
+            "payload": "1"
         },
         "dataProvider": "achainable",
         "network": "polkadot",
@@ -102,7 +102,7 @@
             "payload": {
                 "ClassOfYear": {
                     "name": "Account created between {dates}",
-                    "chain": "Ethereum"
+                    "chain": ["Ethereum"]
                 }
             }
         },
