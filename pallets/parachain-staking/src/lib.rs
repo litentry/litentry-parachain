@@ -82,10 +82,6 @@ pub use traits::*;
 pub use types::*;
 pub use RoundIndex;
 
-pub trait OnAllDelegationRemoved<T: Config> {
-	fn on_all_delegation_removed(delegator: &T::AccountId) -> Result<(), &str>;
-}
-
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
