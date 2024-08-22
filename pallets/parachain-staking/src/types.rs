@@ -22,8 +22,8 @@
 
 use crate::{
 	auto_compound::AutoCompoundDelegations, set::OrderedSet, BalanceOf, BottomDelegations,
-	CandidateInfo, Config, DelegatorState, Error, Event, Pallet, Round, RoundIndex, TopDelegations,
-	Total,
+	CandidateInfo, Config, DelegatorState, Error, Event, OnAllDelegationRemoved, Pallet, Round,
+	RoundIndex, TopDelegations, Total,
 };
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
 use parity_scale_codec::{Decode, Encode};
