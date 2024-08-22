@@ -82,8 +82,8 @@ pub use traits::*;
 pub use types::*;
 pub use RoundIndex;
 
-pub trait ScoreUpdater<T: Config> {
-	fn clear_score_for(delegator: &T::AccountId) -> Result<(), &str>;
+pub trait OnAllDelegationRemoved<T: Config> {
+	fn on_all_delegation_removed(delegator: &T::AccountId) -> Result<(), &str>;
 }
 
 #[frame_support::pallet]
@@ -93,7 +93,7 @@ pub mod pallet {
 		set::OrderedSet,
 		traits::*,
 		types::*,
-		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, Range, ScoreUpdater,
+		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, OnAllDelegationRemoved, Range,
 		WeightInfo,
 	};
 	use frame_support::{
@@ -200,7 +200,7 @@ pub mod pallet {
 		/// The source for adjusted inflation base.
 		type IssuanceAdapter: IssuanceAdapter<BalanceOf<Self>>;
 		/// ScoreStaking updater
-		type ScoreUpdater: ScoreUpdater<Self>;
+		type OnAllDelegationRemoved: OnAllDelegationRemoved<Self>;
 	}
 
 	#[pallet::error]
@@ -1028,7 +1028,7 @@ pub mod pallet {
 						// since it is assumed that they were removed incrementally before only the
 						// last delegation was left.
 						<DelegatorState<T>>::remove(&bond.owner);
-						let _ = T::ScoreUpdater::clear_score_for(&bond.owner);
+						let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(&bond.owner);
 					} else {
 						<DelegatorState<T>>::insert(&bond.owner, delegator);
 					}

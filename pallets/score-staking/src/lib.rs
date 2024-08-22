@@ -84,8 +84,8 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	impl<T: Config> pallet_parachain_staking::ScoreUpdater<T> for Pallet<T> {
-		fn clear_score_for(delegator: &<T>::AccountId) -> Result<(), &str> {
+	impl<T: Config> pallet_parachain_staking::OnAllDelegationRemoved<T> for Pallet<T> {
+		fn on_all_delegation_removed(delegator: &<T>::AccountId) -> Result<(), &str> {
 			if let Some(mut s) = Scores::<T>::get(delegator) {
 				let _ = Self::update_total_score(s.score, 0);
 				s.score = 0;

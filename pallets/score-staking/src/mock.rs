@@ -163,7 +163,7 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
-	type ScoreUpdater = pallet_score_staking::Pallet<Test>;
+	type OnAllDelegationRemoved = pallet_score_staking::Pallet<Test>;
 }
 
 parameter_types! {

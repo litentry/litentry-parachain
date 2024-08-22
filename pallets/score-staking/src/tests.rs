@@ -19,7 +19,7 @@
 use crate::{mock::*, Error, Event, PoolState, RoundInfo, RoundSetting, ScorePayment, Scores};
 use core_primitives::{Identity, DAYS, YEARS};
 use frame_support::{assert_err, assert_ok};
-use pallet_parachain_staking::{Delegator, ScoreUpdater};
+use pallet_parachain_staking::{Delegator, OnAllDelegationRemoved};
 use sp_runtime::Perbill;
 
 fn round_reward() -> Balance {
@@ -430,7 +430,7 @@ fn clear_score_for_works() {
 		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 1000);
 
 		// clear_score works
-		assert_ok!(ScoreStaking::clear_score_for(&bob));
+		assert_ok!(ScoreStaking::on_all_delegation_removed(&bob));
 		assert_eq!(ScoreStaking::total_score(), 0);
 		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 0);
 	});
