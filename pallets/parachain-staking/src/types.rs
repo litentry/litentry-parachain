@@ -598,6 +598,9 @@ impl<
 			});
 			if leaving {
 				<DelegatorState<T>>::remove(&lowest_bottom_to_be_kicked.owner);
+				let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(
+					&lowest_bottom_to_be_kicked.owner,
+				);
 				Pallet::<T>::deposit_event(Event::DelegatorLeft {
 					delegator: lowest_bottom_to_be_kicked.owner,
 					unstaked_amount: lowest_bottom_to_be_kicked.amount,
