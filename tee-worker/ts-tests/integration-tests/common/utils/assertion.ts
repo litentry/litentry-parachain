@@ -150,7 +150,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
         (p) => path.resolve(process.cwd(), p) // resolve relative to this file.
     );
     try {
-        const [runtimeVersion, sidechainVersion] = await Promise.all(
+        const [nodeVersion, sidechainVersion] = await Promise.all(
             paths.map((relativePath) => readFile(relativePath, { encoding: 'utf-8' }))
         ).then((specs) =>
             specs.map((spec) => {
@@ -159,12 +159,12 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
             })
         );
 
-        assert.isNumber(runtimeVersion, `Couldn't get the runtime version`);
+        assert.isNumber(nodeVersion, `Couldn't get the runtime version`);
         assert.isNumber(sidechainVersion, `Couldn't get the sidechain version`);
 
         assert.deepEqual(
             vcPayloadJson.issuer.runtimeVersion,
-            { parachain: runtimeVersion, sidechain: sidechainVersion },
+            { parachain: nodeVersion, sidechain: sidechainVersion },
             'Check VC runtime version: it should equal the current defined versions'
         );
     } catch (error) {
