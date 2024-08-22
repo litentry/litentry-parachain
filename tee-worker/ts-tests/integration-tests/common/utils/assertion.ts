@@ -1,3 +1,6 @@
+import path from 'path';
+import { readFile } from 'fs/promises';
+
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import * as ed from '@noble/ed25519';
@@ -11,13 +14,10 @@ import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { decryptWithAes } from './crypto';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { base58Encode, blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
-import * as base58 from 'micro-base58';
-import { fail } from 'assert';
-
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
     expected: [CorePrimitivesIdentity, boolean][]
@@ -134,7 +134,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     assert.equal(
         vcPayloadJson.issuer.mrenclave,
-        base58.encode(registeredEnclave.mrenclave),
+        base58Encode(registeredEnclave.mrenclave),
         "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
     );
 
@@ -146,11 +146,33 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 7
     // check runtime version is present
-    assert.deepEqual(
-        vcPayloadJson.issuer.runtimeVersion,
-        { parachain: 9195, sidechain: 109 },
-        'Check VC runtime version: it should equal the current defined versions'
+    const paths = ['../../../../../runtime/litentry/src/lib.rs', '../../../../app-libs/sgx-runtime/src/lib.rs'].map(
+        (p) => path.resolve(process.cwd(), p) // resolve relative to this file.
     );
+    try {
+        const [runtimeVersion, sidechainVersion] = await Promise.all(
+            paths.map((relativePath) => readFile(relativePath, { encoding: 'utf-8' }))
+        ).then((specs) =>
+            specs.map((spec) => {
+                const version = (spec.match(/spec_version:\s*(\d+)/) || [])[1];
+                return version ? parseInt(version) : undefined;
+            })
+        );
+
+        assert.isNumber(runtimeVersion, `Couldn't get the runtime version`);
+        assert.isNumber(sidechainVersion, `Couldn't get the sidechain version`);
+
+        assert.deepEqual(
+            vcPayloadJson.issuer.runtimeVersion,
+            { parachain: runtimeVersion, sidechain: sidechainVersion },
+            'Check VC runtime version: it should equal the current defined versions'
+        );
+    } catch (error) {
+        console.error(error);
+        assert.fail(
+            `Couldn't read the runtime version from the runtime or sidechain specs. Paths: ${paths.join(', ')}`
+        );
+    }
 
     // step 8
     // validate VC against schema
