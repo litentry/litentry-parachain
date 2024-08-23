@@ -75,7 +75,9 @@ if [ "$TEST" = "assertion_contracts.test.ts" ]; then
     ln -s /assertion-contracts/artifacts/contracts /ts-tests/integration-tests/contracts
 fi
 
-cd /tee-worker/ts-tests
+ls -l /
+
+cd /app/tee-worker/ts-tests
 pnpm install
 
 NODE_ENV=staging pnpm --filter integration-tests run test $TEST

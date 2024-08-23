@@ -3,7 +3,7 @@ services:
         image: litentry/identity-cli:latest
         container_name: litentry-di-vc-test
         volumes:
-            - ..:/tee-worker
+            - ../..:/app
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
