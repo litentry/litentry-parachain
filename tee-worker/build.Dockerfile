@@ -126,6 +126,7 @@ COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker
@@ -164,6 +165,7 @@ RUN groupadd -g 121 sgx_prv && \
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm
