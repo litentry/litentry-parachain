@@ -4,8 +4,6 @@ services:
         container_name: litentry-di-vc-test
         volumes:
             - ../..:/app
-            - ../ts-tests:/ts-tests
-            - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
         build:
             context: ..

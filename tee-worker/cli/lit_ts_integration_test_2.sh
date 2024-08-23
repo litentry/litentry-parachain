@@ -54,7 +54,7 @@ echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo "Using node http uri $NODEHTTPURL:$NPORT"
 echo ""
 
-cd /client-api/parachain-api
+cd /app/tee-worker/client-api/parachain-api
 curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' $NODEHTTPURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
@@ -63,7 +63,7 @@ ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.jso
 echo "update sidechain metadata"
 
 
-cd /client-api
+cd /app/tee-worker/client-api
 pnpm install
 pnpm run build
 
@@ -74,8 +74,6 @@ if [ "$TEST" = "assertion_contracts.test.ts" ]; then
     pnpm compile
     ln -s /assertion-contracts/artifacts/contracts /ts-tests/integration-tests/contracts
 fi
-
-ls -l /
 
 cd /app/tee-worker/ts-tests
 pnpm install
