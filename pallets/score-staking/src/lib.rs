@@ -88,6 +88,18 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
+	impl<T: Config> pallet_parachain_staking::OnAllDelegationRemoved<T> for Pallet<T> {
+		fn on_all_delegation_removed(delegator: &<T>::AccountId) -> Result<(), &str> {
+			if let Some(mut s) = Scores::<T>::get(delegator) {
+				let _ = Self::update_total_score(s.score, 0);
+				s.score = 0;
+				Scores::<T>::insert(delegator, s);
+			}
+
+			Ok(())
+		}
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + ParaStaking::Config {
 		type Currency: Currency<Self::AccountId>
@@ -250,36 +262,11 @@ pub mod pallet {
 			let round_reward_u128 = round_reward.saturated_into::<u128>();
 
 			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
+			let total_score = Self::total_score();
 			let n = Self::round_config().stake_coef_n;
 			let m = Self::round_config().stake_coef_m;
 
 			let mut all_user_reward = BalanceOf::<T>::zero();
-
-			// the score of the user who has 0 staking should be cleared, so that they don't
-			// participate in any reward calculation, nor should they affect others (`total_score`)
-			// we can't simply delete the entry as there might still be unclaimed reward
-			//
-			// TODO: optimise this, both in a structural (e.g. separate `Score` and `Payment`) and
-			// algorithmetic way
-			//
-			// TODO: when can we remove an entry from `Scores`programmatically?
-			for (a, mut p) in Scores::<T>::iter() {
-				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
-					.map(|s| s.total)
-					.unwrap_or_default()
-					.saturated_into::<u128>();
-
-				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 0));
-
-				if user_stake_u128 == 0 {
-					let _ = Self::update_total_score(p.score, 0);
-					p.score = 0;
-					Scores::<T>::insert(&a, p);
-					weight = weight.saturating_add(T::DbWeight::get().reads_writes(0, 1));
-				}
-			}
-
-			let total_score = Self::total_score();
 
 			for (a, mut p) in Scores::<T>::iter() {
 				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)

@@ -148,6 +148,15 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type OnAllDelegationRemoved = ();
+}
+
+impl pallet_parachain_staking::OnAllDelegationRemoved<Test> for () {
+	fn on_all_delegation_removed(
+		_delegator: &<Test as frame_system::Config>::AccountId,
+	) -> Result<(), &str> {
+		Ok(())
+	}
 }
 
 pub fn precompile_address() -> H160 {
