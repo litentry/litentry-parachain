@@ -50,6 +50,10 @@ pub mod pallet_timestamp;
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
+pub trait NodeMetadataProvider {
+	fn get_metadata(&self) -> Option<&Metadata>;
+}
+
 pub trait NodeMetadataTrait:
 	TeebagCallIndexes
 	+ IMPCallIndexes
@@ -61,6 +65,7 @@ pub trait NodeMetadataTrait:
 	+ TimestampCallIndexes
 	+ EvmAssertionsCallIndexes
 	+ ScoreStakingCallIndexes
+	+ NodeMetadataProvider
 {
 }
 
@@ -74,7 +79,8 @@ impl<
 			+ BalancesCallIndexes
 			+ TimestampCallIndexes
 			+ EvmAssertionsCallIndexes
-			+ ScoreStakingCallIndexes,
+			+ ScoreStakingCallIndexes
+			+ NodeMetadataProvider,
 	> NodeMetadataTrait for T
 {
 }
@@ -105,10 +111,6 @@ impl NodeMetadata {
 			runtime_spec_version,
 			runtime_transaction_version,
 		}
-	}
-
-	pub fn get_metadata(&self) -> Option<&Metadata> {
-		self.node_metadata.as_ref()
 	}
 
 	/// Return the substrate chain runtime version.
@@ -183,5 +185,11 @@ impl NodeMetadata {
 				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
+	}
+}
+
+impl NodeMetadataProvider for NodeMetadata {
+	fn get_metadata(&self) -> Option<&Metadata> {
+		self.node_metadata.as_ref()
 	}
 }

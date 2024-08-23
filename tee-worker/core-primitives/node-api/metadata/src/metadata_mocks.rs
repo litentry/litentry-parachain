@@ -21,7 +21,7 @@ use crate::{
 	pallet_proxy::ProxyCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
 	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
 	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
-	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall, NodeMetadataProvider,
 };
 use codec::{Decode, Encode};
 
@@ -328,5 +328,11 @@ impl EvmAssertionsCallIndexes for NodeMetadataMock {
 
 	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
+	}
+}
+
+impl NodeMetadataProvider for NodeMetadataMock {
+	fn get_metadata(&self) -> Option<&Metadata> {
+		None
 	}
 }
