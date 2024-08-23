@@ -757,10 +757,10 @@ jobs:
           # Litentry
           # - test_name: lit-di-substrate-identity-test
           # - test_name: lit-di-evm-identity-test
-          # - test_name: lit-di-bitcoin-identity-test
-          # - test_name: lit-di-solana-identity-test
+          - test_name: lit-di-bitcoin-identity-test
+          - test_name: lit-di-solana-identity-test
           - test_name: lit-di-vc-test
-          # - test_name: lit-dr-vc-test
+          - test_name: lit-dr-vc-test
           # - test_name: lit-parentchain-nonce
           # - test_name: lit-test-failed-parentchain-extrinsic
           # - test_name: lit-twitter-identity-test
