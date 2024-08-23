@@ -22,7 +22,7 @@ pub mod pallet_asset_manager;
 pub mod pallet_balances;
 pub mod pallet_bridge;
 pub mod pallet_bridge_transfer;
-// pub mod pallet_collator_selection;
+pub mod pallet_collator_selection;
 pub mod pallet_collective;
 pub mod pallet_democracy;
 pub mod pallet_extrinsic_filter;
