@@ -146,21 +146,21 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 7
     // check runtime version is present
-    const paths = ['../../../../../runtime/litentry/src/lib.rs', '../../../../app-libs/sgx-runtime/src/lib.rs'].map(
-        (p) => path.resolve(process.cwd(), p) // resolve relative to this file.
+    const specPaths = ['../../../runtime/litentry/src/lib.rs', '../../app-libs/sgx-runtime/src/lib.rs'].map(
+        (p) => path.resolve(process.cwd(), p) // resolve relative to working directory: integration-tests
     );
     try {
         const [nodeVersion, sidechainVersion] = await Promise.all(
-            paths.map((relativePath) => readFile(relativePath, { encoding: 'utf-8' }))
+            specPaths.map((spec) => readFile(spec, { encoding: 'utf-8' }))
         ).then((specs) =>
             specs.map((spec) => {
                 const version = (spec.match(/spec_version:\s*(\d+)/) || [])[1];
-                return version ? parseInt(version) : undefined;
+                return version ? parseInt(version, 10) : undefined;
             })
         );
 
-        assert.isNumber(nodeVersion, `Couldn't get the runtime version`);
-        assert.isNumber(sidechainVersion, `Couldn't get the sidechain version`);
+        assert.isNumber(nodeVersion, `Couldn't get the node runtime version`);
+        assert.isNumber(sidechainVersion, `Couldn't get the sidechain runtime version`);
 
         assert.deepEqual(
             vcPayloadJson.issuer.runtimeVersion,
@@ -170,7 +170,9 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     } catch (error) {
         console.error(error);
         assert.fail(
-            `Couldn't read the runtime version from the runtime or sidechain specs. Paths: ${paths.join(', ')}`
+            `Couldn't read the runtime version from the node or sidechain specs. Are you running the tests from the right directory (integration-tests)? paths: ${specPaths.join(
+                ', '
+            )}`
         );
     }
 
