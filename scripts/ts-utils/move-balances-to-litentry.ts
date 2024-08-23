@@ -13,20 +13,21 @@ async function encodeExtrinsic() {
     // params: source chain endpoint, destination chain endpoint
     const { sourceApi, destinationAPI } = await initApi(
         'wss://rpc.litmus-parachain.litentry.io',
-        'wss://rpc.rococo-parachain.litentry.io'
+        'wss://rpc.litentry-parachain.litentry.io'
     );
     console.log(colors.green('Fetching system accounts entries...'));
 
     const entries = await sourceApi.query.system.account.entries();
     console.log(colors.green('system account entries length:'), entries.length);
 
+    let totalIssuance = BigInt(0);
     const data = entries.map((res: any) => {
         const account = res[0].toHuman();
         const data = res[1].toHuman();
         const free = BigInt(data.data.free.replace(/,/g, ''));
         const reserved = BigInt(data.data.reserved.replace(/,/g, ''));
         const totalBalance = free + reserved;
-
+        totalIssuance += totalBalance;
         return {
             account: account,
             free: free.toString(),
@@ -34,6 +35,8 @@ async function encodeExtrinsic() {
             totalBalance: totalBalance.toString(),
         };
     });
+
+    console.log('totalIssuance:', totalIssuance.toString());
 
     const filename = `system-accounts-entries-litmus-${new Date().toISOString().slice(0, 10)}.json`;
     const filepath = path.join(__dirname, filename);
@@ -70,7 +73,15 @@ async function encodeExtrinsic() {
                 preimageHash: preimageHash,
             });
 
-            hexData = [preimageHashes, extrinsicsData];
+            hexData = [
+                [
+                    {
+                        totalIssuance: totalIssuance.toString(),
+                    },
+                ],
+                preimageHashes,
+                extrinsicsData,
+            ];
             txs = [];
             if (data.length === 0) {
                 const extrinsicsFilename = `extrinsics-${new Date().toISOString().slice(0, 10)}.json`;
