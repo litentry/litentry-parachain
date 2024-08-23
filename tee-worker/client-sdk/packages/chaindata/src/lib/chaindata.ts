@@ -50,7 +50,10 @@ export const litentryProd: ChainSpec = {
   name: 'Litentry Pre Production Network',
   isTestnet: false,
   isDefault: true,
-  rpcs: [{ url: 'wss://rpc.litentry-parachain.litentry.io' }],
+  rpcs: [
+    { url: 'wss://litentry-rpc.dwellir.com' },
+    { url: 'wss://rpc.litentry-parachain.litentry.io' },
+  ],
   enclaveRpcs: [{ url: 'wss://enclave-prod.litentry.io' }],
 };
 
