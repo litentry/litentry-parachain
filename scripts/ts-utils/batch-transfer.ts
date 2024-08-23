@@ -1,4 +1,4 @@
-// run: pnpm exec ts-node move-balances-to-litentry.ts
+// run: pnpm exec ts-node batch-transfer.ts
 
 import { initApi } from './initApis';
 const fs = require('fs');
