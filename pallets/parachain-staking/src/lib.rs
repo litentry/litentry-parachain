@@ -195,7 +195,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		/// The source for adjusted inflation base.
 		type IssuanceAdapter: IssuanceAdapter<BalanceOf<Self>>;
-		/// ScoreStaking updater
+		/// Handler to notify when all delegations are removed for a delegator.
 		type OnAllDelegationRemoved: OnAllDelegationRemoved<Self>;
 	}
 
