@@ -39,9 +39,12 @@ pub use ita_sgx_runtime::{
 	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
 	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
-use itp_node_api::metadata::{
-	pallet_score_staking::ScoreStakingCallIndexes, pallet_system::SystemConstants,
-	provider::AccessNodeMetadata, NodeMetadataTrait,
+use itp_node_api::{
+	api_client::compose_call,
+	metadata::{
+		pallet_score_staking::ScoreStakingCallIndexes, pallet_system::SystemConstants,
+		provider::AccessNodeMetadata, NodeMetadataProvider, NodeMetadataTrait,
+	},
 };
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
@@ -68,6 +71,7 @@ use sp_core::{
 };
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
+use std::borrow::ToOwned;
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
@@ -143,8 +147,8 @@ pub enum TrustedCall {
 	send_erroneous_parentchain_call(Identity),
 	#[codec(index = 25)]
 	maybe_create_id_graph(Identity, Identity),
-	#[codec(index = 26)]
-	update_token_staking_amount(Identity, AccountId, Balance),
+	#[codec(index = 25)]
+	update_token_staking_amounts(Identity, Vec<(AccountId, Balance)>),
 	#[codec(index = 27)]
 	reward_distribution_completed(Identity),
 
@@ -233,7 +237,7 @@ impl TrustedCall {
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
-			Self::update_token_staking_amount(sender_identity, ..) => sender_identity,
+			Self::update_token_staking_amounts(sender_identity, ..) => sender_identity,
 			Self::reward_distribution_completed(sender_identity) => sender_identity,
 			#[cfg(feature = "development")]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
@@ -982,18 +986,39 @@ where
 
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::update_token_staking_amount(signer, account_id, staking_amount) => {
+			TrustedCall::update_token_staking_amounts(signer, updates) => {
 				let signer_account: AccountId32 =
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&signer_account)?;
 
-				let call = OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.update_token_staking_amount_call_indexes())??,
-					account_id,
-					staking_amount,
-				));
-				calls.push(ParentchainCall::Litentry(call));
+				let mut update_token_staking_amount_calls: Vec<OpaqueCall> = Vec::new();
+
+				for (account_id, staking_amount) in updates {
+					let call = OpaqueCall::from_tuple(&(
+						node_metadata_repo.get_from_metadata(|m| {
+							m.update_token_staking_amount_call_indexes()
+						})??,
+						account_id,
+						staking_amount,
+					));
+					update_token_staking_amount_calls.push(call);
+				}
+
+				let node_metadata = node_metadata_repo.get_from_metadata(|m| {
+					let metadata = m.get_metadata().expect("Metadata not set");
+					metadata.clone()
+				})?;
+
+				for batch in update_token_staking_amount_calls.chunks(500) {
+					let batch_call = OpaqueCall::from_tuple(&compose_call!(
+						node_metadata,
+						"Utility",
+						"batch",
+						batch
+					));
+
+					calls.push(ParentchainCall::Litentry(batch_call));
+				}
 
 				Ok(TrustedCallResult::Empty)
 			},

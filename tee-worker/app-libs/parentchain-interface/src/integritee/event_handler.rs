@@ -298,6 +298,8 @@ where
 
 		let enclave_account_id = executor.get_enclave_account().expect("no enclave account");
 
+		let mut updates: Vec<(AccountId, Balance)> = Vec::new();
+
 		for account_id in account_ids.iter() {
 			let default_id_graph = Vec::new();
 			let id_graph = accounts_graphs.get(account_id).unwrap_or(&default_id_graph);
@@ -308,18 +310,18 @@ where
 					Some(delegator.total)
 				})
 				.sum();
-			let trusted_call = TrustedCall::update_token_staking_amount(
-				enclave_account_id.clone().into(),
-				account_id.clone(),
-				staking_amount,
-			);
-			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
-			let trusted_operation =
-				TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
-			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-			executor.submit_trusted_call(shard, encrypted_trusted_call);
+			updates.push((account_id.clone(), staking_amount));
 		}
+		// Update the staking amounts
+		let trusted_call =
+			TrustedCall::update_token_staking_amounts(enclave_account_id.clone().into(), updates);
+		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation =
+			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);
+		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
+		executor.submit_trusted_call(shard, encrypted_trusted_call);
 
+		// Notify the parachain that the reward distribution is completed
 		let trusted_call = TrustedCall::reward_distribution_completed(enclave_account_id.into());
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
 		let trusted_operation =
