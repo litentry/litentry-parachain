@@ -128,7 +128,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"Litentry-paseo",
 		"litentry-paseo",
 		ChainType::Live,
-		"paseo".into(),
+		"rococo-local".into(),
 		DEFAULT_PARA_ID.into(),
 	)
 }

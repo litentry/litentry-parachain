@@ -422,7 +422,6 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|_config| {
 				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
 				let state_version = Cli::native_runtime_version(&spec).state_version();
-				println!("State Version: {:?}", state_version);
 				cmd.run::<Block>(&*spec, state_version)
 			})
 		},
