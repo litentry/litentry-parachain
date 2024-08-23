@@ -413,7 +413,7 @@ fn claim_works() {
 }
 
 #[test]
-fn clear_score_for_works() {
+fn on_all_delegation_removed_works() {
 	new_test_ext(true).execute_with(|| {
 		let bob = bob();
 		pallet_parachain_staking::DelegatorState::<Test>::insert(
@@ -429,7 +429,6 @@ fn clear_score_for_works() {
 		assert_eq!(ScoreStaking::total_score(), 1000);
 		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 1000);
 
-		// clear_score works
 		assert_ok!(ScoreStaking::on_all_delegation_removed(&bob));
 		assert_eq!(ScoreStaking::total_score(), 0);
 		assert_eq!(Scores::<Test>::get(&bob).unwrap().score, 0);
