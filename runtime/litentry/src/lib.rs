@@ -843,6 +843,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
 	type IssuanceAdapter = AssetsHandler;
+	type OnAllDelegationRemoved = ScoreStaking;
 }
 
 parameter_types! {
@@ -1040,7 +1041,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	pub ChainId: u64 = LITENTRY_PARA_ID.into();
+	pub ChainId: u64 = 212013; // LIT deployment year (21) + paraID (2013)
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);

@@ -22,8 +22,8 @@
 
 use crate::{
 	auto_compound::AutoCompoundDelegations, set::OrderedSet, BalanceOf, BottomDelegations,
-	CandidateInfo, Config, DelegatorState, Error, Event, Pallet, Round, RoundIndex, TopDelegations,
-	Total,
+	CandidateInfo, Config, DelegatorState, Error, Event, OnAllDelegationRemoved, Pallet, Round,
+	RoundIndex, TopDelegations, Total,
 };
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
 use parity_scale_codec::{Decode, Encode};
@@ -600,6 +600,9 @@ impl<
 			});
 			if leaving {
 				<DelegatorState<T>>::remove(&lowest_bottom_to_be_kicked.owner);
+				let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(
+					&lowest_bottom_to_be_kicked.owner,
+				);
 				Pallet::<T>::deposit_event(Event::DelegatorLeft {
 					delegator: lowest_bottom_to_be_kicked.owner,
 					unstaked_amount: lowest_bottom_to_be_kicked.amount,

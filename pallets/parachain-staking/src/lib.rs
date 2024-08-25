@@ -90,7 +90,8 @@ pub mod pallet {
 		set::OrderedSet,
 		traits::*,
 		types::*,
-		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, Range, WeightInfo,
+		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, OnAllDelegationRemoved, Range,
+		WeightInfo,
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -195,6 +196,8 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		/// The source for adjusted inflation base.
 		type IssuanceAdapter: IssuanceAdapter<BalanceOf<Self>>;
+		/// Handler to notify when all delegations are removed for a delegator.
+		type OnAllDelegationRemoved: OnAllDelegationRemoved<Self>;
 	}
 
 	#[pallet::error]
@@ -1025,6 +1028,7 @@ pub mod pallet {
 						// since it is assumed that they were removed incrementally before only the
 						// last delegation was left.
 						<DelegatorState<T>>::remove(&bond.owner);
+						let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(&bond.owner);
 					} else {
 						<DelegatorState<T>>::insert(&bond.owner, delegator);
 					}
