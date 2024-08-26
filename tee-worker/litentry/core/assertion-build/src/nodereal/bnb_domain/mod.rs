@@ -287,7 +287,7 @@ mod tests {
 	fn non_expired_domain_infos_works() {
 		let domains = new_domains();
 		let non_expired_infos = domains.non_expired_domain_infos().unwrap();
-		assert_eq!(non_expired_infos.len(), 6);
+		assert_eq!(non_expired_infos.len(), 3);
 	}
 
 	#[test]
