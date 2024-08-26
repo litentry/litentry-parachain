@@ -44,16 +44,19 @@ use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
 use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler<OCallApi, HandleState> {
+pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
 	pub ocall_api: Arc<OCallApi>,
 	pub state_handler: Arc<HandleState>,
+	pub node_metadata_repository: Arc<NodeMetadataRepository>,
 }
 
-impl<OCallApi, HS> ParentchainEventHandler<OCallApi, HS>
+impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
 where
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
@@ -338,12 +341,14 @@ fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
 	decode_hex(hex_key).ok()
 }
 
-impl<Executor, OCallApi, HS> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler<OCallApi, HS>
+impl<Executor, OCallApi, HS, NMR> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+	for ParentchainEventHandler<OCallApi, HS, NMR>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
 	OCallApi: EnclaveOnChainOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
+	NMR: AccessNodeMetadata,
+	NMR::MetadataType: NodeMetadataTrait,
 {
 	fn handle_events(
 		&self,
