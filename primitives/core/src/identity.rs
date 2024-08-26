@@ -14,16 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub extern crate alloc;
-
 use crate::{
 	assertion::network::{
 		all_bitcoin_web3networks, all_evm_web3networks, all_solana_web3networks,
 		all_substrate_web3networks, Web3Network,
 	},
-	AccountId,
+	format, str, AccountId, String, Vec,
 };
-use alloc::{format, str, string::String};
 use base58::{FromBase58, ToBase58};
 use core::fmt::{Debug, Formatter};
 use litentry_hex_utils::{decode_hex, hex_encode};
@@ -40,17 +37,15 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
 };
-use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
-type MaxStringLength = ConstU32<64>;
-pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
+pub type IdentityInnerString = BoundedVec<u8, ConstU32<64>>;
 
 pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
 
 impl Decode for IdentityString {
 	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-		let inner: BoundedVec<u8, MaxStringLength> = Decode::decode(input)?;
+		let inner: IdentityInnerString = Decode::decode(input)?;
 		Ok(IdentityString { inner })
 	}
 }
@@ -69,7 +64,7 @@ pub struct IdentityString {
 }
 
 impl TypeInfo for IdentityString {
-	type Identity = BoundedVec<u8, MaxStringLength>;
+	type Identity = IdentityInnerString;
 
 	fn type_info() -> Type {
 		TypeDefSequence::new(meta_type::<u8>()).into()
@@ -333,15 +328,17 @@ impl Identity {
 	}
 
 	// check if the given web3networks match the identity
-	pub fn matches_web3networks(&self, networks: &Vec<Web3Network>) -> bool {
+	pub fn matches_web3networks(&self, networks: &[Web3Network]) -> bool {
 		match self {
-			Identity::Substrate(_) =>
-				!networks.is_empty() && networks.iter().all(|n| n.is_substrate()),
+			Identity::Substrate(_) => {
+				!networks.is_empty() && networks.iter().all(|n| n.is_substrate())
+			},
 			Identity::Evm(_) => !networks.is_empty() && networks.iter().all(|n| n.is_evm()),
 			Identity::Bitcoin(_) => !networks.is_empty() && networks.iter().all(|n| n.is_bitcoin()),
 			Identity::Solana(_) => !networks.is_empty() && networks.iter().all(|n| n.is_solana()),
-			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) =>
-				networks.is_empty(),
+			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => {
+				networks.is_empty()
+			},
 		}
 	}
 
@@ -349,8 +346,9 @@ impl Identity {
 	pub fn to_account_id(&self) -> Option<AccountId> {
 		match self {
 			Identity::Substrate(address) | Identity::Solana(address) => Some(address.into()),
-			Identity::Evm(address) =>
-				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()))),
+			Identity::Evm(address) => {
+				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref())))
+			},
 			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
 			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => None,
 		}
@@ -368,21 +366,21 @@ impl Identity {
 						.as_slice()
 						.try_into()
 						.map_err(|_| "Address32 conversion error")?;
-					return Ok(Identity::Substrate(handle))
+					return Ok(Identity::Substrate(handle));
 				} else if v[0] == "evm" {
 					let handle = decode_hex(v[1])
 						.unwrap()
 						.as_slice()
 						.try_into()
 						.map_err(|_| "Address20 conversion error")?;
-					return Ok(Identity::Evm(handle))
+					return Ok(Identity::Evm(handle));
 				} else if v[0] == "bitcoin" {
 					let handle = decode_hex(v[1])
 						.unwrap()
 						.as_slice()
 						.try_into()
 						.map_err(|_| "Address33 conversion error")?;
-					return Ok(Identity::Bitcoin(handle))
+					return Ok(Identity::Bitcoin(handle));
 				} else if v[0] == "solana" {
 					let handle = v[1]
 						.from_base58()
@@ -390,18 +388,18 @@ impl Identity {
 						.as_slice()
 						.try_into()
 						.map_err(|_| "Address32 conversion error")?;
-					return Ok(Identity::Solana(handle))
+					return Ok(Identity::Solana(handle));
 				} else if v[0] == "github" {
-					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())))
+					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())));
 				} else if v[0] == "discord" {
-					return Ok(Identity::Discord(IdentityString::new(v[1].as_bytes().to_vec())))
+					return Ok(Identity::Discord(IdentityString::new(v[1].as_bytes().to_vec())));
 				} else if v[0] == "twitter" {
-					return Ok(Identity::Twitter(IdentityString::new(v[1].as_bytes().to_vec())))
+					return Ok(Identity::Twitter(IdentityString::new(v[1].as_bytes().to_vec())));
 				} else {
-					return Err("Unknown did type")
+					return Err("Unknown did type");
 				}
 			} else {
-				return Err("Wrong did suffix")
+				return Err("Wrong did suffix");
 			}
 		}
 
@@ -495,7 +493,6 @@ impl From<[u8; 33]> for Identity {
 mod tests {
 	use super::*;
 	use parity_scale_codec::DecodeAll;
-	use sp_std::vec;
 	use strum::IntoEnumIterator;
 
 	#[test]

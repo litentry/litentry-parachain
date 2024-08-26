@@ -71,9 +71,8 @@ mod benchmarking;
 pub mod weights;
 
 use frame_support::{
-	dispatch::{CallMetadata, GetCallMetadata},
 	pallet_prelude::*,
-	traits::{Contains, StorageVersion},
+	traits::{CallMetadata, Contains, GetCallMetadata, StorageVersion},
 	transactional,
 };
 use frame_system::pallet_prelude::*;
@@ -247,7 +246,7 @@ pub mod pallet {
 					function_name_bytes,
 				});
 			} else {
-				return Err(Error::<T>::ExtrinsicNotBlocked.into())
+				return Err(Error::<T>::ExtrinsicNotBlocked.into());
 			}
 			// do not pay the fee upon successful unblock
 			Ok(Pays::No.into())
@@ -274,7 +273,7 @@ pub mod pallet {
 				)) && !BlockedExtrinsics::<T>::contains_key((
 					pallet_name.as_bytes(),
 					Vec::<u8>::default(),
-				))
+				));
 			}
 
 			false

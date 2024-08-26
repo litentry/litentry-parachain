@@ -60,7 +60,7 @@ impl<AccountId, RuntimeCall: GetDispatchInfo, Filter: Contains<RuntimeCall>>
 		if !paid_normal_call {
 			return Some(PrecompileFailure::Error {
 				exit_status: ExitError::Other("invalid call".into()),
-			})
+			});
 		}
 		if Filter::contains(call) {
 			None
@@ -83,9 +83,10 @@ impl Contains<RuntimeCall> for WhitelistedCalls {
 	fn contains(t: &RuntimeCall) -> bool {
 		match t {
 			RuntimeCall::Assets(pallet_assets::Call::transfer { .. }) => true,
-			RuntimeCall::Utility(pallet_utility::Call::batch { calls }) |
-			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls }) =>
-				calls.iter().all(WhitelistedCalls::contains),
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls })
+			| RuntimeCall::Utility(pallet_utility::Call::batch_all { calls }) => {
+				calls.iter().all(WhitelistedCalls::contains)
+			},
 			_ => false,
 		}
 	}

@@ -24,15 +24,15 @@ use crate::{
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use log::{info, warn};
+use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::{hexdisplay::HexDisplay, Encode};
-use sp_runtime::traits::AccountIdConversion;
-use std::net::SocketAddr;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+use std::{io::Write, net::SocketAddr};
 
 const UNSUPPORTED_CHAIN_MESSAGE: &str = "Unsupported chain spec, please use litmus* or litentry*";
 
@@ -160,8 +160,10 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		load_spec(id)
 	}
+}
 
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+impl Cli {
+	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_litmus() {
 			&litmus_parachain_runtime::VERSION
 		} else if chain_spec.is_rococo() {
@@ -204,10 +206,6 @@ impl SubstrateCli for RelayChainCli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
-	}
-
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		polkadot_cli::Cli::native_runtime_version(chain_spec)
 	}
 }
 
@@ -369,12 +367,22 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 
 		Some(Subcommand::ExportGenesisState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|_config| {
-				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-				let state_version = Cli::native_runtime_version(&spec).state_version();
-				cmd.run::<Block>(&*spec, state_version)
-			})
+			// TODO: is this the best way?
+			let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+			let state_version = Cli::runtime_version(&spec).state_version();
+			let block: Block = generate_genesis_block(&*spec, state_version)?;
+			let raw_header = block.header().encode();
+			let output_buf = if cmd.raw {
+				raw_header
+			} else {
+				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+			};
+			if let Some(output) = &cmd.output {
+				std::fs::write(output, output_buf)?;
+			} else {
+				std::io::stdout().write_all(&output_buf)?;
+			}
+			Ok(())
 		},
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -389,28 +397,21 @@ pub fn run() -> Result<()> {
 
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) =>
+				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
 						if !runner.config().chain_spec.is_dev() {
-							return Err("Only dev chain should be used in benchmark".into())
+							return Err("Only dev chain should be used in benchmark".into());
 						}
 
-						runner.sync_run(|config| {
-							if config.chain_spec.is_litmus() {
-								cmd.run::<Block, LitmusParachainRuntimeExecutor>(config)
-							} else if config.chain_spec.is_litentry() {
-								cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
-							} else if config.chain_spec.is_rococo() {
-								cmd.run::<Block, RococoParachainRuntimeExecutor>(config)
-							} else {
-								Err(UNSUPPORTED_CHAIN_MESSAGE.into())
-							}
-						})
+						use crate::service::HostFunctions;
+
+						runner.sync_run(|config| cmd.run::<Block, HostFunctions>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 						You can enable it with `--features runtime-benchmarks`."
 							.into())
-					},
+					}
+				},
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					construct_benchmark_partials!(config, |partials| cmd.run(partials.client))
 				}),
@@ -430,8 +431,9 @@ pub fn run() -> Result<()> {
 					})
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-				BenchmarkCmd::Machine(cmd) =>
-					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				BenchmarkCmd::Machine(cmd) => {
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+				},
 				// NOTE: this allows the Client to leniently implement
 				// new benchmark commands without requiring a companion MR.
 				#[allow(unreachable_patterns)]
@@ -439,6 +441,7 @@ pub fn run() -> Result<()> {
 			}
 		},
 		#[cfg(feature = "try-runtime")]
+		#[allow(deprecated)]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use core_primitives::MILLISECS_PER_BLOCK;
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
@@ -489,8 +492,9 @@ pub fn run() -> Result<()> {
 			}
 		},
 		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) =>
-			Err("Try-runtime must be enabled by `--features try-runtime`".into()),
+		Some(Subcommand::TryRuntime) => {
+			Err("Try-runtime must be enabled by `--features try-runtime`".into())
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -509,12 +513,12 @@ pub fn run() -> Result<()> {
 
 			runner.run_node_until_exit(|config| async move {
 				if is_standalone {
-					return crate::service::start_standalone_node::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>(
-						config,
-						evm_tracing_config
-					)
+					return crate::service::start_standalone_node::<
+						rococo_parachain_runtime::RuntimeApi,
+						RococoParachainRuntimeExecutor,
+					>(config, evm_tracing_config)
 					.await
-					.map_err(Into::into)
+					.map_err(Into::into);
 				}
 
 				let hwbench = if !cli.no_hardware_benchmarks {
@@ -526,21 +530,23 @@ pub fn run() -> Result<()> {
 					None
 				};
 
-				let para_id = chain_specs::Extensions::try_get(&*config.chain_spec)
-					.map(|e| e.para_id)
-					.ok_or("Could not find parachain ID in chain-spec.")?;
+				let para_id = ParaId::from(
+					chain_specs::Extensions::try_get(&*config.chain_spec)
+						.map(|e| e.para_id)
+						.ok_or("Could not find ParaId in chain spec")?,
+				);
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
 					[RelayChainCli::executable_name()].iter().chain(cli.relay_chain_args.iter()),
 				);
 
-				let id = ParaId::from(para_id);
-
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
+						&para_id,
+					);
 
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
+				let state_version = Cli::runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header.encode()));
@@ -550,55 +556,39 @@ pub fn run() -> Result<()> {
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
+				info!("Parachain id: {:?}", para_id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				if !collator_options.relay_chain_rpc_urls.is_empty() && !cli.relay_chain_args.is_empty() {
-					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
-				}
-
 				let additional_config = AdditionalConfig {
-                    evm_tracing_config,
-                    enable_evm_rpc: cli.enable_evm_rpc,
-                    proposer_block_size_limit: cli.proposer_block_size_limit,
-                    proposer_soft_deadline_percent: cli.proposer_soft_deadline_percent
-                };
+					evm_tracing_config,
+					enable_evm_rpc: cli.enable_evm_rpc,
+					proposer_block_size_limit: cli.proposer_block_size_limit,
+					proposer_soft_deadline_percent: cli.proposer_soft_deadline_percent,
+				};
 
 				if config.chain_spec.is_litmus() {
-					crate::service::start_node::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>(
-						config,
-						polkadot_config,
-						collator_options,
-						id,
-						additional_config,
-						hwbench,
-					)
+					crate::service::start_node::<
+						litmus_parachain_runtime::RuntimeApi,
+						LitmusParachainRuntimeExecutor,
+					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_litentry() {
-					crate::service::start_node::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>(
-						config,
-						polkadot_config,
-						collator_options,
-						id,
-						additional_config,
-						hwbench,
-					)
+					crate::service::start_node::<
+						litentry_parachain_runtime::RuntimeApi,
+						LitentryParachainRuntimeExecutor,
+					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_rococo() {
-					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>(
-						config,
-						polkadot_config,
-						collator_options,
-						id,
-						additional_config,
-						hwbench,
-					)
+					crate::service::start_node::<
+						rococo_parachain_runtime::RuntimeApi,
+						RococoParachainRuntimeExecutor,
+					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
@@ -615,12 +605,8 @@ impl DefaultConfigurationValues for RelayChainCli {
 		30334
 	}
 
-	fn rpc_ws_listen_port() -> u16 {
+	fn rpc_listen_port() -> u16 {
 		9945
-	}
-
-	fn rpc_http_listen_port() -> u16 {
-		9934
 	}
 
 	fn prometheus_listen_port() -> u16 {
@@ -652,16 +638,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
-	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_http(default_listen_port)
-	}
-
-	fn rpc_ipc(&self) -> Result<Option<String>> {
-		self.base.base.rpc_ipc()
-	}
-
-	fn rpc_ws(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_ws(default_listen_port)
+	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+		self.base.base.rpc_addr(default_listen_port)
 	}
 
 	fn prometheus_config(
@@ -707,8 +685,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_methods()
 	}
 
-	fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
-		self.base.base.rpc_ws_max_connections()
+	fn rpc_max_connections(&self) -> Result<u32> {
+		self.base.base.rpc_max_connections()
 	}
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
