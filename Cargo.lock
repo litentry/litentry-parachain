@@ -7166,6 +7166,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "pallet-assets",
  "pallet-assets-handler",
  "pallet-balances",
  "pallet-bridge",
