@@ -6938,6 +6938,7 @@ dependencies = [
  "pallet-balances",
  "pallet-bridge",
  "pallet-bridge-common",
+ "pallet-bridge-transfer",
  "pallet-parachain-staking",
  "parity-scale-codec",
  "scale-info",
