@@ -7,7 +7,11 @@ repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.1.0'
 
 [dependencies]
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+
 frame-support = { workspace = true }
+sp-runtime = { workspace = true }
 
 [features]
 default = ["std"]
@@ -15,6 +19,9 @@ runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
 ]
 std = [
+    "scale-info/std",
+    "parity-scale-codec/std",
     "frame-support/std",
+    "sp-runtime/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
