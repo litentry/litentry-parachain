@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::alloc::string::String;
+use crate::{CoreHash as Hash, String, Vec};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::{hash::Hash, vec::Vec};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, IntoStaticStr};
 
@@ -32,7 +31,7 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Evm(EvmNetwork),
 /// }
 ///
-/// TODO: theoretically this should the the union of the supported networks of all data providers
+/// TODO: theoretically this should the union of the supported networks of all data providers
 ///
 /// Since the incorporation of Bitcoin network, the name `Web3Network` might not be the best word,
 /// as different kinds of bitcoin types (BitcoinP2tr, BitcoinP2pkh, ...) still belong to the same
@@ -119,10 +118,10 @@ impl Web3Network {
 	pub fn is_substrate(&self) -> bool {
 		matches!(
 			self,
-			Self::Polkadot |
-				Self::Kusama | Self::Litentry |
-				Self::Litmus | Self::LitentryRococo |
-				Self::Khala | Self::SubstrateTestnet
+			Self::Polkadot
+				| Self::Kusama | Self::Litentry
+				| Self::Litmus | Self::LitentryRococo
+				| Self::Khala | Self::SubstrateTestnet
 		)
 	}
 
@@ -133,11 +132,11 @@ impl Web3Network {
 	pub fn is_bitcoin(&self) -> bool {
 		matches!(
 			self,
-			Self::BitcoinP2tr |
-				Self::BitcoinP2pkh |
-				Self::BitcoinP2sh |
-				Self::BitcoinP2wpkh |
-				Self::BitcoinP2wsh
+			Self::BitcoinP2tr
+				| Self::BitcoinP2pkh
+				| Self::BitcoinP2sh
+				| Self::BitcoinP2wpkh
+				| Self::BitcoinP2wsh
 		)
 	}
 

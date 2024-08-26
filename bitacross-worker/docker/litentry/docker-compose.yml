@@ -3,7 +3,6 @@ services:
   relaychain-alice:
     ports:
       - ${AliceWSPort:-9946}:9944
-      - ${AliceRPCPort:-9936}:9933
       - ${AlicePort:-30336}:30333
     volumes:
       - relaychain-alice:/data
@@ -29,7 +28,6 @@ services:
   relaychain-bob:
     ports:
       - ${BobWSPort:-9947}:9944
-      - ${BobRPCPort:-9937}:9933
       - ${BobPort:-30337}:30333
     volumes:
       - relaychain-bob:/data
@@ -52,7 +50,6 @@ services:
   parachain-2106-0:
     ports:
       - ${CollatorWSPort:-9944}:9944
-      - ${CollatorRPCPort:-9933}:9933
       - ${CollatorPort:-30333}:30333
     volumes:
       - parachain-2106-0:/data
@@ -62,7 +59,6 @@ services:
     command:
       - --base-path=/data
       - --chain=/app/rococo-dev-2106.json
-      - --ws-external
       - --rpc-external
       - --rpc-cors=all
       - --name=parachain-2106-0

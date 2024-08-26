@@ -332,15 +332,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
-      - uses: actions/checkout@v4
+        uses: ./.github/actions/disk-cleanup
 
       - name: Build docker image
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
@@ -380,15 +376,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
-      - uses: actions/checkout@v4
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -524,15 +516,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
-      - uses: actions/checkout@v4
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -696,13 +684,13 @@ jobs:
       - name: Run all unittests
         run: |
           echo "::group::core-primitives unittest"
-          cargo test --locked --release -p core-primitives --lib
+          cargo test --locked -p core-primitives --lib
           echo "::endgroup::"
           echo "::group::all pallets unittest"
-          cargo test --locked --release -p pallet-* --lib
+          cargo test --locked -p pallet-* --lib
           echo "::endgroup::"
           echo "::group::all pallets unittest with runtime-benchmarks feature"
-          cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+          cargo test --locked -p pallet-* --lib --features=runtime-benchmarks
           echo "::endgroup::"
 
       - name: Fail early
@@ -719,6 +707,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
+
       - name: Install toolchain
         run: rustup show
 
@@ -732,13 +724,13 @@ jobs:
       - name: Run runtime tests
         run: |
           echo "::group::rococo runtime test"
-          cargo test --locked --release -p rococo-parachain-runtime --lib
+          cargo test --locked -p rococo-parachain-runtime --lib
           echo "::endgroup::"
           echo "::group::litmus runtime test"
-          cargo test --locked --release -p litmus-parachain-runtime --lib
+          cargo test --locked -p litmus-parachain-runtime --lib
           echo "::endgroup::"
           echo "::group::litentry runtime test"
-          cargo test --locked --release -p litentry-parachain-runtime --lib
+          cargo test --locked -p litentry-parachain-runtime --lib
           echo "::endgroup::"
 
       - name: Fail early

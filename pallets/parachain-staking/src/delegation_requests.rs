@@ -26,16 +26,16 @@ use crate::{
 		Event, Pallet, Round, RoundIndex, Total,
 	},
 	weights::WeightInfo,
-	AutoCompoundDelegations, Delegator,
+	AutoCompoundDelegations, Delegator, OnAllDelegationRemoved,
 };
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	traits::{Get, ReservableCurrency},
-	RuntimeDebug,
 };
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use sp_core::RuntimeDebug;
 use sp_runtime::traits::Saturating;
 use sp_std::{vec, vec::Vec};
 
@@ -248,6 +248,7 @@ impl<T: Config> Pallet<T> {
 				<DelegationScheduledRequests<T>>::insert(collator, scheduled_requests);
 				if leaving {
 					<DelegatorState<T>>::remove(&delegator);
+					let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(&delegator);
 					Self::deposit_event(Event::DelegatorLeft {
 						delegator,
 						unstaked_amount: amount,
@@ -307,7 +308,7 @@ impl<T: Config> Pallet<T> {
 						} else {
 							// must rm entire delegation if bond.amount <= less or cancel request
 							Err(<Error<T>>::DelegationBelowMin.into())
-						}
+						};
 					}
 				}
 				Err(<Error<T>>::DelegationDNE.into())
@@ -354,7 +355,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		if existing_revoke_count == state.delegations.0.len() {
-			return Err(<Error<T>>::DelegatorAlreadyLeaving.into())
+			return Err(<Error<T>>::DelegatorAlreadyLeaving.into());
 		}
 
 		updated_scheduled_requests
@@ -473,6 +474,7 @@ impl<T: Config> Pallet<T> {
 			unstaked_amount: state.total,
 		});
 		<DelegatorState<T>>::remove(&delegator);
+		let _ = T::OnAllDelegationRemoved::on_all_delegation_removed(&delegator);
 		let actual_weight =
 			Some(T::WeightInfo::execute_leave_delegators(state.delegations.0.len() as u32));
 		Ok(actual_weight.into())

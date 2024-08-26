@@ -19,9 +19,7 @@ use crate::{
 	self as pallet_score_staking, AccountIdConvert, Config, Perbill, PoolState, RoundSetting,
 };
 use frame_support::{
-	assert_ok, construct_runtime, ord_parameter_types,
-	pallet_prelude::GenesisBuild,
-	parameter_types,
+	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -30,18 +28,12 @@ use sp_keyring::AccountKeyring;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
-	Percent,
+	BuildStorage, Percent,
 };
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-
-pub type BlockNumber = u32;
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Test>,
@@ -53,10 +45,7 @@ pub type SignedExtra = (
 );
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -72,16 +61,15 @@ impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -104,7 +92,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
 	type MaxLocks = ();
-	type Balance = Balance;
+	type Balance = u128;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
@@ -112,10 +100,10 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
-	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 parameter_types! {
@@ -163,6 +151,7 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type OnAllDelegationRemoved = pallet_score_staking::Pallet<Test>;
 }
 
 parameter_types! {
@@ -192,15 +181,17 @@ pub fn charlie() -> AccountId {
 }
 
 pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> { balances: vec![(alice(), 2 * UNIT)] }
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-	let genesis_config: pallet_score_staking::GenesisConfig<Test> =
-		crate::GenesisConfig { state: PoolState::Stopped, marker: Default::default() };
-
-	GenesisBuild::<Test>::assimilate_storage(&genesis_config, &mut t).unwrap();
+	pallet_score_staking::GenesisConfig::<Test> {
+		state: PoolState::Stopped,
+		marker: Default::default(),
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
@@ -216,8 +207,51 @@ pub fn new_test_ext(fast_round: bool) -> sp_io::TestExternalities {
 	ext
 }
 
+pub fn new_test_ext_with_parachain_staking() -> sp_io::TestExternalities {
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![(alice(), 2 * UNIT), (bob(), 10 * UNIT)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+	pallet_parachain_staking::GenesisConfig::<Test> {
+		candidates: vec![(alice(), 10)],
+		delegations: vec![],
+		inflation_config: pallet_parachain_staking::InflationInfo {
+			expect: pallet_parachain_staking::Range { min: 700, ideal: 700, max: 700 },
+			// not used
+			annual: pallet_parachain_staking::Range {
+				min: Perbill::from_percent(50),
+				ideal: Perbill::from_percent(50),
+				max: Perbill::from_percent(50),
+			},
+			// unrealistically high parameterization, only for testing
+			round: pallet_parachain_staking::Range {
+				min: Perbill::from_percent(5),
+				ideal: Perbill::from_percent(5),
+				max: Perbill::from_percent(5),
+			},
+		},
+	}
+	.assimilate_storage(&mut t)
+	.expect("Parachain Staking's storage can be assimilated");
+
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(ScoreStaking::set_score_feeder(RuntimeOrigin::root(), alice()));
+		assert_ok!(ScoreStaking::set_round_config(
+			RuntimeOrigin::root(),
+			RoundSetting { interval: 5, stake_coef_n: 1, stake_coef_m: 2 }
+		));
+	});
+
+	ext
+}
+
 /// Run until a particular block.
-pub fn run_to_block(n: u32) {
+pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		ScoreStaking::on_finalize(System::block_number());
 		ParachainStaking::on_finalize(System::block_number());

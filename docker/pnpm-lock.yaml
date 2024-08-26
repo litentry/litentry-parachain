@@ -6,13 +6,13 @@ settings:
 
 dependencies:
   '@open-web3/parachain-launch':
-    specifier: github:Kailai-Wang/parachain-launch#87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0
-    version: github.com/Kailai-Wang/parachain-launch/87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0
+    specifier: ^2.0.0
+    version: 2.0.0
 
 packages:
 
-  /@noble/curves@1.5.0:
-    resolution: {integrity: sha512-J5EKamIHnKPyClwVrzmaf5wSdQXgdHcPZIZLu3bwnbeCx8/7NPK5q2ZBWF+5FvYGByjiQQsJYX6jfgB2wDPn3A==}
+  /@noble/curves@1.4.2:
+    resolution: {integrity: sha512-TavHr8qycMChk8UwMld0ZDRvatedkzWfH8IiaeGCfymOP5i0hSCozz9vHOL0nkwk7HRMlFnAiKpS2jrUmSybcw==}
     dependencies:
       '@noble/hashes': 1.4.0
     dev: false
@@ -20,6 +20,25 @@ packages:
   /@noble/hashes@1.4.0:
     resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
     engines: {node: '>= 16'}
+    dev: false
+
+  /@open-web3/parachain-launch@2.0.0:
+    resolution: {integrity: sha512-Blerkp6dFTGoddlOeRysEh4CH4ClVEJ7SQh5nSNytwVd8AhrqNAnWlMmnqjZ5FHK2djXMAi4wowEychnetuA7Q==}
+    hasBin: true
+    dependencies:
+      '@polkadot/api': 10.13.1
+      '@polkadot/keyring': 12.6.2(@polkadot/util-crypto@12.6.2)(@polkadot/util@12.6.2)
+      '@polkadot/util': 12.6.2
+      '@polkadot/util-crypto': 12.6.2(@polkadot/util@12.6.2)
+      lodash: 4.17.21
+      readline-sync: 1.4.10
+      shelljs: 0.8.5
+      yaml: 2.5.0
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
     dev: false
 
   /@polkadot-api/client@0.0.1-492c132563ea6b40ae1fc5470dec4cd18768d182.1.0(rxjs@7.8.1):
@@ -303,7 +322,7 @@ packages:
     peerDependencies:
       '@polkadot/util': 12.6.2
     dependencies:
-      '@noble/curves': 1.5.0
+      '@noble/curves': 1.4.2
       '@noble/hashes': 1.4.0
       '@polkadot/networks': 12.6.2
       '@polkadot/util': 12.6.2
@@ -480,8 +499,8 @@ packages:
     dev: false
     optional: true
 
-  /@substrate/connect-known-chains@1.2.2:
-    resolution: {integrity: sha512-gOGrXSWA2d/3kf8Yco00VlHZl48smzAGW5Z9MDxMht98hRpT2yEEN4N5QdoEKMI4ihDW8goXGzmp79D0hFPpuA==}
+  /@substrate/connect-known-chains@1.2.0:
+    resolution: {integrity: sha512-BgcTHKteSAcEQs5ySNTYOO6ODQHVHwPgDrjYQhL0r8ZygY4cyXa5e2O//3tXNJiDopFHdqO8FBAy2Gbht0i0PA==}
     requiresBuild: true
     dev: false
     optional: true
@@ -491,7 +510,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@substrate/connect-extension-protocol': 2.0.0
-      '@substrate/connect-known-chains': 1.2.2
+      '@substrate/connect-known-chains': 1.2.0
       '@substrate/light-client-extension-helpers': 0.0.4(smoldot@2.0.22)
       smoldot: 2.0.22
     transitivePeerDependencies:
@@ -511,7 +530,7 @@ packages:
       '@polkadot-api/json-rpc-provider-proxy': 0.0.1-492c132563ea6b40ae1fc5470dec4cd18768d182.1.0
       '@polkadot-api/substrate-client': 0.0.1-492c132563ea6b40ae1fc5470dec4cd18768d182.1.0
       '@substrate/connect-extension-protocol': 2.0.0
-      '@substrate/connect-known-chains': 1.2.2
+      '@substrate/connect-known-chains': 1.2.0
       rxjs: 7.8.1
       smoldot: 2.0.22
     dev: false
@@ -524,11 +543,11 @@ packages:
   /@types/bn.js@5.1.5:
     resolution: {integrity: sha512-V46N0zwKRF5Q00AZ6hWtN0T8gGmDUaUzLWQvHFo5yThtVwK/VCenFY3wXVbOvNfajEpsTfQM4IN9k/d6gUVX3A==}
     dependencies:
-      '@types/node': 22.2.0
+      '@types/node': 20.14.12
     dev: false
 
-  /@types/node@22.2.0:
-    resolution: {integrity: sha512-bm6EG6/pCpkxDf/0gDNDdtDILMOHgaQBVOJGdwsqClnxA3xL6jtMv76rLBc006RVMWbmaf0xbmom4Z/5o2nRkQ==}
+  /@types/node@20.14.12:
+    resolution: {integrity: sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ==}
     dependencies:
       undici-types: 6.13.0
     dev: false
@@ -589,8 +608,8 @@ packages:
     engines: {node: '>= 12'}
     dev: false
 
-  /debug@4.3.6:
-    resolution: {integrity: sha512-O/09Bd4Z1fBrU4VzkhFqVgpPzaGbw6Sm9FEkBT1A/YBXQFGuuSxa1dN2nxgxS34JmKXqYx8CZAwEVoJFImUXIg==}
+  /debug@4.3.5:
+    resolution: {integrity: sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -717,7 +736,7 @@ packages:
     resolution: {integrity: sha512-yAyTfdeNJGGBFxWdzSKCBYxs5FxLbCg5X5Q4ets974hcQzG1+qCxvIyOo4j2Ry6MUlhWVMX4OoYDefAIIwupjw==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.6
+      debug: 4.3.5
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:
@@ -904,25 +923,4 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: false
-
-  github.com/Kailai-Wang/parachain-launch/87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0:
-    resolution: {tarball: https://codeload.github.com/Kailai-Wang/parachain-launch/tar.gz/87874c95b1738cb3f2a9fa1beef599a3b7dbfaf0}
-    name: '@open-web3/parachain-launch'
-    version: 1.4.2
-    hasBin: true
-    dependencies:
-      '@polkadot/api': 10.13.1
-      '@polkadot/keyring': 12.6.2(@polkadot/util-crypto@12.6.2)(@polkadot/util@12.6.2)
-      '@polkadot/util': 12.6.2
-      '@polkadot/util-crypto': 12.6.2(@polkadot/util@12.6.2)
-      lodash: 4.17.21
-      readline-sync: 1.4.10
-      shelljs: 0.8.5
-      yaml: 2.5.0
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
     dev: false

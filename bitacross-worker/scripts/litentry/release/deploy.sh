@@ -325,13 +325,17 @@ function build {
 
     # download polkadot
     echo "Downloading polkadot binary ..."
-    url="https://github.com/paritytech/polkadot/releases/download/v0.9.42/polkadot"
-    polkadot_bin="$PARACHAIN_BASEDIR/polkadot"
-    wget -O "$polkadot_bin" -q "$url"
-    chmod a+x "$polkadot_bin"
-    if [ ! -s "$polkadot_bin" ]; then
-      echo "$polkadot_bin is 0 bytes, download URL: $url" && exit 1
-    fi
+  
+    for f in polkadot-execute-worker polkadot-prepare-worker polkadot; do
+      url="https://github.com/paritytech/polkadot-sdk/releases/download/polkadot-v1.1.0/$f"
+      polkadot_bin="$PARACHAIN_BASEDIR/$f"
+      wget -O "$polkadot_bin" -q "$url"
+      chmod a+x "$polkadot_bin"
+      if [ ! -s "$polkadot_bin" ]; then
+        echo "$polkadot_bin is 0 bytes, download URL: $url" && exit 1
+      fi
+    done
+
     if ! "$polkadot_bin" --version &> /dev/null; then
       echo "Cannot execute $polkadot_bin, wrong executable?" && exit 1
     fi

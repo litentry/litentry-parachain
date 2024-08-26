@@ -31,7 +31,7 @@ pub mod rococo;
 
 // This is a default chain spec using litentry genesis config
 pub type ChainSpec =
-	sc_service::GenericChainSpec<litentry_parachain_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<litentry_parachain_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
