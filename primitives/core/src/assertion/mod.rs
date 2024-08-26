@@ -75,7 +75,7 @@ pub enum Assertion {
 	#[codec(index = 5)]
 	A7(ParameterString),                                    // (minimum_amount)
 	#[codec(index = 6)]
-	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(BoundedWeb3Network),                                 // litentry, polkadot, kusama, khala, ethereum
 	#[codec(index = 7)]
 	A10(ParameterString),                                   // (minimum_amount)
 	#[codec(index = 8)]
@@ -142,11 +142,10 @@ pub enum Assertion {
 	Dynamic(DynamicParams)
 }
 
-const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
+const A8_SUPPORTED_NETWORKS: [Web3Network; 5] = [
 	Web3Network::Polkadot,
 	Web3Network::Kusama,
 	Web3Network::Litentry,
-	Web3Network::Litmus,
 	Web3Network::Khala,
 	Web3Network::Ethereum,
 ];
@@ -164,7 +163,7 @@ impl Assertion {
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
 			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
-			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
+			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Ethereum],
 			Self::A7(..) | Self::A14 => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
 			Self::A10(..)
