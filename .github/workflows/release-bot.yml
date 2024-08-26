@@ -25,21 +25,6 @@ jobs:
             🚀 A new client release has been built: https://github.com/litentry/litentry-parachain/releases/tag/${{ github.event.release.tag_name }}
             ✨ Please update the client using the docker image litentry/litentry-parachain:$DOCKER_TAG
 
-      - name: Update litmus image version
-        uses: "OnFinality-io/action-onf-release@v1"
-        continue-on-error: true
-        with:
-          # These keys should be in your GitHub secrets
-          # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
-          onf-access-key: ${{ secrets.ONF_ACCESS_KEY }}
-          onf-secret-key: ${{ secrets.ONF_SECRET_KEY }}
-          onf-workspace-id: ${{ secrets.ONF_WORKSPACE_ID }}
-          onf-network-key: litmus-onfinality-key
-          # Add a new image version to network spec
-          onf-sub-command: image
-          onf-action: add
-          image-version: $DOCKER_TAG
-
       - name: Update litentry image version
         uses: "OnFinality-io/action-onf-release@v1"
         continue-on-error: true
