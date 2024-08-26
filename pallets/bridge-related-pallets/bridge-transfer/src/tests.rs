@@ -83,6 +83,10 @@ fn transfer_assets() {
 		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
 		assert_events(vec![
 			RuntimeEvent::Balances(balances::Event::Burned { who: RELAYER_A, amount: 100 }),
+			RuntimeEvent::Balances(pallet_balances::Event::Minted {
+				who: TreasuryAccount::get(),
+				amount: 0,
+			}),
 			RuntimeEvent::AssetsHandler(pallet_assets_handler::Event::TokenBridgeOut {
 				asset_id: None,
 				from: RELAYER_A,
