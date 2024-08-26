@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
+#![allow(dead_code)]
 
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
@@ -111,7 +112,7 @@ pub mod pallet {
 		},
 		ParentchainBlockProcessed {
 			who: T::AccountId,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			block_hash: H256,
 			task_merkle_root: H256,
 		},
@@ -280,7 +281,6 @@ pub mod pallet {
 		pub mode: OperationalMode,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { allow_sgx_debug_mode: false, admin: None, mode: OperationalMode::Production }
@@ -288,7 +288,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
 			Mode::<T>::put(self.mode);
@@ -505,10 +505,10 @@ pub mod pallet {
 
 			match Self::mode() {
 				OperationalMode::Production | OperationalMode::Maintenance => {
-					if !Self::allow_sgx_debug_mode() &&
-						enclave.sgx_build_mode == SgxBuildMode::Debug
+					if !Self::allow_sgx_debug_mode()
+						&& enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
-						return Err(Error::<T>::InvalidSgxMode.into())
+						return Err(Error::<T>::InvalidSgxMode.into());
 					}
 					ensure!(
 						AuthorizedEnclave::<T>::get(worker_type).contains(&enclave.mrenclave),
@@ -590,7 +590,7 @@ pub mod pallet {
 		pub fn parentchain_block_processed(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			task_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -636,7 +636,7 @@ pub mod pallet {
 			// Simple logic for now: only accept blocks from first registered enclave.
 			let primary_enclave_identifier =
 				EnclaveIdentifier::<T>::get(sender_enclave.worker_type)
-					.get(0)
+					.first()
 					.cloned()
 					.ok_or(Error::<T>::EnclaveIdentifierNotExist)?;
 			if sender != primary_enclave_identifier {
@@ -644,7 +644,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(Pays::No.into())
+				return Ok(Pays::No.into());
 			}
 
 			let block_number = confirmation.block_number;

@@ -64,7 +64,7 @@ pallet-collator-selection = { workspace = true }
 parachain-info = { workspace = true }
 
 pallet-xcm = { workspace = true }
-polkadot-parachain = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
 xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
@@ -99,6 +99,7 @@ polkadot-runtime-parachains = { workspace = true, features = ["std"] }
 runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
+pallet-message-queue = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -201,7 +202,7 @@ std = [
     "pallet-collator-selection/std",
     "parachain-info/std",
     "pallet-xcm/std",
-    "polkadot-parachain/std",
+    "polkadot-parachain-primitives/std",
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",

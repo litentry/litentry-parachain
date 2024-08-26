@@ -240,7 +240,7 @@ where
 				let new_issuance =
 					total_issuance.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
 				if new_issuance > MaximumIssuance::<T>::get() {
-					return Err(Error::<T>::ReachMaximumSupply.into())
+					return Err(Error::<T>::ReachMaximumSupply.into());
 				}
 				// Native token require external balance modification
 				let external_balances = <ExternalBalances<T>>::get()
@@ -258,7 +258,7 @@ where
 			// pallet assets
 			Some(AssetInfo { fee: _, asset: Some(asset) }) => {
 				Self::deposit_event(Event::TokenBridgeIn {
-					asset_id: Some(asset),
+					asset_id: Some(asset.clone()),
 					to: who.clone(),
 					amount,
 				});
@@ -306,14 +306,18 @@ where
 				// Burn amount will always be amount exactly
 				// Otherwise
 				let burn_amount = pallet_assets::Pallet::<T>::burn_from(
-					asset,
+					asset.clone(),
 					&who,
 					amount,
 					Precision::Exact,
 					Fortitude::Polite,
 				)?;
 				ensure!(burn_amount > fee, Error::<T>::CannotPayAsFee);
-				pallet_assets::Pallet::<T>::mint_into(asset, &T::TreasuryAccount::get(), fee)?;
+				pallet_assets::Pallet::<T>::mint_into(
+					asset.clone(),
+					&T::TreasuryAccount::get(),
+					fee,
+				)?;
 				Self::deposit_event(Event::TokenBridgeOut {
 					asset_id: Some(asset),
 					from: who,

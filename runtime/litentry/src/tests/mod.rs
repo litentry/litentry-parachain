@@ -15,8 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 mod base_call_filter;
-mod orml_xcm;
-
 pub mod setup {
 	use crate::Runtime;
 	#[cfg(test)]
@@ -32,8 +30,11 @@ mod transaction_payment {
 mod xcm_parachain {
 	use crate::{
 		tests::setup::{
-			ParaA, ParaB, Relay, RelayChainRuntime, RuntimeCall as RelayCall,
-			RuntimeOrigin as RelayOrigin, TestNet,
+			relay_chain::{
+				Runtime as RelayChainRuntime, RuntimeCall as RelayCall,
+				RuntimeOrigin as RelayOrigin,
+			},
+			ParaA, ParaB, Relay, TestNet,
 		},
 		xcm_config::{LocationToAccountId, UnitWeightCost},
 		Runtime, RuntimeCall, RuntimeOrigin,

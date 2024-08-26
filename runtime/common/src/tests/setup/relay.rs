@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use core_primitives::AccountId;
 use cumulus_primitives_core::{InteriorMultiLocation, ParaId};
 use frame_support::{match_types, parameter_types};
 use polkadot_runtime_parachains::origin;
@@ -23,8 +24,6 @@ use xcm_builder::{
 	CurrencyAdapter as XcmCurrencyAdapter, IsConcrete, SignedAccountId32AsNative,
 	SovereignSignedViaLocation,
 };
-
-use core_primitives::AccountId;
 
 parameter_types! {
 	pub KsmLocation: MultiLocation = Here.into();
@@ -57,22 +56,20 @@ pub type LocalOriginConverter<O> = (
 
 #[macro_export]
 macro_rules! decl_test_relay_chain_runtime {
-	($runtime:ident) => {
-        use frame_support::{
+	() => {
+		use frame_support::{
             traits::{ConstU128, ConstU32, ConstU64, Everything, Nothing},
-            weights::IdentityFee,
+            weights::{Weight, IdentityFee, WeightMeter},
+			construct_runtime, parameter_types,
         };
-
+        use frame_system::EnsureRoot;
         use cumulus_primitives_core::ParaId;
 		use core_primitives::{Balance, AccountId};
-        use runtime_common::BlockHashCount;
 		use xcm_executor::XcmExecutor;
-        use frame_system::EnsureRoot;
-        use polkadot_runtime_parachains::{configuration, origin, shared, ump};
-        use xcm::latest::prelude::{NetworkId, MultiLocation, Here, Parachain, X1};
+        use polkadot_runtime_parachains::{configuration, origin, shared};
+        use xcm::latest::prelude::{NetworkId, MultiLocation, Here, Junction, Parachain, X1};
         use sp_core::H256;
         use sp_runtime::{testing::Header, traits::IdentityLookup, AccountId32};
-
         use xcm_builder::{
             AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
             AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, ChildParachainAsNative,
@@ -80,22 +77,22 @@ macro_rules! decl_test_relay_chain_runtime {
             IsChildSystemParachain, IsConcrete, SignedAccountId32AsNative,
             SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
         };
+		use xcm_simulator::{ProcessMessage, AggregateMessageOrigin, UmpQueueId, ProcessMessageError};
+        use runtime_common::BlockHashCount;
         use runtime_common::tests::setup::relay::{SovereignAccountOf,LocalAssetTransactor,KsmLocation,KusamaNetwork};
-        //created by decl_test_network(macro)
+		use runtime_common::tests::setup::relay::{OnlyParachains, LocalOriginConverter, UniversalLocation};
+        // created by `decl_test_network!`
 		type XcmRouter = RelayChainXcmRouter;
-		type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<RelayChainRuntime>;
-		type Block = frame_system::mocking::MockBlock<RelayChainRuntime>;
 
-		impl frame_system::Config for RelayChainRuntime {
+		impl frame_system::Config for Runtime {
 			type RuntimeOrigin = RuntimeOrigin;
 			type RuntimeCall = RuntimeCall;
-			type Index = u64;
-			type BlockNumber = u64;
+			type Nonce = u64;
+			type Block = frame_system::mocking::MockBlock<Runtime>;
 			type Hash = H256;
-			type Hashing = sp_runtime::traits::BlakeTwo256;
+			type Hashing = ::sp_runtime::traits::BlakeTwo256;
 			type AccountId = AccountId;
 			type Lookup = IdentityLookup<Self::AccountId>;
-			type Header = Header;
 			type RuntimeEvent = RuntimeEvent;
 			type BlockHashCount = BlockHashCount;
 			type BlockWeights = ();
@@ -113,7 +110,7 @@ macro_rules! decl_test_relay_chain_runtime {
 			type MaxConsumers = ConstU32<16>;
 		}
 
-		impl pallet_balances::Config for RelayChainRuntime {
+		impl pallet_balances::Config for Runtime {
 			type MaxLocks = ConstU32<50>;
 			type Balance = Balance;
 			type RuntimeEvent = RuntimeEvent;
@@ -121,17 +118,17 @@ macro_rules! decl_test_relay_chain_runtime {
 			type ExistentialDeposit = ConstU128<1>;
 			type AccountStore = System;
 			type WeightInfo = ();
-			type MaxReserves = ConstU32<50>;
-			type ReserveIdentifier = [u8; 8];
-			type HoldIdentifier = ();
+			type MaxReserves = ();
+			type ReserveIdentifier = ();
 			type FreezeIdentifier = ();
 			type MaxHolds = ();
 			type MaxFreezes = ();
+			type RuntimeHoldReason = ();
 		}
 
-		impl shared::Config for RelayChainRuntime {}
+		impl shared::Config for Runtime {}
 
-		impl configuration::Config for RelayChainRuntime {
+		impl configuration::Config for Runtime {
 			type WeightInfo = configuration::TestWeightInfo;
 		}
 
@@ -162,15 +159,14 @@ macro_rules! decl_test_relay_chain_runtime {
 		impl xcm_executor::Config for XcmConfig {
 			type RuntimeCall = RuntimeCall;
 			type XcmSender = XcmRouter;
-			type AssetTransactor = LocalAssetTransactor<RelayChainRuntime>;
+			type AssetTransactor = LocalAssetTransactor<Runtime>;
 			type OriginConverter = LocalOriginConverter<RuntimeOrigin>;
 			type IsReserve = ();
 			type IsTeleporter = ();
 			type UniversalLocation = UniversalLocation;
 			type Barrier = Barrier; // This is the setting should be same from Kusama
 			type Weigher = FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
-			type Trader =
-				UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
+			type Trader = UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
 			type ResponseHandler = ();
 			type AssetTrap = ();
 			type AssetLocker = ();
@@ -184,21 +180,22 @@ macro_rules! decl_test_relay_chain_runtime {
 			type UniversalAliases = Nothing;
 			type CallDispatcher = RuntimeCall;
 			type SafeCallFilter = Everything;
+			type Aliasers = Nothing;
 		}
 
 		pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, KusamaNetwork>;
 
 		#[cfg(feature = "runtime-benchmarks")]
 		parameter_types! {
-			pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
+			pub ReachableDest: Option<MultiLocation> = Some(MultiLocation::parent());
 		}
 
-		impl pallet_xcm::Config for RelayChainRuntime {
+		impl pallet_xcm::Config for Runtime {
 			type RuntimeEvent = RuntimeEvent;
 			type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 			type XcmRouter = XcmRouter;
-			// Anyone can execute XCM messages locally...
-			type ExecuteXcmOrigin = xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
+			type ExecuteXcmOrigin =
+				xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 			type XcmExecuteFilter = Everything;
 			type XcmExecutor = XcmExecutor<XcmConfig>;
 			type XcmTeleportFilter = Everything;
@@ -218,30 +215,63 @@ macro_rules! decl_test_relay_chain_runtime {
 			#[cfg(feature = "runtime-benchmarks")]
 			type ReachableDest = ReachableDest;
 			type AdminOrigin = EnsureRoot<AccountId>;
+			type MaxRemoteLockConsumers = ConstU32<0>;
+			type RemoteLockConsumerIdentifier = ();
 		}
 
-		impl ump::Config for RelayChainRuntime {
+		impl origin::Config for Runtime {}
+
+		parameter_types! {
+			/// Amount of weight that can be spent per block to service messages.
+			pub MessageQueueServiceWeight: Weight = Weight::from_parts(1_000_000_000, 1_000_000);
+			pub const MessageQueueHeapSize: u32 = 65_536;
+			pub const MessageQueueMaxStale: u32 = 16;
+		}
+
+		/// Message processor to handle any messages that were enqueued into the `MessageQueue` pallet.
+		pub struct MessageProcessor;
+		impl ProcessMessage for MessageProcessor {
+			type Origin = AggregateMessageOrigin;
+
+			fn process_message(
+				message: &[u8],
+				origin: Self::Origin,
+				meter: &mut WeightMeter,
+				id: &mut [u8; 32],
+			) -> Result<bool, ProcessMessageError> {
+				let para = match origin {
+					AggregateMessageOrigin::Ump(UmpQueueId::Para(para)) => para,
+				};
+				xcm_builder::ProcessXcmMessage::<
+					Junction,
+					xcm_executor::XcmExecutor<XcmConfig>,
+					RuntimeCall,
+				>::process_message(message, Junction::Parachain(para.into()), meter, id)
+			}
+		}
+
+		impl pallet_message_queue::Config for Runtime {
 			type RuntimeEvent = RuntimeEvent;
-			type UmpSink = ump::XcmSink<XcmExecutor<XcmConfig>, RelayChainRuntime>;
-			type FirstMessageFactorPercent = ConstU64<100>;
-			type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-			type WeightInfo = polkadot_runtime_parachains::ump::TestWeightInfo;
+			type Size = u32;
+			type HeapSize = MessageQueueHeapSize;
+			type MaxStale = MessageQueueMaxStale;
+			type ServiceWeight = MessageQueueServiceWeight;
+			type MessageProcessor = MessageProcessor;
+			type QueueChangeHandler = ();
+			type QueuePausedQuery = ();
+			type WeightInfo = ();
 		}
 
-		impl origin::Config for RelayChainRuntime {}
-
-        construct_runtime!(
-            pub enum RelayChainRuntime where
-                Block = Block,
-                NodeBlock = Block,
-                UncheckedExtrinsic = UncheckedExtrinsic,
-            {
-                System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-                Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-                ParasOrigin: origin::{Pallet, Origin},
-                ParasUmp: ump::{Pallet, Call, Storage, Event},
-                XcmPallet: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin},
-            }
-        );
+		construct_runtime!(
+			pub enum Runtime
+			{
+				System: frame_system,
+				Balances: pallet_balances,
+				ParasOrigin: origin,
+				XcmPallet: pallet_xcm,
+				MessageQueue: pallet_message_queue,
+				Configuration: configuration,
+			}
+		);
 	};
 }

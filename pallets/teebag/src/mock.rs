@@ -17,29 +17,21 @@
 #![allow(dead_code, unused_imports, const_item_mutation)]
 use crate::{self as pallet_teebag, OperationalMode};
 use frame_support::{
-	assert_ok, construct_runtime,
-	pallet_prelude::GenesisBuild,
-	parameter_types,
+	assert_ok, construct_runtime, parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
-use frame_system as system;
 use frame_system::EnsureRoot;
 use sp_core::{ConstU32, H256};
 use sp_keyring::AccountKeyring;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	BuildStorage,
 };
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-
-pub type BlockNumber = u32;
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Test>,
@@ -51,10 +43,7 @@ pub type SignedExtra = (
 );
 
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -70,16 +59,15 @@ impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -109,10 +97,10 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
-	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 parameter_types! {
@@ -144,7 +132,7 @@ impl pallet_teebag::Config for Test {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup. RA from enclave compiled in debug mode is allowed
 pub fn new_test_ext(is_dev_mode: bool) -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![(AccountKeyring::Alice.to_account_id(), 1 << 60)],
 	}
@@ -161,7 +149,7 @@ pub fn new_test_ext(is_dev_mode: bool) -> sp_io::TestExternalities {
 		genesis_config.mode = OperationalMode::Development;
 	}
 
-	GenesisBuild::<Test>::assimilate_storage(&genesis_config, &mut t).unwrap();
+	genesis_config.assimilate_storage(&mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
@@ -176,7 +164,7 @@ pub fn set_timestamp(t: u64) {
 }
 
 /// Run until a particular block.
-pub fn run_to_block(n: u32) {
+pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 1 {
 			System::on_finalize(System::block_number());
