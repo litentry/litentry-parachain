@@ -44,13 +44,7 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, prelude::*};
 type ResourceId = pallet_bridge::ResourceId;
-
-#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
-pub struct AssetInfo<AssetId, Balance> {
-	pub fee: Balance,
-	// None for native token
-	pub asset: Option<AssetId>,
-}
+use pallet_bridge_common::AssetInfo;
 
 #[frame_support::pallet]
 pub mod pallet {

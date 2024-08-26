@@ -25,6 +25,7 @@ use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 pub use pallet_balances as balances;
 use pallet_bridge::{self as bridge, ResourceId};
+use pallet_bridge_common::AssetInfo;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
@@ -122,6 +123,10 @@ parameter_types! {
 	pub const NativeTokenResourceId: ResourceId = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 	// TransferAssetsMembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
+}
+
+ord_parameter_types! {
+	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
 }
 
 pub struct MembersProvider;
