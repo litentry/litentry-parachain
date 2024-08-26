@@ -48,6 +48,21 @@ fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::Account
 
 benchmarks! {
 	transfer_assets{
+		// Whitelist chain
+		Bridge::whitelist_chain(RuntimeOrigin::root())?;
+
+		let resource_id = NativeTokenResourceId::get();
+		let native_token_asset_info: AssetInfo<
+			<Test as pallet_assets::Config>::AssetId,
+			<Test as pallet_assets::Config>::Balance,
+		> = AssetInfo { fee: 0u64, asset: None };
+		// Setup asset handler
+		AssetsHandler::set_resource(
+			RuntimeOrigin::root(),
+			resource_id,
+			native_token_asset_info
+		)?;
+
 		let sender:T::AccountId = create_user::<T>("sender",10u32,10u32);
 
 		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
@@ -58,6 +73,21 @@ benchmarks! {
 	}:_(RawOrigin::Signed(sender),50u32.into(),vec![0u8, 0u8, 0u8, 0u8],dest_chain,r_id)
 
 	transfer{
+		// Whitelist chain
+		Bridge::whitelist_chain(RuntimeOrigin::root())?;
+
+		let resource_id = NativeTokenResourceId::get();
+		let native_token_asset_info: AssetInfo<
+			<Test as pallet_assets::Config>::AssetId,
+			<Test as pallet_assets::Config>::Balance,
+		> = AssetInfo { fee: 0u64, asset: None };
+		// Setup asset handler
+		AssetsHandler::set_resource(
+			RuntimeOrigin::root(),
+			resource_id,
+			native_token_asset_info
+		)?;
+
 		let r_id = NATIVE_TOKEN_RESOURCE_ID;
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
