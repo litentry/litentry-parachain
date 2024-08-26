@@ -36,7 +36,7 @@ pub use pallet::*;
 use parity_scale_codec::FullCodec;
 type BalanceOf<T> =
 	<pallet_balances::Pallet<T> as FInspect<<T as frame_system::Config>::AccountId>>::Balance;
-use pallet_bridge_transfer::BridgeHandler;
+use pallet_bridge_common::BridgeHandler;
 use pallet_parachain_staking::IssuanceAdapter;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedSub},
