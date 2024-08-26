@@ -50,7 +50,7 @@ pub fn handle_reuse(args: Args, m: ItemMod) -> Result<TokenStream> {
 		m.ident = args.cases[current].clone();
 		visitor.visit_item_mod_mut(&mut m);
 		if let Some(e) = visitor.error.take() {
-			return Err(e)
+			return Err(e);
 		}
 		m.to_tokens(&mut result);
 	}
@@ -72,7 +72,7 @@ impl<'a> VisitMut for Visitor<'a> {
 					match self.case(attrs) {
 						Case::Other => {
 							items.remove(i);
-							continue
+							continue;
 						},
 						Case::Current => {
 							if let [Item::Fn(this), Item::Fn(next), ..] = &mut items[i..] {
@@ -82,7 +82,7 @@ impl<'a> VisitMut for Visitor<'a> {
 								)] = this.block.stmts.as_slice()
 								{
 									if attrs.is_empty() && path.is_ident("__") {
-										this.block = next.block.clone();
+										this.block.clone_from(&next.block);
 									}
 								}
 							}
@@ -189,7 +189,7 @@ impl<'a> Visitor<'a> {
 			if let Some(attrs) = target[i].get_attrs_mut() {
 				if let Case::Other = self.case(attrs) {
 					target.remove(i);
-					continue
+					continue;
 				}
 			}
 			i += 1;
@@ -231,12 +231,12 @@ impl<'a> Visitor<'a> {
 						has_current = true;
 						is_casing = true;
 						attrs.remove(i);
-						continue
+						continue;
 					}
 					if self.cases.iter().any(|x| ident == x.as_str()) {
 						is_casing = true;
 						attrs.remove(i);
-						continue
+						continue;
 					}
 				}
 			}
@@ -260,21 +260,21 @@ impl GetAttrsMut for Item {
 	#[inline]
 	fn get_attrs_mut(&mut self) -> Option<&mut Vec<Attribute>> {
 		match self {
-			Item::Const(ItemConst { attrs, .. }) |
-			Item::Enum(ItemEnum { attrs, .. }) |
-			Item::ExternCrate(ItemExternCrate { attrs, .. }) |
-			Item::Fn(ItemFn { attrs, .. }) |
-			Item::ForeignMod(ItemForeignMod { attrs, .. }) |
-			Item::Impl(ItemImpl { attrs, .. }) |
-			Item::Macro(ItemMacro { attrs, .. }) |
-			Item::Mod(ItemMod { attrs, .. }) |
-			Item::Static(ItemStatic { attrs, .. }) |
-			Item::Struct(ItemStruct { attrs, .. }) |
-			Item::Trait(ItemTrait { attrs, .. }) |
-			Item::TraitAlias(ItemTraitAlias { attrs, .. }) |
-			Item::Type(ItemType { attrs, .. }) |
-			Item::Union(ItemUnion { attrs, .. }) |
-			Item::Use(ItemUse { attrs, .. }) => Some(attrs),
+			Item::Const(ItemConst { attrs, .. })
+			| Item::Enum(ItemEnum { attrs, .. })
+			| Item::ExternCrate(ItemExternCrate { attrs, .. })
+			| Item::Fn(ItemFn { attrs, .. })
+			| Item::ForeignMod(ItemForeignMod { attrs, .. })
+			| Item::Impl(ItemImpl { attrs, .. })
+			| Item::Macro(ItemMacro { attrs, .. })
+			| Item::Mod(ItemMod { attrs, .. })
+			| Item::Static(ItemStatic { attrs, .. })
+			| Item::Struct(ItemStruct { attrs, .. })
+			| Item::Trait(ItemTrait { attrs, .. })
+			| Item::TraitAlias(ItemTraitAlias { attrs, .. })
+			| Item::Type(ItemType { attrs, .. })
+			| Item::Union(ItemUnion { attrs, .. })
+			| Item::Use(ItemUse { attrs, .. }) => Some(attrs),
 			_ => None,
 		}
 	}
@@ -284,44 +284,44 @@ impl GetAttrsMut for Expr {
 	#[inline]
 	fn get_attrs_mut(&mut self) -> Option<&mut Vec<Attribute>> {
 		match self {
-			Expr::Array(ExprArray { attrs, .. }) |
-			Expr::Assign(ExprAssign { attrs, .. }) |
-			Expr::Async(ExprAsync { attrs, .. }) |
-			Expr::Await(ExprAwait { attrs, .. }) |
-			Expr::Binary(ExprBinary { attrs, .. }) |
-			Expr::Block(ExprBlock { attrs, .. }) |
-			Expr::Break(ExprBreak { attrs, .. }) |
-			Expr::Call(ExprCall { attrs, .. }) |
-			Expr::Cast(ExprCast { attrs, .. }) |
-			Expr::Closure(ExprClosure { attrs, .. }) |
-			Expr::Const(ExprConst { attrs, .. }) |
-			Expr::Continue(ExprContinue { attrs, .. }) |
-			Expr::Field(ExprField { attrs, .. }) |
-			Expr::ForLoop(ExprForLoop { attrs, .. }) |
-			Expr::Group(ExprGroup { attrs, .. }) |
-			Expr::If(ExprIf { attrs, .. }) |
-			Expr::Index(ExprIndex { attrs, .. }) |
-			Expr::Infer(ExprInfer { attrs, .. }) |
-			Expr::Let(ExprLet { attrs, .. }) |
-			Expr::Lit(ExprLit { attrs, .. }) |
-			Expr::Loop(ExprLoop { attrs, .. }) |
-			Expr::Macro(ExprMacro { attrs, .. }) |
-			Expr::Match(ExprMatch { attrs, .. }) |
-			Expr::MethodCall(ExprMethodCall { attrs, .. }) |
-			Expr::Paren(ExprParen { attrs, .. }) |
-			Expr::Path(ExprPath { attrs, .. }) |
-			Expr::Range(ExprRange { attrs, .. }) |
-			Expr::Reference(ExprReference { attrs, .. }) |
-			Expr::Repeat(ExprRepeat { attrs, .. }) |
-			Expr::Return(ExprReturn { attrs, .. }) |
-			Expr::Struct(ExprStruct { attrs, .. }) |
-			Expr::Try(ExprTry { attrs, .. }) |
-			Expr::TryBlock(ExprTryBlock { attrs, .. }) |
-			Expr::Tuple(ExprTuple { attrs, .. }) |
-			Expr::Unary(ExprUnary { attrs, .. }) |
-			Expr::Unsafe(ExprUnsafe { attrs, .. }) |
-			Expr::While(ExprWhile { attrs, .. }) |
-			Expr::Yield(ExprYield { attrs, .. }) => Some(attrs),
+			Expr::Array(ExprArray { attrs, .. })
+			| Expr::Assign(ExprAssign { attrs, .. })
+			| Expr::Async(ExprAsync { attrs, .. })
+			| Expr::Await(ExprAwait { attrs, .. })
+			| Expr::Binary(ExprBinary { attrs, .. })
+			| Expr::Block(ExprBlock { attrs, .. })
+			| Expr::Break(ExprBreak { attrs, .. })
+			| Expr::Call(ExprCall { attrs, .. })
+			| Expr::Cast(ExprCast { attrs, .. })
+			| Expr::Closure(ExprClosure { attrs, .. })
+			| Expr::Const(ExprConst { attrs, .. })
+			| Expr::Continue(ExprContinue { attrs, .. })
+			| Expr::Field(ExprField { attrs, .. })
+			| Expr::ForLoop(ExprForLoop { attrs, .. })
+			| Expr::Group(ExprGroup { attrs, .. })
+			| Expr::If(ExprIf { attrs, .. })
+			| Expr::Index(ExprIndex { attrs, .. })
+			| Expr::Infer(ExprInfer { attrs, .. })
+			| Expr::Let(ExprLet { attrs, .. })
+			| Expr::Lit(ExprLit { attrs, .. })
+			| Expr::Loop(ExprLoop { attrs, .. })
+			| Expr::Macro(ExprMacro { attrs, .. })
+			| Expr::Match(ExprMatch { attrs, .. })
+			| Expr::MethodCall(ExprMethodCall { attrs, .. })
+			| Expr::Paren(ExprParen { attrs, .. })
+			| Expr::Path(ExprPath { attrs, .. })
+			| Expr::Range(ExprRange { attrs, .. })
+			| Expr::Reference(ExprReference { attrs, .. })
+			| Expr::Repeat(ExprRepeat { attrs, .. })
+			| Expr::Return(ExprReturn { attrs, .. })
+			| Expr::Struct(ExprStruct { attrs, .. })
+			| Expr::Try(ExprTry { attrs, .. })
+			| Expr::TryBlock(ExprTryBlock { attrs, .. })
+			| Expr::Tuple(ExprTuple { attrs, .. })
+			| Expr::Unary(ExprUnary { attrs, .. })
+			| Expr::Unsafe(ExprUnsafe { attrs, .. })
+			| Expr::While(ExprWhile { attrs, .. })
+			| Expr::Yield(ExprYield { attrs, .. }) => Some(attrs),
 			_ => None,
 		}
 	}
@@ -342,8 +342,9 @@ impl GetAttrsMut for FnArg {
 	#[inline]
 	fn get_attrs_mut(&mut self) -> Option<&mut Vec<Attribute>> {
 		match self {
-			FnArg::Receiver(Receiver { attrs, .. }) | FnArg::Typed(PatType { attrs, .. }) =>
-				Some(attrs),
+			FnArg::Receiver(Receiver { attrs, .. }) | FnArg::Typed(PatType { attrs, .. }) => {
+				Some(attrs)
+			},
 		}
 	}
 }
@@ -352,9 +353,9 @@ impl GetAttrsMut for GenericParam {
 	#[inline]
 	fn get_attrs_mut(&mut self) -> Option<&mut Vec<Attribute>> {
 		match self {
-			GenericParam::Lifetime(LifetimeParam { attrs, .. }) |
-			GenericParam::Type(TypeParam { attrs, .. }) |
-			GenericParam::Const(ConstParam { attrs, .. }) => Some(attrs),
+			GenericParam::Lifetime(LifetimeParam { attrs, .. })
+			| GenericParam::Type(TypeParam { attrs, .. })
+			| GenericParam::Const(ConstParam { attrs, .. }) => Some(attrs),
 		}
 	}
 }
@@ -363,22 +364,22 @@ impl GetAttrsMut for Pat {
 	#[inline]
 	fn get_attrs_mut(&mut self) -> Option<&mut Vec<Attribute>> {
 		match self {
-			Pat::Const(PatConst { attrs, .. }) |
-			Pat::Ident(PatIdent { attrs, .. }) |
-			Pat::Lit(PatLit { attrs, .. }) |
-			Pat::Macro(PatMacro { attrs, .. }) |
-			Pat::Or(PatOr { attrs, .. }) |
-			Pat::Paren(PatParen { attrs, .. }) |
-			Pat::Path(PatPath { attrs, .. }) |
-			Pat::Range(PatRange { attrs, .. }) |
-			Pat::Reference(PatReference { attrs, .. }) |
-			Pat::Rest(PatRest { attrs, .. }) |
-			Pat::Slice(PatSlice { attrs, .. }) |
-			Pat::Struct(PatStruct { attrs, .. }) |
-			Pat::Tuple(PatTuple { attrs, .. }) |
-			Pat::TupleStruct(PatTupleStruct { attrs, .. }) |
-			Pat::Type(PatType { attrs, .. }) |
-			Pat::Wild(PatWild { attrs, .. }) => Some(attrs),
+			Pat::Const(PatConst { attrs, .. })
+			| Pat::Ident(PatIdent { attrs, .. })
+			| Pat::Lit(PatLit { attrs, .. })
+			| Pat::Macro(PatMacro { attrs, .. })
+			| Pat::Or(PatOr { attrs, .. })
+			| Pat::Paren(PatParen { attrs, .. })
+			| Pat::Path(PatPath { attrs, .. })
+			| Pat::Range(PatRange { attrs, .. })
+			| Pat::Reference(PatReference { attrs, .. })
+			| Pat::Rest(PatRest { attrs, .. })
+			| Pat::Slice(PatSlice { attrs, .. })
+			| Pat::Struct(PatStruct { attrs, .. })
+			| Pat::Tuple(PatTuple { attrs, .. })
+			| Pat::TupleStruct(PatTupleStruct { attrs, .. })
+			| Pat::Type(PatType { attrs, .. })
+			| Pat::Wild(PatWild { attrs, .. }) => Some(attrs),
 			_ => None,
 		}
 	}

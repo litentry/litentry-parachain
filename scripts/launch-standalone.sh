@@ -28,8 +28,7 @@ function print_divider() {
 
 echo "Starting litentry-collator in standalone mode ..."
 
-$PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external \
-  --port "${CollatorPort:-30333}" --ws-port "${CollatorWSPort:-9944}" --rpc-port "${CollatorRPCPort:-9933}" \
+$PARACHAIN_BIN --dev --rpc-external --port "${CollatorPort:-30333}" --rpc-port "${CollatorWSPort:-9944}" \
   &> "$LITENTRY_PARACHAIN_DIR/para.alice.log" &
 
 sleep 10

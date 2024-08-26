@@ -41,18 +41,14 @@ jobs:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
 
       # try to increase usable memory
       # https://github.com/actions/runner/issues/1051

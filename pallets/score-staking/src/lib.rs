@@ -218,7 +218,6 @@ pub mod pallet {
 		pub marker: PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { state: PoolState::Stopped, marker: Default::default() }
@@ -226,7 +225,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			State::<T>::put(self.state);
 		}
@@ -238,7 +237,7 @@ pub mod pallet {
 			let mut weight = T::DbWeight::get().reads_writes(1, 0); // Self::state()
 
 			if Self::state() == PoolState::Stopped {
-				return weight
+				return weight;
 			}
 
 			let mut r = Round::<T>::get();
@@ -246,7 +245,7 @@ pub mod pallet {
 
 			if !is_modulo(now - r.start_block, Self::round_config().interval.into()) {
 				// nothing to do there
-				return weight
+				return weight;
 			}
 
 			// We are about to start a new round
@@ -257,8 +256,8 @@ pub mod pallet {
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
 
 			// 2. calculate payout
-			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get() /
-				YEARS.into()) * Self::round_config().interval.into();
+			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get()
+				/ YEARS.into()) * Self::round_config().interval.into();
 			let round_reward_u128 = round_reward.saturated_into::<u128>();
 
 			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();

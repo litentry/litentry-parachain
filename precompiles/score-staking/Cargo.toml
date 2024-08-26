@@ -34,6 +34,7 @@ parity-scale-codec = { workspace = true, features = ["std"] }
 default = ["std"]
 std = [
     "fp-evm/std",
+    "pallet-evm/std",
     "frame-support/std",
     "frame-system/std",
     "pallet-evm/std",
@@ -44,5 +45,4 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "sp-std/std",
-    "parity-scale-codec/std",
 ]
