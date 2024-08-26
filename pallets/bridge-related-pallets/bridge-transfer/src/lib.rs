@@ -41,7 +41,7 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
-
+	use ppallet_bridge_common::BridgeHandler;
 	pub type ResourceId = bridge::ResourceId;
 	pub type BridgeChainId = bridge::BridgeChainId;
 
@@ -111,11 +111,5 @@ pub mod pallet {
 			T::BridgeHandler::prepare_token_bridge_in(rid, to, amount)?;
 			Ok(())
 		}
-	}
-
-	pub trait BridgeHandler<B, A, R> {
-		fn prepare_token_bridge_in(resource_id: R, who: A, amount: B) -> Result<B, DispatchError>;
-		// Return actual amount to target chain after deduction e.g fee
-		fn prepare_token_bridge_out(resource_id: R, who: A, amount: B) -> Result<B, DispatchError>;
 	}
 }

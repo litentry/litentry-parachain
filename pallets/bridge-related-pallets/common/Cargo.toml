@@ -1,0 +1,20 @@
+[package]
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition = '2021'
+homepage = 'https://litentry.com'
+name = 'pallet-bridge-common'
+repository = 'https://github.com/litentry/litentry-pallets'
+version = '0.1.0'
+
+[dependencies]
+frame-support = { workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+    "frame-support/runtime-benchmarks",
+]
+std = [
+    "frame-support/std",
+]
+try-runtime = ["frame-support/try-runtime"]

@@ -3,10 +3,11 @@ resolver = "2"
 members = [
     'node',
     'pallets/account-fix',
-    'pallets/assets-handler',
     'pallets/bitacross',
-    'pallets/bridge',
-    'pallets/bridge-transfer',
+    'pallets/bridge-related-pallets/assets-handler',
+    'pallets/bridge-related-pallets/bridge',
+    'pallets/bridge-related-pallets/bridge-transfer',
+    'pallets/bridge-related-pallets/common',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',
@@ -252,10 +253,11 @@ litmus-parachain-runtime = { path = "runtime/litmus", default-features = false }
 rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
-pallet-assets-handler = { path = "pallets/assets-handler", default-features = false }
+pallet-assets-handler = { path = "pallets/bridge-related-pallets/assets-handler", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }
-pallet-bridge = { path = "pallets/bridge", default-features = false }
-pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
+pallet-bridge = { path = "pallets/bridge-related-pallets/bridge", default-features = false }
+pallet-bridge-common = { path = "pallets/bridge-related-pallets/common", default-features = false }
+pallet-bridge-transfer = { path = "pallets/bridge-related-pallets/bridge-transfer", default-features = false }
 pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features = false }
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }
