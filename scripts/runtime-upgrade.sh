@@ -49,8 +49,8 @@ fi
 print_divider
 
 # 2. check if the released runtime version is greater than the on-chain runtime version,
-#    which should be now accessible via localhost:9933
-onchain_version=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getRuntimeVersion", "params": [] }' http://localhost:9933 | jq .result.specVersion)
+#    which should be now accessible via localhost:9944
+onchain_version=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getRuntimeVersion", "params": [] }' http://localhost:9944 | jq .result.specVersion)
 release_version=$(subwasm --json info "$output_wasm" | jq .core_version.specVersion)
 
 echo "Check runtime version ..."

@@ -161,11 +161,11 @@ benchmarks! {
 
 #[cfg(test)]
 mod tests {
+	use crate::mock::Test;
+	use sp_runtime::BuildStorage;
 	pub fn new_test_ext() -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<crate::mock::Test>()
-			.unwrap();
-		sp_io::TestExternalities::new(t)
+		let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+		t.into()
 	}
 }
 
