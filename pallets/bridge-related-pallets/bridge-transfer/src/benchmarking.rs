@@ -50,15 +50,14 @@ fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::Account
 benchmarks! {
 	transfer_assets{
 		// Whitelist chain
-		Bridge::whitelist_chain(RuntimeOrigin::root())?;
-
-		let resource_id = NativeTokenResourceId::get();
+		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root())?;
+		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		let native_token_asset_info: AssetInfo<
 			<Test as pallet_assets::Config>::AssetId,
 			<Test as pallet_assets::Config>::Balance,
 		> = AssetInfo { fee: 0u64, asset: None };
 		// Setup asset handler
-		AssetsHandler::set_resource(
+		<pallet_assets_handler::Pallet<T>>::set_resource(
 			RuntimeOrigin::root(),
 			resource_id,
 			native_token_asset_info
@@ -69,33 +68,30 @@ benchmarks! {
 		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
 		let dest_chain = 0;
 
-		let r_id = NATIVE_TOKEN_RESOURCE_ID;
 
-	}:_(RawOrigin::Signed(sender),50u32.into(),vec![0u8, 0u8, 0u8, 0u8],dest_chain,r_id)
+	}:_(RawOrigin::Signed(sender), 50u32.into(), vec![0u8, 0u8, 0u8, 0u8], dest_chain, resource_id)
 
 	transfer{
 		// Whitelist chain
-		Bridge::whitelist_chain(RuntimeOrigin::root())?;
+		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root())?;
 
-		let resource_id = NativeTokenResourceId::get();
+		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		let native_token_asset_info: AssetInfo<
 			<Test as pallet_assets::Config>::AssetId,
 			<Test as pallet_assets::Config>::Balance,
 		> = AssetInfo { fee: 0u64, asset: None };
 		// Setup asset handler
-		AssetsHandler::set_resource(
+		<pallet_assets_handler::Pallet<T>>::set_resource(
 			RuntimeOrigin::root(),
 			resource_id,
 			native_token_asset_info
 		)?;
 
-		let r_id = NATIVE_TOKEN_RESOURCE_ID;
-
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
-	}:_(RawOrigin::Signed(sender),to_account,50u32.into(), r_id)
+	}:_(RawOrigin::Signed(sender), to_account, 50u32.into(), resource_id)
 }
 
 impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
