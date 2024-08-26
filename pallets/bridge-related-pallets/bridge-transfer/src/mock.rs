@@ -17,21 +17,18 @@
 use crate::{self as bridge_transfer, Config};
 use frame_support::{
 	assert_ok, ord_parameter_types, parameter_types,
-	traits::{
-		fungible,
-		tokens::{Fortitude, Precision},
-		ConstU64, SortedMembers,
-	},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
 use frame_system as system;
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 pub use pallet_balances as balances;
 use pallet_bridge::{self as bridge, ResourceId};
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage, DispatchError,
+	BuildStorage,
 };
 
 pub const TEST_THRESHOLD: u32 = 2;
@@ -43,10 +40,10 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Bridge: pallet_bridge,
+		Bridge: bridge,
 		Assets: pallet_assets,
 		AssetsHandler: pallet_assets_handler,
-		BridgeTransfer: pallet_bridge_transfer,
+		BridgeTransfer: bridge_transfer,
 	}
 );
 
@@ -122,7 +119,7 @@ parameter_types! {
 	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
 	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
-	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
+	pub const NativeTokenResourceId: ResourceId = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 	// TransferAssetsMembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
 }

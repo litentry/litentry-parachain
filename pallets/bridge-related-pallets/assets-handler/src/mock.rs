@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
-use pallet_assets_handler::AssetInfo;
+use pallet_bridge_common::AssetInfo;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},

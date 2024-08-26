@@ -27,6 +27,7 @@ use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
 use hex_literal::hex;
 use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
+use pallet_bridge_common::AssetInfo;
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
