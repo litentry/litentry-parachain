@@ -26,6 +26,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
 use hex_literal::hex;
+use pallet_assets_handler::ResourceToAssetInfo;
 use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
 use pallet_bridge_common::AssetInfo;
 use sp_arithmetic::traits::Saturating;
@@ -50,30 +51,27 @@ fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::Account
 benchmarks! {
 	transfer_assets{
 		// Whitelist chain
-		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root())?;
+		let dest_chain = 0;
+		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root(),dest_chain)?;
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		let native_token_asset_info: AssetInfo<
 			<Test as pallet_assets::Config>::AssetId,
 			<Test as pallet_assets::Config>::Balance,
 		> = AssetInfo { fee: 0u64, asset: None };
 		// Setup asset handler
-		<pallet_assets_handler::Pallet<T>>::set_resource(
-			RuntimeOrigin::root(),
-			resource_id,
-			native_token_asset_info
-		)?;
+		<ResourceToAssetInfo<T>>::insert(resource_id, native_token_asset_info);
 
 		let sender:T::AccountId = create_user::<T>("sender",10u32,10u32);
 
 		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
-		let dest_chain = 0;
 
 
 	}:_(RawOrigin::Signed(sender), 50u32.into(), vec![0u8, 0u8, 0u8, 0u8], dest_chain, resource_id)
 
 	transfer{
 		// Whitelist chain
-		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root())?;
+		let dest_chain = 0;
+		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root(),dest_chain)?;
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		let native_token_asset_info: AssetInfo<
@@ -81,11 +79,7 @@ benchmarks! {
 			<Test as pallet_assets::Config>::Balance,
 		> = AssetInfo { fee: 0u64, asset: None };
 		// Setup asset handler
-		<pallet_assets_handler::Pallet<T>>::set_resource(
-			RuntimeOrigin::root(),
-			resource_id,
-			native_token_asset_info
-		)?;
+		<ResourceToAssetInfo<T>>::insert(resource_id, native_token_asset_info);
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
 
