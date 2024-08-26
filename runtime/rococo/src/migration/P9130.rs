@@ -36,7 +36,7 @@ use sp_std::{collections::btree_map::BTreeMap, vec};
 
 mod deprecated {
 	use super::*;
-	use frame_support::RuntimeDebug;
+	use sp_core::RuntimeDebug;
 	use pallet_parachain_staking::Bond;
 	use scale_info::TypeInfo;
 	// CollatorSnapshot

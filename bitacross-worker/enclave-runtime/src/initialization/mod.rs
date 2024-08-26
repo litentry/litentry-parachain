@@ -432,7 +432,7 @@ pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResul
 
 		Some(Arc::new(FromFileConfigProvider::new(private_key, pem_serialized)))
 	} else {
-		None
+		return Err(Error::Other("Only accept wss scheme".into()))
 	};
 
 	let web_socket_server = Arc::new(TungsteniteWsServer::new(

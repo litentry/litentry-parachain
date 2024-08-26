@@ -18,19 +18,18 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, VCManagementConfig, UNIT, WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, RuntimeGenesisConfig, SessionConfig, SudoConfig, SystemConfig,
+	TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, VCManagementConfig,
+	ROCOCO_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
 
-const DEFAULT_PARA_ID: u32 = 2106;
-
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -94,7 +93,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				DEFAULT_PARA_ID.into(),
+				ROCOCO_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -102,7 +101,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 		Some("litentry-rococo"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: ROCOCO_PARA_ID },
 	)
 }
 
@@ -118,7 +117,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litentry-rococo-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		DEFAULT_PARA_ID.into(),
+		ROCOCO_PARA_ID.into(),
 	)
 }
 
@@ -129,7 +128,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litentry-rococo",
 		ChainType::Live,
 		"rococo".into(),
-		DEFAULT_PARA_ID.into(),
+		ROCOCO_PARA_ID.into(),
 	)
 }
 
@@ -198,14 +197,15 @@ fn generate_genesis(
 	technical_committee_members: Vec<AccountId>,
 	developer_committee_members: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
+			..Default::default()
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
 		sudo: SudoConfig { key: Some(root_key.clone()) },
-		parachain_info: ParachainInfoConfig { parachain_id: id },
+		parachain_info: ParachainInfoConfig { parachain_id: id, ..Default::default() },
 		parachain_staking: ParachainStakingConfig {
 			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
 			..Default::default()
@@ -244,7 +244,10 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		polkadot_xcm: PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
+		},
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
 		assets: Default::default(),

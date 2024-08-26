@@ -18,6 +18,8 @@
 
 pragma solidity ^0.8.8;
 
+import "./StringCleaner.sol";
+
 library AssertionLogic {
     enum Op {
         GreaterThan,
@@ -95,24 +97,27 @@ library AssertionLogic {
 
         result = string(abi.encodePacked(result, "}"));
 
-        return result;
+        // the assembled result may contain some invisible characters that cause the unit test failure, so we need to clear it here.
+        return StringCleaner.cleanString(result);
     }
 
     function toString(
         Condition memory condition
     ) internal pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    '{"src":"',
-                    condition.src,
-                    '","op":"',
-                    operatorToString(condition.op),
-                    '","dst":"',
-                    condition.dst,
-                    '"}'
-                )
-            );
+        string memory result = string(
+            abi.encodePacked(
+                '{"src":"',
+                condition.src,
+                '","op":"',
+                operatorToString(condition.op),
+                '","dst":"',
+                condition.dst,
+                '"}'
+            )
+        );
+
+        // the assembled result may contain some invisible characters that cause the unit test failure, so we need to clear it here.
+        return StringCleaner.cleanString(result);
     }
 
     function operatorToString(Op op) internal pure returns (string memory) {

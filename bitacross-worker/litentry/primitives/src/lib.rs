@@ -24,17 +24,17 @@ extern crate sgx_tstd as std;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod aes;
-mod aes_request;
 mod bitcoin_address;
 mod bitcoin_signature;
 mod ethereum_signature;
+mod plain_request;
 mod validation_data;
 
 pub use aes::*;
-pub use aes_request::*;
 pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
 pub use ethereum_signature::*;
+pub use plain_request::*;
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;
 

@@ -376,7 +376,7 @@ where
 
 		if len_num != 0 {
 			// The unwrap is safe. It resolves to the https::Status' unwrap function which only panics
-			// if the the response is not complete, which cannot happen if the result is Ok().
+			// if the response is not complete, which cannot happen if the result is Ok().
 			let header_len = result.map_err(|e| EnclaveError::Other(e.into()))?.unwrap();
 			let resp_body = &resp[header_len..];
 			attn_report =
@@ -432,7 +432,7 @@ where
 
 		if len_num != 0 {
 			// The unwrap is safe. It resolves to the https::Status' unwrap function which only panics
-			// if the the response is not complete, which cannot happen if the result is Ok().
+			// if the response is not complete, which cannot happen if the result is Ok().
 			let header_len = result.map_err(|e| EnclaveError::Other(e.into()))?.unwrap();
 			let resp_body = &resp[header_len..];
 			debug!("    [Enclave] Base64-encoded SigRL: {:?}", resp_body);

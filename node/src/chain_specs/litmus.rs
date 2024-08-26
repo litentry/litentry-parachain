@@ -18,19 +18,17 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CollatorSelectionConfig,
-	CouncilMembershipConfig, GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, UNIT,
-	WASM_BINARY,
+	CouncilMembershipConfig, ParachainInfoConfig, PolkadotXcmConfig, RuntimeGenesisConfig,
+	SessionConfig, SystemConfig, TechnicalCommitteeMembershipConfig, TeebagConfig,
+	TeebagOperationalMode, LITMUS_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
 
-const DEFAULT_PARA_ID: u32 = 2106;
-
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -93,7 +91,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				DEFAULT_PARA_ID.into(),
+				LITMUS_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -101,7 +99,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		Some("litmus"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: LITMUS_PARA_ID },
 	)
 }
 
@@ -117,7 +115,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litmus-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		DEFAULT_PARA_ID.into(),
+		LITMUS_PARA_ID.into(),
 	)
 }
 
@@ -128,7 +126,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litmus",
 		ChainType::Live,
 		"kusama".into(),
-		DEFAULT_PARA_ID.into(),
+		LITMUS_PARA_ID.into(),
 	)
 }
 
@@ -196,13 +194,14 @@ fn generate_genesis(
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
+			..Default::default()
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		parachain_info: ParachainInfoConfig { parachain_id: id },
+		parachain_info: ParachainInfoConfig { parachain_id: id, ..Default::default() },
 		collator_selection: CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: candicy_bond,
@@ -237,7 +236,10 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		polkadot_xcm: PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
+		},
 		transaction_payment: Default::default(),
 		assets: Default::default(),
 		teebag: TeebagConfig {

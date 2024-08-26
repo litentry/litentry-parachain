@@ -17,7 +17,7 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU64, Everything, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{ConstU64, OnFinalize, OnInitialize},
 	weights::Weight,
 };
 use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
@@ -25,30 +25,22 @@ use pallet_parachain_staking::{InflationInfo, Range};
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 use sp_core::{H160, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, Perbill, Percent,
+	AccountId32, BuildStorage, Perbill, Percent,
 };
 
 pub type AccountId = AccountId32;
 pub type Balance = u128;
-pub type BlockNumber = u64;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		ParachainStaking: pallet_parachain_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		System: frame_system,
+		Evm: pallet_evm,
+		Balances: pallet_balances,
+		ParachainStaking: pallet_parachain_staking,
+		Timestamp: pallet_timestamp,
 	}
 );
 
@@ -57,20 +49,20 @@ parameter_types! {
 	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 0);
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
-	pub const SS58Prefix: u8 = 42;
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = frame_support::traits::Everything;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -79,30 +71,30 @@ impl frame_system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type BlockWeights = ();
-	type BlockLength = ();
-	type SS58Prefix = SS58Prefix;
+	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
+
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 1;
 }
 impl pallet_balances::Config for Test {
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 4];
 	type MaxLocks = ();
-	type Balance = Balance;
-	type RuntimeEvent = RuntimeEvent;
+	type Balance = u128;
 	type DustRemoval = ();
+	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
+
 parameter_types! {
 	pub const MinBlocksPerRound: u32 = 3;
 	pub const DefaultBlocksPerRound: u32 = 5;
@@ -148,6 +140,15 @@ impl pallet_parachain_staking::Config for Test {
 	type OnNewRound = ();
 	type WeightInfo = ();
 	type IssuanceAdapter = ();
+	type OnAllDelegationRemoved = ();
+}
+
+impl pallet_parachain_staking::OnAllDelegationRemoved<Test> for () {
+	fn on_all_delegation_removed(
+		_delegator: &<Test as frame_system::Config>::AccountId,
+	) -> Result<(), &str> {
+		Ok(())
+	}
 }
 
 pub fn precompile_address() -> H160 {
@@ -299,9 +300,7 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.expect("Frame system builds valid default genesis config");
+		let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 		pallet_balances::GenesisConfig::<Test> { balances: self.balances }
 			.assimilate_storage(&mut t)

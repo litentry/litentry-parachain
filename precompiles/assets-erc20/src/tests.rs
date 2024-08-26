@@ -232,7 +232,7 @@ fn mint_is_ok() {
 				LocalAssetId(asset_id),
 				PrecompileCall::mint { to: Address(Bob.into()), value: mint_amount.into() },
 			)
-			.expect_cost(31160756) // 1 weight => 1 gas in mock
+			.expect_cost(27261756) // 1 weight => 1 gas in mock
 			.expect_log(log3(
 				LocalAssetId(0u128),
 				SELECTOR_LOG_TRANSFER,
@@ -315,7 +315,7 @@ fn burn_is_ok() {
 				LocalAssetId(asset_id),
 				PrecompileCall::burn { from: Address(Bob.into()), value: burn_amount.into() },
 			)
-			.expect_cost(38167756) // 1 weight => 1 gas in mock
+			.expect_cost(34475756) // 1 weight => 1 gas in mock
 			.expect_log(log3(
 				LocalAssetId(0u128),
 				SELECTOR_LOG_TRANSFER,
@@ -617,8 +617,8 @@ fn transfer_not_enough_founds() {
 				.execute_reverts(|output| {
 					from_utf8(output)
 						.unwrap()
-						.contains("Dispatched call failed with error: Module(ModuleError") &&
-						from_utf8(output).unwrap().contains("BalanceLow")
+						.contains("Dispatched call failed with error: Module(ModuleError")
+						&& from_utf8(output).unwrap().contains("BalanceLow")
 				});
 
 			precompiles()
@@ -790,8 +790,8 @@ fn transfer_from_non_incremental_approval() {
 					},
 				)
 				.execute_reverts(|output| {
-					output ==
-						b"Dispatched call failed with error: Module(ModuleError \
+					output
+						== b"Dispatched call failed with error: Module(ModuleError \
                     { index: 2, error: [10, 0, 0, 0], message: Some(\"Unapproved\") })"
 				});
 		});
@@ -836,8 +836,8 @@ fn transfer_from_above_allowance() {
 					},
 				)
 				.execute_reverts(|output| {
-					output ==
-						b"Dispatched call failed with error: Module(ModuleError \
+					output
+						== b"Dispatched call failed with error: Module(ModuleError \
                     { index: 2, error: [10, 0, 0, 0], message: Some(\"Unapproved\") })"
 				});
 

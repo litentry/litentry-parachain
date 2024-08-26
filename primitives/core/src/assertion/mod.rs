@@ -54,11 +54,10 @@ use web3_token::Web3TokenType;
 pub mod dynamic;
 use dynamic::DynamicParams;
 
-use crate::{AccountId, ParameterString};
+use crate::{vec, AccountId, ParameterString, Vec};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -168,10 +167,10 @@ impl Assertion {
 			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
 			Self::A7(..) | Self::A14 => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
-			Self::A10(..) |
-			Self::A11(..) |
-			Self::VIP3MembershipCard(..) |
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
+			Self::A10(..)
+			| Self::A11(..)
+			| Self::VIP3MembershipCard(..)
+			| Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(networks) => networks
 				.into_iter()
