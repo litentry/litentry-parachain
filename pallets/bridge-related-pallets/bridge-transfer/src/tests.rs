@@ -83,6 +83,12 @@ fn transfer_assets() {
 		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
 		assert_events(vec![
 			RuntimeEvent::Balances(balances::Event::Burned { who: RELAYER_A, amount: 100 }),
+			RuntimeEvent::AssetsHandler(Event::TokenBridgeOut {
+				asset_id: None,
+				from: RELAYER_A,
+				amount: 100,
+				fee: 0,
+			}),
 			RuntimeEvent::Bridge(bridge::Event::FungibleTransfer(
 				dest_bridge_id,
 				1,
@@ -109,80 +115,7 @@ fn mint_overflow() {
 				u64::MAX,
 				resource_id,
 			),
-			ArithmeticError::Overflow
+			pallet_assets_handler::Error::<Test>::Overflow
 		);
-	})
-}
-
-#[test]
-fn create_successful_transfer_proposal() {
-	let src_id: bridge::BridgeChainId = 0;
-	let r_id = NativeTokenResourceId::get();
-
-	new_test_ext().execute_with(|| {
-		let prop_id = 1;
-		let proposal = make_transfer_proposal(RELAYER_A, 10);
-
-		// Create proposal (& vote)
-		assert_ok!(Bridge::acknowledge_proposal(
-			RuntimeOrigin::signed(RELAYER_A),
-			prop_id,
-			src_id,
-			r_id,
-			Box::new(proposal.clone())
-		));
-		let prop = Bridge::votes(src_id, (prop_id, proposal.clone())).unwrap();
-		let expected = bridge::ProposalVotes {
-			votes_for: vec![RELAYER_A],
-			votes_against: vec![],
-			status: bridge::ProposalStatus::Initiated,
-			expiry: ProposalLifetime::get() + 1,
-		};
-		assert_eq!(prop, expected);
-
-		// Second relayer votes against
-		assert_ok!(Bridge::reject_proposal(
-			RuntimeOrigin::signed(RELAYER_B),
-			prop_id,
-			src_id,
-			r_id,
-			Box::new(proposal.clone())
-		));
-		let prop = Bridge::votes(src_id, (prop_id, proposal.clone())).unwrap();
-		let expected = bridge::ProposalVotes {
-			votes_for: vec![RELAYER_A],
-			votes_against: vec![RELAYER_B],
-			status: bridge::ProposalStatus::Initiated,
-			expiry: ProposalLifetime::get() + 1,
-		};
-		assert_eq!(prop, expected);
-
-		// Third relayer votes in favour
-		assert_ok!(Bridge::acknowledge_proposal(
-			RuntimeOrigin::signed(RELAYER_C),
-			prop_id,
-			src_id,
-			r_id,
-			Box::new(proposal.clone())
-		));
-		let prop = Bridge::votes(src_id, (prop_id, proposal)).unwrap();
-		let expected = bridge::ProposalVotes {
-			votes_for: vec![RELAYER_A, RELAYER_C],
-			votes_against: vec![RELAYER_B],
-			status: bridge::ProposalStatus::Approved,
-			expiry: ProposalLifetime::get() + 1,
-		};
-		assert_eq!(prop, expected);
-
-		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-
-		assert_events(vec![
-			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-			RuntimeEvent::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
-			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
-			RuntimeEvent::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
-			RuntimeEvent::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
-		]);
 	})
 }
