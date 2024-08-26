@@ -41,7 +41,7 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
-	use ppallet_bridge_common::BridgeHandler;
+	use pallet_bridge_common::BridgeHandler;
 	pub type ResourceId = bridge::ResourceId;
 	pub type BridgeChainId = bridge::BridgeChainId;
 
