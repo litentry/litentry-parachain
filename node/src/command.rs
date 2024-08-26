@@ -645,7 +645,7 @@ pub fn run() -> Result<()> {
 					crate::service::start_node::<
 						paseo_parachain_runtime::RuntimeApi,
 						PaseoParachainRuntimeExecutor,
-					>(config, polkadot_config, collator_options, id, additional_config, hwbench)
+					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
