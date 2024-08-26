@@ -56,3 +56,7 @@ impl<Balance: AtLeast32BitUnsigned> IssuanceAdapter<Balance> for () {
 		0u32.into()
 	}
 }
+
+pub trait OnAllDelegationRemoved<T: crate::Config> {
+	fn on_all_delegation_removed(delegator: &T::AccountId) -> Result<(), &str>;
+}

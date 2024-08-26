@@ -29,10 +29,12 @@ pub mod xcm_impl;
 #[cfg(feature = "runtime-benchmarks")]
 use frame_support::assert_ok;
 
+use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
+
 use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
-	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
+	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
 		Weight,
@@ -41,10 +43,7 @@ use frame_support::{
 use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
-
-use xcm::latest::prelude::*;
-
-use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
+use sp_std::marker::PhantomData;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -280,7 +279,7 @@ pub type EnsureRootOrTwoThirdsTechnicalCommittee = EitherOfDiverse<
 
 /// A set of pallet_config that runtime must implement.
 pub trait BaseRuntimeRequirements:
-	frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
+	frame_system::Config<AccountId = AccountId>
 	+ pallet_balances::Config<Balance = Balance>
 	+ pallet_extrinsic_filter::Config
 	+ pallet_multisig::Config
@@ -294,48 +293,6 @@ pub trait BaseRuntimeRequirements:
 pub trait ParaRuntimeRequirements:
 	BaseRuntimeRequirements + pallet_asset_manager::Config<AssetId = AssetId> + pallet_vesting::Config
 {
-}
-
-/// the filter account who is allowed to dispatch XCM sends
-use sp_std::marker::PhantomData;
-use xcm_executor::traits::Convert;
-
-pub struct FilterEnsureOrigin<Origin, Conversion, SpecialGroup>(
-	PhantomData<(Origin, Conversion, SpecialGroup)>,
-);
-impl<
-		Origin: OriginTrait + Clone,
-		Conversion: Convert<Origin, MultiLocation>,
-		SpecialGroup: EnsureOrigin<Origin>,
-	> EnsureOrigin<Origin> for FilterEnsureOrigin<Origin, Conversion, SpecialGroup>
-where
-	Origin::PalletsOrigin: PartialEq,
-{
-	type Success = MultiLocation;
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		// root can send the cross chain message
-
-		let o = match SpecialGroup::try_origin(o) {
-			Ok(_) => return Ok(Here.into()),
-			Err(o) => o,
-		};
-
-		let o = match Conversion::convert(o) {
-			Ok(location) => return Ok(location),
-			Err(o) => o,
-		};
-
-		if o.caller() == Origin::root().caller() {
-			Ok(Here.into())
-		} else {
-			Err(o)
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<Origin, ()> {
-		Ok(Origin::root())
-	}
 }
 
 // EnsureOrigin implementation to make sure the extrinsic origin
@@ -352,7 +309,9 @@ where
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
 				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
-				Ok(who),
+			{
+				Ok(who)
+			},
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}

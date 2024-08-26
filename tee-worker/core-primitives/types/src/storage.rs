@@ -49,7 +49,7 @@ impl<V> StorageEntryVerified<V> {
 		&self.value
 	}
 
-	/// Without accessing the the field directly but with getters only, we cannot partially
+	/// Without accessing the field directly but with getters only, we cannot partially
 	/// own the struct. So we can't do: `hashmap.insert(self.key(), self.value())` if the getters
 	/// consumed the `self`, which is needed to return owned values. Hence, we supply this method,
 	/// to consume `self` and be able to use the values individually.
