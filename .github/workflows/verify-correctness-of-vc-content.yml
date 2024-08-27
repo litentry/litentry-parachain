@@ -9,14 +9,12 @@ on:
         default: "latest"
   schedule:
     - cron: '0 12 * * 3,6' # Run every Wednesday and Saturday at 12:00 UTC
-
 env:
   DOCKER_TAG: ${{ github.event.inputs.docker-tag || 'latest' }}
 
 jobs:
   test-vc-correctness:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -47,7 +45,7 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Run vc correctness test
+      - name: Run vc correctness tests
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-vc-correctness-test.yml up --no-build --exit-code-from lit-vc-correctness-test lit-vc-correctness-test
