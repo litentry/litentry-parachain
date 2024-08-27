@@ -326,8 +326,8 @@ where
 	fn setup_asset_info(resource_id: ResourceId, fee: B) -> DispatchResult {
 		let native_token_asset_info: AssetInfo<AssetId<T>, B> = AssetInfo { fee, asset: None };
 
-		ResourceToAssetInfo::<T>::insert(resource_id, asset.clone());
-		Self::deposit_event(Event::ResourceUpdated { resource_id, asset });
+		ResourceToAssetInfo::<T>::insert(resource_id, native_token_asset_info.clone());
+		Self::deposit_event(Event::ResourceUpdated { resource_id, asset: native_token_asset_info });
 		Ok(())
 	}
 }
