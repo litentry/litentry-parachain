@@ -18,8 +18,8 @@ use super::{
 	bridge,
 	mock::{
 		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer,
-		NativeTokenResourceId, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test, TreasuryAccount,
-		ENDOWED_BALANCE, RELAYER_A,
+		NativeTokenResourceId, RuntimeEvent, RuntimeOrigin, Test, TreasuryAccount, ENDOWED_BALANCE,
+		RELAYER_A,
 	},
 	*,
 };
