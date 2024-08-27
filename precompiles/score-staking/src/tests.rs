@@ -56,6 +56,7 @@ fn claim_is_ok() {
 			Event::<Test>::RewardDistributionStarted {
 				total: round_reward(),
 				distributed: round_reward(),
+				round_index: 2,
 			},
 		));
 		assert_eq!(
@@ -66,6 +67,7 @@ fn claim_is_ok() {
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
 				token_staking_amount: 0,
+				last_token_distributed_round: 0,
 			}
 		);
 
@@ -90,6 +92,7 @@ fn claim_is_ok() {
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
 				token_staking_amount: 0,
+				last_token_distributed_round: 0,
 			}
 		);
 
@@ -114,6 +117,7 @@ fn claim_is_ok() {
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
 				token_staking_amount: 0,
+				last_token_distributed_round: 0,
 			}
 		);
 
