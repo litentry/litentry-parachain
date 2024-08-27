@@ -17,6 +17,7 @@ sp-runtime = { workspace = true }
 default = ["std"]
 runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 std = [
     "scale-info/std",
@@ -24,4 +25,7 @@ std = [
     "frame-support/std",
     "sp-runtime/std",
 ]
-try-runtime = ["frame-support/try-runtime"]
+try-runtime = [
+    "frame-support/try-runtime",
+    "sp-runtime/try-runtime",
+]
