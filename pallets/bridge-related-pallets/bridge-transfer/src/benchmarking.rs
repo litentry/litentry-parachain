@@ -55,11 +55,7 @@ benchmarks! {
 		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root(),dest_chain)?;
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
-		let native_token_asset_info: AssetInfo<
-			<Test as pallet_assets::Config>::AssetId,
-			<Test as pallet_assets::Config>::Balance,
-		> = AssetInfo { fee: 0u64, asset: None };
-		T::BridgeHandler::setup_asset_info(resource_id, native_token_asset_info)?;
+		T::BridgeHandler::setup_asset_info(resource_id, 0u64)?;
 
 		let sender:T::AccountId = create_user::<T>("sender",10u32,10u32);
 
@@ -74,11 +70,7 @@ benchmarks! {
 		<pallet_bridge::Pallet<T>>::whitelist_chain(RuntimeOrigin::root(),dest_chain)?;
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
-		let native_token_asset_info: AssetInfo<
-			<Test as pallet_assets::Config>::AssetId,
-			<Test as pallet_assets::Config>::Balance,
-		> = AssetInfo { fee: 0u64, asset: None };
-		T::BridgeHandler::setup_asset_info(resource_id, native_token_asset_info)?;
+		T::BridgeHandler::setup_asset_info(resource_id, 0u64)?;
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
 
