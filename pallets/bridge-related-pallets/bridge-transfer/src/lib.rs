@@ -64,7 +64,7 @@ pub mod pallet {
 		type TransferAssetsMembers: SortedMembers<Self::AccountId>;
 
 		// Handler of asset transfer/burn/mint etc.
-		type BridgeHandler: BridgeHandler<BalanceOf<Self>, Self::AccountId, ResourceId>;
+		type BridgeHandler: BridgeHandler<BalanceOf<Self>, Self::AccountId, ResourceId, _>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;

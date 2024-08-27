@@ -202,7 +202,7 @@ pub mod pallet {
 	}
 }
 
-impl<T, B, A> BridgeHandler<B, A, ResourceId> for Pallet<T>
+impl<T, B, A> BridgeHandler<B, A, ResourceId, AssetId<T>> for Pallet<T>
 where
 	T: Config
 		+ frame_system::Config<AccountId = A>
@@ -325,7 +325,7 @@ where
 	#[cfg(feature = "runtime-benchmarks")]
 	fn setup_asset_info(
 		resource_id: ResourceId,
-		asset: AssetInfo<AssetId<T>, BalanceOf<T>>,
+		asset: AssetInfo<AssetId<T>, B>,
 	) -> DispatchResult {
 		ResourceToAssetInfo::<T>::insert(resource_id, asset.clone());
 		Self::deposit_event(Event::ResourceUpdated { resource_id, asset });
