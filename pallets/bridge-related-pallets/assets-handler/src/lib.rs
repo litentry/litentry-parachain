@@ -322,6 +322,15 @@ where
 			},
 		}
 	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn setup_asset_info(
+		resource_id: ResourceId,
+		asset: AssetInfo<AssetId<T>, BalanceOf<T>>,
+	) -> DispatchResult {
+		ResourceToAssetInfo::<T>::insert(resource_id, asset.clone());
+		Self::deposit_event(Event::ResourceUpdated { resource_id, asset });
+		Ok(())
+	}
 }
 
 impl<T: Config> IssuanceAdapter<BalanceOf<T>> for Pallet<T> {
