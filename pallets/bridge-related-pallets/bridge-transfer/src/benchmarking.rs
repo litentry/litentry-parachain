@@ -52,7 +52,9 @@ benchmarks! {
 	transfer_assets{
 		// Whitelist chain
 		let dest_chain = 0;
-		<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		if !<pallet_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
+			<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		}
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		T::BridgeHandler::setup_asset_info(resource_id, 0u32.into())?;
@@ -67,7 +69,10 @@ benchmarks! {
 	transfer{
 		// Whitelist chain
 		let dest_chain = 0;
-		<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		if !<pallet_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
+			<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		}
+
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
 		T::BridgeHandler::setup_asset_info(resource_id, 0u32.into())?;
