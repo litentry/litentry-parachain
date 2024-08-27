@@ -597,7 +597,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
           - rococo
     name: ${{ matrix.chain }}
@@ -726,9 +725,6 @@ jobs:
         run: |
           echo "::group::rococo runtime test"
           cargo test --locked -p rococo-parachain-runtime --lib
-          echo "::endgroup::"
-          echo "::group::litmus runtime test"
-          cargo test --locked -p litmus-parachain-runtime --lib
           echo "::endgroup::"
           echo "::group::litentry runtime test"
           cargo test --locked -p litentry-parachain-runtime --lib

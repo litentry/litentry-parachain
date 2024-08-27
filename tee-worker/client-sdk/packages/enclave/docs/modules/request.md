@@ -133,7 +133,7 @@ Link an identity to the user's account.
 | `api` | `ApiPromise` | Litentry Parachain API instance from Polkadot.js |
 | `data` | `Object` | - |
 | `data.identity` | `LitentryIdentity` | Identity to be linked. Use `createCorePrimitivesIdentityType` helper to create this struct |
-| `data.networks` | (``"Polkadot"`` \| ``"Kusama"`` \| ``"Litentry"`` \| ``"Litmus"`` \| ``"LitentryRococo"`` \| ``"Khala"`` \| ``"SubstrateTestnet"`` \| ``"Ethereum"`` \| ``"Bsc"`` \| ``"BitcoinP2tr"`` \| ``"BitcoinP2pkh"`` \| ``"BitcoinP2sh"`` \| ``"BitcoinP2wpkh"`` \| ``"BitcoinP2wsh"`` \| ``"Polygon"`` \| ``"Arbitrum"`` \| ``"Solana"`` \| ``"Combo"``)[] | The networks to link the identity to, for web3 accounts |
+| `data.networks` | (``"Polkadot"`` \| ``"Kusama"`` \| ``"Litentry"`` \| ``"LitentryRococo"`` \| ``"Khala"`` \| ``"SubstrateTestnet"`` \| ``"Ethereum"`` \| ``"Bsc"`` \| ``"BitcoinP2tr"`` \| ``"BitcoinP2pkh"`` \| ``"BitcoinP2sh"`` \| ``"BitcoinP2wpkh"`` \| ``"BitcoinP2wsh"`` \| ``"Polygon"`` \| ``"Arbitrum"`` \| ``"Solana"`` \| ``"Combo"``)[] | The networks to link the identity to, for web3 accounts |
 | `data.validation` | `LitentryValidationData` | The ownership proof. Use `createLitentryValidationDataType` helper to create this struct |
 | `data.who` | `LitentryIdentity` | The prime identity. Use `createCorePrimitivesIdentityType` helper to create this struct |
 

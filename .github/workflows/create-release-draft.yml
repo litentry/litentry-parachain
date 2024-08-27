@@ -35,7 +35,6 @@ on:
         description: If any of the genesis artefacts should be released alongside
         options:
           - none
-          - litmus
           - rococo
           - litentry
 
@@ -76,7 +75,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - rococo
           - litentry
     name: ${{ matrix.chain }}
@@ -305,7 +303,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
     name: ${{ matrix.chain }}
     steps:
