@@ -9,17 +9,16 @@ on:
         default: "latest"
   schedule:
     - cron: '0 12 * * 3,6' # Run every Wednesday and Saturday at 12:00 UTC
-    
+
+env:
+  DOCKER_TAG: ${{ github.event.inputs.docker-tag }} || latest
+
 jobs:
   test-vc-correctness:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set ENV
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          DOCKER_TAG: ${{ github.event.inputs.docker-tag }} || latest
 
       - name: Pull litentry image optionally
         run: |
