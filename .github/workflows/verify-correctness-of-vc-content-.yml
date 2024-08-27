@@ -7,6 +7,8 @@ on:
         description: "client tag(e.g. p1.2.0-9701-w0.0.1-101)"
         required: true
         default: "latest"
+  schedule:
+    - cron: '0 12 * * 3,6' # Run every Wednesday and Saturday at 12:00 UTC
 env:
   DOCKER_TAG: ${{ github.event.inputs.docker-tag || 'latest' }}
 jobs:
