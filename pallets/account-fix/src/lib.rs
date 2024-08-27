@@ -84,7 +84,7 @@ pub mod pallet {
 			let add_total = add_free + add_reserved;
 
 			// First we try to modify the account's balance to the forced balance.
-			T::Currency::deposit_into_existing(&who, add_total)?;
+			let _ = T::Currency::deposit_into_existing(&who, add_total)?;
 			// Then do the reservation
 			T::Currency::reserve(&who, add_reserved)?;
 

@@ -124,7 +124,7 @@ where
 		if auto_compound > 100 {
 			return Err(RevertReason::custom("Must be an integer between 0 and 100 included")
 				.in_field("auto_compound")
-				.into())
+				.into());
 		}
 		let auto_compound = Percent::from_percent(auto_compound);
 
@@ -262,7 +262,7 @@ where
 		if value > 100 {
 			return Err(RevertReason::custom("Must be an integer between 0 and 100 included")
 				.in_field("value")
-				.into())
+				.into());
 		}
 		let value = Percent::from_percent(value);
 

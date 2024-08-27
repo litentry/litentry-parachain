@@ -17,32 +17,25 @@
 use crate as pallet_extrinsic_filter;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Contains, Everything},
+	traits::{ConstU64, Contains, Everything},
 };
-use frame_system as system;
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
-use system::EnsureRoot;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Balances: pallet_balances,
+		ExtrinsicFilter: pallet_extrinsic_filter,
 	}
 );
 
@@ -50,20 +43,19 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ExtrinsicFilter;
 	type BlockWeights = ();
 	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -72,7 +64,7 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<31>;
+	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -84,20 +76,24 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const ExistentialDeposit: u128 = 1;
+}
+
 impl pallet_balances::Config for Test {
-	type MaxLocks = ConstU32<50>;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = Balance; // the type that is relevant to us
-	type RuntimeEvent = RuntimeEvent;
+	type MaxLocks = ();
+	type Balance = u128;
 	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<1>;
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 pub struct SafeModeFilter;
@@ -127,7 +123,7 @@ impl pallet_extrinsic_filter::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	pallet_balances::GenesisConfig::<Test> { balances: vec![(1, 100)] }
 		.assimilate_storage(&mut t)
 		.unwrap();

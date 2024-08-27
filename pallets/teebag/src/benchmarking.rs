@@ -393,7 +393,7 @@ mod benchmarks {
 		let who: T::AccountId = account("who", 1, 1);
 		let test_enclave = Enclave::new(WorkerType::Identity);
 		assert_ok!(Teebag::<T>::add_enclave(&who, &test_enclave));
-		let block_number: T::BlockNumber = 10u32.into();
+		let block_number: BlockNumberFor<T> = 10u32.into();
 
 		#[extrinsic_call]
 		_(RawOrigin::Signed(who.clone()), H256::default(), block_number, H256::default());
