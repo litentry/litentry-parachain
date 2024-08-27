@@ -52,7 +52,7 @@ pub mod pallet {
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
-	type AssetId<T> = <T as pallet_assets::Config>::AssetId;
+	pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
