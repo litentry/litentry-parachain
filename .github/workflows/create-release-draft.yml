@@ -208,7 +208,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -277,7 +276,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
