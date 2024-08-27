@@ -7,22 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2024-08-22
+
+### Added
+
+-   litentry production's RPC endpoints: add Dwellir node.
+
 ## [0.2.0] - 2024-08-14
 
 ### Changed
 
-- Update litentry production's RPC node endpoint to Litentry Mainnet.
+-   Update litentry production's RPC node endpoint to Litentry Mainnet.
 
 ### Changed
 
-- extends `getChain`'s chain argument type to accept any string.
+-   extends `getChain`'s chain argument type to accept any string.
 
 ## [0.1.1] - 2024-06-10
 
 ### Changed
 
-- extends `getChain`'s chain argument type to accept any string.
+-   extends `getChain`'s chain argument type to accept any string.
 
 ## [0.1.0] - 2024-06-06
 
-- Initial version
+-   Initial version

@@ -5,7 +5,6 @@ services:
       - litentry-test-network
     ports:
       - 9946:9944
-      - 9936:9933
       - 30336:30333
     volumes:
       - relaychain-alice:/data
@@ -16,7 +15,6 @@ services:
       - --base-path=/data
       - --chain=/app/rococo-local.json
       - --validator
-      - --ws-external
       - --rpc-external
       - --rpc-cors=all
       - --name=alice
@@ -36,7 +34,6 @@ services:
       - litentry-test-network
     ports:
       - 9947:9944
-      - 9937:9933
       - 30337:30333
     volumes:
       - relaychain-bob:/data
@@ -47,7 +44,6 @@ services:
       - --base-path=/data
       - --chain=/app/rococo-local.json
       - --validator
-      - --ws-external
       - --rpc-external
       - --rpc-cors=all
       - --name=bob
@@ -65,7 +61,6 @@ services:
     ports:
       # TODO: maybe not use 9912 as port
       - 9944:9912
-      - 9933:9933
       - 30333:30333
     volumes:
       - parachain-2106-0:/data
@@ -81,11 +76,10 @@ services:
     command:
       - --base-path=/data
       - --chain=/app/rococo-dev-2106.json
-      - --ws-external
       - --rpc-external
       - --rpc-cors=all
       - --name=parachain-2106-0
-      - --ws-port=9912
+      - --rpc-port=9912
       - --collator
       - --rpc-methods=unsafe
       - --force-authoring
@@ -129,7 +123,7 @@ services:
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
       - ACHAINABLE_AUTH_KEY=
-      - CREDENTIAL_ENDPOINT=http://localhost:9933
+      - CREDENTIAL_ENDPOINT=http://localhost:9944
       - ONEBLOCK_NOTION_KEY=
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
@@ -194,7 +188,7 @@ services:
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
       - ACHAINABLE_AUTH_KEY=
-      - CREDENTIAL_ENDPOINT=http://localhost:9933
+      - CREDENTIAL_ENDPOINT=http://localhost:9944
       - ONEBLOCK_NOTION_KEY=
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
@@ -259,7 +253,7 @@ services:
       - DISCORD_AUTH_TOKEN=
       - ACHAINABLE_URL=http://localhost:19527
       - ACHAINABLE_AUTH_KEY=
-      - CREDENTIAL_ENDPOINT=http://localhost:9933
+      - CREDENTIAL_ENDPOINT=http://localhost:9944
       - ONEBLOCK_NOTION_KEY=
       - ONEBLOCK_NOTION_URL=http://localhost:19527
       - SORA_QUIZ_MASTER_ID=SORA_QUIZ_MASTER_ID
