@@ -28,7 +28,7 @@ use frame_system::RawOrigin;
 use hex_literal::hex;
 use pallet_assets_handler::ResourceToAssetInfo;
 use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
-use pallet_bridge_common::AssetInfo;
+use pallet_bridge_common::{AssetInfo, BridgeHandler};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
