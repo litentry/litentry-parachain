@@ -20,4 +20,5 @@ pub mod link_identity;
 #[cfg(feature = "development")]
 pub mod remove_identity;
 pub mod request_vc;
+pub mod request_vc_subcommands;
 pub mod send_erroneous_parentchain_call;
