@@ -98,21 +98,6 @@ impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 }
 
 // Native executor instance.
-pub struct LitmusParachainRuntimeExecutor;
-
-impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
-	type ExtendHostFunctions = HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		litmus_parachain_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		litmus_parachain_runtime::native_version()
-	}
-}
-
-// Native executor instance.
 pub struct RococoParachainRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
@@ -551,7 +536,7 @@ where
 	Ok((task_manager, client))
 }
 
-/// Start a litmus/litentry/rococo node.
+/// Start a litentry/rococo node.
 pub async fn start_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -659,7 +644,7 @@ where
 	.await
 }
 
-/// Build the import queue for the litmus/litentry/rococo runtime.
+/// Build the import queue for the litentry/rococo runtime.
 pub fn build_import_queue<RuntimeApi, Executor>(
 	client: Arc<ParachainClient<RuntimeApi, Executor>>,
 	block_import: ParachainBlockImport<RuntimeApi, Executor>,

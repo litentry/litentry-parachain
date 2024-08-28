@@ -113,12 +113,7 @@ impl Web3TokenType {
 			Self::Bnb | Self::Eth | Self::SpaceId | Self::Ton | Self::Trx | Self::Inj => {
 				vec![Web3Network::Bsc, Web3Network::Ethereum]
 			},
-			Self::Lit => vec![
-				Web3Network::Bsc,
-				Web3Network::Ethereum,
-				Web3Network::Litentry,
-				Web3Network::Litmus,
-			],
+			Self::Lit => vec![Web3Network::Bsc, Web3Network::Ethereum, Web3Network::Litentry],
 			Self::Nfp | Self::Ada | Self::Doge | Self::Bch | Self::Etc | Self::Fil => {
 				vec![Web3Network::Bsc]
 			},

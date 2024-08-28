@@ -67,7 +67,7 @@ pub fn get_balance(
 					None => Ok(LoopControls::Continue),
 				}
 			},
-			Web3Network::Litentry | Web3Network::Litmus => {
+			Web3Network::Litentry => {
 				let mut client = AchainableClient::new(data_provider_config);
 
 				let param =

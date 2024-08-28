@@ -27,7 +27,7 @@
 //! # Asset Manager Pallet
 //!
 //! This pallet allows to register new assets if certain conditions are met
-//! The main goal of this pallet is to allow Litmus to register XCM assets
+//! The main goal of this pallet is to allow Litentry to register XCM assets
 //! and control the creation of foreign assets
 //! The assumption is we work with AssetTypes, which can then be comverted to AssetIds
 //!
