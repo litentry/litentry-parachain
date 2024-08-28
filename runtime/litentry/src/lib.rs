@@ -258,7 +258,7 @@ impl frame_system::Config for Runtime {
 	type OnKilledAccount = ();
 	type DbWeight = RocksDbWeight;
 	type BaseCallFilter = BaseCallFilter;
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	type BlockWeights = RuntimeBlockWeights;
 	type BlockLength = BlockLength;
 	type SS58Prefix = SS58Prefix;
