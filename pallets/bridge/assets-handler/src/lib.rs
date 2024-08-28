@@ -43,7 +43,7 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointOperand,
 };
 use sp_std::{fmt::Debug, prelude::*};
-type ResourceId = pallet_bridge::ResourceId;
+type ResourceId = pallet_chain_bridge::ResourceId;
 use pallet_bridge_common::AssetInfo;
 
 #[frame_support::pallet]
@@ -64,7 +64,7 @@ pub mod pallet {
 		frame_system::Config
 		+ pallet_balances::Config
 		+ pallet_assets::Config
-		+ pallet_bridge::Config
+		+ pallet_chain_bridge::Config
 	{
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -156,7 +156,7 @@ pub mod pallet {
 			resource_id: ResourceId,
 			asset: AssetInfo<AssetId<T>, BalanceOf<T>>,
 		) -> DispatchResult {
-			<T as pallet_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			<T as pallet_chain_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			ResourceToAssetInfo::<T>::insert(resource_id, asset.clone());
 			Self::deposit_event(Event::ResourceUpdated { resource_id, asset });
 			Ok(())
@@ -169,7 +169,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight({1000})]
 		pub fn remove_resource(origin: OriginFor<T>, resource_id: ResourceId) -> DispatchResult {
-			<T as pallet_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			<T as pallet_chain_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			ResourceToAssetInfo::<T>::remove(resource_id);
 			Self::deposit_event(Event::ResourceRemoved { resource_id });
 			Ok(())
@@ -206,7 +206,7 @@ impl<T, B, A> BridgeHandler<B, A, ResourceId> for Pallet<T>
 where
 	T: Config
 		+ frame_system::Config<AccountId = A>
-		+ pallet_bridge::Config<Balance = B>
+		+ pallet_chain_bridge::Config<Balance = B>
 		+ pallet_assets::Config<Balance = B>
 		+ pallet_balances::Config<Balance = B>,
 	B: Copy

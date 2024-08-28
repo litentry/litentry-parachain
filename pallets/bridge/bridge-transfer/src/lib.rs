@@ -40,8 +40,8 @@ pub mod pallet {
 	use sp_runtime::traits::BadOrigin;
 	use sp_std::vec::Vec;
 
-	pub use pallet_bridge as bridge;
 	use pallet_bridge_common::BridgeHandler;
+	pub use pallet_chain_bridge as bridge;
 	pub type ResourceId = bridge::ResourceId;
 	pub type BridgeChainId = bridge::BridgeChainId;
 

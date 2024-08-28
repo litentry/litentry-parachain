@@ -26,8 +26,8 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
 use hex_literal::hex;
-use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
 use pallet_bridge_common::{AssetInfo, BridgeHandler};
+use pallet_chain_bridge::{EnsureBridge, EnsureOrigin, Get};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
@@ -51,8 +51,8 @@ benchmarks! {
 	transfer_assets{
 		// Whitelist chain
 		let dest_chain = 0;
-		if !<pallet_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
-			<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		if !<pallet_chain_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
+			<pallet_chain_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
 		}
 
 		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
@@ -68,8 +68,8 @@ benchmarks! {
 	transfer{
 		// Whitelist chain
 		let dest_chain = 0;
-		if !<pallet_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
-			<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
+		if !<pallet_chain_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
+			<pallet_chain_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
 		}
 
 

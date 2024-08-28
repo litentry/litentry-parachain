@@ -20,13 +20,13 @@
 //! DATE: 2023-10-17, STEPS: `20`, REPEAT: `50`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
 //! HOSTNAME: `parachain-benchmark`, CPU: `Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("rococo-dev"), DB CACHE: 20
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("litentry-dev"), DB CACHE: 20
 
 // Executed Command:
 // ./litentry-collator
 // benchmark
 // pallet
-// --chain=rococo-dev
+// --chain=litentry-dev
 // --execution=wasm
 // --db-cache=20
 // --wasm-execution=compiled
@@ -36,7 +36,7 @@
 // --steps=20
 // --repeat=50
 // --header=./LICENSE_HEADER
-// --output=./runtime/rococo/src/weights/pallet_bridge.rs
+// --output=./runtime/litentry/src/weights/pallet_bridge.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -48,15 +48,15 @@ use core::marker::PhantomData;
 
 /// Weight functions for `pallet_bridge`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_chain_bridge::WeightInfo for WeightInfo<T> {
 	/// Storage: ChainBridge RelayerThreshold (r:0 w:1)
 	/// Proof Skipped: ChainBridge RelayerThreshold (max_values: Some(1), max_size: None, mode: Measured)
 	fn set_threshold() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
-		// Minimum execution time: 10_246_000 picoseconds.
-		Weight::from_parts(10_609_000, 0)
+		// Minimum execution time: 10_526_000 picoseconds.
+		Weight::from_parts(10_839_000, 0)
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -64,11 +64,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge ChainNonces (max_values: None, max_size: None, mode: Measured)
 	fn whitelist_chain() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `142`
-		//  Estimated: `3607`
-		// Minimum execution time: 15_986_000 picoseconds.
-		Weight::from_parts(16_451_000, 0)
-			.saturating_add(Weight::from_parts(0, 3607))
+		//  Measured:  `109`
+		//  Estimated: `3574`
+		// Minimum execution time: 16_039_000 picoseconds.
+		Weight::from_parts(16_413_000, 0)
+			.saturating_add(Weight::from_parts(0, 3574))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -78,11 +78,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge RelayerCount (max_values: Some(1), max_size: None, mode: Measured)
 	fn add_relayer() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `142`
-		//  Estimated: `3607`
-		// Minimum execution time: 18_770_000 picoseconds.
-		Weight::from_parts(19_235_000, 0)
-			.saturating_add(Weight::from_parts(0, 3607))
+		//  Measured:  `109`
+		//  Estimated: `3574`
+		// Minimum execution time: 18_953_000 picoseconds.
+		Weight::from_parts(19_587_000, 0)
+			.saturating_add(Weight::from_parts(0, 3574))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -92,11 +92,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge RelayerCount (max_values: Some(1), max_size: None, mode: Measured)
 	fn remove_relayer() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `223`
-		//  Estimated: `3688`
-		// Minimum execution time: 20_653_000 picoseconds.
-		Weight::from_parts(21_109_000, 0)
-			.saturating_add(Weight::from_parts(0, 3688))
+		//  Measured:  `190`
+		//  Estimated: `3655`
+		// Minimum execution time: 21_282_000 picoseconds.
+		Weight::from_parts(21_661_000, 0)
+			.saturating_add(Weight::from_parts(0, 3655))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -114,11 +114,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge RelayerCount (max_values: Some(1), max_size: None, mode: Measured)
 	fn acknowledge_proposal() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `340`
-		//  Estimated: `3805`
-		// Minimum execution time: 52_203_000 picoseconds.
-		Weight::from_parts(52_854_000, 0)
-			.saturating_add(Weight::from_parts(0, 3805))
+		//  Measured:  `307`
+		//  Estimated: `3772`
+		// Minimum execution time: 52_964_000 picoseconds.
+		Weight::from_parts(54_065_000, 0)
+			.saturating_add(Weight::from_parts(0, 3772))
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -136,11 +136,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge RelayerCount (max_values: Some(1), max_size: None, mode: Measured)
 	fn reject_proposal() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `340`
-		//  Estimated: `3805`
-		// Minimum execution time: 44_020_000 picoseconds.
-		Weight::from_parts(44_771_000, 0)
-			.saturating_add(Weight::from_parts(0, 3805))
+		//  Measured:  `307`
+		//  Estimated: `3772`
+		// Minimum execution time: 44_953_000 picoseconds.
+		Weight::from_parts(45_689_000, 0)
+			.saturating_add(Weight::from_parts(0, 3772))
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -152,11 +152,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	/// Proof Skipped: ChainBridge RelayerCount (max_values: Some(1), max_size: None, mode: Measured)
 	fn eval_vote_state() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `484`
-		//  Estimated: `3949`
-		// Minimum execution time: 19_330_000 picoseconds.
-		Weight::from_parts(19_813_000, 0)
-			.saturating_add(Weight::from_parts(0, 3949))
+		//  Measured:  `451`
+		//  Estimated: `3916`
+		// Minimum execution time: 19_760_000 picoseconds.
+		Weight::from_parts(20_174_000, 0)
+			.saturating_add(Weight::from_parts(0, 3916))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}

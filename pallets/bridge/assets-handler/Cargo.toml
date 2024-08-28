@@ -1,9 +1,11 @@
 [package]
 authors = ['Trust Computing GmbH <info@litentry.com>']
+description = 'Pallet for Assets handler of token bridge'
 edition = '2021'
-homepage = 'https://litentry.com'
-name = 'pallet-bridge-transfer'
-repository = 'https://github.com/litentry/litentry-pallets'
+homepage = 'https://litentry.com/'
+license = 'GPL-3.0'
+name = 'pallet-assets-handler'
+repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
@@ -11,34 +13,30 @@ hex-literal = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
-sp-arithmetic = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-assets = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-bridge-common = { workspace = true }
+pallet-chain-bridge = { workspace = true }
+pallet-parachain-staking = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
-frame-benchmarking = { workspace = true, optional = true }
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-pallet-assets = { workspace = true }
-
-pallet-bridge = { workspace = true }
-pallet-bridge-common = { workspace = true }
-
 [dev-dependencies]
-pallet-assets-handler = { workspace = true, features = ["std"] }
-pallet-balances = { workspace = true, features = ["std"] }
-pallet-timestamp = { workspace = true, features = ["std"] }
+pallet-bridge-transfer = { workspace = true, features = ["std"] }
 
 [features]
 default = ["std"]
 runtime-benchmarks = [
-    "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "pallet-assets/runtime-benchmarks",
-    "pallet-bridge/runtime-benchmarks",
+    "pallet-chain-bridge/runtime-benchmarks",
     "pallet-bridge-common/runtime-benchmarks",
+    "pallet-parachain-staking/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -47,12 +45,12 @@ std = [
     "sp-runtime/std",
     "sp-io/std",
     "sp-core/std",
-    "sp-arithmetic/std",
     "frame-support/std",
     "frame-system/std",
-    "frame-benchmarking?/std",
     "pallet-assets/std",
-    "pallet-bridge/std",
+    "pallet-balances/std",
+    "pallet-chain-bridge/std",
     "pallet-bridge-common/std",
+    "pallet-parachain-staking/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

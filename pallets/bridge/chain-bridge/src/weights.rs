@@ -56,7 +56,7 @@ pub trait WeightInfo {
 	fn eval_vote_state() -> Weight;
 }
 
-/// Weights for pallet_bridge using the Litentry node and recommended hardware.
+/// Weights for pallet_chain_bridgeusing the Litentry node and recommended hardware.
 pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ChainBridge RelayerThreshold (r:0 w:1)
