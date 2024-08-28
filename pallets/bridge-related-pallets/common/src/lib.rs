@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #[cfg(feature = "runtime-benchmarks")]
 use frame_support::pallet_prelude::DispatchResult;
 use parity_scale_codec::{Decode, Encode};
