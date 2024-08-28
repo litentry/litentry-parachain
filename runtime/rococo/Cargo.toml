@@ -164,6 +164,7 @@ runtime-benchmarks = [
     "pallet-bridge/runtime-benchmarks",
     "pallet-bridge-transfer/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
+    "cumulus-pallet-parachain-system/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
     "pallet-group/runtime-benchmarks",
     "pallet-identity-management/runtime-benchmarks",
