@@ -16,71 +16,72 @@
 
 //! bridge-transfer benchmark file
 
-#![cfg(feature = "runtime-benchmarks")]
-#![allow(clippy::type_complexity)]
-#![allow(unused)]
-#![allow(clippy::useless_vec)]
-use super::*;
-use crate::Pallet as bridge_transfer;
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{ensure, traits::SortedMembers, PalletId};
+use super::{Pallet as BridgeTransfer, *};
+use frame_benchmarking::v2::*;
+use frame_support::traits::Currency;
 use frame_system::RawOrigin;
 use hex_literal::hex;
-use pallet_bridge_common::{AssetInfo, BridgeHandler};
-use pallet_chain_bridge::{EnsureBridge, EnsureOrigin, Get};
-use sp_arithmetic::traits::Saturating;
-use sp_runtime::traits::AccountIdConversion;
+use pallet_bridge_common::BridgeHandler;
+use pallet_chain_bridge::{EnsureOrigin, Pallet as ChainBridge};
 use sp_std::vec;
 
-const UNIT_ISSURANCE: u32 = 20_000;
-const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
-	hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
-fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
-	let user: T::AccountId = account(string, n, seed);
-	bridge_transfer::<T>::transfer(
-		EnsureBridge::<T>::try_successful_origin().unwrap(),
-		user.clone(),
-		(n * UNIT_ISSURANCE).into(),
-		NATIVE_TOKEN_RESOURCE_ID,
-	);
+const RID: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 
+fn setup<T: Config>() {
+	let _ = ChainBridge::<T>::whitelist_chain(RawOrigin::Root.into(), 0).unwrap();
+	let _ = T::BridgeHandler::setup_asset_info(RID, 0u32.into()).unwrap();
+}
+
+fn create_funded_user<T: Config + pallet_assets::Config>(
+	string: &'static str,
+	n: u32,
+	extra: u32,
+) -> T::AccountId {
+	const SEED: u32 = 0;
+	let user = account(string, n, SEED);
+	let total = <T as pallet_assets::Config>::Currency::minimum_balance() + extra.into();
+	<T as pallet_assets::Config>::Currency::make_free_balance_be(&user, total);
+	let _ = <T as pallet_assets::Config>::Currency::issue(total);
 	user
 }
 
-benchmarks! {
-	transfer_assets{
-		// Whitelist chain
-		let dest_chain = 0;
-		if !<pallet_chain_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
-			<pallet_chain_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
-		}
-
-		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
-		T::BridgeHandler::setup_asset_info(resource_id, 0u32.into())?;
-
-		let sender:T::AccountId = create_user::<T>("sender",10u32,10u32);
-
-		ensure!(T::TransferAssetsMembers::contains(&sender),"add transfer_native_member failed");
-
-
-	}:_(RawOrigin::Signed(sender), 50u32.into(), vec![0u8, 0u8, 0u8, 0u8], dest_chain, resource_id)
-
-	transfer{
-		// Whitelist chain
-		let dest_chain = 0;
-		if !<pallet_chain_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
-			<pallet_chain_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(),dest_chain)?;
-		}
-
-
-		let resource_id = NATIVE_TOKEN_RESOURCE_ID;
-		T::BridgeHandler::setup_asset_info(resource_id, 0u32.into())?;
-
-		let sender = PalletId(*b"litry/bg").into_account_truncating();
-
-		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
-
-	}:_(RawOrigin::Signed(sender), to_account, 50u32.into(), resource_id)
+fn do_transfer<T: Config>(to: T::AccountId, amount: u32) {
+	let _ = BridgeTransfer::<T>::transfer(
+		T::BridgeOrigin::try_successful_origin().unwrap(),
+		to,
+		amount.into(),
+		RID,
+	)
+	.expect("BridgeTransfer::transfer failed");
 }
 
-impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
+#[benchmarks(
+    where <T as frame_system::Config>::Hash: From<[u8; 32]>,
+          <T as frame_system::Config>::AccountId: From<[u8; 32]>,
+		  T: pallet_assets::Config,
+)]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn transfer_assets() {
+		setup::<T>();
+		let sender = create_funded_user::<T>("sender", 1, 100);
+		do_transfer::<T>(sender.clone(), 1);
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(sender), 5u32.into(), vec![0u8, 0u8, 0u8, 0u8], 0, RID);
+	}
+
+	#[benchmark]
+	fn transfer() {
+		setup::<T>();
+		let to = create_funded_user::<T>("to", 1, 100);
+		let o = T::BridgeOrigin::try_successful_origin().unwrap();
+
+		#[extrinsic_call]
+		_(o as T::RuntimeOrigin, to, 1u32.into(), RID);
+	}
+
+	impl_benchmark_test_suite!(BridgeTransfer, crate::mock::new_test_ext(), crate::mock::Test);
+}
