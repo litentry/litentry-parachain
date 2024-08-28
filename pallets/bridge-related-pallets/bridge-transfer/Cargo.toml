@@ -21,13 +21,12 @@ frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-assets = { workspace = true }
-pallet-assets-handler = { workspace = true }
-
 
 pallet-bridge = { workspace = true }
 pallet-bridge-common = { workspace = true }
 
 [dev-dependencies]
+pallet-assets-handler = { workspace = true, features = ["std"] }
 pallet-balances = { workspace = true, features = ["std"] }
 pallet-timestamp = { workspace = true, features = ["std"] }
 
@@ -38,7 +37,6 @@ runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "pallet-assets/runtime-benchmarks",
-    "pallet-assets-handler/runtime-benchmarks",
     "pallet-bridge/runtime-benchmarks",
     "pallet-bridge-common/runtime-benchmarks",
 ]
@@ -54,7 +52,6 @@ std = [
     "frame-system/std",
     "frame-benchmarking?/std",
     "pallet-assets/std",
-    "pallet-assets-handler/std",
     "pallet-bridge/std",
     "pallet-bridge-common/std",
 ]

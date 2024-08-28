@@ -10,7 +10,7 @@ version = '0.1.0'
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
-frame-support = { workspace = true }
+frame-support = { workspace = true, optional = true }
 sp-runtime = { workspace = true }
 
 [features]
@@ -22,10 +22,6 @@ runtime-benchmarks = [
 std = [
     "scale-info/std",
     "parity-scale-codec/std",
-    "frame-support/std",
+    "frame-support?/std",
     "sp-runtime/std",
-]
-try-runtime = [
-    "frame-support/try-runtime",
-    "sp-runtime/try-runtime",
 ]

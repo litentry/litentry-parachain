@@ -124,7 +124,6 @@ runtime-common = { workspace = true, features = ["tests"] }
 sp-state-machine = { workspace = true, features = ["std"] }
 xcm-simulator = { workspace = true }
 pallet-message-queue = { workspace = true, features = ["std"] }
-pallet-bridge-common = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

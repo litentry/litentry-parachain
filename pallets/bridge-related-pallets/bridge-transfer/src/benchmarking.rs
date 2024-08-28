@@ -26,7 +26,6 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{ensure, traits::SortedMembers, PalletId};
 use frame_system::RawOrigin;
 use hex_literal::hex;
-use pallet_assets_handler::ResourceToAssetInfo;
 use pallet_bridge::{EnsureBridge, EnsureOrigin, Get};
 use pallet_bridge_common::{AssetInfo, BridgeHandler};
 use sp_arithmetic::traits::Saturating;
