@@ -28,8 +28,8 @@ use sp_std::vec;
 const RID: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 
 fn setup<T: Config>() {
-	let _ = ChainBridge::<T>::whitelist_chain(RawOrigin::Root.into(), 0).unwrap();
-	let _ = T::BridgeHandler::setup_asset_info(RID, 0u32.into()).unwrap();
+	ChainBridge::<T>::whitelist_chain(RawOrigin::Root.into(), 0).unwrap();
+	T::BridgeHandler::setup_asset_info(RID, 0u32.into()).unwrap();
 }
 
 fn create_funded_user<T: Config + pallet_assets::Config>(
@@ -46,7 +46,7 @@ fn create_funded_user<T: Config + pallet_assets::Config>(
 }
 
 fn do_transfer<T: Config>(to: T::AccountId, amount: u32) {
-	let _ = BridgeTransfer::<T>::transfer(
+	BridgeTransfer::<T>::transfer(
 		T::BridgeOrigin::try_successful_origin().unwrap(),
 		to,
 		amount.into(),
@@ -55,9 +55,9 @@ fn do_transfer<T: Config>(to: T::AccountId, amount: u32) {
 	.expect("BridgeTransfer::transfer failed");
 }
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(
     where <T as frame_system::Config>::Hash: From<[u8; 32]>,
-          <T as frame_system::Config>::AccountId: From<[u8; 32]>,
 		  T: pallet_assets::Config,
 )]
 mod benchmarks {

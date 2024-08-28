@@ -40,7 +40,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Bridge: pallet_bridge,
+		Bridge: pallet_chain_bridge,
 		Assets: pallet_assets,
 		AssetsHandler: pallet_assets_handler,
 		BridgeTransfer: pallet_bridge_transfer,
