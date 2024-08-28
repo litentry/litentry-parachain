@@ -11,7 +11,7 @@ check(){
         export CHAIN="rococo"
     fi
 
-    ALLOWED_VALUES=("rococo" "litmus" "litentry")
+    ALLOWED_VALUES=("rococo" "litentry")
 
     if [[ " ${ALLOWED_VALUES[@]} " =~ " ${CHAIN} " ]]; then
         echo "CHAIN is set to a valid value: $CHAIN"
@@ -35,17 +35,15 @@ run_parachain_alice(){
     --collator \
     --force-authoring \
     --chain ${CHAIN}-dev \
-    --unsafe-ws-external \
     --unsafe-rpc-external \
     --rpc-cors=all \
     --ws-max-connections 3000 \
     --port 30333 \
-    --ws-port 9944 \
-    --rpc-port 9933 \
+    --rpc-port 9944 \
     --execution wasm \
     --state-pruning archive \
     --blocks-pruning archive \
-    -- --execution wasm --chain ${PARACHAIN_BASEDIR}/rococo-local-chain-spec.json --port 30332 --ws-port 9943 --rpc-port 9932"
+    -- --execution wasm --chain ${PARACHAIN_BASEDIR}/rococo-local-chain-spec.json --port 30332 --rpc-port 9943"
     echo "Flags: ${flags}"
 
     nohup litentry-collator ${flags} >> ${PARACHAIN_BASEDIR}/para-alice.log 2>&1 &
@@ -58,8 +56,7 @@ run_relay_alice(){
     --chain ${PARACHAIN_BASEDIR}/rococo-local-chain-spec.json \
     --alice \
     --port 30336 \
-    --ws-port 9946 \
-    --rpc-port 9936"
+    --rpc-port 9946"
     echo "Flags: ${flags}"
 
     nohup polkadot ${flags} >> ${PARACHAIN_BASEDIR}/relay-alice.log 2>&1 &
@@ -72,8 +69,7 @@ run_relay_bob(){
     --chain ${PARACHAIN_BASEDIR}/rococo-local-chain-spec.json \
     --bob \
     --port 30337 \
-    --ws-port 9947 \
-    --rpc-port 9937"
+    --rpc-port 9947"
     echo "Flags: ${flags}"
 
     nohup polkadot ${flags} >> ${PARACHAIN_BASEDIR}/relay-bob.log 2>&1 &

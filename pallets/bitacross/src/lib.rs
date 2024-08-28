@@ -90,7 +90,6 @@ pub mod pallet {
 		pub admin: Option<T::AccountId>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { admin: None }
@@ -98,7 +97,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			if let Some(ref admin) = self.admin {
 				Admin::<T>::put(admin);

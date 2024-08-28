@@ -35,7 +35,6 @@ on:
         description: If any of the genesis artefacts should be released alongside
         options:
           - none
-          - litmus
           - rococo
           - litentry
 
@@ -76,7 +75,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - rococo
           - litentry
     name: ${{ matrix.chain }}
@@ -119,19 +117,15 @@ jobs:
     if: ${{ github.event.inputs.parachain_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
+
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
 
       - name: Build docker image
         run: |
@@ -179,11 +173,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -216,7 +206,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -253,11 +242,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -289,7 +274,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -319,7 +303,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
     name: ${{ matrix.chain }}
     steps:

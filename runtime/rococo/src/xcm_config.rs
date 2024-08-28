@@ -29,18 +29,18 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
+use polkadot_parachain_primitives::primitives::Sibling;
 use xcm_builder::{ConvertedConcreteId, NoChecking};
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
 use core_primitives::{AccountId, Weight};
 use runtime_common::xcm_impl::{
-	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
+	AccountIdToMultiLocation, AssetIdMultiLocationConvert, CurrencyId,
 	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
 	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
-use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin, WEIGHT_TO_FEE_FACTOR};
+use runtime_common::WEIGHT_TO_FEE_FACTOR;
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -105,7 +105,7 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
 	Assets,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+	ConvertedConcreteId<AssetId, Balance, AssetIdMultiLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -197,7 +197,7 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Assets,
-			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+			ConvertedConcreteId<AssetId, Balance, AssetIdMultiLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -240,6 +240,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
+	type Aliasers = ();
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -262,9 +263,9 @@ pub type XcmRouter = (
 
 match_types! {
 	pub type ParentOrParachains: impl Contains<MultiLocation> = {
-		// Local account: Litmus
+		// Local account: Rococo
 		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |
-		// Relay-chain account: Kusama
+		// Relay-chain account: Rococo
 		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
 		// AccountKey20 based parachain: Moonriver
 		MultiLocation { parents: 1, interior: X2(Parachain( .. ), Junction::AccountKey20 { .. }) } |
@@ -298,13 +299,7 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// We allow anyone to send any XCM to anywhere
-	// This is highly relied on if target chain properly filtered
-	// Check their Barriers implementation
-	// And for TakeWeightCredit
-	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin =
-		FilterEnsureOrigin<RuntimeOrigin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
@@ -331,6 +326,8 @@ impl pallet_xcm::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
 	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxRemoteLockConsumers = ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

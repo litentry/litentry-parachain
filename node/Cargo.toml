@@ -7,7 +7,7 @@ homepage = 'https://litentry.com/'
 license = 'GPL-3.0'
 name = 'litentry-collator'
 repository = 'https://github.com/litentry/litentry-parachain'
-version = '0.9.19'
+version = '0.9.20'
 
 [[bin]]
 name = 'litentry-collator'
@@ -57,6 +57,8 @@ sp-transaction-pool = { workspace = true, features = ["std"] }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
+fc-api = { workspace = true }
+fc-consensus = { workspace = true }
 fc-db = { workspace = true }
 fc-mapping-sync = { workspace = true }
 fc-rpc = { workspace = true }
@@ -64,7 +66,7 @@ fc-rpc-core = { workspace = true }
 fc-storage = { workspace = true }
 fp-rpc = { workspace = true }
 
-moonbeam-primitives-ext = { workspace = true }
+moonbeam-primitives-ext = { workspace = true, features = ["std"] }
 moonbeam-rpc-debug = { workspace = true }
 moonbeam-rpc-primitives-debug = { workspace = true, features = ["std"] }
 moonbeam-rpc-primitives-txpool = { workspace = true, features = ["std"] }
@@ -81,6 +83,7 @@ cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
+cumulus-test-relay-sproof-builder = { workspace = true, features = ["std"] }
 
 polkadot-cli = { workspace = true }
 polkadot-primitives = { workspace = true, features = ["std"] }
@@ -93,7 +96,6 @@ try-runtime-cli = { workspace = true }
 
 core-primitives = { workspace = true, features = ["std"] }
 litentry-parachain-runtime = { workspace = true, features = ["std"] }
-litmus-parachain-runtime = { workspace = true, features = ["std"] }
 rococo-parachain-runtime = { workspace = true, features = ["std"] }
 
 [build-dependencies]
@@ -103,19 +105,16 @@ substrate-build-script-utils = { workspace = true }
 default = []
 fast-runtime = [
     "litentry-parachain-runtime/fast-runtime",
-    "litmus-parachain-runtime/fast-runtime",
     "rococo-parachain-runtime/fast-runtime",
 ]
 runtime-benchmarks = [
     "litentry-parachain-runtime/runtime-benchmarks",
-    "litmus-parachain-runtime/runtime-benchmarks",
     "rococo-parachain-runtime/runtime-benchmarks",
     "polkadot-service/runtime-benchmarks",
     "polkadot-cli/runtime-benchmarks",
 ]
 try-runtime = [
     "litentry-parachain-runtime/try-runtime",
-    "litmus-parachain-runtime/try-runtime",
     "rococo-parachain-runtime/try-runtime",
     "polkadot-service/try-runtime",
     "polkadot-cli/try-runtime",

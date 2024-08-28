@@ -12,7 +12,7 @@ version = "0.1.0"
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
-serde = { workspace = true, optional = true }
+serde = { workspace = true }
 
 core-primitives = { workspace = true }
 
@@ -22,6 +22,7 @@ frame-system = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-session = { workspace = true }
+sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-staking = { workspace = true }
 sp-std = { workspace = true }
@@ -44,10 +45,12 @@ std = [
     "pallet-session/std",
     "parity-scale-codec/std",
     "scale-info/std",
-    "serde",
+    "serde/std",
     "core-primitives/std",
     "sp-runtime/std",
     "sp-std/std",
     "sp-staking/std",
+    "sp-core/std",
+    "sp-io/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

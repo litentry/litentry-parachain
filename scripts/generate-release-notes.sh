@@ -59,9 +59,8 @@ if is_client_release; then
   fi
 fi
 
-SUBSTRATE_DEP=$(grep -F 'https://github.com/paritytech/substrate' ./Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
-POLKADOT_DEP=$(grep -F 'https://github.com/paritytech/polkadot' ./Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
-CUMULUS_DEP=$(grep -F 'https://github.com/paritytech/cumulus' ./Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
+SUBSTRATE_DEP=$(grep 'frame-system' ./Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
+FRONTIER_DEP=$(grep 'fc-api' ./Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
 
 echo > "$1"
 echo "## This is a release for:" >> "$1"
@@ -95,8 +94,7 @@ cat << EOF >> "$1"
 
 <CODEBLOCK>
 Substrate                    : $SUBSTRATE_DEP
-Polkadot                     : $POLKADOT_DEP
-Cumulus                      : $CUMULUS_DEP
+Frontier                     : $FRONTIER_DEP
 <CODEBLOCK>
 
 EOF
@@ -118,7 +116,7 @@ fi
 
 if is_runtime_release; then
   echo "## Parachain runtime" >> "$1"
-  for CHAIN in litmus rococo litentry; do
+  for CHAIN in rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
     RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')

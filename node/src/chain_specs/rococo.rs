@@ -18,9 +18,10 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
-	DeveloperCommitteeMembershipConfig, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
-	TeebagConfig, TeebagOperationalMode, VCManagementConfig, ROCOCO_PARA_ID, UNIT, WASM_BINARY,
+	DeveloperCommitteeMembershipConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PolkadotXcmConfig, RuntimeGenesisConfig, SessionConfig, SudoConfig, SystemConfig,
+	TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, VCManagementConfig,
+	ROCOCO_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -28,13 +29,12 @@ use serde::Deserialize;
 use sp_core::sr25519;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Get default parachain properties for Rococo which will be filled into chain spec
-/// Currently, we use 131 as the SS58Prefix (same as Litmus)
 fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 18, 131)
 }
@@ -196,14 +196,15 @@ fn generate_genesis(
 	technical_committee_members: Vec<AccountId>,
 	developer_committee_members: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
+			..Default::default()
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
 		sudo: SudoConfig { key: Some(root_key.clone()) },
-		parachain_info: ParachainInfoConfig { parachain_id: id },
+		parachain_info: ParachainInfoConfig { parachain_id: id, ..Default::default() },
 		parachain_staking: ParachainStakingConfig {
 			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
 			..Default::default()
@@ -242,7 +243,10 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		polkadot_xcm: PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
+		},
 		vc_management: VCManagementConfig { admin: Some(root_key.clone()) },
 		transaction_payment: Default::default(),
 		assets: Default::default(),

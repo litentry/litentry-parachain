@@ -4,7 +4,7 @@
 #
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:v0.9.42
+  image: parity/polkadot:v1.1.0
   chain: rococo-local
   env:
     RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
@@ -13,12 +13,10 @@ relaychain:
     - --execution=wasm
   nodes:
     - name: alice
-      wsPort: ${AliceWSPort:-9946}
-      rpcPort: ${AliceRPCPort:-9936}
+      rpcPort: ${AliceWSPort:-9946}
       port: ${AlicePort:-30336}
     - name: bob
-      wsPort: ${BobWSPort:-9947}
-      rpcPort: ${BobRPCPort:-9937}
+      rpcPort: ${BobWSPort:-9947}
       port: ${BobPort:-30337}
 
 # Parachain Configuration
@@ -42,6 +40,5 @@ parachains:
   nodes:
   - flags:
     - --alice
-    wsPort: ${CollatorWSPort:-9944}
-    rpcPort: ${CollatorRPCPort:-9933}
+    rpcPort: ${CollatorWSPort:-9944}
     port: ${CollatorPort:-30333}

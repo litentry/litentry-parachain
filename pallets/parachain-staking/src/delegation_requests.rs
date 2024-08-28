@@ -32,10 +32,10 @@ use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	traits::{Get, ReservableCurrency},
-	RuntimeDebug,
 };
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use sp_core::RuntimeDebug;
 use sp_runtime::traits::Saturating;
 use sp_std::{vec, vec::Vec};
 
@@ -308,7 +308,7 @@ impl<T: Config> Pallet<T> {
 						} else {
 							// must rm entire delegation if bond.amount <= less or cancel request
 							Err(<Error<T>>::DelegationBelowMin.into())
-						}
+						};
 					}
 				}
 				Err(<Error<T>>::DelegationDNE.into())
@@ -355,7 +355,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		if existing_revoke_count == state.delegations.0.len() {
-			return Err(<Error<T>>::DelegatorAlreadyLeaving.into())
+			return Err(<Error<T>>::DelegatorAlreadyLeaving.into());
 		}
 
 		updated_scheduled_requests

@@ -148,14 +148,6 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // check runtime version is present
     const specPaths = ['../../../runtime/litentry/src/lib.rs', '../../app-libs/sgx-runtime/src/lib.rs'].map(
         (p) => path.resolve(process.cwd(), p) // resolve relative to working directory: integration-tests
-    );
-
-    console.log('-------------------');
-    console.log({
-        cwd: process.cwd(),
-        specPaths,
-    });
-    console.log('-------------------');
 
     try {
         const [nodeVersion, sidechainVersion] = await Promise.all(

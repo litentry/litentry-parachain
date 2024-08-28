@@ -2,7 +2,7 @@
 set -eo pipefail
 
 function usage() {
-  echo "Usage: $0 litentry|litmus|rococo"
+  echo "Usage: $0 litentry|rococo"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)
@@ -23,7 +23,6 @@ print_divider
 echo "installing parachain-launch ..."
 pnpm install
 pnpm update
-pnpm run build
 print_divider
 
 # pull the polkadot image to make sure we are using the latest

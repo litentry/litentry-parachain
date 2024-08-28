@@ -11,12 +11,11 @@ Basically, parachains are layer-1 blockchains that connect to the relaychains (P
 
 To achieve identity aggregation, Litentry has a requirement to store sensitive user data, like web3 addresses, computed credit scores, and VCs in the trusted execution environment (TEE). Litentry builds a TEE side chain for this purpose and it is composed of multiple TEE-equipped nodes, to guarantee the security of data storage and data processing without exposing users' private data. A core component of this is the Litentry TEE worker which is based on Integritee's worker. It executes functions with specified inputs and resource limits in response to TEE calls and operations to ensure a sufficient level of scaling.
 
-Overall, our architecture is made of up Relaychains ( Polkadot and Kusama), Parachains (Litentry and Litmus), and the TEE sidechain which is supported by  and enables the runtime to execute in an SGX secure run environment.
+Overall, our architecture is made of up Relaychains (Polkadot and Kusama), Parachains (Litentry and rococo), and the TEE sidechain which is supported by  and enables the runtime to execute in an SGX secure run environment.
 
 To serve as the backbone platform for various Litentry products and achieve a transparent and decentralized user experience, we have different chain-specs/runtimes compiled into one single binary. They are:
 
 - litentry-parachain-runtime (on polkadot)
-- litmus-parachain-runtime (on kusama)
 - rococo-parachain-runtime (on rococo testnet)
 
 Therefore, when building node binary or docker image, no distinction is required. But when building runtime/starting binary/running tests, the chain type must be explicitly given. See the examples below.
@@ -57,7 +56,7 @@ make build-runtime-litentry
 
 The wasms should be located under `target/release/wbuild/litentry-parachain-runtime/`
 
-Similarly, use `make build-runtime-litmus` and `make build-runtime-rococo` to build the litmus-parachain-runtime and rococo-parachain-runtime, respectively.
+Similarly, use `make build-runtime-rococo` to build the rococo-parachain-runtime.
 
 ## Launch parachain
 ### Launch a full parachain network with relay chains
