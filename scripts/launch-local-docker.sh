@@ -3,7 +3,7 @@
 set -eo pipefail
 
 function usage() {
-  echo "Usage: $0 litentry|litmus|rococo"
+  echo "Usage: $0 litentry|rococo"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)

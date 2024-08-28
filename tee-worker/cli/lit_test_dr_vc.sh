@@ -144,7 +144,7 @@ assertion_vec=(
     "a4 0"
     "a6"
     "a7 0"
-    "a8 litentry,litmus"
+    "a8 litentry"
     "a10 0"
     "a11 0"
     "a14"

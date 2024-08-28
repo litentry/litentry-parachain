@@ -48,7 +48,6 @@ test('it deterministically hashes a graph', () => {
           'Polkadot',
           'Kusama',
           'Litentry',
-          'Litmus',
           'LitentryRococo',
           'Khala',
         ],

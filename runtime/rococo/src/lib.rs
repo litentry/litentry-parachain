@@ -1356,6 +1356,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
+			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)

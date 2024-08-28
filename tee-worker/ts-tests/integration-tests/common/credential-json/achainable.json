@@ -129,10 +129,10 @@
     {
         "id": "litentry-transaction-count",
         "name": "LIT Transaction Count",
-        "description": "Your total transaction amount on these Substrate networks: Litentry, Litmus, Ethereum.",
+        "description": "Your total transaction amount on these Substrate networks: Litentry, Ethereum.",
         "assertion": {
             "id": "A8",
-            "payload": ["Litentry", "Litmus", "Ethereum"]
+            "payload": ["Litentry", "Ethereum"]
         },
         "dataProvider": "achainable",
         "network": "litentry",
