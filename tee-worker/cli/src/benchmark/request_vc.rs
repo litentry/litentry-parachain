@@ -8,6 +8,7 @@ use crate::{
 };
 use clap::Parser;
 use core::time::Duration;
+use ita_sgx_runtime::pallet_imt::Identity;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::DirectClient;
 use itp_stf_primitives::{
@@ -20,15 +21,20 @@ use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
 use std::time::Instant;
 
-// Command to perform direct request_vc benchmarking. It creates a given number of threads and sends
-// `requests_per_thread` requests one by one recording time to get response. It uses Alice as
-// an IdGraph root. If bench case requires any identities to be linked, the preparation should be done
-// using other CLI commands.
-// Example usage: ./litentry-cli trusted benchmark-direct-request-vc 8 400 a1
+//	Command to perform request_vc benchmarking. It creates a given number of threads and sends
+//	`requests_per_thread` requests one by one recording time to get response. It uses Alice as
+//	an IdGraph root. If bench case requires any identities to be linked, the preparation should be done
+//	using other CLI commands.
+//	Example usage:
+//	./litentry-cli trusted benchmark-request-vc 8 400 \
+//		did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
+//		a1
 #[derive(Parser)]
-pub struct BenchmarkDirectRequestVcCommand {
+pub struct BenchmarkRequestVcCommand {
 	threads: u32,
 	requests_per_thread: u32,
+	// did account to whom the vc will be issued
+	did: String,
 	#[clap(subcommand)]
 	assertion: Command,
 }
@@ -51,9 +57,10 @@ struct Client<'a> {
 	top: &'a TrustedOperation<TrustedCallSigned, Getter>,
 }
 
-impl BenchmarkDirectRequestVcCommand {
+impl BenchmarkRequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		println!("Running direct request_vc benchmarking");
+		println!("Running request_vc benchmarking");
+		let identity = Identity::from_did(self.did.as_str()).unwrap();
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let encryption_key = get_shielding_key(cli).unwrap();
@@ -67,7 +74,7 @@ impl BenchmarkDirectRequestVcCommand {
 
 		let top = TrustedCall::request_vc(
 			alice.public().into(),
-			alice.public().into(),
+			identity,
 			assertion,
 			Some(aes_key),
 			Default::default(),

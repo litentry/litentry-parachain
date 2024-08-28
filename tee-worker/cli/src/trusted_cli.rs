@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	benchmark::{direct_request_vc::BenchmarkDirectRequestVcCommand, stf::BenchmarkStfCommand},
+	benchmark::{request_vc::BenchmarkRequestVcCommand, stf::BenchmarkStfCommand},
 	Cli, CliResult,
 };
 
@@ -59,7 +59,7 @@ pub enum TrustedCommand {
 	BenchmarkStf(BenchmarkStfCommand),
 
 	/// Benchmark direct request vc
-	BenchmarkDirectRequestVc(BenchmarkDirectRequestVcCommand),
+	BenchmarkRequestVc(BenchmarkRequestVcCommand),
 }
 
 impl TrustedCli {
@@ -67,7 +67,7 @@ impl TrustedCli {
 		match &self.command {
 			TrustedCommand::BaseTrusted(cmd) => cmd.run(cli, self),
 			TrustedCommand::BenchmarkStf(cmd) => cmd.run(cli, self),
-			TrustedCommand::BenchmarkDirectRequestVc(cmd) => cmd.run(cli, self),
+			TrustedCommand::BenchmarkRequestVc(cmd) => cmd.run(cli, self),
 			#[cfg(feature = "evm")]
 			TrustedCommand::EvmCommands(cmd) => cmd.run(cli, self),
 		}

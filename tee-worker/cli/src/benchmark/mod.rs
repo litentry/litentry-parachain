@@ -1,2 +1,2 @@
-pub mod direct_request_vc;
+pub mod request_vc;
 pub mod stf;
