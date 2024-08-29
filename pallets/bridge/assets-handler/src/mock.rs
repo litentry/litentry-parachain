@@ -24,7 +24,7 @@ use frame_support::{
 };
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
-use pallet_assets_handler::AssetInfo;
+use pallet_bridge_common::AssetInfo;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
@@ -40,7 +40,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Bridge: pallet_bridge,
+		Bridge: pallet_chain_bridge,
 		Assets: pallet_assets,
 		AssetsHandler: pallet_assets_handler,
 		BridgeTransfer: pallet_bridge_transfer,
@@ -103,7 +103,7 @@ parameter_types! {
 	pub const TreasuryAccount:u64 = 0x8;
 }
 
-impl pallet_bridge::Config for Test {
+impl pallet_chain_bridge::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = RuntimeCall;
@@ -182,7 +182,7 @@ impl pallet_assets_handler::Config for Test {
 }
 
 impl pallet_bridge_transfer::Config for Test {
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Test>;
+	type BridgeOrigin = pallet_chain_bridge::EnsureBridge<Test>;
 	type TransferAssetsMembers = MembersProvider;
 	type BridgeHandler = AssetsHandler;
 	type WeightInfo = ();
@@ -225,8 +225,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn new_test_ext_initialized(
-	src_id: pallet_bridge::BridgeChainId,
-	r_id: pallet_bridge::ResourceId,
+	src_id: pallet_chain_bridge::BridgeChainId,
+	r_id: pallet_chain_bridge::ResourceId,
 	asset: AssetInfo<
 		<Test as pallet_assets::Config>::AssetId,
 		<Test as pallet_assets::Config>::Balance,
