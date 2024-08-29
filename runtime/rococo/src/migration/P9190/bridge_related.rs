@@ -23,7 +23,7 @@ use frame_support::{
 };
 use pallet_assets_handler::{AssetInfo, ExternalBalances, MaximumIssuance, ResourceToAssetInfo};
 use pallet_balances::AccountData;
-use pallet_bridge::{BridgeChainId, ResourceId};
+use pallet_chain_bridge::{BridgeChainId, ResourceId};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const DECIMAL_CONVERTOR: u128 = 1_000_000u128;
@@ -46,12 +46,12 @@ mod old {
 	>;
 
 	#[frame_support::storage_alias]
-	pub type Resources<T: pallet_bridge::Config> =
-		StorageMap<pallet_bridge::Pallet<T>, Blake2_256, ResourceId, Vec<u8>>;
+	pub type Resources<T: pallet_chain_bridge::Config> =
+		StorageMap<pallet_chain_bridge::Pallet<T>, Blake2_256, ResourceId, Vec<u8>>;
 
 	#[frame_support::storage_alias]
-	pub type BridgeFee<T: pallet_bridge::Config> =
-		StorageMap<pallet_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
+	pub type BridgeFee<T: pallet_chain_bridge::Config> =
+		StorageMap<pallet_chain_bridge::Pallet<T>, Twox64Concat, BridgeChainId, u128>;
 }
 
 pub const NATIVE_TOKEN_RESOURCE_ID: [u8; 32] =
@@ -69,7 +69,7 @@ where
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
 		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
-		+ pallet_bridge::Config
+		+ pallet_chain_bridge::Config
 		+ pallet_bridge_transfer::Config,
 {
 	pub fn relocate_resource_fee_storage() -> frame_support::weights::Weight {
@@ -163,7 +163,7 @@ where
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
 		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
-		+ pallet_bridge::Config
+		+ pallet_chain_bridge::Config
 		+ pallet_bridge_transfer::Config,
 {
 	pub fn pre_upgrade_resource_fee_storage() -> Result<Vec<u8>, &'static str> {
@@ -257,7 +257,7 @@ where
 		+ pallet_assets::Config<AssetId = u128, Balance = u128>
 		+ pallet_assets_handler::Config
 		+ pallet_balances::Config<Balance = u128>
-		+ pallet_bridge::Config
+		+ pallet_chain_bridge::Config
 		+ pallet_bridge_transfer::Config,
 {
 	#[cfg(feature = "try-runtime")]
