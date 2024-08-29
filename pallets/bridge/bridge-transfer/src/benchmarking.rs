@@ -22,7 +22,7 @@ use frame_support::traits::Currency;
 use frame_system::RawOrigin;
 use hex_literal::hex;
 use pallet_bridge_common::BridgeHandler;
-use pallet_chain_bridge::{EnsureOrigin, Pallet as ChainBridge};
+use pallet_chain_bridge::EnsureOrigin;
 use sp_std::vec;
 
 const RID: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
