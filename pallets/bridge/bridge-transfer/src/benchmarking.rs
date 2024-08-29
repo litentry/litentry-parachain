@@ -29,7 +29,7 @@ const RID: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976b
 
 fn setup<T: Config>() {
 	ChainBridge::<T>::whitelist_chain(RawOrigin::Root.into(), 0).unwrap();
-	T::BridgeHandler::setup_asset_info(RID, 0u32.into()).unwrap();
+	T::BridgeHandler::setup_native_asset_info(RID, 0u32.into()).unwrap();
 }
 
 fn create_funded_user<T: Config + pallet_assets::Config>(

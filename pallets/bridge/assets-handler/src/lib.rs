@@ -323,7 +323,7 @@ where
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]
-	fn setup_asset_info(resource_id: ResourceId, fee: B) -> DispatchResult {
+	fn setup_native_asset_info(resource_id: ResourceId, fee: B) -> DispatchResult {
 		let native_token_asset_info: AssetInfo<AssetId<T>, B> = AssetInfo { fee, asset: None };
 
 		ResourceToAssetInfo::<T>::insert(resource_id, native_token_asset_info.clone());

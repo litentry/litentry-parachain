@@ -18,5 +18,5 @@ pub trait BridgeHandler<B, A, R> {
 	fn prepare_token_bridge_out(resource_id: R, who: A, amount: B) -> Result<B, DispatchError>;
 	// Used to initialize setup for benchmark
 	#[cfg(feature = "runtime-benchmarks")]
-	fn setup_asset_info(resource_id: R, fee: B) -> DispatchResult;
+	fn setup_native_asset_info(resource_id: R, fee: B) -> DispatchResult;
 }
