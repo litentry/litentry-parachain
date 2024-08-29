@@ -150,7 +150,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         string memory variable = "$holding_amount";
         AssertionLogic.CompositeCondition memory cc = AssertionLogic
             .CompositeCondition(
-                new AssertionLogic.Condition[](max > 0 && balance > 0 ? 3 : 2),
+                new AssertionLogic.Condition[](max > 0 && balance > 0 ? 4 : 3),
                 true
             );
         AssertionLogic.andOp(
@@ -160,9 +160,26 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
             AssertionLogic.Op.Equal,
             tokenName
         );
+
+        AssertionLogic.CompositeCondition memory networkCc = AssertionLogic
+            .CompositeCondition(
+                new AssertionLogic.Condition[](token.networks.length),
+                false
+            );
+        AssertionLogic.addCompositeCondition(cc, 1, networkCc);
+        for (uint256 i = 0; i < token.networks.length; i++) {
+            AssertionLogic.andOp(
+                networkCc,
+                i,
+                "$network",
+                AssertionLogic.Op.Equal,
+                Identities.get_network_name(token.networks[i].network)
+            );
+        }
+
         AssertionLogic.andOp(
             cc,
-            1,
+            2,
             variable,
             min == 0
                 ? AssertionLogic.Op.GreaterThan
@@ -172,7 +189,7 @@ abstract contract TokenHoldingAmount is DynamicAssertion {
         if (max > 0 && balance > 0) {
             AssertionLogic.andOp(
                 cc,
-                2,
+                3,
                 variable,
                 AssertionLogic.Op.LessThan,
                 StringShift.toShiftedString(
