@@ -28,7 +28,10 @@ use sp_std::vec;
 const RID: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 
 fn setup<T: Config>() {
-	ChainBridge::<T>::whitelist_chain(RawOrigin::Root.into(), 0).unwrap();
+	let dest_chain = 0;
+	if !<pallet_bridge::Pallet<T>>::chain_whitelisted(dest_chain) {
+		<pallet_bridge::Pallet<T>>::whitelist_chain(RawOrigin::Root.into(), dest_chain)?;
+	}
 	T::BridgeHandler::setup_native_asset_info(RID, 0u32.into()).unwrap();
 }
 
