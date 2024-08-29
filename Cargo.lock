@@ -5636,8 +5636,8 @@ dependencies = [
  "pallet-balances",
  "pallet-bitacross",
  "pallet-bounties",
- "pallet-bridge",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-collective",
  "pallet-democracy",
  "pallet-ethereum",
@@ -6858,9 +6858,9 @@ dependencies = [
  "hex-literal",
  "pallet-assets",
  "pallet-balances",
- "pallet-bridge",
  "pallet-bridge-common",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-parachain-staking",
  "parity-scale-codec",
  "scale-info",
@@ -7058,23 +7058,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-bridge"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-core-hashing",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-bridge-common"
 version = "0.1.0"
 dependencies = [
@@ -7095,13 +7078,30 @@ dependencies = [
  "pallet-assets",
  "pallet-assets-handler",
  "pallet-balances",
- "pallet-bridge",
  "pallet-bridge-common",
+ "pallet-chain-bridge",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-chain-bridge"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -10690,8 +10690,8 @@ dependencies = [
  "pallet-balances",
  "pallet-bitacross",
  "pallet-bounties",
- "pallet-bridge",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-collective",
  "pallet-democracy",
  "pallet-ethereum",
