@@ -20,6 +20,7 @@ pub use ita_sgx_runtime::{Balance, Index};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::{
 	parentchain::{
@@ -36,11 +37,18 @@ use sp_core::{blake2_256, H160};
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc};
 
-pub struct ParentchainEventHandler {
+pub struct ParentchainEventHandler<MetricsApi>
+where
+	MetricsApi: EnclaveMetricsOCallApi,
+{
 	pub assertion_repository: Arc<EvmAssertionRepository>,
+	pub metrics_api: Arc<MetricsApi>,
 }
 
-impl ParentchainEventHandler {
+impl<MetricsApi> ParentchainEventHandler<MetricsApi>
+where
+	MetricsApi: EnclaveMetricsOCallApi,
+{
 	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		executor: &Executor,
 		account: &AccountId,
@@ -203,10 +211,11 @@ impl ParentchainEventHandler {
 	}
 }
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
-	for ParentchainEventHandler
+impl<Executor, MetricsApi> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+	for ParentchainEventHandler<MetricsApi>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	MetricsApi: EnclaveMetricsOCallApi,
 {
 	fn handle_events(
 		&self,

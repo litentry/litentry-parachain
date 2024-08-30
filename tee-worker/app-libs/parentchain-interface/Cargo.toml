@@ -16,6 +16,8 @@ itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types
 itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
+itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
+itp-enclave-metrics = { path = "../../core-primitives/enclave-metrics", default-features = false }
 
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
