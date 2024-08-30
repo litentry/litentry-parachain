@@ -58,6 +58,7 @@ env_logger = "0.10.0"
 lc-mock-server = { path = "../mock-server" }
 litentry-hex-utils = { path = "../../../../primitives/hex" }
 ethabi = { version = "18.0.0", default-features = false }
+itp-test = { path = "../../../core-primitives/test", default-features = false }
 
 [features]
 default = ["std"]
@@ -97,4 +98,5 @@ std = [
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
 ]
+test = ["itp-test/sgx"]
 development = []

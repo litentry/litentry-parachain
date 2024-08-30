@@ -4438,6 +4438,7 @@ dependencies = [
  "itc-rest-client",
  "itp-ocall-api",
  "itp-stf-primitives",
+ "itp-test",
  "itp-types",
  "itp-utils",
  "lc-common",
