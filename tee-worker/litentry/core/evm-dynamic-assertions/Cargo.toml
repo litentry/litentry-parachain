@@ -33,12 +33,12 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # local
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
 lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
-itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 
 [dev-dependencies]
 http_req = { features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
