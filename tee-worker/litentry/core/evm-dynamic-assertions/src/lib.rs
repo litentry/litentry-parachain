@@ -44,6 +44,7 @@ use evm::{
 	executor::stack::{MemoryStackState, StackExecutor, StackSubstateMetadata},
 	Config, ExitReason,
 };
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use lc_dynamic_assertion::{
 	AssertionExecutor, AssertionLogicRepository, AssertionResult, Identity, IdentityNetworkTuple,
 	Web3Network,
@@ -70,8 +71,9 @@ pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
-pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
+pub struct EvmAssertionExecutor<A: AssertionLogicRepository, MetricsApi: EnclaveMetricsOCallApi> {
 	pub assertion_repository: Arc<A>,
+	pub metrics_api: Arc<MetricsApi>,
 }
 
 pub fn execute_smart_contract(
@@ -103,8 +105,11 @@ pub fn execute_smart_contract(
 	(reason, data, precompiles.contract_logs.take())
 }
 
-impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
-	AssertionExecutor<AssertionId, AssertionParams> for EvmAssertionExecutor<A>
+impl<A, MetricsApi> AssertionExecutor<AssertionId, AssertionParams>
+	for EvmAssertionExecutor<A, MetricsApi>
+where
+	A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
+	MetricsApi: EnclaveMetricsOCallApi,
 {
 	fn execute(
 		&self,

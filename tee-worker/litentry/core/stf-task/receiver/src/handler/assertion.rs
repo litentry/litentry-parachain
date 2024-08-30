@@ -292,6 +292,7 @@ where
 				req,
 				params,
 				context.assertion_repository.clone(),
+				context.ocall_api.clone(),
 			)?;
 			vc_logs = Some(result.1);
 			Ok(result.0)

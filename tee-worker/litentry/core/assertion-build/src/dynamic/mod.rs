@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{dynamic::repository::SmartContractByteCode, *};
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
 use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
@@ -27,12 +28,14 @@ pub mod repository;
 
 pub fn build<
 	SC: AssertionLogicRepository<Id = H160, Item = (SmartContractByteCode, Vec<String>)>,
+	MetricsApi: EnclaveMetricsOCallApi,
 >(
 	req: &AssertionBuildRequest,
 	params: DynamicParams,
 	repository: Arc<SC>,
+	metrics_api: Arc<MetricsApi>,
 ) -> Result<(Credential, Vec<String>)> {
-	let executor = EvmAssertionExecutor { assertion_repository: repository };
+	let executor = EvmAssertionExecutor { assertion_repository: repository, metrics_api };
 	let execution_params = params.clone();
 	let result = executor
 		.execute(
