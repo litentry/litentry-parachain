@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	handler::TaskHandler, EnclaveOnChainOCallApi, Getter, StfTaskContext, TrustedCall,
-	TrustedCallSigned,
+	handler::TaskHandler, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, Getter, StfTaskContext,
+	TrustedCall, TrustedCallSigned,
 };
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
@@ -37,7 +37,7 @@ pub(crate) struct IdentityVerificationHandler<
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
@@ -56,7 +56,7 @@ where
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	type Error = IMPError;
