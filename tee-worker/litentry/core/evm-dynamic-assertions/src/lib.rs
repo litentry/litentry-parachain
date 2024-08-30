@@ -44,6 +44,7 @@ use evm::{
 	executor::stack::{MemoryStackState, StackExecutor, StackSubstateMetadata},
 	Config, ExitReason,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use lc_dynamic_assertion::{
 	AssertionExecutor, AssertionLogicRepository, AssertionResult, Identity, IdentityNetworkTuple,
@@ -53,6 +54,7 @@ use std::{
 	collections::BTreeMap,
 	string::{String, ToString},
 	sync::Arc,
+	time::Instant,
 	vec,
 	vec::Vec,
 };
@@ -117,11 +119,19 @@ where
 		assertion_params: AssertionParams,
 		identities: &[IdentityNetworkTuple],
 	) -> Result<AssertionResult, String> {
+		let start_time = Instant::now();
 		let (smart_contract_byte_code, secrets) = self
 			.assertion_repository
 			.get(&assertion_id)
 			.map_err(|_| "Could not access assertion repository")?
 			.ok_or("Assertion not found")?;
+		let duration = start_time.elapsed();
+		if let Err(e) =
+			self.metrics_api.update_metric(EnclaveMetric::DynamicAssertionGetTime(duration))
+		{
+			log::warn!("Failed to update DynamicAssertionGetTime metric with error: {:?}", e);
+		}
+
 		let input = prepare_execute_call_input(identities, secrets, assertion_params)
 			.map_err(|_| "Could not prepare evm execution input")?;
 
