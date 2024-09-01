@@ -7,7 +7,6 @@ on:
         type: choice
         description: The chain whose runtime-wasm is built
         options:
-          - litmus
           - litentry
           - rococo
       ref:

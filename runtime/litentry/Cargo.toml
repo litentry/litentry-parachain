@@ -81,8 +81,8 @@ core-primitives = { workspace = true }
 pallet-account-fix = { workspace = true }
 pallet-asset-manager = { workspace = true }
 pallet-bitacross = { workspace = true }
-pallet-bridge = { workspace = true }
 pallet-bridge-transfer = { workspace = true }
+pallet-chain-bridge = { workspace = true }
 pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
@@ -153,7 +153,9 @@ runtime-benchmarks = [
     "pallet-preimage/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
     "pallet-scheduler/runtime-benchmarks",
+    "pallet-identity-management/runtime-benchmarks",
     "pallet-teebag/runtime-benchmarks",
+    "pallet-vc-management/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "pallet-treasury/runtime-benchmarks",
     "pallet-utility/runtime-benchmarks",
@@ -161,9 +163,10 @@ runtime-benchmarks = [
     "runtime-common/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
     "xcm-builder/runtime-benchmarks",
-    "pallet-bridge/runtime-benchmarks",
+    "pallet-chain-bridge/runtime-benchmarks",
     "pallet-bridge-transfer/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
+    "cumulus-pallet-parachain-system/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
     "pallet-score-staking/runtime-benchmarks",
 ]
@@ -247,7 +250,7 @@ std = [
     "frame-benchmarking?/std",
     "frame-system-benchmarking?/std",
     'runtime-common/std',
-    "pallet-bridge/std",
+    "pallet-chain-bridge/std",
     "pallet-bridge-transfer/std",
     "pallet-extrinsic-filter/std",
     "pallet-bitacross/std",
@@ -283,7 +286,7 @@ try-runtime = [
     "pallet-balances/try-runtime",
     "pallet-bitacross/try-runtime",
     "pallet-bounties/try-runtime",
-    "pallet-bridge/try-runtime",
+    "pallet-chain-bridge/try-runtime",
     "pallet-bridge-transfer/try-runtime",
     "pallet-collective/try-runtime",
     "pallet-democracy/try-runtime",

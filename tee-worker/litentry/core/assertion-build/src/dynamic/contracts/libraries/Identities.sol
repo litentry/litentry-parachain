@@ -276,4 +276,64 @@ library Identities {
             chain = "combo";
         }
     }
+
+    function get_network_name(
+        uint32 network
+    ) internal pure returns (string memory) {
+        if (network == Web3Networks.Polkadot) {
+            return "Polkadot";
+        }
+        if (network == Web3Networks.Kusama) {
+            return "Kusama";
+        }
+        if (network == Web3Networks.Litentry) {
+            return "Litentry";
+        }
+        if (network == Web3Networks.Litmus) {
+            return "Litmus";
+        }
+        if (network == Web3Networks.LitentryRococo) {
+            return "LitentryRococo";
+        }
+        if (network == Web3Networks.Khala) {
+            return "Khala";
+        }
+        if (network == Web3Networks.SubstrateTestnet) {
+            return "SubstrateTestnet";
+        }
+        if (network == Web3Networks.Ethereum) {
+            return "Ethereum";
+        }
+        if (network == Web3Networks.Bsc) {
+            return "Bsc";
+        }
+        if (network == Web3Networks.Polygon) {
+            return "Polygon";
+        }
+        if (network == Web3Networks.Arbitrum) {
+            return "Arbitrum";
+        }
+        if (network == Web3Networks.Solana) {
+            return "Solana";
+        }
+        if (network == Web3Networks.Combo) {
+            return "Combo";
+        }
+        if (network == Web3Networks.BitcoinP2tr) {
+            return "BitcoinP2tr";
+        }
+        if (network == Web3Networks.BitcoinP2pkh) {
+            return "BitcoinP2pkh";
+        }
+        if (network == Web3Networks.BitcoinP2sh) {
+            return "BitcoinP2sh";
+        }
+        if (network == Web3Networks.BitcoinP2wpkh) {
+            return "BitcoinP2wpkh";
+        }
+        if (network == Web3Networks.BitcoinP2wsh) {
+            return "BitcoinP2wsh";
+        }
+        return "";
+    }
 }

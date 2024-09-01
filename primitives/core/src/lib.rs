@@ -82,7 +82,6 @@ mod constants {
 	use super::types::BlockNumber;
 
 	pub const LITENTRY_PARA_ID: u32 = 2013;
-	pub const LITMUS_PARA_ID: u32 = 2106; // will be deprecated soon
 	pub const ROCOCO_PARA_ID: u32 = 2106; // will be replaced by paseo
 
 	/// This determines the average expected block time that we are targeting.

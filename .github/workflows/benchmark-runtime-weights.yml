@@ -14,11 +14,6 @@ on:
         description: litentry
         required: true
         default: true
-      litmus:
-        type: boolean
-        description: litmus
-        required: true
-        default: true
       rococo:
         type: boolean
         description: rococo
@@ -83,9 +78,6 @@ jobs:
       - name: Set env
         run: |
           chain=""
-          if [ "${{ github.event.inputs.litmus }}" = "true" ]; then
-            chain="$chain litmus"
-          fi
           if [ "${{ github.event.inputs.litentry }}" = "true" ]; then
             chain="$chain litentry"
           fi

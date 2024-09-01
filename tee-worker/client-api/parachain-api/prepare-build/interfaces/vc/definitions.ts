@@ -42,7 +42,7 @@ export default {
                 "Polkadot",
                 "Kusama",
                 "Litentry",
-                "Litmus",
+                "__UnsupportedLitmus",
                 "__UnsupportedLitentryRococo",
                 "Khala",
                 "__UnsupportedSubstrateTestnet",

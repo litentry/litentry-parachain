@@ -99,6 +99,7 @@ runtime-benchmarks = [
     "pallet-teebag/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
+    "cumulus-pallet-parachain-system/runtime-benchmarks",
 ]
 
 try-runtime = [
