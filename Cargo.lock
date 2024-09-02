@@ -6816,6 +6816,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-aiusd-convertor"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-assets",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
 dependencies = [

@@ -274,6 +274,8 @@ pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = fa
 
 # CollabAI local
 pallet-aiusd-convertor = { path = "pallets/collab-ai/aiusd-convertor", default-features = false }
+pallet-collab-ai-common = { path = "pallets/collab-ai/common", default-features = false }
+pallet-curator = { path = "pallets/collab-ai/curator", default-features = false }
 
 
 [patch.crates-io]

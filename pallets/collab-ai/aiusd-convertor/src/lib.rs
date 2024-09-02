@@ -20,10 +20,7 @@
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		tokens::{
-			fungibles::{Inspect as FsInspect, Mutate as FsMutate},
-			Fortitude, Precision, Preservation,
-		},
+		tokens::{fungibles::Inspect as FsInspect, Fortitude, Precision, Preservation},
 		StorageVersion,
 	},
 };
