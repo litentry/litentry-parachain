@@ -1,0 +1,16 @@
+[
+    {
+        "id": "token-holding-amount-btcs",
+        "name": "BTCS Holding Amount",
+        "description": "The number of BTCS tokens you hold > 0",
+        "assertion": {
+            "id": "Brc20AmountHolder",
+            "payload": []
+        },
+        "dataProvider": "geniidata",
+        "network": "bitcoin",
+        "mockDid": "litentry:bitcoin:0x0202eb94e79b526f80b9029672f03d7c721da64c99fe742545423cbcc70851727f",
+        "mockWeb3Network": "BitcoinP2wpkh",
+        "expectedCredentialValue": true
+    }
+]
