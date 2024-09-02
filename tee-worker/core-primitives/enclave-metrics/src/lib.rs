@@ -49,4 +49,6 @@ pub enum EnclaveMetric {
 	SuccessfullVCIssuance,
 	FailedVCIssuance,
 	ParentchainEventProcessed(String),
+	DynamicAssertionSaveTime(Duration),
+	DynamicAssertionGetTime(Duration),
 }

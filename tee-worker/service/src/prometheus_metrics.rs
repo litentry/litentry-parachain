@@ -100,7 +100,12 @@ lazy_static! {
 	static ref FAILED_VC_ISSUANCE_TASKS: Counter =
 		register_counter!("litentry_worker_vc_failed_issuances_tasks", "Failed VC Issuance tasks")
 			.unwrap();
-
+	static ref DYNAMIC_ASSERTION_SAVE_TIME: Histogram =
+		register_histogram!("litentry_worker_dynamic_assertion_save_time", "Time taken to save a dynamic assertion")
+			.unwrap();
+	static ref DYNAMIC_ASSERTION_GET_TIME: Histogram =
+		register_histogram!("litentry_worker_dynamic_assertion_get_time", "Time taken to get a dynamic assertion")
+			.unwrap();
 }
 
 pub async fn start_metrics_server<MetricsHandler>(
@@ -249,6 +254,12 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 			EnclaveMetric::FailedVCIssuance => {
 				FAILED_VC_ISSUANCE_TASKS.inc();
+			},
+			EnclaveMetric::DynamicAssertionSaveTime(time) => {
+				DYNAMIC_ASSERTION_SAVE_TIME.observe(time.as_secs_f64());
+			},
+			EnclaveMetric::DynamicAssertionGetTime(time) => {
+				DYNAMIC_ASSERTION_GET_TIME.observe(time.as_secs_f64());
 			},
 		}
 		Ok(())

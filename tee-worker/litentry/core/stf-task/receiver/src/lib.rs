@@ -90,7 +90,7 @@ pub struct StfTaskContext<
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
@@ -111,7 +111,7 @@ impl<
 		A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
-		O: EnclaveOnChainOCallApi,
+		O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 		AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 	> StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>
 where
