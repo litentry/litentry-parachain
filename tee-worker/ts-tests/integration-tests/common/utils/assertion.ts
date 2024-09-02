@@ -6,6 +6,7 @@ import { CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
+import { nextRequestId } from '../helpers';
 import { aesKey } from '../call';
 import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
@@ -15,7 +16,6 @@ import { base58Encode, blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
-import { fail } from 'assert';
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -145,9 +145,23 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 7
     // check runtime version is present
+    const [parachainSpecVersion, sidechainSpecVersion] = await Promise.all([
+        context.api.rpc.state.getRuntimeVersion(),
+        context.tee.sendRequest(
+            {
+                jsonrpc: '2.0',
+                method: 'state_getRuntimeVersion',
+                params: [],
+            },
+            { requestId: nextRequestId(context) }
+        ),
+    ]).then(([parachain, sidechain]) => {
+        return [parachain.specVersion.toNumber(), sidechain.result.specVersion as number];
+    });
+
     assert.deepEqual(
         vcPayloadJson.issuer.runtimeVersion,
-        { parachain: 9200, sidechain: 110 },
+        { parachain: parachainSpecVersion, sidechain: sidechainSpecVersion },
         'Check VC runtime version: it should equal the current defined versions'
     );
 
