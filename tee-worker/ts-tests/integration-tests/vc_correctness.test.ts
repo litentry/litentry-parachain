@@ -18,6 +18,10 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
+import { byId } from '@litentry/chaindata';
+
+// Change this to the environment you want to test
+const chain = byId['litentry-dev'];
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -29,9 +33,17 @@ describe('Test Vc (direct invocation)', function () {
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
 
+    const nodeEndpoint: string = chain.rpcs[0].url;
+    const enclaveEndpoint: string = chain.enclaveRpcs[0].url;
+    console.log(`[node] ${nodeEndpoint}`);
+    console.log(`[worker] ${enclaveEndpoint}`);
+
+    const teeDevNodePort = 443;
+    const teeDevWorkerPort = 443;
+    const errorArray: { id: string; index: number; assertion: any; error: any }[] = [];
     this.timeout(6000000);
     before(async () => {
-        context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
+        context = await initIntegrationTestContext(enclaveEndpoint, nodeEndpoint);
         teeShieldingKey = await getTeeShieldingKey(context);
     });
 
@@ -40,12 +52,8 @@ describe('Test Vc (direct invocation)', function () {
     // `pnpm run test-data-providers:local` for all tests
     const idIndex = process.argv.indexOf('--id');
     argvId = process.argv[idIndex + 1];
-    const {
-        protocol: workerProtocal,
-        hostname: workerHostname,
-        port: workerPort,
-    } = new URL(process.env.WORKER_ENDPOINT!);
-    const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
+    const { protocol: workerProtocal, hostname: workerHostname } = new URL(enclaveEndpoint);
+    const { protocol: nodeProtocal, hostname: nodeHostname } = new URL(nodeEndpoint);
 
     async function linkIdentityViaCli(id: string) {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
@@ -59,7 +67,7 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
+            const commandPromise = zx`${clientDir} -p ${teeDevNodePort} -P ${teeDevWorkerPort} -u ${
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
                   trusted -d link-identity did:litentry:substrate:${formatAddress}\
@@ -78,42 +86,55 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
-        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
-        const assertion = {
-            [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
-        };
-        console.log('vc description: ', credentialDefinitions.description);
+        try {
+            const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
+            const assertion = {
+                [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
+            };
+            console.log('vc description: ', credentialDefinitions.description);
 
-        console.log('assertion: ', assertion);
+            console.log('assertion: ', assertion);
 
-        let currentNonce = (await getSidechainNonce(context, substrateIdentities[index])).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const nonce = getNextNonce();
+            let currentNonce = (await getSidechainNonce(context, substrateIdentities[index])).toNumber();
+            const getNextNonce = () => currentNonce++;
+            const nonce = getNextNonce();
 
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const requestVcCall = await createSignedTrustedCallRequestVc(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', nonce),
-            new PolkadotSigner(keyringPairs[index]),
-            substrateIdentities[index],
-            context.api.createType('Assertion', assertion).toHex(),
-            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-            requestIdentifier
-        );
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-        await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const requestVcCall = await createSignedTrustedCallRequestVc(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                new PolkadotSigner(keyringPairs[index]),
+                substrateIdentities[index],
+                context.api.createType('Assertion', assertion).toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
+            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
 
-        const vcResults = context.api.createType('RequestVCResult', res.value);
-        const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
-        const vcPayloadJson = JSON.parse(decryptVcPayload);
-        console.log('vcPayload: ', vcPayloadJson);
+            const vcResults = context.api.createType('RequestVCResult', res.value);
+            const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
+            const vcPayloadJson = JSON.parse(decryptVcPayload);
+            console.log('vcPayload: ', vcPayloadJson);
 
-        assert.equal(
-            vcPayloadJson.credentialSubject.values[0],
-            credentialDefinitions.expectedCredentialValue,
-            "credential value doesn't match, please check the credential json expectedCredentialValue"
-        );
+            assert.equal(
+                vcPayloadJson.credentialSubject.values[0],
+                credentialDefinitions.expectedCredentialValue,
+                "credential value doesn't match, please check the credential json expectedCredentialValue"
+            );
+        } catch (error) {
+            // Sometimes unstable dataprovider can cause interruptions in the testing process. We expect errors in the test to be stored and specific error information to be thrown out after the end.
+            const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
+
+            errorArray.push({
+                id: id,
+                index: index,
+                assertion: credentialDefinitions.assertion.payload,
+                error: error,
+            });
+            console.error(`Error in requestVc for id ${id} at index ${index}:`, error);
+        }
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
@@ -129,4 +150,10 @@ describe('Test Vc (direct invocation)', function () {
             });
         });
     }
+    after(async function () {
+        if (errorArray.length > 0) {
+            console.log('errorArray:', errorArray);
+            throw new Error(`${errorArray.length} tests failed. See above for details.`);
+        }
+    });
 });
