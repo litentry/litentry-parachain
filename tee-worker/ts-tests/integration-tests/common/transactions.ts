@@ -138,7 +138,7 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
 }
 
 // After removing the sudo module, we use `EnsureRootOrHalfCouncil` instead of `Sudo`,
-// and there are only two council members in litmus-dev/rococo-dev/litentry-dev.
+// and there are only two council members in rococo-dev/litentry-dev.
 // So only `propose` is required, no vote.
 //
 // TODO: support to send the `vote extrinsic`, if the number of council members is greater than 2.

@@ -30,7 +30,7 @@ SGX_PRODUCTION ?= 0
 WORKER_MODE ?= sidechain
 WORKER_DEV ?= 0
 WORKER_MOCK_SERVER ?= 0
-RA_METHOD ?= 
+RA_METHOD ?= dcap
 
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk

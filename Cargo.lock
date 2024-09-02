@@ -4416,7 +4416,7 @@ dependencies = [
  "iana-time-zone-haiku",
  "js-sys",
  "wasm-bindgen",
- "windows-core 0.52.0",
+ "windows-core",
 ]
 
 [[package]]
@@ -5531,7 +5531,6 @@ dependencies = [
  "futures 0.3.30",
  "jsonrpsee",
  "litentry-parachain-runtime",
- "litmus-parachain-runtime",
  "log",
  "moonbeam-primitives-ext",
  "moonbeam-rpc-debug",
@@ -5638,8 +5637,8 @@ dependencies = [
  "pallet-balances",
  "pallet-bitacross",
  "pallet-bounties",
- "pallet-bridge",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-collective",
  "pallet-democracy",
  "pallet-ethereum",
@@ -5715,95 +5714,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.75",
-]
-
-[[package]]
-name = "litmus-parachain-runtime"
-version = "0.1.0"
-dependencies = [
- "core-primitives",
- "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-session-benchmarking",
- "cumulus-pallet-xcm",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-primitives-timestamp",
- "cumulus-primitives-utility",
- "fp-rpc",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "frame-try-runtime",
- "hex-literal",
- "log",
- "moonbeam-rpc-primitives-debug",
- "moonbeam-rpc-primitives-txpool",
- "orml-traits",
- "orml-xtokens",
- "pallet-asset-manager",
- "pallet-assets",
- "pallet-assets-handler",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-bitacross",
- "pallet-bounties",
- "pallet-bridge",
- "pallet-bridge-transfer",
- "pallet-collator-selection",
- "pallet-collective",
- "pallet-democracy",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-extrinsic-filter",
- "pallet-identity",
- "pallet-identity-management",
- "pallet-membership",
- "pallet-message-queue",
- "pallet-multisig",
- "pallet-preimage",
- "pallet-proxy",
- "pallet-scheduler",
- "pallet-session",
- "pallet-teebag",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
- "pallet-utility",
- "pallet-vesting",
- "pallet-xcm",
- "parachain-info",
- "parity-scale-codec",
- "polkadot-parachain-primitives",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
- "runtime-common",
- "scale-info",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-state-machine",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "staging-xcm",
- "staging-xcm-builder",
- "staging-xcm-executor",
- "substrate-wasm-builder",
- "xcm-simulator",
 ]
 
 [[package]]
@@ -6825,7 +6735,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#2778a86fb12a1a61ca8ea9348f68b3c974f786e0"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -6845,7 +6755,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#2778a86fb12a1a61ca8ea9348f68b3c974f786e0"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -6860,7 +6770,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#2778a86fb12a1a61ca8ea9348f68b3c974f786e0"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -6874,7 +6784,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#2778a86fb12a1a61ca8ea9348f68b3c974f786e0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -6949,8 +6859,9 @@ dependencies = [
  "hex-literal",
  "pallet-assets",
  "pallet-balances",
- "pallet-bridge",
+ "pallet-bridge-common",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-parachain-staking",
  "parity-scale-codec",
  "scale-info",
@@ -7148,20 +7059,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-bridge"
+name = "pallet-bridge-common"
 version = "0.1.0"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
- "frame-system",
- "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "sp-core",
- "sp-core-hashing",
- "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7172,13 +7076,33 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "pallet-assets",
+ "pallet-assets-handler",
  "pallet-balances",
- "pallet-bridge",
+ "pallet-bridge-common",
+ "pallet-chain-bridge",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-chain-bridge"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-core-hashing",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -7200,25 +7124,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-collator-selection"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.1.0#e51a91fcac27d2f95ad631989622848aa8043f9e"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-session",
- "parity-scale-codec",
- "rand 0.8.5",
- "scale-info",
- "sp-runtime",
- "sp-staking",
  "sp-std",
 ]
 
@@ -10467,9 +10372,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
+checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
@@ -10898,8 +10803,8 @@ dependencies = [
  "pallet-balances",
  "pallet-bitacross",
  "pallet-bounties",
- "pallet-bridge",
  "pallet-bridge-transfer",
+ "pallet-chain-bridge",
  "pallet-collective",
  "pallet-democracy",
  "pallet-ethereum",
@@ -12650,18 +12555,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.208"
+version = "1.0.209"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cff085d2cb684faa248efb494c39b68e522822ac0de72ccf08109abde717cfb2"
+checksum = "99fce0ffe7310761ca6bf9faf5115afbc19688edd00171d81b1bb1b116c63e09"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.208"
+version = "1.0.209"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24008e81ff7613ed8e5ba0cfaf24e2c2f1e5b8a0495711e44fcd4882fca62bcf"
+checksum = "a5831b979fd7b5439637af1752d535ff49f4860c0f341d1baeb6faf0f4242170"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -15696,7 +15601,7 @@ version = "0.51.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
 dependencies = [
- "windows-core 0.51.1",
+ "windows-core",
  "windows-targets 0.48.5",
 ]
 
@@ -15707,15 +15612,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-core"
-version = "0.52.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
-dependencies = [
- "windows-targets 0.52.6",
 ]
 
 [[package]]

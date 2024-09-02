@@ -60,7 +60,7 @@ pub fn build(
 		Identity::Substrate(account) => account_id_to_string(&account),
 		Identity::Evm(account) => account_id_to_string(&account),
 		Identity::Bitcoin(account) => account_id_to_string(&account),
-		_ => unreachable!(),
+		_ => return Err(Error::RequestVCFailed(Assertion::A20, ErrorDetail::NoEligibleIdentity)),
 	};
 	debug!("Assertion A20 build, who: {:?}", who);
 

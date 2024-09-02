@@ -264,9 +264,9 @@ pub type XcmRouter = (
 
 match_types! {
 	pub type ParentOrParachains: impl Contains<MultiLocation> = {
-		// Local account: Litmus
+		// Local account: Litentry
 		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |
-		// Relay-chain account: Kusama
+		// Relay-chain account: Polkadot
 		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
 		// AccountKey20 based parachain: Moonriver
 		MultiLocation { parents: 1, interior: X2(Parachain( .. ), Junction::AccountKey20 { .. }) } |
