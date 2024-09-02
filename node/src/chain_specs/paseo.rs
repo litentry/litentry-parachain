@@ -15,13 +15,14 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
+use core_primitives::LITENTRY_PARA_ID;
 use cumulus_primitives_core::ParaId;
 use paseo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
 	DeveloperCommitteeMembershipConfig, ParachainInfoConfig, ParachainStakingConfig,
 	PolkadotXcmConfig, RuntimeGenesisConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, VCManagementConfig,
-	ROCOCO_PARA_ID, UNIT, WASM_BINARY,
+	LITENTRY_PARA_ID, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -93,7 +94,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				ROCOCO_PARA_ID.into(),
+				LITENTRY_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -101,7 +102,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 		Some("litentry-paseo"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: ROCOCO_PARA_ID },
+		Extensions { relay_chain: "rococo-local".into(), para_id: LITENTRY_PARA_ID },
 	)
 }
 
@@ -117,7 +118,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 		"litentry-paseo-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		ROCOCO_PARA_ID.into(),
+		LITENTRY_PARA_ID.into(),
 	)
 }
 
@@ -128,7 +129,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"litentry-paseo",
 		ChainType::Live,
 		"rococo".into(),
-		ROCOCO_PARA_ID.into(),
+		LITENTRY_PARA_ID.into(),
 	)
 }
 

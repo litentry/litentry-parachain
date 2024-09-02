@@ -100,7 +100,7 @@ launch-docker-litmus: generate-docker-compose-litmus
 launch-docker-rococo: generate-docker-compose-rococo
 	@./scripts/launch-local-docker.sh rococo
 
-.PHONY: launch-docker-paseo ## Launch a local rococo-parachain network with docker
+.PHONY: launch-docker-paseo ## Launch a local paseo-parachain network with docker
 launch-docker-paseo: generate-docker-compose-paseo
 	@./scripts/launch-local-docker.sh paseo
 

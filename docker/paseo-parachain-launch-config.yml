@@ -13,11 +13,9 @@ relaychain:
     - --execution=wasm
   nodes:
     - name: alice
-      wsPort: ${AliceWSPort:-9946}
       rpcPort: ${AliceRPCPort:-9936}
       port: ${AlicePort:-30336}
     - name: bob
-      wsPort: ${BobWSPort:-9947}
       rpcPort: ${BobRPCPort:-9937}
       port: ${BobPort:-30337}
 
@@ -42,6 +40,5 @@ parachains:
   nodes:
   - flags:
     - --alice
-    wsPort: ${CollatorWSPort:-9944}
     rpcPort: ${CollatorRPCPort:-9933}
     port: ${CollatorPort:-30333}
