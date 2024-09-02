@@ -2,8 +2,8 @@
 set -eo pipefail
 
 function usage() {
-  echo "Usage:   $0 litentry|litmus [srtool image]"
-  echo "default: $0 litentry|litmus paritytech/srtool"
+  echo "Usage:   $0 litentry [srtool image]"
+  echo "default: $0 litentry paritytech/srtool"
 }
 
 [ $# -lt 1 ] && (usage; exit 1)
@@ -15,7 +15,7 @@ CHAIN=$1
 SRTOOL_IMAGE=${2:-paritytech/srtool}
 
 case "$1" in
-  litentry|litmus|rococo) ;;
+  litentry|rococo) ;;
   *) usage; exit 1 ;;
 esac
 

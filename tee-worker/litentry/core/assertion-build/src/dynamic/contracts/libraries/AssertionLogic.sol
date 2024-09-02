@@ -34,11 +34,21 @@ library AssertionLogic {
         string src;
         Op op;
         string dst;
+        CompositeCondition cc;
     }
 
     struct CompositeCondition {
         Condition[] conditions;
         bool isAnd; // true for 'And', false for 'Or'
+    }
+
+    function newConditionWithoutSubCc(
+        string memory src,
+        Op op,
+        string memory dst
+    ) internal pure returns (Condition memory) {
+        CompositeCondition memory subCc;
+        return Condition(src, op, dst, subCc);
     }
 
     function addCondition(
@@ -48,7 +58,16 @@ library AssertionLogic {
         Op op,
         string memory dst
     ) internal pure {
-        cc.conditions[i] = Condition(src, op, dst);
+        CompositeCondition memory subCc;
+        cc.conditions[i] = Condition(src, op, dst, subCc);
+    }
+
+    function addCompositeCondition(
+        CompositeCondition memory cc,
+        uint256 i,
+        CompositeCondition memory subCc
+    ) internal pure {
+        cc.conditions[i] = Condition("", Op.Equal, "", subCc);
     }
 
     function andOp(
@@ -85,12 +104,15 @@ library AssertionLogic {
                 abi.encodePacked(result, cc.isAnd ? '"and":[' : '"or":[')
             );
             for (uint256 i = 0; i < cc.conditions.length; i++) {
+                Condition memory c = cc.conditions[i];
                 if (i > 0) {
                     result = string(abi.encodePacked(result, ","));
                 }
-                result = string(
-                    abi.encodePacked(result, toString(cc.conditions[i]))
-                );
+                if (c.cc.conditions.length > 0) {
+                    result = string(abi.encodePacked(result, toString(c.cc)));
+                } else {
+                    result = string(abi.encodePacked(result, toString(c)));
+                }
             }
             result = string(abi.encodePacked(result, "]"));
         }

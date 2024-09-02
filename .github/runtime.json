@@ -6,12 +6,6 @@
       "uri": "wss://rpc.rococo-parachain.litentry.io:443"
     },
     {
-      "name": "litmus",
-      "package": "litmus-parachain-runtime",
-      "path": "runtime/litmus",
-      "uri": "wss://rpc.litmus-parachain.litentry.io:443"
-    },
-    {
       "name": "litentry",
       "package": "litentry-parachain-runtime",
       "path": "runtime/litentry",

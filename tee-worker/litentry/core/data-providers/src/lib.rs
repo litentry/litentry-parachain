@@ -231,7 +231,7 @@ impl DataProviderConfig {
 			litentry_discord_microservice_url: "https://tee-microservice.litentry.io:9528"
 				.to_string(),
 			discord_auth_token: "".to_string(),
-			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
+			achainable_url: "https://label-production.litentry.io/".to_string(),
 			achainable_auth_key: "".to_string(),
 			credential_endpoint: "wss://rpc.rococo-parachain.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
