@@ -36,21 +36,15 @@ pub use pallet::*;
 use parity_scale_codec::FullCodec;
 type BalanceOf<T> =
 	<pallet_balances::Pallet<T> as FInspect<<T as frame_system::Config>::AccountId>>::Balance;
-use pallet_bridge_transfer::BridgeHandler;
+use pallet_bridge_common::BridgeHandler;
 use pallet_parachain_staking::IssuanceAdapter;
 use sp_runtime::{
 	traits::{CheckedAdd, CheckedSub},
 	ArithmeticError, DispatchError, FixedPointOperand,
 };
 use sp_std::{fmt::Debug, prelude::*};
-type ResourceId = pallet_bridge::ResourceId;
-
-#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
-pub struct AssetInfo<AssetId, Balance> {
-	pub fee: Balance,
-	// None for native token
-	pub asset: Option<AssetId>,
-}
+type ResourceId = pallet_chain_bridge::ResourceId;
+use pallet_bridge_common::AssetInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -58,7 +52,7 @@ pub mod pallet {
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
-	type AssetId<T> = <T as pallet_assets::Config>::AssetId;
+	pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -70,7 +64,7 @@ pub mod pallet {
 		frame_system::Config
 		+ pallet_balances::Config
 		+ pallet_assets::Config
-		+ pallet_bridge::Config
+		+ pallet_chain_bridge::Config
 	{
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -162,7 +156,7 @@ pub mod pallet {
 			resource_id: ResourceId,
 			asset: AssetInfo<AssetId<T>, BalanceOf<T>>,
 		) -> DispatchResult {
-			<T as pallet_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			<T as pallet_chain_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			ResourceToAssetInfo::<T>::insert(resource_id, asset.clone());
 			Self::deposit_event(Event::ResourceUpdated { resource_id, asset });
 			Ok(())
@@ -175,7 +169,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight({1000})]
 		pub fn remove_resource(origin: OriginFor<T>, resource_id: ResourceId) -> DispatchResult {
-			<T as pallet_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			<T as pallet_chain_bridge::Config>::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			ResourceToAssetInfo::<T>::remove(resource_id);
 			Self::deposit_event(Event::ResourceRemoved { resource_id });
 			Ok(())
@@ -212,7 +206,7 @@ impl<T, B, A> BridgeHandler<B, A, ResourceId> for Pallet<T>
 where
 	T: Config
 		+ frame_system::Config<AccountId = A>
-		+ pallet_bridge::Config<Balance = B>
+		+ pallet_chain_bridge::Config<Balance = B>
 		+ pallet_assets::Config<Balance = B>
 		+ pallet_balances::Config<Balance = B>,
 	B: Copy
@@ -327,6 +321,14 @@ where
 				Ok(burn_amount.checked_sub(&fee).ok_or(ArithmeticError::Overflow)?)
 			},
 		}
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn setup_native_asset_info(resource_id: ResourceId, fee: B) -> DispatchResult {
+		let native_token_asset_info: AssetInfo<AssetId<T>, B> = AssetInfo { fee, asset: None };
+
+		ResourceToAssetInfo::<T>::insert(resource_id, native_token_asset_info.clone());
+		Self::deposit_event(Event::ResourceUpdated { resource_id, asset: native_token_asset_info });
+		Ok(())
 	}
 }
 

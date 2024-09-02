@@ -17,21 +17,19 @@
 use crate::{self as bridge_transfer, Config};
 use frame_support::{
 	assert_ok, ord_parameter_types, parameter_types,
-	traits::{
-		fungible,
-		tokens::{Fortitude, Precision},
-		ConstU64, SortedMembers,
-	},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
 use frame_system as system;
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 pub use pallet_balances as balances;
-use pallet_bridge::{self as bridge, ResourceId};
+use pallet_bridge_common::AssetInfo;
+use pallet_chain_bridge::{self as bridge, ResourceId};
 use sp_core::H256;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	BuildStorage, DispatchError,
+	BuildStorage,
 };
 
 pub const TEST_THRESHOLD: u32 = 2;
@@ -44,6 +42,8 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Balances: pallet_balances,
 		Bridge: bridge,
+		Assets: pallet_assets,
+		AssetsHandler: pallet_assets_handler,
 		BridgeTransfer: bridge_transfer,
 	}
 );
@@ -63,7 +63,7 @@ impl frame_system::Config for Test {
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
@@ -114,11 +114,19 @@ impl bridge::Config for Test {
 	type WeightInfo = ();
 }
 
+pub const MAXIMUM_ISSURANCE: u64 = 20_000_000_000_000;
+
 parameter_types! {
+	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
+	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
-	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
-	// transferassetsmembers
+	pub const NativeTokenResourceId: ResourceId = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
+	// TransferAssetsMembers
 	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
+}
+
+ord_parameter_types! {
+	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
 }
 
 pub struct MembersProvider;
@@ -143,34 +151,41 @@ impl SortedMembers<u64> for MembersProvider {
 	}
 }
 
-pub struct MockAssetsHandler;
-impl bridge_transfer::BridgeHandler<Balance, AccountId, ResourceId> for MockAssetsHandler {
-	fn prepare_token_bridge_in(
-		_: ResourceId,
-		who: AccountId,
-		amount: Balance,
-	) -> Result<Balance, DispatchError> {
-		<Balances as fungible::Mutate<AccountId>>::mint_into(&who, amount)
-	}
-	// Return actual amount to target chain after deduction e.g fee
-	fn prepare_token_bridge_out(
-		_: ResourceId,
-		who: AccountId,
-		amount: Balance,
-	) -> Result<Balance, DispatchError> {
-		<Balances as fungible::Mutate<AccountId>>::burn_from(
-			&who,
-			amount,
-			Precision::Exact,
-			Fortitude::Polite,
-		)
-	}
+impl pallet_assets::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = u32;
+	type AssetIdParameter = u32;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<Self::AccountId>>;
+	type ForceOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type AssetDeposit = ConstU64<1>;
+	type AssetAccountDeposit = ConstU64<10>;
+	type MetadataDepositBase = ConstU64<1>;
+	type MetadataDepositPerByte = ConstU64<1>;
+	type ApprovalDeposit = ConstU64<1>;
+	type StringLimit = ConstU32<50>;
+	type Freezer = ();
+	type WeightInfo = ();
+	type CallbackHandle = ();
+	type Extra = ();
+	type RemoveItemsLimit = ConstU32<5>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
+}
+
+impl pallet_assets_handler::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type TreasuryAccount = TreasuryAccount;
+	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
+	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
 impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type TransferAssetsMembers = MembersProvider;
-	type BridgeHandler = MockAssetsHandler;
+	type BridgeHandler = AssetsHandler;
 	type WeightInfo = ();
 }
 
@@ -205,6 +220,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
 		// Whitelist chain
 		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), dest_chain));
+
+		let resource_id = NativeTokenResourceId::get();
+		let native_token_asset_info: AssetInfo<
+			<Test as pallet_assets::Config>::AssetId,
+			<Test as pallet_assets::Config>::Balance,
+		> = AssetInfo { fee: 0u64, asset: None };
+		// Setup asset handler
+		assert_ok!(AssetsHandler::set_resource(
+			RuntimeOrigin::root(),
+			resource_id,
+			native_token_asset_info
+		));
 	});
 	ext
 }

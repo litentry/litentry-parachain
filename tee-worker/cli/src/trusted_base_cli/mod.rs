@@ -41,7 +41,7 @@ use substrate_client_keystore::LocalKeystore;
 
 use self::commands::litentry::id_graph::IDGraphCommand;
 
-mod commands;
+pub mod commands;
 
 #[derive(Subcommand)]
 pub enum TrustedBaseCommand {
