@@ -9,7 +9,7 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-cargo_toml = "0.19"
+cargo_toml = "0.20"
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { workspace = true, features = ["full", "visit-mut"] }
