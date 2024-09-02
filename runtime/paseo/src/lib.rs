@@ -24,6 +24,7 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
+use core_primitives::LITENTRY_PARA_ID;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -69,7 +70,7 @@ use xcm_executor::XcmExecutor;
 pub use constants::currency::deposit;
 pub use core_primitives::{
 	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
-	HOURS, MINUTES, ROCOCO_PARA_ID, SLOT_DURATION,
+	HOURS, MINUTES, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
 
@@ -1083,7 +1084,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 
 parameter_types! {
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-	pub ChainId: u64 = ROCOCO_PARA_ID.into();
+	pub ChainId: u64 = LITENTRY_PARA_ID.into();
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
