@@ -11,11 +11,10 @@ import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { decryptWithAes } from './crypto';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { base58Encode, blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
-import * as base58 from 'micro-base58';
 import { fail } from 'assert';
 
 export function assertIdGraph(
@@ -134,7 +133,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     assert.equal(
         vcPayloadJson.issuer.mrenclave,
-        base58.encode(registeredEnclave.mrenclave),
+        base58Encode(registeredEnclave.mrenclave),
         "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
     );
 
