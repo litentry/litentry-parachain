@@ -16,7 +16,10 @@
 
 #![allow(clippy::result_large_err)]
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
+use crate::{
+	handler::TaskHandler, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, StfTaskContext,
+	TrustedCall, H256,
+};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
@@ -50,7 +53,7 @@ pub(crate) struct AssertionHandler<
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 > where
 	ShieldingKeyRepository: AccessKey,
@@ -69,7 +72,7 @@ where
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 {
 	type Error = VCMPError;
@@ -144,7 +147,7 @@ pub fn create_credential_str<
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 >(
 	req: &AssertionBuildRequest,
@@ -289,6 +292,7 @@ where
 				req,
 				params,
 				context.assertion_repository.clone(),
+				context.ocall_api.clone(),
 			)?;
 			vc_logs = Some(result.1);
 			Ok(result.0)
