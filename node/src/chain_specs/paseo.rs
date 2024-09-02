@@ -102,7 +102,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 		Some("litentry-paseo"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "paseo-local".into(), para_id: PASEO_PARA_ID },
+		Extensions { relay_chain: "paseo".into(), para_id: PASEO_PARA_ID },
 	)
 }
 

@@ -5,7 +5,10 @@
 # Relaychain Configuration
 relaychain:
   image: parity/polkadot:v1.1.0
-  chain: paseo-local
+  # TODO: `rococo-local` is used here as `paseo` has only "raw" chain spec which can't be further
+  #       manipulated by parachain-launch
+  #       we might need to switch to other launch tools
+  chain: rococo-local
   env:
     RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
   flags:
