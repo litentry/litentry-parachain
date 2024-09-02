@@ -77,7 +77,7 @@ jobs:
         chain:
           - rococo
           - litentry
-    name: ${{ matrix.chain }}
+    name: runtime-${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.78.0"
+          tag: "1.74.0"
 
       - name: Summary
         run: |
@@ -304,7 +304,7 @@ jobs:
       matrix:
         chain:
           - litentry
-    name: ${{ matrix.chain }}
+    name: ts-tests-${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
