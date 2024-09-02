@@ -46,14 +46,6 @@ build-runtime-rococo:
 build-runtime-paseo:
 	cargo build --locked -p $(call pkgid, paseo-parachain-runtime) --release
 
-.PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
-srtool-build-wasm-litentry:
-	@./scripts/build-wasm.sh litentry
-
-.PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
-srtool-build-wasm-rococo:
-	@./scripts/build-wasm.sh rococo
-
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
 	@./scripts/build-docker.sh release latest
