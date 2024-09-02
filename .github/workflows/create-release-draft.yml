@@ -96,7 +96,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.73.0"
+          tag: "1.78.0"
 
       - name: Summary
         run: |
