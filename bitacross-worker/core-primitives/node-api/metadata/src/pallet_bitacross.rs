@@ -24,6 +24,7 @@ pub trait BitAcrossCallIndexes {
 	fn remove_relayer_call_indexes(&self) -> Result<[u8; 2]>;
 	fn btc_wallet_generated_indexes(&self) -> Result<[u8; 2]>;
 	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]>;
+	fn ton_wallet_generated_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl BitAcrossCallIndexes for NodeMetadata {
@@ -41,5 +42,9 @@ impl BitAcrossCallIndexes for NodeMetadata {
 
 	fn eth_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(BITACROSS, "eth_wallet_generated")
+	}
+
+	fn ton_wallet_generated_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BITACROSS, "ton_wallet_generated")
 	}
 }

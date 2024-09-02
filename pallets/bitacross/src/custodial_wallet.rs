@@ -17,13 +17,15 @@
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-pub type PubKey = [u8; 33];
+pub type PubKey33 = [u8; 33];
+pub type PubKey32 = [u8; 32];
 
 /// custodial wallet that each tee worker generates and holds
 #[derive(Encode, Decode, Clone, Default, Debug, PartialEq, Eq, TypeInfo)]
 pub struct CustodialWallet {
-	pub btc: Option<PubKey>,
-	pub eth: Option<PubKey>,
+	pub btc: Option<PubKey33>,
+	pub eth: Option<PubKey33>,
+	pub ton: Option<PubKey32>,
 }
 
 impl CustodialWallet {
@@ -33,5 +35,9 @@ impl CustodialWallet {
 
 	pub fn has_eth(&self) -> bool {
 		self.eth.is_some()
+	}
+
+	pub fn has_ton(&self) -> bool {
+		self.ton.is_some()
 	}
 }
