@@ -22,7 +22,7 @@ use paseo_parachain_runtime::{
 	DeveloperCommitteeMembershipConfig, ParachainInfoConfig, ParachainStakingConfig,
 	PolkadotXcmConfig, RuntimeGenesisConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, TeebagConfig, TeebagOperationalMode, VCManagementConfig,
-	LITENTRY_PARA_ID, UNIT, WASM_BINARY,
+	UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
