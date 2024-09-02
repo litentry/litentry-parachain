@@ -8,6 +8,7 @@ members = [
     'pallets/bridge/chain-bridge',
     'pallets/bridge/bridge-transfer',
     'pallets/bridge/common',
+    'pallets/collab-ai/aiusd-convertor',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',
@@ -270,6 +271,10 @@ pallet-evm-precompile-bridge-transfer = { path = "precompiles/bridge-transfer", 
 pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-staking", default-features = false }
 pallet-evm-precompile-score-staking = { path = "precompiles/score-staking", default-features = false }
 pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = false }
+
+# CollabAI local
+pallet-aiusd-convertor = { path = "pallets/collab-ai/aiusd-convertor", default-features = false }
+
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }

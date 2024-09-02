@@ -15,31 +15,29 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 //! Pallet for converting among AIUSD and other stable token.
-//! 
+//!
 #![cfg_attr(not(feature = "std"), no_std)]
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		tokens::{
 			fungibles::{Inspect as FsInspect, Mutate as FsMutate},
-			Fortitude, Precision,
+			Fortitude, Precision, Preservation,
 		},
 		StorageVersion,
 	},
 };
 
-
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T>;
 	/// Balance type alias for balances of assets that implement the `fungibles` trait.
-	pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T> as FsInspect<T as frame_system::Config>::AccountId>;
 	pub(crate) type AssetBalanceOf<T> =
-		InspectFungibles<T>::Balance;
+		<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 	/// Type alias for Asset IDs.
 	pub(crate) type AssetIdOf<T> =
-		InspectFungibles<T>::AssetId;
+		<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -51,24 +49,27 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_assets::Config {
-        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-        // This is not a treasury account
-        // Balance of all types in this account record the 
+		// This is not a treasury account
+		// Balance of all types in this account record the
 		// available stable coin for AIUSD to switch back
-        type ConvertingFeeAccount: Get<Self::AccountId>;
+		type ConvertingFeeAccount: Get<Self::AccountId>;
 
 		// Declare the asset id of AIUSD
-        type AIUSDAssetId: Get<AssetIdOf<Self>>;
+		type AIUSDAssetId: Get<AssetIdOf<Self>>;
+
+		/// The privileged origin to enable/disable AIUSD switch
+		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	// Asset Id => ratio of system exchange rate for AIUSD to other token in 10^18
 	// e.g.
 	// (1 USDT) = 10^6 in system
 	// (1 AIUSD) = 10^18 in system
-	// Value of StorageMap n = 10^(-12) * 10^(18) = 10^(6), 
+	// Value of StorageMap n = 10^(-12) * 10^(18) = 10^(6),
 	// which means (1 AIUSD) * n = (10^18) * (1 USDT) in system balance when converting.
-    #[pallet::storage]
+	#[pallet::storage]
 	#[pallet::getter(fn enabled_tokens)]
 	pub type EnabledTokens<T: Config> =
 		StorageMap<_, Twox64Concat, AssetIdOf<T>, AssetBalanceOf<T>, OptionQuery>;
@@ -88,41 +89,71 @@ pub mod pallet {
 		/// AIUSD minted with other eligible stable token locked
 		AIUSDCreated {
 			beneficiary: T::AccountId,
+			aiusd_amount: AssetBalanceOf<T>,
 			asset_id: AssetIdOf<T>,
-			amount: AssetBalanceOf<T>,
+			asset_amount: AssetBalanceOf<T>,
 		},
 		/// AIUSD burned with other eligible stable token released
 		AIUSDDestroyed {
 			beneficiary: T::AccountId,
+			aiusd_amount: AssetBalanceOf<T>,
 			asset_id: AssetIdOf<T>,
-			amount: AssetBalanceOf<T>,
+			asset_amount: AssetBalanceOf<T>,
+		},
+		AssetEnabled {
+			asset_id: AssetIdOf<T>,
+			decimal_ratio: AssetBalanceOf<T>,
+		},
+		AssetDisabled {
+			asset_id: AssetIdOf<T>,
 		},
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		// Lock target_asset_id token and mint AIUSD
 		#[pallet::call_index(0)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn mint_aiusd(
 			origin: OriginFor<T>,
-            target_asset_id: AssetIdOf<T>,
-			amount: AssetBalanceOf<T>,
+			target_asset_id: AssetIdOf<T>,
+			aiusd_amount: AssetBalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let beneficiary = T::IncConsumerOrigin::ensure_origin(origin)?;
-			ensure!(EnabledTokens::<T>::contains_key(&target_asset_id),  Error::<T>::AssetNotEnabled);
-			let aiusd_id = AIUSDAssetId::get();
-			ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
-			// It will fail if insufficient fund
-			let actual_amount: AssetBalanceOf<T> = InspectFungibles<T>::transfer(target_asset_id, beneficiary, ConvertingFeeAccount::get(), amount, Expendable)?;
-			
-			
-			let minted_amount: AssetBalanceOf<T> = InspectFungibles<T>::mint_into(aiusd_id, beneficiary, actual_amount)?;
+			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
+				ensure!(
+					EnabledTokens::<T>::contains_key(&target_asset_id),
+					Error::<T>::AssetNotEnabled
+				);
+				let aiusd_id = AIUSDAssetId::get();
+				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
+				// It will fail if insufficient fund
+				let aiusd_minted_amount: AssetBalanceOf<T> =
+					<InspectFungibles<T>>::mint_into(aiusd_id, beneficiary, aiusd_amount)?;
 
-			Self::deposit_event(Event::AIUSDCreated { beneficiary, asset_id: target_asset_id, amount });
+				// Maybe it is better to save decimal of AIUSD somewhere
+				let aseet_target_transfer_amount =
+					aiusd_minted_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
+				let asset_actual_transfer_amount: AssetBalanceOf<T> =
+					<InspectFungibles<T>>::transfer(
+						target_asset_id,
+						beneficiary,
+						ConvertingFeeAccount::get(),
+						aseet_target_mint_amount,
+						Preservation::Expendable,
+					)?;
 
-			Ok(())
+				Self::deposit_event(Event::AIUSDCreated {
+					beneficiary,
+					aiusd_amount: aiusd_minted_amount,
+					asset_id: target_asset_id,
+					asset_amount: asset_actual_transfer_amount,
+				});
+
+				Ok(())
+			} else {
+				Err(Error::<T>::AssetNotEnabled.into())
+			}
 		}
 
 		// Burn aiusd and get target_asset_id token released
@@ -131,37 +162,58 @@ pub mod pallet {
 		#[pallet::weight(W{195_000_000})]
 		pub fn burn_aiusd(
 			origin: OriginFor<T>,
-            target_asset_id: AssetIdOf<T>,
-			amount: AssetBalanceOf<T>,
+			target_asset_id: AssetIdOf<T>,
+			aiusd_amount: AssetBalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let beneficiary = T::IncConsumerOrigin::ensure_origin(origin)?;
 			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
 				let aiusd_id = AIUSDAssetId::get();
 				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
 				// It will fail if insufficient fund
-				let actual_amount: AssetBalanceOf<T> = InspectFungibles<T>::transfer(aiusd_id, beneficiary, ConvertingFeeAccount::get(), amount, Expendable)?;
-				
-			
-				// Maybe it is better to save decimal of AIUSD somewhere
-				let minted_amount: AssetBalanceOf<T> = InspectFungibles<T>::mint_into(target_asset_id, beneficiary, actual_amount * ratio / 10^18)?;
+				let aiusd_destroyed_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::burn_from(
+					aiusd_id,
+					beneficiary,
+					aiusd_amount,
+					Precision::Exact,
+					Fortitude::Polite,
+				)?;
 
-				Self::deposit_event(Event::AIUSDDestroyed { beneficiary, asset_id: target_asset_id, amount });
+				// Maybe it is better to save decimal of AIUSD somewhere
+				let aseet_target_transfer_amount =
+					aiusd_destroyed_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
+				let asset_actual_transfer_amount: AssetBalanceOf<T> =
+					<InspectFungibles<T>>::transfer(
+						target_asset_id,
+						ConvertingFeeAccount::get(),
+						beneficiary,
+						aseet_target_transfer_amount,
+						Preservation::Expendable,
+					)?;
+
+				Self::deposit_event(Event::AIUSDDestroyed {
+					beneficiary,
+					aiusd_amount: aiusd_destroyed_amount,
+					asset_id: target_asset_id,
+					asset_amount: asset_actual_transfer_amount,
+				});
 				Ok(())
 			} else {
 				Err(Error::<T>::AssetNotEnabled.into())
 			}
 		}
 
-
-
-        /// Enable a specific type of token available for switching
-        #[pallet::call_index(1)]
+		/// Enable a specific type of token available for switching
+		#[pallet::call_index(1)]
 		#[pallet::weight({195_000_000})]
 		pub fn enable_token(
 			origin: OriginFor<T>,
 			target_asset_id: AssetId,
+			decimal_ratio: AssetBalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			
+			T::ManagerOrigin::ensure_origin(origin)?;
+			EnabledTokens::<T>::insert(&target_asset_id, decimal_ratio);
+			Self::deposit_event(Event::AssetEnabled { asset_id: target_asset_id, decimal_ratio });
+			Ok(Pays::No.into())
 		}
 
 		/// disable a specific type of token available for switching
@@ -171,7 +223,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			target_asset_id: AssetId,
 		) -> DispatchResultWithPostInfo {
-			
+			T::ManagerOrigin::ensure_origin(origin)?;
+			EnabledTokens::<T>::remove(&target_asset_id);
+			Self::deposit_event(Event::AssetDisabled { asset_id: target_asset_id });
+			Ok(Pays::No.into())
 		}
 	}
 }
