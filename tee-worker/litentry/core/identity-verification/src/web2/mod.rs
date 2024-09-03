@@ -21,6 +21,7 @@ extern crate sgx_tstd as std;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod discord;
+mod helpers;
 pub mod twitter;
 
 use crate::{ensure, Error, Result};
@@ -69,7 +70,7 @@ pub fn verify(
 					.query_user_by_id(user_id.into_bytes())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-				let payload = twitter::helpers::payload_from_tweet(&tweet)?;
+				let payload = twitter::payload_from_tweet(&tweet)?;
 				ensure!(
 					payload.as_slice() == raw_msg,
 					Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
