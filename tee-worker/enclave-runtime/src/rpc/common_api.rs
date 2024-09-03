@@ -235,16 +235,10 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 		debug!("worker_api_direct rpc was called: state_getRuntimeVersion");
 		let runtime_version = VERSION;
 
-		Ok(json!({
-			// "specName": runtime_version.spec_name,
-			// "implName": runtime_version.impl_name,
-			"authoringVersion": runtime_version.authoring_version,
-			"specVersion": runtime_version.spec_version,
-			"implVersion": runtime_version.impl_version,
-			"apis": runtime_version.apis,
-			"transactionVersion": runtime_version.transaction_version,
-			"stateVersion": runtime_version.state_version,
-		}))
+		let json_value =
+			RpcReturnValue::new(runtime_version.encode(), false, DirectRequestStatus::Ok);
+
+		Ok(json!(json_value.to_hex()))
 	});
 
 	// TODO: deprecate

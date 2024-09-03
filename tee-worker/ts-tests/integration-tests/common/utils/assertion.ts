@@ -7,7 +7,7 @@ import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
 import { nextRequestId } from '../helpers';
-import { aesKey } from '../call';
+import { aesKey, sendRequest } from '../call';
 import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
@@ -147,16 +147,20 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     // check runtime version is present
     const [parachainSpecVersion, sidechainSpecVersion] = await Promise.all([
         context.api.rpc.state.getRuntimeVersion(),
-        context.tee.sendRequest(
+        sendRequest(
+            context.tee,
             {
                 jsonrpc: '2.0',
+                id: nextRequestId(context),
                 method: 'state_getRuntimeVersion',
                 params: [],
             },
-            { requestId: nextRequestId(context) }
+            context.api
         ),
-    ]).then(([parachain, sidechain]) => {
-        return [parachain.specVersion.toNumber(), sidechain.result.specVersion as number];
+    ]).then(([parachainRuntime, sidechainReturnValue]) => {
+        const sidechainRuntime = context.api.createType('RuntimeVersion', sidechainReturnValue.value);
+
+        return [parachainRuntime.specVersion.toNumber(), sidechainRuntime.specVersion.toNumber()];
     });
 
     assert.deepEqual(
