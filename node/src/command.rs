@@ -104,9 +104,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		)?),
 		// Paseo
 		"paseo-dev" => Box::new(chain_specs::paseo::get_chain_spec_dev(false)),
-		"paseo-staging" => Box::new(chain_specs::paseo::get_chain_spec_staging()),
 		"paseo" => Box::new(chain_specs::paseo::ChainSpec::from_json_bytes(
-			&include_bytes!("../res/chain_specs/rococo.json")[..],
+			&include_bytes!("../res/chain_specs/paseo.json")[..],
 		)?),
 		// Generate res/chain_specs/litentry.json
 		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),

@@ -144,6 +144,10 @@ clean-docker-litentry:
 clean-docker-rococo:
 	@./scripts/clean-local-docker.sh rococo
 
+.PHONY: clean-docker-paseo ## Clean up paseo docker images, containers, volumes, etc
+clean-docker-paseo:
+	@./scripts/clean-local-docker.sh paseo
+
 .PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
 clean-binary:
 	@./scripts/clean-local-binary.sh

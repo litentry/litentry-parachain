@@ -6,8 +6,8 @@ DESTDIR="$ROOTDIR/tee-worker/docker/litentry"
 
 # generate files
 cd "$ROOTDIR"
-make generate-docker-compose-rococo
+make generate-docker-compose-paseo
 
 # copy files over to `DESTDIR`
 mkdir -p "$DESTDIR"
-cp docker/generated-rococo/* "$DESTDIR/"
+cp docker/generated-paseo/* "$DESTDIR/"

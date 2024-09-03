@@ -4,7 +4,10 @@
 #
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:v0.9.42
+  image: parity/polkadot:v1.1.0
+  # TODO: `rococo-local` is used here as `paseo` has only "raw" chain spec which can't be further
+  #       manipulated by parachain-launch
+  #       we might need to switch to other launch tools
   chain: rococo-local
   env:
     RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
@@ -13,10 +16,10 @@ relaychain:
     - --execution=wasm
   nodes:
     - name: alice
-      rpcPort: ${AliceRPCPort:-9936}
+      rpcPort: ${AliceRPCPort:-9946}
       port: ${AlicePort:-30336}
     - name: bob
-      rpcPort: ${BobRPCPort:-9937}
+      rpcPort: ${BobRPCPort:-9947}
       port: ${BobPort:-30337}
 
 # Parachain Configuration
@@ -40,5 +43,5 @@ parachains:
   nodes:
   - flags:
     - --alice
-    rpcPort: ${CollatorRPCPort:-9933}
+    rpcPort: ${CollatorRPCPort:-9944}
     port: ${CollatorPort:-30333}

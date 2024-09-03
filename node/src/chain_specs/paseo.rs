@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use core_primitives::LITENTRY_PARA_ID;
+use core_primitives::PASEO_PARA_ID;
 use cumulus_primitives_core::ParaId;
 use paseo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, BitacrossConfig, CouncilMembershipConfig,
@@ -35,7 +35,7 @@ pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensio
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
-/// Get default parachain properties for Rococo which will be filled into chain spec
+/// Get default parachain properties for paseo which will be filled into chain spec
 /// Currently, we use 131 as the SS58Prefix (same as Litmus)
 fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 18, 131)
@@ -94,7 +94,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				LITENTRY_PARA_ID.into(),
+				PASEO_PARA_ID.into(),
 			)
 		},
 		Vec::new(),
@@ -102,23 +102,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 		Some("litentry-paseo"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: LITENTRY_PARA_ID },
-	)
-}
-
-pub fn get_chain_spec_staging() -> ChainSpec {
-	// Staging keys are derivative keys based on a single master secret phrase:
-	//
-	// root: 	$SECRET
-	// account:	$SECRET//collator//<id>
-	// aura: 	$SECRET//collator//<id>//aura
-	get_chain_spec_from_genesis_info(
-		include_bytes!("../../res/genesis_info/staging.json"),
-		"Litentry-paseo-staging",
-		"litentry-paseo-staging",
-		ChainType::Local,
-		"rococo-local".into(),
-		LITENTRY_PARA_ID.into(),
+		Extensions { relay_chain: "paseo".into(), para_id: PASEO_PARA_ID },
 	)
 }
 
@@ -128,8 +112,8 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 		"Litentry-paseo",
 		"litentry-paseo",
 		ChainType::Live,
-		"rococo".into(),
-		LITENTRY_PARA_ID.into(),
+		"paseo".into(),
+		PASEO_PARA_ID.into(),
 	)
 }
 
@@ -183,7 +167,7 @@ fn get_chain_spec_from_genesis_info(
 			)
 			.expect("Invalid telemetry URL; qed."),
 		),
-		Some("litentry-rococo"),
+		Some("litentry-paseo"),
 		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
