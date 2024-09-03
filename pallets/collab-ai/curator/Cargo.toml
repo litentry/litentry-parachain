@@ -11,6 +11,7 @@ version = '0.1.0'
 [dependencies]
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
+bitflags = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }

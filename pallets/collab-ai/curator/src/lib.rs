@@ -25,7 +25,7 @@
 //!
 //! 
 #![cfg_attr(not(feature = "std"), no_std)]
-
+use bitflags::bitflags;
 use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
@@ -72,11 +72,42 @@ pub struct PoolMetadata<BoundedString> {
 	pub description: BoundedString,
 }
 
+bitflags! {
+	/// Flags used to record the status of pool proposal
+	pub struct ProposalStatusFlags: u32 {
+		/// Whether the minimum staked amount proposed by curator is satisfied.
+		///
+		/// # Note
+		///
+		/// Once a pool is satisfied this requirement, all staked amount can no longer be withdrawed
+		/// unless the pool is later denied passing by voting or until the end of pool maturity.
+		/// 
+		/// Otherwise, the pool will be refunded.
+		const MINIMUM_STAKE_PASSED = 0b0000_0001;
+		/// Whether the pool proposal passing the committee voting.
+		///
+		/// # Note
+		///
+		/// A valid pool must passing committee's audit procedure regarding legal files and other pool parameters.
+		const COMMITTEE_VOTE_PASSED = 0b0000_0010;
+		/// Whether the pool proposal passing the global democracy voting.
+		///
+		/// # Note
+		///
+		/// A valid pool must passing committee's audit procedure regarding legal files and other pool parameters.
+		const DEMOCRACY_VOTE_PASSED = 0b0000_0100;
+		/// Whether the pool guardian has been selected
+		///
+		/// # Note
+		///
+		/// A valid pool must have guardian or a default one will be used (committee)
+		const GUARDIAN_SELECTED = 0b0000_1000;
+	}
+}
+
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{DispatchResult, *};
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+	use super::*;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
@@ -99,103 +130,13 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = BlockNumberFor<Self>>;
 
-		/// The period between a proposal being approved and enacted.
-		///
-		/// It should generally be a little more than the unstake period to ensure that
-		/// voting stakers have an opportunity to remove themselves from the system in the case
-		/// where they are on the losing side of a vote.
+		/// The minimum amount to be used as a deposit for a curator
 		#[pallet::constant]
-		type EnactmentPeriod: Get<BlockNumberFor<Self>>;
+		type MinimumCuratorDeposit: Get<BalanceOf<Self>>;
 
-		/// How often (in blocks) new public referenda are launched.
-		#[pallet::constant]
-		type LaunchPeriod: Get<BlockNumberFor<Self>>;
+		/// Origin from curator legal file verified by
+		type CuratorJudgeOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// How often (in blocks) to check for new votes.
-		#[pallet::constant]
-		type VotingPeriod: Get<BlockNumberFor<Self>>;
-
-		/// The minimum period of vote locking.
-		///
-		/// It should be no shorter than enactment period to ensure that in the case of an approval,
-		/// those successful voters are locked into the consequences that their votes entail.
-		#[pallet::constant]
-		type VoteLockingPeriod: Get<BlockNumberFor<Self>>;
-
-		/// The minimum amount to be used as a deposit for a public referendum proposal.
-		#[pallet::constant]
-		type MinimumDeposit: Get<BalanceOf<Self>>;
-
-		/// Indicator for whether an emergency origin is even allowed to happen. Some chains may
-		/// want to set this permanently to `false`, others may want to condition it on things such
-		/// as an upgrade having happened recently.
-		#[pallet::constant]
-		type InstantAllowed: Get<bool>;
-
-		/// Minimum voting period allowed for a fast-track referendum.
-		#[pallet::constant]
-		type FastTrackVotingPeriod: Get<BlockNumberFor<Self>>;
-
-		/// Period in blocks where an external proposal may not be re-submitted after being vetoed.
-		#[pallet::constant]
-		type CooloffPeriod: Get<BlockNumberFor<Self>>;
-
-		/// The maximum number of public proposals that can exist at any time.
-		#[pallet::constant]
-		type MaxCurators: Get<u32>;
-
-		/// The maximum number of deposits a public proposal may have at any time.
-		#[pallet::constant]
-		type MaxDeposits: Get<u32>;
-
-		/// The maximum number of items which can be blacklisted.
-		#[pallet::constant]
-		type MaxBlacklisted: Get<u32>;
-
-		/// Origin from which the next tabled referendum may be forced. This is a normal
-		/// "super-majority-required" referendum.
-		type ExternalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which the next tabled referendum may be forced; this allows for the tabling
-		/// of a majority-carries referendum.
-		type ExternalMajorityOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which the next tabled referendum may be forced; this allows for the tabling
-		/// of a negative-turnout-bias (default-carries) referendum.
-		type ExternalDefaultOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which the new proposal can be made.
-		///
-		/// The success variant is the account id of the depositor.
-		type SubmitOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
-
-		/// Origin from which the next majority-carries (or more permissive) referendum may be
-		/// tabled to vote according to the `FastTrackVotingPeriod` asynchronously in a similar
-		/// manner to the emergency origin. It retains its threshold method.
-		type FastTrackOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which the next majority-carries (or more permissive) referendum may be
-		/// tabled to vote immediately and asynchronously in a similar manner to the emergency
-		/// origin. It retains its threshold method.
-		type InstantOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which any referendum may be cancelled in an emergency.
-		type CancellationOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which proposals may be blacklisted.
-		type BlacklistOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin from which a proposal may be cancelled and its backers slashed.
-		type CancelProposalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// Origin for anyone able to veto proposals.
-		type VetoOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
-
-		/// Overarching type of all pallets origins.
-		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>;
-
-		/// Handler for the unbalanced reduction when slashing a preimage deposit.
-		type Slash: OnUnbalanced<NegativeImbalanceOf<Self>>;
 	}
 
 	/// The number of (public) curator that have been made so far.
@@ -203,30 +144,29 @@ pub mod pallet {
 	#[pallet::getter(fn public_curator_count)]
 	pub type PublicCuratorCount<T> = StorageValue<_, CuratorIndex, ValueQuery>;
 
-	/// The public Curator. The second item is current using curator legal file hash.
+	/// The public curator to index
 	#[pallet::storage]
-	#[pallet::getter(fn public_curators)]
-	pub type PublicCurators<T: Config> = StorageMap<
+	#[pallet::getter(fn public_curator_to_index)]
+	pub type PublicCuratorToIndex<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
-		(CuratorIndex, InfoHash),
+		CuratorIndex,
 		OptionQuery,
 	>;
 
-	// Storing all history curator info hash with updated time
-	// We all record the user who update the hash in the first place
+	/// Curator index to hash and update time. Info Hash is current used curator legal file hash.
 	#[pallet::storage]
-	#[pallet::getter(fn curator_info_hash)]
-	pub type CuratorInfoHash<T: Config> = StorageMap<
+	#[pallet::getter(fn curator_index_to_info)]
+	pub type CuratorIndexToInfo<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		InfoHash,
-		(BlockNumberFor<T>, T::AccountId, CandidateStatus),
+		CuratorIndex,
+		(InfoHash, BlockNumberFor<T>, T::AccountId, CandidateStatus),
 		OptionQuery,
 	>;
 
-	/// The next free referendum index, aka the number of referenda started so far.
+	/// The next free Pool Proposal index, aka the number of pool proposed so far.
 	#[pallet::storage]
 	#[pallet::getter(fn pool_proposal_count)]
 	pub type PoolProposalCount<T> = StorageValue<_, PoolProposalIndex, ValueQuery>;
@@ -246,6 +186,17 @@ pub mod pallet {
 	// Metadata of staking pools
 	#[pallet::storage]
 	#[pallet::getter(fn staking_pool_metadata)]
+	pub type StakingPoolStatus<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		PoolProposalIndex,
+		(InfoHash),
+		OptionQuery,
+	>;
+
+	// Metadata of staking pools
+	#[pallet::storage]
+	#[pallet::getter(fn staking_pool_metadata)]
 	pub type StakingPoolMetadata<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -257,96 +208,35 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+
+		CuratorRegisted {
+			curator: T::AccountId,
+			curator_index: CuratorIndex,
+			info_hash: InfoHash, 
+		},
+		CuratorUpdated {
+			curator: T::AccountId,
+			curator_index: CuratorIndex,
+			info_hash: InfoHash, 
+		},
+		CuratorCleaned {
+			curator: T::AccountId,
+			curator_index: CuratorIndex,
+		},
+		CuratorStatusUpdated {
+			curator: T::AccountId,
+			curator_index: CuratorIndex,
+			status: CandidateStatus,
+		}
 		/// A motion has been proposed by a public account.
 		Proposed { proposal_index: PropIndex, deposit: BalanceOf<T> },
-		/// A public proposal has been tabled for referendum vote.
-		Tabled { proposal_index: PropIndex, deposit: BalanceOf<T> },
-		/// An external proposal has been tabled.
-		ExternalTabled,
-		/// A referendum has begun.
-		Started { ref_index: ReferendumIndex, threshold: VoteThreshold },
-		/// A proposal has been approved by referendum.
-		Passed { ref_index: ReferendumIndex },
-		/// A proposal has been rejected by referendum.
-		NotPassed { ref_index: ReferendumIndex },
-		/// A referendum has been cancelled.
-		Cancelled { ref_index: ReferendumIndex },
-		/// An account has delegated their vote to another account.
-		Delegated { who: T::AccountId, target: T::AccountId },
-		/// An account has cancelled a previous delegation operation.
-		Undelegated { account: T::AccountId },
-		/// An external proposal has been vetoed.
-		Vetoed { who: T::AccountId, proposal_hash: H256, until: BlockNumberFor<T> },
-		/// A proposal_hash has been blacklisted permanently.
-		Blacklisted { proposal_hash: H256 },
-		/// An account has voted in a referendum
-		Voted { voter: T::AccountId, ref_index: ReferendumIndex, vote: AccountVote<BalanceOf<T>> },
-		/// An account has secconded a proposal
-		Seconded { seconder: T::AccountId, prop_index: PropIndex },
-		/// A proposal got canceled.
-		ProposalCanceled { prop_index: PropIndex },
-		/// Metadata for a proposal or a referendum has been set.
-		MetadataSet {
-			/// Metadata owner.
-			owner: MetadataOwner,
-			/// Preimage hash.
-			hash: PreimageHash,
-		},
-		/// Metadata for a proposal or a referendum has been cleared.
-		MetadataCleared {
-			/// Metadata owner.
-			owner: MetadataOwner,
-			/// Preimage hash.
-			hash: PreimageHash,
-		},
-		/// Metadata has been transferred to new owner.
-		MetadataTransferred {
-			/// Previous metadata owner.
-			prev_owner: MetadataOwner,
-			/// New metadata owner.
-			owner: MetadataOwner,
-			/// Preimage hash.
-			hash: PreimageHash,
-		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Value too low
-		ValueLow,
-		/// Proposal does not exist
-		ProposalMissing,
-		/// Cannot cancel the same proposal twice
-		AlreadyCanceled,
-		/// Proposal already made
-		DuplicateProposal,
-		/// Proposal still blacklisted
-		ProposalBlacklisted,
-		/// Next external proposal not simple majority
-		NotSimpleMajority,
-		/// Invalid hash
-		InvalidHash,
-		/// No external proposal
-		NoProposal,
-		/// Identity may not veto a proposal twice
-		AlreadyVetoed,
-		/// Vote given for invalid referendum
-		ReferendumInvalid,
-		/// No proposals waiting
-		NoneWaiting,
-		/// The given account did not vote on the referendum.
-		NotVoter,
-		/// The actor has no permission to conduct the action.
-		NoPermission,
-		/// The account is already delegating.
-		AlreadyDelegating,
-		/// Too high a balance was provided that the account cannot afford.
-		InsufficientFunds,
-		/// The account is not currently delegating.
-		NotDelegating,
-		/// The account currently has votes attached to it and the operation cannot succeed until
-		/// these are removed, either through `unvote` or `reap_vote`.
-		VotesExist,
+		CuratorAlreadyRegistered,
+		CuratorNotRegistered,
+		CuratorIndexNotExist,
 	}
 
 	#[pallet::hooks]
@@ -364,38 +254,79 @@ pub mod pallet {
 		#[pallet::weight(W{195_000_000})]
 		pub fn regist_curator(
 			origin: OriginFor<T>,
-			info_hash: Option<InfoHash>,
+			info_hash: InfoHash,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Ensure curator not existing yet
-
-
+			ensure!(!PublicCuratorToIndex::<T>::contains_key(&who), Error::<T>::CuratorAlreadyRegistered);
+			// New registed curator need to make a balance reserve
+			T::Currency::reserve(&who, MinimumCuratorDeposit::get())?;
+			Self::update_curator(who, Some(info_hash))
 		}
 
 		/// Updating a curator legal info
-		#[pallet::call_index(0)]
+		#[pallet::call_index(1)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn update_curator(
 			origin: OriginFor<T>,
-			info_hash: Option<InfoHash>,
+			info_hash: InfoHash,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
+			ensure!(PublicCuratorToIndex::<T>::contains_key(&who), Error::<T>::CuratorNotRegistered);
+
+			Self::update_curator(who, Some(info_hash))
 		}
+
+		/// Clean a curator legal info
+		/// Impossible when there is a staking pool proposal ongoing
+		#[pallet::call_index(2)]
+		#[pallet::weight(W{195_000_000})]
+		pub fn clean_curator(
+			origin: OriginFor<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			// Ensure existing
+			ensure!(PublicCuratorToIndex::<T>::contains_key(&who), Error::<T>::CuratorNotRegistered);
+
+			// New registed curator need to make a balance reserve
+			T::Currency::unreserve(&who, MinimumCuratorDeposit::get())?;
+			Self::update_curator(who, None)
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(W{195_000_000})]
+		pub fn judge_curator_status(
+			origin: OriginFor<T>,
+			curator: T::AccountId,
+			status: CandidateStatus,
+		) -> DispatchResult {
+			T::CuratorJudgeOrigin::ensure_origin(origin)?;
+			let curator_index = PublicCuratorToIndex::<T>::get(curator).ok_or(Error::<T>::CuratorNotRegistered)?;
+			CuratorIndexToInfo::<T>::try_mutate_exists(curator_index, |maybe_info| -> Result<(), DispatchError> {
+				let mut info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
+				// Update block number
+				info.1 = frame_system::Pallet::<T>::block_number();
+				// Update status
+				info.3 = status;
+				Self::deposit_event(Event::CuratorStatusUpdated { 
+					curator,
+					curator_index,
+					status,
+				});
+			})?;
+		}
+
+
 
 
 
 		/// Curator propose a staking pool
 		///
-		/// The dispatch origin of this call must be _Signed_ and the sender must
-		/// have funds to cover the deposit.
-		///
-		/// - `proposal_hash`: The hash of the proposal preimage.
-		/// - `value`: The amount of deposit (must be at least `MinimumDeposit`).
-		///
-		/// Emits `Proposed`.
+		
 		#[pallet::call_index(0)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn propose_staking_pool(
@@ -406,61 +337,25 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 
-
-
-
-			ensure!(value >= T::MinimumDeposit::get(), Error::<T>::ValueLow);
-
-			let index = Self::public_prop_count();
-			let real_prop_count = PublicProps::<T>::decode_len().unwrap_or(0) as u32;
-			let max_proposals = T::MaxProposals::get();
-			ensure!(real_prop_count < max_proposals, Error::<T>::TooMany);
-			let proposal_hash = proposal.hash();
-
-			if let Some((until, _)) = <Blacklist<T>>::get(proposal_hash) {
-				ensure!(
-					<frame_system::Pallet<T>>::block_number() >= until,
-					Error::<T>::ProposalBlacklisted,
-				);
-			}
-
-			T::Currency::reserve(&who, value)?;
-
-			let depositors = BoundedVec::<_, T::MaxDeposits>::truncate_from(vec![who.clone()]);
-			DepositOf::<T>::insert(index, (depositors, value));
-
-			PublicPropCount::<T>::put(index + 1);
-
-			PublicProps::<T>::try_append((index, proposal, who))
-				.map_err(|_| Error::<T>::TooMany)?;
-
-			Self::deposit_event(Event::<T>::Proposed { proposal_index: index, deposit: value });
-			Ok(())
 		}
+	}
+}
 
-		/// Signals agreement with a particular proposal.
-		///
-		/// The dispatch origin of this call must be _Signed_ and the sender
-		/// must have funds to cover the deposit, equal to the original deposit.
-		///
-		/// - `proposal`: The index of the proposal to second.
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::second())]
-		pub fn second(
-			origin: OriginFor<T>,
-			#[pallet::compact] proposal: PropIndex,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+impl<T: Config> Pallet<T> {
+	pub fn update_curator(who: T::AccountId, info_hash: Option<InfoHash>) -> DispatchResult {
+		if Some(hash) = info_hash {
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let next_curator_index = PublicCuratorCount::<T>::get();
 
-			let seconds = Self::len_of_deposit_of(proposal).ok_or(Error::<T>::ProposalMissing)?;
-			ensure!(seconds < T::MaxDeposits::get(), Error::<T>::TooMany);
-			let mut deposit = Self::deposit_of(proposal).ok_or(Error::<T>::ProposalMissing)?;
-			T::Currency::reserve(&who, deposit.1)?;
-			let ok = deposit.0.try_push(who.clone()).is_ok();
-			debug_assert!(ok, "`seconds` is below static limit; `try_insert` should succeed; qed");
-			<DepositOf<T>>::insert(proposal, deposit);
-			Self::deposit_event(Event::<T>::Seconded { seconder: who, prop_index: proposal });
-			Ok(())
+			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
+			CuratorIndexToInfo::<T>::insert(&next_curator_index, (info_hash, current_block, who.clone(), CandidateStatus::Unverified));
+			
+			PublicCuratorCount::<T>::put(next_curator_index.checked_add(1u32.into())?);
+		} else {
+			// i.e. info_hash == None
+			let index = PublicCuratorToIndex::<T>::take(&who);
+			CuratorIndexToInfo::<T>::remove(&index);
 		}
+		Ok(())
 	}
 }
