@@ -23,7 +23,7 @@ while getopts ":p:A:B:u:W:V:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-NPORT=${NPORT:-9912}
+NPORT=${NPORT:-9944}
 NODEURL=${NODEURL:-"ws://litentry-node"}
 
 WORKER1PORT=${WORKER1PORT:-2000}

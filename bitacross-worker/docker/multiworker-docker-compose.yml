@@ -7,11 +7,8 @@ services:
     container_name: litentry-node
     networks:
       - litentry-test-network
-    ports:
-      # TODO: maybe not use 9912 as port
-      - 9944:9912
     healthcheck:
-      test: ["CMD", "nc", "-z", "litentry-node", "9912"]
+      test: ["CMD", "nc", "-z", "litentry-node", "9944"]
       interval: 30s
       timeout: 10s
       retries: 20  bitacross-worker-1:
@@ -41,7 +38,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/bitacross-worker --clean-reset --ws-external -M bitacross-worker-1 -T wss://bitacross-worker-1
-      -u ws://litentry-node -U ws://bitacross-worker-1 -P 2011 -w 2101 -p 9912 -h 4645
+      -u ws://litentry-node -U ws://bitacross-worker-1 -P 2011 -w 2101 -p 9944 -h 4645
       run --dev --skip-ra"
     restart: "no"
   bitacross-worker-2:
@@ -73,7 +70,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/bitacross-worker --clean-reset --ws-external -M bitacross-worker-2 -T wss://bitacross-worker-2
-      -u ws://litentry-node -U ws://bitacross-worker-2 -P 2011 -w 2101 -p 9912 -h 4645
+      -u ws://litentry-node -U ws://bitacross-worker-2 -P 2011 -w 2101 -p 9944 -h 4645
       run --dev --skip-ra --request-state"
     restart: "no"
   bitacross-worker-3:
@@ -105,7 +102,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/bitacross-worker --clean-reset --ws-external -M bitacross-worker-3 -T wss://bitacross-worker-3
-      -u ws://litentry-node -U ws://bitacross-worker-3 -P 2011 -w 2101 -p 9912 -h 4645
+      -u ws://litentry-node -U ws://bitacross-worker-3 -P 2011 -w 2101 -p 9944 -h 4645
       run --dev --skip-ra --request-state"
     restart: "no"
 networks:

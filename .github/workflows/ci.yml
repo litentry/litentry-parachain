@@ -744,7 +744,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Litentry
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
@@ -759,10 +758,6 @@ jobs:
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
 
       - uses: actions/download-artifact@v4
         with:
@@ -837,10 +832,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
-
       - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
@@ -906,10 +897,6 @@ jobs:
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
 
       - uses: actions/download-artifact@v4
         with:
