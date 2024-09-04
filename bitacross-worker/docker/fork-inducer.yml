@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: ping.Dockerfile
-    depends_on: [ 'litentry-node-${VERSION}', 'bitacross-worker-1-${VERSION}', 'bitacross-worker-2-${VERSION}' ]
+    depends_on: [ 'bitacross-worker-1-${VERSION}', 'bitacross-worker-2-${VERSION}' ]
     networks:
       - litentry-test-network
     entrypoint: "ping litentry-worker-2"
@@ -26,8 +26,6 @@ services:
       context: .
       dockerfile: fork.Dockerfile
     depends_on:
-      litentry-node-${VERSION}:
-        condition: service_healthy
       litentry-worker-1-${VERSION}:
         condition: service_healthy
       litentry-worker-2-${VERSION}:

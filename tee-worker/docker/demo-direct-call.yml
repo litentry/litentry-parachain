@@ -12,14 +12,12 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      litentry-node:
-        condition: service_healthy
       litentry-worker-1:
         condition: service_healthy
     networks:
       - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/demo_direct_call.sh -p 9912 -u ws://litentry-node
+      "/usr/local/worker-cli/demo_direct_call.sh -p 9944
       -V wss://litentry-worker-1 -P 2011 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:
