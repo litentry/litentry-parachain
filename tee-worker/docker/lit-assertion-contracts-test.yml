@@ -13,8 +13,14 @@ services:
             dockerfile: build.Dockerfile
             target: deployed-client
         depends_on:
+            litentry-node:
+                condition: service_healthy
             litentry-worker-1:
                 condition: service_healthy
-        network_mode: host
+        networks:
+            - litentry-test-network
         entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh assertion_contracts.test.ts 2>&1' "
         restart: "no"
+networks:
+    litentry-test-network:
+        driver: bridge

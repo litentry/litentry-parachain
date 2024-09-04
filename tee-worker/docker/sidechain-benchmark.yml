@@ -11,11 +11,17 @@ services:
       context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-client
-    network_mode: host
     depends_on:
+      litentry-node-${VERSION}:
+        condition: service_healthy
       litentry-worker-1-${VERSION}:
         condition: service_healthy
+    networks:
+      - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/benchmark.sh -p 9944 -A 2011
+      "/usr/local/worker-cli/benchmark.sh -p 9912 -A 2011 -u ws://litentry-node
       -V wss://litentry-worker-1 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
+networks:
+  litentry-test-network:
+    driver: bridge
