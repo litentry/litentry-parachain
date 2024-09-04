@@ -6,6 +6,7 @@ services:
       context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-worker
+    network_mode: host
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
@@ -14,8 +15,6 @@ services:
       - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     environment:
       - RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,
-    networks:
-      - litentry-test-network
     healthcheck:
       test: curl -s -f http://bitacross-worker-1:4645/is_initialized || exit 1
       interval: 30s
@@ -33,6 +32,7 @@ services:
       context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-worker
+    network_mode: host
     depends_on:
       bitacross-worker-1:
         condition: service_healthy
@@ -44,8 +44,6 @@ services:
       - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     environment:
       - RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,
-    networks:
-      - litentry-test-network
     healthcheck:
       test: curl -s -f http://bitacross-worker-2:4645/is_initialized || exit 1
       interval: 30s
@@ -63,6 +61,7 @@ services:
       context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-worker
+    network_mode: host
     depends_on:
       bitacross-worker-2:
         condition: service_healthy
@@ -74,8 +73,6 @@ services:
       - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     environment:
       - RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,
-    networks:
-      - litentry-test-network
     healthcheck:
       test: curl -s -f http://bitacross-worker-3:4645/is_initialized || exit 1
       interval: 30s
@@ -86,6 +83,3 @@ services:
       -U ws://bitacross-worker-3 -P 2011 -w 2101 -p 9944 -h 4645
       run --dev --skip-ra --request-state"
     restart: "no"
-networks:
-  litentry-test-network:
-    driver: host

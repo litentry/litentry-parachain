@@ -95,4 +95,4 @@ volumes:
 networks:
   # to be aligned with other yml files => same network
   litentry-test-network:
-    driver: host
+    driver: bridge

@@ -68,4 +68,4 @@ services:
     restart: "no"
 networks:
   integritee-test-network:
-    driver: host
+    driver: bridge
