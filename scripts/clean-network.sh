@@ -19,7 +19,14 @@ esac
 ZOMBIENET_BIN=zombienet-${os}-${arch}
 ZOMBIENET_PID=$(pidof $ZOMBIENET_BIN)
 
-[ -z $ZOMBIENET_PID ] || kill -2 $ZOMBIENET_PID
+if [ -z $ZOMBIENET_PID ]; then
+  # the network might not be started with zombienet
+  killall polkadot || true
+  killall litentry-collator || true
+else
+  kill -2 $ZOMBIENET_PID
+fi
+
 rm -rf "$LITENTRY_PARACHAIN_DIR"
 
 echo "cleaned up"

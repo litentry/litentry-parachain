@@ -231,22 +231,16 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         sys.exit("Unsupported worker")
 
     print("Starting litentry parachain in background ...")
-    if parachain_type == "local-docker":
-        add_collator_ports()
-        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, parachain_dir, worker_dir)
-        # TODO: use Popen and copy the stdout also to node.log
-        run(["./local-setup/start_parachain.sh"], check=True)
-    elif parachain_type == "local-binary-standalone":
+    if parachain_type == "standalone":
         add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
         run(["./scripts/launch-standalone.sh"], check=True)
-    elif parachain_type == "local-binary":
+    elif parachain_type == "network":
         add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
-        run(["./scripts/launch-local-binary.sh", "rococo"], check=True)
+        run(["./scripts/launch-network.sh", "rococo"], check=True)
     elif parachain_type == "remote":
         setup_environment(offset, "", worker_dir)
         print("Litentry parachain should be started remotely")
@@ -317,9 +311,9 @@ if __name__ == "__main__":
         "-p",
         "--parachain",
         nargs="?",
-        default="local-binary-standalone",
+        default="standalone",
         type=str,
-        help="Config for parachain selection: local-binary-standalone / local-docker / local-binary / remote",
+        help="Config for parachain selection: standalone / network / remote",
     )
     parser.add_argument(
         "-l",
