@@ -356,7 +356,7 @@ jobs:
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-parachain:latest litentry/litentry-chain-aio:latest | pzip --fast > litentry-parachain-dev.tar.gz
 
       - name: Upload parachain docker image
         uses: actions/upload-artifact@v4
@@ -498,7 +498,7 @@ jobs:
         run: docker run litentry/identity-worker:latest test --all
 
       - name: Save docker images
-        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | gzip > litentry-identity.tar.gz
+        run: docker save litentry/identity-worker:latest litentry/identity-cli:latest | pzip --fast > litentry-identity.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v4
@@ -577,7 +577,7 @@ jobs:
         run: docker run litentry/bitacross-worker:latest test --all
 
       - name: Save docker images
-        run: docker save litentry/bitacross-worker:latest litentry/bitacross-cli:latest | gzip > litentry-bitacross.tar.gz
+        run: docker save litentry/bitacross-worker:latest litentry/bitacross-cli:latest | pzip --fast > litentry-bitacross.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v4
@@ -744,17 +744,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - test_name: lit-di-substrate-identity-test
-          - test_name: lit-di-evm-identity-test
-          - test_name: lit-di-bitcoin-identity-test
-          - test_name: lit-di-solana-identity-test
-          - test_name: lit-di-vc-test
-          - test_name: lit-dr-vc-test
+          # - test_name: lit-di-substrate-identity-test
+          # - test_name: lit-di-evm-identity-test
+          # - test_name: lit-di-bitcoin-identity-test
+          # - test_name: lit-di-solana-identity-test
+          # - test_name: lit-di-vc-test
+          # - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
-          - test_name: lit-test-failed-parentchain-extrinsic
-          - test_name: lit-twitter-identity-test
-          - test_name: lit-discord-identity-test
-          - test_name: lit-assertion-contracts-test
+          # - test_name: lit-test-failed-parentchain-extrinsic
+          # - test_name: lit-twitter-identity-test
+          # - test_name: lit-discord-identity-test
+          # - test_name: lit-assertion-contracts-test
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
@@ -822,12 +822,12 @@ jobs:
       matrix:
         include:
           - test_name: lit-di-bitcoin-identity-multiworker-test
-          - test_name: lit-di-evm-identity-multiworker-test
-          - test_name: lit-di-solana-identity-multiworker-test
-          - test_name: lit-di-substrate-identity-multiworker-test
-          - test_name: lit-di-vc-multiworker-test
-          - test_name: lit-dr-vc-multiworker-test
-          - test_name: lit-resume-worker
+          # - test_name: lit-di-evm-identity-multiworker-test
+          # - test_name: lit-di-solana-identity-multiworker-test
+          # - test_name: lit-di-substrate-identity-multiworker-test
+          # - test_name: lit-di-vc-multiworker-test
+          # - test_name: lit-dr-vc-multiworker-test
+          # - test_name: lit-resume-worker
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4

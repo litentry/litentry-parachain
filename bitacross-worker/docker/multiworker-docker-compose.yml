@@ -11,7 +11,8 @@ services:
       test: ["CMD", "nc", "-z", "litentry-node", "9944"]
       interval: 30s
       timeout: 10s
-      retries: 20  bitacross-worker-1:
+      retries: 20
+  bitacross-worker-1:
     image: litentry/bitacross-worker:latest
     container_name: bitacross-worker-1
     build:
