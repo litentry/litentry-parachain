@@ -3,7 +3,7 @@ timeout = 1000
 provider = "native"
 
 [relaychain]
-default_command = "./polkadot"
+default_command = "polkadot"
 default_args = ["--no-hardware-benchmarks", "-l=parachain=debug"]
 chain = "rococo-local"
 
@@ -25,6 +25,6 @@ cumulus_based = true
 
 [[parachains.collators]]
 name = "collator1"
-command = "./litentry-collator"
+command = "litentry-collator"
 args = ["--no-hardware-benchmarks", "--force-authoring", "--enable-evm-rpc"]
 ws_port = 9944

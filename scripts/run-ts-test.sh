@@ -7,7 +7,7 @@ evm=false
 
 case "$1" in
     litentry|rococo) export PARACHAIN_TYPE=$1 ;;
-    *) echo "usage: ./$0 litentry [bridge]"; exit 1 ;;
+    *) echo "usage: ./$0 litentry [bridge] [evm]"; exit 1 ;;
 esac
     
 if [ "$2" = "bridge" ]; then
@@ -29,6 +29,7 @@ pnpm install
 pnpm run test-filter 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
 if $bridge; then
+    $ROOTDIR/scripts/launch-local-bridge-docker.sh
     pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 fi
 

@@ -5,7 +5,7 @@ import type { ISubmittableResult } from '@polkadot/types/types';
 import { loadConfig } from '../utils';
 
 const FINALIZED_BLOCKS_COUNT = 1;
-const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
+const TIMEOUT_MIN = 1000 * 60 * 5; // 5min
 
 /**
  * Connects to the parachain via the config file
