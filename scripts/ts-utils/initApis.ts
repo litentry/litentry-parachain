@@ -1,22 +1,21 @@
-const { ApiPromise, WsProvider } = require("@polkadot/api");
+const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { cryptoWaitReady } = require('@polkadot/util-crypto');
-const { fetchEndpoint, defaultEndpoint } = require('./endpoint.json');
 
-import colors from "colors";
-//fetchApi is used to fetch data from the chain
-const wsFetchProvider = new WsProvider(fetchEndpoint);
+import colors from 'colors';
 
-//defaultAPI is used to send transactions to the chain
-const wsDefaultProvider = new WsProvider(defaultEndpoint);
+/*
+ * @param fromEndpoint - the endpoint of the source chain
+ * @param toEndpoint - the endpoint of the destination chain
+ */
 
-export const initApi = async () => {
-    console.log(colors.green("init api..."))
-    const fetchApi = await ApiPromise.create({ provider: wsFetchProvider });
-    const defaultAPI = await ApiPromise.create({ provider: wsDefaultProvider });
+export const initApi = async (fromEndpoint: string, toEndpoint: string) => {
+    const sourceProvider = new WsProvider(fromEndpoint);
+    const destinationProvider = new WsProvider(toEndpoint);
+
+    const sourceApi = await ApiPromise.create({ provider: sourceProvider });
+    const destinationAPI = await ApiPromise.create({ provider: destinationProvider });
     await cryptoWaitReady();
-    console.log(colors.green("api is ready"))
+    console.log(colors.green('api is ready'));
 
-    return { fetchApi, defaultAPI };
-}
-
-
+    return { sourceApi, destinationAPI };
+};
