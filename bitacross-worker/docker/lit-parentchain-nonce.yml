@@ -9,8 +9,6 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      litentry-node:
-        condition: service_healthy
       bitacross-worker-1:
         condition: service_healthy
     networks:

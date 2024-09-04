@@ -12,8 +12,6 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      litentry-node:
-        condition: service_healthy
       litentry-worker-1:
         condition: service_healthy
     networks:

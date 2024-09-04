@@ -7,11 +7,6 @@ services:
     container_name: litentry-node
     networks:
       - litentry-test-network
-    healthcheck:
-      test: ["CMD", "nc", "-z", "litentry-node", "9944"]
-      interval: 30s
-      timeout: 10s
-      retries: 20
   litentry-worker-1:
     image: litentry/identity-worker:latest
     container_name: litentry-worker-1
@@ -21,7 +16,7 @@ services:
       target: deployed-worker
     depends_on:
       litentry-node:
-        condition: service_healthy
+        condition: service_started
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
