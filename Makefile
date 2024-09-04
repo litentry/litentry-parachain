@@ -38,25 +38,9 @@ build-node:
 build-runtime-litentry:
 	cargo build --locked -p $(call pkgid, litentry-parachain-runtime) --release
 
-.PHONY: build-runtime-litmus ## Build litmus release runtime
-build-runtime-litmus:
-	cargo build --locked -p $(call pkgid, litmus-parachain-runtime) --release
-
 .PHONY: build-runtime-rococo ## Build rococo release runtime
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
-
-.PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
-srtool-build-wasm-litentry:
-	@./scripts/build-wasm.sh litentry
-
-.PHONY: srtool-build-wasm-litmus ## Build litmus wasm with srtools
-srtool-build-wasm-litmus:
-	@./scripts/build-wasm.sh litmus
-
-.PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
-srtool-build-wasm-rococo:
-	@./scripts/build-wasm.sh rococo
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
@@ -88,10 +72,6 @@ launch-docker-bridge:
 launch-docker-litentry: generate-docker-compose-litentry
 	@./scripts/launch-local-docker.sh litentry
 
-.PHONY: launch-docker-litmus ## Launch a local litmus-parachain network with docker
-launch-docker-litmus: generate-docker-compose-litmus
-	@./scripts/launch-local-docker.sh litmus
-
 .PHONY: launch-docker-rococo ## Launch a local rococo-parachain network with docker
 launch-docker-rococo: generate-docker-compose-rococo
 	@./scripts/launch-local-docker.sh rococo
@@ -99,10 +79,6 @@ launch-docker-rococo: generate-docker-compose-rococo
 .PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
 launch-binary-litentry:
 	@./scripts/launch-local-binary.sh litentry
-
-.PHONY: launch-binary-litmus ## Launch a local litmus-parachain network with binaries
-launch-binary-litmus:
-	@./scripts/launch-local-binary.sh litmus
 
 .PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
 launch-binary-rococo:
@@ -126,10 +102,6 @@ test-cargo-all-benchmarks:
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
 	@./scripts/run-ts-test.sh litentry bridge evm
 
-.PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
-test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
-	@./scripts/run-ts-test.sh litmus bridge no_evm
-
 .PHONY: test-ts-docker-rococo ## Run rococo ts tests with docker without clean-up
 test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
 	@./scripts/run-ts-test.sh rococo bridge evm
@@ -137,10 +109,6 @@ test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
 	@./scripts/run-ts-test.sh litentry no_bridge evm
-
-.PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
-test-ts-binary-litmus: launch-binary-litmus
-	@./scripts/run-ts-test.sh litmus no_bridge no_evm
 
 .PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
 test-ts-binary-rococo: launch-binary-rococo
@@ -151,10 +119,6 @@ test-ts-binary-rococo: launch-binary-rococo
 .PHONY: clean-docker-litentry ## Clean up litentry docker images, containers, volumes, etc
 clean-docker-litentry:
 	@./scripts/clean-local-docker.sh litentry
-
-.PHONY: clean-docker-litmus ## Clean up litmus docker images, containers, volumes, etc
-clean-docker-litmus:
-	@./scripts/clean-local-docker.sh litmus
 
 .PHONY: clean-docker-rococo ## Clean up rococo docker images, containers, volumes, etc
 clean-docker-rococo:
@@ -169,10 +133,6 @@ clean-binary:
 .PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry local network
 generate-docker-compose-litentry:
 	@./scripts/generate-docker-files.sh litentry
-
-.PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus local network
-generate-docker-compose-litmus:
-	@./scripts/generate-docker-files.sh litmus
 
 .PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
 generate-docker-compose-rococo:

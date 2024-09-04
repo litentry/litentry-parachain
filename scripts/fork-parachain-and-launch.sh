@@ -27,7 +27,7 @@ function usage() {
   print_divider
   echo "Usage: $0 [chain] [ws-rpc-endpoint] [binary]"
   echo
-  echo "chain:             rococo|litmus|litentry"
+  echo "chain:             rococo|litentry"
   echo "                   default: rococo"
   echo "ws-rpc-endpoint:   the ws rpc endpoint of the parachain"
   echo "                   default: litentry-rococo's rpc endpoint"
@@ -53,9 +53,6 @@ FORK_CHAIN=${ORIG_CHAIN}-dev
 case "$ORIG_CHAIN" in
   rococo)
     ENDPOINT="${2:-wss://rpc.rococo-parachain.litentry.io}"
-    ;;
-  litmus)
-    ENDPOINT="${2:-wss://rpc.litmus-parachain.litentry.io}"
     ;;
   litentry)
     ENDPOINT="${2:-wss://rpc.litentry-parachain.litentry.io}"

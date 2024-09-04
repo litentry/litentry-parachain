@@ -119,7 +119,7 @@ export const mockAssertions = [
             Achainable: {
                 AmountToken: {
                     name: 'LIT Holding Amount',
-                    chain: ['Litentry', 'Litmus'],
+                    chain: ['Litentry'],
                     amount: '0',
                 },
             },

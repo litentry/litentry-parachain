@@ -11,7 +11,7 @@ check(){
         export CHAIN="rococo"
     fi
 
-    ALLOWED_VALUES=("rococo" "litmus" "litentry")
+    ALLOWED_VALUES=("rococo" "litentry")
 
     if [[ " ${ALLOWED_VALUES[@]} " =~ " ${CHAIN} " ]]; then
         echo "CHAIN is set to a valid value: $CHAIN"

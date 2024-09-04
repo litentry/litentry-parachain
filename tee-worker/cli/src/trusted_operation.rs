@@ -38,6 +38,7 @@ use itp_types::{
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::{aes_encrypt_default, AesRequest, RequestAesKey};
 use log::*;
+use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::H256;
 use std::{
 	fmt::Debug,
@@ -365,21 +366,16 @@ fn send_direct_request<T: Decode + Debug>(
 }
 
 pub(crate) fn send_direct_vc_request(
-	cli: &Cli,
-	trusted_args: &TrustedCli,
+	client: &DirectClient,
+	shard: ShardIdentifier,
+	shielding_key: &Rsa3072PubKey,
+	aes_key: RequestAesKey,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	key: RequestAesKey,
 ) -> TrustedOpResult<Vec<RequestVcResultOrError>> {
-	let encryption_key = get_shielding_key(cli).unwrap();
-	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
-
-	debug!("get direct api");
-	let direct_api = get_worker_api_direct(cli);
-
+	let jsonrpc_call: String = get_vc_json_request(shard, top, shielding_key, aes_key);
 	debug!("setup sender and receiver");
 	let (sender, receiver) = channel();
-	direct_api.watch(jsonrpc_call, sender);
+	client.watch(jsonrpc_call, sender);
 
 	debug!("waiting for rpc response");
 	let mut req_cnt = 0u8;
@@ -409,13 +405,13 @@ pub(crate) fn send_direct_vc_request(
 								debug!("received request result, len: {:?}", len);
 								vec_result.push(value);
 								if req_cnt >= len {
-									direct_api.close().unwrap();
+									client.close().unwrap();
 									return Ok(vec_result)
 								}
 							} else {
 								// Should never happen.
 								error!("failed to decode RequestVcResultOrError.");
-								direct_api.close().unwrap();
+								client.close().unwrap();
 								return Err(TrustedOperationError::Default {
 									msg: "[Error] failed to decode RequestVcResultOrError."
 										.to_string(),
@@ -425,7 +421,7 @@ pub(crate) fn send_direct_vc_request(
 						_ => {
 							// Should never happen. RpcReturnValue should always have DirectRequestStatus::TrustedOperationStatus.
 							error!("Wrong RpcReturnValue. Should never happen.");
-							direct_api.close().unwrap();
+							client.close().unwrap();
 							return Err(TrustedOperationError::Default {
 								msg: "[Error] Wrong RpcReturnValue. Should never happen."
 									.to_string(),
@@ -436,7 +432,7 @@ pub(crate) fn send_direct_vc_request(
 			},
 			Err(e) => {
 				error!("failed to receive rpc response: {:?}", e);
-				direct_api.close().unwrap();
+				client.close().unwrap();
 				return Err(TrustedOperationError::Default {
 					msg: "failed to receive rpc response".to_string(),
 				})
@@ -445,10 +441,22 @@ pub(crate) fn send_direct_vc_request(
 	}
 }
 
+pub(crate) fn prepare_request_data_and_send_direct_vc_request(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
+	key: RequestAesKey,
+) -> TrustedOpResult<Vec<RequestVcResultOrError>> {
+	let encryption_key = get_shielding_key(cli).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
+	let direct_api = get_worker_api_direct(cli);
+	send_direct_vc_request(&direct_api, shard, &encryption_key, key, top)
+}
+
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
-	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+	shielding_pubkey: &sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 	key: RequestAesKey,
 ) -> String {
 	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
