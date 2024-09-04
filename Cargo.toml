@@ -9,6 +9,7 @@ members = [
     'pallets/bridge/bridge-transfer',
     'pallets/bridge/common',
     'pallets/collab-ai/aiusd-convertor',
+    'pallets/collab-ai/curator',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',

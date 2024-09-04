@@ -1,16 +1,17 @@
 [package]
 authors = ['Litentry Dev']
-description = 'Pallet for managing curator'
+description = 'Pallet for managing pool proposal'
 edition = '2021'
 homepage = 'https://litentry.com/'
 license = 'GPL-3.0'
-name = 'pallet-curator'
+name = 'pallet-pool-proposal'
 repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
+bitflags = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }

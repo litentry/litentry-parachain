@@ -17,7 +17,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use sp_core::H256;
 use sp_runtime::DispatchError;
+
+pub type InfoHash = H256;
+pub type CuratorIndex = u128;
+pub type PoolProposalIndex = u128;
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
 pub struct PoolSetting<BlockNumber, Balance> {
@@ -34,6 +39,14 @@ pub struct PoolSetting<BlockNumber, Balance> {
 	pub pool_cap: Balance,
 	// Minimum amount of token required for pool starting
 	pub minimum_cap: Balance,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct PoolMetadata<BoundedString> {
+	/// The user friendly name of this staking pool. Limited in length by `PoolStringLimit`.
+	pub name: BoundedString,
+	/// The short description for this staking pool. Limited in length by `PoolStringLimit`.
+	pub description: BoundedString,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
