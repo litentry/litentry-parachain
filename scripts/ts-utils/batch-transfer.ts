@@ -20,6 +20,8 @@ async function encodeExtrinsic() {
     console.log(colors.green('system account entries length:'), entries.length);
 
     let totalIssuance = BigInt(0);
+    let account_index = 0;
+
     const data = entries.map((res: any) => {
         const account = res[0].toHuman();
         const data = res[1].toHuman();
@@ -27,7 +29,9 @@ async function encodeExtrinsic() {
         const reserved = BigInt(data.data.reserved.replace(/,/g, ''));
         const totalBalance = free + reserved;
         totalIssuance += totalBalance;
+        account_index++;
         return {
+            index: account_index,
             account: account,
             free: free.toString(),
             reserved: reserved.toString(),
