@@ -27,4 +27,4 @@ services:
     restart: "no"
 networks:
   litentry-test-network:
-    driver: bridge
+    driver: host

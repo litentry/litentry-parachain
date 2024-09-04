@@ -86,10 +86,6 @@ services:
       -U ws://bitacross-worker-3 -P 2011 -w 2101 -p 9944 -h 4645
       run --dev --skip-ra --request-state"
     restart: "no"
-volumes:
-  ? relaychain-alice
-  ? relaychain-bob
-  ? parachain-2106-0
 networks:
   litentry-test-network:
-    driver: bridge
+    driver: host

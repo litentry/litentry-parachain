@@ -32,4 +32,4 @@ volumes:
   ? parachain-2106-0
 networks:
   litentry-test-network:
-    driver: bridge
+    driver: host

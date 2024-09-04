@@ -38,4 +38,4 @@ services:
       "pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 litentry-worker-2"
 networks:
   litentry-test-network:
-    driver: bridge
+    driver: host
