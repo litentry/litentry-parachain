@@ -1,4 +1,4 @@
-// run: pnpm exec ts-node move-vcregistry-snapshot.ts
+// run: pnpm exec ts-node batch-transfer.ts
 
 import { initApi } from './initApis';
 const fs = require('fs');
@@ -6,19 +6,42 @@ const path = require('path');
 const prettier = require('prettier');
 import colors from 'colors';
 
-//set the maximal calls are 500 per batch
-const BATCH_SIZE = 500;
+// maximal calls are 1000 per batch
+const BATCH_SIZE = 750;
 async function encodeExtrinsic() {
     // params: source chain endpoint, destination chain endpoint
-    const { sourceApi, destinationAPI } = await initApi('ws://localhost:9944', 'ws://localhost:9944');
-    console.log(colors.green('get vcRegistry entries...'));
+    const { sourceApi, destinationAPI } = await initApi(
+        'wss://rpc.litmus-parachain.litentry.io',
+        'wss://rpc.litentry-parachain.litentry.io'
+    );
+    console.log(colors.green('Fetching system accounts entries...'));
 
-    const entries = await sourceApi.query.vcManagement.vcRegistry.entries();
+    const entries = await sourceApi.query.system.account.entries();
+    console.log(colors.green('system account entries length:'), entries.length);
+
+    let totalIssuance = BigInt(0);
+    let account_index = 0;
+
     const data = entries.map((res: any) => {
-        return { index: res[0].toHuman(), vc: res[1].toHuman() };
+        const account = res[0].toHuman();
+        const data = res[1].toHuman();
+        const free = BigInt(data.data.free.replace(/,/g, ''));
+        const reserved = BigInt(data.data.reserved.replace(/,/g, ''));
+        const totalBalance = free + reserved;
+        totalIssuance += totalBalance;
+        account_index++;
+        return {
+            index: account_index,
+            account: account,
+            free: free.toString(),
+            reserved: reserved.toString(),
+            totalBalance: totalBalance.toString(),
+        };
     });
 
-    const filename = `VCRegistry-${new Date().toISOString().slice(0, 10)}.json`;
+    console.log('totalIssuance:', totalIssuance.toString());
+
+    const filename = `system-accounts-entries-litmus-${new Date().toISOString().slice(0, 10)}.json`;
     const filepath = path.join(__dirname, filename);
     const formattedData = prettier.format(JSON.stringify(data), {
         parser: 'json',
@@ -31,26 +54,29 @@ async function encodeExtrinsic() {
     console.log(colors.green(`Data saved to ${filename} successfully.`));
 
     let txs: any[] = [];
-    console.log(colors.green('vcRegistry data length'), data.length);
     let i = 0;
-    const hexData = [];
+    let hexData = [];
+    const extrinsicsData = [];
 
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
         const batchTxs = batch.map((entry: any) =>
-            destinationAPI.tx.vcManagement.addVcRegistryItem(
-                entry.index[0],
-                entry.vc.subject,
-                entry.vc.assertion,
-                entry.vc.hash_
-            )
+            destinationAPI.tx.balances.transfer(entry.account[0], entry.totalBalance)
         );
         txs = txs.concat(batchTxs);
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++;
-            const extrinsics = destinationAPI.tx.utility.batch(batchTxs);
-            hexData.push({ batch: i, extrinsics: extrinsics.toHex() });
-            // console.log(colors.green(`extrinsic ${i} encode`), extrinsics.toHex());
+            const extrinsics = destinationAPI.tx.utility.forceBatch(batchTxs);
+            extrinsicsData.push({ batch: i, extrinsics: extrinsics.toHex() });
+
+            hexData = [
+                [
+                    {
+                        totalIssuance: totalIssuance.toString(),
+                    },
+                ],
+                extrinsicsData,
+            ];
             txs = [];
             if (data.length === 0) {
                 const extrinsicsFilename = `extrinsics-${new Date().toISOString().slice(0, 10)}.json`;
