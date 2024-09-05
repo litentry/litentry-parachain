@@ -1,4 +1,6 @@
+
 <div align="center">
+
 ![](https://res.cloudinary.com/brandpad/image/upload/c_scale,dpr_auto,f_auto,w_768/v1673016042/19618/parachain-logo-color-black-t)
 
 [![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
@@ -9,6 +11,7 @@
 
 Litentry parachain is a substrate-based, EVM-compatible blockchain that connects to the relaychain (e.g. [Polkadot](https://polkadot.com/)) which ensures shared security and interoperability. It serves as the backbone of Litentry protocol:
 - LIT token native features: transfer, governance, staking ...
+- Runtime logic such as enclave management, DID ...
 - parentchain of identity-worker, which is a TEE-based sidechain to achieve identity aggregation and crediential issuance without promising users' privacy 
 - parentchain of bitacross-worker, which is a TEE-based offchain-worker to bridge assets across chains using native custodian and multisig
 
@@ -46,6 +49,10 @@ make launch-network-litentry`
 ```
 It will firstly look for the `litentry-collator` binary under `target/release/`, if not found, it will try to copy binaries out from `litentry/litentry-parachain:latest` image if you are on Linux.
 
+If you see the screenshot below, you can tell the network is successfully spun up and you can access the [polkadot-js block explorer](https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9944#/explorer) locally:
+
+![](https://github.com/user-attachments/assets/125e43d7-b54f-41af-8de4-07bbe12b9702)
+
 When finished with the network, run
 
 ```
@@ -56,7 +63,7 @@ to stop the processes and tidy things up.
 
 ### Launch a standalone parachain node
 
-To speed up the development, it's possible to launch the parachain without relaychain.
+To speed up the development, the parachain can be launched without relaychain nodes.
 In this case, parachain will author blocks by itself with instant block finalisation, please refer to [this PR](https://github.com/litentry/litentry-parachain/pull/1059).
 
 ```
@@ -101,7 +108,7 @@ respectively.
 
 Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/ts-tests/README.md)
 
-### Clean-up
+### Teardown
 
 In the worker launch terminal, `Ctrl + C` should interrupt and clean everything up automatically.
 
