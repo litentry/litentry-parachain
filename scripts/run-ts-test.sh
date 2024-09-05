@@ -26,7 +26,7 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
 [ -f .env ] || echo "NODE_ENV=ci" >.env
 pnpm install
-pnpm run test-filter 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+pnpm run test-filter 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
 if $bridge; then
     $ROOTDIR/scripts/launch-bridge.sh
@@ -34,7 +34,7 @@ if $bridge; then
 fi
 
 if $evm; then
-    pnpm run test-evm-transfer 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
-    pnpm run test-evm-contract 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
-    pnpm run test-precompile-contract 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+    pnpm run test-evm-transfer 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+    pnpm run test-evm-contract 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+    pnpm run test-precompile-contract 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 fi
