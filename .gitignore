@@ -13,7 +13,7 @@ tags.lock
 recipe.json
 rococo-fork.json
 
-gethdata
+**/gethdata/
 
 *.patch
 /log
