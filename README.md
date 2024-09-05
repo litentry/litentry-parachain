@@ -43,9 +43,9 @@ Similarly, use `make build-runtime-rococo` to build the rococo-parachain-runtime
 ## Launch parachain
 ### Launch a parachain network with relaychains
 
-Litentry takes use of zombinet(https://github.com/paritytech/zombienet) to spin up local networks with 2 relaychain nodes and 1 parachain node:
+Litentry uses zombinet(https://github.com/paritytech/zombienet) to spin up a local network with 2 relaychain nodes and 1 parachain node:
 ```
-make launch-network-litentry`
+make launch-network-litentry
 ```
 It will firstly look for the `litentry-collator` binary under `target/release/`, if not found, it will try to copy binaries out from `litentry/litentry-parachain:latest` image if you are on Linux.
 
@@ -104,6 +104,10 @@ They stand for different parachain launching options:
 - parachain is remotely launched (elsewhere), so don't launch parachain in `launch.py`
 respectively.
 
+If you see the screenshot below, you can tell the worker is running:
+
+![](https://github.com/cryptoade1/litentry-parachain/assets/88367184/cb1cea60-bc5d-4b62-bae7-503583a135ee)
+
 ### TEE worker tests 
 
 Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/ts-tests/README.md)
@@ -111,23 +115,6 @@ Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/bl
 ### Teardown
 
 In the worker launch terminal, `Ctrl + C` should interrupt and clean everything up automatically.
-
-### How to tell the worker is running
-
-![image (2)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/87dd72f6-0124-4007-9b14-dddc97d3d252)
-Waiting for block production to start
-
-![image (3)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/83872a38-abfe-4dc3-878f-9e25b7da6c2d)
-Block produced
-
-![image (4)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/d04c76f7-484a-4172-ac10-53a6d4714766)
-Parachain up; waiting for the worker to start
-
-![image (5)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/cb1cea60-bc5d-4b62-bae7-503583a135ee)
-Worker started!
-
-![image (6)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/21ff630c-baa3-439d-b70a-03f621f49258)
-In logs, you’ll see the sidechain starts to produce blocks
 
 ### Additional Info:
 
