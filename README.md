@@ -43,11 +43,11 @@ Similarly, use `make build-runtime-rococo` to build the rococo-parachain-runtime
 ## Launch parachain
 ### Launch a parachain network with relaychains
 
-Litentry uses zombinet(https://github.com/paritytech/zombienet) to spin up a local network with 2 relaychain nodes and 1 parachain node:
+Litentry uses [zombinet](https://github.com/paritytech/zombienet) to spin up a local network with 2 relaychain nodes and 1 parachain node:
 ```
 make launch-network-litentry
 ```
-It will firstly look for the `litentry-collator` binary under `target/release/`, if not found, it will try to copy binaries out from `litentry/litentry-parachain:latest` image if you are on Linux.
+It will firstly look for the `target/release/litentry-collator` binary - and if not found - copy the binary out from `litentry/litentry-parachain:latest` image if you are on Linux.
 
 If you see the screenshot below, you can tell the network is successfully spun up and you can access the [polkadot-js block explorer](https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9944#/explorer) locally:
 
