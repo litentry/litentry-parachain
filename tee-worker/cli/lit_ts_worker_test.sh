@@ -15,7 +15,7 @@ TEST=$1
 
 
 BINARY_DIR="/usr/local/bin"
-NODE_ENDPOINT="ws://litentry-node:9912"
+NODE_ENDPOINT="ws://localhost:9944"
 
 echo "Using binary dir: $BINARY_DIR"
 echo "Using node endpoint: $NODE_ENDPOINT"
