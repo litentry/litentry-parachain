@@ -54,9 +54,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + Sized {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// The Legal file storage
-		type FileStorage: QueryPreimage + StorePreimage;
-
 		/// Currency type for this pallet.
 		type Currency: ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = BlockNumberFor<Self>>;
@@ -122,14 +119,6 @@ pub mod pallet {
 		CuratorIndexNotExist,
 	}
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		/// Weight: see `begin_block`
-		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-			Self::begin_block(n)
-		}
-	}
-
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Registing a curator legal info
@@ -145,7 +134,20 @@ pub mod pallet {
 			);
 			// New registed curator need to make a balance reserve
 			T::Currency::reserve(&who, MinimumCuratorDeposit::get())?;
-			Self::update_curator(who, Some(info_hash))
+
+			// Update curator
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let next_curator_index = PublicCuratorCount::<T>::get();
+
+			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
+			CuratorIndexToInfo::<T>::insert(
+				&next_curator_index,
+				(info_hash, current_block, who, CandidateStatus::Unverified),
+			);
+			PublicCuratorCount::<T>::put(next_curator_index.checked_add(1u32.into())?);
+
+			Self::deposit_event(Event::CuratorRegisted { curator: who, curator_index, info_hash });
+			Ok(())
 		}
 
 		/// Updating a curator legal info
@@ -155,12 +157,33 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
-			ensure!(
-				PublicCuratorToIndex::<T>::contains_key(&who),
-				Error::<T>::CuratorNotRegistered
-			);
+			let curator_index =
+				PublicCuratorToIndex::<T>::get(curator).ok_or(Error::<T>::CuratorNotRegistered)?;
 
-			Self::update_curator(who, Some(info_hash))
+			// Update curator
+			// But if banned, then require extra reserve
+			CuratorIndexToInfo::<T>::try_mutate_exists(
+				curator_index,
+				|maybe_info| -> Result<(), DispatchError> {
+					let mut info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
+
+					if (info.3 == CandidateStatus::Banned) {
+						T::Currency::reserve(&who, MinimumCuratorDeposit::get())?;
+					}
+
+					// Update hash
+					info.0 = info_hash;
+					// Update block number
+					info.1 = frame_system::Pallet::<T>::block_number();
+					Self::deposit_event(Event::CuratorUpdated {
+						curator,
+						curator_index,
+						info_hash,
+					});
+					Ok(())
+				},
+			)?;
+			Ok(())
 		}
 
 		/// Clean a curator legal info
@@ -176,9 +199,26 @@ pub mod pallet {
 				Error::<T>::CuratorNotRegistered
 			);
 
-			// New registed curator need to make a balance reserve
-			T::Currency::unreserve(&who, MinimumCuratorDeposit::get())?;
-			Self::update_curator(who, None)
+			let curator_index = PublicCuratorToIndex::<T>::take(&who);
+
+			// Update curator
+			// But if banned, then require extra reserve
+			CuratorIndexToInfo::<T>::try_mutate_exists(
+				curator_index,
+				|maybe_info| -> Result<(), DispatchError> {
+					let info = maybe_info.ok_or(Error::<T>::CuratorIndexNotExist)?;
+
+					if (info.3 != CandidateStatus::Banned) {
+						T::Currency::unreserve(&who, MinimumCuratorDeposit::get())?;
+					}
+
+					// Delete item
+					maybe_info = None;
+					Self::deposit_event(Event::CuratorCleaned { curator, curator_index });
+					Ok(())
+				},
+			)?;
+			Ok(())
 		}
 
 		#[pallet::call_index(3)]
@@ -199,35 +239,42 @@ pub mod pallet {
 					info.1 = frame_system::Pallet::<T>::block_number();
 					// Update status
 					info.3 = status;
+
 					Self::deposit_event(Event::CuratorStatusUpdated {
 						curator,
 						curator_index,
 						status,
 					});
+					Ok(())
 				},
 			)?;
 		}
 	}
 }
 
-impl<T: Config> Pallet<T> {
-	pub fn update_curator(who: T::AccountId, info_hash: Option<InfoHash>) -> DispatchResult {
-		if Some(hash) = info_hash {
-			let current_block = frame_system::Pallet::<T>::block_number();
-			let next_curator_index = PublicCuratorCount::<T>::get();
-
-			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
-			CuratorIndexToInfo::<T>::insert(
-				&next_curator_index,
-				(info_hash, current_block, who.clone(), CandidateStatus::Unverified),
-			);
-
-			PublicCuratorCount::<T>::put(next_curator_index.checked_add(1u32.into())?);
-		} else {
-			// i.e. info_hash == None
-			let index = PublicCuratorToIndex::<T>::take(&who);
-			CuratorIndexToInfo::<T>::remove(&index);
+/// Some sort of check on the origin is from curator.
+impl<T: Config> EnsureCurator<T::AccountId> for Pallet<T> {
+	fn is_curator(account: T::AccountId) -> bool {
+		if let some(curator_index) = PublicCuratorToIndex::<T>::get(account) {
+			if let some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
+				if (info.3 != CandidateStatus::Banned) {
+					return true;
+				}
+			}
 		}
-		Ok(())
+
+		false
+	}
+
+	fn is_verified_curator(account: T::AccountId) -> bool {
+		if let some(curator_index) = PublicCuratorToIndex::<T>::get(account) {
+			if let some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
+				if (info.3 == CandidateStatus::Verified) {
+					return true;
+				}
+			}
+		}
+
+		false
 	}
 }

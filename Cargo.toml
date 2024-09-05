@@ -236,6 +236,7 @@ parachain-info = { git = "https://github.com/paritytech/polkadot-sdk", branch = 
 
 substrate-fixed = { git = "https://github.com/encointer/substrate-fixed", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0", default-features = false }
+orml-utilities = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0", default-features = false }
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0", default-features = false }
 
 # benchmarking

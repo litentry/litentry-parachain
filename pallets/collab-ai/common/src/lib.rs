@@ -62,3 +62,39 @@ pub enum CandidateStatus {
 	#[codec(index = 2)]
 	Banned,
 }
+
+/// Some sort of check on the account is from some group.
+pub trait EnsureCurator<AccountId> {
+	/// All curator but banned ones
+	fn is_curator(account: AccountId) -> bool;
+
+	/// Only verified one
+	fn is_verified_curator(account: AccountId) -> bool;
+}
+
+pub struct EnsureSignedAndCurator<AccountId, EC>(sp_std::marker::PhantomData<(AccountId, EC)>);
+impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, AccountId: Decode>
+	EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
+where
+	EC: EnsureCurator<AccountId>,
+{
+	type Success = AccountId;
+	fn try_origin(o: O) -> Result<Self::Success, O> {
+		o.into().and_then(|o| match o {
+			RawOrigin::Signed(who) => {
+				if EC::is_curator() {
+					Ok(who)
+				} else {
+					Err(O::from(r))
+				}
+			},
+			r => Err(O::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<O, ()> {
+		// No promised successful_origin
+		Err(())
+	}
+}

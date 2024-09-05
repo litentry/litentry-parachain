@@ -40,6 +40,7 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+use orml_utilities::OrderedSet;
 use pallet_collab_ai_common::*;
 pub use pallet::*;
 
@@ -60,18 +61,16 @@ pub type CallOf<T> = <T as frame_system::Config>::RuntimeCall;
 pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct PoolMetadata<BoundedString> {
-	/// The user friendly name of this staking pool. Limited in length by `PoolStringLimit`.
-	pub name: BoundedString,
-	/// The short description for this staking pool. Limited in length by `PoolStringLimit`.
-	pub description: BoundedString,
-}
-
 bitflags! {
 	/// Flags used to record the status of pool proposal
 	pub struct ProposalStatusFlags: u32 {
-		/// Whether the minimum staked amount proposed by curator is satisfied.
+		/// Whether the pool proposal passing the committee voting.
+		///
+		/// # Note
+		///
+		/// A valid pool must passing committee's audit procedure regarding legal files and other pool parameters.
+		const COMMITTEE_VOTE_PASSED = 0b0000_0001;
+				/// Whether the minimum staked amount proposed by curator is satisfied.
 		///
 		/// # Note
 		///
@@ -79,13 +78,7 @@ bitflags! {
 		/// unless the pool is later denied passing by voting or until the end of pool maturity.
 		/// 
 		/// Otherwise, the pool will be refunded.
-		const MINIMUM_STAKE_PASSED = 0b0000_0001;
-		/// Whether the pool proposal passing the committee voting.
-		///
-		/// # Note
-		///
-		/// A valid pool must passing committee's audit procedure regarding legal files and other pool parameters.
-		const COMMITTEE_VOTE_PASSED = 0b0000_0010;
+		const MINIMUM_STAKE_PASSED = 0b0000_0010;
 		/// Whether the pool proposal passing the global democracy voting.
 		///
 		/// # Note
@@ -99,6 +92,24 @@ bitflags! {
 		/// A valid pool must have guardian or a default one will be used (committee)
 		const GUARDIAN_SELECTED = 0b0000_1000;
 	}
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+pub struct PoolProposalStatus<BlockNumber, Balance> {
+	pub pool_status_flags: ProposalStatusFlags,
+	pub proposal_expire_time: BlockNumber,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+pub struct PoolProposalPreStake<AccountId, Balance> {
+	pub amount: Balance,
+	pub owner: AccountId,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+pub struct PoolProposalPreStaking<AccountId, Balance, S: Get<u32>> {
+	pub total_pre_staked_amount: Balance,
+	pub pre_staking: OrderedSet<PoolProposalPreStake<AccountId, Balance>, S>,
 }
 
 #[frame_support::pallet]
@@ -119,19 +130,16 @@ pub mod pallet {
 		/// The Scheduler.
 		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
 
-		/// The Legal file storage
-		type FileStorage: QueryPreimage + StorePreimage;
-
 		/// Currency type for this pallet.
 		type Currency: ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId, Moment = BlockNumberFor<Self>>;
 
-		/// The minimum amount to be used as a deposit for a curator
+		/// The minimum amount to be used as a deposit for creating a pool curator
 		#[pallet::constant]
-		type MinimumCuratorDeposit: Get<BalanceOf<Self>>;
+		type MinimumPoolDeposit: Get<BalanceOf<Self>>;
 
-		/// Origin from curator legal file verified by
-		type CuratorJudgeOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Origin who can make a pool proposal 
+		type ProposalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 	}
 
@@ -144,18 +152,18 @@ pub mod pallet {
 	///
 	/// TWOX-NOTE: Safe, as increasing integer keys are safe.
 	#[pallet::storage]
-	#[pallet::getter(fn pool_deposit_of)]
-	pub type PoolDepositOf<T: Config> = StorageMap<
+	#[pallet::getter(fn pool_proposal_deposit_of)]
+	pub type PoolProposalDepositOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		CuratorIndex,
+		T::AccountId,
 		BoundedVec<(PoolProposalIndex, BalanceOf<T>), T::MaxDeposits>,
 	>;
 
 	// Metadata of staking pools
 	#[pallet::storage]
-	#[pallet::getter(fn staking_pool_metadata)]
-	pub type StakingPoolStatus<T: Config> = StorageMap<
+	#[pallet::getter(fn pool_proposal_status)]
+	pub type PoolProposalStatus<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		PoolProposalIndex,
@@ -183,9 +191,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		CuratorAlreadyRegistered,
-		CuratorNotRegistered,
-		CuratorIndexNotExist,
 	}
 
 	#[pallet::hooks]
@@ -200,17 +205,23 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Curator propose a staking pool
 		/// 
-		/// pool_setup: Including pool details
-		/// proposal_end_time: All ProposalStatusFlags must be satisfied before this date
+		/// max_pool_size: At most this amount of raised money curator/staking pool willing to take
+		/// min_pool_size: At least this amount of raised money require for curator willing to fulfill contract 
+		/// proposal_end_time: All ProposalStatusFlags must be satisfied before this date, this is also the approximate 
+		/// 				   date when pool begins.
+		/// pool_last_time: How long does the staking pool last if passed
 		/// estimated_epoch_reward: This number is only for displaying purpose without any techinical meaning
-		/// 
+		/// pool_info_hash: Hash of pool info for including pool details
 		#[pallet::call_index(0)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn propose_staking_pool(
 			origin: OriginFor<T>,
-			pool_setup: PoolSetting<BlockNumberFor<T>, BalanceOf<T>>,
+			max_pool_size: BalanceOf<T>,
+			min_pool_size: BalanceOf<T>,
 			proposal_end_time: BlockNumberFor<T>,
+			pool_last_time: BlockNumberFor<T>,
 			estimated_epoch_reward: BalanceOf<T>,
+			pool_info_hash: InfoHash,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -219,21 +230,3 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> Pallet<T> {
-	pub fn update_curator(who: T::AccountId, info_hash: Option<InfoHash>) -> DispatchResult {
-		if Some(hash) = info_hash {
-			let current_block = frame_system::Pallet::<T>::block_number();
-			let next_curator_index = PublicCuratorCount::<T>::get();
-
-			PublicCuratorToIndex::<T>::insert(&who, next_curator_index);
-			CuratorIndexToInfo::<T>::insert(&next_curator_index, (info_hash, current_block, who.clone(), CandidateStatus::Unverified));
-			
-			PublicCuratorCount::<T>::put(next_curator_index.checked_add(1u32.into())?);
-		} else {
-			// i.e. info_hash == None
-			let index = PublicCuratorToIndex::<T>::take(&who);
-			CuratorIndexToInfo::<T>::remove(&index);
-		}
-		Ok(())
-	}
-}
