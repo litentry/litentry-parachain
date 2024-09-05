@@ -2,8 +2,8 @@
 ![](https://res.cloudinary.com/brandpad/image/upload/c_scale,dpr_auto,f_auto,w_768/v1673016042/19618/parachain-logo-color-black-t)
 
 [![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
-[![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg?event=release)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
-[![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/simulate-runtime-upgrade.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/simulate-runtime-upgrade.yml)
+[![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
+[![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/check-runtime-upgrade.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/check-runtime-upgrade.yml)
 
 A parachain is an application-specific data structure that is globally coherent and validatable by the validators of the relaychain. They take their name from the concept of parallelized chains that run parallel to the relaychain. Most commonly, a parachain will take the form of a blockchain, but there is no specific need for them to be actual blockchains.
 
@@ -36,15 +36,12 @@ To build the binary:
 make build-node
 ```
 
-To build the `litentry/litentry-parachain` docker image:
+To build the `litentry/litentry-parachain` docker image, based on cargo profile:
 
 ```
 make build-docker-release
-or
 make build-docker-production
 ```
-
-they will use `release` or `production` cargo profile, respectively.
 
 To build the litentry-parachain runtime wasm:
 
@@ -116,7 +113,7 @@ They stand for different parachain launching options:
 - parachain is remotely launched (elsewhere), so don't launch parachain in `launch.py`
 respectively.
 
-### TEE Worker Tests 
+### TEE worker tests 
 
 Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/ts-tests/README.md)
 
@@ -124,7 +121,7 @@ Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/bl
 
 In the worker launch terminal, `Ctrl + C` should interrupt and clean everything up automatically.
 
-### How to know the Worker is Working
+### How to tell the worker is running
 
 ![image (2)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/87dd72f6-0124-4007-9b14-dddc97d3d252)
 Waiting for block production to start
@@ -146,7 +143,3 @@ In logs, you’ll see the sidechain starts to produce blocks
 1. Change the RUST_LOG level: `litentry-parachain/local-setup/py/worker.py`
 2. Check existing ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
 3. JSON config parameters: `litentry-parachain/tee-worker/service/src/cli.yml`
-
-## License
-
-GPLv3
