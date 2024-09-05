@@ -1,32 +1,16 @@
-# Litentry Parachain
+<div align="center">
 ![](https://res.cloudinary.com/brandpad/image/upload/c_scale,dpr_auto,f_auto,w_768/v1673016042/19618/parachain-logo-color-black-t)
 
 [![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
 [![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
 [![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/check-runtime-upgrade.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/check-runtime-upgrade.yml)
 
-A parachain is an application-specific data structure that is globally coherent and validatable by the validators of the relaychain. They take their name from the concept of parallelized chains that run parallel to the relaychain. Most commonly, a parachain will take the form of a blockchain, but there is no specific need for them to be actual blockchains.
+</div>
 
-Basically, parachains are layer-1 blockchains that connect to the relaychains (Polkadot or Kusama), which validates the state transition of connected parachains, providing a shared state across the entire ecosystem. Since the validator set on the relaychain is expected to be secure with a large amount of stake put up to back it, it is desirable for parachains to benefit from this shared security.
-
-To achieve identity aggregation, Litentry has a requirement to store sensitive user data, like web3 addresses, computed credit scores, and VCs in the trusted execution environment (TEE). Litentry builds a TEE sidechain for this purpose and it can be composed of multiple TEE-equipped nodes, to guarantee the security of data storage and data processing without exposing users' private data. A core component of this is the Litentry TEE worker which is based on Integritee's worker. It executes functions with specified inputs and resource limits in response to TEE calls and operations to ensure a sufficient level of scaling.
-
-To serve as the backbone platform for various Litentry products and achieve a transparent and decentralized user experience, we have different chain-specs/runtimes compiled into one single binary. They are:
-
-- litentry-parachain-runtime (on polkadot)
-- rococo-parachain-runtime (on rococo testnet)
-
-Therefore, when building node binary or docker image, no distinction is required. But when building runtime/starting binary/running tests, the chain type must be explicitly given. See the examples below.
-
-## Lists of make targets
-
-Simply run
-
-```
-make help
-```
-
-to see the full lists of market targets and their short descriptions.
+Litentry parachain is a substrate-based, EVM-compatible blockchain that connects to the relaychain (e.g. [Polkadot](https://polkadot.com/)) which ensures shared security and interoperability. It serves as the backbone of Litentry protocol:
+- LIT token native features: transfer, governance, staking ...
+- parentchain of identity-worker, which is a TEE-based sidechain to achieve identity aggregation and crediential issuance without promising users' privacy 
+- parentchain of bitacross-worker, which is a TEE-based offchain-worker to bridge assets across chains using native custodian and multisig
 
 ## Build parachain
 
