@@ -29,6 +29,7 @@ PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
 cd "$ROOTDIR"
 export PARA_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
 export PARA_CHAIN_SPEC=${CHAIN}-dev
+export COLLATOR_WS_PORT=${CollatorWSPort:-9944}
 
 case $(uname -s) in
   Darwin) os=macos ;;
