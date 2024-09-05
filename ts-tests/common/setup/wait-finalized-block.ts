@@ -21,7 +21,7 @@ const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
     let unsub: VoidFn;
     let api: ApiPromise;
 
-    const provider = new WsProvider(config.parachain_ws);
+    const provider = new WsProvider(config.parachain_ws, 10000);
 
     console.log(`Connecting to parachain ${config.parachain_ws}`);
 
