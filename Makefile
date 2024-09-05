@@ -72,10 +72,6 @@ launch-network-rococo:
 launch-network-litentry:
 	@./scripts/launch-network.sh litentry
 
-.PHONY: launch-docker-bridge
-launch-docker-bridge:
-	@./scripts/launch-local-bridge-docker.sh
-
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all

@@ -7,7 +7,7 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 
 if [[ "$(docker image inspect litentry/chainbridge:latest 2>/dev/null)" == "[]" ]]; then
     echo "litentry/chainbridge:latest image not found..."
-    ${ROOTDIR}/scripts/build-bridge-docker.sh
+    ${ROOTDIR}/scripts/build-bridge.sh
 fi
 
 echo "------------------------------------------------------------"

@@ -29,7 +29,7 @@ pnpm install
 pnpm run test-filter 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
 if $bridge; then
-    $ROOTDIR/scripts/launch-local-bridge-docker.sh
+    $ROOTDIR/scripts/launch-bridge.sh
     pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 fi
 
