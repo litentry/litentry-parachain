@@ -181,6 +181,18 @@ func prepareSignEthereumDirectCall(identity map[string]interface{}, prehashedEth
 
 }
 
+func prepareSignTonDirectCall(identity map[string]interface{}, payload []byte) map[string]interface{} {
+	signTonDirectCall := map[string]interface{}{
+		"col1": identity,
+		"col2": utiles.BytesToHex(payload),
+	}
+
+	return map[string]interface{}{
+		"SignTon": signTonDirectCall,
+	}
+
+}
+
 func prepareSignBitcoinTaprootSpendableDirectCall(identity map[string]interface{}, bitcoinPayload []byte, merkleRootHash [32]byte) map[string]interface{} {
 	payload := map[string]interface{}{
 		"TaprootSpendable": map[string]interface{}{

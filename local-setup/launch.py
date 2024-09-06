@@ -240,7 +240,7 @@ def main(processes, worker, workers_number, parachain_type, log_config_path, off
         add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
-        run(["./scripts/launch-network.sh", "rococo"], check=True)
+        run(["./scripts/launch-network.sh", "litentry"], check=True)
     elif parachain_type == "remote":
         setup_environment(offset, "", worker_dir)
         print("Litentry parachain should be started remotely")

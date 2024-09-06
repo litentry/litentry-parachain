@@ -34,9 +34,9 @@ pub trait Ed25519Sealing {
 
 	fn exists(&self) -> bool;
 
-	fn create_sealed_if_absent(&self) -> Result<()>;
+	fn create_sealed_if_absent_or_provided(&self, seed: Option<[u8; 32]>) -> Result<()>;
 
-	fn create_sealed(&self) -> Result<()>;
+	fn create_sealed(&self, seed: Option<[u8; 32]>) -> Result<()>;
 }
 
 impl ToPubkey for ed25519::Pair {
@@ -61,15 +61,17 @@ pub mod sgx {
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use sp_core::{crypto::Pair, ed25519};
-	use std::path::PathBuf;
+	use std::{path::PathBuf, string::String};
 
 	/// Gets a repository for an Ed25519 keypair and initializes
 	/// a fresh key pair if it doesn't exist at `path`.
 	pub fn get_ed25519_repository(
 		path: PathBuf,
+		key_file_prefix: Option<String>,
+		key: Option<[u8; 32]>,
 	) -> Result<KeyRepository<ed25519::Pair, Ed25519Seal>> {
-		let ed25519_seal = Ed25519Seal::new(path);
-		ed25519_seal.create_sealed_if_absent()?;
+		let ed25519_seal = Ed25519Seal::new(path, key_file_prefix);
+		ed25519_seal.create_sealed_if_absent_or_provided(key)?;
 		let signing_pair = ed25519_seal.unseal_pair()?;
 		Ok(KeyRepository::new(signing_pair, ed25519_seal.into()))
 	}
@@ -77,15 +79,20 @@ pub mod sgx {
 	#[derive(Clone, Debug)]
 	pub struct Ed25519Seal {
 		base_path: PathBuf,
+		key_file_prefix: Option<String>,
 	}
 
 	impl Ed25519Seal {
-		pub fn new(base_path: PathBuf) -> Self {
-			Self { base_path }
+		pub fn new(base_path: PathBuf, key_file_prefix: Option<String>) -> Self {
+			Self { base_path, key_file_prefix }
 		}
 
 		pub fn path(&self) -> PathBuf {
-			self.base_path.join(SEALED_SIGNER_SEED_FILE)
+			if let Some(ref prefix) = self.key_file_prefix {
+				self.base_path.join(prefix.clone() + "_" + SEALED_SIGNER_SEED_FILE)
+			} else {
+				self.base_path.join(SEALED_SIGNER_SEED_FILE)
+			}
 		}
 	}
 
@@ -102,19 +109,26 @@ pub mod sgx {
 			self.path().exists()
 		}
 
-		fn create_sealed_if_absent(&self) -> Result<()> {
+		fn create_sealed_if_absent_or_provided(&self, seed: Option<[u8; 32]>) -> Result<()> {
 			if !self.exists() {
 				info!("Keyfile not found, creating new! {}", self.path().display());
-				return self.create_sealed()
+				return self.create_sealed(seed)
 			}
+			if seed.is_some() {
+				info!("Seed provided, creating new! {}", self.path().display());
+				return self.create_sealed(seed)
+			}
+
 			Ok(())
 		}
 
-		fn create_sealed(&self) -> Result<()> {
-			let mut seed = [0u8; 32];
-			let mut rand = StdRng::new()?;
-			rand.fill_bytes(&mut seed);
-
+		fn create_sealed(&self, seed: Option<[u8; 32]>) -> Result<()> {
+			let seed = seed.unwrap_or_else(|| {
+				let mut seed = [0u8; 32];
+				let mut rand = StdRng::new().unwrap();
+				rand.fill_bytes(&mut seed);
+				seed
+			});
 			Ok(seal(&seed, self.path())?)
 		}
 	}
@@ -141,24 +155,30 @@ pub mod sgx_tests {
 	use super::sgx::*;
 	use crate::{key_repository::AccessKey, Ed25519Sealing, ToPubkey};
 	use itp_sgx_temp_dir::TempDir;
+	use std::string::String;
 
 	pub fn using_get_ed25519_repository_twice_initializes_key_only_once() {
 		let temp_dir =
 			TempDir::with_prefix("using_get_rsa3072_repository_twice_initializes_key_only_once")
 				.unwrap();
 		let temp_path = temp_dir.path().to_path_buf();
-		let key1 = get_ed25519_repository(temp_path.clone()).unwrap().retrieve_key().unwrap();
-		let key2 = get_ed25519_repository(temp_path).unwrap().retrieve_key().unwrap();
+		let key1 = get_ed25519_repository(temp_path.clone(), None, None)
+			.unwrap()
+			.retrieve_key()
+			.unwrap();
+		let key2 = get_ed25519_repository(temp_path, None, None).unwrap().retrieve_key().unwrap();
 		assert_eq!(key1.pubkey().unwrap(), key2.pubkey().unwrap());
 	}
 
+	pub fn using_get_ed25519_repository_with_different_prefix_initializes_key_twice() {}
+
 	pub fn ed25529_sealing_works() {
 		let temp_dir = TempDir::with_prefix("ed25529_sealing_works").unwrap();
-		let seal = Ed25519Seal::new(temp_dir.path().to_path_buf());
+		let seal = Ed25519Seal::new(temp_dir.path().to_path_buf(), None::<String>);
 
 		// Create new sealed keys and unseal them.
 		assert!(!seal.exists());
-		seal.create_sealed_if_absent().unwrap();
+		seal.create_sealed_if_absent_or_provided(None).unwrap();
 		let pair = seal.unseal_pair().unwrap();
 		let pubkey = seal.unseal_pubkey().unwrap();
 
@@ -166,13 +186,13 @@ pub mod sgx_tests {
 		assert_eq!(pair.pubkey().unwrap(), pubkey);
 
 		// Should not change anything because the key is already there.
-		seal.create_sealed_if_absent().unwrap();
+		seal.create_sealed_if_absent_or_provided(None).unwrap();
 		let pair_same = seal.unseal_pair().unwrap();
 
 		assert_eq!(pair.pubkey().unwrap(), pair_same.pubkey().unwrap());
 
 		// Should overwrite previous keys.
-		seal.create_sealed().unwrap();
+		seal.create_sealed(None).unwrap();
 		let pair_different = seal.unseal_pair().unwrap();
 
 		assert_ne!(pair_different.pubkey().unwrap(), pair.pubkey().unwrap());
