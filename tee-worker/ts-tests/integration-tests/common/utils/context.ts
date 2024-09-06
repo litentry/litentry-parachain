@@ -27,7 +27,10 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
     return wsp;
 }
 
-export async function initIntegrationTestContext(substrateEndpoint: string): Promise<IntegrationTestContext> {
+export async function initIntegrationTestContext(
+    substrateEndpoint: string,
+    enclaveEndpoint?: string
+): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
 
@@ -42,7 +45,8 @@ export async function initIntegrationTestContext(substrateEndpoint: string): Pro
 
     const chainIdentifier = api.registry.chainSS58 as number;
 
-    const workerEndpoint = await getWorkerEndpoint(api);
+    const workerEndpoint = enclaveEndpoint ? enclaveEndpoint : await getWorkerEndpoint(api);
+
     const wsp = await initWorkerConnection(workerEndpoint);
     const requestId = 1;
 
