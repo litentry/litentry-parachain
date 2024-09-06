@@ -20,8 +20,6 @@ use sp_core::{H160, U256};
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
-#[cfg(feature = "development")]
-use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
 	format,
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
@@ -658,6 +656,7 @@ where
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 
 				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				use crate::helpers::ensure_enclave_signer_or_alice;
 				ensure!(
 					ensure_enclave_signer_or_alice(&account),
 					StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)

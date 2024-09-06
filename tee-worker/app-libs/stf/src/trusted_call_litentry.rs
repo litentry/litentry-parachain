@@ -42,9 +42,6 @@ use litentry_macros::if_development_or;
 use litentry_primitives::{ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network};
 use log::*;
 
-#[cfg(feature = "development")]
-use crate::helpers::ensure_enclave_signer_or_alice;
-
 impl TrustedCallSigned {
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
@@ -149,6 +146,7 @@ impl TrustedCallSigned {
 	) -> StfResult<()> {
 		if_development_or!(
 			{
+				use crate::helpers::ensure_enclave_signer_or_alice;
 				// In non-prod: we allow to use `Alice` as the dummy signer
 				ensure!(
 					ensure_enclave_signer_or_alice(&signer),
@@ -156,6 +154,7 @@ impl TrustedCallSigned {
 				);
 			},
 			{
+				use crate::helpers::ensure_enclave_signer_account;
 				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 				ensure_enclave_signer_account(&signer)
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
