@@ -28,7 +28,7 @@ NODE_URL=${node_url:-"ws://127.0.0.1"}	# "ws://host.docker.internal"
 NODE_PORT=${node_port:-"9944"}			# "9946"
 
 # Fixed values:
-WORKER_ENDPOINT="localhost"
+ENCLAVE_ENDPOINT="localhost"
 MU_RA_PORT="3443"
 UNTRUSTED_HTTP_PORT="4545"
 TRUSTED_WORKER_PORT="2000"
@@ -114,13 +114,13 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	"
 
 	launch_command="RUST_LOG=${RUST_LOG} ./litentry-worker ${F_CLEAN} --ws-external \
---mu-ra-external-address ${WORKER_ENDPOINT} \
+--mu-ra-external-address ${ENCLAVE_ENDPOINT} \
 --mu-ra-port ${mu_ra_port} \
 --node-port ${NODE_PORT} \
 --node-url ${NODE_URL} \
---trusted-external-address wss://${WORKER_ENDPOINT} \
+--trusted-external-address wss://${ENCLAVE_ENDPOINT} \
 --trusted-worker-port ${trusted_worker_port} \
---untrusted-external-address ws://${WORKER_ENDPOINT} \
+--untrusted-external-address ws://${ENCLAVE_ENDPOINT} \
 --untrusted-http-port ${untrusted_http_port} \
 --untrusted-worker-port ${untrusted_worker_port} \
 run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"

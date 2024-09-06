@@ -60,6 +60,11 @@ on:
         description: rebuild-bitacross-docker
         required: true
         default: true
+      run-multi-worker-test:
+        type: boolean
+        description: run-multi-worker-test
+        required: true
+        default: false
       push-docker:
         type: boolean
         description: push-docker
@@ -813,6 +818,7 @@ jobs:
   identity-multi-worker-test:
     runs-on: ubuntu-latest
     continue-on-error: true
+    if: ${{ github.event.inputs.run-multi-worker-test == 'true' }} # only if triggered manually
     needs:
       - set-condition
       - parachain-build-dev
