@@ -1,28 +1,48 @@
-use crate::{self as pallet_halving_mint, OnTokenMinted};
-use frame_support::{
-	derive_impl, parameter_types,
-	traits::{ConstU64, Currency, ExistenceRequirement, Hooks},
-	weights::Weight,
-	PalletId,
+use crate::{self as pallet_halving_mint, Instance1, OnTokenMinted};
+use frame_support::pallet_prelude::*;
+use frame_support::{construct_runtime, parameter_types, PalletId};
+use sp_core::{ConstU32, ConstU64, H256};
+use sp_runtime::{
+	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
-use sp_core::ConstU32;
-use sp_runtime::BuildStorage;
 
-type Block = frame_system::mocking::MockBlock<Test>;
-
-frame_support::construct_runtime!(
+construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		HalvingMint: pallet_halving_mint,
+		HalvingMint: pallet_halving_mint::<Instance1>,
 	}
 );
 
-#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
+parameter_types! {
+	pub const BlockHashCount: u32 = 250;
+}
 impl frame_system::Config for Test {
-	type Block = Block;
+	type BaseCallFilter = frame_support::traits::Everything;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type Block = frame_system::mocking::MockBlock<Test>;
+	type DbWeight = ();
+	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
+	type RuntimeCall = RuntimeCall;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type RuntimeEvent = RuntimeEvent;
+	type BlockHashCount = BlockHashCount;
+	type Version = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
+	type OnSetCode = ();
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -31,27 +51,26 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
+	type MaxLocks = ();
 	type Balance = u64;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
-	type MaxFreezes = ();
 	type MaxHolds = ();
+	type MaxFreezes = ();
 	type RuntimeHoldReason = ();
-	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
-	pub const BeneficiaryId: PalletId = PalletId(*b"can/hlvm");
+	pub const BeneficiaryId: PalletId = PalletId(*b"lty/hlvm");
 }
 
-impl pallet_halving_mint::Config for Test {
+impl pallet_halving_mint::Config<Instance1> for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = frame_system::EnsureRoot<u64>;
@@ -62,11 +81,15 @@ impl pallet_halving_mint::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut ext: sp_io::TestExternalities =
-		frame_system::GenesisConfig::<Test>::default().build_storage().unwrap().into();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![(HalvingMint::beneficiary_account(), 10)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		let _ = Balances::deposit_creating(&HalvingMint::beneficiary_account(), 10);
 	});
 	ext
 }
@@ -89,7 +112,7 @@ where
 	T: frame_system::Config<AccountId = u64> + pallet_balances::Config<Balance = u64>,
 {
 	fn token_minted(beneficiary: T::AccountId, amount: T::Balance) -> Weight {
-		let _ = Balances::transfer(&beneficiary, &1, amount, ExistenceRequirement::AllowDeath);
+		let _ = Balances::transfer(RuntimeOrigin::signed(beneficiary), 1, amount);
 		Weight::zero()
 	}
 }

@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Event, State};
+use crate::{mock::*, Error, Event, Instance1, State};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
@@ -11,13 +11,13 @@ fn set_mint_state_check_works() {
 		);
 		assert_noop!(
 			HalvingMint::set_mint_state(RuntimeOrigin::root(), State::Running),
-			Error::<Test>::MintNotStarted,
+			Error::<Test, Instance1>::MintNotStarted,
 		);
 		assert_ok!(HalvingMint::start_mint_from_next_block(RuntimeOrigin::root()));
 		assert_eq!(HalvingMint::mint_state(), State::Running);
 		assert_noop!(
 			HalvingMint::set_mint_state(RuntimeOrigin::root(), State::Running),
-			Error::<Test>::MintStateUnchanged,
+			Error::<Test, Instance1>::MintStateUnchanged,
 		);
 		assert_ok!(HalvingMint::set_mint_state(RuntimeOrigin::root(), State::Stopped));
 		assert_eq!(HalvingMint::mint_state(), State::Stopped);
@@ -31,11 +31,11 @@ fn start_mint_too_early_fails() {
 		assert_eq!(System::block_number(), 1);
 		assert_noop!(
 			HalvingMint::start_mint_from_block(RuntimeOrigin::root(), 0),
-			Error::<Test>::StartBlockTooEarly,
+			Error::<Test, Instance1>::StartBlockTooEarly,
 		);
 		assert_noop!(
 			HalvingMint::start_mint_from_block(RuntimeOrigin::root(), 1),
-			Error::<Test>::StartBlockTooEarly,
+			Error::<Test, Instance1>::StartBlockTooEarly,
 		);
 		assert_ok!(HalvingMint::start_mint_from_block(RuntimeOrigin::root(), 2));
 		System::assert_last_event(Event::MintStarted { start_block: 2 }.into());
