@@ -43,7 +43,7 @@ describe('Test Vc (direct invocation)', function () {
     const errorArray: { id: string; index: number; assertion: any; error: any }[] = [];
     this.timeout(6000000);
     before(async () => {
-        context = await initIntegrationTestContext(enclaveEndpoint, nodeEndpoint);
+        context = await initIntegrationTestContext(nodeEndpoint);
         teeShieldingKey = await getTeeShieldingKey(context);
     });
 

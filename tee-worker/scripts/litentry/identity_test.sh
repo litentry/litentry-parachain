@@ -6,8 +6,8 @@ root_dir=$(git rev-parse --show-toplevel)
 root_dir="$root_dir/tee-worker"
 
 #NODE PORT
-node_port=9912
-node_url=ws://litentry-node
+node_port=9944
+node_url=ws://localhost
 
 worker_url=wss://tee-builder
 worker_port=2000
