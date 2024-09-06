@@ -49,44 +49,44 @@ fn halving_mint_works() {
 
 		assert_eq!(System::block_number(), 1);
 		assert_eq!(Balances::total_issuance(), 10);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
 		assert_ok!(HalvingMint::start_mint_from_next_block(RuntimeOrigin::root()));
 		System::assert_last_event(Event::MintStarted { start_block: 2 }.into());
 
 		run_to_block(2);
 		// 50 tokens are minted
 		assert_eq!(Balances::total_issuance(), 60);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 50);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 50);
 
 		run_to_block(11);
 		assert_eq!(Balances::total_issuance(), 510);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 500);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 500);
 
 		run_to_block(12);
 		// the first halving
 		assert_eq!(Balances::total_issuance(), 535);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 525);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 525);
 
 		run_to_block(22);
 		// the second halving
 		assert_eq!(Balances::total_issuance(), 772);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 762);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 762);
 
 		run_to_block(52);
 		// the fifth halving - only 1 token is minted
 		assert_eq!(Balances::total_issuance(), 971);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 961);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 961);
 
 		run_to_block(62);
 		// the sixth halving - but 0 tokens will be minted
 		assert_eq!(Balances::total_issuance(), 980);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 970);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 970);
 
 		run_to_block(1_000);
 		// no changes since the sixth halving, the total minted token will be fixated on 980,
@@ -94,8 +94,8 @@ fn halving_mint_works() {
 		//
 		// we'll have much accurate result in reality where token unit is 18 decimal
 		assert_eq!(Balances::total_issuance(), 980);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 970);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 970);
 	});
 }
 
@@ -113,8 +113,8 @@ fn set_on_token_minted_state_works() {
 		run_to_block(2);
 		// 50 tokens are minted, but none is transferred away
 		assert_eq!(Balances::total_issuance(), 60);
-		assert_eq!(Balances::free_balance(&beneficiary), 60);
-		assert_eq!(Balances::free_balance(&1), 0);
+		assert_eq!(Balances::free_balance(beneficiary), 60);
+		assert_eq!(Balances::free_balance(1), 0);
 
 		run_to_block(10);
 		assert_ok!(HalvingMint::set_on_token_minted_state(RuntimeOrigin::root(), State::Running));
@@ -125,8 +125,8 @@ fn set_on_token_minted_state_works() {
 		run_to_block(11);
 		// start to transfer token
 		assert_eq!(Balances::total_issuance(), 510);
-		assert_eq!(Balances::free_balance(&beneficiary), 460);
-		assert_eq!(Balances::free_balance(&1), 50);
+		assert_eq!(Balances::free_balance(beneficiary), 460);
+		assert_eq!(Balances::free_balance(1), 50);
 	});
 }
 
@@ -139,16 +139,16 @@ fn set_mint_state_works() {
 
 		run_to_block(2);
 		assert_eq!(Balances::total_issuance(), 60);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 50);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 50);
 		// stop the minting
 		assert_ok!(HalvingMint::set_mint_state(RuntimeOrigin::root(), State::Stopped));
 
 		run_to_block(3);
 		// no new tokens should be minted
 		assert_eq!(Balances::total_issuance(), 60);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 50);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 50);
 
 		run_to_block(4);
 		// resume the minting
@@ -156,14 +156,14 @@ fn set_mint_state_works() {
 
 		run_to_block(5);
 		assert_eq!(Balances::total_issuance(), 110);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 100);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 100);
 		assert_eq!(HalvingMint::skipped_blocks(), 2);
 
 		// the first halving should be delayed to block 14
 		run_to_block(14);
 		assert_eq!(Balances::total_issuance(), 535);
-		assert_eq!(Balances::free_balance(&beneficiary), 10);
-		assert_eq!(Balances::free_balance(&1), 525);
+		assert_eq!(Balances::free_balance(beneficiary), 10);
+		assert_eq!(Balances::free_balance(1), 525);
 	});
 }

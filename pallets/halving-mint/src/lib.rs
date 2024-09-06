@@ -196,7 +196,7 @@ pub mod pallet {
 					// defined during runtime binding thus plain division is used
 					let mut i = BlockNumberFor::<T>::zero();
 					while i < halving_round {
-						minted = minted / 2u32.into();
+						minted /= 2u32.into();
 						i += BlockNumberFor::<T>::one();
 					}
 
