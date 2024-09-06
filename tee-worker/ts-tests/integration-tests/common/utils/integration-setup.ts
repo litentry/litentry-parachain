@@ -27,7 +27,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         before('Starting Litentry(parachain&tee)', async function () {
             //env url
 
-            const tmp = await initIntegrationTestContext(process.env.NODE_ENDPOINT!);
+            const tmp = await initIntegrationTestContext(process.env.PARACHAIN_ENDPOINT!);
             context.mrEnclave = tmp.mrEnclave;
             context.api = tmp.api;
             context.tee = tmp.tee;
