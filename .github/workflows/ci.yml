@@ -778,7 +778,7 @@ jobs:
 
       - name: Launch parachain network
         run: |
-          make launch-network-rococo
+          make launch-network-litentry
 
       - name: Integration single worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
@@ -851,7 +851,7 @@ jobs:
 
       - name: Launch parachain network
         run: |
-          make launch-network-rococo
+          make launch-network-litentry
 
       - name: Integration multi worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
@@ -917,7 +917,7 @@ jobs:
 
       - name: Launch parachain network
         run: |
-          make launch-network-rococo
+          make launch-network-litentry
 
       - name: Integration bitacross worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_bitacross_test == 'true'
