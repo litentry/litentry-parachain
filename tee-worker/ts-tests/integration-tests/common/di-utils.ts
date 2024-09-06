@@ -400,7 +400,13 @@ export const sendRequestFromTrustedCall = async (
         hexToU8a(aesKey),
         trustedOperation.toU8a()
     );
-    const request = createJsonRpcRequest('author_requestVc', [u8aToHex(requestParam)], nextRequestId(context));
+
+    const isRequestVc = call.call.isRequestVc || call.call.isRequestBatchVc;
+    const request = createJsonRpcRequest(
+        isRequestVc ? 'author_requestVc' : 'author_submitAndWatchAesRequest',
+        [u8aToHex(requestParam)],
+        nextRequestId(context)
+    );
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 
