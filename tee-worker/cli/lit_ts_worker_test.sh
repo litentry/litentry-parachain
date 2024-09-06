@@ -15,10 +15,10 @@ TEST=$1
 
 
 BINARY_DIR="/usr/local/bin"
-NODE_ENDPOINT="ws://localhost:9944"
+PARACHAIN_ENDPOINT="ws://localhost:9944"
 
 echo "Using binary dir: $BINARY_DIR"
-echo "Using node endpoint: $NODE_ENDPOINT"
+echo "Using node endpoint: $PARACHAIN_ENDPOINT"
 
 cd /ts-tests
 pnpm install

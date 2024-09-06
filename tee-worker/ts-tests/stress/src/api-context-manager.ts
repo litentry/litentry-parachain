@@ -9,15 +9,15 @@ import { withRetry } from './util/with-retry';
 
 export const apiContextManager = (
     config: {
-        substrateEndpoint: string;
-        workerEndpoint: string;
+        parachainEndpoint: string;
+        enclaveEndpoint: string;
     },
     log: WritableStream<string>
 ): ContextManager<Api> => {
     return ContextManager.blank()
         .extend(
             async () => ({
-                provider: new ParachainWsProvider(config.substrateEndpoint),
+                provider: new ParachainWsProvider(config.parachainEndpoint),
             }),
             async ({ provider }) => {
                 await provider.disconnect();
@@ -36,7 +36,7 @@ export const apiContextManager = (
         )
         .extend(
             async () => ({
-                teeWorker: await withRetry(5, () => initWorkerConnection(config.workerEndpoint, log)),
+                teeWorker: await withRetry(5, () => initWorkerConnection(config.enclaveEndpoint, log)),
             }),
             async ({ teeWorker }) => {
                 await teeWorker.close();

@@ -4,10 +4,10 @@ import dotenv from 'dotenv';
 
 function getWorkerUrls(env: String): String[] {
     if (env == 'local') {
-        let workerEndpoint = process.env.WORKER_ENDPOINT!;
-        const workerEndpointParts = workerEndpoint.split(':');
-        let url = workerEndpointParts[0] + ':' + workerEndpointParts[1];
-        let port = parseInt(workerEndpointParts[2]);
+        let enclaveEndpoint = process.env.ENCLAVE_ENDPOINT!;
+        const enclaveEndpointParts = enclaveEndpoint.split(':');
+        let url = enclaveEndpointParts[0] + ':' + enclaveEndpointParts[1];
+        let port = parseInt(enclaveEndpointParts[2]);
         return [url + ':' + port, url + ':' + (port + 10), url + ':' + (port + 20)];
     } else {
         return ['wss://bitacross-worker-1:2011', 'wss://bitacross-worker-2:2011', 'wss://bitacross-worker-3:2011'];
