@@ -248,7 +248,7 @@ mod tests {
 	#[test]
 	fn build_evm_amount_holding_lt_min_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x85be4e2ccc9c85be8783798b6e8a101bdac6467f".as_bytes().to_vec())
+		let address = decode_hex("0x85be4e2ccc9c85be8783798b6e8a101bdac6467f".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -305,7 +305,7 @@ mod tests {
 	#[test]
 	fn build_evm_amount_holding_gte_max_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()

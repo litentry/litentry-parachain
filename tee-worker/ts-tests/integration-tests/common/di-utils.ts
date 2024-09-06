@@ -387,7 +387,6 @@ export const sendRequestFromTrustedCall = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     call: TrustedCallSigned,
-    isVcDirect = false,
     onMessageReceived?: (res: WorkerRpcReturnValue) => void
 ) => {
     // construct trusted operation
@@ -401,11 +400,7 @@ export const sendRequestFromTrustedCall = async (
         hexToU8a(aesKey),
         trustedOperation.toU8a()
     );
-    const request = createJsonRpcRequest(
-        isVcDirect ? 'author_requestVc' : 'author_submitAndWatchAesRequest',
-        [u8aToHex(requestParam)],
-        nextRequestId(context)
-    );
+    const request = createJsonRpcRequest('author_requestVc', [u8aToHex(requestParam)], nextRequestId(context));
     return sendRequest(context.tee, request, context.api, onMessageReceived);
 };
 

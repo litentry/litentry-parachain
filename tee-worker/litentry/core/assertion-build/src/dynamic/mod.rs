@@ -281,9 +281,7 @@ pub mod assertion_test {
 		// given
 		// bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0
 		let address = decode_hex(
-			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed"
-				.as_bytes()
-				.to_vec(),
+			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed".as_bytes(),
 		)
 		.unwrap()
 		.as_slice()

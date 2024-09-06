@@ -26,8 +26,8 @@ use crate::{
 	format,
 	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::{
-		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
-		SetIdentityNetworksResult, TrustedCallResult,
+		ActivateIdentityResult, DeactivateIdentityResult, SetIdentityNetworksResult,
+		TrustedCallResult,
 	},
 	Arc, Getter, String, ToString, Vec,
 };
@@ -39,9 +39,7 @@ pub use ita_sgx_runtime::{
 	Balance, IDGraph, Index, ParentchainInstanceLitentry, ParentchainInstanceTargetA,
 	ParentchainInstanceTargetB, ParentchainLitentry, Runtime, System, VERSION as SIDECHAIN_VERSION,
 };
-use itp_node_api::metadata::{
-	pallet_system::SystemConstants, provider::AccessNodeMetadata, NodeMetadataTrait,
-};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
@@ -132,8 +130,7 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[codec(index = 21)]
-	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, bool, H256),
+	// index = 21 was `request_vc_callback`, which was deprecated after native requestVc was introduced
 	#[codec(index = 22)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	#[codec(index = 23)]
@@ -223,7 +220,6 @@ impl TrustedCall {
 			Self::request_vc(sender_identity, ..) => sender_identity,
 			Self::set_identity_networks(sender_identity, ..) => sender_identity,
 			Self::link_identity_callback(sender_identity, ..) => sender_identity,
-			Self::request_vc_callback(sender_identity, ..) => sender_identity,
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
@@ -239,7 +235,6 @@ impl TrustedCall {
 			Self::link_identity(..) => "link_identity",
 			Self::request_vc(..) => "request_vc",
 			Self::link_identity_callback(..) => "link_identity_callback",
-			Self::request_vc_callback(..) => "request_vc_callback",
 			Self::handle_vcmp_error(..) => "handle_vcmp_error",
 			Self::handle_imp_error(..) => "handle_imp_error",
 			Self::deactivate_identity(..) => "deactivate_identity",
@@ -781,108 +776,13 @@ where
 				maybe_key,
 				req_ext_hash,
 			),
-			TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) => {
-				debug!(
-					"request_vc, who: {}, assertion: {:?}",
-					account_id_to_string(&who),
-					assertion
-				);
-
-				let parachain_runtime_version =
-					node_metadata_repo.get_from_metadata(|m| m.system_version())??.spec_version;
-				let sidechain_runtime_version = SIDECHAIN_VERSION.spec_version;
-
-				Self::request_vc_internal(
-					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
-					assertion,
-					top_hash,
-					req_ext_hash,
-					maybe_key,
-					shard,
-					parachain_runtime_version,
-					sidechain_runtime_version,
-				)
-				.map_err(|e| {
-					debug!("pushing error event ... error: {}", e);
-					push_call_vcmp_some_error(
-						calls,
-						node_metadata_repo,
-						Some(who),
-						e.to_vcmp_error(),
-						req_ext_hash,
-					);
-					e
-				})?;
-				Ok(TrustedCallResult::Streamed)
-			},
-			TrustedCall::request_batch_vc(..) => {
-				error!(
-					"TrustedCall::request_batch_vc is not supported here. Will be removed later."
-				);
+			TrustedCall::request_vc(_signer, _who, _assertion, _maybe_key, _req_ext_hash) => {
+				error!("deprecated, please use author_requestVc instead");
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::request_vc_callback(
-				signer,
-				who,
-				assertion,
-				vc_payload,
-				maybe_key,
-				should_create_id_graph,
-				req_ext_hash,
-			) => {
-				debug!(
-					"request_vc_callback, who: {}, should_create_id_graph: {}, assertion: {:?}",
-					account_id_to_string(&who),
-					should_create_id_graph,
-					assertion
-				);
-
-				Self::request_vc_callback_internal(
-					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
-					assertion.clone(),
-					should_create_id_graph,
-				)
-				.map_err(|e| {
-					debug!("pushing error event ... error: {}", e);
-					push_call_vcmp_some_error(
-						calls,
-						node_metadata_repo.clone(),
-						Some(who.clone()),
-						e.to_vcmp_error(),
-						req_ext_hash,
-					);
-					e
-				})?;
-
-				debug!("pushing vc_issued event ...");
-				let call_index =
-					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
-
-				// IDGraph hash can't be `None` as we should have created it otherwise
-				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
-				let mutated_id_graph =
-					if should_create_id_graph { IMT::id_graph(&who) } else { Vec::new() };
-
-				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-					call_index,
-					who,
-					assertion,
-					id_graph_hash,
-					req_ext_hash,
-				))));
-
-				if let Some(key) = maybe_key {
-					Ok(TrustedCallResult::RequestVC(RequestVCResult {
-						vc_payload: aes_encrypt_default(&key, &vc_payload),
-						vc_logs: None,
-						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-						pre_id_graph_hash: id_graph_hash,
-					}))
-				} else {
-					Ok(TrustedCallResult::Empty)
-				}
+			TrustedCall::request_batch_vc(..) => {
+				error!("deprecated, please use author_requestVc instead");
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::set_identity_networks(
 				signer,
