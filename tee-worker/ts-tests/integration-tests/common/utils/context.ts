@@ -28,10 +28,10 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
 }
 
 export async function initIntegrationTestContext(
-    substrateEndpoint: string,
+    parachainEndpoint: string,
     enclaveEndpoint?: string
 ): Promise<IntegrationTestContext> {
-    const provider = new WsProvider(substrateEndpoint);
+    const provider = new WsProvider(parachainEndpoint);
     await cryptoWaitReady();
 
     const web3Wallets = createWeb3Wallets();
@@ -45,7 +45,7 @@ export async function initIntegrationTestContext(
 
     const chainIdentifier = api.registry.chainSS58 as number;
 
-    const workerEndpoint = enclaveEndpoint ? enclaveEndpoint : await getWorkerEndpoint(api);
+    const workerEndpoint = enclaveEndpoint ? enclaveEndpoint : await getenclaveEndpoint(api);
 
     const wsp = await initWorkerConnection(workerEndpoint);
     const requestId = 1;
@@ -65,7 +65,7 @@ export async function initIntegrationTestContext(
     };
 }
 
-async function getWorkerEndpoint(api: ApiPromise): Promise<string> {
+async function getenclaveEndpoint(api: ApiPromise): Promise<string> {
     const registry = await api.query.teebag.enclaveRegistry.entries();
     const identityEnclaves = registry.reduce((enclaves, [, enclave]) => {
         if (enclave.isEmpty || !enclave.unwrap().workerType.isIdentity) {

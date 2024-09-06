@@ -18,8 +18,8 @@ function getConfig(): Config {
     return {
         connections: 3,
         iterations: 2,
-        workerEndpoint: process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-        substrateEndpoint: process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
+        enclaveEndpoint: process.env.ENCLAVE_ENDPOINT!, // @fixme evil assertion; centralize env access
+        parachainEndpoint: process.env.PARACHAIN_ENDPOINT!, // @fixme evil assertion; centralize env access
     };
 }
 
