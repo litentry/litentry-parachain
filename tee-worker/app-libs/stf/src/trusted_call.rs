@@ -128,14 +128,13 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	// index = 21 was `request_vc_callback`, which was deprecated after native requestVc was introduced
-	#[codec(index = 22)]
+	#[codec(index = 21)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
-	#[codec(index = 23)]
+	#[codec(index = 22)]
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
-	#[codec(index = 24)]
+	#[codec(index = 23)]
 	send_erroneous_parentchain_call(Identity),
-	#[codec(index = 25)]
+	#[codec(index = 24)]
 	maybe_create_id_graph(Identity, Identity),
 
 	// original integritee trusted calls, starting from index 50
