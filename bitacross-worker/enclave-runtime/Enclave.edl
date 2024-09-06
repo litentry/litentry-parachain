@@ -105,6 +105,9 @@ enclave {
 		public sgx_status_t get_ethereum_wallet_pair(
 			[out, size=pair_size] uint8_t* pair, uint32_t pair_size);
 
+		public sgx_status_t get_ton_wallet_pair(
+			[out, size=pair_size] uint8_t* pair, uint32_t pair_size);
+
 		public sgx_status_t get_mrenclave(
 			[out, size=mrenclave_size] uint8_t* mrenclave, uint32_t mrenclave_size);
 

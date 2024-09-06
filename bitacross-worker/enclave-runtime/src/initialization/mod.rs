@@ -35,8 +35,8 @@ use crate::{
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
-		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
+		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TON_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
@@ -95,7 +95,12 @@ use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier};
 use litentry_macros::if_development_or;
 use log::*;
 use sp_core::{crypto::Pair, H256};
-use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+use std::{
+	collections::HashMap,
+	path::PathBuf,
+	string::{String, ToString},
+	sync::Arc,
+};
 
 use std::sync::SgxRwLock as RwLock;
 
@@ -109,7 +114,7 @@ pub(crate) fn init_enclave(
 	info!("Ceremony commands thread count: {}", ceremony_commands_thread_count);
 	info!("Ceremony events thread count: {}", ceremony_events_thread_count);
 
-	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
+	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone(), None, None)?);
 
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;
@@ -126,6 +131,12 @@ pub(crate) fn init_enclave(
 	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
 	let ethereum_key = ethereum_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public_bytes());
+
+	let ton_key_repository =
+		Arc::new(get_ed25519_repository(base_dir.clone(), Some("ton".to_string()), None)?);
+	GLOBAL_TON_KEY_REPOSITORY_COMPONENT.initialize(ton_key_repository.clone());
+	let ton_key = ton_key_repository.retrieve_key()?;
+	info!("[Enclave initialized] Ton public key raw : {:?}", ton_key.public().0);
 
 	let shielding_key_repository = Arc::new(get_rsa3072_repository(base_dir.clone())?);
 	GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.initialize(shielding_key_repository.clone());
@@ -278,12 +289,21 @@ pub(crate) fn finish_enclave_init() -> EnclaveResult<()> {
 pub(crate) fn init_wallets(base_dir: PathBuf) -> EnclaveResult<()> {
 	if_development_or!(
 		{
-			println!("Initializing wallets from BTC_KEY and ETH_KEY env variables");
+			println!("Initializing wallets from BTC_KEY, ETH_KEY and TON_KEY env variables");
 			let btc_key: Option<[u8; 32]> = read_key_from_env("BTC_KEY")?;
-			create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
+			if btc_key.is_some() {
+				create_schnorr_repository(base_dir.clone(), "bitcoin", btc_key)?;
+			}
 
 			let eth_key: Option<[u8; 32]> = read_key_from_env("ETH_KEY")?;
-			create_ecdsa_repository(base_dir, "ethereum", eth_key)?;
+			if eth_key.is_some() {
+				create_ecdsa_repository(base_dir.clone(), "ethereum", eth_key)?;
+			}
+
+			let ton_key: Option<[u8; 32]> = read_key_from_env("TON_KEY")?;
+			if ton_key.is_some() {
+				get_ed25519_repository(base_dir, Some("ton".to_string()), ton_key)?;
+			}
 		},
 		{
 			println!("Init wallets available in dev mode only!");
@@ -335,8 +355,18 @@ pub(crate) fn publish_wallets() -> EnclaveResult<()> {
 	let ethereum_opaque_call =
 		OpaqueCall::from_tuple(&(ethereum_call, ethereum_key.public_bytes()));
 
+	let ton_key_repository = GLOBAL_TON_KEY_REPOSITORY_COMPONENT.get()?;
+	let ton_key = ton_key_repository.retrieve_key()?;
+
+	let ton_call = metadata_repository
+		.get_from_metadata(|m| m.ton_wallet_generated_indexes())
+		.map_err(|e| Error::Other(e.into()))?
+		.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+
+	let ton_opaque_call = OpaqueCall::from_tuple(&(ton_call, ton_key.public().0));
+
 	let xts = extrinsics_factory
-		.create_extrinsics(&[bitcoin_opaque_call, ethereum_opaque_call], None)
+		.create_extrinsics(&[bitcoin_opaque_call, ethereum_opaque_call, ton_opaque_call], None)
 		.map_err(|e| Error::Other(e.into()))?;
 	validator_accessor
 		.execute_mut_on_validator(|v| v.send_extrinsics(xts))
@@ -381,6 +411,7 @@ fn run_bit_across_handler(
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
 	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
+	let ton_key_repository = GLOBAL_TON_KEY_REPOSITORY_COMPONENT.get()?;
 
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
@@ -391,11 +422,12 @@ fn run_bit_across_handler(
 		author_api,
 	));
 
-	let stf_task_context = BitAcrossTaskContext::new(
+	let task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
 		signing_key,
 		ethereum_key_repository,
 		bitcoin_key_repository,
+		ton_key_repository,
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,
@@ -408,7 +440,7 @@ fn run_bit_across_handler(
 		responder,
 	);
 	run_bit_across_handler_runner(
-		Arc::new(stf_task_context),
+		Arc::new(task_context),
 		ceremony_commands_thread_count,
 		ceremony_events_thread_count,
 	);
