@@ -10,6 +10,7 @@ members = [
     'pallets/bridge/common',
     'pallets/collab-ai/aiusd-convertor',
     'pallets/collab-ai/curator',
+    'pallets/collab-ai/pool-proposal',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',
@@ -279,7 +280,7 @@ pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = fa
 pallet-aiusd-convertor = { path = "pallets/collab-ai/aiusd-convertor", default-features = false }
 pallet-collab-ai-common = { path = "pallets/collab-ai/common", default-features = false }
 pallet-curator = { path = "pallets/collab-ai/curator", default-features = false }
-
+pallet-pool-proposal = { path = "pallets/collab-ai/pool-proposal", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }

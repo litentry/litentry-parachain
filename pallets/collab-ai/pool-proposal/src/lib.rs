@@ -23,34 +23,25 @@
 //!
 //! The Curator pallet handles the administration of general curator and proposed staking pool.
 //!
-//! 
+//!
 #![cfg_attr(not(feature = "std"), no_std)]
 use bitflags::bitflags;
 use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
 	error::BadOrigin,
-	traits::{
-		defensive_prelude::*,
-		schedule::{v3::Named as ScheduleNamed, DispatchTime},
-		Bounded, Currency, EnsureOrigin, Get, Hash as PreimageHash, LockIdentifier,
-		LockableCurrency, OnUnbalanced, QueryPreimage, ReservableCurrency, StorePreimage,
-		WithdrawReasons,
-	},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency},
 	weights::Weight,
+	BoundedVec,
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 use orml_utilities::OrderedSet;
-use pallet_collab_ai_common::*;
 pub use pallet::*;
+use pallet_collab_ai_common::*;
+use sp_std::collections::vec_deque::VecDeque;
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarking;
+pub(crate) const POOL_DEMOCRACY_ID: LockIdentifier = *b"spdemocy";
+pub(crate) const POOL_COMMITTEE_ID: LockIdentifier = *b"spcomtte";
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -76,7 +67,7 @@ bitflags! {
 		///
 		/// Once a pool is satisfied this requirement, all staked amount can no longer be withdrawed
 		/// unless the pool is later denied passing by voting or until the end of pool maturity.
-		/// 
+		///
 		/// Otherwise, the pool will be refunded.
 		const MINIMUM_STAKE_PASSED = 0b0000_0010;
 		/// Whether the pool proposal passing the global democracy voting.
@@ -95,13 +86,31 @@ bitflags! {
 }
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
-pub struct PoolProposalStatus<BlockNumber, Balance> {
+pub struct PoolProposalStatus<BlockNumber> {
+	pub pool_proposal_index: PoolProposalIndex,
 	pub pool_status_flags: ProposalStatusFlags,
 	pub proposal_expire_time: BlockNumber,
 }
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
-pub struct PoolProposalPreStake<AccountId, Balance> {
+pub struct PoolProposalInfo<InfoHash, Balance, BlockNumber, AccountId> {
+	// Proposer/Curator
+	pub proposer: AccountId,
+	// Hash of pool info like legal files etc.
+	pub pool_info_hash: InfoHash,
+	// The maximum staking amount that the pool can handle
+	pub max_pool_size: Balance,
+	// The minimum staking amount that pool must satisfied in order for curator willing to operating
+	pub min_pool_size: Balance,
+	// If proposal passed, when the staking pool will be ended
+	pub pool_last_time: BlockNumber,
+	// estimated APR, but in percentage form
+	// i.e. 100 => 100%
+	pub estimated_epoch_reward: Balance,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
+pub struct PoolStaking<AccountId, Balance> {
 	pub amount: Balance,
 	pub owner: AccountId,
 }
@@ -109,7 +118,7 @@ pub struct PoolProposalPreStake<AccountId, Balance> {
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
 pub struct PoolProposalPreStaking<AccountId, Balance, S: Get<u32>> {
 	pub total_pre_staked_amount: Balance,
-	pub pre_staking: OrderedSet<PoolProposalPreStake<AccountId, Balance>, S>,
+	pub pre_staking: OrderedSet<PoolStaking<AccountId, Balance>, S>,
 }
 
 #[frame_support::pallet]
@@ -138,9 +147,12 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinimumPoolDeposit: Get<BalanceOf<Self>>;
 
-		/// Origin who can make a pool proposal 
-		type ProposalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// The maximum amount of allowed pool proposed by a single curator
+		#[pallet::constant]
+		type MaximumPoolProposed: Get<u32>;
 
+		/// Origin who can make a pool proposal
+		type ProposalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	/// The next free Pool Proposal index, aka the number of pool proposed so far.
@@ -149,8 +161,6 @@ pub mod pallet {
 	pub type PoolProposalCount<T> = StorageValue<_, PoolProposalIndex, ValueQuery>;
 
 	/// Those who have a reserve for his pool proposal.
-	///
-	/// TWOX-NOTE: Safe, as increasing integer keys are safe.
 	#[pallet::storage]
 	#[pallet::getter(fn pool_proposal_deposit_of)]
 	pub type PoolProposalDepositOf<T: Config> = StorageMap<
@@ -160,25 +170,33 @@ pub mod pallet {
 		BoundedVec<(PoolProposalIndex, BalanceOf<T>), T::MaxDeposits>,
 	>;
 
-	// Metadata of staking pools
+	// Pending pool proposal status of staking pools
 	#[pallet::storage]
-	#[pallet::getter(fn pool_proposal_status)]
-	pub type PoolProposalStatus<T: Config> = StorageMap<
+	#[pallet::getter(fn pending_pool_proposal_status)]
+	pub type PendingPoolProposalStatus<T: Config> =
+		StorageValue<_, VecDeque<PoolProposalStatus<BlockNumberFor<T>>>, ValueQuery>;
+
+	// Pool proposal content
+	// This storage is not allowed to update once any ProposalStatusFlags passed
+	// Yet root is allowed to do that
+	#[pallet::storage]
+	#[pallet::getter(fn pool_proposal)]
+	pub type PoolProposal<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		PoolProposalIndex,
-		(InfoHash),
+		PoolProposalInfo<InfoHash, BalanceOf<T>, BlockNumberFor<T>, T::AccountId>,
 		OptionQuery,
 	>;
 
-	// Metadata of staking pools
+	// Prestaking of pool proposal
 	#[pallet::storage]
-	#[pallet::getter(fn staking_pool_metadata)]
-	pub type StakingPoolMetadata<T: Config> = StorageMap<
+	#[pallet::getter(fn staking_pool_pre_stakings)]
+	pub type StakingPoolPrestakings<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		PoolProposalIndex,
-		PoolMetadata<BoundedVec<u8, T::PoolStringLimit>>,
+		PoolProposalPreStaking<T::AccountId, BalanceOf<T>, T::MaximumPoolProposed>,
 		OptionQuery,
 	>;
 
@@ -190,8 +208,7 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -204,10 +221,10 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Curator propose a staking pool
-		/// 
+		///
 		/// max_pool_size: At most this amount of raised money curator/staking pool willing to take
-		/// min_pool_size: At least this amount of raised money require for curator willing to fulfill contract 
-		/// proposal_end_time: All ProposalStatusFlags must be satisfied before this date, this is also the approximate 
+		/// min_pool_size: At least this amount of raised money require for curator willing to fulfill contract
+		/// proposal_end_time: All ProposalStatusFlags must be satisfied before this date, this is also the approximate
 		/// 				   date when pool begins.
 		/// pool_last_time: How long does the staking pool last if passed
 		/// estimated_epoch_reward: This number is only for displaying purpose without any techinical meaning
@@ -224,9 +241,16 @@ pub mod pallet {
 			pool_info_hash: InfoHash,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+		}
 
-
+		#[pallet::call_index(1)]
+		#[pallet::weight(W{195_000_000})]
+		pub fn vote_staking_pool(
+			origin: OriginFor<T>,
+			pool_proposal_index: PoolProposalIndex,
+			vote: AccountVote<BalanceOf<T>>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
 		}
 	}
 }
-
