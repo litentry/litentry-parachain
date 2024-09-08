@@ -63,6 +63,7 @@ use core::ffi::c_int;
 #[cfg(feature = "development")]
 use initialization::global_components::{
 	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
+	GLOBAL_TON_KEY_REPOSITORY_COMPONENT,
 };
 use itc_parentchain::{
 	block_import_dispatcher::DispatchBlockImport,
@@ -313,6 +314,36 @@ pub unsafe extern "C" fn get_ethereum_wallet_pair(pair: *mut u8, pair_size: u32)
 		},
 		{
 			error!("Ethereum wallet can only be retrieved in non-prod");
+			sgx_status_t::SGX_ERROR_UNEXPECTED
+		}
+	)
+}
+
+#[no_mangle]
+#[cfg_attr(not(feature = "development"), allow(unused_variables))]
+pub unsafe extern "C" fn get_ton_wallet_pair(pair: *mut u8, pair_size: u32) -> sgx_status_t {
+	if_development_or!(
+		{
+			let ton_key_repository = match GLOBAL_TON_KEY_REPOSITORY_COMPONENT.get() {
+				Ok(s) => s,
+				Err(e) => {
+					error!("{:?}", e);
+					return sgx_status_t::SGX_ERROR_UNEXPECTED
+				},
+			};
+
+			let keypair = match ton_key_repository.retrieve_key() {
+				Ok(p) => p,
+				Err(e) => return e.into(),
+			};
+
+			let privkey_slice = slice::from_raw_parts_mut(pair, pair_size as usize);
+			privkey_slice.clone_from_slice(&keypair.seed());
+
+			sgx_status_t::SGX_SUCCESS
+		},
+		{
+			error!("Ton wallet can only be retrieved in non-prod");
 			sgx_status_t::SGX_ERROR_UNEXPECTED
 		}
 	)

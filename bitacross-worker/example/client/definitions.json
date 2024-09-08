@@ -74,6 +74,10 @@
       [
         "SignEthereum",
         "(LitentryIdentity, PrehashedEthereumMessage)"
+      ],
+      [
+        "SignTon",
+        "(LitentryIdentity, Vec<u8>)"
       ]
     ]
   },

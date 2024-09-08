@@ -25,6 +25,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, LitentryMultiSignature, ShardIdentifier};
 use sp_io::hashing::blake2_256;
+use std::vec::Vec;
 
 pub mod handler;
 
@@ -50,6 +51,7 @@ impl DirectCallSigned {
 pub enum DirectCall {
 	SignBitcoin(Identity, SignBitcoinPayload),
 	SignEthereum(Identity, PrehashedEthereumMessage),
+	SignTon(Identity, Vec<u8>),
 	CheckSignBitcoin(Identity),
 }
 
@@ -58,6 +60,7 @@ impl DirectCall {
 		match self {
 			Self::SignBitcoin(signer, ..) => signer,
 			Self::SignEthereum(signer, ..) => signer,
+			Self::SignTon(signer, ..) => signer,
 			Self::CheckSignBitcoin(signer) => signer,
 		}
 	}

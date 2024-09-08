@@ -5,7 +5,7 @@ import type { ISubmittableResult } from '@polkadot/types/types';
 import { loadConfig } from '../utils';
 
 const FINALIZED_BLOCKS_COUNT = 1;
-const TIMEOUT_MIN = 1000 * 60 * 5; // 5min
+const TIMEOUT_MIN = 5;
 
 /**
  * Connects to the parachain via the config file
@@ -35,7 +35,7 @@ const TIMEOUT_MIN = 1000 * 60 * 5; // 5min
             );
             process.exit(1);
         });
-    }, TIMEOUT_MIN);
+    }, TIMEOUT_MIN * 60 * 1000);
 
     api = await ApiPromise.create({
         provider: provider,
