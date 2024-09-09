@@ -76,6 +76,10 @@ launch-network-rococo:
 launch-network-litentry:
 	@./scripts/launch-network.sh litentry
 
+.PHONY: launch-network-paseo ## Launch a local litentry network with relaychain network
+launch-network-paseo:
+	@./scripts/launch-network.sh paseo
+
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all
@@ -94,10 +98,9 @@ test-ts-litentry: launch-network-litentry
 test-ts-rococo: launch-network-rococo
 	@./scripts/run-ts-test.sh rococo bridge evm
 
-
-.PHONY: test-ts-binary-paseo ## Run paseo ts tests with binary without clean-up
-test-ts-binary-paseo: launch-binary-paseo
-	@./scripts/run-ts-test.sh paseo no_bridge evm
+.PHONY: test-ts-paseo ## Run paseo ts tests without clean-up
+test-ts-paseo: launch-network-paseo
+	@./scripts/run-ts-test.sh paseo bridge evm
 
 # clean up
 
