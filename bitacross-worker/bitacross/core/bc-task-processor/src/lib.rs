@@ -78,7 +78,7 @@ use lc_direct_call::{
 	handler::{
 		kill_ceremony, nonce_share, partial_signature_share,
 		sign_bitcoin::{self, SignBitcoinError},
-		sign_ethereum,
+		sign_ethereum, sign_ton,
 	},
 	CeremonyRoundCall, CeremonyRoundCallSigned, DirectCall, DirectCallSigned,
 };
@@ -109,6 +109,7 @@ pub struct BitAcrossTaskContext<
 	SIGNINGAK,
 	EKR,
 	BKR,
+	TKR,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
@@ -121,6 +122,7 @@ pub struct BitAcrossTaskContext<
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
+	TKR: AccessKey<KeyType = ed25519::Pair>,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	Responder: SendRpcResponse<Hash = H256>,
 {
@@ -128,6 +130,7 @@ pub struct BitAcrossTaskContext<
 	pub signing_key_access: Arc<SIGNINGAK>,
 	pub ethereum_key_repository: Arc<EKR>,
 	pub bitcoin_key_repository: Arc<BKR>,
+	pub ton_key_repository: Arc<TKR>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
@@ -145,6 +148,7 @@ impl<
 		SIGNINGAK,
 		EKR,
 		BKR,
+		TKR,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
@@ -152,12 +156,13 @@ impl<
 		ERL: EnclaveRegistryLookup,
 		SRL: SignerRegistryLookup,
 		Responder,
-	> BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>
+	> BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
+	TKR: AccessKey<KeyType = ed25519::Pair>,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	Responder: SendRpcResponse<Hash = H256>,
@@ -168,6 +173,7 @@ where
 		signing_key_access: Arc<SIGNINGAK>,
 		ethereum_key_repository: Arc<EKR>,
 		bitcoin_key_repository: Arc<BKR>,
+		ton_key_repository: Arc<TKR>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
@@ -184,6 +190,7 @@ where
 			signing_key_access,
 			ethereum_key_repository,
 			bitcoin_key_repository,
+			ton_key_repository,
 			enclave_signer,
 			state_handler,
 			ocall_api,
@@ -199,8 +206,23 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+pub fn run_bit_across_handler_runner<
+	SKR,
+	SIGNINGAK,
+	EKR,
+	BKR,
+	TKR,
+	S,
+	H,
+	O,
+	RRL,
+	ERL,
+	SRL,
+	Responder,
+>(
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 	ceremony_commands_thread_count: u8,
 	ceremony_events_thread_count: u8,
 ) where
@@ -208,6 +230,7 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
 	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -287,8 +310,10 @@ pub fn run_bit_across_handler_runner<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL
 }
 
 #[allow(clippy::type_complexity)]
-fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>(
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 	ceremony_id: CeremonyId,
 	command: CeremonyCommand,
 	event_threads_pool: ThreadPool,
@@ -298,6 +323,7 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
 	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -429,8 +455,10 @@ fn handle_ceremony_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Res
 }
 
 #[allow(clippy::type_complexity)]
-fn process_command<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+fn process_command<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>(
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 	ceremony_id: CeremonyId,
 	command: CeremonyCommand,
 ) -> Option<CeremonyEvent>
@@ -439,6 +467,7 @@ where
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	EKR: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
 	BKR: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -531,15 +560,18 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-fn handle_request<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn handle_request<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: BitAcrossRequest,
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 ) -> Option<(CeremonyId, CeremonyCommand)>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -572,15 +604,18 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-fn handle_direct_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn handle_direct_call<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: PlainRequest,
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 ) -> Result<(Option<BitAcrossProcessingResult>, Option<(CeremonyId, CeremonyCommand)>), Vec<u8>>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -652,19 +687,33 @@ where
 			e.encode()
 		})
 		.map(|r| (Some(BitAcrossProcessingResult::Ok(r.encode())), None)),
+		DirectCall::SignTon(signer, payload) => sign_ton::handle(
+			signer,
+			payload,
+			context.relayer_registry_lookup.deref(),
+			context.ton_key_repository.deref(),
+		)
+		.map_err(|e| {
+			error!("SignTon error: {:?}", e);
+			e.encode()
+		})
+		.map(|r| (Some(BitAcrossProcessingResult::Ok(r.encode())), None)),
 	}
 }
 
 #[allow(clippy::type_complexity)]
-fn handle_ceremony_round_call<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>(
+fn handle_ceremony_round_call<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>(
 	request: PlainRequest,
-	context: Arc<BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, S, H, O, RRL, ERL, SRL, Responder>>,
+	context: Arc<
+		BitAcrossTaskContext<SKR, SIGNINGAK, EKR, BKR, TKR, S, H, O, RRL, ERL, SRL, Responder>,
+	>,
 ) -> Result<Option<(CeremonyId, CeremonyCommand)>, Vec<u8>>
 where
 	SKR: AccessKey + AccessPubkey<KeyType = Rsa3072PubKey>,
 	SIGNINGAK: AccessKey<KeyType = ed25519::Pair>,
 	EKR: AccessKey<KeyType = EcdsaPair>,
 	BKR: AccessKey<KeyType = SchnorrPair>,
+	TKR: AccessKey<KeyType = ed25519::Pair> + Send + Sync + 'static,
 	<SKR as AccessKey>::KeyType: ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,

@@ -350,14 +350,14 @@ pub mod tests {
 	#[test]
 	fn updating_status_event_with_finalized_state_removes_connection() {
 		let connection_hash = H256::random();
-		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+		let connection_registry = create_registry_with_single_connection(connection_hash);
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
 			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
 
-		let result = rpc_responder
-			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Finalized);
+		let result =
+			rpc_responder.update_status_event(connection_hash, TrustedOperationStatus::Finalized);
 
 		assert!(result.is_ok());
 
@@ -368,17 +368,15 @@ pub mod tests {
 	#[test]
 	fn updating_status_event_with_finalized_state_doesnt_remove_connection_if_force_watch_set() {
 		let connection_hash = H256::random();
-		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+		let connection_registry = create_registry_with_single_connection(connection_hash);
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
 			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
-		rpc_responder
-			.update_connection_state(connection_hash.clone(), vec![], true)
-			.unwrap();
+		rpc_responder.update_connection_state(connection_hash, vec![], true).unwrap();
 
-		let result = rpc_responder
-			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Finalized);
+		let result =
+			rpc_responder.update_status_event(connection_hash, TrustedOperationStatus::Finalized);
 
 		assert!(result.is_ok());
 
@@ -390,17 +388,17 @@ pub mod tests {
 	fn updating_status_event_with_ready_state_keeps_connection_and_sends_update() {
 		let connection_hash = H256::random();
 		let connection_registry: Arc<ConnectionRegistry<_, u64>> =
-			create_registry_with_single_connection(connection_hash.clone());
+			create_registry_with_single_connection(connection_hash);
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
 			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
 
-		let first_result = rpc_responder
-			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Ready);
+		let first_result =
+			rpc_responder.update_status_event(connection_hash, TrustedOperationStatus::Ready);
 
-		let second_result = rpc_responder
-			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Submitted);
+		let second_result =
+			rpc_responder.update_status_event(connection_hash, TrustedOperationStatus::Submitted);
 
 		assert!(first_result.is_ok());
 		assert!(second_result.is_ok());
@@ -412,13 +410,13 @@ pub mod tests {
 	#[test]
 	fn sending_state_successfully_sends_update_and_removes_connection_token() {
 		let connection_hash = H256::random();
-		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+		let connection_registry = create_registry_with_single_connection(connection_hash);
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
 			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
 
-		let result = rpc_responder.send_state(connection_hash.clone(), "new_state".encode());
+		let result = rpc_responder.send_state(connection_hash, "new_state".encode());
 		assert!(result.is_ok());
 
 		verify_closed_connection(&connection_hash, connection_registry);
@@ -438,7 +436,7 @@ pub mod tests {
 		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
-		let maybe_connection = connection_registry.withdraw(&connection_hash);
+		let maybe_connection = connection_registry.withdraw(connection_hash);
 		assert!(maybe_connection.is_some());
 	}
 
@@ -446,7 +444,7 @@ pub mod tests {
 		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
-		assert!(connection_registry.withdraw(&connection_hash).is_none());
+		assert!(connection_registry.withdraw(connection_hash).is_none());
 	}
 
 	fn create_registry_with_single_connection(
@@ -455,7 +453,7 @@ pub mod tests {
 		let connection_registry = TestConnectionRegistry::new();
 		let rpc_response = RpcResponseBuilder::new().with_id(2).build();
 
-		connection_registry.store(connection_hash.clone(), 1, rpc_response, false);
+		connection_registry.store(connection_hash, 1, rpc_response, false);
 		Arc::new(connection_registry)
 	}
 }

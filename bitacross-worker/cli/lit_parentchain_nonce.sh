@@ -24,10 +24,10 @@ done
 
 # Using default port if none given as arguments.
 NPORT=${NPORT:-9944}
-NODEURL=${NODEURL:-"ws://127.0.0.1"}
+NODEURL=${NODEURL:-"ws://litentry-node"}
 
 WORKER1PORT=${WORKER1PORT:-2000}
-WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
+WORKER1URL=${WORKER1URL:-"wss://litentry-node"}
 
 CLIENT_BIN=${CLIENT_BIN:-"./../bin/bitacross-cli"}
 

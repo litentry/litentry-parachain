@@ -9,7 +9,7 @@ use crate::{
 use base58::FromBase58;
 use codec::{Decode, Encode};
 use core::result::Result;
-use ita_sgx_runtime::{Runtime, System};
+use ita_sgx_runtime::{Runtime, System, VERSION};
 use ita_stf::{aes_encrypt_default, AesOutput, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_ocall_api::EnclaveAttestationOCallApi;
@@ -233,8 +233,12 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 	io_handler.add_sync_method("state_getRuntimeVersion", |_: Params| {
 		debug!("worker_api_direct rpc was called: state_getRuntimeVersion");
-		let parsed = "world";
-		Ok(Value::String(format!("hello, {}", parsed)))
+		let runtime_version = VERSION;
+
+		let json_value =
+			RpcReturnValue::new(runtime_version.encode(), false, DirectRequestStatus::Ok);
+
+		Ok(json!(json_value.to_hex()))
 	});
 
 	// TODO: deprecate

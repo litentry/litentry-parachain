@@ -68,37 +68,13 @@ build-node-tryruntime:
 launch-standalone:
 	@./scripts/launch-standalone.sh
 
-.PHONY: launch-docker-bridge
-launch-docker-bridge:
-	@./scripts/launch-local-bridge-docker.sh
+.PHONY: launch-network-rococo ## Launch a local rococo network with relaychain network
+launch-network-rococo:
+	@./scripts/launch-network.sh rococo
 
-.PHONY: launch-docker-litentry ## Launch a local litentry-parachain network with docker
-launch-docker-litentry: generate-docker-compose-litentry
-	@./scripts/launch-local-docker.sh litentry
-
-.PHONY: launch-docker-rococo ## Launch a local rococo-parachain network with docker
-launch-docker-rococo: generate-docker-compose-rococo
-	@./scripts/launch-local-docker.sh rococo
-
-.PHONY: launch-docker-paseo ## Launch a local paseo-parachain network with docker
-launch-docker-paseo: generate-docker-compose-paseo
-	@./scripts/launch-local-docker.sh paseo
-
-.PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
-launch-binary-litentry:
-	@./scripts/launch-local-binary.sh litentry
-
-.PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
-launch-binary-rococo:
-	@./scripts/launch-local-binary.sh rococo
-
-.PHONY: launch-binary-paseo ## Launch a local rococo-parachain network with binaries
-launch-binary-paseo:
-	@./scripts/launch-local-binary.sh paseo
-
-.PHONY: launch-custom-binary-rococo ## Launch a local rococo-parachain network with binary already built under target files
-launch-custom-binary-rococo:
-	@./scripts/launch-local-custom-binary.sh rococo
+.PHONY: launch-network-litentry ## Launch a local litentry network with relaychain network
+launch-network-litentry:
+	@./scripts/launch-network.sh litentry
 
 # run tests
 
@@ -110,25 +86,14 @@ test-cargo-all:
 test-cargo-all-benchmarks:
 	@cargo test --release --all --features runtime-benchmarks
 
-.PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
-test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
+.PHONY: test-ts-litentry ## Run litentry ts tests without clean-up
+test-ts-litentry: launch-network-litentry
 	@./scripts/run-ts-test.sh litentry bridge evm
 
-.PHONY: test-ts-docker-rococo ## Run rococo ts tests with docker without clean-up
-test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
+.PHONY: test-ts-rococo ## Run rococo ts tests without clean-up
+test-ts-rococo: launch-network-rococo
 	@./scripts/run-ts-test.sh rococo bridge evm
 
-.PHONY: test-ts-docker-paseo ## Run paseo ts tests with docker without clean-up
-test-ts-docker-paseo: launch-docker-paseo launch-docker-bridge
-	@./scripts/run-ts-test.sh paseo bridge evm
-
-.PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
-test-ts-binary-litentry: launch-binary-litentry
-	@./scripts/run-ts-test.sh litentry no_bridge evm
-
-.PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
-test-ts-binary-rococo: launch-binary-rococo
-	@./scripts/run-ts-test.sh rococo no_bridge evm
 
 .PHONY: test-ts-binary-paseo ## Run paseo ts tests with binary without clean-up
 test-ts-binary-paseo: launch-binary-paseo
@@ -136,31 +101,9 @@ test-ts-binary-paseo: launch-binary-paseo
 
 # clean up
 
-.PHONY: clean-docker-litentry ## Clean up litentry docker images, containers, volumes, etc
-clean-docker-litentry:
-	@./scripts/clean-local-docker.sh litentry
-
-.PHONY: clean-docker-rococo ## Clean up rococo docker images, containers, volumes, etc
-clean-docker-rococo:
-	@./scripts/clean-local-docker.sh rococo
-
-.PHONY: clean-docker-paseo ## Clean up paseo docker images, containers, volumes, etc
-clean-docker-paseo:
-	@./scripts/clean-local-docker.sh paseo
-
-.PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
-clean-binary:
-	@./scripts/clean-local-binary.sh
-
-# generate docker-compose files
-
-.PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry local network
-generate-docker-compose-litentry:
-	@./scripts/generate-docker-files.sh litentry
-
-.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
-generate-docker-compose-rococo:
-	@./scripts/generate-docker-files.sh rococo
+.PHONY: clean-network ## Clean up the network launched by 'launch-network'
+clean-network:
+	@./scripts/clean-network.sh
 
 .PHONY: generate-docker-compose-paseo ## Generate docker-compose files for rococo local network
 generate-docker-compose-paseo:

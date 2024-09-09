@@ -281,7 +281,6 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 	// Determine the category based on the request type
 	let category = match req {
 		RequestType::IdentityVerification(_) => "link_identity",
-		RequestType::AssertionVerification(_) => "request_vc",
 	};
 
 	let label: String = match req {
@@ -294,7 +293,6 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Bitcoin(_) => "Bitcoin".into(),
 			Identity::Solana(_) => "Solana".into(),
 		},
-		RequestType::AssertionVerification(request) => assertion_to_string(request.assertion),
 	};
 	inc_stf_calls(category, &label);
 	observe_execution_time(category, &label, time)
