@@ -140,7 +140,10 @@ pub enum Assertion {
 	NftHolder(Web3NftType),
 
 	#[codec(index = 27)]
-	Dynamic(DynamicParams)
+	Dynamic(DynamicParams),
+
+	#[codec(index = 28)]
+	LinkedIdentities,
 }
 
 const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
@@ -198,7 +201,11 @@ impl Assertion {
 			// any web3 network is allowed
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
-			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
+			Self::A2(..)
+			| Self::A3(..)
+			| Self::A6
+			| Self::GenericDiscordRole(..)
+			| Self::LinkedIdentities => vec![],
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
 			Self::NftHolder(t_type) => t_type.get_supported_networks(),
@@ -211,7 +218,7 @@ impl Assertion {
 	#[allow(clippy::match_like_matches_macro)]
 	pub fn skip_identity_filtering(&self) -> bool {
 		match self {
-			Self::A1 | Self::Dynamic(..) => true,
+			Self::A1 | Self::Dynamic(..) | Self::LinkedIdentities => true,
 			_ => false,
 		}
 	}
