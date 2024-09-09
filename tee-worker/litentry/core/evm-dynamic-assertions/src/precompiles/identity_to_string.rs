@@ -168,7 +168,7 @@ pub mod test {
 			// given
 			let encoded = encode(&[
 				Token::Uint(network.into()),
-				Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+				Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 			]);
 
 			// when
@@ -201,7 +201,7 @@ pub mod test {
 			// given
 			let encoded = encode(&[
 				Token::Uint(network.into()),
-				Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+				Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 			]);
 
 			// when
@@ -219,7 +219,7 @@ pub mod test {
 		// BitcoinP2tr
 		let encoded = encode(&[
 			Token::Uint(Web3Network::BitcoinP2tr.get_code().into()),
-			Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+			Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 		]);
 
 		// when
@@ -236,7 +236,7 @@ pub mod test {
 		// BitcoinP2wsh
 		let encoded = encode(&[
 			Token::Uint(Web3Network::BitcoinP2wsh.get_code().into()),
-			Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+			Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 		]);
 
 		// when
@@ -312,7 +312,7 @@ pub mod integration_test {
 				FUNCTION_HASH,
 				encode(&[
 					Token::Uint(network.into()),
-					Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+					Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 				]),
 			)
 			.unwrap();
@@ -349,7 +349,7 @@ pub mod integration_test {
 				FUNCTION_HASH,
 				encode(&[
 					Token::Uint(network.into()),
-					Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+					Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 				]),
 			)
 			.unwrap();
@@ -375,11 +375,11 @@ pub mod integration_test {
 			FUNCTION_HASH,
 			encode(&[
 				Token::Uint(Web3Network::BitcoinP2tr.get_code().into()),
-				Token::Bytes(decode_hex(address.as_bytes().to_vec()).unwrap()),
+				Token::Bytes(decode_hex(address.as_bytes()).unwrap()),
 			]),
 		)
 		.unwrap();
-		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// when
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -409,7 +409,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();

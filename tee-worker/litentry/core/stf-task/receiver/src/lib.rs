@@ -37,9 +37,7 @@ pub mod handler;
 use codec::Encode;
 use frame_support::sp_tracing::warn;
 use futures::{executor, executor::ThreadPoolBuilder};
-use handler::{
-	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
-};
+use handler::{identity_verification::IdentityVerificationHandler, TaskHandler};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itp_enclave_metrics::EnclaveMetric;
@@ -252,9 +250,6 @@ where
 			match &req {
 				RequestType::IdentityVerification(req) =>
 					IdentityVerificationHandler { req: req.clone(), context: context_pool.clone() }
-						.start(sender_pool),
-				RequestType::AssertionVerification(req) =>
-					AssertionHandler { req: req.clone(), context: context_pool.clone() }
 						.start(sender_pool),
 			}
 

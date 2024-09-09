@@ -90,7 +90,7 @@ fn get_blocks_after_returns_all_blocks_if_last_known_is_default() {
 	let block_2 = create_signed_block(2, block_1.hash());
 	let block_3 = create_signed_block(3, block_2.hash());
 
-	let blocks = vec![block_1.clone(), block_2.clone(), block_3.clone()];
+	let blocks = vec![block_1, block_2, block_3];
 
 	let temp_dir = fill_storage_with_blocks(blocks.clone());
 

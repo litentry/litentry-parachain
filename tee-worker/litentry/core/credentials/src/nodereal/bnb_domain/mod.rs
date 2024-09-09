@@ -84,21 +84,21 @@ mod tests {
 	#[test]
 	fn match_domain_amount_0_works() {
 		let amount = 0;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index.unwrap(), 1);
 	}
 
 	#[test]
 	fn match_domain_amount_mid_works() {
 		let amount = 20;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index.unwrap(), 5);
 	}
 
 	#[test]
 	fn match_domain_amount_last_works() {
 		let amount = 300;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index, None);
 	}
 }
