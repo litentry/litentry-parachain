@@ -103,23 +103,16 @@ test-ts-paseo: launch-network-paseo
 	@./scripts/run-ts-test.sh paseo bridge evm
 
 # clean up
-
 .PHONY: clean-network ## Clean up the network launched by 'launch-network'
 clean-network:
 	@./scripts/clean-network.sh
 
-.PHONY: generate-docker-compose-paseo ## Generate docker-compose files for rococo local network
-generate-docker-compose-paseo:
-	@./scripts/generate-docker-files.sh paseo
-
 # update dependencies
-
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
 	@cd ts-tests && pnpm dlx npm-check-updates -u && pnpm install
 
 # format
-
 .PHONY: fmt ## (cargo, taplo, ts, solidity) fmt
 fmt: fmt-cargo fmt-taplo fmt-ts fmt-contract
 
@@ -151,7 +144,6 @@ githooks:
 	git config core.hooksPath .githooks
 
 # clippy
-
 .PHONY: clippy ## cargo clippy
 clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
