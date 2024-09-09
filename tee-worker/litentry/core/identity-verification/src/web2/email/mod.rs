@@ -1,6 +1,9 @@
 mod email_verification_store;
 pub use email_verification_store::*;
 
+mod mailer;
+pub use mailer::*;
+
 use crate::web2::helpers;
 use std::string::String;
 
