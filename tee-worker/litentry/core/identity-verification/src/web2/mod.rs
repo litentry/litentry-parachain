@@ -21,6 +21,7 @@ extern crate sgx_tstd as std;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod discord;
+pub mod email;
 mod helpers;
 pub mod twitter;
 
