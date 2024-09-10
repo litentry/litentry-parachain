@@ -21,24 +21,31 @@ import "../../libraries/Identities.sol";
 import "../Constants.sol";
 
 library Ada {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](7);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1000 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 20000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
-		ranges[5] = 100000 * Constants.decimals_factor;
-		ranges[6] = 300000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
+        uint256[] memory ranges = new uint256[](7);
+        ranges[0] = 0;
+        ranges[1] = 1000;
+        ranges[2] = 5000;
+        ranges[3] = 20000;
+        ranges[4] = 50000;
+        ranges[5] = 100000;
+        ranges[6] = 300000;
 
-		return ranges;
-	}
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](1);
-		networks[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47"
-		);
-		return networks;
-	}
+        return TokenInfoRanges(ranges, 0);
+    }
+
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](1);
+        networks[0] = TokenInfoNetwork(
+            Web3Networks.Bsc,
+            "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return networks;
+    }
 }

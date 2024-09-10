@@ -145,7 +145,7 @@ mod tests {
 	) {
 		let req = crate_assertion_build_request(platform_user_type.clone(), identities);
 
-		match build(&req, platform_user_type.clone(), &data_provider_config) {
+		match build(&req, platform_user_type.clone(), data_provider_config) {
 			Ok(credential) => {
 				log::info!("build platform user: {:?} done", platform_user_type);
 				assert_eq!(
@@ -173,12 +173,11 @@ mod tests {
 	fn build_karat_dao_user_works() {
 		let data_provider_config = init(PlatformUserType::KaratDao);
 
-		let mut address =
-			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
 
@@ -189,7 +188,7 @@ mod tests {
 			&data_provider_config,
 		);
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -208,12 +207,11 @@ mod tests {
 	fn build_magic_craft_staking_user_works() {
 		let data_provider_config = init(PlatformUserType::MagicCraftStaking);
 
-		let mut address =
-			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
 
@@ -224,7 +222,7 @@ mod tests {
 			&data_provider_config,
 		);
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -243,12 +241,11 @@ mod tests {
 	fn build_daren_market_user_works() {
 		let data_provider_config = init(PlatformUserType::DarenMarket);
 
-		let mut address =
-			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
 
@@ -259,7 +256,7 @@ mod tests {
 			&data_provider_config,
 		);
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()

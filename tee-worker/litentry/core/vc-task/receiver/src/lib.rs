@@ -318,7 +318,9 @@ pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, N, AR>(
 			send_vc_response(
 				connection_hash,
 				context.clone(),
-				Err(RequestVcErrorDetail::UnexpectedCall("Expected request_batch_vc ".to_string())),
+				Err(RequestVcErrorDetail::UnexpectedCall(
+					"Expected request_vc or request_batch_vc ".to_string(),
+				)),
 				0u8,
 				0u8,
 				false,
@@ -433,7 +435,7 @@ where
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
-		info!(
+		debug!(
 			"Processing vc request for {}, assertion: {:?}",
 			who.to_did().unwrap_or_default(),
 			assertion

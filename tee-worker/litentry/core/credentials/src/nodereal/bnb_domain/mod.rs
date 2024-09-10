@@ -41,12 +41,19 @@ pub trait RangeCredentialDetail {
 			Some(index) => {
 				let min = range[index - 1];
 				let max = range[index];
-				let min_item =
-					AssertionLogic::new_item(breakdown, Op::GreaterEq, &format!("{}", min));
-				let max_item =
-					AssertionLogic::new_item(breakdown, Op::LessThan, &format!("{}", max));
+				let min_item = AssertionLogic::new_item(
+					breakdown,
+					if index == 1 { Op::GreaterThan } else { Op::GreaterEq },
+					&format!("{}", min),
+				);
 
-				vec![min_item, max_item]
+				if amount > 0 {
+					let max_item =
+						AssertionLogic::new_item(breakdown, Op::LessThan, &format!("{}", max));
+					vec![min_item, max_item]
+				} else {
+					vec![min_item]
+				}
 			},
 			None => {
 				// >= last value
@@ -77,21 +84,21 @@ mod tests {
 	#[test]
 	fn match_domain_amount_0_works() {
 		let amount = 0;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index.unwrap(), 1);
 	}
 
 	#[test]
 	fn match_domain_amount_mid_works() {
 		let amount = 20;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index.unwrap(), 5);
 	}
 
 	#[test]
 	fn match_domain_amount_last_works() {
 		let amount = 300;
-		let index = match_range_index(&BNB_DOMAIN_HOLDING_AMOUNT_RANGE.to_vec(), amount);
+		let index = match_range_index(BNB_DOMAIN_HOLDING_AMOUNT_RANGE.as_ref(), amount);
 		assert_eq!(index, None);
 	}
 }

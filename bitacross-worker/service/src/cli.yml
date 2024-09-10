@@ -114,6 +114,18 @@ args:
         takes_value: true
         required: false
         default_value: "0"
+    - ceremony-commands-thread-count:
+          long: ceremony-commands-thread-count
+          help: Number of threads to spawn for ceremony commands handling
+          takes_value: true
+          default_value: "4"
+          required: false
+    - ceremony-events-thread-count:
+        long: ceremony-events-thread-count
+        help: Number of threads to spawn for ceremony events handling
+        takes_value: true
+        default_value: "20"
+        required: false
 
 subcommands:
     - run:
@@ -153,7 +165,7 @@ subcommands:
     - wallet:
         about: Print the bitcoin and ethereum custodian wallet key information, only works in non-prod
     - init-wallet:
-        about: Init eth and btc wallets from BTC_KEY and ETH_KEY env variables, only works in non-prod
+        about: Init eth, btc, ton wallets from BTC_KEY, ETH_KEY, TON_KEY env variables, only works in non-prod
     - mrenclave:
         about: Dump mrenclave to stdout. base58 encoded.
     - init-shard:

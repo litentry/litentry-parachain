@@ -29,10 +29,12 @@ pub mod xcm_impl;
 #[cfg(feature = "runtime-benchmarks")]
 use frame_support::assert_ok;
 
+use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
+
 use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
-	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
+	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
 		Weight,
@@ -41,10 +43,7 @@ use frame_support::{
 use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
-
-use xcm::latest::prelude::*;
-
-use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
+use sp_std::marker::PhantomData;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -74,13 +73,16 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND / GAS_PER_SECOND;
 
+// Cosnt ratio of 1 weight = n fee
+pub const WEIGHT_TO_FEE_FACTOR: u128 = 1_000_000u128;
+
 pub mod currency {
 	use core_primitives::Balance;
 
-	pub const UNIT: Balance = 1_000_000_000_000;
-	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000
-	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
+	pub const UNIT: Balance = 1_000_000_000_000_000_000;
+	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000_000_000
+	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000_000_000
+	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000_000_000
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
@@ -277,7 +279,7 @@ pub type EnsureRootOrTwoThirdsTechnicalCommittee = EitherOfDiverse<
 
 /// A set of pallet_config that runtime must implement.
 pub trait BaseRuntimeRequirements:
-	frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
+	frame_system::Config<AccountId = AccountId>
 	+ pallet_balances::Config<Balance = Balance>
 	+ pallet_extrinsic_filter::Config
 	+ pallet_multisig::Config
@@ -293,54 +295,12 @@ pub trait ParaRuntimeRequirements:
 {
 }
 
-/// the filter account who is allowed to dispatch XCM sends
-use sp_std::marker::PhantomData;
-use xcm_executor::traits::Convert;
-
-pub struct FilterEnsureOrigin<Origin, Conversion, SpecialGroup>(
-	PhantomData<(Origin, Conversion, SpecialGroup)>,
-);
-impl<
-		Origin: OriginTrait + Clone,
-		Conversion: Convert<Origin, MultiLocation>,
-		SpecialGroup: EnsureOrigin<Origin>,
-	> EnsureOrigin<Origin> for FilterEnsureOrigin<Origin, Conversion, SpecialGroup>
-where
-	Origin::PalletsOrigin: PartialEq,
-{
-	type Success = MultiLocation;
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		// root can send the cross chain message
-
-		let o = match SpecialGroup::try_origin(o) {
-			Ok(_) => return Ok(Here.into()),
-			Err(o) => o,
-		};
-
-		let o = match Conversion::convert(o) {
-			Ok(location) => return Ok(location),
-			Err(o) => o,
-		};
-
-		if o.caller() == Origin::root().caller() {
-			Ok(Here.into())
-		} else {
-			Err(o)
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<Origin, ()> {
-		Ok(Origin::root())
-	}
-}
-
 // EnsureOrigin implementation to make sure the extrinsic origin
 // must come from one of the registered enclaves
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teebag::Config + pallet_teebag::Config,
+	T: frame_system::Config + pallet_teebag::Config,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
@@ -349,7 +309,9 @@ where
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(who)
 				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
-				Ok(who),
+			{
+				Ok(who)
+			},
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}

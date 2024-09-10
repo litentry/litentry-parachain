@@ -233,8 +233,6 @@ pub fn query_lit_holding_amount(
 				)
 			} else if *network == Web3Network::Litentry {
 				(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
-			} else if *network == Web3Network::Litmus {
-				(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
 			} else {
 				return Ok(LoopControls::Continue)
 			};

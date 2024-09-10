@@ -20,29 +20,40 @@ pragma solidity ^0.8.8;
 
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
-
+struct TokenNetwork {
+    uint32 id;
+    string tokenAddress;
+}
 library Bean {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](5);
-		ranges[0] = 0 * Constants.decimals_factor;
-		ranges[1] = 1500 * Constants.decimals_factor;
-		ranges[2] = 5000 * Constants.decimals_factor;
-		ranges[3] = 10000 * Constants.decimals_factor;
-		ranges[4] = 50000 * Constants.decimals_factor;
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
+        uint256[] memory ranges = new uint256[](5);
+        ranges[0] = 0;
+        ranges[1] = 1500;
+        ranges[2] = 5000;
+        ranges[3] = 10000;
+        ranges[4] = 50000;
 
-		return ranges;
-	}
+        return TokenInfoRanges(ranges, 0);
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory networks = new TokenInfo[](2);
-		networks[0] = TokenInfo(
-			Web3Networks.Bsc,
-			"0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c"
-		);
-		networks[1] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0xba7b9936a965fac23bb7a8190364fa60622b3cff"
-		);
-		return networks;
-	}
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](2);
+        networks[0] = TokenInfoNetwork(
+            Web3Networks.Bsc,
+            "0x07da81e9a684ab87fad7206b3bc8d0866f48cc7c",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        networks[1] = TokenInfoNetwork(
+            Web3Networks.Combo,
+            "0xba7b9936a965fac23bb7a8190364fa60622b3cff",
+            DataProviderTypes.NoderealClient,
+            18
+        );
+        return networks;
+    }
 }

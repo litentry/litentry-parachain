@@ -14,23 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use bc_enclave_registry::EnclaveRegistryLookup;
-use parentchain_primitives::Identity;
-use std::{sync::Arc, vec};
-
-#[cfg(feature = "std")]
-use std::sync::Mutex;
-
 use crate::handler::nonce_share::NonceShareError::InvalidSigner;
-use bc_musig2_ceremony::{
-	CeremonyCommand, CeremonyCommandsRegistry, CeremonyId, CeremonyRegistry,
-	PendingCeremonyCommand, PubNonce,
-};
+use bc_enclave_registry::EnclaveRegistryLookup;
+use bc_musig2_ceremony::{CeremonyCommand, CeremonyId, PubNonce};
 use codec::Encode;
-use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair};
+use litentry_primitives::Identity;
 use log::debug;
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
+use std::sync::Arc;
 
 #[derive(Encode, Debug)]
 pub enum NonceShareError {
@@ -38,14 +28,12 @@ pub enum NonceShareError {
 	InvalidNonce,
 }
 
-pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
+pub fn handle<ER: EnclaveRegistryLookup>(
 	signer: Identity,
-	ceremony_id: CeremonyId,
+	ceremony_id: &CeremonyId,
 	payload: [u8; 66],
-	ceremony_registry: Arc<Mutex<CeremonyRegistry<AK>>>,
-	ceremony_commands: Arc<Mutex<CeremonyCommandsRegistry>>,
 	enclave_registry: Arc<ER>,
-) -> Result<(), NonceShareError> {
+) -> Result<CeremonyCommand, NonceShareError> {
 	debug!("Received nonce share from: {:?} for ceremony {:?}", signer, ceremony_id);
 	let is_valid_signer = match signer {
 		Identity::Substrate(address) => enclave_registry.contains_key(&address),
@@ -59,42 +47,19 @@ pub fn handle<ER: EnclaveRegistryLookup, AK: AccessKey<KeyType = SchnorrPair>>(
 		PubNonce::from_bytes(payload.as_slice()).map_err(|_| NonceShareError::InvalidNonce)?;
 
 	match signer {
-		Identity::Substrate(address) => {
-			let mut registry = ceremony_registry.lock().unwrap();
-			if let Some(ceremony) = registry.get_mut(&ceremony_id) {
-				ceremony.save_event(CeremonyCommand::SaveNonce(*address.as_ref(), nonce));
-			} else {
-				debug!("Ceremony {:?} not found, saving events...", ceremony_id);
-				let mut commands = ceremony_commands.lock().unwrap();
-				// ~1 minute (1 tick ~ 1 s)
-				let ceremony_tick_to_live = 60_000;
-				let command = PendingCeremonyCommand {
-					ticks_left: ceremony_tick_to_live,
-					command: CeremonyCommand::SaveNonce(*address.as_ref(), nonce),
-				};
-				if let Some(events) = commands.get_mut(&ceremony_id) {
-					debug!("Commands found, appending...");
-					events.push(command);
-				} else {
-					debug!("Commands not found, creating...");
-					commands.insert(ceremony_id, vec![command]);
-				}
-			}
-		},
-		_ => return Err(InvalidSigner),
+		Identity::Substrate(address) => Ok(CeremonyCommand::SaveNonce(*address.as_ref(), nonce)),
+		_ => Err(InvalidSigner),
 	}
-	Ok(())
 }
 
 #[cfg(test)]
 pub mod test {
-	use crate::handler::nonce_share::{handle, NonceShareError, SchnorrPair};
+	use crate::handler::nonce_share::{handle, NonceShareError};
 	use alloc::sync::Arc;
 	use bc_enclave_registry::{EnclaveRegistry, EnclaveRegistryUpdater};
-	use bc_musig2_ceremony::{CeremonyCommandsRegistry, CeremonyRegistry, SignBitcoinPayload};
-	use codec::alloc::sync::Mutex;
-	use itp_sgx_crypto::{key_repository::AccessKey, Error};
-	use parentchain_primitives::Identity;
+	use bc_musig2_ceremony::SignBitcoinPayload;
+	use itp_sgx_crypto::{key_repository::AccessKey, schnorr::Pair as SchnorrPair, Error};
+	use litentry_primitives::Identity;
 	use sp_core::{sr25519, Pair};
 
 	struct SignerAccess {}
@@ -113,8 +78,6 @@ pub mod test {
 		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
 		let signer_account = Identity::Substrate(alice_key_pair.public().into());
 		let ceremony_id = SignBitcoinPayload::Derived(vec![]);
-		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
-		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
 		let enclave_registry = Arc::new(EnclaveRegistry::default());
 		let _ =
 			enclave_registry.update(alice_key_pair.public().into(), "localhost:2000".to_string());
@@ -122,15 +85,13 @@ pub mod test {
 		// when
 		let result = handle(
 			signer_account,
-			ceremony_id,
+			&ceremony_id,
 			[
 				2, 121, 190, 102, 126, 249, 220, 187, 172, 85, 160, 98, 149, 206, 135, 11, 7, 2,
 				155, 252, 219, 45, 206, 40, 217, 89, 242, 129, 91, 22, 248, 23, 152, 3, 45, 226,
 				102, 38, 40, 201, 11, 3, 245, 231, 32, 40, 78, 181, 47, 247, 215, 31, 66, 132, 246,
 				39, 182, 138, 133, 61, 120, 199, 142, 31, 254, 147,
 			],
-			ceremony_registry,
-			ceremony_commands_registry,
 			enclave_registry,
 		);
 
@@ -144,22 +105,18 @@ pub mod test {
 		let alice_key_pair = sr25519::Pair::from_string("//Alice", None).unwrap();
 		let signer_account = Identity::Substrate(alice_key_pair.public().into());
 		let ceremony_id = SignBitcoinPayload::Derived(vec![]);
-		let ceremony_registry = Arc::new(Mutex::new(CeremonyRegistry::<SignerAccess>::new()));
-		let ceremony_commands_registry = Arc::new(Mutex::new(CeremonyCommandsRegistry::new()));
 		let enclave_registry = Arc::new(EnclaveRegistry::default());
 
 		// when
 		let result = handle(
 			signer_account,
-			ceremony_id,
+			&ceremony_id,
 			[
 				2, 121, 190, 102, 126, 249, 220, 187, 172, 85, 160, 98, 149, 206, 135, 11, 7, 2,
 				155, 252, 219, 45, 206, 40, 217, 89, 242, 129, 91, 22, 248, 23, 152, 3, 45, 226,
 				102, 38, 40, 201, 11, 3, 245, 231, 32, 40, 78, 181, 47, 247, 215, 31, 66, 132, 246,
 				39, 182, 138, 133, 61, 120, 199, 142, 31, 254, 147,
 			],
-			ceremony_registry,
-			ceremony_commands_registry,
 			enclave_registry,
 		);
 

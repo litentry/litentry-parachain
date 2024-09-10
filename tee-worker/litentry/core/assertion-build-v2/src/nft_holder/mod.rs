@@ -230,14 +230,14 @@ mod tests {
 			.set_nodereal_api_chain_network_url(url.clone() + "/nodereal_jsonrpc/")
 			.unwrap();
 		data_provider_config.set_moralis_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
+		data_provider_config.set_moralis_api_url(url + "/moralis/").unwrap();
 		data_provider_config
 	}
 
 	#[test]
 	fn build_werido_ghost_gang_holder_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+		let address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -270,12 +270,11 @@ mod tests {
 	#[test]
 	fn build_club3_sbt_holder_works() {
 		let data_provider_config = init();
-		let mut address =
-			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Bsc, Web3Network::Polygon])];
 
@@ -299,7 +298,7 @@ mod tests {
 			},
 		}
 
-		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -333,12 +332,11 @@ mod tests {
 	#[test]
 	fn build_mfan_holder_works() {
 		let data_provider_config = init();
-		let mut address =
-			decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Polygon])];
 
@@ -362,7 +360,7 @@ mod tests {
 			},
 		}
 
-		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+		address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()

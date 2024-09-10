@@ -16,9 +16,9 @@ parachain_src: &parachain_src
 parachain_test: &parachain_test
   - 'ts-tests/**'
   - 'docker/**'
-  - 'scripts/build-bridge-docker.sh'
-  - 'scripts/launch-local-docker.sh'
-  - 'scripts/launch-local-bridge-docker.sh'
+  - 'scripts/build-bridge.sh'
+  - 'scripts/launch-network.sh'
+  - 'scripts/launch-bridge.sh'
 
 coverage_src: &coverage_src
   - *parachain_src
@@ -37,6 +37,7 @@ tee_test: &tee_test
   - 'tee-worker/cli/*.sh'
   - 'docker/**'
   - 'tee-worker/docker/*.yml'
+  - 'tee-worker/litentry/core/assertion-build/src/dynamic/contracts/**'
 
 bitacross_src: &bitacross_src
   - 'bitacross-worker/**/*.rs'
@@ -46,7 +47,7 @@ bitacross_src: &bitacross_src
   - 'bitacross-worker/build.Dockerfile'
   - 'bitacross-worker/enclave-runtime/**'
 
-bitacross_test: &bitacross_src
+bitacross_test: &bitacross_test
   - 'bitacross-worker/ts-tests/**'
   - 'bitacross-worker/cli/*.sh'
   - 'docker/**'

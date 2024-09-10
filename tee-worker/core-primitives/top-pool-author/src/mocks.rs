@@ -307,7 +307,7 @@ mod tests {
 
 		let trusted_operation_or_hash =
 			TrustedOperationOrHash::<TrustedCallSignedMock, GetterMock>::from_top(
-				trusted_operation.clone(),
+				trusted_operation,
 			);
 		let removed_tops = author.remove_top(vec![trusted_operation_or_hash], shard, true).unwrap();
 

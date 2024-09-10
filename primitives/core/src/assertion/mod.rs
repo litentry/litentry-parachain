@@ -54,11 +54,10 @@ use web3_token::Web3TokenType;
 pub mod dynamic;
 use dynamic::DynamicParams;
 
-use crate::{AccountId, ParameterString};
+use crate::{vec, AccountId, ParameterString, Vec};
 
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_std::{vec, vec::Vec};
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -76,7 +75,7 @@ pub enum Assertion {
 	#[codec(index = 5)]
 	A7(ParameterString),                                    // (minimum_amount)
 	#[codec(index = 6)]
-	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(BoundedWeb3Network),                                 // litentry, polkadot, kusama, khala, ethereum
 	#[codec(index = 7)]
 	A10(ParameterString),                                   // (minimum_amount)
 	#[codec(index = 8)]
@@ -140,14 +139,16 @@ pub enum Assertion {
 	NftHolder(Web3NftType),
 
 	#[codec(index = 27)]
-	Dynamic(DynamicParams)
+	Dynamic(DynamicParams),
+
+	#[codec(index = 28)]
+	LinkedIdentities,
 }
 
-const A8_SUPPORTED_NETWORKS: [Web3Network; 6] = [
+const A8_SUPPORTED_NETWORKS: [Web3Network; 5] = [
 	Web3Network::Polkadot,
 	Web3Network::Kusama,
 	Web3Network::Litentry,
-	Web3Network::Litmus,
 	Web3Network::Khala,
 	Web3Network::Ethereum,
 ];
@@ -165,13 +166,13 @@ impl Assertion {
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
 			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
-			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
+			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Ethereum],
 			Self::A7(..) | Self::A14 => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
-			Self::A10(..) |
-			Self::A11(..) |
-			Self::VIP3MembershipCard(..) |
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
+			Self::A10(..)
+			| Self::A11(..)
+			| Self::VIP3MembershipCard(..)
+			| Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(networks) => networks
 				.into_iter()
@@ -198,7 +199,11 @@ impl Assertion {
 			// any web3 network is allowed
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
-			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
+			Self::A2(..)
+			| Self::A3(..)
+			| Self::A6
+			| Self::GenericDiscordRole(..)
+			| Self::LinkedIdentities => vec![],
 			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::PlatformUser(p_type) => p_type.get_supported_networks(),
 			Self::NftHolder(t_type) => t_type.get_supported_networks(),
@@ -211,7 +216,7 @@ impl Assertion {
 	#[allow(clippy::match_like_matches_macro)]
 	pub fn skip_identity_filtering(&self) -> bool {
 		match self {
-			Self::A1 | Self::Dynamic(..) => true,
+			Self::A1 | Self::Dynamic(..) | Self::LinkedIdentities => true,
 			_ => false,
 		}
 	}

@@ -4,8 +4,8 @@ import { readFileSync } from 'fs';
 export const Config = z.object({
     connections: z.number().int().positive(),
     iterations: z.number(),
-    substrateEndpoint: z.string().url(),
-    workerEndpoint: z.string().url(),
+    parachainEndpoint: z.string().url(),
+    enclaveEndpoint: z.string().url(),
 });
 
 export type Config = z.infer<typeof Config>;

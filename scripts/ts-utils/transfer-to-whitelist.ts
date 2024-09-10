@@ -1,6 +1,6 @@
 //run: pnpm exec ts-node transfer-to-whitelist.ts
 
-import { initApi } from "./initApis";
+import { initApi } from './initApis';
 import colors from 'colors';
 let whiteList: any;
 import * as ExcelJS from 'exceljs';
@@ -8,7 +8,6 @@ import * as ExcelJS from 'exceljs';
 const transferAmount = '100000000000000';
 
 function transfer(api: any) {
-
     let txs: any = [];
     for (let index = 0; index < whiteList.length; index++) {
         try {
@@ -16,16 +15,17 @@ function transfer(api: any) {
             txs.push(tx);
         } catch (error: any) {
             //maybe invalied address or other error remove it from whitelist
-            console.log(colors.red('transfer Error: '), `${error.message}. Removing ${whiteList[index]} from whiteList.`);
+            console.log(
+                colors.red('transfer Error: '),
+                `${error.message}. Removing ${whiteList[index]} from whiteList.`
+            );
             whiteList.splice(index, 1);
             index--;
         }
     }
-    const transfer_hex =
-        api.tx.utility.batchAll(txs)
-            .toHex()
+    const transfer_hex = api.tx.utility.batchAll(txs).toHex();
 
-    return transfer_hex
+    return transfer_hex;
 }
 
 async function main() {
@@ -41,13 +41,13 @@ async function main() {
     // Read the second column of the sheet and skip the first row
     whiteList = worksheet.getColumn(2).values.slice(1);
 
-    const { defaultAPI } = await initApi();
+    // params: source chain endpoint, destination chain endpoint
+    const { sourceApi } = await initApi('ws://localhost:9944', 'ws://localhost:9944');
 
-    const transfer_hex = transfer(defaultAPI);
+    const transfer_hex = transfer(sourceApi);
     console.log(colors.green('transfer_hex'), transfer_hex);
     console.log(colors.green('done'));
-    process.exit()
-
+    process.exit();
 }
 
 main();

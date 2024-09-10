@@ -28,6 +28,8 @@ extern "C" {
 		untrusted_worker_addr_size: u32,
 		encoded_base_dir_str: *const u8,
 		encoded_base_dir_size: u32,
+		ceremony_commands_thread_count: u8,
+		ceremony_events_thread_count: u8,
 	) -> sgx_status_t;
 
 	pub fn init_direct_invocation_server(
@@ -126,6 +128,13 @@ extern "C" {
 	) -> sgx_status_t;
 
 	pub fn get_ethereum_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_ton_wallet_pair(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
 		pair: *mut u8,

@@ -4,7 +4,7 @@ import { step } from 'mocha-steps';
 import { signAndSend, describeLitentry, loadConfig, sleep, sudoWrapperTC } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
 import { Web3 } from 'web3';
-
+const BN = require('bn.js');
 import { compiled } from '../common/utils/compile';
 
 describeLitentry('Test EVM Module Contract', ``, (context) => {
@@ -24,7 +24,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
 
         // Deposit money into substrate account's truncated EVM address's mapping substrate account
-        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, 30000000000000);
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, new BN('30000000000000000000'));
         await signAndSend(tx_init, context.eve);
 
         // Get the initial balance of Eve and EVM external account
@@ -41,7 +41,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        let value = 20000000000000; // 20 000 000 000 000
+        let value = new BN('20000000000000000000'); // 20 000 000 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
             eveMappedEVMAccount,
@@ -49,7 +49,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             '0x',
             value,
             1000000,
-            25000,
+            25000000000,
             null,
             null,
             []

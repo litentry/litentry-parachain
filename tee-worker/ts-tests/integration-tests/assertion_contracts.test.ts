@@ -40,8 +40,7 @@ describe('Test Vc (direct request)', function () {
 
     before(async () => {
         context = await initIntegrationTestContext(
-            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
+            process.env.PARACHAIN_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await context.web3Wallets.substrate.Alice.getIdentity(context);
@@ -49,9 +48,9 @@ describe('Test Vc (direct request)', function () {
     });
 
     step('loading tokenmapping contract bytecode', async function () {
-        const file = path.resolve('./', './contracts-build-info/TokenMapping.sol/TokenMapping.json');
+        const file = path.resolve('./', './contracts/token_holding_amount/TokenMapping.sol/TokenMapping.json');
         const data = fs.readFileSync(file, 'utf8');
-        contractBytecode = JSON.parse(data).bytecode.object;
+        contractBytecode = JSON.parse(data).bytecode;
         assert.isNotEmpty(contractBytecode);
     });
 
@@ -65,7 +64,12 @@ describe('Test Vc (direct request)', function () {
         const assertionId = '0x0000000000000000000000000000000000000003';
         const createAssertionEventsPromise = subscribeToEvents('evmAssertions', 'AssertionCreated', context.api);
 
-        const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [secret]);
+        const proposal = context.api.tx.evmAssertions.createAssertion(assertionId, contractBytecode, [
+            // At least three secrets are required here.
+            secret,
+            secret,
+            secret,
+        ]);
         await context.api.tx.developerCommittee.execute(proposal, proposal.encodedLength).signAndSend(alice);
 
         const event = (await createAssertionEventsPromise).map((e) => e);
@@ -127,11 +131,12 @@ describe('Test Vc (direct request)', function () {
 
         const abiCoder = new ethers.utils.AbiCoder();
         const encodedData = abiCoder.encode(['string'], ['bnb']);
+
         const assertion = {
             dynamic: context.api.createType('DynamicParams', [
                 Uint8Array.from(Buffer.from('0000000000000000000000000000000000000003', 'hex')),
                 encodedData,
-                false,
+                true,
             ]),
         };
 

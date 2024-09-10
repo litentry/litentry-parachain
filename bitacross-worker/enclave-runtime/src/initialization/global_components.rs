@@ -103,6 +103,7 @@ pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Se
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveBitcoinKeyRepository = KeyRepository<SchnorrPair, SchnorrSeal>;
 pub type EnclaveEthereumKeyRepository = KeyRepository<EcdsaPair, EcdsaSeal>;
+pub type EnclaveTonKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
@@ -306,7 +307,6 @@ pub type EnclaveTopPoolAuthor = Author<
 	AuthorTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
-	EnclaveOCallApi,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 >;
@@ -356,6 +356,10 @@ pub static GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 pub static GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveEthereumKeyRepository,
 > = ComponentContainer::new("Ethereum key repository");
+
+/// Ton key repository
+pub static GLOBAL_TON_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveTonKeyRepository> =
+	ComponentContainer::new("Ton key repository");
 
 /// Light client db seal for the Integritee parentchain
 pub static GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<

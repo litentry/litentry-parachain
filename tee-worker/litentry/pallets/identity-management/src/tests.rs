@@ -175,12 +175,7 @@ fn link_identity_fails_for_linked_identity() {
 
 		// alice -> charlie NOK, as alice is already in bob's IDGraph
 		assert_err!(
-			IMT::link_identity(
-				RuntimeOrigin::signed(ALICE),
-				alice.clone(),
-				charlie.clone(),
-				web3networks,
-			),
+			IMT::link_identity(RuntimeOrigin::signed(ALICE), alice.clone(), charlie, web3networks,),
 			Error::<Test>::IdentityAlreadyLinked
 		);
 
@@ -242,7 +237,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 		assert_err!(
 			IMT::link_identity(
 				RuntimeOrigin::signed(ALICE),
-				who.clone(),
+				who,
 				alice_twitter_identity(65),
 				vec![],
 			),
@@ -279,9 +274,9 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::id_graph(&who.clone());
+		let id_graph = IMT::id_graph(&who);
 		assert_eq!(id_graph.len(), 2);
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 
 		assert_ok!(IMT::deactivate_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -297,19 +292,19 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::id_graph(&who.clone())
+		let id_graph = IMT::id_graph(&who)
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling link_identity.
 		assert_eq!(id_graph.len(), 1);
-		assert_eq!(IMT::id_graph(&who.clone()).len(), 2);
+		assert_eq!(IMT::id_graph(&who).len(), 2);
 		// identity is only deactivated, so it still exists
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 
 		assert_ok!(IMT::deactivate_identity(
 			RuntimeOrigin::signed(ALICE),
-			who.clone(),
+			who,
 			bob_substrate_identity(),
 		));
 	});
@@ -334,9 +329,9 @@ fn activate_identity_works() {
 				status: IdentityStatus::Active
 			}
 		);
-		let id_graph = IMT::id_graph(&who.clone());
+		let id_graph = IMT::id_graph(&who);
 		assert_eq!(id_graph.len(), 2);
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 
 		assert_ok!(IMT::deactivate_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -351,14 +346,14 @@ fn activate_identity_works() {
 				status: IdentityStatus::Inactive
 			}
 		);
-		let id_graph = IMT::id_graph(&who.clone())
+		let id_graph = IMT::id_graph(&who)
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling link_identity.
 		assert_eq!(id_graph.len(), 1);
 		// identity is only deactivated, so it still exists
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 
 		assert_ok!(IMT::activate_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -366,9 +361,9 @@ fn activate_identity_works() {
 			alice_substrate_identity(),
 		));
 
-		let id_graph = IMT::id_graph(&who.clone());
+		let id_graph = IMT::id_graph(&who);
 		assert_eq!(id_graph.len(), 2);
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
 }
 
@@ -550,7 +545,7 @@ fn id_graph_stats_works() {
 		// alice's IDGraph should have 3 entries:
 		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
 		assert_eq!(stats.len(), 1);
-		assert!(stats.contains(&(alice.clone(), 3)));
+		assert!(stats.contains(&(alice, 3)));
 	});
 }
 
@@ -626,7 +621,7 @@ fn remove_identity_graph_of_other_account_fails() {
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
-			alice.clone(),
+			alice,
 			alice_twitter_identity(1),
 			vec![],
 		));

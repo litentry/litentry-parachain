@@ -1,0 +1,24 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"importHelpers": true,
+		"target": "esnext",
+		"module": "esnext",
+		"lib": ["es2020", "dom"],
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"baseUrl": ".",
+		"paths": {
+			"@litentry/chaindata": ["packages/chaindata/src/index.ts"],
+			"@litentry/enclave": ["packages/enclave/src/index.ts"],
+			"@litentry/vc-sdk": ["packages/vc-sdk/src/index.ts"]
+		}
+	},
+	"exclude": ["node_modules", "tmp"]
+}

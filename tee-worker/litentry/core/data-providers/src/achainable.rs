@@ -1518,7 +1518,7 @@ mod tests {
 	}
 
 	#[test]
-	fn total_transactions_work() {
+	fn total_transactions_works() {
 		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
 
 		let mut client = new_achainable_client();

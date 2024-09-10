@@ -35,7 +35,6 @@ on:
         description: If any of the genesis artefacts should be released alongside
         options:
           - none
-          - litmus
           - rococo
           - litentry
 
@@ -76,9 +75,9 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - rococo
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -97,7 +96,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.66.0"
+          profile: production
 
       - name: Summary
         run: |
@@ -124,6 +123,10 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
+
       - name: Build docker image
         run: |
           ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
@@ -143,6 +146,7 @@ jobs:
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-chain-aio:${{ env.RELEASE_TAG }} | gzip > litentry-chain-aio.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -152,6 +156,7 @@ jobs:
           path: |
             litentry-collator
             litentry-parachain-dev.tar.gz
+            litentry-chain-aio.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -168,11 +173,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -241,11 +242,7 @@ jobs:
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+        uses: ./.github/actions/disk-cleanup
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -300,15 +297,14 @@ jobs:
         run: |
           docker push litentry/bitacross-worker:${{ env.RELEASE_TAG }}
 
-
   parachain-ts-tests:
     runs-on: ubuntu-latest
     needs: build-parachain-client
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
@@ -322,6 +318,7 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-chain-aio.tar.gz
           docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
@@ -350,6 +347,7 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+          docker push litentry/litentry-chain-aio:${{ env.RELEASE_TAG }}
 
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}

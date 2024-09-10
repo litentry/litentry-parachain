@@ -20,7 +20,7 @@ development = [
     "itp-attestation-handler/development",
     "litentry-primitives/development",
     "litentry-macros/development",
-    "bc-task-receiver/development",
+    "bc-task-processor/development",
 ]
 offchain-worker = [
     "itp-settings/offchain-worker",
@@ -59,7 +59,6 @@ sgx_tunittest = { branch = "master", git = "https://github.com/apache/teaclave-s
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 [dependencies]
-array-bytes = { version = "6.0.0" }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 derive_more = { version = "0.99.5" }
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx" }
@@ -86,19 +85,15 @@ webpki = { git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_
 base58 = { rev = "sgx_1.1.3", package = "rust-base58", default-features = false, features = ["mesalock_sgx"], git = "https://github.com/mesalock-linux/rust-base58-sgx" }
 
 cid = { default-features = false, git = "https://github.com/whalelephant/rust-cid", branch = "nstd" }
-enclave-bridge-primitives = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "sdk-v0.12.11-polkadot-v0.9.42" }
 multibase = { default-features = false, git = "https://github.com/whalelephant/rust-multibase", branch = "nstd" }
 
 # local deps
 ita-parentchain-interface = { path = "../app-libs/parentchain-interface", default-features = false, features = ["sgx"] }
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime", default-features = false }
 ita-stf = { path = "../app-libs/stf", default-features = false, features = ["sgx"] }
-itc-direct-rpc-client = { path = "../core/direct-rpc-client", default-features = false, features = ["sgx"] }
 itc-direct-rpc-server = { path = "../core/direct-rpc-server", default-features = false, features = ["sgx"] }
 itc-offchain-worker-executor = { path = "../core/offchain-worker-executor", default-features = false, features = ["sgx"] }
 itc-parentchain = { path = "../core/parentchain/parentchain-crate", default-features = false, features = ["sgx"] }
-itc-parentchain-block-import-dispatcher = { path = "../core/parentchain/block-import-dispatcher", default-features = false, features = ["sgx"] }
-itc-parentchain-block-importer = { path = "../core/parentchain/block-importer", default-features = false, features = ["sgx"] }
 itc-parentchain-light-client = { path = "../core/parentchain/light-client", default-features = false }
 itc-parentchain-test = { path = "../core/parentchain/test", default-features = false }
 itc-tls-websocket-server = { path = "../core/tls-websocket-server", default-features = false, features = ["sgx"] }
@@ -131,7 +126,6 @@ itp-utils = { path = "../core-primitives/utils", default-features = false }
 # litentry
 bc-enclave-registry = { path = "../bitacross/core/bc-enclave-registry", default-features = false, features = ["sgx"] }
 bc-musig2-ceremony = { path = "../bitacross/core/bc-musig2-ceremony", default-features = false, features = ["sgx"] }
-bc-musig2-runner = { path = "../bitacross/core/bc-musig2-runner", default-features = false, features = ["sgx"] }
 bc-relayer-registry = { path = "../bitacross/core/bc-relayer-registry", default-features = false, features = ["sgx"] }
 bc-signer-registry = { path = "../bitacross/core/bc-signer-registry", default-features = false, features = ["sgx"] }
 bc-task-sender = { path = "../bitacross/core/bc-task-sender", default-features = false, features = ["sgx"] }
@@ -142,7 +136,7 @@ litentry-primitives = { path = "../litentry/primitives", default-features = fals
 litentry-proc-macros = { path = "../../primitives/core/proc-macros", default-features = false }
 
 # bitacross
-bc-task-receiver = { path = "../bitacross/core/bc-task-receiver", default-features = false, features = ["sgx"] }
+bc-task-processor = { path = "../bitacross/core/bc-task-processor", default-features = false, features = ["sgx"] }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

@@ -18,10 +18,32 @@
 
 pragma solidity ^0.8.8;
 
-library Constants {
-	uint256 constant decimals_factor = 1000;
-}
 struct TokenInfo {
-	uint32 network;
-	string tokenAddress;
+    uint256[] ranges;
+    // Some ranges are decimals, need convert them to int with multiply by rangeDecimals.
+    uint256 rangeDecimals;
+    // Different networks for same token may have different decimals, need use maxDecimals as multiplier factor.
+    uint8 maxDecimals;
+    TokenInfoNetwork[] networks;
+}
+
+struct TokenInfoNetwork {
+    uint32 network;
+    string tokenAddress;
+    uint8 dataProvierType;
+    uint8 decimals;
+}
+
+struct TokenInfoRanges {
+    uint256[] ranges;
+    // Some ranges are decimals, need convert them to int with multiply by rangeDecimals.
+    uint256 rangeDecimals;
+}
+
+library DataProviderTypes {
+    uint8 public constant AchainableClient = 0;
+    uint8 public constant BlockchainInfoClient = 1;
+    uint8 public constant GeniidataClient = 2;
+    uint8 public constant MoralisClient = 3;
+    uint8 public constant NoderealClient = 4;
 }

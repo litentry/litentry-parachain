@@ -238,7 +238,9 @@ mod impl_ffi {
 		fn generate_dcap_ra_extrinsic(&self, w_url: &str, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
-			self.set_ql_qe_enclave_paths()?;
+			if !skip_ra {
+				self.set_ql_qe_enclave_paths()?;
+			}
 			let quoting_enclave_target_info = if !skip_ra {
 				match self.qe_get_target_info() {
 					Ok(target_info) => Some(target_info),

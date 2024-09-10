@@ -69,11 +69,15 @@
     "type_mapping": [
       [
         "SignBitcoin",
-        "(LitentryIdentity, RequestAesKey, SignBitcoinPayload)"
+        "(LitentryIdentity, SignBitcoinPayload)"
       ],
       [
         "SignEthereum",
-        "(LitentryIdentity, RequestAesKey, PrehashedEthereumMessage)"
+        "(LitentryIdentity, PrehashedEthereumMessage)"
+      ],
+      [
+        "SignTon",
+        "(LitentryIdentity, Vec<u8>)"
       ]
     ]
   },
@@ -92,8 +96,7 @@
     ]
   },
   "PrehashedEthereumMessage": "[u8; 32]",
-  "RequestAesKey": "[u8; 32]",
-  "AesRequest": {
+  "PlainRequest": {
     "type": "struct",
     "type_mapping": [
       [
@@ -101,33 +104,12 @@
         "ShardIdentifier"
       ],
       [
-        "key",
-        "Vec<u8>"
-      ],
-      [
         "payload",
-        "AesOutput"
+        "Vec<u8>"
       ]
     ]
   },
   "ShardIdentifier": "[u8; 32]",
-  "AesOutput": {
-    "type": "struct",
-    "type_mapping": [
-      [
-        "ciphertext",
-        "Vec<u8>"
-      ],
-      [
-        "aad",
-        "Vec<u8>"
-      ],
-      [
-        "nonce",
-        "[u8; 12]"
-      ]
-    ]
-  },
   "Address32": "[u8;32]",
   "Address20": "[u8;20]",
   "Address33": "[u8;33]",

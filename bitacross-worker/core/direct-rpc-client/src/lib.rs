@@ -41,11 +41,7 @@ use core::str::FromStr;
 
 use log::{debug, error};
 
-use serde_json::from_str;
-
-use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
-
-use itp_utils::FromHexPrefixed;
+use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 
 use std::{
 	boxed::Box,
@@ -98,12 +94,8 @@ impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 }
 
 pub trait RpcClientFactory {
-	type Client: RpcClient;
-	fn create(
-		&self,
-		url: &str,
-		response_sink: Sender<Response>,
-	) -> Result<Self::Client, Box<dyn Error>>;
+	type Client: RpcClient + Send + Clone;
+	fn create(&self, url: &str) -> Result<Self::Client, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClientFactory {}
@@ -111,12 +103,8 @@ pub struct DirectRpcClientFactory {}
 impl RpcClientFactory for DirectRpcClientFactory {
 	type Client = DirectRpcClient;
 
-	fn create(
-		&self,
-		url: &str,
-		response_sink: Sender<Response>,
-	) -> Result<Self::Client, Box<dyn Error>> {
-		DirectRpcClient::new(url, response_sink)
+	fn create(&self, url: &str) -> Result<Self::Client, Box<dyn Error>> {
+		DirectRpcClient::new(url)
 	}
 }
 
@@ -124,12 +112,13 @@ pub trait RpcClient {
 	fn send(&mut self, request: &RpcRequest) -> Result<(), Box<dyn Error>>;
 }
 
+#[derive(Clone)]
 pub struct DirectRpcClient {
-	request_sink: Sender<String>,
+	request_sink: Sender<(String, Sender<bool>)>,
 }
 
 impl DirectRpcClient {
-	pub fn new(url: &str, response_sink: Sender<Response>) -> Result<Self, Box<dyn Error>> {
+	pub fn new(url: &str) -> Result<Self, Box<dyn Error>> {
 		let server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
@@ -144,28 +133,21 @@ impl DirectRpcClient {
 			client_tls_with_config(server_url.as_str(), stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
-		let (request_sender, request_receiver) = channel();
+		let (request_sender, request_receiver) = channel::<(String, Sender<bool>)>();
 
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
 
 		std::thread::spawn(move || {
-			loop {
-				// let's flush all pending requests first
-				while let Ok(request) = request_receiver.try_recv() {
-					if let Err(e) = socket.write_message(Message::Text(request)) {
-						error!("Could not write message to socket, reason: {:?}", e)
-					}
+			while let Ok((request, result_sender)) = request_receiver.recv() {
+				let mut result = true;
+				if let Err(e) = socket.write_message(Message::Text(request)) {
+					error!("Could not write message to socket, reason: {:?}", e);
+					result = false;
 				}
-
-				if let Ok(message) = socket.read_message() {
-					if let Ok(Some(response)) = Self::handle_ws_message(message) {
-						if let Err(e) = response_sink.send(response) {
-							log::error!("Could not forward response, reason: {:?}", e)
-						};
-					}
+				if let Err(e) = result_sender.send(result) {
+					log::error!("Could not send rpc result back, reason: {:?}", e);
 				}
-				std::thread::sleep(Duration::from_millis(1))
 			}
 		});
 		debug!("Connected to peer: {}", url);
@@ -190,23 +172,6 @@ impl DirectRpcClient {
 			_ => {},
 		}
 	}
-
-	fn handle_ws_message(message: Message) -> Result<Option<Response>, Box<dyn Error>> {
-		match message {
-			Message::Text(text) => {
-				let rpc_response: RpcResponse = from_str(&text)
-					.map_err(|e| format!("Could not deserialize RpcResponse, reason: {:?}", e))?;
-				let return_value: RpcReturnValue =
-					RpcReturnValue::from_hex(&rpc_response.result)
-						.map_err(|e| format!("Could not deserialize value , reason: {:?}", e))?;
-				Ok(Some((rpc_response.id, return_value)))
-			},
-			_ => {
-				log::warn!("Only text messages are supported");
-				Ok(None)
-			},
-		}
-	}
 }
 
 #[derive(Clone)]
@@ -219,44 +184,15 @@ impl RpcClient for DirectRpcClient {
 	fn send(&mut self, request: &RpcRequest) -> Result<(), Box<dyn Error>> {
 		let request = serde_json::to_string(request)
 			.map_err(|e| format!("Could not parse RpcRequest {:?}", e))?;
+		let (sender, receiver) = channel();
 		self.request_sink
-			.send(request)
-			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
-	}
-}
+			.send((request, sender))
+			.map_err(|e| format!("Could not parse RpcRequest {:?}", e))?;
 
-#[cfg(test)]
-mod tests {
-	use crate::DirectRpcClient;
-	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
-	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-	use itp_utils::ToHexPrefixed;
-	use tungstenite::Message;
-
-	#[test]
-	fn test_response_handling() {
-		let id = Id::Text(
-			"0x0000000000000000000000000000000000000000000000000000000000000000".to_owned(),
-		);
-		let return_value: RpcReturnValue = RpcReturnValue::new(
-			vec![],
-			false,
-			DirectRequestStatus::TrustedOperationStatus(
-				TrustedOperationStatus::TopExecuted(vec![], true),
-				H256::random(),
-			),
-		);
-		let rpc_response: RpcResponse = RpcResponse {
-			jsonrpc: "2.0".to_owned(),
-			result: return_value.to_hex(),
-			id: id.clone(),
-		};
-		let serialized_rpc_response = serde_json::to_string(&rpc_response).unwrap();
-		let message = Message::text(serialized_rpc_response);
-
-		let (result_id, result) = DirectRpcClient::handle_ws_message(message).unwrap().unwrap();
-
-		assert_eq!(id, result_id);
-		assert_eq!(return_value, result);
+		if receiver.recv()? {
+			Ok(())
+		} else {
+			Err("Could not send request".into())
+		}
 	}
 }

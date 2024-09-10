@@ -54,7 +54,10 @@ use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 use crate::error::ServiceResult;
 use itc_parentchain::primitives::ParentchainId;
 use itp_types::parentchain::{AccountId, Balance};
-use sp_core::crypto::{AccountId32, Ss58Codec};
+use sp_core::{
+	crypto::{AccountId32, Ss58Codec},
+	Pair,
+};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSigner;
 use std::{
@@ -259,6 +262,11 @@ pub(crate) fn main() {
 		let ethereum_keypair = enclave.get_ethereum_wallet_pair().unwrap();
 		println!("public : 0x{}", hex::encode(ethereum_keypair.public_bytes()));
 		println!("private: 0x{}", hex::encode(ethereum_keypair.private_bytes()));
+
+		println!("Ton wallet:");
+		let ton_keypair = enclave.get_ton_wallet_pair().unwrap();
+		println!("public : 0x{}", hex::encode(ton_keypair.public().0));
+		println!("private: 0x{}", hex::encode(ton_keypair.seed()));
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-wallet") {
 		println!("Initializing wallets");
 		enclave.init_wallets(config.data_dir().to_str().unwrap()).unwrap();
@@ -355,11 +363,7 @@ fn start_worker<E, T, InitializationHandler>(
 	// ------------------------------------------------------------------------
 	// Start prometheus metrics server.
 	if config.enable_metrics_server() {
-		let enclave_wallet = Arc::new(EnclaveAccountInfoProvider::new(
-			litentry_rpc_api.clone(),
-			tee_accountid.clone(),
-		));
-		let metrics_handler = Arc::new(MetricsHandler::new(enclave_wallet));
+		let metrics_handler = Arc::new(MetricsHandler {});
 		let metrics_server_port = config
 			.try_parse_metrics_server_port()
 			.expect("metrics server port to be a valid port number");

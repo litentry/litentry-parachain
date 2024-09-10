@@ -8,5 +8,5 @@ This folder contains Ethereum Virtual Machine (EVM) contracts converted to JSON 
 
 ## Included Contracts
 
--   [ParachainStaking](https://www.notion.so/web3builders/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006?pvs=4#53cff6e661e84c4fb300bbb5e9f68033)
--   [BridgeTransfer](https://www.notion.so/web3builders/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006?pvs=4#1f82e990425345b59b7cdbba50bb2c49)
+-   [ParachainStaking] precompiles/parachain-staking/StakingInterface.sol
+-   [BridgeTransfer] precompiles/bridge-transfer/BridgeInterface.sol

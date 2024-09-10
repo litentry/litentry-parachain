@@ -654,7 +654,7 @@ where
 			}
 		}
 
-		// check if the given hash is equal or a a descendent of any root, if we
+		// check if the given hash is equal or a descendent of any root, if we
 		// find a valid root that passes the predicate then we must ensure that
 		// we're not finalizing past any children node.
 		let mut position = None;
@@ -1542,7 +1542,7 @@ mod test {
 		assert_eq!(path, [0, 1, 0, 0, 0]);
 
 		// Post order traversal requirement for `import`
-		let res = tree.import(&"Z", 100, (), &is_descendent_of_for_post_order);
+		let res = tree.import("Z", 100, (), &is_descendent_of_for_post_order);
 		assert_eq!(res, Ok(false));
 		assert_eq!(
 			tree.iter().map(|node| *node.0).collect::<Vec<_>>(),

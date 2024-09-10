@@ -136,7 +136,7 @@ fn signed_block(
 	let block_data = SidechainBlockDataBuilder::default()
 		.with_timestamp(now_as_millis())
 		.with_layer_one_head(parentchain_header.hash())
-		.with_signer(signer.clone())
+		.with_signer(signer)
 		.with_payload(state_update)
 		.build();
 

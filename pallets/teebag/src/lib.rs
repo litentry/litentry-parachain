@@ -16,12 +16,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
+#![allow(dead_code)]
 
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo},
 	ensure,
 	pallet_prelude::*,
 	traits::Get,
+	weights::Weight,
 };
 use frame_system::pallet_prelude::*;
 use parity_scale_codec::Decode;
@@ -37,6 +39,9 @@ pub use sgx_verify::{
 };
 
 pub use pallet::*;
+
+pub mod weights;
+pub use crate::weights::WeightInfo;
 
 mod types;
 pub use types::*;
@@ -62,6 +67,9 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
+
 		type MomentsPerDay: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -104,7 +112,7 @@ pub mod pallet {
 		},
 		ParentchainBlockProcessed {
 			who: T::AccountId,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			block_hash: H256,
 			task_merkle_root: H256,
 		},
@@ -273,7 +281,6 @@ pub mod pallet {
 		pub mode: OperationalMode,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { allow_sgx_debug_mode: false, admin: None, mode: OperationalMode::Production }
@@ -281,7 +288,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
 			Mode::<T>::put(self.mode);
@@ -329,7 +336,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_add_enclave())]
 		pub fn force_add_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -341,7 +348,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_remove_enclave())]
 		pub fn force_remove_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -352,7 +359,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_remove_enclave_by_mrenclave())]
 		pub fn force_remove_enclave_by_mrenclave(
 			origin: OriginFor<T>,
 			mrenclave: MrEnclave,
@@ -377,7 +384,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_remove_enclave_by_worker_type())]
 		pub fn force_remove_enclave_by_worker_type(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -403,7 +410,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_add_authorized_enclave())]
 		pub fn force_add_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -421,7 +428,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_remove_authorized_enclave())]
 		pub fn force_remove_authorized_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -442,7 +449,13 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight({
+            match attestation_type {
+                AttestationType::Ias => <T as Config>::WeightInfo::register_enclave_with_ias_attestation(),
+                AttestationType::Dcap(_) => <T as Config>::WeightInfo::register_enclave_with_dcap_attestation(),
+                AttestationType::Ignore => Weight::zero(),
+            }
+        })]
 		pub fn register_enclave(
 			origin: OriginFor<T>,
 			worker_type: WorkerType,
@@ -492,10 +505,10 @@ pub mod pallet {
 
 			match Self::mode() {
 				OperationalMode::Production | OperationalMode::Maintenance => {
-					if !Self::allow_sgx_debug_mode() &&
-						enclave.sgx_build_mode == SgxBuildMode::Debug
+					if !Self::allow_sgx_debug_mode()
+						&& enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
-						return Err(Error::<T>::InvalidSgxMode.into())
+						return Err(Error::<T>::InvalidSgxMode.into());
 					}
 					ensure!(
 						AuthorizedEnclave::<T>::get(worker_type).contains(&enclave.mrenclave),
@@ -518,7 +531,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::unregister_enclave())]
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			Self::remove_enclave(&sender)?;
@@ -526,7 +539,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::register_quoting_enclave())]
 		pub fn register_quoting_enclave(
 			origin: OriginFor<T>,
 			enclave_identity: Vec<u8>,
@@ -542,7 +555,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(11)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::register_tcb_info())]
 		pub fn register_tcb_info(
 			origin: OriginFor<T>,
 			tcb_info: Vec<u8>,
@@ -562,7 +575,7 @@ pub mod pallet {
 		// ===============================================================================
 
 		#[pallet::call_index(20)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::post_opaque_task())]
 		pub fn post_opaque_task(
 			origin: OriginFor<T>,
 			request: RsaRequest,
@@ -573,11 +586,11 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(21)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::parentchain_block_processed())]
 		pub fn parentchain_block_processed(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			block_number: T::BlockNumber,
+			block_number: BlockNumberFor<T>,
 			task_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -594,7 +607,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(22)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		#[pallet::weight(<T as Config>::WeightInfo::sidechain_block_imported())]
 		pub fn sidechain_block_imported(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -623,7 +636,7 @@ pub mod pallet {
 			// Simple logic for now: only accept blocks from first registered enclave.
 			let primary_enclave_identifier =
 				EnclaveIdentifier::<T>::get(sender_enclave.worker_type)
-					.get(0)
+					.first()
 					.cloned()
 					.ok_or(Error::<T>::EnclaveIdentifierNotExist)?;
 			if sender != primary_enclave_identifier {
@@ -631,7 +644,7 @@ pub mod pallet {
 					"Ignore block confirmation from non primary enclave identifier: {:?}, primary: {:?}",
 					sender, primary_enclave_identifier
 				);
-				return Ok(Pays::No.into())
+				return Ok(Pays::No.into());
 			}
 
 			let block_number = confirmation.block_number;
@@ -829,6 +842,9 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 #[cfg(any(test, feature = "runtime-benchmarks", feature = "test-util"))]
 pub mod test_util;

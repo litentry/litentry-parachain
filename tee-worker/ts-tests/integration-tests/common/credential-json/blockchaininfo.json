@@ -1,0 +1,16 @@
+[
+    {
+        "id": "token-holding-amount-btc",
+        "name": "Bitcoin Holding Amount",
+        "description": "The number of bitcoin tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "BTC"
+        },
+        "dataProvider": "blockchaininfo",
+        "network": "bitcoin",
+        "mockDid": "litentry:bitcoin:0x03041ee39c741c35eb55078220dceb477a1e3b1b129977e0b37db6624772b5bda8",
+        "mockWeb3Network": "BitcoinP2wpkh",
+        "expectedCredentialValue": true
+    }
+]

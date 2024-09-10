@@ -19,44 +19,35 @@ use crate as pallet_evm_address;
 use fp_evm::GenesisAccount;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU32, FindAuthor, GenesisBuild},
+	traits::{ConstU32, FindAuthor},
 	weights::Weight,
 	ConsensusEngineId,
 };
 use frame_system::RawOrigin;
 use hex_literal::hex;
 use parity_scale_codec::Encode;
-use sp_core::{H160, U256};
+use sp_core::{H160, H256, U256};
 use sp_runtime::{
-	generic,
-	traits::{AccountIdLookup, BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature,
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	BuildStorage, MultiSignature,
 };
 use sp_std::vec;
 use std::collections::BTreeMap;
 
-pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
-type Block = frame_system::mocking::MockBlock<Test>;
-
 pub type Balance = u128;
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		// Frontier
-		EVM: pallet_evm::{Pallet, Call, Config, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin},
-		EVMAddress: pallet_evm_address::{Pallet, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		EVM: pallet_evm,
+		Ethereum: pallet_ethereum,
+		EVMAddress: pallet_evm_address,
 	}
 );
 
@@ -64,70 +55,51 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 impl frame_system::Config for Test {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	/// The aggregated dispatch type that is available for extrinsics.
-	type RuntimeCall = RuntimeCall;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = u64;
-	/// The index type for blocks.
-	type BlockNumber = u64;
-	/// The type for hashing blocks and tries.
-	type Hash = sp_core::H256;
-	/// The hashing algorithm used.
-	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = generic::Header<u64, BlakeTwo256>;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	/// The ubiquitous origin type.
-	type RuntimeOrigin = RuntimeOrigin;
-	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
-	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
-	type Version = ();
-	/// Converts a module to an index of this module in the runtime.
-	type PalletInfo = PalletInfo;
-	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<u128>;
-	/// What to do if a new account is created.
-	type OnNewAccount = ();
-	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = ();
-	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = frame_support::traits::Everything;
-	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
-	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = ();
-	/// The maximum length of a block (in bytes).
 	type BlockLength = ();
-	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
+	type Block = frame_system::mocking::MockBlock<Test>;
+	type DbWeight = ();
+	type RuntimeOrigin = RuntimeOrigin;
+	type Nonce = u64;
+	type RuntimeCall = RuntimeCall;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type AccountId = AccountId;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type RuntimeEvent = RuntimeEvent;
+	type BlockHashCount = BlockHashCount;
+	type Version = ();
+	type PalletInfo = PalletInfo;
+	type AccountData = pallet_balances::AccountData<Balance>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
 	type SS58Prefix = ();
-	/// The action to take on a Runtime Upgrade
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+	pub const ExistentialDeposit: u128 = 1;
+}
+
 impl pallet_balances::Config for Test {
-	type MaxLocks = ConstU32<50>;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = Balance; // the type that is relevant to us
-	type RuntimeEvent = RuntimeEvent;
+	type MaxLocks = ();
+	type Balance = u128;
 	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<1>;
+	type RuntimeEvent = RuntimeEvent;
+	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
+
 parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
@@ -270,7 +242,7 @@ impl pallet_evm_address::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 	let mut accounts = BTreeMap::new();
 	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex![
@@ -293,7 +265,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.expect("Pallet balances storage can be assimilated");
 
-	GenesisBuild::<Test>::assimilate_storage(&pallet_evm::GenesisConfig { accounts }, &mut t)
+	pallet_evm::GenesisConfig::<Test> { accounts, ..Default::default() }
+		.assimilate_storage(&mut t)
 		.expect("Pallet evm storage can be assimilated");
 
 	let mut ext = sp_io::TestExternalities::new(t);

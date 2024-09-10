@@ -571,7 +571,7 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let identity = who.clone().into();
+		let identity = who.into();
 
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();

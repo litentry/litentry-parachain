@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use frame_support::{dispatch::*, traits::GenesisBuild, weights::Weight};
+use frame_support::{dispatch::*, weights::Weight};
 pub use pallet_balances::Call as BalancesCall;
 use parity_scale_codec::Decode;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{BuildStorage, SaturatedConversion};
 pub use sp_std::cell::RefCell;
 
 use core_primitives::{AccountId, Balance, BlockNumber};
@@ -42,8 +42,8 @@ pub fn charlie() -> AccountId {
 	AccountId::from(CHARLIE)
 }
 
-pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000 * UNIT;
-pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000 * UNIT;
+pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000_000_000 * UNIT;
+pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000_000_000 * UNIT;
 
 pub struct ExtBuilder<R> {
 	phantom: sp_std::marker::PhantomData<R>,
@@ -73,7 +73,7 @@ where
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<R>().unwrap();
+		let mut t = frame_system::GenesisConfig::<R>::default().build_storage().unwrap();
 
 		pallet_balances::GenesisConfig::<R> {
 			balances: self
@@ -92,24 +92,21 @@ where
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-		let parachain_info_config =
-			parachain_info::GenesisConfig { parachain_id: self.parachain_id.into() };
-		<parachain_info::GenesisConfig as GenesisBuild<R, _>>::assimilate_storage(
-			&parachain_info_config,
-			&mut t,
-		)
+		parachain_info::GenesisConfig::<R> {
+			parachain_id: self.parachain_id.into(),
+			..Default::default()
+		}
+		.assimilate_storage(&mut t)
 		.unwrap();
 
-		<pallet_xcm::GenesisConfig as GenesisBuild<R>>::assimilate_storage(
-			&pallet_xcm::GenesisConfig { safe_xcm_version: Some(2) },
-			&mut t,
-		)
-		.unwrap();
+		pallet_xcm::GenesisConfig::<R> { safe_xcm_version: Some(2), ..Default::default() }
+			.assimilate_storage(&mut t)
+			.unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		let block: BlockNumber = 1;
 		// let block = <R as frame_system::Config>::BlockNumber::from(block_number);
-		ext.execute_with(|| frame_system::Pallet::<R>::set_block_number(block));
+		ext.execute_with(|| frame_system::Pallet::<R>::set_block_number(block.into()));
 		ext
 	}
 }
@@ -130,14 +127,14 @@ where
 	R: BaseRuntimeRequirements,
 {
 	let mut t: sp_io::TestExternalities =
-		frame_system::GenesisConfig::default().build_storage::<R>().unwrap().into();
+		frame_system::GenesisConfig::<R>::default().build_storage().unwrap().into();
 	t.execute_with(|| {
 		frame_system::Pallet::<R>::set_block_consumed_resources(w, 0);
 		assertions()
 	});
 }
 
-/// This macro expects the passed runtime(litentry litmus rococo) to contain
+/// This macro expects the passed runtime(litentry rococo) to contain
 /// `cumulus_pallet_xcmp_queue` and `cumulus_pallet_dmp_queue`.
 #[macro_export]
 macro_rules! decl_test_chain {
@@ -150,20 +147,23 @@ macro_rules! decl_test_chain {
 			ExtBuilder, PARA_A_USER_INITIAL_BALANCE, PARA_B_USER_INITIAL_BALANCE,
 		};
 		use xcm::prelude::Parent;
-		use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
-		runtime_common::decl_test_relay_chain_runtime!($runtime);
+		use xcm_simulator::{
+			decl_test_network, decl_test_parachain, decl_test_relay_chain, TestExt,
+		};
+		pub mod relay_chain {
+			// declared by `decl_test_network`
+			use super::RelayChainXcmRouter;
+			runtime_common::decl_test_relay_chain_runtime!();
+		}
+		use sp_runtime::BuildStorage;
 
 		pub fn relay_ext() -> sp_io::TestExternalities {
-			let mut t = frame_system::GenesisConfig::default()
-				.build_storage::<RelayChainRuntime>()
-				.unwrap();
-
-			pallet_balances::GenesisConfig::<RelayChainRuntime> { balances: vec![] }
-				.assimilate_storage(&mut t)
-				.unwrap();
-
+			use relay_chain::{Runtime, System};
+			let t = frame_system::GenesisConfig::<Runtime>::default().build_storage().unwrap();
 			let mut ext = sp_io::TestExternalities::new(t);
-			ext.execute_with(|| frame_system::Pallet::<RelayChainRuntime>::set_block_number(1));
+			ext.execute_with(|| {
+				System::set_block_number(1);
+			});
 			ext
 		}
 
@@ -174,7 +174,6 @@ macro_rules! decl_test_chain {
 				DmpMessageHandler = cumulus_pallet_dmp_queue::Pallet::<$runtime>,
 				new_ext = ExtBuilder::<$runtime>::default()
 				.balances(vec![
-					// fund Alice
 					(alice(), PARA_A_USER_INITIAL_BALANCE),
 				]).parachain_id(1).build(),
 			}
@@ -187,7 +186,6 @@ macro_rules! decl_test_chain {
 				DmpMessageHandler = cumulus_pallet_dmp_queue::Pallet::<$runtime>,
 				new_ext = ExtBuilder::<$runtime>::default()
 				.balances(vec![
-					// fund BOB
 					(bob(), PARA_B_USER_INITIAL_BALANCE),
 				]).parachain_id(2).build(),
 			}
@@ -195,13 +193,16 @@ macro_rules! decl_test_chain {
 
 		decl_test_relay_chain! {
 			pub struct Relay {
-				Runtime = RelayChainRuntime,
-				XcmConfig = XcmConfig,
+				Runtime = relay_chain::Runtime,
+				RuntimeCall = relay_chain::RuntimeCall,
+				RuntimeEvent = relay_chain::RuntimeEvent,
+				XcmConfig = relay_chain::XcmConfig,
+				MessageQueue = relay_chain::MessageQueue,
+				System = relay_chain::System,
 				new_ext = relay_ext(),
 			}
 		}
 
-		//declare ParachainXcmRouter, RelayChainXcmRouter
 		decl_test_network! {
 			pub struct TestNet {
 				relay_chain = Relay,

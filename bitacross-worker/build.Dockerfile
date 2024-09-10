@@ -59,19 +59,8 @@ ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
 WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
-RUN \
-  if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
-    echo "Omit cache for release image"; \
-    unset RUSTC_WRAPPER; \
-    make; \
-  else \
-    rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
-    rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
-    rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
-    rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-    make && sccache --show-stats; \
-  fi
-
+RUN unset RUSTC_WRAPPER;
+RUN make
 RUN make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}' > mrenclave.txt
 RUN cargo test --release
 
@@ -118,6 +107,7 @@ COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/* /usr/local/
 COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/bitacross-worker
@@ -156,6 +146,7 @@ RUN groupadd -g 121 sgx_prv && \
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm

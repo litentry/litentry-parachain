@@ -21,36 +21,42 @@ pragma solidity ^0.8.8;
 import "../../libraries/Identities.sol";
 import "../Constants.sol";
 library Wbtc {
-	function getTokenRanges() internal pure returns (uint256[] memory) {
-		uint256[] memory ranges = new uint256[](14);
+    function getTokenRanges() internal pure returns (TokenInfoRanges memory) {
+        uint256[] memory ranges = new uint256[](14);
 
-		// all ranges multiplied by decimals_factor(1000).
-		// pub const BTC_AMOUNT_RANGE: [f64; 14] =[0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
-		ranges[0] = 0;
-		ranges[1] = 1;
-		ranges[2] = 100;
-		ranges[3] = 300;
-		ranges[4] = 600;
-		ranges[5] = 1000;
-		ranges[6] = 2000;
-		ranges[7] = 5000;
-		ranges[8] = 10000;
-		ranges[9] = 15000;
-		ranges[10] = 25000;
-		ranges[11] = 30000;
-		ranges[12] = 40000;
-		ranges[13] = 50000;
+        // all ranges multiplied by decimals_factor(1000).
+        // pub const BTC_AMOUNT_RANGE: [f64; 14] =[0.0, 0.001, 0.1, 0.3, 0.6, 1.0, 2.0, 5.0, 10.0, 15.0, 25.0, 30.0, 40.0, 50.0];
+        ranges[0] = 0;
+        ranges[1] = 1;
+        ranges[2] = 100;
+        ranges[3] = 300;
+        ranges[4] = 600;
+        ranges[5] = 1000;
+        ranges[6] = 2000;
+        ranges[7] = 5000;
+        ranges[8] = 10000;
+        ranges[9] = 15000;
+        ranges[10] = 25000;
+        ranges[11] = 30000;
+        ranges[12] = 40000;
+        ranges[13] = 50000;
 
-		return ranges;
-	}
+        return TokenInfoRanges(ranges, 3);
+    }
 
-	function getTokenInfo() internal pure returns (TokenInfo[] memory) {
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](1);
-		tokenInfoList[0] = TokenInfo(
-			Web3Networks.Ethereum,
-			"0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
-		);
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](1);
+        networks[0] = TokenInfoNetwork(
+            Web3Networks.Ethereum,
+            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+            DataProviderTypes.NoderealClient,
+            18
+        );
 
-		return tokenInfoList;
-	}
+        return networks;
+    }
 }

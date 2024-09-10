@@ -49,19 +49,23 @@ pub fn parse_decimal(input: Vec<u8>) -> PrecompileResult {
 				},
 			};
 
-			let processed_decimal_string =
-				(decimal * Decimal::new(10_i64.pow(decimals), 0)).normalize().to_string();
-			match U256::from_dec_str(processed_decimal_string.as_str()) {
-				Ok(n) => n,
-				Err(e) => {
-					log::debug!(
-						"Cannot parse decimal {:?} to U256, reason: {:?}",
-						processed_decimal_string,
-						e
-					);
-					return Ok(failure_precompile_output(ethabi::Token::Uint(Default::default())))
-				},
-			}
+			// Split the decimal into integer and fractional parts
+			let integer_part = decimal.trunc();
+			let fractional_part = decimal.fract();
+
+			// Process the integer part
+			let integer_string = integer_part.to_string();
+			let integer_u256 = U256::from_dec_str(&integer_string).unwrap()
+				* U256::from(10).pow(U256::from(decimals));
+
+			// Process the fractional part
+			let fractional_string = (fractional_part * Decimal::new(10_i64.pow(decimals), 0))
+				.normalize()
+				.to_string();
+			let fractional_u256 = U256::from_dec_str(&fractional_string).unwrap();
+
+			// Combine the results
+			integer_u256 + fractional_u256
 		},
 		None => {
 			log::debug!("Could not decode input {:?}, reason: string value is invalid", input);
@@ -129,7 +133,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();
@@ -151,7 +155,7 @@ pub mod integration_test {
 		.unwrap();
 
 		// when
-		let (_, return_data, _) = execute_smart_contract(byte_code.clone(), input_data);
+		let (_, return_data, _) = execute_smart_contract(byte_code, input_data);
 
 		// then
 		let decoded = decode(&return_types, &return_data).unwrap();

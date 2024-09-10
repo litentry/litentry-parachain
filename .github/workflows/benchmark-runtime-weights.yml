@@ -14,11 +14,6 @@ on:
         description: litentry
         required: true
         default: true
-      litmus:
-        type: boolean
-        description: litmus
-        required: true
-        default: true
       rococo:
         type: boolean
         description: rococo
@@ -41,18 +36,14 @@ jobs:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: ./.github/actions/disk-cleanup
 
       # try to increase usable memory
       # https://github.com/actions/runner/issues/1051
@@ -87,9 +78,6 @@ jobs:
       - name: Set env
         run: |
           chain=""
-          if [ "${{ github.event.inputs.litmus }}" = "true" ]; then
-            chain="$chain litmus"
-          fi
           if [ "${{ github.event.inputs.litentry }}" = "true" ]; then
             chain="$chain litentry"
           fi
@@ -161,6 +149,7 @@ jobs:
             echo "copy generated weights files back ..."
             scp -o StrictHostKeychecking=no -i ./benchmark-server-key.pem "${{ env.BENCHMARK_SSH_USER }}"@"${{ steps.start_instance.outputs.remote_ip }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
+          rm -f ./benchmark-server-key.pem
           echo "======================"
           git status
 
@@ -173,7 +162,7 @@ jobs:
           echo "Remote instance running state: $ret"
 
       - name: Create auto PR
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "[benchmarking bot] Auto commit generated weights files"
           committer: benchmarking bot <noreply@github.com>

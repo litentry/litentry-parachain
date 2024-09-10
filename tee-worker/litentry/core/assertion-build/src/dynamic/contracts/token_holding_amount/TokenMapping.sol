@@ -20,6 +20,7 @@ pragma solidity ^0.8.8;
 
 import { TokenQueryLogic } from "./TokenQueryLogic.sol";
 import "../libraries/Identities.sol";
+import "./Constants.sol";
 
 // brc20
 import { Btcs } from "./brc20/Btcs.sol";
@@ -71,276 +72,179 @@ import { Usdt } from "./erc20/Usdt.sol";
 import { Wbtc } from "./erc20//Wbtc.sol";
 import { Cvx } from "./erc20/Cvx.sol";
 import { Usdd } from "./erc20/Usdd.sol";
+
+// btc
+import { Btc } from "./Btc.sol";
 contract TokenMapping is TokenQueryLogic {
-	constructor() {
-		// btcs
-		tokenRanges["btcs"] = Btcs.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["btcs"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+    constructor() {
+        // btcs
+        setTokenInfo("btcs", Btcs.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// cats
-		tokenRanges["cats"] = Cats.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["cats"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // cats
+        setTokenInfo("cats", Cats.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// long
-		tokenRanges["long"] = Long.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["long"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // long
+        setTokenInfo("long", Long.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// mmss
-		tokenRanges["mmss"] = Mmss.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["mmss"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // mmss
+        setTokenInfo("mmss", Mmss.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// ordi
-		tokenRanges["ordi"] = Ordi.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["ordi"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // ordi
+        setTokenInfo("ordi", Ordi.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// rats
-		tokenRanges["rats"] = Rats.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["rats"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // rats
+        setTokenInfo("rats", Rats.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// sats
-		tokenRanges["sats"] = Sats.getTokenRanges();
-		for (uint8 i = 0; i < BRC20.getBrc20TokenInfo().length; i++) {
-			tokenInfo["sats"].push(BRC20.getBrc20TokenInfo()[i]);
-		}
+        // sats
+        setTokenInfo("sats", Sats.getTokenRanges(), BRC20.getTokenNetworks());
 
-		// ada
-		tokenRanges["ada"] = Ada.getTokenRanges();
-		for (uint8 i = 0; i < Ada.getTokenInfo().length; i++) {
-			tokenInfo["ada"].push(Ada.getTokenInfo()[i]);
-		}
+        // Btc
+        setTokenInfo("btc", Btc.getTokenRanges(), Btc.getTokenNetworks());
 
-		// amp
-		tokenRanges["amp"] = Amp.getTokenRanges();
-		for (uint8 i = 0; i < Amp.getTokenInfo().length; i++) {
-			tokenInfo["amp"].push(Amp.getTokenInfo()[i]);
-		}
+        // ada
+        setTokenInfo("ada", Ada.getTokenRanges(), Ada.getTokenNetworks());
 
-		// atom
-		tokenRanges["atom"] = Atom.getTokenRanges();
-		for (uint8 i = 0; i < Atom.getTokenInfo().length; i++) {
-			tokenInfo["atom"].push(Atom.getTokenInfo()[i]);
-		}
+        // amp
+        setTokenInfo("amp", Amp.getTokenRanges(), Amp.getTokenNetworks());
 
-		// bch
-		tokenRanges["bch"] = Bch.getTokenRanges();
-		for (uint8 i = 0; i < Bch.getTokenInfo().length; i++) {
-			tokenInfo["bch"].push(Bch.getTokenInfo()[i]);
-		}
+        // atom
+        setTokenInfo("atom", Atom.getTokenRanges(), Atom.getTokenNetworks());
 
-		// bean
-		tokenRanges["bean"] = Bean.getTokenRanges();
-		for (uint8 i = 0; i < Bean.getTokenInfo().length; i++) {
-			tokenInfo["bean"].push(Bean.getTokenInfo()[i]);
-		}
+        // bch
+        setTokenInfo("bch", Bch.getTokenRanges(), Bch.getTokenNetworks());
 
-		// bnb
-		tokenRanges["bnb"] = Bnb.getTokenRanges();
-		for (uint8 i = 0; i < Bnb.getTokenInfo().length; i++) {
-			tokenInfo["bnb"].push(Bnb.getTokenInfo()[i]);
-		}
+        // bean
+        setTokenInfo("bean", Bean.getTokenRanges(), Bean.getTokenNetworks());
 
-		// comp
-		tokenRanges["comp"] = Comp.getTokenRanges();
-		for (uint8 i = 0; i < Comp.getTokenInfo().length; i++) {
-			tokenInfo["comp"].push(Comp.getTokenInfo()[i]);
-		}
+        // bnb
+        setTokenInfo("bnb", Bnb.getTokenRanges(), Bnb.getTokenNetworks());
 
-		// cro
-		tokenRanges["cro"] = Cro.getTokenRanges();
-		for (uint8 i = 0; i < Cro.getTokenInfo().length; i++) {
-			tokenInfo["cro"].push(Cro.getTokenInfo()[i]);
-		}
+        // comp
+        setTokenInfo("comp", Comp.getTokenRanges(), Comp.getTokenNetworks());
 
-		// crv
-		tokenRanges["crv"] = Crv.getTokenRanges();
-		for (uint8 i = 0; i < Crv.getTokenInfo().length; i++) {
-			tokenInfo["crv"].push(Crv.getTokenInfo()[i]);
-		}
+        // cro
+        setTokenInfo("cro", Cro.getTokenRanges(), Cro.getTokenNetworks());
 
-		// dai
-		tokenRanges["dai"] = Dai.getTokenRanges();
-		for (uint8 i = 0; i < Dai.getTokenInfo().length; i++) {
-			tokenInfo["dai"].push(Dai.getTokenInfo()[i]);
-		}
+        // crv
+        setTokenInfo("crv", Crv.getTokenRanges(), Crv.getTokenNetworks());
 
-		// doge
-		tokenRanges["doge"] = Doge.getTokenRanges();
-		for (uint8 i = 0; i < Doge.getTokenInfo().length; i++) {
-			tokenInfo["doge"].push(Doge.getTokenInfo()[i]);
-		}
+        // dai
+        setTokenInfo("dai", Dai.getTokenRanges(), Dai.getTokenNetworks());
 
-		// dydx
-		tokenRanges["dydx"] = Dydx.getTokenRanges();
-		for (uint8 i = 0; i < Dydx.getTokenInfo().length; i++) {
-			tokenInfo["dydx"].push(Dydx.getTokenInfo()[i]);
-		}
+        // doge
+        setTokenInfo("doge", Doge.getTokenRanges(), Doge.getTokenNetworks());
 
-		// etc
-		tokenRanges["etc"] = Etc.getTokenRanges();
-		for (uint8 i = 0; i < Etc.getTokenInfo().length; i++) {
-			tokenInfo["etc"].push(Etc.getTokenInfo()[i]);
-		}
+        // dydx
+        setTokenInfo("dydx", Dydx.getTokenRanges(), Dydx.getTokenNetworks());
 
-		// eth
-		tokenRanges["eth"] = Eth.getTokenRanges();
-		for (uint8 i = 0; i < Eth.getTokenInfo().length; i++) {
-			tokenInfo["eth"].push(Eth.getTokenInfo()[i]);
-		}
+        // etc
+        setTokenInfo("etc", Etc.getTokenRanges(), Etc.getTokenNetworks());
 
-		// fil
-		tokenRanges["fil"] = Fil.getTokenRanges();
-		for (uint8 i = 0; i < Fil.getTokenInfo().length; i++) {
-			tokenInfo["fil"].push(Fil.getTokenInfo()[i]);
-		}
+        // eth
+        setTokenInfo("eth", Eth.getTokenRanges(), Eth.getTokenNetworks());
 
-		// grt
-		tokenRanges["grt"] = Grt.getTokenRanges();
-		for (uint8 i = 0; i < Grt.getTokenInfo().length; i++) {
-			tokenInfo["grt"].push(Grt.getTokenInfo()[i]);
-		}
+        // fil
+        setTokenInfo("fil", Fil.getTokenRanges(), Fil.getTokenNetworks());
 
-		// gtc
-		tokenRanges["gtc"] = Gtc.getTokenRanges();
-		for (uint8 i = 0; i < Gtc.getTokenInfo().length; i++) {
-			tokenInfo["gtc"].push(Gtc.getTokenInfo()[i]);
-		}
+        // grt
+        setTokenInfo("grt", Grt.getTokenRanges(), Grt.getTokenNetworks());
 
-		// gusd
-		tokenRanges["gusd"] = Gusd.getTokenRanges();
-		for (uint8 i = 0; i < Gusd.getTokenInfo().length; i++) {
-			tokenInfo["gusd"].push(Gusd.getTokenInfo()[i]);
-		}
+        // gtc
+        setTokenInfo("gtc", Gtc.getTokenRanges(), Gtc.getTokenNetworks());
 
-		// imx
-		tokenRanges["imx"] = Imx.getTokenRanges();
-		for (uint8 i = 0; i < Imx.getTokenInfo().length; i++) {
-			tokenInfo["imx"].push(Imx.getTokenInfo()[i]);
-		}
+        // gusd
+        setTokenInfo("gusd", Gusd.getTokenRanges(), Gusd.getTokenNetworks());
 
-		// inj
-		tokenRanges["inj"] = Inj.getTokenRanges();
-		for (uint8 i = 0; i < Inj.getTokenInfo().length; i++) {
-			tokenInfo["inj"].push(Inj.getTokenInfo()[i]);
-		}
+        // imx
+        setTokenInfo("imx", Imx.getTokenRanges(), Imx.getTokenNetworks());
 
-		// leo
-		tokenRanges["leo"] = Leo.getTokenRanges();
-		for (uint8 i = 0; i < Leo.getTokenInfo().length; i++) {
-			tokenInfo["leo"].push(Leo.getTokenInfo()[i]);
-		}
+        // inj
+        setTokenInfo("inj", Inj.getTokenRanges(), Inj.getTokenNetworks());
 
-		// link
-		tokenRanges["link"] = Link.getTokenRanges();
-		for (uint8 i = 0; i < Link.getTokenInfo().length; i++) {
-			tokenInfo["link"].push(Link.getTokenInfo()[i]);
-		}
+        // leo
+        setTokenInfo("leo", Leo.getTokenRanges(), Leo.getTokenNetworks());
 
-		// lit
-		tokenRanges["lit"] = Lit.getTokenRanges();
-		for (uint8 i = 0; i < Lit.getTokenInfo().length; i++) {
-			tokenInfo["lit"].push(Lit.getTokenInfo()[i]);
-		}
+        // link
+        setTokenInfo("link", Link.getTokenRanges(), Link.getTokenNetworks());
 
-		// matic
-		tokenRanges["matic"] = Matic.getTokenRanges();
-		for (uint8 i = 0; i < Matic.getTokenInfo().length; i++) {
-			tokenInfo["matic"].push(Matic.getTokenInfo()[i]);
-		}
+        // lit
+        setTokenInfo("lit", Lit.getTokenRanges(), Lit.getTokenNetworks());
 
-		// mcrt
-		tokenRanges["mcrt"] = Mcrt.getTokenRanges();
-		for (uint8 i = 0; i < Mcrt.getTokenInfo().length; i++) {
-			tokenInfo["mcrt"].push(Mcrt.getTokenInfo()[i]);
-		}
+        // matic
+        setTokenInfo("matic", Matic.getTokenRanges(), Matic.getTokenNetworks());
 
-		// nfp
-		tokenRanges["nfp"] = Nfp.getTokenRanges();
-		for (uint8 i = 0; i < Nfp.getTokenInfo().length; i++) {
-			tokenInfo["nfp"].push(Nfp.getTokenInfo()[i]);
-		}
+        // mcrt
+        setTokenInfo("mcrt", Mcrt.getTokenRanges(), Mcrt.getTokenNetworks());
 
-		// people
-		tokenRanges["people"] = People.getTokenRanges();
-		for (uint8 i = 0; i < People.getTokenInfo().length; i++) {
-			tokenInfo["people"].push(People.getTokenInfo()[i]);
-		}
+        // nfp
+        setTokenInfo("nfp", Nfp.getTokenRanges(), Nfp.getTokenNetworks());
 
-		// shib
-		tokenRanges["shib"] = Shib.getTokenRanges();
-		for (uint8 i = 0; i < Shib.getTokenInfo().length; i++) {
-			tokenInfo["shib"].push(Shib.getTokenInfo()[i]);
-		}
+        // people
+        setTokenInfo(
+            "people",
+            People.getTokenRanges(),
+            People.getTokenNetworks()
+        );
 
-		// sol
-		tokenRanges["sol"] = Sol.getTokenRanges();
-		for (uint8 i = 0; i < Sol.getTokenInfo().length; i++) {
-			tokenInfo["sol"].push(Sol.getTokenInfo()[i]);
-		}
+        // shib
+        setTokenInfo("shib", Shib.getTokenRanges(), Shib.getTokenNetworks());
 
-		// spaceid
-		tokenRanges["spaceid"] = SpaceId.getTokenRanges();
-		for (uint8 i = 0; i < SpaceId.getTokenInfo().length; i++) {
-			tokenInfo["spaceid"].push(SpaceId.getTokenInfo()[i]);
-		}
+        // sol
+        setTokenInfo("sol", Sol.getTokenRanges(), Sol.getTokenNetworks());
 
-		// ton
-		tokenRanges["ton"] = Ton.getTokenRanges();
-		for (uint8 i = 0; i < Ton.getTokenInfo().length; i++) {
-			tokenInfo["ton"].push(Ton.getTokenInfo()[i]);
-		}
+        // spaceid
+        setTokenInfo(
+            "spaceid",
+            SpaceId.getTokenRanges(),
+            SpaceId.getTokenNetworks()
+        );
 
-		// trx
-		tokenRanges["trx"] = Trx.getTokenRanges();
-		for (uint8 i = 0; i < Trx.getTokenInfo().length; i++) {
-			tokenInfo["trx"].push(Trx.getTokenInfo()[i]);
-		}
+        // ton
+        setTokenInfo("ton", Ton.getTokenRanges(), Ton.getTokenNetworks());
 
-		// tusd
-		tokenRanges["tusd"] = Tusd.getTokenRanges();
-		for (uint8 i = 0; i < Tusd.getTokenInfo().length; i++) {
-			tokenInfo["tusd"].push(Tusd.getTokenInfo()[i]);
-		}
+        // trx
+        setTokenInfo("trx", Trx.getTokenRanges(), Trx.getTokenNetworks());
 
-		// uni
-		tokenRanges["uni"] = Uni.getTokenRanges();
-		for (uint8 i = 0; i < Uni.getTokenInfo().length; i++) {
-			tokenInfo["uni"].push(Uni.getTokenInfo()[i]);
-		}
+        // tusd
+        setTokenInfo("tusd", Tusd.getTokenRanges(), Tusd.getTokenNetworks());
 
-		// usdc
-		tokenRanges["usdc"] = Usdc.getTokenRanges();
-		for (uint8 i = 0; i < Usdc.getTokenInfo().length; i++) {
-			tokenInfo["usdc"].push(Usdc.getTokenInfo()[i]);
-		}
+        // uni
+        setTokenInfo("uni", Uni.getTokenRanges(), Uni.getTokenNetworks());
 
-		// usdd
-		tokenRanges["usdd"] = Usdd.getTokenRanges();
-		for (uint8 i = 0; i < Usdd.getTokenInfo().length; i++) {
-			tokenInfo["usdd"].push(Usdd.getTokenInfo()[i]);
-		}
+        // usdc
+        setTokenInfo("usdc", Usdc.getTokenRanges(), Usdc.getTokenNetworks());
 
-		// usdt
-		tokenRanges["usdt"] = Usdt.getTokenRanges();
-		for (uint8 i = 0; i < Usdt.getTokenInfo().length; i++) {
-			tokenInfo["usdt"].push(Usdt.getTokenInfo()[i]);
-		}
+        // usdd
+        setTokenInfo("usdd", Usdd.getTokenRanges(), Usdd.getTokenNetworks());
 
-		// wbtc
-		tokenRanges["wbtc"] = Wbtc.getTokenRanges();
-		for (uint8 i = 0; i < Wbtc.getTokenInfo().length; i++) {
-			tokenInfo["wbtc"].push(Wbtc.getTokenInfo()[i]);
-		}
-	}
+        // usdt
+        setTokenInfo("usdt", Usdt.getTokenRanges(), Usdt.getTokenNetworks());
+
+        // wbtc
+        setTokenInfo("wbtc", Wbtc.getTokenRanges(), Wbtc.getTokenNetworks());
+    }
+
+    function setTokenInfo(
+        string memory tokenName,
+        TokenInfoRanges memory ranges,
+        TokenInfoNetwork[] memory networks
+    ) private {
+        TokenInfo storage tokenInfo = tokens[tokenName];
+
+        delete tokenInfo.ranges;
+        for (uint i = 0; i < ranges.ranges.length; i++) {
+            tokenInfo.ranges.push(ranges.ranges[i]);
+        }
+        tokenInfo.rangeDecimals = ranges.rangeDecimals;
+
+        delete tokenInfo.networks;
+        uint8 maxDecimals = 0;
+        for (uint i = 0; i < networks.length; i++) {
+            if (maxDecimals < networks[i].decimals) {
+                maxDecimals = networks[i].decimals;
+            }
+            tokenInfo.networks.push(networks[i]);
+        }
+        tokenInfo.maxDecimals = maxDecimals;
+    }
 }

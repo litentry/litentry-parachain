@@ -21,24 +21,35 @@ pragma solidity ^0.8.8;
 import "../Constants.sol";
 import "../../libraries/Identities.sol";
 
-
 library BRC20 {
-	function getDefaultTokenNetworks() internal pure returns (uint32[] memory) {
-		uint32[] memory networks = new uint32[](5);
-		networks[0] = Web3Networks.BitcoinP2tr;
-		networks[1] = Web3Networks.BitcoinP2pkh;
-		networks[2] = Web3Networks.BitcoinP2sh;
-		networks[3] = Web3Networks.BitcoinP2wpkh;
-		networks[4] = Web3Networks.BitcoinP2wsh;
-		return networks;
-	}
-	function getBrc20TokenInfo() internal pure returns (TokenInfo[] memory) {
-		uint32[] memory networks = BRC20.getDefaultTokenNetworks();
-		TokenInfo[] memory tokenInfoList = new TokenInfo[](networks.length);
-		for (uint i = 0; i < networks.length; i++) {
-			tokenInfoList[i] = TokenInfo(networks[i], "");
-		}
+    function getDefaultTokenNetworks() internal pure returns (uint32[] memory) {
+        uint32[] memory networks = new uint32[](5);
+        networks[0] = Web3Networks.BitcoinP2tr;
+        networks[1] = Web3Networks.BitcoinP2pkh;
+        networks[2] = Web3Networks.BitcoinP2sh;
+        networks[3] = Web3Networks.BitcoinP2wpkh;
+        networks[4] = Web3Networks.BitcoinP2wsh;
+        return networks;
+    }
 
-		return tokenInfoList;
-	}
+    function getTokenNetworks()
+        internal
+        pure
+        returns (TokenInfoNetwork[] memory)
+    {
+        uint32[] memory defaultNetworks = BRC20.getDefaultTokenNetworks();
+        TokenInfoNetwork[] memory networks = new TokenInfoNetwork[](
+            defaultNetworks.length
+        );
+        for (uint i = 0; i < defaultNetworks.length; i++) {
+            networks[i] = TokenInfoNetwork(
+                defaultNetworks[i],
+                "",
+                DataProviderTypes.GeniidataClient,
+                18
+            );
+        }
+
+        return networks;
+    }
 }

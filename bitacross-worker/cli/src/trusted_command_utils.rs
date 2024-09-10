@@ -83,9 +83,10 @@ pub(crate) fn get_identifiers(trusted_args: &TrustedCli, cli: &Cli) -> ([u8; 32]
 		mrenclave_from_base58(mrenclave)
 	} else {
 		let direct_api = get_worker_api_direct(cli);
-		direct_api
-			.get_state_mrenclave()
-			.expect("Unable to retrieve MRENCLAVE from endpoint")
+		match direct_api.get_state_mrenclave() {
+			Ok(mrenclave) => mrenclave,
+			Err(e) => panic!("Unable to retrieve MRENCLAVE from endpoint: {:?}", e),
+		}
 	};
 	let shard = match &trusted_args.shard {
 		Some(val) =>

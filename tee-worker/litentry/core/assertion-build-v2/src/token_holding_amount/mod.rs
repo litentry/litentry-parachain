@@ -120,13 +120,13 @@ mod tests {
 	) -> AssertionLogic {
 		let mut assertion = AssertionLogic::new_and();
 		assertion = assertion.add_item(AssertionLogic::new_item(
-			"$network".into(),
+			"$network",
 			Op::Equal,
 			web3_network_to_chain(&network),
 		));
 		if let Some(address) = token_type.get_token_address(network) {
 			assertion =
-				assertion.add_item(AssertionLogic::new_item("$address".into(), Op::Equal, address));
+				assertion.add_item(AssertionLogic::new_item("$address", Op::Equal, address));
 		}
 		assertion
 	}
@@ -158,7 +158,7 @@ mod tests {
 		data_provider_config.set_achainable_url(url.clone()).unwrap();
 		data_provider_config.set_moralis_api_url(url.clone() + "/moralis/").unwrap();
 		data_provider_config
-			.set_moralis_solana_api_url(url.clone() + "/moralis_solana/")
+			.set_moralis_solana_api_url(url + "/moralis_solana/")
 			.unwrap();
 		data_provider_config
 	}
@@ -166,7 +166,7 @@ mod tests {
 	#[test]
 	fn build_bnb_holding_amount_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes().to_vec())
+		let address = decode_hex("0x45cdb67696802b9d01ed156b883269dbdb9c6239".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -247,7 +247,7 @@ mod tests {
 	#[test]
 	fn build_evm_holding_amount_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -290,7 +290,7 @@ mod tests {
 	#[test]
 	fn build_ethereum_holding_amount_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e7c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -333,7 +333,7 @@ mod tests {
 	#[test]
 	fn build_lit_holding_amount_works() {
 		let data_provider_config = init();
-		let address = decode_hex("0xba359c153ad11aa17c3122b05a4db8b46bb3191b".as_bytes().to_vec())
+		let address = decode_hex("0xba359c153ad11aa17c3122b05a4db8b46bb3191b".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -382,7 +382,7 @@ mod tests {
 			.as_slice()
 			.try_into()
 			.unwrap();
-		let address2 = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes().to_vec())
+		let address2 = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -427,12 +427,11 @@ mod tests {
 	#[test]
 	fn build_nfp_holding_amount_works() {
 		let data_provider_config = init();
-		let mut address =
-			decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes().to_vec())
-				.unwrap()
-				.as_slice()
-				.try_into()
-				.unwrap();
+		let mut address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e0c".as_bytes())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
 		let mut identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm(address), vec![Web3Network::Bsc])];
 		let mut req = crate_assertion_build_request(Web3TokenType::Nfp, identities);
@@ -447,13 +446,8 @@ mod tests {
 							create_network_address_assertion_logics(Web3TokenType::Nfp),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
+								op: Op::GreaterThan,
 								dst: "0".into()
-							}),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::LessThan,
-								dst: "1".into()
 							})
 						]
 					}
@@ -465,7 +459,7 @@ mod tests {
 			},
 		};
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e1c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e1c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -483,7 +477,7 @@ mod tests {
 							create_network_address_assertion_logics(Web3TokenType::Nfp),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
+								op: Op::GreaterThan,
 								dst: "0".into()
 							}),
 							Box::new(AssertionLogic::Item {
@@ -501,7 +495,7 @@ mod tests {
 			},
 		};
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e2c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -537,7 +531,7 @@ mod tests {
 			},
 		};
 
-		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+		address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -618,9 +612,7 @@ mod tests {
 		let data_provider_config: DataProviderConfig = init();
 		// bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0
 		let address = decode_hex(
-			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed"
-				.as_bytes()
-				.to_vec(),
+			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed".as_bytes(),
 		)
 		.unwrap()
 		.as_slice()
@@ -659,7 +651,7 @@ mod tests {
 	#[test]
 	fn build_bean_holding_amount_works() {
 		let data_provider_config: DataProviderConfig = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e3c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -699,7 +691,7 @@ mod tests {
 	#[test]
 	fn build_an_holding_amount_works() {
 		let data_provider_config: DataProviderConfig = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e4c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e4c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()
@@ -739,7 +731,7 @@ mod tests {
 	#[test]
 	fn build_tuna_holding_amount_works() {
 		let data_provider_config: DataProviderConfig = init();
-		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e5c".as_bytes().to_vec())
+		let address = decode_hex("0x75438d34c9125839c8b08d21b7f3167281659e5c".as_bytes())
 			.unwrap()
 			.as_slice()
 			.try_into()

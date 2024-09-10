@@ -35,6 +35,8 @@ pub trait EnclaveBase: Send + Sync + 'static {
 		mu_ra_addr: &str,
 		untrusted_worker_addr: &str,
 		base_dir: &str,
+		ceremony_commands_thread_count: u8,
+		ceremony_events_thread_count: u8,
 	) -> EnclaveResult<()>;
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
@@ -76,6 +78,9 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// retrieve the eth wallet key pair, only works in non-prod
 	fn get_ethereum_wallet_pair(&self) -> EnclaveResult<ecdsa::Pair>;
 
+	/// retrieve the ton wallet key pair, only works in non-prod
+	fn get_ton_wallet_pair(&self) -> EnclaveResult<ed25519::Pair>;
+
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 
 	// litentry
@@ -110,7 +115,7 @@ mod impl_ffi {
 	use pallet_teebag::EnclaveFingerprint;
 	use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 	use sgx_types::*;
-	use sp_core::ed25519;
+	use sp_core::{ed25519, Pair};
 
 	impl EnclaveBase for Enclave {
 		fn init(
@@ -118,6 +123,8 @@ mod impl_ffi {
 			mu_ra_addr: &str,
 			untrusted_worker_addr: &str,
 			base_dir: &str,
+			ceremony_commands_thread_count: u8,
+			ceremony_events_thread_count: u8,
 		) -> EnclaveResult<()> {
 			let mut retval = sgx_status_t::SGX_SUCCESS;
 
@@ -135,6 +142,8 @@ mod impl_ffi {
 					encoded_untrusted_worker_addr.len() as u32,
 					encoded_base_dir.as_ptr(),
 					encoded_base_dir.len() as u32,
+					ceremony_commands_thread_count,
+					ceremony_events_thread_count,
 				)
 			};
 
@@ -370,6 +379,25 @@ mod impl_ffi {
 
 			ecdsa::Pair::from_bytes(&private_key)
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))
+		}
+
+		fn get_ton_wallet_pair(&self) -> EnclaveResult<ed25519::Pair> {
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let mut private_key = [0u8; 32];
+
+			let result = unsafe {
+				ffi::get_ton_wallet_pair(
+					self.eid,
+					&mut retval,
+					private_key.as_mut_ptr(),
+					private_key.len() as u32,
+				)
+			};
+
+			ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+			Ok(ed25519::Pair::from_seed(&private_key))
 		}
 
 		fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {

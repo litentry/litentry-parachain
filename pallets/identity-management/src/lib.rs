@@ -47,12 +47,22 @@ use pallet_teebag::ShardIdentifier;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
+const MAX_REDIRECT_URL_LEN: u32 = 256;
+
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{ShardIdentifier, Vec, WeightInfo, H256};
+	use super::{ShardIdentifier, Vec, WeightInfo, H256, MAX_REDIRECT_URL_LEN};
 	use core_primitives::{ErrorDetail, IMPError, Identity};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+
+	#[derive(
+		Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen,
+	)]
+	#[scale_info(skip_type_params(MaxOIDCClientUris, MaxRedirectUriLen))]
+	pub struct OIDCClient<MaxOIDCClientUris: Get<u32>, MaxRedirectUriLen: Get<u32>> {
+		redirect_uris: BoundedVec<BoundedVec<u8, MaxRedirectUriLen>, MaxOIDCClientUris>,
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -67,6 +77,19 @@ pub mod pallet {
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
+		// maximum number of OIDC client URIs
+		#[pallet::constant]
+		type MaxOIDCClientRedirectUris: Get<u32>;
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn integrity_test() {
+			assert!(
+				<T as Config>::MaxOIDCClientRedirectUris::get() > 0,
+				"MaxOIDCClientUris must be greater than zero."
+			);
+		}
 	}
 
 	#[pallet::event]
@@ -146,6 +169,12 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		OIDCClientRegistered {
+			client_id: T::AccountId,
+		},
+		OIDCClientUnregistered {
+			client_id: T::AccountId,
+		},
 	}
 
 	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
@@ -153,12 +182,33 @@ pub mod pallet {
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
+	// OIDC clients who can use the OIDC flow
+	#[pallet::storage]
+	#[pallet::getter(fn oidc_client)]
+	pub type OIDCClients<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		OIDCClient<T::MaxOIDCClientRedirectUris, ConstU32<MAX_REDIRECT_URL_LEN>>,
+		OptionQuery,
+	>;
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
 		/// a `link_identity` request from unauthorized user
 		UnauthorizedUser,
+		/// redirect_uris exceed the maximum length
+		TooManyRedirectUris,
+		/// redirect_uris is empty
+		EmptyRedirectUris,
+		/// redirect_uri exceeds the maximum length
+		RedirectUriTooLong,
+		/// OIDC client already exists
+		OIDCClientAlreadyRegistered,
+		/// OIDC client does not exists
+		OIDCClientDoesNotExist,
 	}
 
 	#[pallet::call]
@@ -261,6 +311,53 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Register an OIDC client
+		// TODO: take a deposit to cover the storage cost and prevent spamming
+		#[pallet::call_index(6)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn register_oidc_client(
+			origin: OriginFor<T>,
+			redirect_uris: Vec<Vec<u8>>,
+		) -> DispatchResult {
+			let client_id = ensure_signed(origin)?;
+			ensure!(!redirect_uris.is_empty(), Error::<T>::EmptyRedirectUris);
+			ensure!(
+				!OIDCClients::<T>::contains_key(&client_id),
+				Error::<T>::OIDCClientAlreadyRegistered
+			);
+
+			let client_redirect_uris = redirect_uris
+				.into_iter()
+				.map(|uri| {
+					BoundedVec::<u8, _>::try_from(uri).map_err(|_| Error::<T>::RedirectUriTooLong)
+				})
+				.collect::<Result<Vec<_>, _>>()?;
+
+			OIDCClients::<T>::insert(
+				&client_id,
+				OIDCClient {
+					redirect_uris: BoundedVec::try_from(client_redirect_uris)
+						.map_err(|_| Error::<T>::TooManyRedirectUris)?,
+				},
+			);
+
+			Self::deposit_event(Event::OIDCClientRegistered { client_id });
+
+			Ok(())
+		}
+
+		/// Unregister an OIDC client
+		#[pallet::call_index(7)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn unregister_oidc_client(origin: OriginFor<T>) -> DispatchResult {
+			let client_id = ensure_signed(origin)?;
+			ensure!(OIDCClients::<T>::contains_key(&client_id), Error::<T>::OIDCClientDoesNotExist);
+			OIDCClients::<T>::remove(&client_id);
+			Self::deposit_event(Event::OIDCClientUnregistered { client_id });
+
+			Ok(())
+		}
+
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
@@ -342,30 +439,34 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::LinkIdentityFailed(detail) =>
+				IMPError::LinkIdentityFailed(detail) => {
 					Self::deposit_event(Event::LinkIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::DeactivateIdentityFailed(detail) =>
+					})
+				},
+				IMPError::DeactivateIdentityFailed(detail) => {
 					Self::deposit_event(Event::DeactivateIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::ActivateIdentityFailed(detail) =>
+					})
+				},
+				IMPError::ActivateIdentityFailed(detail) => {
 					Self::deposit_event(Event::ActivateIdentityFailed {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
-				IMPError::UnclassifiedError(detail) =>
+					})
+				},
+				IMPError::UnclassifiedError(detail) => {
 					Self::deposit_event(Event::UnclassifiedError {
 						prime_identity,
 						detail,
 						req_ext_hash,
-					}),
+					})
+				},
 			}
 			Ok(Pays::No.into())
 		}

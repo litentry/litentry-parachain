@@ -23,14 +23,16 @@
 use crate::{config::Config, error::Error, initialized_service::TrackInitialization};
 use async_trait::async_trait;
 use codec::{Decode, Encode};
+use futures::future::join_all;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
 use itp_types::ShardIdentifier;
+use itp_utils::ToHexPrefixed;
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_rpc_handler::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
 use jsonrpsee::{
-	types::{to_json_value, traits::Client},
+	types::{to_json_value, traits::Client, v2::params::JsonRpcParams, JsonValue},
 	ws_client::WsClientBuilder,
 };
 use litentry_primitives::WorkerType;
@@ -46,13 +48,12 @@ pub type Url = String;
 #[derive(Clone, Hash, Eq, PartialEq, Encode, Decode, Debug)]
 pub struct PeerUrls {
 	pub trusted: Url,
-	pub untrusted: Url,
 	pub me: bool,
 }
 
 impl PeerUrls {
-	pub fn new(trusted: Url, untrusted: Url, me: bool) -> Self {
-		PeerUrls { trusted, untrusted, me }
+	pub fn new(trusted: Url, me: bool) -> Self {
+		PeerUrls { trusted, me }
 	}
 }
 
@@ -105,8 +106,8 @@ where
 			return Ok(())
 		}
 		let nr_blocks = blocks.len();
+		let encoded_blocks = blocks.to_hex();
 
-		let blocks_json = vec![to_json_value(blocks)?];
 		let peers = self
 			.peer_urls
 			.read()
@@ -119,32 +120,22 @@ where
 
 		let nr_peers = peers.len();
 
-		for url in peers {
-			let blocks = blocks_json.clone();
-
-			tokio::spawn(async move {
-				let untrusted_peer_url = url.untrusted;
-
-				debug!("Broadcasting block to peer with address: {:?}", untrusted_peer_url);
-				// FIXME: Websocket connection to a worker should stay, once established.
-				let client = match WsClientBuilder::default().build(&untrusted_peer_url).await {
-					Ok(c) => c,
-					Err(e) => {
-						error!("Failed to create websocket client for block broadcasting (target url: {}): {:?}", untrusted_peer_url, e);
-						return
-					},
-				};
-
-				if let Err(e) =
-					client.request::<Vec<u8>>(RPC_METHOD_NAME_IMPORT_BLOCKS, blocks.into()).await
-				{
+		let futures = peers.iter().map(|url| {
+			let encoded_blocks_cloned = encoded_blocks.clone();
+			let url = url.trusted.clone();
+			tokio::task::spawn_blocking(move || {
+				let client = DirectWorkerApi::new(url.to_string());
+				if let Err(e) = client.import_sidechain_blocks(encoded_blocks_cloned) {
 					error!(
 						"Broadcast block request ({}) to {} failed: {:?}",
-						RPC_METHOD_NAME_IMPORT_BLOCKS, untrusted_peer_url, e
+						RPC_METHOD_NAME_IMPORT_BLOCKS, url, e
 					);
 				}
-			});
-		}
+			})
+		});
+
+		join_all(futures).await;
+
 		info!("broadcast {} block(s) to {} peers", nr_blocks, nr_peers);
 		Ok(())
 	}
@@ -199,16 +190,8 @@ where
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
 			let enclave_url = String::from_utf8_lossy(enclave.url.as_slice()).to_string();
 			trace!("found peer rpc url: {}", enclave_url);
-			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
-			match worker_api_direct.get_untrusted_worker_url() {
-				Ok(untrusted_worker_url) => {
-					let is_me = enclave_url == worker_url_external;
-					peer_urls.insert(PeerUrls::new(enclave_url, untrusted_worker_url, is_me));
-				},
-				Err(e) => {
-					warn!("Failed to get untrusted worker url (enclave: {}): {:?}", enclave_url, e);
-				},
-			}
+			let is_me = enclave_url == worker_url_external;
+			peer_urls.insert(PeerUrls::new(enclave_url, is_me));
 		}
 		debug!("found {} peers in shard state for {:?}", peer_urls.len(), shard);
 		Ok(peer_urls)
@@ -275,16 +258,8 @@ mod tests {
 		let untrusted_worker_port = "4000".to_string();
 		let mut peer_urls: HashSet<PeerUrls> = HashSet::new();
 
-		peer_urls.insert(PeerUrls {
-			untrusted: format!("ws://{}", W1_URL),
-			trusted: format!("ws://{}", W1_URL),
-			me: false,
-		});
-		peer_urls.insert(PeerUrls {
-			untrusted: format!("ws://{}", W2_URL),
-			trusted: format!("ws://{}", W2_URL),
-			me: false,
-		});
+		peer_urls.insert(PeerUrls { trusted: format!("ws://{}", W1_URL), me: false });
+		peer_urls.insert(PeerUrls { trusted: format!("ws://{}", W2_URL), me: false });
 
 		let worker = Worker::new(
 			local_worker_config(W1_URL.into(), untrusted_worker_port.clone(), "30".to_string()),

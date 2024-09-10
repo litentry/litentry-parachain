@@ -37,7 +37,6 @@ where
 	I: BlockImport<Block> + Send,
 {
 	type Error = I::Error;
-	type Transaction = I::Transaction;
 
 	async fn check_block(
 		&mut self,
@@ -48,7 +47,7 @@ where
 
 	async fn import_block(
 		&mut self,
-		mut block_import_params: sc_consensus::BlockImportParams<Block, Self::Transaction>,
+		mut block_import_params: sc_consensus::BlockImportParams<Block>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
 		// immediately finalize the block
 		block_import_params.finalized = true;

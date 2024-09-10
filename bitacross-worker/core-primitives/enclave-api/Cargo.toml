@@ -1,6 +1,6 @@
 [package]
 name = "itp-enclave-api"
-version = "0.9.0"
+version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
@@ -28,7 +28,7 @@ itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
-pallet-teebag = { path = "../../../pallets/teebag", default-features = false }
+pallet-teebag = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
 
 [features]
 default = []
