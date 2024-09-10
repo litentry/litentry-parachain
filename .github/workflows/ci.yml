@@ -445,7 +445,6 @@ jobs:
             WORKER_ENV_DATA_PROVIDERS_CONFIG=1
             WORKER_MOCK_SERVER=1
             ADDITIONAL_FEATURES_ARG=
-            RA_METHOD=dcap
 
       - name: Copy caches from the built image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
@@ -547,7 +546,6 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=offchain-worker
             ADDITIONAL_FEATURES_ARG=
-            RA_METHOD=dcap
 
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_bitacross == 'true'
