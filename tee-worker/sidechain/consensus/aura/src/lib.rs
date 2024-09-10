@@ -386,7 +386,7 @@ mod tests {
 	use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
 	use itp_test::mock::onchain_mock::OnchainMock;
 	use itp_types::{
-		AccountId, Block as ParentchainBlock, Header as ParentchainHeader, ShardIdentifier,
+		AccountId, Block as ParentchainBlock, Header as ParentchainHeader,
 		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
@@ -447,7 +447,7 @@ mod tests {
 	}
 
 	fn create_validateer_set_from_publics(authorities: Vec<Public>) -> Vec<AccountId> {
-		authorities.iter().map(|a| AccountId::from(a.clone())).collect()
+		authorities.iter().map(|a| AccountId::from(*a)).collect()
 	}
 
 	fn onchain_mock(

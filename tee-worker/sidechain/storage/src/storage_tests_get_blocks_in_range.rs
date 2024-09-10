@@ -57,12 +57,7 @@ fn get_blocks_in_range_returns_empty_vec_if_from_is_invalid() {
 	let block_3 = create_signed_block(3, block_2.hash());
 	let block_4 = create_signed_block(4, block_3.hash());
 
-	let temp_dir = fill_storage_with_blocks(vec![
-		block_1.clone(),
-		block_2.clone(),
-		block_3.clone(),
-		block_4.clone(),
-	]);
+	let temp_dir = fill_storage_with_blocks(vec![block_1, block_2, block_3.clone(), block_4]);
 
 	{
 		let updated_sidechain_db = get_storage(temp_dir.path().to_path_buf());
@@ -84,10 +79,10 @@ fn get_blocks_in_range_returns_all_blocks_if_upper_bound_is_invalid() {
 	let block_5 = create_signed_block(5, block_4.hash());
 
 	let temp_dir = fill_storage_with_blocks(vec![
-		block_1.clone(),
+		block_1,
 		block_2.clone(),
 		block_3.clone(),
-		block_4.clone(),
+		block_4,
 		block_5.clone(),
 	]);
 

@@ -19,9 +19,7 @@ use crate::{
 	trusted_base_cli::commands::litentry::request_vc_subcommands::Command,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::{
-		perform_trusted_operation, prepare_request_data_and_send_direct_vc_request,
-	},
+	trusted_operation::prepare_request_data_and_send_direct_vc_request,
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
@@ -32,7 +30,7 @@ use litentry_primitives::{
 	aes_decrypt, Assertion, BoundedWeb3Network, Identity, ParameterString, RequestAesKey,
 	Web3Network, REQUEST_AES_KEY_LEN,
 };
-use sp_core::{Pair, H256};
+use sp_core::Pair;
 
 // usage example below
 //
@@ -88,9 +86,6 @@ where
 pub struct RequestVcCommand {
 	// did account to whom the vc will be issued
 	did: String,
-	// mode for the request-vc
-	#[clap(short, long, default_value_t = false)]
-	stf: bool,
 	// the assertion itself, can be specified more than once
 	// the value will be passed into the parser as a whole string
 	#[clap(short, long, num_args = 1..)]
@@ -119,7 +114,7 @@ impl RequestVcCommand {
 		println!(">>> identity: {:?}", identity);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
-		let mut nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
+		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 		println!(">>> nonce: {}", nonce);
 
 		let assertions: Vec<Assertion> = self
@@ -136,69 +131,33 @@ impl RequestVcCommand {
 
 		let key = Self::random_aes_key();
 
-		if self.stf {
-			assertions.into_iter().for_each(|a| {
-				let top = TrustedCall::request_vc(
-					alice.public().into(),
-					identity.clone(),
-					a,
-					Some(key),
-					Default::default(),
-				)
-				.sign(&KeyPair::Sr25519(Box::new(alice.clone())), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top = TrustedCall::request_batch_vc(
+			alice.public().into(),
+			identity,
+			assertions.try_into().unwrap(),
+			Some(key),
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), 0, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
 
-			if trusted_cli.direct {
-				match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
-					Ok(vc) => {
-						print_vc(&key, vc);
-					},
-					Err(e) => {
-						println!("{:?}", e);
-					},
-				}
-			} else {
-				println!("WARNING: This method does not support printing VC, Please use -d for direct invocation to print the VC");
-				match perform_trusted_operation::<H256>(cli, trusted_cli, &top) {
-					Ok(block_hash) => {
-						println!("Request VC Event included in block hash: {:?}", block_hash)
-					},
-					Err(e) => {
-						println!("{:?}", e);
-					},
-				}
-			}
-			nonce += 1;
-			});
-		} else {
-			let top = TrustedCall::request_batch_vc(
-				alice.public().into(),
-				identity,
-				assertions.try_into().unwrap(),
-				Some(key),
-				Default::default(),
-			)
-			.sign(&KeyPair::Sr25519(Box::new(alice)), 0, &mrenclave, &shard)
-			.into_trusted_operation(trusted_cli.direct);
-
-			match prepare_request_data_and_send_direct_vc_request(cli, trusted_cli, &top, key) {
-				Ok(result) =>
-					for res in result {
-						match res.result {
-							Err(err) => {
-								println!("received one error: {:?}", err);
-							},
-							Ok(payload) => {
-								let vc = RequestVCResult::decode(&mut payload.as_slice()).unwrap();
-								print_vc(&key, vc);
-							},
-						}
-					},
-				Err(e) => {
-					println!("{:?}", e);
+		match prepare_request_data_and_send_direct_vc_request(cli, trusted_cli, &top, key) {
+			Ok(result) =>
+				for res in result {
+					match res.result {
+						Err(err) => {
+							println!("received one error: {:?}", err);
+						},
+						Ok(payload) => {
+							let vc = RequestVCResult::decode(&mut payload.as_slice()).unwrap();
+							print_vc(&key, vc);
+						},
+					}
 				},
-			}
-		};
+			Err(e) => {
+				println!("{:?}", e);
+			},
+		}
 
 		Ok(CliResultOk::None)
 	}

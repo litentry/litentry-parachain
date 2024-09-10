@@ -431,7 +431,7 @@ mod tests {
 		)
 		.is_none());
 		assert!(
-			extract_state_id_from_file_name(format!("{}", ENCRYPTED_STATE_FILE).as_str()).is_none()
+			extract_state_id_from_file_name(ENCRYPTED_STATE_FILE.to_string().as_str()).is_none()
 		);
 		assert!(extract_state_id_from_file_name(
 			format!("1234_{}-other", ENCRYPTED_STATE_FILE).as_str()

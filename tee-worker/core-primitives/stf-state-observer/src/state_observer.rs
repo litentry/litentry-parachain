@@ -111,7 +111,7 @@ mod tests {
 		let state_observer = StateObserver::<TestState>::default();
 
 		assert_matches!(
-			state_observer.observe_state(&shard(), |_| { () }),
+			state_observer.observe_state(&shard(), |_| {}),
 			Err(Error::CurrentShardStateEmpty)
 		);
 	}

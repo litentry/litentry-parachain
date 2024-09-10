@@ -279,35 +279,35 @@ mod tests {
 		let addr = "bc1qlht0muueu6wln5qqwtvczjepnfeerpaw480067";
 		let pubkey = "0272cbf3e56e238897ca9ee9ca9594a82803cfdf19121bd939cbe3f2e1bcaffc7b";
 		let network = Web3Network::BitcoinP2wpkh;
-		let gen_addr = pubkey_to_address(&network, &pubkey);
+		let gen_addr = pubkey_to_address(&network, pubkey);
 		assert_eq!(addr, gen_addr);
 
 		// p2sh
 		let addr = "35KQSeZpaABvNWmKAMXo7mAAtXZBqCd4sw";
 		let pubkey = "02e46883d2101f09e875dd4a67ee5c2dce9d821b9a610a7e12ab0de7494b19b7d0";
 		let network = Web3Network::BitcoinP2sh;
-		let gen_addr = pubkey_to_address(&network, &pubkey);
+		let gen_addr = pubkey_to_address(&network, pubkey);
 		assert_eq!(addr, gen_addr);
 
 		// p2tr
 		let addr = "bc1pwgqves622fs5s42h4sr8hu9y6ej232hga8uxal7xgkcsy8a3ryqqvgku7t";
 		let pubkey = "031d867537093a8eaace96717ba0aa226a5bf368c6c84ca5dfb214d380bc91afbe";
 		let network = Web3Network::BitcoinP2tr;
-		let gen_addr = pubkey_to_address(&network, &pubkey);
+		let gen_addr = pubkey_to_address(&network, pubkey);
 		assert_eq!(addr, gen_addr);
 
 		// p2pkh
 		let addr = "1CY8nArJbvLSHQmKp3SiG8T5WSBfnMJpJx";
 		let pubkey = "02784a686e5ffc74d713f66cb8885d6b75c062c61df5f6de8f86f07c340ebc183c";
 		let network = Web3Network::BitcoinP2pkh;
-		let gen_addr = pubkey_to_address(&network, &pubkey);
+		let gen_addr = pubkey_to_address(&network, pubkey);
 		assert_eq!(addr, gen_addr);
 
 		// p2wsh
 		let addr = "";
 		let pubkey = "02e46883d2101f09e875dd4a67ee5c2dce9d821b9a610a7e12ab0de7494b19b7d0";
 		let network = Web3Network::BitcoinP2wsh;
-		let gen_addr = pubkey_to_address(&network, &pubkey);
+		let gen_addr = pubkey_to_address(&network, pubkey);
 		assert_eq!(addr, gen_addr);
 	}
 }
