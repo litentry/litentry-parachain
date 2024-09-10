@@ -1,7 +1,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use super::{Mail, Mailer};
+use super::{template::VERYFY_EMAIL_TEMPLATE, Mail, Mailer};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -30,56 +30,47 @@ pub(crate) struct Email {
 }
 
 #[derive(Serialize)]
-struct DynamicTemplateData {
-	redirect_url: String,
+pub(crate) struct Content {
+	content_type: String,
+	value: String,
 }
 
 #[derive(Serialize)]
-struct SendGridEmail {
+pub(crate) struct SendGridMail {
 	personalizations: Vec<Personalization>,
 	from: Email,
-	template_id: String,
-	dynamic_template_data: DynamicTemplateData,
+	subject: String,
+	content: Vec<Content>,
 }
 
-impl SendGridEmail {
-	pub fn new(
-		to: Email,
-		from: Email,
-		template_id: String,
-		verification_code: String,
-		redirect_url: String,
-	) -> Self {
+impl SendGridMail {
+	pub fn new(from_email: String, mail: Mail) -> Self {
+		let content = vec![Content { content_type: String::from("text/html"), value: mail.body }];
+		let to = Email { email: mail.to, name: None };
+		let from = Email { email: from_email, name: Some(String::from("Litentry")) };
 		Self {
 			personalizations: vec![Personalization { to: vec![to] }],
 			from,
-			template_id,
-			dynamic_template_data: DynamicTemplateData {
-				redirect_url: std::format!(
-					"{}?verification_code={}",
-					redirect_url,
-					verification_code
-				),
-			},
+			subject: mail.subject,
+			content,
 		}
 	}
 }
 
-impl RestPath<String> for SendGridEmail {
+impl RestPath<String> for SendGridMail {
 	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
-pub(crate) struct SendGridMailer {
+pub struct SendGridMailer {
 	api_key: String,
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
-	from: Email,
-	template_id: String,
+	from: String,
 }
 
 impl SendGridMailer {
-	pub fn new(api_key: String, from_email: Email, template_id: String) -> Self {
+	pub fn new(api_key: String, from_email: String) -> Self {
 		let base_url = Url::parse("https://api.sendgrid.com/v3/mail/send").unwrap();
 		let authorization = std::format!("Bearer {}", api_key);
 
@@ -87,35 +78,23 @@ impl SendGridMailer {
 		headers.insert(AUTHORIZATION.as_str(), &authorization);
 		headers.insert(CONTENT_TYPE.as_str(), "application/json");
 
-		Self {
-			api_key,
-			client: RestClient::new(
-				HttpClient::new(
-					SendWithCertificateVerification::new(vec![]),
-					true,
-					None,
-					Some(headers),
-					None,
-				),
-				base_url,
-			),
-			from: from_email,
-			template_id,
-		}
+		let http_client = HttpClient::new(
+			SendWithCertificateVerification::new(vec![]),
+			true,
+			None,
+			Some(headers),
+			None,
+		);
+
+		Self { api_key, client: RestClient::new(http_client, base_url), from: from_email }
 	}
 }
 
 impl Mailer for SendGridMailer {
 	fn send(&mut self, mail: Mail) -> Result<(), String> {
-		let sendgrid_email = SendGridEmail::new(
-			Email { email: mail.to, name: None },
-			self.from.clone(),
-			self.template_id.clone(),
-			mail.redirect_url.unwrap_or_default(),
-			mail.verification_code,
-		);
+		let sendgrid_mail = SendGridMail::new(self.from.clone(), mail);
 		self.client
-			.post(String::default(), &sendgrid_email)
+			.post(String::default(), &sendgrid_mail)
 			.map_err(|e| std::format!("Failed to send verification email: {:?}", e))?;
 
 		Ok(())

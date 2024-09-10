@@ -1,11 +1,12 @@
 pub mod sendgrid_mailer;
+pub(crate) mod template;
 
 use std::string::String;
 
 pub struct Mail {
 	pub to: String,
-	pub verification_code: String,
-	pub redirect_url: Option<String>,
+	pub subject: String,
+	pub body: String,
 }
 
 pub trait Mailer {
