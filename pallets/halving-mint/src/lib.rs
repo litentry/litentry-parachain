@@ -1,3 +1,19 @@
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 //! # Pallet halving-mint
 //!
 //! This pallet mints the (native) token in a halving way.
@@ -17,7 +33,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 
-use frame_support::traits::Currency;
+use frame_support::traits::tokens::{
+	fungibles::{metadata::Mutate as MMutate, Create, Inspect, Mutate},
+	AssetId, Balance,
+};
 pub use pallet::*;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
@@ -31,9 +50,6 @@ mod tests;
 
 mod traits;
 pub use traits::OnTokenMinted;
-
-pub type BalanceOf<T, I = ()> =
-	<<T as Config<I>>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// an on/off flag, used in both `MintState` and `OnTokenMintedState`
 #[derive(
@@ -50,11 +66,7 @@ pub enum State {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{ReservableCurrency, StorageVersion},
-		PalletId,
-	};
+	use frame_support::{pallet_prelude::*, traits::StorageVersion, PalletId};
 	use frame_system::pallet_prelude::{BlockNumberFor, *};
 	use sp_runtime::{
 		traits::{AccountIdConversion, One, Zero},
@@ -70,14 +82,19 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
-		type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+		type Assets: Inspect<Self::AccountId, AssetId = Self::AssetId, Balance = Self::AssetBalance>
+			+ Mutate<Self::AccountId>
+			+ Create<Self::AccountId>
+			+ MMutate<Self::AccountId>;
+		type AssetId: AssetId + Copy;
+		type AssetBalance: Balance;
 		type RuntimeEvent: From<Event<Self, I>>
 			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The origin to control the minting configuration
 		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The total issuance of the (native) token
 		#[pallet::constant]
-		type TotalIssuance: Get<BalanceOf<Self, I>>;
+		type TotalIssuance: Get<Self::AssetBalance>;
 		/// Halving internal in blocks, we force u32 type, BlockNumberFor<T> implements
 		/// AtLeast32BitUnsigned so it's safe
 		#[pallet::constant]
@@ -86,7 +103,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type BeneficiaryId: Get<PalletId>;
 		/// Hook for other pallets to deal with OnTokenMinted event
-		type OnTokenMinted: OnTokenMinted<Self::AccountId, BalanceOf<Self, I>>;
+		type OnTokenMinted: OnTokenMinted<Self::AssetId, Self::AccountId, Self::AssetBalance>;
 	}
 
 	#[pallet::event]
@@ -94,8 +111,8 @@ pub mod pallet {
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		MintStateChanged { new_state: State },
 		OnTokenMintedStateChanged { new_state: State },
-		MintStarted { start_block: BlockNumberFor<T> },
-		Minted { to: T::AccountId, amount: BalanceOf<T, I> },
+		MintStarted { asset_id: T::AssetId, start_block: BlockNumberFor<T> },
+		Minted { asset_id: T::AssetId, to: T::AccountId, amount: T::AssetBalance },
 	}
 
 	#[pallet::error]
@@ -107,6 +124,10 @@ pub mod pallet {
 		StartBlockTooEarly,
 		SkippedBlocksOverflow,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn mint_asset_id)]
+	pub type MintAssetId<T: Config<I>, I: 'static = ()> = StorageValue<_, T::AssetId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn mint_state)]
@@ -210,13 +231,23 @@ pub mod pallet {
 					//
 					// Also imagine there's no callback impl, in this case the tokens will still be
 					// minted and accumulated.
-					let _ = T::Currency::deposit_creating(&to, minted);
-					Self::deposit_event(Event::Minted { to: to.clone(), amount: minted });
-					if Self::on_token_minted_state() == State::Running {
-						weight = weight.saturating_add(T::OnTokenMinted::token_minted(to, minted));
+					if let Some(id) = Self::mint_asset_id() {
+						if let Ok(actual) = T::Assets::mint_into(id, &to, minted) {
+							Self::deposit_event(Event::Minted {
+								asset_id: id,
+								to: to.clone(),
+								amount: actual,
+							})
+						}
+
+						if Self::on_token_minted_state() == State::Running {
+							weight = weight
+								.saturating_add(T::OnTokenMinted::token_minted(id, to, minted));
+						}
 					}
-					// 1 read: `on_token_minted_state`
-					weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 0));
+
+					// 2 reads: `asset_id`, `on_token_minted_state`
+					weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 0));
 				} else {
 					// we should have minted tokens but it's forcibly stopped
 					let skipped_blocks =
@@ -269,10 +300,20 @@ pub mod pallet {
 		/// minting
 		#[pallet::call_index(2)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn start_mint_from_next_block(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn start_mint_from_next_block(
+			origin: OriginFor<T>,
+			id: T::AssetId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
+		) -> DispatchResultWithPostInfo {
 			Self::start_mint_from_block(
 				origin,
 				frame_system::Pallet::<T>::block_number() + BlockNumberFor::<T>::one(),
+				id,
+				name,
+				symbol,
+				decimals,
 			)
 		}
 
@@ -282,6 +323,10 @@ pub mod pallet {
 		pub fn start_mint_from_block(
 			origin: OriginFor<T>,
 			start_block: BlockNumberFor<T>,
+			id: T::AssetId,
+			name: Vec<u8>,
+			symbol: Vec<u8>,
+			decimals: u8,
 		) -> DispatchResultWithPostInfo {
 			T::ManagerOrigin::ensure_origin(origin)?;
 			ensure!(StartBlock::<T, I>::get().is_none(), Error::<T, I>::MintAlreadyStarted);
@@ -292,7 +337,10 @@ pub mod pallet {
 			MintState::<T, I>::put(State::Running);
 			OnTokenMintedState::<T, I>::put(State::Running);
 			StartBlock::<T, I>::put(start_block);
-			Self::deposit_event(Event::MintStarted { start_block });
+			T::Assets::create(id, Self::beneficiary_account(), true, 1u32.into())?;
+			T::Assets::set(id, &Self::beneficiary_account(), name, symbol, decimals)?;
+			MintAssetId::<T, I>::put(id);
+			Self::deposit_event(Event::MintStarted { asset_id: id, start_block });
 			Ok(Pays::No.into())
 		}
 	}
