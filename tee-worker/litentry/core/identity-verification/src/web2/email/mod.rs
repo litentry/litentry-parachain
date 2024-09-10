@@ -1,5 +1,5 @@
-mod email_verification_store;
-pub use email_verification_store::*;
+mod verification_code_store;
+pub use verification_code_store::*;
 
 mod mailer;
 pub use mailer::*;

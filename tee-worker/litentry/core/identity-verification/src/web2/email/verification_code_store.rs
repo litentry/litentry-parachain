@@ -14,9 +14,9 @@ lazy_static! {
 		RwLock::new(LruCache::new(NonZeroUsize::new(250).unwrap()));
 }
 
-pub struct EmailVerificationStore;
+pub struct VerificationCodeStore;
 
-impl EmailVerificationStore {
+impl VerificationCodeStore {
 	pub fn insert(account_id: AccountId, verification_code: String) -> Result<(), String> {
 		STORE
 			.write()
