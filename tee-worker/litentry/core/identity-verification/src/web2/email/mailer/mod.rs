@@ -1,3 +1,5 @@
+pub mod sendgrid_mailer;
+
 use std::string::String;
 
 pub struct Mail {
