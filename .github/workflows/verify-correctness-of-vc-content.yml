@@ -40,11 +40,6 @@ jobs:
         run: |
           make launch-network-litentry
 
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
-
       - name: Run vc correctness tests
         run: |
           cd tee-worker/docker
