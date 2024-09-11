@@ -475,21 +475,16 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 							"Could not parse identity"
 						))),
 				};
-				let verification_code = email::generate_verification_code();
-				let redirect_url = std::format!(
-					"{}?verification_code={}",
-					data_provider_config.sendgrid_redirect_url.clone(),
-					verification_code
-				);
 				let mut mailer = email::sendgrid_mailer::SendGridMailer::new(
 					data_provider_config.sendgrid_api_key.clone(),
 					data_provider_config.sendgrid_from_email.clone(),
 				);
+				let verification_code = email::generate_verification_code();
 
 				match email::VerificationCodeStore::insert(account_id, verification_code.clone()) {
 					Ok(_) => {
 						if let Err(_) =
-							email::send_verification_email(&mut mailer, email, redirect_url)
+							email::send_verification_email(&mut mailer, email, verification_code)
 						{
 							return Ok(json!(compute_hex_encoded_return_error(
 								"Could not send verification email"

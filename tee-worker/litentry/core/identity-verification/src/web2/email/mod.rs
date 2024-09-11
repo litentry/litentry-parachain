@@ -14,12 +14,13 @@ pub fn generate_verification_code() -> String {
 pub fn send_verification_email(
 	mailer: &mut impl Mailer,
 	to_email: String,
-	redirect_url: String,
+	verification_code: String,
 ) -> Result<(), String> {
 	let mail = mailer::Mail {
 		to: to_email,
 		subject: String::from("Verify your email address"),
-		body: template::VERYFY_EMAIL_TEMPLATE.replace("{{ redirect_url }}", &redirect_url),
+		body: template::VERYFY_EMAIL_TEMPLATE
+			.replace("{{ verification_code }}", &verification_code),
 	};
 
 	mailer.send(mail)
