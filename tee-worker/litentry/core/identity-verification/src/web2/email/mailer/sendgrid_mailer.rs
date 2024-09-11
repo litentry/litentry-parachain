@@ -8,14 +8,10 @@ use itc_rest_client::{
 	error::Error as HttpError,
 	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
-	RestGet, RestPath, RestPost,
+	RestPath, RestPost,
 };
-use serde::{Deserialize, Serialize};
-use std::{
-	string::{String, ToString},
-	vec,
-	vec::Vec,
-};
+use serde::Serialize;
+use std::{string::String, vec, vec::Vec};
 use url::Url;
 
 #[derive(Serialize)]
@@ -64,7 +60,6 @@ impl RestPath<String> for SendGridMail {
 }
 
 pub struct SendGridMailer {
-	api_key: String,
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 	from: String,
 }
@@ -86,7 +81,7 @@ impl SendGridMailer {
 			None,
 		);
 
-		Self { api_key, client: RestClient::new(http_client, base_url), from: from_email }
+		Self { client: RestClient::new(http_client, base_url), from: from_email }
 	}
 }
 
