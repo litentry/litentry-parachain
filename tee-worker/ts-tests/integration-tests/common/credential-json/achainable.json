@@ -163,7 +163,7 @@
             "payload": {
                 "Amount": {
                     "name": "Created over {amount} contracts",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -183,7 +183,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Polkadot",
+                    "chain": ["Polkadot"],
                     "amount": "0"
                 }
             }
@@ -203,7 +203,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -223,7 +223,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Litentry",
+                    "chain": ["Litentry"],
                     "amount": "0"
                 }
             }
