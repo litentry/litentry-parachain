@@ -9,7 +9,7 @@
         },
         "dataProvider": "moralis",
         "network": "solana",
-        "mockDid": "litentry:solana:0x09b36de0a9862cdbfe3eb023959e97e816e17d846a5762b3c1bfe7b75490c23b",
+        "mockDid": "litentry:solana:6xJ8xjUu6rY7kQS4kJodG4NcNgMtubUXGbhdBb7gqJMn",
         "mockWeb3Network": "solana",
         "expectedCredentialValue": true
     }
