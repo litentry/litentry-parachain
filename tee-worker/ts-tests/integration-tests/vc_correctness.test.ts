@@ -3,23 +3,25 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { randomSubstrateWallet } from './common/helpers';
-import { assertIsInSidechainBlock } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
+    createSignedTrustedGetterIdGraph,
+    sendAesRequestFromGetter,
+    decodeIdGraph,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
-import { CorePrimitivesIdentity } from 'parachain-api';
+import { CorePrimitivesIdentity, WorkerRpcReturnValue } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
-import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
 import { byId } from '@litentry/chaindata';
-
+import { sleep } from './common/utils';
 // Change this to the environment you want to test
 const chain = byId['litentry-dev'];
 
@@ -29,7 +31,7 @@ describe('Test Vc (direct invocation)', function () {
     const substrateIdentities: CorePrimitivesIdentity[] = [];
 
     const clientDir = process.env.LITENTRY_CLI_DIR;
-    const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
 
@@ -64,7 +66,7 @@ describe('Test Vc (direct invocation)', function () {
         const formatAddress = u8aToHex(keyringPair.publicKey);
         const substrateIdentity = await new PolkadotSigner(keyringPair).getIdentity(context);
         substrateIdentities.push(substrateIdentity);
-        const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
+
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
             const commandPromise = zx`${clientDir} -p ${teeDevNodePort} -P ${teeDevWorkerPort} -u ${
@@ -75,14 +77,23 @@ describe('Test Vc (direct invocation)', function () {
                   ${credentialDefinitions.mockWeb3Network}`;
 
             await commandPromise;
+
+            const idGraphGetter = await createSignedTrustedGetterIdGraph(
+                context.api,
+                new PolkadotSigner(keyringPair),
+                substrateIdentity
+            );
+            const res = await sendAesRequestFromGetter(context, teeShieldingKey, hexToU8a(aesKey), idGraphGetter);
+
+            const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+            assert.lengthOf(idGraph, 2, 'idGraph length should be 2');
         } catch (error: any) {
             console.log(`Exit code: ${error.exitCode}`);
             console.log(`Error: ${error.stderr}`);
+
             throw error;
         }
-
-        const events = (await eventsPromise).map(({ event }) => event);
-        assert.equal(events.length, 1);
     }
 
     async function requestVc(id: string, index: number) {
@@ -110,19 +121,26 @@ describe('Test Vc (direct invocation)', function () {
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
 
-            const vcResults = context.api.createType('RequestVCResult', res.value);
-            const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
-            const vcPayloadJson = JSON.parse(decryptVcPayload);
-            console.log('vcPayload: ', vcPayloadJson);
-
-            assert.equal(
-                vcPayloadJson.credentialSubject.values[0],
-                credentialDefinitions.expectedCredentialValue,
-                "credential value doesn't match, please check the credential json expectedCredentialValue"
+            const onMessageReceived = async (res: WorkerRpcReturnValue) => {
+                const vcresponse = context.api.createType('RequestVcResultOrError', res.value);
+                console.log(`vcresponse len: ${vcresponse.len}, idx: ${vcresponse.idx}`);
+                if (vcresponse.result.isOk) await assertVc(context, substrateIdentities[index], vcresponse.result.asOk);
+                const decryptVcPayload = decryptWithAes(aesKey, vcresponse.vc_payload, 'utf-8').replace('0x', '');
+                const vcPayloadJson = JSON.parse(decryptVcPayload);
+                assert.equal(
+                    vcPayloadJson.credentialSubject.values[0],
+                    credentialDefinitions.expectedCredentialValue,
+                    "credential value doesn't match, please check the credential json expectedCredentialValue"
+                );
+            };
+            const callResults = await sendRequestFromTrustedCall(
+                context,
+                teeShieldingKey,
+                requestVcCall,
+                onMessageReceived
             );
+            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, callResults);
         } catch (error) {
             // Sometimes unstable dataprovider can cause interruptions in the testing process. We expect errors in the test to be stored and specific error information to be thrown out after the end.
             const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
@@ -130,11 +148,13 @@ describe('Test Vc (direct invocation)', function () {
             errorArray.push({
                 id: id,
                 index: index,
-                assertion: credentialDefinitions.assertion.payload,
+                assertion: JSON.stringify(credentialDefinitions.assertion),
                 error: error,
             });
             console.error(`Error in requestVc for id ${id} at index ${index}:`, error);
         }
+        //  sometime the previous nonce change hasn't been persisted in the sidechain state while next request is already coming
+        await sleep(12);
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
