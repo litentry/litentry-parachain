@@ -98,7 +98,7 @@
         "assertion": {
             "id": "GenericDiscordRole",
             "payload": {
-                "soraquiz": "participant"
+                "contest": "participant"
             }
         },
         "dataProvider": "discord",
