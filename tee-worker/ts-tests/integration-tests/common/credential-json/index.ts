@@ -25,8 +25,8 @@ export const geniidata = geniidataJson as unknown as CredentialDefinition[];
 export const moralis = moralisJson as unknown as CredentialDefinition[];
 export const blockchaininfo = blockchaininfoJson as unknown as CredentialDefinition[];
 export const credentialsJson = [
-    // ...nodereal,
-    // ...geniidata,
+    ...nodereal,
+    ...geniidata,
     ...moralis,
     ...achainable,
     ...litentry,
