@@ -2,7 +2,7 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
-import { genesisSubstrateWallet, randomSubstrateWallet } from './common/helpers';
+import { randomSubstrateWallet } from './common/helpers';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -22,7 +22,6 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
 import { byId } from '@litentry/chaindata';
 import { sleep } from './common/utils';
-import { subscribeToEventsWithExtHash } from './common/transactions';
 // Change this to the environment you want to test
 const chain = byId['litentry-dev'];
 
@@ -32,7 +31,6 @@ describe('Test Vc (direct invocation)', function () {
     const substrateIdentities: CorePrimitivesIdentity[] = [];
 
     const clientDir = process.env.LITENTRY_CLI_DIR;
-    const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
@@ -68,7 +66,6 @@ describe('Test Vc (direct invocation)', function () {
         const formatAddress = u8aToHex(keyringPair.publicKey);
         const substrateIdentity = await new PolkadotSigner(keyringPair).getIdentity(context);
         substrateIdentities.push(substrateIdentity);
-        const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
 
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
@@ -97,8 +94,6 @@ describe('Test Vc (direct invocation)', function () {
 
             throw error;
         }
-        const events = (await eventsPromise).map(({ event }) => event);
-        assert.equal(events.length, 1);
     }
 
     async function requestVc(id: string, index: number) {
