@@ -10,7 +10,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x6A9c371dB67992444cA55D32eA4219dd264b8DD3",
+        "mockDid": "litentry:evm:0x5a973F455898c0A6C812F6A4bBc6678810dd5838",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -24,7 +24,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x10EF5b7309Bdc639fbE9597EB87a34b27ecDAF0f",
+        "mockDid": "litentry:evm:0x3bb6849153105C0c4d8D068E7Cb1C365b9b20eB8",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
