@@ -1,7 +1,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use super::{template::VERYFY_EMAIL_TEMPLATE, Mail, Mailer};
+use super::{Mail, Mailer};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use http_req::response::Headers;
 use itc_rest_client::{
