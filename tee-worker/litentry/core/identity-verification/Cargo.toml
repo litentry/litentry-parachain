@@ -8,10 +8,10 @@ version = "0.1.0"
 # std dependencies
 base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
-lru = "0.12.3"
-rand = { version = "0.8", optional = true }
 http = { version = "0.2", optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
+lru = "0.12.3"
+rand = { version = "0.8", optional = true }
 
 # sgx dependencies
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
@@ -29,9 +29,9 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 
 # internal dependencies
+itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
-itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
