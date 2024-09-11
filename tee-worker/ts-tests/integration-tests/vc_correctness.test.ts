@@ -22,7 +22,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { CredentialDefinition, credentialsJson } from './common/credential-json';
 import { byId } from '@litentry/chaindata';
 import { sleep } from './common/utils';
-import { subscribeToEventsWithExtHash } from 'common/transactions';
+import { subscribeToEventsWithExtHash } from './common/transactions';
 // Change this to the environment you want to test
 const chain = byId['litentry-dev'];
 
