@@ -1,4 +1,4 @@
-pub const VERYFY_EMAIL_TEMPLATE: &str = r#"
+pub const EMAIL_VERIFICATION_TEMPLATE: &str = r#"
 <!DOCTYPE html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>

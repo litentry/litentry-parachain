@@ -19,7 +19,7 @@ pub fn send_verification_email(
 	let mail = mailer::Mail {
 		to: to_email,
 		subject: String::from("Verify your email address"),
-		body: template::VERYFY_EMAIL_TEMPLATE
+		body: template::EMAIL_VERIFICATION_TEMPLATE
 			.replace("{{ verification_code }}", &verification_code),
 	};
 
