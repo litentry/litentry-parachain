@@ -426,7 +426,7 @@ impl DataProviderConfig {
 			config.set_sendgrid_from_email(v);
 		}
 		if let Ok(v) = env::var("SENDGRID_REDIRECT_URL") {
-			config.set_sendgrid_redirect_url(v);
+			config.set_sendgrid_redirect_url(v)?;
 		}
 
 		Ok(config)
