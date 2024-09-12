@@ -491,7 +491,9 @@ pub mod pallet {
 						return Err(Error::<T>::TokenStakingAmountAlreadyUpdated.into());
 					}
 					let last_round = Round::<T>::get();
-					s.token_staking_amount = amount;
+					s.last_round_reward += amount;
+					s.total_reward += amount;
+					s.unpaid_reward += amount;
 					s.last_token_distributed_round = last_round.index;
 					Scores::<T>::insert(account.clone(), s);
 					Self::deposit_event(Event::TokenStakingAmountUpdated {

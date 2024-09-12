@@ -174,7 +174,6 @@ fn score_staking_works() {
 				total_reward: 0,
 				last_round_reward: 0,
 				unpaid_reward: 0,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0
 			}
 		);
@@ -208,7 +207,6 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: alice_total_reward,
 				unpaid_reward: alice_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -232,7 +230,6 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward(),
 				unpaid_reward: alice_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -259,7 +256,6 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: calculate_round_reward(2000, 2000, 900, 1600),
 				unpaid_reward: alice_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -284,7 +280,6 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: calculate_round_reward(2000, 3000, 900, 3200),
 				unpaid_reward: alice_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -295,7 +290,6 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: bob_total_reward,
 				unpaid_reward: bob_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -346,7 +340,6 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward(),
 				unpaid_reward: alice_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -359,7 +352,6 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: 0,
 				unpaid_reward: bob_total_reward,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -408,7 +400,6 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -425,7 +416,6 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -442,7 +432,6 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -491,6 +480,8 @@ fn update_token_staking_amount_works() {
 			2,
 		));
 
+		total_reward += 1000;
+
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -498,7 +489,6 @@ fn update_token_staking_amount_works() {
 				total_reward,
 				last_round_reward: total_reward,
 				unpaid_reward: total_reward,
-				token_staking_amount: 1000,
 				last_token_distributed_round: 2,
 			}
 		);
@@ -524,6 +514,8 @@ fn update_token_staking_amount_works() {
 			3,
 		));
 
+		total_reward += 1200;
+
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
 			Event::<Test>::TokenStakingAmountUpdated { account: alice(), amount: 1200 },
 		));
@@ -533,9 +525,8 @@ fn update_token_staking_amount_works() {
 			ScorePayment {
 				score: 500,
 				total_reward,
-				last_round_reward: round_reward(),
+				last_round_reward: round_reward() + 1200,
 				unpaid_reward: total_reward,
-				token_staking_amount: 1200,
 				last_token_distributed_round: 3,
 			}
 		);
