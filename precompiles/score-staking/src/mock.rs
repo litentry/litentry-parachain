@@ -281,19 +281,6 @@ where
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
-		let signer: <T as frame_system::Config>::AccountId = get_signer(TEST8_SIGNER_PUB);
-		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
-			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(
-				&signer,
-				&pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE),
-			));
-		}
-		Ok(frame_system::RawOrigin::Signed(signer).into())
-	}
 }
 
 pub fn alice() -> AccountId {
