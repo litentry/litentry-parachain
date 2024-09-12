@@ -68,10 +68,6 @@ pub trait AccountIdConvert<T: Config> {
 	fn convert(account: AccountId32) -> T::AccountId;
 }
 
-pub trait TokenStakingAuthorizer<T: Config> {
-	fn can_update_staking(sender: &T::AccountId) -> bool;
-}
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -118,8 +114,8 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
 		type AccountIdConvert: AccountIdConvert<Self>;
-		/// Token staking authorizer
-		type TokenStakingAuthorizer: TokenStakingAuthorizer<Self>;
+		// For extrinsics that should only be called by origins from TEE
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::error]
@@ -487,11 +483,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			round_index: RoundIndex,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin.clone())?;
-			ensure!(
-				T::TokenStakingAuthorizer::can_update_staking(&sender),
-				Error::<T>::UnauthorizedOrigin
-			);
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
 			match Scores::<T>::get(&account) {
 				Some(mut s) => {
@@ -515,11 +507,7 @@ pub mod pallet {
 		#[pallet::call_index(10)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn complete_reward_distribution(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin.clone())?;
-			ensure!(
-				T::TokenStakingAuthorizer::can_update_staking(&sender),
-				Error::<T>::UnauthorizedOrigin
-			);
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
 			Self::deposit_event(Event::RewardDistributionCompleted {});
 

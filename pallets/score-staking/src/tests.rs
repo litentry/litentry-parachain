@@ -552,7 +552,7 @@ fn update_token_staking_amount_origin_check_works() {
 				1000,
 				1
 			),
-			Error::<Test>::UnauthorizedOrigin
+			sp_runtime::DispatchError::BadOrigin
 		);
 	})
 }
@@ -581,7 +581,7 @@ fn complete_reward_distribution_works() {
 		let enclave = Enclave::new(WorkerType::Identity);
 		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
 
-		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()),));
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice())));
 
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
 			Event::<Test>::RewardDistributionCompleted {},
@@ -593,8 +593,8 @@ fn complete_reward_distribution_works() {
 fn complete_reward_distribution_origin_check_works() {
 	new_test_ext(false).execute_with(|| {
 		assert_noop!(
-			ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()),),
-			Error::<Test>::UnauthorizedOrigin
+			ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice())),
+			sp_runtime::DispatchError::BadOrigin
 		);
 	});
 }

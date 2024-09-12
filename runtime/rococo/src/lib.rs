@@ -1160,12 +1160,6 @@ impl pallet_score_staking::AccountIdConvert<Runtime> for IdentityAccountIdConver
 	}
 }
 
-impl pallet_score_staking::TokenStakingAuthorizer<Runtime> for pallet_teebag::Pallet<Runtime> {
-	fn can_update_staking(sender: &<Runtime as frame_system::Config>::AccountId) -> bool {
-		pallet_teebag::Pallet::<Runtime>::enclave_registry(sender).is_some()
-	}
-}
-
 impl pallet_score_staking::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
@@ -1174,7 +1168,7 @@ impl pallet_score_staking::Config for Runtime {
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<1_000_000>;
-	type TokenStakingAuthorizer = pallet_teebag::Pallet<Runtime>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}

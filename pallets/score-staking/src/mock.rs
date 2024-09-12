@@ -18,8 +18,11 @@
 use crate::{
 	self as pallet_score_staking, AccountIdConvert, Config, Perbill, PoolState, RoundSetting,
 };
+use core::marker::PhantomData;
 use frame_support::{
-	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
+	assert_ok, construct_runtime, ord_parameter_types,
+	pallet_prelude::EnsureOrigin,
+	parameter_types,
 	traits::{OnFinalize, OnInitialize},
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -167,7 +170,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyIssuance = ConstU128<{ 100_000_000 * UNIT }>;
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
-	type TokenStakingAuthorizer = pallet_teebag::Pallet<Test>;
+	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 }
 
 parameter_types! {
@@ -196,9 +199,36 @@ impl pallet_teebag::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_score_staking::TokenStakingAuthorizer<Test> for pallet_teebag::Pallet<Test> {
-	fn can_update_staking(sender: &<Test as frame_system::Config>::AccountId) -> bool {
-		pallet_teebag::Pallet::<Test>::enclave_registry(sender).is_some()
+pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
+impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
+where
+	T: frame_system::Config + pallet_teebag::Config + pallet_timestamp::Config<Moment = u64>,
+	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
+	<T as frame_system::Config>::Hash: From<[u8; 32]>,
+{
+	type Success = T::AccountId;
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+		o.into().and_then(|o| match o {
+			frame_system::RawOrigin::Signed(who)
+				if pallet_teebag::EnclaveRegistry::<T>::contains_key(&who) =>
+			{
+				Ok(who)
+			},
+			r => Err(T::RuntimeOrigin::from(r)),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		use pallet_teebag::test_util::{get_signer, TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+		let signer: <T as frame_system::Config>::AccountId = get_signer(TEST8_SIGNER_PUB);
+		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
+			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(
+				&signer,
+				&pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE),
+			));
+		}
+		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
 }
 
