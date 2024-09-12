@@ -66,7 +66,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -91,7 +90,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
@@ -116,7 +114,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				token_staking_amount: 0,
 				last_token_distributed_round: 0,
 			}
 		);
