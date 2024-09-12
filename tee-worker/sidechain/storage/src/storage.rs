@@ -441,7 +441,7 @@ mod test {
 			// ensure db starts empty
 			assert!(sidechain_db.load_last_block_from_db(&shard).unwrap().is_none());
 			// write signed_block to db
-			sidechain_db.db.put((LAST_BLOCK_KEY, shard), signed_last_block.clone()).unwrap();
+			sidechain_db.db.put((LAST_BLOCK_KEY, shard), signed_last_block).unwrap();
 		}
 
 		// then
@@ -469,7 +469,7 @@ mod test {
 			// ensure db starts empty
 			assert!(sidechain_db.load_last_block_from_db(&shard).unwrap().is_none());
 			// write shards to db
-			sidechain_db.db.put((LAST_BLOCK_KEY, shard), signed_last_block.clone()).unwrap();
+			sidechain_db.db.put((LAST_BLOCK_KEY, shard), signed_last_block).unwrap();
 			// write shards to db
 			sidechain_db.db.put(STORED_SHARDS_KEY, shard_vector.clone()).unwrap();
 		}
@@ -582,7 +582,7 @@ mod test {
 				.db
 				.put((shard, signed_block.block().header().block_number()), signed_block.hash())
 				.unwrap();
-			sidechain_db.db.put((LAST_BLOCK_KEY, shard), last_block.clone()).unwrap();
+			sidechain_db.db.put((LAST_BLOCK_KEY, shard), last_block).unwrap();
 			assert_eq!(
 				sidechain_db
 					.db
@@ -650,7 +650,7 @@ mod test {
 			sidechain_db.shards.push(shard);
 			sidechain_db.last_blocks.insert(shard, last_block);
 			// when
-			let result = sidechain_db.verify_block_ancestry(&signed_block_two.block());
+			let result = sidechain_db.verify_block_ancestry(signed_block_two.block());
 
 			// then
 			assert!(result);
@@ -673,7 +673,7 @@ mod test {
 			sidechain_db.last_blocks.insert(shard, last_block);
 
 			// when
-			let result = sidechain_db.verify_block_ancestry(&signed_block_two.block());
+			let result = sidechain_db.verify_block_ancestry(signed_block_two.block());
 
 			// then
 			assert!(!result);
@@ -689,7 +689,7 @@ mod test {
 			let mut sidechain_db = get_storage(temp_dir.path().to_path_buf());
 			sidechain_db.shards.push(shard);
 			// when
-			let result = sidechain_db.verify_block_ancestry(&signed_block.block());
+			let result = sidechain_db.verify_block_ancestry(signed_block.block());
 
 			// then
 			assert!(!result);
@@ -703,7 +703,7 @@ mod test {
 		let signed_block = create_signed_block(8, shard);
 		{
 			let sidechain_db = get_storage(temp_dir.path().to_path_buf());
-			let result = sidechain_db.verify_block_ancestry(&signed_block.block());
+			let result = sidechain_db.verify_block_ancestry(signed_block.block());
 			assert!(!result);
 		}
 	}

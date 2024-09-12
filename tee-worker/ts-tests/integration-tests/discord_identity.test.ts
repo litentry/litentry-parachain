@@ -51,8 +51,7 @@ describe('Test Discord Identity (direct invocation)', function () {
 
     before(async () => {
         context = await initIntegrationTestContext(
-            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
+            process.env.PARACHAIN_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
 

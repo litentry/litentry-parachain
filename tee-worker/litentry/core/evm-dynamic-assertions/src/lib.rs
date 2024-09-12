@@ -44,6 +44,8 @@ use evm::{
 	executor::stack::{MemoryStackState, StackExecutor, StackSubstateMetadata},
 	Config, ExitReason,
 };
+use itp_enclave_metrics::EnclaveMetric;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use lc_dynamic_assertion::{
 	AssertionExecutor, AssertionLogicRepository, AssertionResult, Identity, IdentityNetworkTuple,
 	Web3Network,
@@ -52,6 +54,7 @@ use std::{
 	collections::BTreeMap,
 	string::{String, ToString},
 	sync::Arc,
+	time::Instant,
 	vec,
 	vec::Vec,
 };
@@ -70,8 +73,9 @@ pub type AssertionParams = Vec<u8>;
 pub type SmartContractByteCode = Vec<u8>;
 pub type AssertionRepositoryItem = (SmartContractByteCode, Vec<String>);
 
-pub struct EvmAssertionExecutor<A: AssertionLogicRepository> {
+pub struct EvmAssertionExecutor<A: AssertionLogicRepository, MetricsApi: EnclaveMetricsOCallApi> {
 	pub assertion_repository: Arc<A>,
+	pub metrics_api: Arc<MetricsApi>,
 }
 
 pub fn execute_smart_contract(
@@ -103,8 +107,11 @@ pub fn execute_smart_contract(
 	(reason, data, precompiles.contract_logs.take())
 }
 
-impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
-	AssertionExecutor<AssertionId, AssertionParams> for EvmAssertionExecutor<A>
+impl<A, MetricsApi> AssertionExecutor<AssertionId, AssertionParams>
+	for EvmAssertionExecutor<A, MetricsApi>
+where
+	A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
+	MetricsApi: EnclaveMetricsOCallApi,
 {
 	fn execute(
 		&self,
@@ -112,11 +119,19 @@ impl<A: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>>
 		assertion_params: AssertionParams,
 		identities: &[IdentityNetworkTuple],
 	) -> Result<AssertionResult, String> {
+		let start_time = Instant::now();
 		let (smart_contract_byte_code, secrets) = self
 			.assertion_repository
 			.get(&assertion_id)
 			.map_err(|_| "Could not access assertion repository")?
 			.ok_or("Assertion not found")?;
+		let duration = start_time.elapsed();
+		if let Err(e) =
+			self.metrics_api.update_metric(EnclaveMetric::DynamicAssertionGetTime(duration))
+		{
+			log::warn!("Failed to update DynamicAssertionGetTime metric with error: {:?}", e);
+		}
+
 		let input = prepare_execute_call_input(identities, secrets, assertion_params)
 			.map_err(|_| "Could not prepare evm execution input")?;
 

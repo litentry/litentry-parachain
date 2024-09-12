@@ -401,8 +401,7 @@ mod tests {
 		state: &TestState,
 		state_hash: &StateHash,
 	) {
-		let (retrieved_hash, retrieved_state) =
-			get_state_entry(&state_file_io, &shard_id, state_id);
+		let (retrieved_hash, retrieved_state) = get_state_entry(state_file_io, shard_id, state_id);
 		assert!(state_file_io.shard_exists(shard_id));
 		assert_eq!(state_hash, &retrieved_hash);
 		assert_eq!(state, &retrieved_state);
@@ -413,12 +412,7 @@ mod tests {
 		shard_id: &ShardIdentifier,
 		state_id: StateId,
 	) -> (StateHash, TestState) {
-		state_file_io
-			.get_states_for_shard(shard_id)
-			.unwrap()
-			.get(&state_id)
-			.unwrap()
-			.clone()
+		*state_file_io.get_states_for_shard(shard_id).unwrap().get(&state_id).unwrap()
 	}
 
 	fn create_in_memory_state_file_io(shards: &[ShardIdentifier]) -> TestStateFileIo {

@@ -60,6 +60,11 @@ on:
         description: rebuild-bitacross-docker
         required: true
         default: true
+      run-multi-worker-test:
+        type: boolean
+        description: run-multi-worker-test
+        required: true
+        default: false
       push-docker:
         type: boolean
         description: push-docker
@@ -202,7 +207,7 @@ jobs:
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
         run: pnpm run check-format
-      
+
       - name: Dynamic-contract install npm deps
         working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
         run: pnpm install
@@ -539,7 +544,7 @@ jobs:
           tags: local-builder:latest
           target: builder
           build-args: |
-            WORKER_MODE_ARG=offchain-worker            
+            WORKER_MODE_ARG=offchain-worker
             ADDITIONAL_FEATURES_ARG=
 
       - name: Build worker
@@ -595,7 +600,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
           - rococo
     name: ${{ matrix.chain }}
@@ -617,7 +621,7 @@ jobs:
         if: needs.set-condition.outputs.run_parachain_test == 'true'
         timeout-minutes: 35
         run: |
-          make test-ts-docker-${{ matrix.chain }}
+          make test-ts-${{ matrix.chain }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
@@ -648,7 +652,7 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.5
-  
+
   parachain-dynamic-contract-test:
     runs-on: ubuntu-latest
     steps:
@@ -656,7 +660,7 @@ jobs:
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
-      
+
       - name: Install npm deps
         working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
         run: pnpm install
@@ -725,9 +729,6 @@ jobs:
           echo "::group::rococo runtime test"
           cargo test --locked -p rococo-parachain-runtime --lib
           echo "::endgroup::"
-          echo "::group::litmus runtime test"
-          cargo test --locked -p litmus-parachain-runtime --lib
-          echo "::endgroup::"
           echo "::group::litentry runtime test"
           cargo test --locked -p litentry-parachain-runtime --lib
           echo "::endgroup::"
@@ -746,12 +747,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Litentry
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
           - test_name: lit-di-bitcoin-identity-test
           - test_name: lit-di-solana-identity-test
-          - test_name: lit-di-vc-test
           - test_name: lit-dr-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-test-failed-parentchain-extrinsic
@@ -761,10 +760,6 @@ jobs:
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
 
       - uses: actions/download-artifact@v4
         with:
@@ -783,16 +778,9 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Generate parachain artefacts
+      - name: Launch parachain network
         run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-          ls -l docker/generated-rococo/
-          ls -l tee-worker/docker/litentry/
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
+          make launch-network-litentry
 
       - name: Integration single worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
@@ -827,6 +815,7 @@ jobs:
   identity-multi-worker-test:
     runs-on: ubuntu-latest
     continue-on-error: true
+    if: ${{ github.event.inputs.run-multi-worker-test == 'true' }} # only if triggered manually
     needs:
       - set-condition
       - parachain-build-dev
@@ -839,16 +828,11 @@ jobs:
           - test_name: lit-di-evm-identity-multiworker-test
           - test_name: lit-di-solana-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
-          - test_name: lit-di-vc-multiworker-test
           - test_name: lit-dr-vc-multiworker-test
           - test_name: lit-resume-worker
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
 
       - uses: actions/download-artifact@v4
         with:
@@ -867,16 +851,9 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Generate parachain artefacts
+      - name: Launch parachain network
         run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-          ls -l docker/generated-rococo/
-          ls -l tee-worker/docker/litentry/
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
+          make launch-network-litentry
 
       - name: Integration multi worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
@@ -923,10 +900,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
-
       - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
@@ -944,16 +917,9 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Generate parachain artefacts
+      - name: Launch parachain network
         run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-          ls -l docker/generated-rococo/
-          ls -l bitacross-worker/docker/litentry/
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
+          make launch-network-litentry
 
       - name: Integration bitacross worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_bitacross_test == 'true'
@@ -1025,7 +991,7 @@ jobs:
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-identity.tar.gz
           docker load < litentry-bitacross.tar.gz
-          
+
       - name: Dockerhub login
         uses: docker/login-action@v3
         with:

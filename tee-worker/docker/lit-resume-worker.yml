@@ -12,7 +12,7 @@ services:
             target: deployed-worker
         depends_on:
             litentry-node:
-                condition: service_healthy
+                condition: service_started
         networks:
             - litentry-test-network
         entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_worker_test.sh resuming_worker.test.ts 2>&1' "

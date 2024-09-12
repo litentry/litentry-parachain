@@ -25,7 +25,7 @@ describeLitentry('Test Base Filter', ``, (context) => {
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-        // the balance transfer should work for litmus, rococo and litentry
+        // the balance transfer should work for rococo and litentry
         expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
     });
 
@@ -33,7 +33,7 @@ describeLitentry('Test Base Filter', ``, (context) => {
         // only work for rococo
         const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
         if (parachain !== 'rococo-dev') {
-            console.log('Skip litmus/litentry (no sudo)');
+            console.log('Skip litentry (no sudo)');
             return;
         }
         // Get the initial balance of Alice and Bob

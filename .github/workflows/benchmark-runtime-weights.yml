@@ -14,11 +14,6 @@ on:
         description: litentry
         required: true
         default: true
-      litmus:
-        type: boolean
-        description: litmus
-        required: true
-        default: true
       rococo:
         type: boolean
         description: rococo
@@ -83,9 +78,6 @@ jobs:
       - name: Set env
         run: |
           chain=""
-          if [ "${{ github.event.inputs.litmus }}" = "true" ]; then
-            chain="$chain litmus"
-          fi
           if [ "${{ github.event.inputs.litentry }}" = "true" ]; then
             chain="$chain litentry"
           fi
@@ -170,7 +162,7 @@ jobs:
           echo "Remote instance running state: $ret"
 
       - name: Create auto PR
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "[benchmarking bot] Auto commit generated weights files"
           committer: benchmarking bot <noreply@github.com>

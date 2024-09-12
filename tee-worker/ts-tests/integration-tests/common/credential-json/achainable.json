@@ -8,7 +8,7 @@
             "payload": {
                 "Basic": {
                     "name": "BAB token holder",
-                    "chain": "Bsc"
+                    "chain": ["Bsc"]
                 }
             }
         },
@@ -27,7 +27,7 @@
             "payload": {
                 "Basic": {
                     "name": "Uniswap V2/V3 user",
-                    "chain": "Ethereum"
+                    "chain": ["Ethereum"]
                 }
             }
         },
@@ -40,10 +40,10 @@
     {
         "id": "dot-holder",
         "name": "DOT Holding Time",
-        "description": "The length of time a user continues to hold DOT token (threshold DOT > 5)",
+        "description": "The length of time a user continues to hold DOT token (threshold DOT > 1)",
         "assertion": {
             "id": "A7",
-            "payload": "5"
+            "payload": "1"
         },
         "dataProvider": "achainable",
         "network": "polkadot",
@@ -102,7 +102,7 @@
             "payload": {
                 "ClassOfYear": {
                     "name": "Account created between {dates}",
-                    "chain": "Ethereum"
+                    "chain": ["Ethereum"]
                 }
             }
         },
@@ -129,10 +129,10 @@
     {
         "id": "litentry-transaction-count",
         "name": "LIT Transaction Count",
-        "description": "Your total transaction amount on these Substrate networks: Litentry, Litmus, Ethereum.",
+        "description": "Your total transaction amount on these Substrate networks: Litentry, Ethereum.",
         "assertion": {
             "id": "A8",
-            "payload": ["Litentry", "Litmus", "Ethereum"]
+            "payload": ["Litentry", "Ethereum"]
         },
         "dataProvider": "achainable",
         "network": "litentry",
@@ -150,7 +150,7 @@
         },
         "dataProvider": "achainable",
         "network": "litentry",
-        "mockDid": "litentry:substrate:0x5FeEE1E799015A22EbD216d43484FCB3BA88de20",
+        "mockDid": "litentry:substrate:0x00f160c0e8fff2d4f00ab03e18dced9f2ac52a6b865cda497a33aee5b3fe335b",
         "mockWeb3Network": "litentry,polkadot",
         "expectedCredentialValue": true
     },
@@ -163,7 +163,7 @@
             "payload": {
                 "Amount": {
                     "name": "Created over {amount} contracts",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -183,7 +183,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Polkadot",
+                    "chain": ["Polkadot"],
                     "amount": "0"
                 }
             }
@@ -203,7 +203,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -223,7 +223,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Litentry",
+                    "chain": ["Litentry"],
                     "amount": "0"
                 }
             }
@@ -233,19 +233,5 @@
         "mockDid": "litentry:substrate:0xc0103c4b56ce752d05b16a88260e3a9e2c44306602a74c5edd1cd4ff56356f7c",
         "mockWeb3Network": "litentry,polkadot",
         "expectedCredentialValue": true
-    },
-    {
-        "id": "token-holding-amount-btcs",
-        "name": "BTCS Holding Time",
-        "description": "The number of BTCS tokens you hold > 0",
-        "assertion": {
-            "id": "Brc20AmountHolder",
-            "payload": []
-        },
-        "dataProvider": "achainable",
-        "network": "litentry",
-        "mockDid": "litentry:bitcoin:0x02dbb0aff6e115284ac2ac5795e299588dae74474ad4bd0e580e92163e80837da8",
-        "mockWeb3Network": "BitcoinP2tr",
-        "expectedCredentialValue": null
     }
 ]

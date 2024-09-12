@@ -65,6 +65,8 @@ pub enum Web3Network {
 	#[codec(index = 2)]
 	Litentry,
 	#[codec(index = 3)]
+	// TODO: we sunset Litmus already, this entry is kept temporarily to not break anything.
+	//       However, it should not be used in any of the vc building logic
 	Litmus,
 	#[codec(index = 4)]
 	LitentryRococo,

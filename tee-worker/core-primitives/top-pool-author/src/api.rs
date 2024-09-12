@@ -133,7 +133,7 @@ mod tests {
 	type TestChainApi = SidechainApi<ParentchainBlock, TrustedCallSignedMock>;
 
 	pub fn endowed_account() -> ed25519::Pair {
-		ed25519::Pair::from_seed(&[42u8; 32].into())
+		ed25519::Pair::from_seed(&[42u8; 32])
 	}
 
 	#[test]

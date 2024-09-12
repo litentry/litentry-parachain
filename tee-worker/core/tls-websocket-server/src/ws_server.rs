@@ -400,7 +400,7 @@ mod tests {
 		let expected_answer = "websocket server response".to_string();
 		let port: u16 = 21778;
 
-		let (server, handler) = create_server(vec![expected_answer.clone()], port);
+		let (server, handler) = create_server(vec![expected_answer], port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || server_clone.run());

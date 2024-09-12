@@ -10,35 +10,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xf813361F1FADC5c51EFdd0ba5b93e2760a5537EC",
-        "mockWeb3Network": "bsc,ethereum",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "bnb-999-club-member",
-        "name": "000-999.bnb Domain Holding Amount",
-        "description": "You are holding a certain amount of 000-999.bnb domain names",
-        "assertion": {
-            "id": "BnbDigitDomainClub",
-            "payload": "Bnb999ClubMember"
-        },
-        "dataProvider": "nodereal",
-        "network": "ethereum",
-        "mockDid": "litentry:evm:0xA6E3d8B20a5DC12c986AF63E496B8D585117aBBd",
-        "mockWeb3Network": "bsc,ethereum",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "bnb-10k-club-member",
-        "name": "0000-9999.bnb Holding Amount",
-        "description": "You are holding a certain amount of 0000-9999.bnb domain names",
-        "assertion": {
-            "id": "BnbDigitDomainClub",
-            "payload": "Bnb10KClubMember"
-        },
-        "dataProvider": "nodereal",
-        "network": "ethereum",
-        "mockDid": "litentry:evm:0xD673b52E4c560f5d2BD41fd92e7566Ef445DC5AB",
+        "mockDid": "litentry:evm:0x5a973F455898c0A6C812F6A4bBc6678810dd5838",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -52,7 +24,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x5029bC78f84Fc7F1568FbA1A7808e753691E6675",
+        "mockDid": "litentry:evm:0x3bb6849153105C0c4d8D068E7Cb1C365b9b20eB8",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -66,7 +38,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xA5044e67f0c35b31fe82F2Ded6606b0b91545e98",
+        "mockDid": "litentry:evm:0xF0775DD7A342F123b63826Eab7abb979d109B2DC",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -80,7 +52,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xd14A1dB9B2Bfe0cE9cC175C24d6B01a16aB84f42",
+        "mockDid": "litentry:evm:0x661Be0562b31E9E8DdC2A7c93803005A1C71D749",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -94,7 +66,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xAA1582084c4f588eF9BE86F5eA1a919F86A3eE57",
+        "mockDid": "litentry:evm:0xa1D100a5bf6BFd2736837c97248853D989a9ED84",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -108,7 +80,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xe7DAE0cEd7a64d50136D466945257b600e718ACa",
+        "mockDid": "litentry:evm:0x65f7BA4Ec257AF7c55fd5854E5f6356bBd0fb8EC",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -122,7 +94,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x46f80018211D5cBBc988e853A8683501FCA4ee9b",
+        "mockDid": "litentry:evm:0x7fBC543Cb079bDA8b8013b811B179BcD38a313ce",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -136,7 +108,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x310E035d176ccB589511eD16af7aE7BAc4fc7f83",
+        "mockDid": "litentry:evm:0xbc29937451E4607d21a2444DE4dbFbA1AE8B88b8",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -150,7 +122,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x94CFF34005A073911C3179abE89F1677f0D37d42",
+        "mockDid": "litentry:evm:0x4b516c437c30D8D9d88b1c0463cEDc996e1F23d1",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -164,7 +136,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xB4e9275827B5f049196f5337F69533937475A3de",
+        "mockDid": "litentry:evm:0x04EAb3e8Ab9D6Aaa09953Bf6d4d2f0aa105c6d11",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -178,7 +150,7 @@
         },
         "dataProvider": "nodereal",
         "network": "litentry",
-        "mockDid": "litentry:evm:0xcFD97648df7fB75A545c69106d2049aa3D540334",
+        "mockDid": "litentry:evm:0x5b2a74B28C271800D743c8d9Cb5EDB145c32e718",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -192,7 +164,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x60E4F4bF50204dEeeD8bF4C6216b41BA2e5e453a",
+        "mockDid": "litentry:evm:0x1DF5DFE74De0Fd7De571bfF235e2f1E7F2F04c71",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -206,7 +178,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x8BaE6C9EA994d18e6b05cE33aE3e54Fa6F7FcE82",
+        "mockDid": "litentry:evm:0x202869cC52285E05B279796C6f379e79d50cDc21",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -220,7 +192,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x2d23D597b21F88c55fC6f1E2a84f42b06b7915dF",
+        "mockDid": "litentry:evm:0x12B1Cd23A925EFE7bc7584E26F6e7f33494755dB",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -234,7 +206,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0xDebc74120F822C0F0e6Eb69dB5F347F574d2D446",
+        "mockDid": "litentry:evm:0x221A5d1FCABecA06608eaaA4DF016533b1Ff67CA",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -248,7 +220,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x31743a08D895d01a49dB98b8F9c8469D92f63745",
+        "mockDid": "litentry:evm:0xd28424E9c65F8496456a2387556e621e9Bb066Af",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -262,7 +234,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x67aB29354a70732CDC97f372Be81d657ce8822cd",
+        "mockDid": "litentry:evm:0x8558FE88F8439dDcd7453ccAd6671Dfd90657a32",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -276,35 +248,7 @@
         },
         "dataProvider": "nodereal",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x3B7BB88dB769923dC2eE1e9e6A83c00A74c407D2",
-        "mockWeb3Network": "bsc,ethereum",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "token-staking-amount-lit",
-        "name": "LIT Staking Amount",
-        "description": "You are staking a certain amount of LIT",
-        "assertion": {
-            "id": "LitStaking",
-            "payload": []
-        },
-        "dataProvider": "nodereal",
-        "network": "litentry",
-        "mockDid": "litentry:substrate:0xfc7a9dd32be14db4695555aa9a2abd240a8c2160f84ccb403a985701dd13fe50",
-        "mockWeb3Network": "litentry,polkadot",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "weirdo-ghost-gang-holder",
-        "name": "WeirdoGhostGang Holder",
-        "description": "You are WeirdoGhostGang NFT holder",
-        "assertion": {
-            "id": "WeirdoGhostGangHolder",
-            "payload": []
-        },
-        "dataProvider": "nodereal",
-        "network": "ethereum",
-        "mockDid": "litentry:evm:0xCaA18Cd73E2756c680859F0A97E2C4846D50f71B",
+        "mockDid": "litentry:evm:0xDe8A35e0e8859ceD282103Fd15d8dD72Fd6Bb862",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     }

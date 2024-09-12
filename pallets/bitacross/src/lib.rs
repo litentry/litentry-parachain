@@ -70,8 +70,9 @@ pub mod pallet {
 		AdminSet { new_admin: Option<T::AccountId> },
 		RelayerAdded { who: Identity },
 		RelayerRemoved { who: Identity },
-		BtcWalletGenerated { pub_key: PubKey, account_id: T::AccountId },
-		EthWalletGenerated { pub_key: PubKey },
+		BtcWalletGenerated { pub_key: PubKey33, account_id: T::AccountId },
+		EthWalletGenerated { pub_key: PubKey33 },
+		TonWalletGenerated { pub_key: PubKey32 },
 		VaultRemoved { who: T::AccountId },
 	}
 
@@ -82,6 +83,7 @@ pub mod pallet {
 		UnsupportedRelayerType,
 		BtcWalletAlreadyExist,
 		EthWalletAlreadyExist,
+		TonWalletAlreadyExist,
 		VaultNotExist,
 	}
 
@@ -166,7 +168,7 @@ pub mod pallet {
 		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
 		pub fn btc_wallet_generated(
 			origin: OriginFor<T>,
-			pub_key: PubKey,
+			pub_key: PubKey33,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
 			Vault::<T>::try_mutate(tee_account.clone(), |v| {
@@ -181,7 +183,7 @@ pub mod pallet {
 		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
 		pub fn eth_wallet_generated(
 			origin: OriginFor<T>,
-			pub_key: PubKey,
+			pub_key: PubKey33,
 		) -> DispatchResultWithPostInfo {
 			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
 			Vault::<T>::try_mutate(tee_account, |v| {
@@ -192,8 +194,23 @@ pub mod pallet {
 			})
 		}
 
-		// TODO: placeholder
 		#[pallet::call_index(32)]
+		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
+		pub fn ton_wallet_generated(
+			origin: OriginFor<T>,
+			pub_key: PubKey32,
+		) -> DispatchResultWithPostInfo {
+			let tee_account = T::TEECallOrigin::ensure_origin(origin)?;
+			Vault::<T>::try_mutate(tee_account, |v| {
+				ensure!(!v.has_ton(), Error::<T>::TonWalletAlreadyExist);
+				v.ton = Some(pub_key);
+				Self::deposit_event(Event::TonWalletGenerated { pub_key });
+				Ok(Pays::No.into())
+			})
+		}
+
+		// TODO: placeholder
+		#[pallet::call_index(33)]
 		#[pallet::weight(({195_000_000}, DispatchClass::Normal, Pays::No))]
 		pub fn task_complete(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;

@@ -12,14 +12,12 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      litentry-node:
-        condition: service_healthy
       litentry-worker-1:
         condition: service_healthy
     networks:
       - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/lit_test_failed_parentchain_extrinsic.sh -p 9912 -u ws://litentry-node
+      "/usr/local/worker-cli/lit_test_failed_parentchain_extrinsic.sh -p 9944 -u ws://litentry-node
       -V ws://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:

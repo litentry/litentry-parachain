@@ -8,15 +8,12 @@
 **/node_modules/
 **/ts-tests/.yarn
 
-docker/generated-*/
-tee-worker/docker/litentry/
-
 tags.lock
 
 recipe.json
 rococo-fork.json
 
-gethdata
+**/gethdata/
 
 *.patch
 /log

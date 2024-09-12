@@ -85,11 +85,12 @@ contract A20 is DynamicAssertion {
         }
 
         Logging.info("begin create assertion for A20");
-        AssertionLogic.Condition memory condition = AssertionLogic.Condition(
-            "$has_joined",
-            AssertionLogic.Op.Equal,
-            "true"
-        );
+        AssertionLogic.Condition memory condition = AssertionLogic
+            .newConditionWithoutSubCc(
+                "$has_joined",
+                AssertionLogic.Op.Equal,
+                "true"
+            );
         string[] memory assertions = new string[](1);
         assertions[0] = AssertionLogic.toString(condition);
 

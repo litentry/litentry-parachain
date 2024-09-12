@@ -267,7 +267,7 @@ impl frame_system::Config for Runtime {
 	type OnKilledAccount = ();
 	type DbWeight = RocksDbWeight;
 	type BaseCallFilter = BaseCallFilter;
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	type BlockWeights = RuntimeBlockWeights;
 	type BlockLength = BlockLength;
 	type SS58Prefix = SS58Prefix;
@@ -913,14 +913,14 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
-impl pallet_bridge::Config for Runtime {
+impl pallet_chain_bridge::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
 	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_chain_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -949,7 +949,7 @@ impl SortedMembers<AccountId> for TransferAssetsAnyone {
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type BridgeHandler = AssetsHandler;
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type BridgeOrigin = pallet_chain_bridge::EnsureBridge<Runtime>;
 	type TransferAssetsMembers = TransferAssetsAnyone;
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
@@ -1241,7 +1241,7 @@ construct_runtime! {
 		Assets: pallet_assets = 56,
 
 		// Rococo pallets
-		ChainBridge: pallet_bridge = 60,
+		ChainBridge: pallet_chain_bridge= 60,
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		IdentityManagement: pallet_identity_management = 64,
@@ -1363,6 +1363,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
+			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)
@@ -1393,7 +1394,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_vc_management, VCManagement]
-		[pallet_bridge,ChainBridge]
+		[pallet_chain_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 		[pallet_teebag, Teebag]
 	);
@@ -1900,10 +1901,19 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, BenchmarkError};
 
 			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			impl frame_system_benchmarking::Config for Runtime {
+				fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
+					ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
+					Ok(())
+				}
+
+				fn verify_set_code() {
+					System::assert_last_event(cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into());
+				}
+			}
 
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 			impl cumulus_pallet_session_benchmarking::Config for Runtime {}

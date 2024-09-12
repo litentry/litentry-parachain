@@ -21,10 +21,11 @@ pub use ita_sgx_runtime::{Balance, Index, Runtime};
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_api_client_types::StaticEvent;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{
 	pallet_score_staking::ScoreStakingCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
-use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesTrait};
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_stf_state_handler::handle_state::HandleState;
@@ -46,7 +47,7 @@ use pallet_identity_management_tee::IdentityContext;
 use sp_core::{blake2_256, H160};
 use sp_runtime::traits::Header;
 use sp_std::vec::Vec;
-use std::{collections::BTreeMap, format, println, string::String, sync::Arc};
+use std::{collections::BTreeMap, format, println, string::String, sync::Arc, time::Instant};
 
 pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository> {
 	pub assertion_repository: Arc<EvmAssertionRepository>,
@@ -57,7 +58,7 @@ pub struct ParentchainEventHandler<OCallApi, HandleState, NodeMetadataRepository
 
 impl<OCallApi, HS, NMR> ParentchainEventHandler<OCallApi, HS, NMR>
 where
-	OCallApi: EnclaveOnChainOCallApi,
+	OCallApi: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 	NMR: AccessNodeMetadata,
 	NMR::MetadataType: NodeMetadataTrait,
@@ -217,9 +218,17 @@ where
 			})?;
 			decrypted_secrets.push(secret);
 		}
+		let start_time = Instant::now();
 		self.assertion_repository
 			.save(id, (byte_code, decrypted_secrets))
 			.map_err(Error::AssertionCreatedHandling)?;
+		let duration = start_time.elapsed();
+		if let Err(e) =
+			self.ocall_api.update_metric(EnclaveMetric::DynamicAssertionSaveTime(duration))
+		{
+			warn!("Failed to update DynamicAssertionSaveTime metric with error: {:?}", e);
+		}
+
 		Ok(())
 	}
 
@@ -367,7 +376,7 @@ impl<Executor, OCallApi, HS, NMR> HandleParentchainEvents<Executor, TrustedCallS
 	for ParentchainEventHandler<OCallApi, HS, NMR>
 where
 	Executor: IndirectExecutor<TrustedCallSigned, Error>,
-	OCallApi: EnclaveOnChainOCallApi,
+	OCallApi: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 	NMR: AccessNodeMetadata,
 	NMR::MetadataType: NodeMetadataTrait,

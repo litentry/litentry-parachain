@@ -3,10 +3,11 @@ resolver = "2"
 members = [
     'node',
     'pallets/account-fix',
-    'pallets/assets-handler',
     'pallets/bitacross',
-    'pallets/bridge',
-    'pallets/bridge-transfer',
+    'pallets/bridge/assets-handler',
+    'pallets/bridge/chain-bridge',
+    'pallets/bridge/bridge-transfer',
+    'pallets/bridge/common',
     'pallets/extrinsic-filter',
     'pallets/evm-address',
     'pallets/evm-assertions',
@@ -23,7 +24,6 @@ members = [
     'primitives/core/macros',
     'primitives/hex',
     'runtime/litentry',
-    'runtime/litmus',
     'runtime/rococo',
     'runtime/common',
 ]
@@ -75,11 +75,11 @@ serde_json = { version = "=1.0.120", default-features = false }
 slices = { version = "0.2.0" }
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
-similar-asserts = { version = "1.5.0" }
+similar-asserts = { version = "1.6.0" }
 sha3 = { version = "0.10", default-features = false }
 futures = { version = "0.3.30", features = ["compat"] }
 jsonrpsee = { version = "0.16.3", features = ["server"] }
-tokio = { version = "1.39.2", features = ["macros", "sync"] }
+tokio = { version = "1.40.0", features = ["macros", "sync"] }
 strum = { version = "0.26", default-features = false }
 strum_macros = { version = "0.26", default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false }
@@ -250,14 +250,14 @@ litentry-proc-macros = { path = "primitives/core/proc-macros" }
 litentry-hex-utils = { path = "primitives/hex", default-features = false }
 runtime-common = { path = "runtime/common", default-features = false }
 litentry-parachain-runtime = { path = "runtime/litentry", default-features = false }
-litmus-parachain-runtime = { path = "runtime/litmus", default-features = false }
 rococo-parachain-runtime = { path = "runtime/rococo", default-features = false }
 pallet-account-fix = { path = "pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "pallets/xcm-asset-manager", default-features = false }
-pallet-assets-handler = { path = "pallets/assets-handler", default-features = false }
+pallet-assets-handler = { path = "pallets/bridge/assets-handler", default-features = false }
 pallet-bitacross = { path = "pallets/bitacross", default-features = false }
-pallet-bridge = { path = "pallets/bridge", default-features = false }
-pallet-bridge-transfer = { path = "pallets/bridge-transfer", default-features = false }
+pallet-chain-bridge = { path = "pallets/bridge/chain-bridge", default-features = false }
+pallet-bridge-common = { path = "pallets/bridge/common", default-features = false }
+pallet-bridge-transfer = { path = "pallets/bridge/bridge-transfer", default-features = false }
 pallet-extrinsic-filter = { path = "pallets/extrinsic-filter", default-features = false }
 pallet-group = { path = "pallets/group", default-features = false }
 pallet-identity-management = { path = "pallets/identity-management", default-features = false }

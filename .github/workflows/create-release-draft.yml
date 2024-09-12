@@ -35,7 +35,6 @@ on:
         description: If any of the genesis artefacts should be released alongside
         options:
           - none
-          - litmus
           - rococo
           - litentry
 
@@ -76,7 +75,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - rococo
           - litentry
     name: ${{ matrix.chain }}
@@ -98,7 +96,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
-          tag: "1.73.0"
+          profile: production
 
       - name: Summary
         run: |
@@ -208,7 +206,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -277,7 +274,6 @@ jobs:
             SGX_MODE=HW
             IMAGE_FOR_RELEASE=true
             SGX_COMMERCIAL_KEY=enclave_key.pem
-            RA_METHOD=dcap
 
       - name: Build worker
         uses: docker/build-push-action@v6
@@ -307,7 +303,6 @@ jobs:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
     name: ${{ matrix.chain }}
     steps:

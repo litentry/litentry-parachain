@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{dynamic::repository::SmartContractByteCode, *};
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_types::Assertion;
 use lc_credentials::{assertion_logic::AssertionLogic, Credential, IssuerRuntimeVersion};
 use lc_dynamic_assertion::{AssertionExecutor, AssertionLogicRepository};
@@ -27,12 +28,14 @@ pub mod repository;
 
 pub fn build<
 	SC: AssertionLogicRepository<Id = H160, Item = (SmartContractByteCode, Vec<String>)>,
+	MetricsApi: EnclaveMetricsOCallApi,
 >(
 	req: &AssertionBuildRequest,
 	params: DynamicParams,
 	repository: Arc<SC>,
+	metrics_api: Arc<MetricsApi>,
 ) -> Result<(Credential, Vec<String>)> {
-	let executor = EvmAssertionExecutor { assertion_repository: repository };
+	let executor = EvmAssertionExecutor { assertion_repository: repository, metrics_api };
 	let execution_params = params.clone();
 	let result = executor
 		.execute(
@@ -85,6 +88,7 @@ pub fn build<
 #[cfg(test)]
 pub mod assertion_test {
 	use crate::dynamic::{build, repository::InMemorySmartContractRepo};
+	use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 	use itp_types::Assertion;
 	use lc_mock_server::run;
 	use lc_stf_task_sender::AssertionBuildRequest;
@@ -93,6 +97,7 @@ pub mod assertion_test {
 		DynamicContractParams, DynamicParams, Identity, IdentityString, Web3Network,
 	};
 	use sp_core::{crypto::AccountId32, H160};
+	use std::sync::Arc;
 
 	#[test]
 	pub fn test_a20_true() {
@@ -131,9 +136,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let metrics_api = Arc::new(MetricsOCallMock::default());
 
 		// when
-		let (credential, vc_logs) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, vc_logs) =
+			build(&request, dynamic_params, repository.into(), metrics_api).unwrap();
 
 		for log in &vc_logs {
 			println!("{}", log);
@@ -174,9 +181,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let metrics_api = Arc::new(MetricsOCallMock::default());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) =
+			build(&request, dynamic_params, repository.into(), metrics_api).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -215,9 +224,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let metrics_api = Arc::new(MetricsOCallMock::default());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) =
+			build(&request, dynamic_params, repository.into(), metrics_api).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
@@ -253,9 +264,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let metrics_api = Arc::new(MetricsOCallMock::default());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) =
+			build(&request, dynamic_params, repository.into(), metrics_api).unwrap();
 
 		// then
 		assert!(!credential.credential_subject.values[0]);
@@ -268,9 +281,7 @@ pub mod assertion_test {
 		// given
 		// bc1pgr5fw4p9gl9me0vzjklnlnap669caxc0gsk4j62gff2qktlw6naqm4m3d0
 		let address = decode_hex(
-			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed"
-				.as_bytes()
-				.to_vec(),
+			"0x02e8c39e82aaaa143c3def8d3c7084a539b227244ac9067c3f7fc86cb73a0b7aed".as_bytes(),
 		)
 		.unwrap()
 		.as_slice()
@@ -304,9 +315,11 @@ pub mod assertion_test {
 		};
 
 		let repository = InMemorySmartContractRepo::new();
+		let metrics_api = Arc::new(MetricsOCallMock::default());
 
 		// when
-		let (credential, _) = build(&request, dynamic_params, repository.into()).unwrap();
+		let (credential, _) =
+			build(&request, dynamic_params, repository.into(), metrics_api).unwrap();
 
 		println!("Credential is: {:?}", credential);
 
