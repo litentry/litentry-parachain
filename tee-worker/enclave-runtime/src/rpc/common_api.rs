@@ -483,8 +483,8 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 
 				match email::VerificationCodeStore::insert(account_id, verification_code.clone()) {
 					Ok(_) => {
-						if let Err(_) =
-							email::send_verification_email(&mut mailer, email, verification_code)
+						if email::send_verification_email(&mut mailer, email, verification_code)
+							.is_err()
 						{
 							return Ok(json!(compute_hex_encoded_return_error(
 								"Could not send verification email"
@@ -494,10 +494,9 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 							RpcReturnValue::new(vec![], false, DirectRequestStatus::Ok);
 						Ok(json!(json_value.to_hex()))
 					},
-					Err(_) =>
-						return Ok(json!(compute_hex_encoded_return_error(
-							"Could not save verification code"
-						))),
+					Err(_) => Ok(json!(compute_hex_encoded_return_error(
+						"Could not save verification code"
+					))),
 				}
 			},
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
