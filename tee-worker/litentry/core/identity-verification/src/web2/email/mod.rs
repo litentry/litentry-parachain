@@ -4,8 +4,7 @@ pub use verification_code_store::*;
 mod mailer;
 pub use mailer::*;
 
-use crate::web2::helpers;
-use std::string::String;
+use crate::{alloc::string::String, web2::helpers};
 
 pub fn generate_verification_code() -> String {
 	helpers::get_random_string(32)

@@ -3,8 +3,8 @@ extern crate sgx_rand as rand;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use crate::alloc::string::String;
 use rand::{thread_rng, Rng};
-use std::string::String;
 
 pub(crate) fn get_random_string(length: usize) -> String {
 	let mut rng = thread_rng();

@@ -2,6 +2,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use super::{Mail, Mailer};
+use crate::alloc::{string::String, vec, vec::Vec};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -11,7 +12,6 @@ use itc_rest_client::{
 	RestPath, RestPost,
 };
 use serde::Serialize;
-use std::{string::String, vec, vec::Vec};
 use url::Url;
 
 #[derive(Serialize)]

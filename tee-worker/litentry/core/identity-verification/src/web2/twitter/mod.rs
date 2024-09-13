@@ -1,12 +1,15 @@
 mod oauth_store;
 pub use oauth_store::*;
 
-use crate::{web2::helpers, Error, Result};
+use crate::{
+	alloc::{format, string::String, vec::Vec},
+	web2::helpers,
+	Error, Result,
+};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use lc_data_providers::twitter_official::Tweet;
 use litentry_primitives::{self, ErrorDetail};
 use sp_core::hashing::sha2_256;
-use std::{format, string::String, vec::Vec};
 
 #[derive(Debug)]
 pub struct AuthorizeData {

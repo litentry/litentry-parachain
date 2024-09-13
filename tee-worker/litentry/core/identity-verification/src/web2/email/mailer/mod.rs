@@ -1,7 +1,7 @@
 pub mod sendgrid_mailer;
 pub(crate) mod template;
 
-use std::string::String;
+use crate::alloc::string::String;
 
 pub struct Mail {
 	pub to: String,

@@ -1,13 +1,14 @@
+use crate::alloc::string::String;
 use codec::Encode;
 use core::result::Result;
 use lazy_static::lazy_static;
 use litentry_primitives::ParentchainAccountId as AccountId;
 use lru::LruCache;
+use std::num::NonZeroUsize;
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
-use std::{num::NonZeroUsize, string::String};
 
 lazy_static! {
 	static ref STORE: RwLock<LruCache<String, String>> =
