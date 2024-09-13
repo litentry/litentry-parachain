@@ -278,6 +278,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Twitter(_) => "Twitter".into(),
 			Identity::Discord(_) => "Discord".into(),
 			Identity::Github(_) => "Github".into(),
+			Identity::Email(_) => "Email".into(),
 			Identity::Substrate(_) => "Substrate".into(),
 			Identity::Evm(_) => "Evm".into(),
 			Identity::Bitcoin(_) => "Bitcoin".into(),
@@ -320,6 +321,7 @@ fn assertion_to_string(assertion: Assertion) -> String {
 		Assertion::Dynamic(param) => {
 			format!("DynamicAssertion({:?})", param.smart_contract_id)
 		},
+		Assertion::LinkedIdentities => "LinkedIdentities".into(),
 	};
 	assertion
 }
