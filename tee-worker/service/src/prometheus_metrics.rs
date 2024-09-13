@@ -321,6 +321,7 @@ fn assertion_to_string(assertion: Assertion) -> String {
 		Assertion::Dynamic(param) => {
 			format!("DynamicAssertion({:?})", param.smart_contract_id)
 		},
+		Assertion::LinkedIdentities => "LinkedIdentities".into(),
 	};
 	assertion
 }

@@ -293,6 +293,7 @@ where
 			vc_logs = Some(result.1);
 			Ok(result.0)
 		},
+		Assertion::LinkedIdentities => todo!(),
 	}?;
 
 	// post-process the credential
