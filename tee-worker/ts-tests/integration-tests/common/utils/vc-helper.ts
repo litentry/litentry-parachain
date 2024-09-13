@@ -345,4 +345,12 @@ export const mockAssertions = [
             WeirdoGhostGangHolder: [],
         },
     },
+
+    // LinkedIdentities
+    {
+        description: 'All web2 and web3 identities you linked',
+        assertion: {
+            LinkedIdentities: [],
+        },
+    },
 ];
