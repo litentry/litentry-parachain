@@ -207,6 +207,8 @@ where
 			vc_logs = Some(result.1);
 			Ok(result.0)
 		},
+
+		Assertion::LinkedIdentities => lc_assertion_build_v2::linked_identities::build(req),
 	}?;
 
 	// post-process the credential

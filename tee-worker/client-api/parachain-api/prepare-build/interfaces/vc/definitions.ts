@@ -35,6 +35,7 @@ export default {
                 PlatformUser: "PlatformUserType",
                 NftHolder: "Web3NftType",
                 Dynamic: "DynamicParams",
+                LinkedIdentities: "Null",
             },
         },
         AssertionSupportedNetwork: {
