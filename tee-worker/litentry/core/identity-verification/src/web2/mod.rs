@@ -231,14 +231,7 @@ pub fn verify(
 						.to_vec(),
 					)))
 				})?,
-				Err(e) =>
-					return Err(Error::LinkIdentityFailed(ErrorDetail::StfError(
-						ErrorString::truncate_from(
-							std::format!("failed to get verification code: {}", e,)
-								.as_bytes()
-								.to_vec(),
-						),
-					))),
+				Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
 			};
 
 			ensure!(
