@@ -53,6 +53,7 @@ pub enum Command {
 	#[clap(subcommand)]
 	NftHolder(NftHolderCommand),
 	Dynamic(DynamicArg),
+	LinkedIdentities,
 }
 
 #[derive(Args, Debug)]
@@ -492,6 +493,7 @@ impl Command {
 					return_log: arg.return_log.unwrap_or_default(),
 				}))
 			},
+			Command::LinkedIdentities => Ok(LinkedIdentities),
 		}
 	}
 }

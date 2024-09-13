@@ -150,7 +150,7 @@
         },
         "dataProvider": "achainable",
         "network": "litentry",
-        "mockDid": "litentry:substrate:0x5FeEE1E799015A22EbD216d43484FCB3BA88de20",
+        "mockDid": "litentry:substrate:0x00f160c0e8fff2d4f00ab03e18dced9f2ac52a6b865cda497a33aee5b3fe335b",
         "mockWeb3Network": "litentry,polkadot",
         "expectedCredentialValue": true
     },
@@ -163,7 +163,7 @@
             "payload": {
                 "Amount": {
                     "name": "Created over {amount} contracts",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -183,7 +183,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Polkadot",
+                    "chain": ["Polkadot"],
                     "amount": "0"
                 }
             }
@@ -203,7 +203,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Ethereum",
+                    "chain": ["Ethereum"],
                     "amount": "0"
                 }
             }
@@ -223,7 +223,7 @@
             "payload": {
                 "Amount": {
                     "name": "Balance over {amount}",
-                    "chain": "Litentry",
+                    "chain": ["Litentry"],
                     "amount": "0"
                 }
             }
