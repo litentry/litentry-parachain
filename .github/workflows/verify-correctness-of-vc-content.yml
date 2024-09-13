@@ -36,14 +36,9 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Generate parachain artefacts
+      - name: Launch parachain network
         run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
+          make launch-network-litentry
 
       - name: Run vc correctness tests
         run: |
