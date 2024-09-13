@@ -181,99 +181,107 @@ impl Domains {
 #[cfg(test)]
 mod tests {
 	use super::Domains;
+	use chrono::{Duration, SecondsFormat, Utc};
 	use litentry_primitives::BnbDigitDomainType;
 
-	const RESPONSE: &'static str = r#"
-		{
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe1": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "1",
-					"expires": "2024-08-24T00:36:44Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "2",
-					"expires": "2032-08-24T00:15:56Z"
-				}
-			],
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe2": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "3",
-					"expires": "2023-08-24T20:36:26Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "4",
-					"expires": "2023-08-24T20:35:59Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "win",
-					"expires": "2023-08-24T20:38:29Z"
-				}
-			],
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe3": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "5",
-					"expires": "2024-08-24T06:33:32Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "6",
-					"expires": "2024-08-24T07:57:41Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "7",
-					"expires": "2023-09-16T19:36:14Z"
-				}
-			],
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe4": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "8",
-					"expires": "2028-09-18T13:35:38Z"
-				}
-			],
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe5": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "9",
-					"expires": "2023-09-03T08:35:40Z"
-				}
-			],
-			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe6": [
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "000",
-					"expires": "2024-10-30T18:40:51Z"
-				},
-				{
-					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "999",
-					"expires": "2024-03-19T18:16:59Z"
-				}
-			]
-		}
-		"#;
-
 	fn new_domains() -> Domains {
-		let value: serde_json::Value = serde_json::from_str(RESPONSE).unwrap();
+		let future_date = Utc::now()
+			.checked_add_signed(Duration::days(10))
+			.expect("Failed to add duration")
+			.to_rfc3339_opts(SecondsFormat::Secs, true);
+		let response = format!(
+			r#"
+				{{
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe1": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "1",
+							"expires": "2024-08-24T00:36:44Z"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "2",
+							"expires": "{}"
+						}}
+					],
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe2": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "3",
+							"expires": "2023-08-24T20:36:26Z"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "4",
+							"expires": "2023-08-24T20:35:59Z"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "win",
+							"expires": "2023-08-24T20:38:29Z"
+						}}
+					],
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe3": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "5",
+							"expires": "2024-08-24T06:33:32Z"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "6",
+							"expires": "2024-08-24T07:57:41Z"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "7",
+							"expires": "2023-09-16T19:36:14Z"
+						}}
+					],
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe4": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "8",
+							"expires": "{}"
+						}}
+					],
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe5": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "9",
+							"expires": "2023-09-03T08:35:40Z"
+						}}
+					],
+					"0xr4b0bf28adfcee93c5069982a895785c9231c1fe6": [
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "000",
+							"expires": "{}"
+						}},
+						{{
+							"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
+							"name": "999",
+							"expires": "2024-03-19T18:16:59Z"
+						}}
+					]
+				}}
+				"#,
+			future_date, future_date, future_date
+		);
+
+		let value: serde_json::Value = serde_json::from_str(response.as_str()).unwrap();
 		Domains::from_value(&value).unwrap()
 	}
 
@@ -287,7 +295,7 @@ mod tests {
 	fn non_expired_domain_infos_works() {
 		let domains = new_domains();
 		let non_expired_infos = domains.non_expired_domain_infos().unwrap();
-		assert_eq!(non_expired_infos.len(), 6);
+		assert_eq!(non_expired_infos.len(), 3);
 	}
 
 	#[test]

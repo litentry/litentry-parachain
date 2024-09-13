@@ -53,6 +53,7 @@ litentry-primitives = { path = "../../primitives", default-features = false }
 pallet-parachain-staking = { path = "../../../../pallets/parachain-staking", default-features = false }
 
 [dev-dependencies]
+chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 env_logger = "0.10.0"
 lc-mock-server = { path = "../mock-server" }
 litentry-hex-utils = { path = "../../../../primitives/hex" }
