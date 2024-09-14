@@ -5,6 +5,7 @@ PARACHAIN_BASEDIR="/opt/litentry/parachain"
 REPO_DIR="/code/litentry-parachain"
 # Currently, only chain type rococo is supported.
 CHAIN='rococo'
+ZOMBIENET_DIR=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 8; echo)
 
 check(){
     if [ -z "$CHAIN" ]; then
@@ -22,10 +23,22 @@ check(){
 }
 
 init(){
+    # cd "$PARACHAIN_BASEDIR" || exit
+    # polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local-chain-spec.json
+    # litentry-collator export-genesis-state --chain $CHAIN-dev > genesis-state
+    # litentry-collator export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
+    export PARA_ID=$(grep -i "${CHAIN}_para_id" ${REPO_DIR}/primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
+    export PARA_CHAIN_SPEC=${CHAIN}-dev
+    export COLLATOR_WS_PORT=${CollatorWSPort:-9944}
+}
+
+run_zombienet(){
     cd "$PARACHAIN_BASEDIR" || exit
-    polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local-chain-spec.json
-    litentry-collator export-genesis-state --chain $CHAIN-dev > genesis-state
-    litentry-collator export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
+    cp ${REPO_DIR}/zombienet/config.toml .
+    zombienet setup polkadot -y || true
+    cp /usr/local/bin/litentry-collator .
+    nohup zombienet -d $ZOMBIENET_DIR -l silent spawn config.toml &
+    zombienet_pid=$!
 }
 
 run_parachain_alice(){
@@ -78,23 +91,25 @@ run_relay_bob(){
 
 register_parachain(){
     echo "Register parathread now ..."
-    cd "$REPO_DIR" || exit
-    export PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
+    # cd "$REPO_DIR" || exit
+    # export PARACHAIN_ID=$(grep -i "${CHAIN}_para_id" primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
     cd "$REPO_DIR/ts-tests" || exit
     if [[ -z "$NODE_ENV" ]]; then
         echo "NODE_ENV=ci" > .env
     else
         echo "NODE_ENV=$NODE_ENV" > .env
     fi
-    jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > config.ci.json.1
-    mv config.ci.json.1 config.ci.json
-    pnpm install
-    pnpm run register-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/register-parathread.log"
 
-    echo "Upgrade parathread to parachain in 90s ..."
-    # Wait for 90s to allow onboarding finish, after that we do the upgrade
-    sleep 90
-    pnpm run upgrade-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/upgrade-parathread.log"
+    corepack pnpm install
+    # jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > config.ci.json.1
+    # mv config.ci.json.1 config.ci.json
+    # pnpm install
+    # pnpm run register-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/register-parathread.log"
+
+    # echo "Upgrade parathread to parachain in 90s ..."
+    # # Wait for 90s to allow onboarding finish, after that we do the upgrade
+    # sleep 90
+    # pnpm run upgrade-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/upgrade-parathread.log"
 
     echo "wait for parachain to produce block #1..."
     pnpm run wait-finalized-block 2>&1
@@ -110,21 +125,24 @@ print_help(){
 }
 
 watch_pid(){
-    wait -n ${relay_alice_pid} ${relay_bob_pid} ${parachain_alice_pid}
+    # wait -n ${relay_alice_pid} ${relay_bob_pid} ${parachain_alice_pid} ${zombienet_pid}
+    wait -n ${zombienet_pid}
     EXIT_STATUS=$?
-    kill ${relay_alice_pid} ${relay_bob_pid} ${parachain_alice_pid}
+    # kill ${relay_alice_pid} ${relay_bob_pid} ${parachain_alice_pid} ${zombienet_pid}
+    kill ${zombienet_pid}
     exit $EXIT_STATUS
 }
 
 main(){
     # check
-    init
-    run_relay_alice
-    sleep 5
-    run_relay_bob
-    sleep 5
-    run_parachain_alice
-    sleep 5
+    # init
+    # run_relay_alice
+    # sleep 5
+    # run_relay_bob
+    # sleep 5
+    # run_parachain_alice
+    # sleep 5
+    run_zombienet
     register_parachain
     print_help
     watch_pid

@@ -55,6 +55,7 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
 ENV NVM_DIR /opt/nvm
+ENV ZOMBIENET_VERSION v1.3.109
 
 # install netcat for healthcheck
 RUN apt-get update && \
@@ -65,8 +66,6 @@ RUN apt-get update && \
     libboost-thread-dev lsb-release libsystemd0 pkgconf jq python3-pip curl && \
     apt-get install -yq ca-certificates && \
     update-ca-certificates && \
-    wget -O /usr/local/bin/polkadot -q https://github.com/paritytech/polkadot/releases/download/v0.9.42/polkadot && \
-    chmod +x /usr/local/bin/polkadot && \
     curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - && \
     apt-get update && apt-get install -y nodejs && \
     npm install -g pnpm && \
@@ -83,6 +82,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/cache/apt/lists 
 
+RUN echo "downloading zombienet-linux-x64 ..." && \
+    curl -L -s -O "https://github.com/paritytech/zombienet/releases/download/$ZOMBIENET_VERSION/zombienet-linux-x64" && \
+    chmod +x zombienet-linux-x64 && \
+    cp zombienet-linux-x64 /usr/local/bin/zombienet && \
+    zombienet version
+
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /opt/litentry/parachain /code/litentry-parachain && \
 	chown -R litentry:litentry /opt/litentry
@@ -94,6 +99,8 @@ RUN chmod +x /usr/local/bin/litentry-collator && \
 
 COPY ./node/src/chain_specs /code/litentry-parachain/node/src/chain_specs
 COPY ./ts-tests /code/litentry-parachain/ts-tests 
+COPY ./primitives/core/src/lib.rs /code/litentry-parachain/primitives/core/src/lib.rs
+COPY ./zombienet/config.toml /code/litentry-parachain/zombienet/config.toml
 RUN chown -R litentry:litentry /code
 
 COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
