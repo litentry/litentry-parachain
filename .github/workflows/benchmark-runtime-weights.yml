@@ -19,6 +19,11 @@ on:
         description: rococo
         required: true
         default: true
+      paseo:
+        type: boolean
+        description: paseo
+        required: true
+        default: true
       pallets:
         description: pallets to benchmark, * for all, or comma listed (e.g. frame-system,pallet-proxy)
         default: "*"
@@ -83,6 +88,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rococo }}" = "true" ]; then
             chain="$chain rococo"
+          fi
+          if [ "${{ github.event.inputs.paseo }}" = "true" ]; then
+            chain="$chain paseo"
           fi
           if [ "$chain" = "" ]; then
             echo "::error::Please select at least one chain."
