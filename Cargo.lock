@@ -8099,7 +8099,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
  "chrono",
- "der 0.6.1",
+ "der 0.7.9",
  "env_logger 0.10.2",
  "frame-benchmarking",
  "frame-support",
