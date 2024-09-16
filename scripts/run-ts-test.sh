@@ -6,7 +6,7 @@ bridge=false
 evm=false
 
 case "$1" in
-    litentry|rococo) export PARACHAIN_TYPE=$1 ;;
+    litentry|rococo|paseo) export PARACHAIN_TYPE=$1 ;;
     *) echo "usage: ./$0 litentry [bridge] [evm]"; exit 1 ;;
 esac
     
