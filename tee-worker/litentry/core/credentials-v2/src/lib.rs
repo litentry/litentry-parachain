@@ -30,6 +30,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 // TODO migration to v2 in the future
 pub use lc_credentials::{assertion_logic, Credential, IssuerRuntimeVersion};
 
+pub mod linked_identities;
 pub mod nft_holder;
 pub mod platform_user;
 pub mod token_holding_amount;
