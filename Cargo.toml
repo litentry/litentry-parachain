@@ -13,6 +13,7 @@ members = [
     'pallets/evm-assertions',
     'pallets/group',
     'pallets/identity-management',
+    'pallets/omni-account',
     'pallets/parachain-staking',
     'pallets/score-staking',
     'pallets/teebag',
