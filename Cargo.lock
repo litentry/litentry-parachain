@@ -7806,6 +7806,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-omni-account"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-teebag",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
 dependencies = [
