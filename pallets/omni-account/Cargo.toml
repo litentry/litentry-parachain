@@ -17,11 +17,18 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
+[dev-dependencies]
+pallet-balances = { workspace = true, default-features = true }
+pallet-timestamp = { workspace = true, features = ["std"] }
+pallet-teebag = { workspace = true, features = ["std", "test-util"] }
+
 [features]
 default = ["std"]
 runtime-benchmarks = [
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
+    "pallet-timestamp/runtime-benchmarks",
+    "pallet-teebag/runtime-benchmarks",
 ]
 std = [
     "parity-scale-codec/std",
@@ -34,5 +41,6 @@ std = [
     "sp-io/std",
     "frame-support/std",
     "frame-system/std",
+    "pallet-teebag/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
