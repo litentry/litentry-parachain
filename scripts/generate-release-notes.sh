@@ -116,7 +116,7 @@ fi
 
 if is_runtime_release; then
   echo "## Parachain runtime" >> "$1"
-  for CHAIN in rococo litentry; do
+  for CHAIN in rococo litentry paseo; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
     RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
@@ -256,12 +256,12 @@ EOF
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
     output="- [\`$commit\`]($REPO/commit/$commit) $desc"
-    
+
     for ((i=0; i<${#labels[@]}; i++)); do
       label=$(gh pr list --search "$commit" --label "${labels[i]}" --state merged)
       [ -n "$label" ] && output+=" $REPO/labels/${labels[i]}"
     done
-    
+
     echo "$output" >> "$1"
   done
 fi
