@@ -39,6 +39,7 @@ pub use ita_sgx_runtime::{
 };
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
 	error::StfError,
@@ -339,10 +340,12 @@ impl TrustedCallVerification for TrustedCallSigned {
 	}
 }
 
-impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
+impl<NodeMetadataRepository, OCallApi> ExecuteCall<NodeMetadataRepository, OCallApi>
+	for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	OCallApi: EnclaveOnChainOCallApi,
 {
 	type Error = StfError;
 	type Result = TrustedCallResult;
@@ -386,6 +389,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		ocall_api: Arc<OCallApi>,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;

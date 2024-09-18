@@ -69,10 +69,11 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository>,
+		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)> + From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
-	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository>>::Error: Debug,
+	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>>::Error:
+		Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
@@ -132,6 +133,7 @@ where
 			trusted_operation.hash(),
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),
+			self.ocall_api.clone(),
 		) {
 			Err(e) => {
 				if let Err(e) =
@@ -307,13 +309,14 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository>
+		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>
 		+ RuntimeUpgradeInterface<StateHandler::StateT>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
-	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository>>::Error: Debug,
+	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>>::Error:
+		Debug,
 	<Stf as RuntimeUpgradeInterface<StateHandler::StateT>>::Error: Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,

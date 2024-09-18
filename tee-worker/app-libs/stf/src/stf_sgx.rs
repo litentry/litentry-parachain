@@ -28,6 +28,7 @@ use ita_sgx_runtime::{
 	Executive, ParentchainInstanceLitentry, ParentchainInstanceTargetA, ParentchainInstanceTargetB,
 };
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInstancesInterface,
@@ -134,11 +135,11 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime, NodeMetadataRepository>
-	StateCallInterface<TCS, State, NodeMetadataRepository> for Stf<TCS, G, State, Runtime>
+impl<TCS, G, State, Runtime, NodeMetadataRepository, OCallApi>
+	StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi> for Stf<TCS, G, State, Runtime>
 where
 	TCS: PartialEq
-		+ ExecuteCall<NodeMetadataRepository>
+		+ ExecuteCall<NodeMetadataRepository, OCallApi>
 		+ Encode
 		+ Decode
 		+ Debug
@@ -149,6 +150,7 @@ where
 	State: SgxExternalitiesTrait + Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	OCallApi: EnclaveOnChainOCallApi,
 {
 	type Error = TCS::Error;
 	type Result = TCS::Result;
@@ -160,8 +162,9 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		ocall_api: Arc<OCallApi>,
 	) -> Result<Self::Result, Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
+		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api))
 	}
 }
 

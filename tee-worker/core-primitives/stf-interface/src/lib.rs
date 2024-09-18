@@ -27,6 +27,7 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{BlockHash, BlockNumber, ParentchainCall, ParentchainId},
@@ -62,11 +63,12 @@ pub trait UpdateState<State, StateDiff> {
 }
 
 /// Interface to execute state mutating calls on a state.
-pub trait StateCallInterface<TCS, State, NodeMetadataRepository>
+pub trait StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
+	OCallApi: EnclaveOnChainOCallApi,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -84,6 +86,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		ocall_api: Arc<OCallApi>,
 	) -> Result<Self::Result, Self::Error>;
 }
 
@@ -94,10 +97,11 @@ pub trait StateGetterInterface<G, S> {
 }
 
 /// Trait used to abstract the call execution.
-pub trait ExecuteCall<NodeMetadataRepository>
+pub trait ExecuteCall<NodeMetadataRepository, OCallApi>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	OCallApi: EnclaveOnChainOCallApi,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -112,6 +116,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		ocall_api: Arc<OCallApi>,
 	) -> Result<Self::Result, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.

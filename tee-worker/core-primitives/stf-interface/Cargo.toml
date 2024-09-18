@@ -9,6 +9,7 @@ codec = { version = "3.0.0", default-features = false, features = ["derive"], pa
 
 itp-node-api-metadata = { path = "../node-api/metadata", default-features = false, features = ["mocks"] }
 itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
+itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }
 itp-types = { default-features = false, path = "../types" }
 
