@@ -5662,6 +5662,7 @@ dependencies = [
  "pallet-membership",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-omni-account",
  "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",

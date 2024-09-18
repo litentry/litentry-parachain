@@ -268,6 +268,7 @@ pallet-parachain-staking = { path = "pallets/parachain-staking", default-feature
 pallet-score-staking = { path = "pallets/score-staking", default-features = false }
 pallet-teebag = { path = "pallets/teebag", default-features = false }
 pallet-vc-management = { path = "pallets/vc-management", default-features = false }
+pallet-omni-account = { path = "pallets/omni-account", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "precompiles/assets-erc20", default-features = false }
 pallet-evm-precompile-bridge-transfer = { path = "precompiles/bridge-transfer", default-features = false }
 pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-staking", default-features = false }
