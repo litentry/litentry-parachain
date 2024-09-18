@@ -171,7 +171,7 @@ pub mod integration_test {
 	use ethabi::{decode, encode, ethereum_types::U256, ParamType, Token};
 	use serde_json::json;
 
-	// tee-worker/litentry/core/assertion-build/src/dynamic/contracts/tests/JsonTest.sol
+	// https://github.com/litentry/DynamicAssertion/tree/dev/contracts/tests/JsonTest.sol
 	const FUNCTION_HASH_0: &str = "73260cf2"; // callGetString(string,string)
 	const FUNCTION_HASH_1: &str = "fe598591"; // callGetBool(string,string)
 	const FUNCTION_HASH_2: &str = "f5e19bc0"; // callGetI64(string,string)

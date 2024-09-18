@@ -37,7 +37,6 @@ tee_test: &tee_test
   - 'tee-worker/cli/*.sh'
   - 'docker/**'
   - 'tee-worker/docker/*.yml'
-  - 'tee-worker/litentry/core/assertion-build/src/dynamic/contracts/**'
 
 bitacross_src: &bitacross_src
   - 'bitacross-worker/**/*.rs'

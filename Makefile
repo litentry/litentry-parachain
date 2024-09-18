@@ -113,8 +113,8 @@ update-ts-dep:
 	@cd ts-tests && pnpm dlx npm-check-updates -u && pnpm install
 
 # format
-.PHONY: fmt ## (cargo, taplo, ts, solidity) fmt
-fmt: fmt-cargo fmt-taplo fmt-ts fmt-contract
+.PHONY: fmt ## (cargo, taplo, ts) fmt
+fmt: fmt-cargo fmt-taplo fmt-ts
 
 .PHONY: fmt-cargo ## cargo fmt
 fmt-cargo:
@@ -134,10 +134,6 @@ fmt-taplo:
 fmt-ts:
 	@cd ts-tests && pnpm install && pnpm run format
 	@cd tee-worker/ts-tests && pnpm install && pnpm run format
-
-.PHONY: fmt-contract ## contract fmt
-fmt-contract:
-	@cd tee-worker/litentry/core/assertion-build/src/dynamic && pnpm install && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:

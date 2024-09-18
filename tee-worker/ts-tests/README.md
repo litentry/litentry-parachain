@@ -52,12 +52,3 @@ Direct invocation vc test: `pnpm --filter integration-tests run test di_vc.test.
 3. Execute test cases:
    1. Single test:  `pnpm run test-data-providers:local --id=your credential json id` 
    2. All credential tests:`pnpm run test-data-providers:local`（Run all the `credential-json/*.json` test cases, execute them in the order of [export](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/ts-tests/integration-tests/common/credential-json/index.ts#L21).）
-
-## Assertion contracts tests
-
-- Compile contracts using hardhat(ts-tests folder): 
-  `pnpm --filter integration-tests run compile-contracts`
-- Link [assertion contracts](https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src/dynamic/artifacts/contracts) to the ts-tests directory(integration-tests/contracts folder):
-  `pnpm --filter integration-tests run link-contracts`
-- Perform testing:
-  `pnpm --filter integration-tests run test assertion_contracts.test.ts`
