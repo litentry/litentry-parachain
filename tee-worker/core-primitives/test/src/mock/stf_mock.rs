@@ -14,6 +14,7 @@
 	limitations under the License.
 
 */
+use super::onchain_mock::OnchainMock;
 use alloc::{boxed::Box, sync::Arc};
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -63,8 +64,13 @@ impl UpdateState<SgxExternalities, SgxExternalitiesDiffType> for StfMock {
 	}
 }
 
-impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRepositoryMock>
-	for StfMock
+impl
+	StateCallInterface<
+		TrustedCallSignedMock,
+		SgxExternalities,
+		NodeMetadataRepositoryMock,
+		OnchainMock,
+	> for StfMock
 {
 	type Error = StfMockError;
 	type Result = ();
@@ -76,8 +82,9 @@ impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRep
 		top_hash: H256,
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
+		ocall_api: Arc<OnchainMock>,
 	) -> Result<(), Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
+		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api))
 	}
 }
 
@@ -170,7 +177,7 @@ impl Default for TrustedCallSignedMock {
 	}
 }
 
-impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
+impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock> for TrustedCallSignedMock {
 	type Error = StfMockError;
 	type Result = ();
 
@@ -180,6 +187,7 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
+		_ocall_api: Arc<OnchainMock>,
 	) -> Result<(), Self::Error> {
 		match self.call {
 			TrustedCallMock::noop(_) => Ok(()),
