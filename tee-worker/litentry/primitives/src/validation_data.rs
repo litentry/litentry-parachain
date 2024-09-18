@@ -47,6 +47,13 @@ pub enum DiscordValidationData {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct EmailValidationData {
+	pub email: ValidationString,
+	pub verification_code: ValidationString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Web3CommonValidationData {
 	pub message: ValidationString, // or String if under std
 	pub signature: LitentryMultiSignature,
@@ -60,6 +67,8 @@ pub enum Web2ValidationData {
 	Twitter(TwitterValidationData),
 	#[codec(index = 1)]
 	Discord(DiscordValidationData),
+	#[codec(index = 2)]
+	Email(EmailValidationData),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

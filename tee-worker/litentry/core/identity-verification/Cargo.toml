@@ -8,6 +8,8 @@ version = "0.1.0"
 # std dependencies
 base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
+http = { version = "0.2", optional = true }
+http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
 lru = "0.12.3"
 rand = { version = "0.8", optional = true }
 
@@ -22,8 +24,12 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 # no_std dependencies
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 
 # internal dependencies
+itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
@@ -34,9 +40,6 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 lc-data-providers = { path = "../data-providers", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-
-[dev-dependencies]
-url = "2.5.0"
 
 [features]
 default = ["std"]
@@ -53,7 +56,12 @@ sgx = [
     "lc-stf-task-sender/sgx",
 ]
 std = [
+    "http",
+    "http_req",
     "log/std",
+    "serde/std",
+    "serde_json/std",
+    "url/std",
     "itp-sgx-crypto/std",
     "frame-support/std",
     "lc-data-providers/std",
