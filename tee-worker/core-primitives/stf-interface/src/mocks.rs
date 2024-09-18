@@ -27,6 +27,7 @@ use codec::{Decode, Encode};
 use core::{fmt::Debug, marker::PhantomData};
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
+use itp_ocall_api::mock::OnchainMock;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId},
@@ -56,7 +57,8 @@ impl<State, StateDiff> UpdateState<State, StateDiff> for StateInterfaceMock<Stat
 	}
 }
 
-impl<TCS, State, StateDiff> StateCallInterface<TCS, State, NodeMetadataRepository<NodeMetadataMock>>
+impl<TCS, State, StateDiff>
+	StateCallInterface<TCS, State, NodeMetadataRepository<NodeMetadataMock>, OnchainMock>
 	for StateInterfaceMock<State, StateDiff>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
@@ -71,6 +73,7 @@ where
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
+		_ocall_api: Arc<OnchainMock>,
 	) -> Result<Self::Result, Self::Error> {
 		unimplemented!()
 	}
@@ -100,7 +103,7 @@ impl<State, StateDiff> SystemPalletAccountInterface<State, AccountId>
 
 pub struct CallExecutorMock;
 
-impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock {
+impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>, OnchainMock> for CallExecutorMock {
 	type Error = String;
 	type Result = ();
 
@@ -110,6 +113,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		_top_hash: H256,
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
+		_ocall_api: Arc<OnchainMock>,
 	) -> Result<(), Self::Error> {
 		unimplemented!()
 	}

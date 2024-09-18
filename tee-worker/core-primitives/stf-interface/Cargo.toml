@@ -20,6 +20,9 @@ std = [
     "itp-node-api-metadata-provider/std",
     "itp-stf-primitives/std",
     "itp-types/std",
+    "itp-ocall-api/std",
 ]
 sgx = []
-mocks = []
+mocks = [
+    "itp-ocall-api/mocks",
+]
