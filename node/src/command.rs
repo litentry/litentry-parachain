@@ -39,6 +39,7 @@ const UNSUPPORTED_CHAIN_MESSAGE: &str = "Unsupported chain spec, please use lite
 trait IdentifyChain {
 	fn is_litentry(&self) -> bool;
 	fn is_rococo(&self) -> bool;
+	fn is_paseo(&self) -> bool;
 	fn is_dev(&self) -> bool;
 	fn is_standalone(&self) -> bool;
 }
@@ -48,10 +49,15 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 		// we need the combined condition as the id in our rococo spec starts with `litentry-rococo`
 		// simply renaming `litentry-rococo` to `rococo` everywhere would have an impact on the
 		// existing litentry-rococo chain
-		self.id().starts_with("litentry") && !self.id().starts_with("litentry-rococo")
+		self.id().starts_with("litentry")
+			&& !self.id().starts_with("litentry-rococo")
+			&& !self.id().starts_with("litentry-paseo")
 	}
 	fn is_rococo(&self) -> bool {
 		self.id().starts_with("litentry-rococo")
+	}
+	fn is_paseo(&self) -> bool {
+		self.id().starts_with("litentry-paseo")
 	}
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")
@@ -67,6 +73,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_rococo(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_rococo(self)
+	}
+	fn is_paseo(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_paseo(self)
 	}
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
@@ -93,8 +102,15 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo.json")[..],
 		)?),
+		// Paseo
+		"paseo-dev" => Box::new(chain_specs::paseo::get_chain_spec_dev(false)),
+		"paseo" => Box::new(chain_specs::paseo::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/paseo.json")[..],
+		)?),
 		// Generate res/chain_specs/litentry.json
 		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),
+		// Generate res/chain_specs/paseo.json
+		"generate-paseo" => Box::new(chain_specs::paseo::get_chain_spec_prod()),
 		// Generate res/chain_specs/rococo.json
 		// Deprecated: for rococo we are using a new chain spec which was restored from an old state
 		//             see https://github.com/paritytech/subport/issues/337#issuecomment-1137882912
@@ -103,6 +119,8 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
 			if chain_spec.is_rococo() {
 				Box::new(chain_specs::rococo::ChainSpec::from_json_file(path.into())?)
+			} else if chain_spec.is_paseo() {
+				Box::new(chain_specs::paseo::ChainSpec::from_json_file(path.into())?)
 			} else {
 				// Fallback: use Litentry chain spec
 				Box::new(chain_spec)
@@ -149,6 +167,8 @@ impl Cli {
 	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_rococo() {
 			&rococo_parachain_runtime::VERSION
+		} else if chain_spec.is_paseo() {
+			&paseo_parachain_runtime::VERSION
 		} else {
 			// By default litentry is used
 			&litentry_parachain_runtime::VERSION
@@ -221,6 +241,20 @@ macro_rules! construct_benchmark_partials {
 				>,
 			)?;
 			$code
+		} else if $config.chain_spec.is_paseo() {
+			let $partials = new_partial::<
+				paseo_parachain_runtime::RuntimeApi,
+				PaseoParachainRuntimeExecutor,
+				_,
+			>(
+				&$config,
+				false,
+				crate::service::build_import_queue::<
+					paseo_parachain_runtime::RuntimeApi,
+					PaseoParachainRuntimeExecutor,
+				>,
+			)?;
+			$code
 		} else {
 			panic!("{}", UNSUPPORTED_CHAIN_MESSAGE)
 		}
@@ -259,7 +293,22 @@ macro_rules! construct_async_run {
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
-		} else {
+		} else if runner.config().chain_spec.is_paseo() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					paseo_parachain_runtime::RuntimeApi,
+					PaseoParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					false,
+					crate::service::build_import_queue::<paseo_parachain_runtime::RuntimeApi, PaseoParachainRuntimeExecutor>,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		}
+		else {
 			panic!("{}", UNSUPPORTED_CHAIN_MESSAGE)
 		}
 	}}
@@ -268,7 +317,6 @@ macro_rules! construct_async_run {
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
-
 	match &cli.subcommand {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -524,6 +572,14 @@ pub fn run() -> Result<()> {
 					crate::service::start_node::<
 						rococo_parachain_runtime::RuntimeApi,
 						RococoParachainRuntimeExecutor,
+					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
+				} else if config.chain_spec.is_paseo() {
+					crate::service::start_node::<
+						paseo_parachain_runtime::RuntimeApi,
+						PaseoParachainRuntimeExecutor,
 					>(config, polkadot_config, collator_options, para_id, additional_config, hwbench)
 					.await
 					.map(|r| r.0)

@@ -602,6 +602,7 @@ jobs:
         chain:
           - litentry
           - rococo
+          - paseo
     name: ${{ matrix.chain }}
     steps:
       - uses: actions/checkout@v4
