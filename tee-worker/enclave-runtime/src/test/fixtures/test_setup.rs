@@ -80,6 +80,7 @@ pub fn test_setup() -> (
 	ShieldingCryptoMock,
 	Arc<HandleStateMock>,
 	Arc<TestStfExecutor>,
+	Arc<OcallApi>,
 ) {
 	let shielding_key = ShieldingCryptoMock::default();
 	let shielding_key_repo = Arc::new(KeyRepositoryMock::new(shielding_key.clone()));
@@ -115,6 +116,7 @@ pub fn test_setup() -> (
 		shielding_key,
 		state_handler,
 		stf_executor,
+		Arc::new(OcallApi),
 	)
 }
 

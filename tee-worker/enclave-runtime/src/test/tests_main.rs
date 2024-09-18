@@ -183,7 +183,7 @@ fn run_evm_tests() {}
 
 fn test_compose_block() {
 	// given
-	let (_, _, shard, _, _, state_handler, _) = test_setup();
+	let (_, _, shard, _, _, state_handler, _, ..) = test_setup();
 	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
 		Arc::new(TestStateKeyRepo::new(state_key())),
@@ -325,7 +325,7 @@ fn test_differentiate_getter_and_call_works() {
 
 fn test_create_block_and_confirmation_works() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
 
 	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
@@ -375,7 +375,7 @@ fn test_create_block_and_confirmation_works() {
 
 fn test_create_state_diff() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
 
 	let block_composer = BlockComposer::<Block, SignedBlock, _, _>::new(
 		test_account(),
@@ -441,7 +441,7 @@ fn test_create_state_diff() {
 
 fn test_executing_call_updates_account_nonce() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
 
 	let sender = funded_pair();
 	let receiver = unfunded_public();
@@ -475,7 +475,7 @@ fn test_executing_call_updates_account_nonce() {
 }
 
 fn test_call_set_update_parentchain_block() {
-	let (_, _, shard, _, _, state_handler, _) = test_setup();
+	let (_, _, shard, _, _, state_handler, _, ..) = test_setup();
 	let (mut state, _) = state_handler.load_cloned(&shard).unwrap();
 
 	let block_number = 3;
@@ -498,7 +498,7 @@ fn test_call_set_update_parentchain_block() {
 
 fn test_signature_must_match_public_sender_in_call() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
 
 	// create accounts
 	let sender = funded_pair();
@@ -529,7 +529,7 @@ fn test_signature_must_match_public_sender_in_call() {
 
 fn test_invalid_nonce_call_is_not_executed() {
 	// given
-	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
+	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor, ..) = test_setup();
 
 	// create accounts
 	let sender = funded_pair();
@@ -560,7 +560,8 @@ fn test_invalid_nonce_call_is_not_executed() {
 
 pub fn test_retrieve_events() {
 	// given
-	let (_, mut state, shard, mrenclave, ..) = test_setup();
+	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
+		test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -584,6 +585,7 @@ pub fn test_retrieve_events() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
+		ocall_api,
 	)
 	.unwrap();
 
@@ -591,7 +593,8 @@ pub fn test_retrieve_events() {
 }
 
 pub fn test_retrieve_event_count() {
-	let (_, mut state, shard, mrenclave, ..) = test_setup();
+	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
+		test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -617,6 +620,7 @@ pub fn test_retrieve_event_count() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
+		ocall_api,
 	)
 	.unwrap();
 
@@ -625,7 +629,8 @@ pub fn test_retrieve_event_count() {
 }
 
 pub fn test_reset_events() {
-	let (_, mut state, shard, mrenclave, ..) = test_setup();
+	let (_, mut state, shard, mrenclave, _shielding_key, _state_handler, _stf_executor, ocall_api) =
+		test_setup();
 	let mut opaque_vec = Vec::new();
 	let sender = funded_pair();
 	let receiver = unendowed_account();
@@ -648,6 +653,7 @@ pub fn test_reset_events() {
 		Default::default(),
 		&mut opaque_vec,
 		repo,
+		ocall_api,
 	)
 	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());

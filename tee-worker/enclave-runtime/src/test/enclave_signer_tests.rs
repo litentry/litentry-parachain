@@ -98,7 +98,7 @@ pub fn nonce_is_computed_correctly() {
 	let shard = ShardIdentifier::default();
 	let enclave_signer = StfEnclaveSigner::<_, _, _, TestStf, _, TrustedCallSigned, Getter>::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repo,
 		top_pool_author.clone(),
 	);
@@ -141,6 +141,7 @@ pub fn nonce_is_computed_correctly() {
 		Default::default(),
 		&mut Vec::new(),
 		repo.clone(),
+		ocall_api.clone(),
 	)
 	.is_ok());
 
@@ -151,6 +152,7 @@ pub fn nonce_is_computed_correctly() {
 		Default::default(),
 		&mut Vec::new(),
 		repo,
+		ocall_api,
 	)
 	.is_ok());
 	assert_eq!(2, TestStf::get_account_nonce(&mut state, &enclave_account));
