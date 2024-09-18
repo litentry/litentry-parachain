@@ -52,10 +52,13 @@ fn claim_is_ok() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::<Test>::RewardCalculated {
-			total: round_reward(),
-			distributed: round_reward(),
-		}));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				total: round_reward(),
+				distributed: round_reward(),
+				round_index: 2,
+			},
+		));
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -63,6 +66,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
+				last_token_distributed_round: 0,
 			}
 		);
 
@@ -86,6 +90,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
+				last_token_distributed_round: 0,
 			}
 		);
 
@@ -109,6 +114,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
+				last_token_distributed_round: 0,
 			}
 		);
 
