@@ -18,7 +18,7 @@
 #![allow(clippy::identity_op)]
 #![allow(clippy::items_after_test_module)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
@@ -978,6 +978,11 @@ impl pallet_vc_management::Config for Runtime {
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
+impl pallet_omni_account::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+}
+
 impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
@@ -1209,6 +1214,7 @@ construct_runtime! {
 		VCManagement: pallet_vc_management = 81,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 82,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 83,
+		OmniAccount: pallet_omni_account = 84,
 
 		// Frontier
 		EVM: pallet_evm = 120,
