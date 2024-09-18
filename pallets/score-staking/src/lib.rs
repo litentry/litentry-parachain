@@ -159,38 +159,17 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PoolStarted {
-			start_block: BlockNumberFor<T>,
-		},
+		PoolStarted { start_block: BlockNumberFor<T> },
 		PoolStopped {},
-		ScoreFeederSet {
-			new_score_feeder: Option<T::AccountId>,
-		},
-		RoundConfigSet {
-			new_config: RoundSetting,
-		},
-		ScoreUpdated {
-			who: Identity,
-			new_score: Score,
-		},
-		ScoreRemoved {
-			who: Identity,
-		},
+		ScoreFeederSet { new_score_feeder: Option<T::AccountId> },
+		RoundConfigSet { new_config: RoundSetting },
+		ScoreUpdated { who: Identity, new_score: Score },
+		ScoreRemoved { who: Identity },
 		ScoreCleared {},
-		TokenStakingAmountUpdated {
-			account: T::AccountId,
-			amount: BalanceOf<T>,
-		},
-		RewardDistributionStarted {
-			total: BalanceOf<T>,
-			distributed: BalanceOf<T>,
-			round_index: RoundIndex,
-		},
+		TokenStakingAmountUpdated { account: T::AccountId, amount_distributed: BalanceOf<T> },
+		RewardDistributionStarted { round_index: RoundIndex },
 		RewardDistributionCompleted {},
-		RewardClaimed {
-			who: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
 	}
 
 	#[pallet::storage]
@@ -275,43 +254,17 @@ pub mod pallet {
 			Round::<T>::put(r);
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
 
-			// 2. calculate payout
+			// 2. calculate base round reward
 			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get()
 				/ YEARS.into()) * Self::round_config().interval.into();
-			let round_reward_u128 = round_reward.saturated_into::<u128>();
-
-			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
-			let total_score = Self::total_score();
-			let n = Self::round_config().stake_coef_n;
-			let m = Self::round_config().stake_coef_m;
-
-			let mut all_user_reward = BalanceOf::<T>::zero();
 
 			for (a, mut p) in Scores::<T>::iter() {
-				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
-					.map(|s| s.total)
-					.unwrap_or_default()
-					.saturated_into::<u128>();
-				let user_reward_u128 = round_reward_u128
-					.saturating_mul(p.score.into())
-					.saturating_div(total_score.into())
-					.saturating_mul(num_integer::Roots::nth_root(&user_stake_u128.pow(n), m))
-					.saturating_div(num_integer::Roots::nth_root(&total_stake_u128.pow(n), m));
-				let user_reward = user_reward_u128.saturated_into::<BalanceOf<T>>();
-
-				p.last_round_reward = user_reward;
-				p.total_reward += user_reward;
-				p.unpaid_reward += user_reward;
-				all_user_reward += user_reward;
+				p.last_round_reward = round_reward;
 				Scores::<T>::insert(&a, p);
 				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 			}
 
-			Self::deposit_event(Event::<T>::RewardDistributionStarted {
-				total: round_reward,
-				distributed: all_user_reward,
-				round_index,
-			});
+			Self::deposit_event(Event::<T>::RewardDistributionStarted { round_index });
 
 			weight
 		}
@@ -491,14 +444,31 @@ pub mod pallet {
 						return Err(Error::<T>::TokenStakingAmountAlreadyUpdated.into());
 					}
 					let last_round = Round::<T>::get();
-					s.last_round_reward += amount;
-					s.total_reward += amount;
-					s.unpaid_reward += amount;
+					let total_stake_u128 =
+						ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
+					let total_score = Self::total_score();
+					let n = Self::round_config().stake_coef_n;
+					let m = Self::round_config().stake_coef_m;
+					let round_reward_u128 = s.last_round_reward.saturated_into::<u128>();
+					let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&account)
+						.map(|s| s.total)
+						.unwrap_or_default()
+						.saturated_into::<u128>();
+					let user_reward_u128 = round_reward_u128
+						.saturating_mul(s.score.into())
+						.saturating_div(total_score.into())
+						.saturating_mul(num_integer::Roots::nth_root(&user_stake_u128.pow(n), m))
+						.saturating_div(num_integer::Roots::nth_root(&total_stake_u128.pow(n), m));
+					let mut user_reward = user_reward_u128.saturated_into::<BalanceOf<T>>();
+					user_reward += amount;
+					s.last_round_reward = user_reward;
+					s.total_reward += user_reward;
+					s.unpaid_reward += user_reward;
 					s.last_token_distributed_round = last_round.index;
 					Scores::<T>::insert(account.clone(), s);
 					Self::deposit_event(Event::TokenStakingAmountUpdated {
 						account: account.clone(),
-						amount,
+						amount_distributed: user_reward,
 					});
 					Ok(Pays::No.into())
 				},
