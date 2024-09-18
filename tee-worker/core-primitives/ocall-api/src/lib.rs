@@ -17,6 +17,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "mocks")]
+pub mod mock;
+
 pub extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
