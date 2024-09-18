@@ -2023,6 +2023,7 @@ dependencies = [
  "itp-node-api",
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-ocall-api",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -2546,6 +2547,7 @@ version = "0.8.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-ocall-api",
  "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
