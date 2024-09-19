@@ -20,6 +20,7 @@ use core_primitives::YEARS;
 use frame_support::{assert_err, assert_ok};
 use pallet_parachain_staking::Delegator;
 use pallet_score_staking::{Error, Event, ScorePayment};
+use pallet_teebag::{Enclave, WorkerType};
 use precompile_utils::testing::*;
 use sp_runtime::Perbill;
 
@@ -34,6 +35,9 @@ fn precompiles() -> ScoreStakingMockPrecompile<Test> {
 #[test]
 fn claim_is_ok() {
 	new_test_ext(true).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
 		run_to_block(2);
 		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
 
@@ -55,6 +59,14 @@ fn claim_is_ok() {
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
 			Event::<Test>::RewardDistributionStarted { round_index: 2 },
 		));
+		// calculates the rewards
+		assert_ok!(ScoreStaking::update_token_staking_amount(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			0,
+			2,
+		));
+
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -62,7 +74,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				last_token_distributed_round: 0,
+				last_token_distributed_round: 2,
 			}
 		);
 
@@ -86,7 +98,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				last_token_distributed_round: 0,
+				last_token_distributed_round: 2,
 			}
 		);
 
@@ -110,7 +122,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				last_token_distributed_round: 0,
+				last_token_distributed_round: 2,
 			}
 		);
 
