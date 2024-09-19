@@ -232,7 +232,7 @@ where
 		Ok(())
 	}
 
-	fn update_staking_scores<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn distribute_staking_rewards<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		&self,
 		executor: &Executor,
 		block_header: impl Header<Hash = H256>,
@@ -315,53 +315,37 @@ where
 
 		let extrinsic_sender = ParachainExtrinsicSender::new();
 
-		let update_token_staking_amount_call_index = self
+		let distribute_rewards_call_index = self
 			.node_metadata_repository
-			.get_from_metadata(|m| m.update_token_staking_amount_call_indexes())
+			.get_from_metadata(|m| m.distribute_rewards_call_indexes())
 			.map_err(|_| {
-				Error::Other(
-					"Metadata retrieval for update_token_staking_amount_call_indexes failed".into(),
-				)
+				Error::Other("Metadata retrieval for distribute_rewards_call_indexes failed".into())
 			})?
 			.map_err(|_| Error::Other("Invalid metadata".into()))?;
 
-		for account_id in account_ids.iter() {
-			let default_id_graph = Vec::new();
-			let id_graph = accounts_graphs.get(account_id).unwrap_or(&default_id_graph);
-			let staking_amount: Balance = id_graph
-				.iter()
-				.filter_map(|identity| {
-					let delegator = delegator_states.get(identity)?;
-					Some(delegator.total)
-				})
-				.sum();
-			let call = OpaqueCall::from_tuple(&(
-				update_token_staking_amount_call_index,
-				account_id,
-				staking_amount,
-				round_index,
-			));
-			extrinsic_sender
-				.send(call)
-				.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
-		}
-
-		let complete_reward_distribution_call_index = self
-			.node_metadata_repository
-			.get_from_metadata(|m| m.complete_reward_distribution_call_indexes())
-			.map_err(|_| {
-				Error::Other(
-					"Metadata retrieval for complete_reward_distribution_call_indexes failed"
-						.into(),
-				)
-			})?
-			.map_err(|_| Error::Other("Invalid metadata".into()))?;
-
-		let complete_reward_distribution_call =
-			OpaqueCall::from_tuple(&(complete_reward_distribution_call_index.clone()));
-		extrinsic_sender.send(complete_reward_distribution_call).map_err(|_| {
-			Error::Other("Failed to send complete_reward_distribution_call extrinsic".into())
-		})?;
+		let id_graphs_staking: Vec<(AccountId, Balance)> = account_ids
+			.into_iter()
+			.map(|account_id| {
+				let default_id_graph = Vec::new();
+				let id_graph = accounts_graphs.get(&account_id).unwrap_or(&default_id_graph);
+				let staking_amount: Balance = id_graph
+					.iter()
+					.filter_map(|identity| {
+						let delegator = delegator_states.get(identity)?;
+						Some(delegator.total)
+					})
+					.sum();
+				(account_id, staking_amount)
+			})
+			.collect();
+		let call = OpaqueCall::from_tuple(&(
+			distribute_rewards_call_index,
+			round_index,
+			id_graphs_staking,
+		));
+		extrinsic_sender
+			.send(call)
+			.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
 
 		Ok(())
 	}
@@ -510,7 +494,7 @@ where
 				.iter()
 				.try_for_each(|event| {
 					let event_hash = hash_of(&event);
-					let result = self.update_staking_scores(
+					let result = self.distribute_staking_rewards(
 						executor,
 						block_header.clone(),
 						event.round_index,
