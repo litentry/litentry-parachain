@@ -18,9 +18,10 @@
 use crate::{
 	error::Result, pallet_balances::BalancesCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
-	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	pallet_proxy::ProxyCallIndexes, pallet_score_staking::ScoreStakingCallIndexes,
+	pallet_system::SystemConstants, pallet_teebag::TeebagCallIndexes,
+	pallet_timestamp::TimestampCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall, NodeMetadataProvider,
 };
 use codec::{Decode, Encode};
 
@@ -88,6 +89,11 @@ pub struct NodeMetadataMock {
 	timestamp_set: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
+
+	//ScoreStaking
+	score_staking_module: u8,
+	update_token_staking_amount: u8,
+	complete_reward_distribution: u8,
 }
 
 impl NodeMetadataMock {
@@ -143,6 +149,10 @@ impl NodeMetadataMock {
 			timestamp_set: 0,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
+
+			score_staking_module: 100u8,
+			update_token_staking_amount: 0u8,
+			complete_reward_distribution: 1u8,
 		}
 	}
 }
@@ -174,6 +184,16 @@ impl TeebagCallIndexes for NodeMetadataMock {
 	}
 	fn sidechain_block_imported_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teebag_module, self.sidechain_block_imported])
+	}
+}
+
+impl ScoreStakingCallIndexes for NodeMetadataMock {
+	fn update_token_staking_amount_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.update_token_staking_amount])
+	}
+
+	fn complete_reward_distribution_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.complete_reward_distribution])
 	}
 }
 
@@ -308,5 +328,11 @@ impl EvmAssertionsCallIndexes for NodeMetadataMock {
 
 	fn void_assertion_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.evm_assertions_module, self.evm_assertions_void_assertion])
+	}
+}
+
+impl NodeMetadataProvider for NodeMetadataMock {
+	fn get_metadata(&self) -> Option<&Metadata> {
+		None
 	}
 }

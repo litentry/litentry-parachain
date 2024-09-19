@@ -17,10 +17,22 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use http_req_sgx as http_req;
+	pub use http_sgx as http;
+}
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod discord;
+pub mod email;
+mod helpers;
 pub mod twitter;
 
 use crate::{ensure, Error, Result};
@@ -69,7 +81,7 @@ pub fn verify(
 					.query_user_by_id(user_id.into_bytes())
 					.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-				let payload = twitter::helpers::payload_from_tweet(&tweet)?;
+				let payload = twitter::payload_from_tweet(&tweet)?;
 				ensure!(
 					payload.as_slice() == raw_msg,
 					Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
@@ -200,6 +212,37 @@ pub fn verify(
 				Ok(user.username)
 			},
 		},
+		Web2ValidationData::Email(data) => {
+			let email = vec_to_string(data.email.to_vec())
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+			let verification_code = vec_to_string(data.verification_code.to_vec())
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+			let Some(account_id) = who.to_account_id() else {
+					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
+				};
+			let stored_verification_code = match email::VerificationCodeStore::get(&account_id) {
+				Ok(data) => data.ok_or_else(|| {
+					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+						std::format!(
+							"no verification code found for {}",
+							account_id_to_string(&account_id)
+						)
+						.as_bytes()
+						.to_vec(),
+					)))
+				})?,
+				Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
+			};
+
+			ensure!(
+				verification_code == stored_verification_code,
+				Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+					"verification code mismatch".as_bytes().to_vec()
+				)))
+			);
+
+			Ok(email)
+		},
 	}?;
 
 	// compare the username:
@@ -215,6 +258,11 @@ pub fn verify(
 			);
 		},
 		Identity::Discord(address) => {
+			let handle = std::str::from_utf8(address.inner_ref())
+				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
+			ensure!(username.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
+		},
+		Identity::Email(address) => {
 			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(username.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));

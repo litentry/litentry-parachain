@@ -12,6 +12,7 @@ use itp_types::{
 	RsaRequest, H256,
 };
 use sp_core::H160;
+use sp_runtime::traits::Header;
 use std::vec::Vec;
 
 pub struct TestEventCreator;
@@ -70,6 +71,12 @@ impl FilterEvents for MockEvents {
 	) -> Result<Vec<itp_types::parentchain::events::ParentchainBlockProcessed>, Self::Error> {
 		Ok(Vec::new())
 	}
+
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RewardDistributionStarted>, Self::Error> {
+		Ok(Vec::new())
+	}
 }
 
 pub struct MockParentchainEventHandler {}
@@ -83,6 +90,7 @@ where
 		&self,
 		_: &Executor,
 		_: impl FilterEvents,
+		_: impl Header,
 	) -> Result<ProcessedEventsArtifacts, Error> {
 		Ok((
 			Vec::from([H256::default()]),

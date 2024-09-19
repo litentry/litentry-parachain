@@ -42,6 +42,10 @@ build-runtime-litentry:
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
+.PHONY: build-runtime-paseo ## Build paseo release runtime
+build-runtime-paseo:
+	cargo build --locked -p $(call pkgid, paseo-parachain-runtime) --release
+
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
 	@./scripts/build-docker.sh release latest
@@ -72,6 +76,10 @@ launch-network-rococo:
 launch-network-litentry:
 	@./scripts/launch-network.sh litentry
 
+.PHONY: launch-network-paseo ## Launch a local litentry network with relaychain network
+launch-network-paseo:
+	@./scripts/launch-network.sh paseo
+
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all
@@ -90,21 +98,21 @@ test-ts-litentry: launch-network-litentry
 test-ts-rococo: launch-network-rococo
 	@./scripts/run-ts-test.sh rococo bridge evm
 
+.PHONY: test-ts-paseo ## Run paseo ts tests without clean-up
+test-ts-paseo: launch-network-paseo
+	@./scripts/run-ts-test.sh paseo bridge evm
 
 # clean up
-
 .PHONY: clean-network ## Clean up the network launched by 'launch-network'
 clean-network:
 	@./scripts/clean-network.sh
 
 # update dependencies
-
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
 	@cd ts-tests && pnpm dlx npm-check-updates -u && pnpm install
 
 # format
-
 .PHONY: fmt ## (cargo, taplo, ts, solidity) fmt
 fmt: fmt-cargo fmt-taplo fmt-ts fmt-contract
 
@@ -136,7 +144,6 @@ githooks:
 	git config core.hooksPath .githooks
 
 # clippy
-
 .PHONY: clippy ## cargo clippy
 clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings

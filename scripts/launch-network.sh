@@ -6,7 +6,7 @@
 set -eo pipefail
 
 function usage() {
-  echo "Usage: $0 litentry|rococo"
+  echo "Usage: $0 litentry|rococo|paseo"
 }
 
 function print_divider() {

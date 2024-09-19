@@ -105,4 +105,10 @@ impl FilterEvents for FilterableEvents {
 	) -> Result<Vec<itp_types::parentchain::events::ParentchainBlockProcessed>, Self::Error> {
 		Ok(Vec::new())
 	}
+
+	fn get_reward_distribution_started_events(
+		&self,
+	) -> Result<Vec<itp_types::parentchain::events::RewardDistributionStarted>, Self::Error> {
+		Ok(Vec::new())
+	}
 }

@@ -213,6 +213,8 @@ pub struct DataProviderConfig {
 	pub blockchain_info_api_retry_delay: u64,
 	pub blockchain_info_api_retry_times: u16,
 	pub blockchain_info_api_url: String,
+	pub sendgrid_api_key: String,
+	pub sendgrid_from_email: String,
 }
 
 impl DataProviderConfig {
@@ -268,6 +270,8 @@ impl DataProviderConfig {
 			blockchain_info_api_retry_delay: 5000,
 			blockchain_info_api_retry_times: 2,
 			blockchain_info_api_url: "https://blockchain.info/".to_string(),
+			sendgrid_api_key: "".to_string(),
+			sendgrid_from_email: "".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -413,6 +417,13 @@ impl DataProviderConfig {
 		if let Ok(v) = env::var("MAGIC_CRAFT_API_KEY") {
 			config.set_magic_craft_api_key(v);
 		}
+		if let Ok(v) = env::var("SENDGRID_API_KEY") {
+			config.set_sendgrid_api_key(v);
+		}
+		if let Ok(v) = env::var("SENDGRID_FROM_EMAIL") {
+			config.set_sendgrid_from_email(v);
+		}
+
 		Ok(config)
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) -> Result<(), Error> {
@@ -630,6 +641,14 @@ impl DataProviderConfig {
 		debug!("set_blockchain_info_api_url: {:?}", v);
 		self.blockchain_info_api_url = v;
 		Ok(())
+	}
+	pub fn set_sendgrid_api_key(&mut self, v: String) {
+		debug!("set_sendgrid_api_key: {:?}", v);
+		self.sendgrid_api_key = v;
+	}
+	pub fn set_sendgrid_from_email(&mut self, v: String) {
+		debug!("set_sendgrid_from_email: {:?}", v);
+		self.sendgrid_from_email = v;
 	}
 }
 
