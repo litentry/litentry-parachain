@@ -22,7 +22,8 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub type ValidationString = BoundedVec<u8, ConstU32<64>>;
+// The size limit value should be 128 otherwise the message size will exceed the limit while link identity.
+pub type ValidationString = BoundedVec<u8, ConstU32<128>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
