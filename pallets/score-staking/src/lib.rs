@@ -434,12 +434,10 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
-			if LastTokenDistributionRound::<T>::exists() {
-				ensure!(
-					round_index > LastTokenDistributionRound::<T>::get(),
-					Error::<T>::RoundRewardsAlreadyDistributed
-				);
-			}
+			ensure!(
+				round_index > LastTokenDistributionRound::<T>::get(),
+				Error::<T>::RoundRewardsAlreadyDistributed
+			);
 
 			let id_graphs_staking_map: BTreeMap<T::AccountId, BalanceOf<T>> =
 				id_graphs_staking.into_iter().collect();
