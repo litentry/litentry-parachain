@@ -74,7 +74,6 @@ pub mod pallet {
 
 	use core_primitives::Identity;
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::Zero;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
