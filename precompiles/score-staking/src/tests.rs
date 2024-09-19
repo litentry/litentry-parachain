@@ -23,6 +23,7 @@ use pallet_score_staking::{Error, Event, ScorePayment};
 use pallet_teebag::{Enclave, WorkerType};
 use precompile_utils::testing::*;
 use sp_runtime::Perbill;
+use sp_std::vec;
 
 fn round_reward() -> Balance {
 	(Perbill::from_perthousand(5) * 100_000_000 * UNIT / (YEARS as u128)) * 5
@@ -60,11 +61,10 @@ fn claim_is_ok() {
 			Event::<Test>::RewardDistributionStarted { round_index: 2 },
 		));
 		// calculates the rewards
-		assert_ok!(ScoreStaking::update_token_staking_amount(
+		assert_ok!(ScoreStaking::distribute_rewards(
 			RuntimeOrigin::signed(alice()),
-			alice(),
-			0,
 			2,
+			vec![(alice(), 0)]
 		));
 
 		assert_eq!(
@@ -74,7 +74,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				last_token_distributed_round: 2,
 			}
 		);
 
@@ -98,7 +97,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				last_token_distributed_round: 2,
 			}
 		);
 
@@ -122,7 +120,6 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				last_token_distributed_round: 2,
 			}
 		);
 
