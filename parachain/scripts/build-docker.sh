@@ -8,7 +8,7 @@ function usage() {
 [ $# -lt 1 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR/parachain"
+cd "$ROOTDIR"
 
 PROFILE="$1"
 TAG="$2"
@@ -49,7 +49,7 @@ PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     --build-arg HTTP_PROXY="$PROXY" \
@@ -76,7 +76,7 @@ PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     --build-arg HTTP_PROXY="$PROXY" \
