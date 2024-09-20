@@ -118,26 +118,26 @@ fmt: fmt-cargo fmt-taplo fmt-ts fmt-contract
 
 .PHONY: fmt-cargo ## cargo fmt
 fmt-cargo:
-	@cargo fmt --all
-	@cd tee-worker && cargo fmt --all
-	@cd tee-worker/enclave-runtime && cargo fmt --all
-	@cd bitacross-worker && cargo fmt --all
-	@cd bitacross-worker/enclave-runtime && cargo fmt --all
+	@cd parachain && cargo fmt --all
+	@cd tee-worker/identity && cargo fmt --all
+	@cd tee-worker/identity/enclave-runtime && cargo fmt --all
+	@cd tee-worker/bitacross && cargo fmt --all
+	@cd tee-worker/bitacross/enclave-runtime && cargo fmt --all
 
 .PHONY: fmt-taplo ## taplo fmt
 fmt-taplo:
 	@RUST_LOG=error taplo fmt
-	@cd tee-worker && RUST_LOG=error taplo fmt
-	@cd tee-worker/enclave-runtime && RUST_LOG=error taplo fmt
+	@cd tee-worker/identity && RUST_LOG=error taplo fmt
+	@cd tee-worker/identity/enclave-runtime && RUST_LOG=error taplo fmt
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
-	@cd ts-tests && pnpm install && pnpm run format
-	@cd tee-worker/ts-tests && pnpm install && pnpm run format
+	@cd parachain/ts-tests && pnpm install && pnpm run format
+	@cd tee-worker/identity/ts-tests && pnpm install && pnpm run format
 
 .PHONY: fmt-contract ## contract fmt
 fmt-contract:
-	@cd tee-worker/litentry/core/assertion-build/src/dynamic && pnpm install && pnpm run format
+	@cd tee-worker/identity/litentry/core/assertion-build/src/dynamic && pnpm install && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:
