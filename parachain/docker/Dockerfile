@@ -8,7 +8,7 @@ ARG PROFILE
 # ==========================
 FROM rust:bullseye as builder
 
-WORKDIR /litentry
+WORKDIR /litentry/parachain
 COPY . /litentry
 
 RUN apt-get update && apt-get install -yq clang libclang-dev cmake protobuf-compiler
