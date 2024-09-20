@@ -27,7 +27,7 @@ use frame_system::EnsureRoot;
 use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
 use pallet_score_staking::{AccountIdConvert, PoolState, RoundSetting};
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
-use sp_core::{ConstU128, ConstU32, ConstU64, H160, H256};
+use sp_core::{ConstU128, ConstU16, ConstU32, ConstU64, H160, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage, Perbill, Percent,
@@ -169,6 +169,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
+	type MaxIDGraphAccountsPerCall = ConstU16<2>;
 }
 
 pub fn precompile_address() -> H160 {
