@@ -7,6 +7,7 @@ mod tests;
 
 pub use pallet::*;
 
+use core_primitives::Identity as PrimeIdentity;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
@@ -38,20 +39,20 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn opaque_id_graphs)]
 	pub type OpaqueIDGraphs<T: Config> = StorageMap<
-		Hasher = Identity,
-		Key = Vec<u8>,   // prime identity
-		Value = Vec<u8>, // IDGraph
+		Hasher = Blake2_128Concat,
+		Key = PrimeIdentity, // prime identity
+		Value = Vec<u8>,     // IDGraph
 	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// IDGraph created
-		IDGraphCreated(Vec<u8>),
+		IDGraphCreated(PrimeIdentity),
 		/// IDGraph updated
-		IDGraphUpdated(Vec<u8>),
+		IDGraphUpdated(PrimeIdentity),
 		/// IDGraph removed
-		IDGraphRemoved(Vec<u8>),
+		IDGraphRemoved(PrimeIdentity),
 		/// LinkedIdentity added
 		LinkedIdentityAdded(Vec<u8>),
 		/// LinkedIdentity removed
@@ -74,7 +75,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn insert_id_graph(
 			origin: OriginFor<T>,
-			prime_identity: Vec<u8>,
+			prime_identity: PrimeIdentity,
 			id_graph: Vec<u8>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -90,7 +91,10 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn remove_id_graph(origin: OriginFor<T>, prime_identity: Vec<u8>) -> DispatchResult {
+		pub fn remove_id_graph(
+			origin: OriginFor<T>,
+			prime_identity: PrimeIdentity,
+		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
 				OpaqueIDGraphs::<T>::contains_key(&prime_identity),

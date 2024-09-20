@@ -8,6 +8,7 @@ use frame_system::EnsureRoot;
 pub use pallet_teebag::test_util::get_signer;
 use pallet_teebag::test_util::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 use sp_core::H256;
+use sp_keyring::AccountKeyring;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage,
@@ -50,6 +51,14 @@ where
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
+}
+
+pub fn alice() -> AccountId {
+	AccountKeyring::Alice.to_account_id()
+}
+
+pub fn bob() -> AccountId {
+	AccountKeyring::Bob.to_account_id()
 }
 
 frame_support::construct_runtime!(

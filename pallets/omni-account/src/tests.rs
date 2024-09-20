@@ -1,15 +1,14 @@
 use crate::{mock::*, OpaqueIDGraphs, OpaqueLinkedIdentities, *};
+use core_primitives::Identity as PrimeIdentity;
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::BadOrigin;
 use sp_std::vec;
-
-const OPAQUE_PRIME_IDENTITY: &[u8; 32] = &[1u8; 32];
 
 #[test]
 fn create_id_graph_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
+		let prime_identity = PrimeIdentity::from(alice());
 		let opaque_id_graph = vec![1, 2, 3];
 
 		assert_ok!(OmniAccount::insert_id_graph(
@@ -26,12 +25,12 @@ fn create_id_graph_works() {
 #[test]
 fn create_id_graph_origin_check_works() {
 	new_test_ext().execute_with(|| {
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
+		let prime_identity = PrimeIdentity::from(alice());
 		let opaque_id_graph = vec![1, 2, 3];
 
 		assert_noop!(
 			OmniAccount::insert_id_graph(
-				RuntimeOrigin::signed(get_signer(OPAQUE_PRIME_IDENTITY)),
+				RuntimeOrigin::signed(bob()),
 				prime_identity,
 				opaque_id_graph
 			),
@@ -44,7 +43,7 @@ fn create_id_graph_origin_check_works() {
 fn update_id_graph_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
+		let prime_identity = PrimeIdentity::from(alice());
 		let opaque_id_graph = vec![1, 2, 3];
 		let updated_id_graph = vec![4, 5, 6];
 
@@ -67,7 +66,7 @@ fn update_id_graph_works() {
 fn remove_id_graph_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
+		let prime_identity = PrimeIdentity::from(alice());
 		let opaque_id_graph = vec![1, 2, 3];
 
 		assert_ok!(OmniAccount::insert_id_graph(
@@ -87,12 +86,10 @@ fn remove_id_graph_works() {
 #[test]
 fn remove_id_graph_origin_check_works() {
 	new_test_ext().execute_with(|| {
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
-
 		assert_noop!(
 			OmniAccount::remove_id_graph(
-				RuntimeOrigin::signed(get_signer(OPAQUE_PRIME_IDENTITY)),
-				prime_identity
+				RuntimeOrigin::signed(alice()),
+				PrimeIdentity::from(bob())
 			),
 			BadOrigin
 		);
@@ -102,11 +99,11 @@ fn remove_id_graph_origin_check_works() {
 #[test]
 fn remove_id_graph_not_found_works() {
 	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let prime_identity = OPAQUE_PRIME_IDENTITY.to_vec();
-
 		assert_noop!(
-			OmniAccount::remove_id_graph(RuntimeOrigin::signed(tee_signer), prime_identity),
+			OmniAccount::remove_id_graph(
+				RuntimeOrigin::signed(get_tee_signer()),
+				PrimeIdentity::from(bob())
+			),
 			Error::<TestRuntime>::IDGraphNotFound
 		);
 	});
@@ -115,11 +112,10 @@ fn remove_id_graph_not_found_works() {
 #[test]
 fn add_linked_identity_works() {
 	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
 		let opaque_linked_identity = vec![1, 2, 3];
 
 		assert_ok!(OmniAccount::add_linked_identity(
-			RuntimeOrigin::signed(tee_signer),
+			RuntimeOrigin::signed(get_tee_signer()),
 			opaque_linked_identity.clone()
 		));
 		assert!(OpaqueLinkedIdentities::<TestRuntime>::contains_key(&opaque_linked_identity));
@@ -133,10 +129,7 @@ fn add_linked_identity_origin_check_works() {
 		let opaque_linked_identity = vec![1, 2, 3];
 
 		assert_noop!(
-			OmniAccount::add_linked_identity(
-				RuntimeOrigin::signed(get_signer(OPAQUE_PRIME_IDENTITY)),
-				opaque_linked_identity
-			),
+			OmniAccount::add_linked_identity(RuntimeOrigin::signed(bob()), opaque_linked_identity),
 			BadOrigin
 		);
 	});
@@ -188,7 +181,7 @@ fn remove_linked_identity_origin_check_works() {
 
 		assert_noop!(
 			OmniAccount::remove_linked_identity(
-				RuntimeOrigin::signed(get_signer(OPAQUE_PRIME_IDENTITY)),
+				RuntimeOrigin::signed(bob()),
 				opaque_linked_identity
 			),
 			BadOrigin
@@ -199,12 +192,11 @@ fn remove_linked_identity_origin_check_works() {
 #[test]
 fn remove_linked_identity_not_found_works() {
 	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
 		let opaque_linked_identity = vec![1, 2, 3];
 
 		assert_noop!(
 			OmniAccount::remove_linked_identity(
-				RuntimeOrigin::signed(tee_signer),
+				RuntimeOrigin::signed(get_tee_signer()),
 				opaque_linked_identity
 			),
 			Error::<TestRuntime>::LinkedIdentityNotFound
