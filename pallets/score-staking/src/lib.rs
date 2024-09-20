@@ -174,7 +174,7 @@ pub mod pallet {
 		ScoreRemoved { who: Identity },
 		ScoreCleared {},
 		RewardDistributionStarted { round_index: RoundIndex },
-		RewardDistributionCompleted { distributed: BalanceOf<T> },
+		RewardDistributionCompleted { round_index: RoundIndex },
 		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
 	}
 
@@ -460,8 +460,6 @@ pub mod pallet {
 			let n = Self::round_config().stake_coef_n;
 			let m = Self::round_config().stake_coef_m;
 
-			let mut all_user_reward = BalanceOf::<T>::zero();
-
 			for (a, mut p) in Scores::<T>::iter() {
 				let default_staking = BalanceOf::<T>::zero();
 				let id_graph_staking = id_graphs_staking_map.get(&a).unwrap_or(&default_staking);
@@ -480,15 +478,23 @@ pub mod pallet {
 				p.last_round_reward = user_reward;
 				p.total_reward += user_reward;
 				p.unpaid_reward += user_reward;
-				all_user_reward += user_reward;
 				Scores::<T>::insert(&a, p);
 			}
 
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn complete_reward_distribution(
+			origin: OriginFor<T>,
+			round_index: RoundIndex,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+
 			LastTokenDistributionRound::<T>::put(round_index);
 
-			Self::deposit_event(Event::RewardDistributionCompleted {
-				distributed: all_user_reward,
-			});
+			Self::deposit_event(Event::RewardDistributionCompleted { round_index });
 
 			Ok(Pays::No.into())
 		}
