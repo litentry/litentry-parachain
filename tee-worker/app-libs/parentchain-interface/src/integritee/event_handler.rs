@@ -338,14 +338,18 @@ where
 				(account_id, staking_amount)
 			})
 			.collect();
-		let call = OpaqueCall::from_tuple(&(
-			distribute_rewards_call_index,
-			round_index,
-			id_graphs_staking,
-		));
-		extrinsic_sender
-			.send(call)
-			.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
+
+		id_graphs_staking.chunks(1000).for_each(|batch| {
+			let call = OpaqueCall::from_tuple(&(
+				distribute_rewards_call_index,
+				round_index,
+				batch.to_vec(),
+			));
+			extrinsic_sender
+				.send(call)
+				.map_err(|_| Error::Other("Failed to send extrinsic".into()))
+				.unwrap();
+		});
 
 		Ok(())
 	}
