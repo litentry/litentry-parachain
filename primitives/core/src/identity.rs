@@ -290,11 +290,14 @@ pub enum Identity {
 
 	#[codec(index = 6)]
 	Solana(Address32),
+
+	#[codec(index = 7)]
+	Email(IdentityString),
 }
 
 impl Identity {
 	pub fn is_web2(&self) -> bool {
-		matches!(self, Self::Twitter(..) | Self::Discord(..) | Self::Github(..))
+		matches!(self, Self::Twitter(..) | Self::Discord(..) | Self::Github(..) | Self::Email(..))
 	}
 
 	pub fn is_web3(&self) -> bool {
@@ -323,7 +326,10 @@ impl Identity {
 			Identity::Evm(_) => all_evm_web3networks(),
 			Identity::Bitcoin(_) => all_bitcoin_web3networks(),
 			Identity::Solana(_) => all_solana_web3networks(),
-			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => Vec::new(),
+			Identity::Twitter(_)
+			| Identity::Discord(_)
+			| Identity::Github(_)
+			| Identity::Email(_) => Vec::new(),
 		}
 	}
 
@@ -336,9 +342,10 @@ impl Identity {
 			Identity::Evm(_) => !networks.is_empty() && networks.iter().all(|n| n.is_evm()),
 			Identity::Bitcoin(_) => !networks.is_empty() && networks.iter().all(|n| n.is_bitcoin()),
 			Identity::Solana(_) => !networks.is_empty() && networks.iter().all(|n| n.is_solana()),
-			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => {
-				networks.is_empty()
-			},
+			Identity::Twitter(_)
+			| Identity::Discord(_)
+			| Identity::Github(_)
+			| Identity::Email(_) => networks.is_empty(),
 		}
 	}
 
@@ -350,7 +357,10 @@ impl Identity {
 				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref())))
 			},
 			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
-			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => None,
+			Identity::Twitter(_)
+			| Identity::Discord(_)
+			| Identity::Github(_)
+			| Identity::Email(_) => None,
 		}
 	}
 
@@ -395,6 +405,8 @@ impl Identity {
 					return Ok(Identity::Discord(IdentityString::new(v[1].as_bytes().to_vec())));
 				} else if v[0] == "twitter" {
 					return Ok(Identity::Twitter(IdentityString::new(v[1].as_bytes().to_vec())));
+				} else if v[0] == "email" {
+					return Ok(Identity::Email(IdentityString::new(v[1].as_bytes().to_vec())));
 				} else {
 					return Err("Unknown did type");
 				}
@@ -429,6 +441,11 @@ impl Identity {
 					"github:{}",
 					str::from_utf8(handle.inner_ref())
 						.map_err(|_| "github handle conversion error")?
+				),
+				Identity::Email(handle) => format!(
+					"email:{}",
+					str::from_utf8(handle.inner_ref())
+						.map_err(|_| "email handle conversion error")?
 				),
 			}
 		))
@@ -504,6 +521,7 @@ mod tests {
 					Identity::Twitter(..) => true,
 					Identity::Discord(..) => true,
 					Identity::Github(..) => true,
+					Identity::Email(..) => true,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => false,
@@ -522,6 +540,7 @@ mod tests {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
 					Identity::Github(..) => false,
+					Identity::Email(..) => false,
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => true,
 					Identity::Bitcoin(..) => true,
@@ -540,6 +559,7 @@ mod tests {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
 					Identity::Github(..) => false,
+					Identity::Email(..) => false,
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => false,
@@ -558,6 +578,7 @@ mod tests {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
 					Identity::Github(..) => false,
+					Identity::Email(..) => false,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => true,
 					Identity::Bitcoin(..) => false,
@@ -576,6 +597,7 @@ mod tests {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
 					Identity::Github(..) => false,
+					Identity::Email(..) => false,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => true,
@@ -594,6 +616,7 @@ mod tests {
 					Identity::Twitter(..) => false,
 					Identity::Discord(..) => false,
 					Identity::Github(..) => false,
+					Identity::Email(..) => false,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
 					Identity::Bitcoin(..) => false,
@@ -702,6 +725,14 @@ mod tests {
 	fn test_github_did() {
 		let identity = Identity::Github(IdentityString::new("github_handle".as_bytes().to_vec()));
 		let did_str = "did:litentry:github:github_handle";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
+	}
+
+	#[test]
+	fn test_email_did() {
+		let identity = Identity::Email(IdentityString::new("test@test.com".as_bytes().to_vec()));
+		let did_str = "did:litentry:email:test@test.com";
 		assert_eq!(identity.to_did().unwrap(), did_str);
 		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
