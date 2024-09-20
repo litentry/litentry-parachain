@@ -63,7 +63,10 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
+use sp_runtime::{
+	traits::{ConstU32, Header as HeaderTrait},
+	BoundedVec, MultiAddress,
+};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
@@ -340,12 +343,13 @@ impl TrustedCallVerification for TrustedCallSigned {
 	}
 }
 
-impl<NodeMetadataRepository, OCallApi> ExecuteCall<NodeMetadataRepository, OCallApi>
-	for TrustedCallSigned
+impl<NodeMetadataRepository, OCallApi, ParentchainHeader>
+	ExecuteCall<NodeMetadataRepository, OCallApi, ParentchainHeader> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	OCallApi: EnclaveOnChainOCallApi,
+	ParentchainHeader: HeaderTrait<Hash = H256>,
 {
 	type Error = StfError;
 	type Result = TrustedCallResult;
@@ -390,6 +394,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;

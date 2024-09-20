@@ -33,6 +33,10 @@ use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId},
 	AccountId, Index, ShardIdentifier, H256,
 };
+use sp_runtime::{generic::Header, traits::BlakeTwo256};
+
+type BlockNumber = u32;
+pub type ParentchainHeader = Header<BlockNumber, BlakeTwo256>;
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {
@@ -58,8 +62,13 @@ impl<State, StateDiff> UpdateState<State, StateDiff> for StateInterfaceMock<Stat
 }
 
 impl<TCS, State, StateDiff>
-	StateCallInterface<TCS, State, NodeMetadataRepository<NodeMetadataMock>, OnchainMock>
-	for StateInterfaceMock<State, StateDiff>
+	StateCallInterface<
+		TCS,
+		State,
+		NodeMetadataRepository<NodeMetadataMock>,
+		OnchainMock,
+		ParentchainHeader,
+	> for StateInterfaceMock<State, StateDiff>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
@@ -74,6 +83,7 @@ where
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
 		_ocall_api: Arc<OnchainMock>,
+		_parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error> {
 		unimplemented!()
 	}
@@ -103,7 +113,9 @@ impl<State, StateDiff> SystemPalletAccountInterface<State, AccountId>
 
 pub struct CallExecutorMock;
 
-impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>, OnchainMock> for CallExecutorMock {
+impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>, OnchainMock, ParentchainHeader>
+	for CallExecutorMock
+{
 	type Error = String;
 	type Result = ();
 
@@ -114,6 +126,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>, OnchainMock> for Call
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
 		_ocall_api: Arc<OnchainMock>,
+		_parentchain_header: &ParentchainHeader,
 	) -> Result<(), Self::Error> {
 		unimplemented!()
 	}

@@ -36,7 +36,7 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{
-	parentchain::{Header as ParentchainHeader, ParentchainCall, ParentchainId},
+	parentchain::{ParentchainCall, ParentchainId},
 	storage::StorageEntryVerified,
 	H256,
 };
@@ -47,7 +47,7 @@ use std::{
 	time::Duration, vec, vec::Vec,
 };
 
-pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
+pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
@@ -55,11 +55,12 @@ where
 	ocall_api: Arc<OCallApi>,
 	state_handler: Arc<StateHandler>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
-	_phantom: PhantomData<(Stf, TCS, G)>,
+	_phantom: PhantomData<(Stf, TCS, G, PH)>,
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
-	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
+// maybe we need concrete types here
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
@@ -69,13 +70,19 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>,
+		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)> + From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
-	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>>::Error:
-		Debug,
+	<Stf as StateCallInterface<
+		TCS,
+		StateHandler::StateT,
+		NodeMetadataRepository,
+		OCallApi,
+		PH,
+	>>::Error: Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	PH: HeaderTrait<Hash = H256>,
 {
 	pub fn new(
 		ocall_api: Arc<OCallApi>,
@@ -91,16 +98,14 @@ where
 	/// an invalid trusted call, which results in `Ok(ExecutionStatus::Failure)`. The latter
 	/// can be used to remove the trusted call from a queue. In the former case we might keep the
 	/// trusted call and just re-try the operation.
-	fn execute_trusted_call_on_stf<PH>(
+	fn execute_trusted_call_on_stf(
 		&self,
 		state: &mut StateHandler::StateT,
 		trusted_operation: &TrustedOperation<TCS, G>,
-		_header: &PH,
+		parentchain_header: &PH,
 		shard: &ShardIdentifier,
 		post_processing: StatePostProcessing,
 	) -> Result<ExecutedOperation<TCS, G>>
-	where
-		PH: HeaderTrait<Hash = H256>,
 	{
 		debug!("query mrenclave of self");
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
@@ -134,6 +139,7 @@ where
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),
 			self.ocall_api.clone(),
+			parentchain_header,
 		) {
 			Err(e) => {
 				if let Err(e) =
@@ -182,9 +188,9 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
-	StfUpdateState<ParentchainHeader, ParentchainId>
-	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+	StfUpdateState<PH, ParentchainId>
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256> + QueryShardState,
@@ -193,21 +199,17 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>,
+		> + ParentchainPalletInstancesInterface<StateHandler::StateT, PH>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>>::Error:
-		Debug,
+	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, PH>>::Error: Debug,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	PH: HeaderTrait<Hash = H256>,
 {
-	fn update_states(
-		&self,
-		header: &ParentchainHeader,
-		parentchain_id: &ParentchainId,
-	) -> Result<()> {
+	fn update_states(&self, header: &PH, parentchain_id: &ParentchainId) -> Result<()> {
 		debug!("Update STF storage upon block import!");
 		let storage_hashes = Stf::storage_hashes_to_update_on_block(parentchain_id);
 
@@ -247,28 +249,28 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
-	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
 where
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>> + IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>>::Error:
-		Debug,
+	<Stf as ParentchainPalletInstancesInterface<StateHandler::StateT, PH>>::Error: Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256> + QueryShardState,
 	StateHandler::StateT: Encode + SgxExternalitiesTrait,
-	Stf: ParentchainPalletInstancesInterface<StateHandler::StateT, ParentchainHeader>
+	Stf: ParentchainPalletInstancesInterface<StateHandler::StateT, PH>
 		+ UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
 		>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	PH: HeaderTrait<Hash = H256>,
 {
 	fn initialize_new_shards(
 		&self,
-		header: &ParentchainHeader,
+		header: &PH,
 		state_diff_update: &BTreeMap<Vec<u8>, Option<Vec<u8>>>,
 		shards: &Vec<u8>,
 	) -> Result<()> {
@@ -297,8 +299,8 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G> StateUpdateProposer<TCS, G>
-	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH> StateUpdateProposer<TCS, G, PH>
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
@@ -309,21 +311,22 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>
+		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>
 		+ RuntimeUpgradeInterface<StateHandler::StateT>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
-	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi>>::Error:
+	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>>::Error:
 		Debug,
 	<Stf as RuntimeUpgradeInterface<StateHandler::StateT>>::Error: Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	PH: HeaderTrait<Hash = H256>,
 {
 	type Externalities = StateHandler::StateT;
 
-	fn propose_state_update<PH, F>(
+	fn propose_state_update<F>(
 		&self,
 		trusted_calls: &[TrustedOperation<TCS, G>],
 		header: &PH,
@@ -332,7 +335,6 @@ where
 		prepare_state_function: F,
 	) -> Result<BatchExecutionResult<Self::Externalities, TCS, G>>
 	where
-		PH: HeaderTrait<Hash = H256>,
 		F: FnOnce(Self::Externalities) -> Self::Externalities,
 	{
 		let ends_at = duration_now() + max_exec_duration;

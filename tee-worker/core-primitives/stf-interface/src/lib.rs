@@ -33,6 +33,7 @@ use itp_types::{
 	parentchain::{BlockHash, BlockNumber, ParentchainCall, ParentchainId},
 	ShardIdentifier, H256,
 };
+use sp_runtime::traits::Header as HeaderTrait;
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -63,12 +64,13 @@ pub trait UpdateState<State, StateDiff> {
 }
 
 /// Interface to execute state mutating calls on a state.
-pub trait StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi>
+pub trait StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi, ParentchainHeader>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	OCallApi: EnclaveOnChainOCallApi,
+	ParentchainHeader: HeaderTrait<Hash = H256>,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -87,6 +89,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error>;
 }
 
@@ -97,11 +100,12 @@ pub trait StateGetterInterface<G, S> {
 }
 
 /// Trait used to abstract the call execution.
-pub trait ExecuteCall<NodeMetadataRepository, OCallApi>
+pub trait ExecuteCall<NodeMetadataRepository, OCallApi, ParentchainHeader>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	OCallApi: EnclaveOnChainOCallApi,
+	ParentchainHeader: HeaderTrait<Hash = H256>,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -117,6 +121,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.

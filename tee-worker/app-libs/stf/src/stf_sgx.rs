@@ -48,7 +48,7 @@ use itp_types::{
 };
 use itp_utils::stringify::account_id_to_string;
 use log::*;
-use sp_runtime::traits::StaticLookup;
+use sp_runtime::traits::{Header as HeaderTrait, StaticLookup};
 
 impl<TCS, G, State, Runtime, AccountId> InitState<State, AccountId> for Stf<TCS, G, State, Runtime>
 where
@@ -135,11 +135,12 @@ where
 	}
 }
 
-impl<TCS, G, State, Runtime, NodeMetadataRepository, OCallApi>
-	StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi> for Stf<TCS, G, State, Runtime>
+impl<TCS, G, State, Runtime, NodeMetadataRepository, OCallApi, ParentchainHeader>
+	StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi, ParentchainHeader>
+	for Stf<TCS, G, State, Runtime>
 where
 	TCS: PartialEq
-		+ ExecuteCall<NodeMetadataRepository, OCallApi>
+		+ ExecuteCall<NodeMetadataRepository, OCallApi, ParentchainHeader>
 		+ Encode
 		+ Decode
 		+ Debug
@@ -151,6 +152,7 @@ where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	OCallApi: EnclaveOnChainOCallApi,
+	ParentchainHeader: HeaderTrait<Hash = H256>,
 {
 	type Error = TCS::Error;
 	type Result = TCS::Result;
@@ -163,8 +165,11 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api))
+		state.execute_with(|| {
+			call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api, parentchain_header)
+		})
 	}
 }
 

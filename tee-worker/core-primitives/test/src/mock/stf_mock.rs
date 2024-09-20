@@ -38,14 +38,18 @@ use itp_types::{
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::{sr25519, Pair};
-use sp_runtime::transaction_validity::{
-	TransactionValidityError, UnknownTransaction, ValidTransaction,
+use sp_runtime::{
+	generic::Header,
+	traits::BlakeTwo256,
+	transaction_validity::{TransactionValidityError, UnknownTransaction, ValidTransaction},
 };
 use sp_std::{vec, vec::Vec};
 use std::{thread::sleep, time::Duration};
 
 // a few dummy types
 type NodeMetadataRepositoryMock = NodeMetadataRepository<NodeMetadataMock>;
+type BlockNumber = u32;
+pub type ParentchainHeader = Header<BlockNumber, BlakeTwo256>;
 
 #[derive(Debug, PartialEq, Eq, Encode)]
 pub enum StfMockError {
@@ -70,6 +74,7 @@ impl
 		SgxExternalities,
 		NodeMetadataRepositoryMock,
 		OnchainMock,
+		ParentchainHeader,
 	> for StfMock
 {
 	type Error = StfMockError;
@@ -83,8 +88,11 @@ impl
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 		ocall_api: Arc<OnchainMock>,
+		parentchain_header: &ParentchainHeader,
 	) -> Result<(), Self::Error> {
-		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api))
+		state.execute_with(|| {
+			call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api, parentchain_header)
+		})
 	}
 }
 
@@ -177,7 +185,9 @@ impl Default for TrustedCallSignedMock {
 	}
 }
 
-impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock> for TrustedCallSignedMock {
+impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock, ParentchainHeader>
+	for TrustedCallSignedMock
+{
 	type Error = StfMockError;
 	type Result = ();
 
@@ -188,6 +198,7 @@ impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock> for TrustedCallSignedM
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 		_ocall_api: Arc<OnchainMock>,
+		_parentchain_header: &ParentchainHeader,
 	) -> Result<(), Self::Error> {
 		match self.call {
 			TrustedCallMock::noop(_) => Ok(()),

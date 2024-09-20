@@ -35,14 +35,19 @@ use itp_stf_primitives::{
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use itp_types::RsaRequest;
+use itp_types::{Header, RsaRequest};
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
+use sp_runtime::traits::Header as HeaderTrait;
 use std::{sync::Arc, vec::Vec};
 
 type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
 type TestStf = Stf<TrustedCallSigned, GetterExecutorMock, SgxExternalities, Runtime>;
+
+pub fn latest_parentchain_header() -> Header {
+	Header::new(1, Default::default(), Default::default(), [69; 32].into(), Default::default())
+}
 
 pub fn derive_key_is_deterministic() {
 	let rsa_key = Rsa3072KeyPair::new().unwrap();
@@ -142,6 +147,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut Vec::new(),
 		repo.clone(),
 		ocall_api.clone(),
+		&latest_parentchain_header(),
 	)
 	.is_ok());
 
@@ -153,6 +159,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut Vec::new(),
 		repo,
 		ocall_api,
+		&latest_parentchain_header(),
 	)
 	.is_ok());
 	assert_eq!(2, TestStf::get_account_nonce(&mut state, &enclave_account));

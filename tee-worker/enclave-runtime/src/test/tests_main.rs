@@ -586,6 +586,7 @@ pub fn test_retrieve_events() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		&latest_parentchain_header(),
 	)
 	.unwrap();
 
@@ -621,6 +622,7 @@ pub fn test_retrieve_event_count() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		&latest_parentchain_header(),
 	)
 	.unwrap();
 
@@ -654,6 +656,7 @@ pub fn test_reset_events() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		&latest_parentchain_header(),
 	)
 	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());

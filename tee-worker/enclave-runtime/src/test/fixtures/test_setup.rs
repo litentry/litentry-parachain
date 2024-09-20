@@ -38,7 +38,7 @@ use itp_top_pool_author::{
 	author::Author,
 	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
 };
-use itp_types::{Block, MrEnclave};
+use itp_types::{parentchain::Header as ParentchainHeader, Block, MrEnclave};
 use sp_core::{crypto::Pair, ed25519 as spEd25519};
 use std::sync::Arc;
 pub type TestRpcResponder = RpcResponderMock<ExtrinsicHash<SidechainApi<Block, TrustedCallSigned>>>;
@@ -68,6 +68,7 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	ParentchainHeader,
 >;
 
 /// Returns all the things that are commonly used in tests and runs

@@ -203,7 +203,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			}
 			log_remaining_slot_duration(&slot, "Before AURA");
 
-			let env = ProposerFactory::<Block, _, _, _, _>::new(
+			let env = ProposerFactory::<Block, _, _, _, _, _>::new(
 				top_pool_author,
 				stf_executor,
 				block_composer,
