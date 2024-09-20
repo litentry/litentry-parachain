@@ -351,6 +351,23 @@ where
 				.unwrap();
 		});
 
+		let complete_reward_distribution_call_index = self
+			.node_metadata_repository
+			.get_from_metadata(|m| m.complete_reward_distribution_call_indexes())
+			.map_err(|_| {
+				Error::Other(
+					"Metadata retrieval for complete_reward_distribution_call_indexes failed"
+						.into(),
+				)
+			})?
+			.map_err(|_| Error::Other("Invalid metadata".into()))?;
+
+		let complete_reward_distribution_call =
+			OpaqueCall::from_tuple(&(complete_reward_distribution_call_index.clone()));
+		extrinsic_sender.send(complete_reward_distribution_call).map_err(|_| {
+			Error::Other("Failed to send complete_reward_distribution_call extrinsic".into())
+		})?;
+
 		Ok(())
 	}
 }
