@@ -119,6 +119,8 @@ pub mod pallet {
 		type AccountIdConvert: AccountIdConvert<Self>;
 		// For extrinsics that should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		#[pallet::constant]
+		type MaxIDGraphAccountsPerCall: Get<u16>;
 	}
 
 	#[pallet::error]
@@ -157,6 +159,8 @@ pub mod pallet {
 		MaxScoreUserCountReached,
 		// the token staking amount has been updated already for the round
 		RoundRewardsAlreadyDistributed,
+		// the maximum number of IDGraph accounts has been reached
+		MaxIDGraphAccountsPerCallReached,
 	}
 
 	#[pallet::event]
@@ -441,6 +445,11 @@ pub mod pallet {
 
 			let id_graphs_staking_map: BTreeMap<T::AccountId, BalanceOf<T>> =
 				id_graphs_staking.into_iter().collect();
+
+			ensure!(
+				id_graphs_staking_map.len() <= T::MaxIDGraphAccountsPerCall::get() as usize,
+				Error::<T>::MaxIDGraphAccountsPerCallReached
+			);
 
 			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get()
 				/ YEARS.into()) * Self::round_config().interval.into();

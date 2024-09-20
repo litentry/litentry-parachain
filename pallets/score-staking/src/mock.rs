@@ -26,7 +26,7 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use sp_core::{ConstU128, ConstU32, H256};
+use sp_core::{ConstU128, ConstU16, ConstU32, H256};
 use sp_keyring::AccountKeyring;
 use sp_runtime::{
 	generic,
@@ -171,6 +171,7 @@ impl pallet_score_staking::Config for Test {
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
+	type MaxIDGraphAccountsPerCall = ConstU16<2>;
 }
 
 parameter_types! {

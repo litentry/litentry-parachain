@@ -786,6 +786,48 @@ fn distribute_rewards_origin_check_works() {
 }
 
 #[test]
+fn distribute_rewards_max_id_graph_accounts_per_call_check_works() {
+	new_test_ext(true).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
+		run_to_block(2);
+		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
+
+		let alice_staking = 900;
+		let alice_score = 500;
+
+		run_to_block(3);
+		pallet_parachain_staking::DelegatorState::<Test>::insert(
+			alice(),
+			Delegator::new(bob(), bob(), alice_staking),
+		);
+		pallet_parachain_staking::Total::<Test>::put(alice_staking);
+		assert_ok!(ScoreStaking::update_score(
+			RuntimeOrigin::signed(alice()),
+			alice().into(),
+			alice_score
+		));
+
+		// run to next reward distribution round, alice should win all rewards
+		run_to_block(7);
+
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+		));
+
+		assert_noop!(
+			ScoreStaking::distribute_rewards(
+				RuntimeOrigin::signed(alice()),
+				2,
+				vec![(alice(), 0), (bob(), 0), (charlie(), 0)]
+			),
+			Error::<Test>::MaxIDGraphAccountsPerCallReached
+		);
+	});
+}
+
+#[test]
 fn on_all_delegation_removed_works() {
 	new_test_ext(true).execute_with(|| {
 		let bob = bob();
