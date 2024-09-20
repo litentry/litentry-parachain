@@ -221,9 +221,10 @@ fn score_staking_works() {
 			2,
 			vec![(alice(), alice_id_graph_staking)]
 		));
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()), 2));
 
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			distributed: round_reward,
+			round_index: 2,
 		}));
 
 		assert_eq!(
@@ -704,6 +705,7 @@ fn distribute_rewards_works() {
 			3,
 			vec![(alice(), alice_id_graph_staking)]
 		));
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()), 3));
 
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
@@ -716,7 +718,7 @@ fn distribute_rewards_works() {
 		alice_total_reward += round_reward;
 
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			distributed: round_reward,
+			round_index: 3,
 		}));
 
 		assert_eq!(
@@ -767,6 +769,7 @@ fn distribute_rewards_round_rewards_already_distributed_works() {
 			2,
 			vec![(alice(), 0)]
 		));
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()), 2));
 
 		assert_noop!(
 			ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2, vec![(alice(), 0)]),
@@ -823,6 +826,34 @@ fn distribute_rewards_max_id_graph_accounts_per_call_check_works() {
 				vec![(alice(), 0), (bob(), 0), (charlie(), 0)]
 			),
 			Error::<Test>::MaxIDGraphAccountsPerCallReached
+		);
+	});
+}
+
+#[test]
+fn complete_reward_distribution_works() {
+	new_test_ext(false).execute_with(|| {
+		let enclave = Enclave::new(WorkerType::Identity);
+		pallet_teebag::EnclaveRegistry::<Test>::insert(alice(), enclave);
+
+		assert_eq!(ScoreStaking::last_rewards_distribution_round(), 0);
+
+		assert_ok!(ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()), 1));
+
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionCompleted { round_index: 1 },
+		));
+
+		assert_eq!(ScoreStaking::last_rewards_distribution_round(), 1);
+	});
+}
+
+#[test]
+fn complete_reward_distribution_origin_check_works() {
+	new_test_ext(false).execute_with(|| {
+		assert_noop!(
+			ScoreStaking::complete_reward_distribution(RuntimeOrigin::signed(alice()), 2),
+			sp_runtime::DispatchError::BadOrigin
 		);
 	});
 }
