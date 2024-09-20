@@ -61,7 +61,7 @@ ARG FINGERPRINT=none
 ARG SGX_COMMERCIAL_KEY
 ENV SGX_COMMERCIAL_KEY=$SGX_COMMERCIAL_KEY
 
-WORKDIR $HOME/tee-worker
+WORKDIR $HOME/tee-worker/identity
 COPY . $HOME
 
 RUN \
@@ -100,8 +100,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/bin/litentry-cli /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -119,8 +119,8 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 WORKDIR /usr/local/bin
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/bin/* /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/cli/*.sh /usr/local/worker-cli/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libprotobuf* /lib/x86_64-linux-gnu/
@@ -173,9 +173,9 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 
 RUN mkdir -p /origin /data
 
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /origin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/mrenclave.txt /origin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/bin/* /origin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/mrenclave.txt /origin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/identity/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 WORKDIR /origin
 
