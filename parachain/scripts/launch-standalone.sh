@@ -8,9 +8,9 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
+PARACHAIN_BIN="$ROOTDIR/parachain/target/release/litentry-collator"
 
-cd "$ROOTDIR"
+cd "$ROOTDIR/parachain"
 
 if [ ! -f "$PARACHAIN_BIN" ]; then
   echo "no litentry-collator found, build it now ..."
@@ -37,7 +37,7 @@ print_divider
 
 # Check parachain status
 echo "wait for parachain to produce block #1..."
-cd "$ROOTDIR/ts-tests"
+cd "$ROOTDIR/parachain/ts-tests"
 
 if [[ -z "${NODE_ENV}" ]]; then
     echo "NODE_ENV=ci" > .env

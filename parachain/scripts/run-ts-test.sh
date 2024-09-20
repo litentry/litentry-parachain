@@ -19,7 +19,7 @@ if [ "$3" = "evm" ]; then
 fi
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR/ts-tests"
+cd "$ROOTDIR/parachain/ts-tests"
 
 LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
@@ -29,7 +29,7 @@ pnpm install
 pnpm run test-filter 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
 if $bridge; then
-    $ROOTDIR/scripts/launch-bridge.sh
+    $ROOTDIR/parachain/scripts/launch-bridge.sh
     pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 fi
 

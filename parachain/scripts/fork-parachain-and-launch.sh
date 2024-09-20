@@ -93,9 +93,9 @@ if [ ! -f data/fork.json ]; then
   exit 2
 fi
 
-cp -f data/fork.json "$ROOTDIR/docker/"
+cp -f data/fork.json "$ROOTDIR/parachain/docker/"
 
-cd "$ROOTDIR"
+cd "$ROOTDIR/parachain"
 sed -i.bak "s;$FORK_CHAIN;fork.json;" "docker/$ORIG_CHAIN-parachain-launch-config.yml"
 
 # start the network

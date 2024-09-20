@@ -68,7 +68,7 @@ print_divider
 
 # 3. do runtime upgrade and verify
 echo "Do runtime upgrade and verify ..."
-cd "$ROOTDIR/ts-tests"
+cd "$ROOTDIR/parachain/ts-tests"
 echo "NODE_ENV=ci" > .env
 pnpm install && pnpm run test-runtime-upgrade 2>&1
 

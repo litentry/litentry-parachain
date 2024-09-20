@@ -8,7 +8,7 @@ function usage() {
 [ $# -lt 1 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR"
+cd "$ROOTDIR/parachain"
 
 PROFILE="$1"
 TAG="$2"

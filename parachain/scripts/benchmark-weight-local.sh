@@ -16,7 +16,7 @@ function usage() {
 [ $# -ne 3 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR"
+cd "$ROOTDIR/parachain"
 
 PALLET=${2//-/_}
 

@@ -29,15 +29,15 @@ function parachain_check() {
 }
 
 function clean_up() {
-    cd "$root_dir"
+    cd "$root_dir/parachain"
     cargo clean
-    cd "$root_dir/tee-worker"
+    cd "$root_dir/tee-worker/identity"
     cargo clean
-    cd "$root_dir/tee-worker/enclave-runtime"
+    cd "$root_dir/tee-worker/identity/enclave-runtime"
     cargo clean
-    cd "$root_dir/bitacross-worker"
+    cd "$root_dir/tee-worker/bitacross"
     cargo clean
-    cd "$root_dir/bitacross-worker/enclave-runtime"
+    cd "$root_dir/tee-worker/bitacross/enclave-runtime"
     cargo clean
 }
 
@@ -51,40 +51,40 @@ cd "$root_dir"
 make fmt
 
 echo "[Step 1], Parachain clippy"
-cd "$root_dir" && parachain_check
+cd "$root_dir/parachain" && parachain_check
 
-echo "[Step 2], tee-worker clippy"
-cd "$root_dir/tee-worker" && worker_clippy
+echo "[Step 2], identity-worker clippy"
+cd "$root_dir/tee-worker/identity" && worker_clippy
 
-echo "[Step 3], tee-worker enclave clippy"
-cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
+echo "[Step 3], identity-worker enclave clippy"
+cd "$root_dir/tee-worker/identity/enclave-runtime" && worker_clippy
 
-echo "[Step 4], tee-worker cargo test"
-cd "$root_dir/tee-worker"
+echo "[Step 4], identity-worker cargo test"
+cd "$root_dir/tee-worker/identity"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release --features development -- --show-output
 
-echo "[Step 5], tee-worker service test"
+echo "[Step 5], identity-worker service test"
 clean_up
-cd "$root_dir/tee-worker"
+cd "$root_dir/tee-worker/identity"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
-cd "$root_dir/tee-worker/bin"
+cd "$root_dir/tee-worker/identity/bin"
 ./litentry-worker test --all
 
 echo "[Step 6], bitacross-worker clippy"
-cd "$root_dir/bitacross-worker" && bitacross_clippy
+cd "$root_dir/tee-worker/bitacross" && bitacross_clippy
 
 echo "[Step 7], bitacross-worker enclave clippy"
-cd "$root_dir/bitacross-worker/enclave-runtime" && bitacross_clippy
+cd "$root_dir/tee-worker/bitacross/enclave-runtime" && bitacross_clippy
 
 echo "[Step 8], bitacross-worker cargo test"
-cd "$root_dir/bitacross-worker"
+cd "$root_dir/tee-worker/bitacross"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 9], bitacross-worker service test"
 clean_up
-cd "$root_dir/bitacross-worker"
+cd "$root_dir/tee-worker/bitacross"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
-cd "$root_dir/bitacross-worker/bin"
+cd "$root_dir/tee-worker/bitacross/bin"
 ./bitacross-worker test --all
 
 end=$(date +%s)

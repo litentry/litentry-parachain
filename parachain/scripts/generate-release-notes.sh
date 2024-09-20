@@ -175,11 +175,11 @@ EOF
 fi
 
 if is_identity_worker_release; then
-  WORKER_VERSION=$(grep version tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
-  WORKER_BIN=$(grep name tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
-  WORKER_RUSTC_VERSION=$(cd tee-worker && rustc --version)
-  UPSTREAM_COMMIT=$(cat tee-worker/upstream_commit)
-  RUNTIME_VERSION=$(grep spec_version tee-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+  WORKER_VERSION=$(grep version tee-worker/identity/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_BIN=$(grep name tee-worker/identity/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_RUSTC_VERSION=$(cd tee-worker/identity && rustc --version)
+  UPSTREAM_COMMIT=$(cat tee-worker/identity/upstream_commit)
+  RUNTIME_VERSION=$(grep spec_version tee-worker/identity/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
   ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
   MRENCLAVE=$(docker run --entrypoint cat litentry/identity-worker:$IDENTITY_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
@@ -201,7 +201,7 @@ EOF
 fi
 
 if is_bitacross_worker_release; then
-  WORKER_VERSION=$(grep version bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_VERSION=$(grep version tee-worker/bitacross/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_BIN=$(grep name bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_RUSTC_VERSION=$(cd bitacross-worker && rustc --version)
   UPSTREAM_COMMIT=$(cat bitacross-worker/upstream_commit)
