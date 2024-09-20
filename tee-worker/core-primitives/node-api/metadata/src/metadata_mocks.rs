@@ -93,6 +93,7 @@ pub struct NodeMetadataMock {
 	//ScoreStaking
 	score_staking_module: u8,
 	distribute_rewards: u8,
+	complete_reward_distribution: u8,
 }
 
 impl NodeMetadataMock {
@@ -151,6 +152,7 @@ impl NodeMetadataMock {
 
 			score_staking_module: 100u8,
 			distribute_rewards: 0u8,
+			complete_reward_distribution: 1u8,
 		}
 	}
 }
@@ -188,6 +190,10 @@ impl TeebagCallIndexes for NodeMetadataMock {
 impl ScoreStakingCallIndexes for NodeMetadataMock {
 	fn distribute_rewards_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.score_staking_module, self.distribute_rewards])
+	}
+
+	fn complete_reward_distribution_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.complete_reward_distribution])
 	}
 }
 
