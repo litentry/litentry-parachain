@@ -23,17 +23,13 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use events::{
 	ActivateIdentityRequested, DeactivateIdentityRequested, EnclaveUnauthorized,
-	LinkIdentityRequested, OpaqueTaskPosted, RewardDistributionStarted, VCRequested,
+	LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
 };
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{bounded::alloc, H160, H256};
-use sp_runtime::{
-	generic::Header as HeaderG,
-	traits::{BlakeTwo256, Header as HeaderT},
-	MultiAddress, MultiSignature,
-};
+use sp_runtime::{generic::Header as HeaderG, traits::BlakeTwo256, MultiAddress, MultiSignature};
 
 use self::events::ParentchainBlockProcessed;
 
@@ -120,10 +116,6 @@ pub trait FilterEvents {
 	fn get_parentchain_block_proccessed_events(
 		&self,
 	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error>;
-
-	fn get_reward_distribution_started_events(
-		&self,
-	) -> Result<Vec<RewardDistributionStarted>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -143,7 +135,6 @@ where
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-		block_header: impl HeaderT<Hash = H256>,
 	) -> Result<ProcessedEventsArtifacts, Error>;
 }
 
@@ -158,7 +149,6 @@ pub enum ParentchainEventProcessingError {
 	OpaqueTaskPostedFailure,
 	AssertionCreatedFailure,
 	ParentchainBlockProcessedFailure,
-	RewardDistributionStartedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -182,8 +172,6 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: AssertionCreatedFailure",
 			ParentchainEventProcessingError::ParentchainBlockProcessedFailure =>
 				"Parentchain Event Processing Error: ParentchainBlockProcessedFailure",
-			ParentchainEventProcessingError::RewardDistributionStartedFailure =>
-				"Parentchain Event Processing Error: RewardDistributionStartedFailure",
 		};
 		write!(f, "{}", message)
 	}

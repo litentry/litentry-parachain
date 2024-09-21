@@ -69,13 +69,10 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let repository = GLOBAL_ASSERTION_REPOSITORY.get()?;
-	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 
 	let parentchain_event_handler = LitentryParentchainEventHandler {
 		assertion_repository: repository,
-		ocall_api: ocall_api.clone(),
-		state_handler,
-		node_metadata_repository: node_metadata_repository.clone(),
+		metrics_api: ocall_api.clone(),
 	};
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(

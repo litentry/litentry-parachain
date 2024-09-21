@@ -83,5 +83,4 @@ pub struct ScorePayment<Balance> {
 	pub total_reward: Balance,
 	pub last_round_reward: Balance,
 	pub unpaid_reward: Balance,
-	pub last_token_distributed_round: RoundIndex,
 }
