@@ -7,7 +7,7 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 
 if [[ "$(docker image inspect litentry/chainbridge:latest 2>/dev/null)" == "[]" ]]; then
     echo "litentry/chainbridge:latest image not found..."
-    ${ROOTDIR}/scripts/build-bridge.sh
+    ${ROOTDIR}/parachain/scripts/build-bridge.sh
 fi
 
 echo "------------------------------------------------------------"
@@ -28,6 +28,6 @@ docker rm -f geth &>/dev/null
 #
 # TODO - make it work with latest image
 docker run -d --rm --entrypoint 'sh' --name 'geth' \
-    -u "$(id -u)":"$(id -g)" -v ${ROOTDIR}/scripts/geth:/data/ -p 8546:8546 -p 8545:8545 \
+    -u "$(id -u)":"$(id -g)" -v ${ROOTDIR}/parachain/scripts/geth:/data/ -p 8546:8546 -p 8545:8545 \
     ethereum/client-go:v1.13.14 /data/run_geth.sh docker /data
 echo "runing geth...(container name: geth)"

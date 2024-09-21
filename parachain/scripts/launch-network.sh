@@ -24,9 +24,9 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
-
+PARACHAIN_BIN="$ROOTDIR/parachain/target/release/litentry-collator"
 cd "$ROOTDIR"
+
 export PARA_ID=$(grep -i "${CHAIN}_para_id" common/primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
 export PARA_CHAIN_SPEC=${CHAIN}-dev
 export COLLATOR_WS_PORT=${CollatorWSPort:-9944}
@@ -47,7 +47,7 @@ ZOMBIENET_BIN=zombienet-${os}-${arch}
 
 cd "$LITENTRY_PARACHAIN_DIR"
 export PATH="$LITENTRY_PARACHAIN_DIR:$PATH"
-cp "$ROOTDIR/zombienet/config.toml" .
+cp "$ROOTDIR/parachain/zombienet/config.toml" .
 
 if ! $ZOMBIENET_BIN version &> /dev/null; then
   echo "downloading $ZOMBIENET_BIN ..."
@@ -82,7 +82,7 @@ print_divider
 echo "launching zombienet network (in background), dir = $ZOMBIENET_DIR ..."
 $ZOMBIENET_BIN -d $ZOMBIENET_DIR -l silent spawn config.toml &
 
-cd "$ROOTDIR/ts-tests"
+cd "$ROOTDIR/parachain/ts-tests"
 
 if [ -z "$NODE_ENV" ]; then
     echo "NODE_ENV=ci" > .env

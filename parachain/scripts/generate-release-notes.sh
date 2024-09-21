@@ -41,6 +41,8 @@ is_bitacross_worker_release() {
   [ "${type:3:1}" = "1" ]
 }
 
+cd "$ROOTDIR/parachain"
+
 if is_client_release; then
   # base image used to build the node binary
   NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
@@ -174,6 +176,8 @@ sha1sum of genesis wasm   : $GENESIS_WASM_HASH
 EOF
 fi
 
+cd "$ROOTDIR"
+
 if is_identity_worker_release; then
   WORKER_VERSION=$(grep version tee-worker/identity/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   WORKER_BIN=$(grep name tee-worker/identity/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
@@ -202,10 +206,10 @@ fi
 
 if is_bitacross_worker_release; then
   WORKER_VERSION=$(grep version tee-worker/bitacross/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
-  WORKER_BIN=$(grep name bitacross-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
-  WORKER_RUSTC_VERSION=$(cd bitacross-worker && rustc --version)
-  UPSTREAM_COMMIT=$(cat bitacross-worker/upstream_commit)
-  RUNTIME_VERSION=$(grep spec_version bitacross-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+  WORKER_BIN=$(grep name tee-worker/bitacross/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_RUSTC_VERSION=$(cd tee-worker/bitacross && rustc --version)
+  UPSTREAM_COMMIT=$(cat tee-worker/bitacross/upstream_commit)
+  RUNTIME_VERSION=$(grep spec_version tee-worker/bitacross/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
   ENCLAVE_SHASUM=$(docker run --entrypoint sha1sum litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/enclave.signed.so | awk '{print $1}')
   MRENCLAVE=$(docker run --entrypoint cat litentry/bitacross-worker:$BITACROSS_WORKER_DOCKER_TAG /origin/mrenclave.txt)
 cat << EOF >> "$1"
