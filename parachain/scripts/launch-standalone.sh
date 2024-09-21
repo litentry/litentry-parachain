@@ -10,7 +10,7 @@ LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 ROOTDIR=$(git rev-parse --show-toplevel)
 PARACHAIN_BIN="$ROOTDIR/parachain/target/release/litentry-collator"
 
-cd "$ROOTDIR/parachain"
+cd "$ROOTDIR"
 
 if [ ! -f "$PARACHAIN_BIN" ]; then
   echo "no litentry-collator found, build it now ..."

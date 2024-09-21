@@ -28,19 +28,19 @@ help:
 
 .PHONY: build-node ## Build release node
 build-node:
-	cd parachain && cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release
+	cd parachain && cargo build --locked -p litentry-collator --release
 
 .PHONY: build-runtime-litentry ## Build litentry release runtime
 build-runtime-litentry:
-	cd parachain && cargo build --locked -p $(call pkgid, litentry-parachain-runtime) --release
+	cd parachain && cargo build --locked -p litentry-parachain-runtime --release
 
 .PHONY: build-runtime-rococo ## Build rococo release runtime
 build-runtime-rococo:
-	cd parachain && cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
+	cd parachain && cargo build --locked -p rococo-parachain-runtime --release
 
 .PHONY: build-runtime-paseo ## Build paseo release runtime
 build-runtime-paseo:
-	cd parachain && cargo build --locked -p $(call pkgid, paseo-parachain-runtime) --release
+	cd parachain && cargo build --locked -p paseo-parachain-runtime --release
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
@@ -151,7 +151,3 @@ clippyfix:
 .PHONY: cargofix ## cargo fix
 cargofix:
 	cd parachain && cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
-
-define pkgid
-$(shell cargo pkgid $1)
-endef

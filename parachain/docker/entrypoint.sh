@@ -2,7 +2,7 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 PARACHAIN_BASEDIR="/opt/litentry/parachain"
-REPO_DIR="/code/litentry-parachain"
+REPO_DIR="/code"
 # Currently, only chain type rococo is supported.
 CHAIN='rococo'
 ZOMBIENET_DIR=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 8; echo)
@@ -23,14 +23,14 @@ check(){
 }
 
 init(){
-    export PARA_ID=$(grep -i "${CHAIN}_para_id" ${REPO_DIR}/primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
+    export PARA_ID=$(grep -i "${CHAIN}_para_id" ${REPO_DIR}/common/primitives/core/src/lib.rs | sed 's/.* = //;s/\;.*//')
     export PARA_CHAIN_SPEC=${CHAIN}-dev
     export COLLATOR_WS_PORT=${CollatorWSPort:-9944}
 }
 
 run_zombienet(){
     cd "$PARACHAIN_BASEDIR" || exit
-    cp ${REPO_DIR}/zombienet/config.toml .
+    cp ${REPO_DIR}/parachain/zombienet/config.toml .
     zombienet setup polkadot -y || true
     export PATH=${PATH}:${PARACHAIN_BASEDIR}
     cp /usr/local/bin/litentry-collator .
@@ -40,7 +40,7 @@ run_zombienet(){
 
 register_parachain(){
     echo "Register parathread now ..."
-    cd "$REPO_DIR/ts-tests" || exit
+    cd "$REPO_DIR/parachain/ts-tests" || exit
     if [[ -z "$NODE_ENV" ]]; then
         echo "NODE_ENV=ci" > .env
     else

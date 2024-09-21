@@ -9,7 +9,7 @@ ARG PROFILE
 FROM rust:bullseye as builder
 
 WORKDIR /litentry/parachain
-COPY . /litentry
+COPY . /litentry/
 
 RUN apt-get update && apt-get install -yq clang libclang-dev cmake protobuf-compiler
 
@@ -26,7 +26,7 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
 
-COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
 
 # install netcat for healthcheck
 RUN apt-get update && \
@@ -93,21 +93,18 @@ RUN echo "downloading zombienet-linux-x64 ..." && \
     zombienet version
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
-	mkdir -p /opt/litentry/parachain /code/litentry-parachain && \
+	mkdir -p /opt/litentry/parachain /code && \
 	chown -R litentry:litentry /opt/litentry
 	
-COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
 RUN chmod +x /usr/local/bin/litentry-collator && \
     # check if executable works in this container
     /usr/local/bin/litentry-collator --version
 
-COPY ./node/src/chain_specs /code/litentry-parachain/node/src/chain_specs
-COPY ./ts-tests /code/litentry-parachain/ts-tests 
-COPY ./primitives/core/src/lib.rs /code/litentry-parachain/primitives/core/src/lib.rs
-COPY ./zombienet/config.toml /code/litentry-parachain/zombienet/config.toml
+COPY ./parachain /code/parachain
+COPY ./parachain/docker/entrypoint.sh /usr/local/bin/
+COPY ./common /code/common
 RUN chown -R litentry:litentry /code
-
-COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER litentry
