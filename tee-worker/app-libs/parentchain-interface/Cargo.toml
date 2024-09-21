@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-pallet-identity-management-tee = { path = "../../litentry/pallets/identity-management", default-features = false }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # local dependencies
@@ -17,12 +16,9 @@ itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types
 itp-enclave-metrics = { path = "../../core-primitives/enclave-metrics", default-features = false }
 itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
-itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
-itp-stf-state-handler = { path = "../../core-primitives/stf-state-handler", default-features = false }
-itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
-lc-parachain-extrinsic-task-sender = { path = "../../litentry/core/parachain-extrinsic-task/sender", default-features = false }
+
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
@@ -30,14 +26,12 @@ log = { version = "0.4", default-features = false }
 substrate-api-client = { optional = true, default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate dep
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
 lc-dynamic-assertion = { path = "../../litentry/core/dynamic-assertion", default-features = false }
 lc-evm-dynamic-assertions = { path = "../../litentry/core/evm-dynamic-assertions", default-features = false }
-litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -50,6 +44,7 @@ itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["m
 itp-test = { path = "../../core-primitives/test" }
 itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["mocks"] }
 itc-parentchain-test = { path = "../../core/parentchain/test" }
+
 
 [features]
 default = ["std"]
@@ -64,7 +59,6 @@ std = [
     "itp-stf-executor/std",
     "itp-stf-primitives/std",
     "itp-top-pool-author/std",
-    "itp-sgx-externalities/std",
     "itp-types/std",
     "log/std",
     "sp-core/std",
@@ -73,7 +67,6 @@ std = [
     "litentry-primitives/std",
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
-    "lc-parachain-extrinsic-task-sender/std",
     "sp-std/std",
 ]
 sgx = [
@@ -83,10 +76,8 @@ sgx = [
     "itp-node-api/sgx",
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
-    "itp-sgx-externalities/sgx",
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-dynamic-assertion/sgx",
     "lc-evm-dynamic-assertions/sgx",
-    "lc-parachain-extrinsic-task-sender/sgx",
 ]

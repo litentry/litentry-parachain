@@ -25,7 +25,7 @@ use itp_types::{
 		events::{
 			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
 			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted,
-			ParentchainBlockProcessed, RewardDistributionStarted, VCRequested,
+			ParentchainBlockProcessed, VCRequested,
 		},
 		FilterEvents,
 	},
@@ -102,12 +102,6 @@ impl FilterEvents for FilterableEvents {
 	fn get_parentchain_block_proccessed_events(
 		&self,
 	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error> {
-		self.filter()
-	}
-
-	fn get_reward_distribution_started_events(
-		&self,
-	) -> Result<Vec<RewardDistributionStarted>, Self::Error> {
 		self.filter()
 	}
 }
