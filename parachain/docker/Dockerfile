@@ -19,14 +19,14 @@ ARG PROFILE
 RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
-# stage 2: packaging
+# stage 2.1: packaging parachain image
 # ==========================
 FROM ubuntu:22.04 AS parachain
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
 
-COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin
 
 # install netcat for healthcheck
 RUN apt-get update && \
@@ -49,6 +49,10 @@ VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/local/bin/litentry-collator"]
 CMD ["--help"]
+
+# ==========================
+# stage 2.2: packaging aio image
+# ==========================
 
 FROM ubuntu:22.04 AS chain-aio
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
@@ -92,7 +96,7 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /opt/litentry/parachain /code/litentry-parachain && \
 	chown -R litentry:litentry /opt/litentry
 	
-COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin
 RUN chmod +x /usr/local/bin/litentry-collator && \
     # check if executable works in this container
     /usr/local/bin/litentry-collator --version
