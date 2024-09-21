@@ -5,29 +5,28 @@ name = "lc-direct-call"
 version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+log = { workspace = true }
+codec = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
 
 # internal dependencies
 bc-enclave-registry = { path = "../../../bitacross/core/bc-enclave-registry", default-features = false }
 bc-musig2-ceremony = { path = "../../../bitacross/core/bc-musig2-ceremony", default-features = false }
 bc-relayer-registry = { path = "../../../bitacross/core/bc-relayer-registry", default-features = false }
 bc-signer-registry = { path = "../../../bitacross/core/bc-signer-registry", default-features = false }
-itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
-itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
-litentry-primitives = { path = "../../primitives", default-features = false }
 
-log = { version = "0.4", default-features = false }
+itp-sgx-crypto = { workspace = true }
+itp-stf-primitives = { workspace = true }
+litentry-primitives = { workspace = true }
 
-# sgx dependencies
-sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true }
+sgx_tstd = { workspace = true, optional = true }
 
 [dev-dependencies]
-k256 = { version = "0.13.3", features = ["ecdsa-core", "schnorr"] }
-rand = { version = "0.7" }
-hex = { version = "0.4" }
-itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mocks"] }
+k256 = { workspace = true, features = ["ecdsa-core", "schnorr"] }
+rand = { workspace = true }
+hex = { workspace = true }
+itp-sgx-crypto = { workspace = true, features = ["std", "mocks"] }
 
 [features]
 default = ["std"]
@@ -53,6 +52,7 @@ std = [
     "litentry-primitives/std",
     "sp-core/std",
     "sp-io/std",
+    "codec/std",
 ]
 test = [
     "itp-sgx-crypto/mocks",

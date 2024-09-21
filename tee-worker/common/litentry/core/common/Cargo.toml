@@ -1,0 +1,18 @@
+[package]
+edition = "2021"
+name = "lc-common"
+version = "0.1.0"
+
+[dependencies]
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+litentry-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "litentry-primitives/sgx",
+]
+std = [
+    "litentry-primitives/std",
+]

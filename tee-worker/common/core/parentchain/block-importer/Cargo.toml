@@ -1,0 +1,63 @@
+[package]
+name = "itc-parentchain-block-importer"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
+
+ita-stf = { path = "../../../app-libs/stf", default-features = false }
+itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
+itc-parentchain-light-client = { path = "../light-client", default-features = false }
+itp-enclave-metrics = { workspace = true }
+itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
+itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-interface = { path = "../../../core-primitives/stf-interface", default-features = false }
+itp-types = { workspace = true }
+
+thiserror_sgx = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+
+codec = { workspace = true }
+log = { workspace = true }
+sp-runtime = { workspace = true }
+itp-ocall-api = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    # local
+    "ita-stf/std",
+    "itc-parentchain-indirect-calls-executor/std",
+    "itc-parentchain-light-client/std",
+    "itp-enclave-metrics/std",
+    "itp-extrinsics-factory/std",
+    "itp-stf-executor/std",
+    "itp-stf-interface/std",
+    "itp-types/std",
+    # no-std compatible libraries
+    "codec/std",
+    "log/std",
+    "sp-runtime/std",
+    # std compatible external
+    "thiserror",
+    "itp-ocall-api/std",
+]
+sgx = [
+    # sgx
+    "sgx_tstd",
+    # local
+    "ita-stf/sgx",
+    "itc-parentchain-indirect-calls-executor/sgx",
+    "itc-parentchain-light-client/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-stf-executor/sgx",
+    # sgx enabled external libraries
+    "thiserror_sgx",
+]
+
+# feature to export mock implementations, only to be used for dev-dependencies!
+mocks = []

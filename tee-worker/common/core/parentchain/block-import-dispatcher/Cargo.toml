@@ -1,0 +1,38 @@
+[package]
+name = "itc-parentchain-block-import-dispatcher"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
+
+itc-parentchain-block-importer = { workspace = true }
+itp-import-queue = { workspace = true }
+
+thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+log = { workspace = true }
+
+[dev-dependencies]
+itc-parentchain-block-importer = { workspace = true, features = ["mocks"] }
+
+[features]
+default = ["std"]
+std = [
+    "log/std",
+    "thiserror",
+    "itc-parentchain-block-importer/std",
+    "itp-import-queue/std",
+]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
+    "itc-parentchain-block-importer/sgx",
+    "itp-import-queue/sgx",
+]
+
+# feature to export mock implementations, only to be used for dev-dependencies!
+mocks = []

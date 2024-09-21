@@ -1,0 +1,29 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-service"
+version = "0.1.0"
+
+[dependencies]
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+log = { workspace = true }
+
+# litentry
+lc-common = { workspace = true }
+lc-data-providers = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "litentry-primitives/sgx",
+    "lc-common/sgx",
+    "lc-data-providers/sgx",
+]
+std = [
+    "log/std",
+    "litentry-primitives/std",
+    "lc-common/std",
+    "lc-data-providers/std",
+]

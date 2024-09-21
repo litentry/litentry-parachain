@@ -1,0 +1,26 @@
+[package]
+name = "lc-vc-task-sender"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# sgx dependencies
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["net", "thread"], optional = true }
+
+# no_std dependencies
+lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
+log = { version = "0.4", default-features = false }
+
+# litentry
+litentry-primitives = { path = "../../../primitives", default-features = false }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+]
+std = [
+    "log/std",
+]
