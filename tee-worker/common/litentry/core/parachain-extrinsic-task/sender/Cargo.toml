@@ -3,19 +3,12 @@ name = "lc-parachain-extrinsic-task-sender"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-log = { version = "0.4", default-features = false }
+log = { workspace = true }
+lazy_static = { workspace = true }
 
-# sgx dependencies
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["net", "thread"], optional = true }
-
-# no_std dependencies
-lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
-
-# internal dependencies
-itp-types = { path = "../../../../core-primitives/types", default-features = false }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+itp-types = { workspace = true }
 
 [features]
 default = ["std"]

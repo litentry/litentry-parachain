@@ -8,7 +8,6 @@ edition = "2021"
 sgx_tstd = { workspace = true, optional = true }
 sgx_types = { workspace = true }
 
-ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { path = "../light-client", default-features = false }
 itp-enclave-metrics = { workspace = true }
@@ -29,7 +28,6 @@ itp-ocall-api = { workspace = true }
 default = ["std"]
 std = [
     # local
-    "ita-stf/std",
     "itc-parentchain-indirect-calls-executor/std",
     "itc-parentchain-light-client/std",
     "itp-enclave-metrics/std",
@@ -49,7 +47,6 @@ sgx = [
     # sgx
     "sgx_tstd",
     # local
-    "ita-stf/sgx",
     "itc-parentchain-indirect-calls-executor/sgx",
     "itc-parentchain-light-client/sgx",
     "itp-enclave-metrics/sgx",

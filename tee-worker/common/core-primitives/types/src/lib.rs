@@ -26,6 +26,8 @@ use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
 pub mod storage;
+pub mod sidechain;
+pub use sidechain::SidechainBlockHash;
 
 pub use itp_sgx_runtime_primitives::types::*;
 pub use litentry_primitives::{

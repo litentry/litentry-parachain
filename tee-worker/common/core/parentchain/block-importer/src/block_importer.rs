@@ -19,7 +19,6 @@
 
 use crate::{error::Result, ImportParentchainBlocks};
 
-use ita_stf::ParentchainHeader;
 use itc_parentchain_indirect_calls_executor::ExecuteIndirectCalls;
 use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, Validator,
@@ -31,7 +30,7 @@ use itp_stf_executor::traits::StfUpdateState;
 use itp_stf_interface::ShardCreationInfo;
 use itp_types::{
 	parentchain::{IdentifyParentchain, ParentchainId},
-	OpaqueCall, H256,
+	OpaqueCall, H256, Header as ParentchainHeader,
 };
 use log::*;
 use sp_runtime::{

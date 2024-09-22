@@ -28,6 +28,7 @@ mod aes_request;
 mod bitcoin_address;
 mod bitcoin_signature;
 mod ethereum_signature;
+mod plain_request;
 mod validation_data;
 
 pub use aes::*;

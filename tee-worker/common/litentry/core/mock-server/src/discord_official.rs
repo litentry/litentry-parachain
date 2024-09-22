@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use ita_stf::helpers::get_expected_raw_message;
+use lc_identity_verification::web2::helpers::get_expected_raw_message;
 use lc_data_providers::discord_official::{
 	DiscordMessage, DiscordMessageAuthor, DiscordUser, DiscordUserAccessToken,
 };

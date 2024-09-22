@@ -5,69 +5,31 @@ members = [
     "common/core-primitives/*",
     "common/core-primitives/sgx/*",
     "common/core-primitives/substrate-sgx/*",
+    "common/core-primitives/node-api/*",
+    "common/litentry/core/*",
+    "common/litentry/core/parachain-extrinsic-task/*",
+    "common/litentry/core/stf-task/*",
+    "common/litentry/macros",
+    "common/litentry/pallets/*",
     "common/litentry/primitives",
-
-
+    "common/core/*",
+    "common/core/parentchain/*",
 
     # identity-worker
+
     # bitacross-worker
     "bitacross/app-libs/*",
     "bitacross/cli",
-    "bitacross/core/direct-rpc-client",
-    "bitacross/core/direct-rpc-server",
-    "bitacross/core/offchain-worker-executor",
-    "bitacross/core/parentchain/block-import-dispatcher",
-    "bitacross/core/parentchain/block-importer",
-    "bitacross/core/parentchain/indirect-calls-executor",
-    "bitacross/core/parentchain/light-client",
-    "bitacross/core/parentchain/parentchain-crate",
-    "bitacross/core/rest-client",
-    "bitacross/core/rpc-client",
-    "bitacross/core/tls-websocket-server",
-    "bitacross/core-primitives/attestation-handler",
-    "bitacross/core-primitives/import-queue",
-    "bitacross/core-primitives/component-container",
-    "bitacross/core-primitives/enclave-api",
-    "bitacross/core-primitives/enclave-api/ffi",
-    "bitacross/core-primitives/enclave-metrics",
-    "bitacross/core-primitives/extrinsics-factory",
-    "bitacross/core-primitives/hashing",
-    "bitacross/core-primitives/networking-utils",
-    "bitacross/core-primitives/node-api",
-    "bitacross/core-primitives/node-api/api-client-extensions",
-    "bitacross/core-primitives/node-api/api-client-types",
-    "bitacross/core-primitives/node-api/factory",
-    "bitacross/core-primitives/node-api/metadata",
-    "bitacross/core-primitives/node-api/metadata-provider",
-    "bitacross/core-primitives/nonce-cache",
-    "bitacross/core-primitives/ocall-api",
-    "bitacross/core-primitives/primitives-cache",
-    "bitacross/core-primitives/rpc",
-    "bitacross/core-primitives/settings",
-    "bitacross/core-primitives/sgx/crypto",
-    "bitacross/core-primitives/sgx/io",
-    "bitacross/core-primitives/sgx-runtime-primitives",
-    "bitacross/core-primitives/stf-executor",
-    "bitacross/core-primitives/stf-interface",
-    "bitacross/core-primitives/stf-primitives",
-    "bitacross/core-primitives/stf-state-handler",
-    "bitacross/core-primitives/stf-state-observer",
-    "bitacross/core-primitives/storage",
-    "bitacross/core-primitives/substrate-sgx/environmental",
-    "bitacross/core-primitives/substrate-sgx/externalities",
-    "bitacross/core-primitives/substrate-sgx/sp-io",
-    "bitacross/core-primitives/test",
-    "bitacross/core-primitives/time-utils",
-    "bitacross/core-primitives/top-pool",
-    "bitacross/core-primitives/top-pool-author",
-    "bitacross/core-primitives/types",
-    "bitacross/core-primitives/utils",
     "bitacross/service",
     "bitacross/litentry/core/direct-call",
     "bitacross/bitacross/core/*",
 ]
 
 exclude = [
+    "common/core/parentchain",
+    "common/litentry/core/parachain-extrinsic-task",
+    "common/litentry/core/stf-task",
+    "common/core-primitives/node-api/src",
     "common/core-primitives/sgx",
     "common/core-primitives/substrate-sgx",
 ]
@@ -75,6 +37,7 @@ exclude = [
 [workspace.dependencies]
 
 aes = { version = "0.6.0" }
+byteorder = { version = "1.4.2", default-features = false }
 thiserror = { version = "1.0" }
 env_logger = { version = "0.10.0" }
 log = { version = "0.4", default-features = false }
@@ -82,25 +45,29 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 arrayvec = { version = "0.7.1", default-features = false }
 bit-vec = { version = "0.6", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+hex-literal = { version = "0.4" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 itertools = { version = "0.10.1", default-features = false }
 base58 = { version = "0.2", default-features = false }
 base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 derive_more = { version = "0.99" }
+futures = { version = "0.3" }
 rustls = { version = "0.19" }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_derive = { version = "1.0", default-features = false }
 serde_json = { version = "1.0", default-features = false, features = ["alloc", "preserve_order"] }
 webpki = { version = "0.21" }
 hash-db = { version = "0.15.2", default-features = false }
 bitcoin = { version = "0.31.0", default-features = false }
 rand = { version = "0.7" }
 ring = { version = "0.16.20", default-features = false }
-scale-info = { version = "2.4.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 secp256k1 = { version = "0.28.0", default-features = false }
 ofb = { version = "0.4.0" }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
-k256 = { version = "0.13.3" }
+threadpool = { version = "1.8.0" }
+k256 = { version = "0.13.3", default-features = false }
 ethabi = { version = "18.0.0", default-features = false }
 evm = { version = "0.41.1", default-features = false, features = ["with-codec"] }
 http = { version = "0.2" }
@@ -110,22 +77,40 @@ rust-base58 = { version = "0.0.4" }
 primitive-types = { version = "0.12.1", default-features = false }
 libsecp256k1 = { version = "0.7.0", default-features = false }
 postcard = { version = "0.7.2", default-features = false, features = ["alloc"] }
+jsonrpc-core = { version = "18" }
+linked-hash-map = { version = "0.5.2" }
+parity-util-mem = { version = "0.12.0", default-features = false }
+mio = { version = "0.6.14" }
+tungstenite = { version = "0.15.0" }
+yasna = { version = "0.4" }
+musig2 = { git = "https://github.com/kziemianek/musig2", branch = "master", features = ["k256"] }
 
 url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0", default-features = false, features = ["sync-api"] }
 
 # substrate
+finality-grandpa = { version = "0.16.0", default-features = false, features = ["derive-codec"] }
 frame-metadata = { version = "15.1.0", features = ["v14"], default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 binary-merkle-tree = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # SGX SDK
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", tag = "v1.1.6" }
@@ -153,18 +138,38 @@ yasna_sgx = { package = "yasna", git = "https://github.com/mesalock-linux/yasna.
 rand-sgx = { package = "rand", git = "https://github.com/mesalock-linux/rand-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"] }
 serde_json-sgx = { package = "serde_json", git = "https://github.com/mesalock-linux/serde-json-sgx", tag = "sgx_1.1.3" }
 rust-base58-sgx = { package = "rust-base58", git = "https://github.com/mesalock-linux/rust-base58-sgx", features = ["mesalock_sgx"] }
+linked-hash-map_sgx = { package = "linked-hash-map", git = "https://github.com/mesalock-linux/linked-hash-map-sgx" }
+mio_sgx = { package = "mio", git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
+futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx" }
+threadpool_sgx = { package = "threadpool", git = "https://github.com/mesalock-linux/rust-threadpool-sgx", tag = "sgx_1.1.3" }
+rust-base58_sgx = { package = "rust-base58", git = "https://github.com/mesalock-linux/rust-base58-sgx", rev = "sgx_1.1.3", default-features = false, features = ["mesalock_sgx"] }
+musig2_sgx = { package = "musig2", git = "https://github.com/kailai-wang/musig2.git", branch = "use-sha2-0.8", features = ["k256"] }
 
+# Integritee patched libs
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false }
 httparse = { git = "https://github.com/integritee-network/httparse-sgx", branch = "sgx-experimental", default-features = false }
 http_req = { git = "https://github.com/integritee-network/http_req", branch = "master", features = ["rust-tls"] }
 http-sgx = { package = "http", git = "https://github.com/integritee-network/http-sgx", branch = "sgx-experimental" }
 http_req-sgx = { package = "http_req", git = "https://github.com/integritee-network/http_req", default-features = false, features = ["rust-tls", "sgx"] }
+rcgen = { git = "https://github.com/integritee-network/rcgen", default-features = false }
+mio-extras = { git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b", default-features = false }
+tungstenite_sgx = { package = "tungstenite", git = "https://github.com/integritee-network/tungstenite-rs-sgx", branch = "sgx-experimental", features = ["rustls-tls-webpki-roots"] }
 
 # local
 itc-parentchain-block-import-dispatcher = { path = "common/core/parentchain/block-import-dispatcher", default-features = false }
 itc-parentchain-block-importer = { path = "common/core/parentchain/block-importer", default-features = false }
+itc-parentchain-indirect-calls-executor = { path = "common/core/parentchain/indirect-calls-executor", default-features = false }
+itc-parentchain-light-client = { path = "common/core/parentchain/light-client", default-features = false }
+itc-parentchain = { path = "common/core/parentchain/parentchain-crate", default-features = false }
+itc-parentchain-test = { path = "common/core/parentchain/test", default-features = false }
 itc-rest-client = { path = "common/core/rest-client", default-features = false }
+itc-rpc-client = { path = "common/core/rpc-client" }
+itc-direct-rpc-client = { path = "common/core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "common/core/direct-rpc-server", default-features = false }
+itc-tls-websocket-server = { path = "common/core/tls-websocket-server", default-features = false }
+itc-offchain-worker-executor = { path = "common/core/offchain-worker-executor", default-features = false }
 
+itp-attestation-handler = { path = "common/core-primitives/attestation-handler", default-features = false }
 itp-import-queue = { path = "common/core-primitives/import-queue", default-features = false }
 itp-storage = { path = "common/core-primitives/storage", default-features = false }
 itp-types = { path = "common/core-primitives/types", default-features = false }
@@ -182,6 +187,26 @@ itp-binary-merkle-tree = { path = "common/core-primitives/binary-merkle-tree", d
 itp-component-container = { path = "common/core-primitives/component-container", default-features = false }
 itp-rpc = { path = "common/core-primitives/rpc", default-features = false }
 itp-hashing = { path = "common/core-primitives/hashing", default-features = false }
+itp-enclave-api = { path = "common/core-primitives/enclave-api" }
+itp-enclave-api-ffi = { path = "common/core-primitives/enclave-api/ffi" }
+itp-enclave-metrics =  { path = "common/core-primitives/enclave-metrics", default-features = false }
+itp-extrinsics-factory = { path = "common/core-primitives/extrinsics-factory", default-features = false }
+itp-nonce-cache = { path = "common/core-primitives/nonce-cache", default-features = false }
+itp-node-api = { path = "common/core-primitives/node-api", default-features = false }
+itp-api-client-extensions = { path = "common/core-primitives/node-api/api-client-extensions" }
+itp-api-client-types = { path = "common/core-primitives/node-api/api-client-types", default-features = false }
+itp-node-api-factory = { path = "common/core-primitives/node-api/factory" }
+itp-node-api-metadata = { path = "common/core-primitives/node-api/metadata", default-features = false }
+itp-node-api-metadata-provider = { path = "common/core-primitives/node-api/metadata-provider", default-features = false }
+itp-networking-utils = { path = "common/core-primitives/networking-utils", default-features = false }
+itp-primitives-cache = { path = "common/core-primitives/primitives-cache", default-features = false }
+itp-stf-executor = { path = "common/core-primitives/stf-executor", default-features = false }
+itp-stf-interface = { path = "common/core-primitives/stf-interface", default-features = false }
+itp-stf-state-handler = { path = "common/core-primitives/stf-state-handler", default-features = false }
+itp-stf-state-observer = { path = "common/core-primitives/stf-state-observer", default-features = false }
+itp-top-pool = { path = "common/core-primitives/top-pool", default-features = false }
+itp-top-pool-author = { path = "common/core-primitives/top-pool-author", default-features = false }
+itp-test = { path = "common/core-primitives/test", default-features = false }
 
 # litentry
 litentry-primitives = { path = "common/litentry/primitives", default-features = false }
@@ -191,10 +216,16 @@ lc-common = { path = "common/litentry/core/common", default-features = false }
 lc-teebag-storage = { path = "common/litentry/core/teebag-storage", default-features = false }
 lc-service = { path = "common/litentry/core/service", default-features = false }
 lc-stf-task-sender = { path = "common/litentry/core/stf-task/sender", default-features = false }
+lc-stf-task-receiver = { path = "common/litentry/core/stf-task/receiver", default-features = false }
 lc-mock-server = { path = "common/litentry/core/mock-server" }
 lc-credentials = { path = "common/litentry/core/credentials", default-features = false }
 lc-dynamic-assertion = { path = "common/litentry/core/dynamic-assertion", default-features = false }
+lc-data-providers = { path = "common/litentry/core/data-providers", default-features = false }
+lc-assertion-build = { path = "common/litentry/core/assertion-build", default-features = false }
 lc-evm-dynamic-assertions = { path = "common/litentry/core/evm-dynamic-assertions", default-features = false }
+lc-identity-verification = { path = "common/litentry/core/identity-verification", default-features = false }
+lc-parachain-extrinsic-task-sender = { path = "common/litentry/core/parachain-extrinsic-task/sender", default-features = false }
+lc-parachain-extrinsic-task-receiver = { path = "common/litentry/core/parachain-extrinsic-task/receiver", default-features = false }
 litentry-hex-utils = { path = "../common/utils/hex", default-features = false }
 
 pallet-teebag = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
