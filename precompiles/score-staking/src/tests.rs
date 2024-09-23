@@ -23,7 +23,6 @@ use pallet_score_staking::{Error, Event, ScorePayment};
 use pallet_teebag::{Enclave, WorkerType};
 use precompile_utils::testing::*;
 use sp_runtime::Perbill;
-use sp_std::vec;
 
 fn round_reward() -> Balance {
 	(Perbill::from_perthousand(5) * 100_000_000 * UNIT / (YEARS as u128)) * 5
@@ -43,11 +42,12 @@ fn claim_is_ok() {
 		assert_ok!(ScoreStaking::start_pool(RuntimeOrigin::root()));
 
 		run_to_block(3);
+		let alice_staking = 1000;
 		pallet_parachain_staking::DelegatorState::<Test>::insert(
 			alice(),
-			Delegator::new(bob(), bob(), 1000),
+			Delegator::new(bob(), bob(), alice_staking),
 		);
-		pallet_parachain_staking::Total::<Test>::put(1000);
+		pallet_parachain_staking::Total::<Test>::put(alice_staking);
 
 		assert_ok!(ScoreStaking::update_score(
 			RuntimeOrigin::signed(alice()),
@@ -60,12 +60,21 @@ fn claim_is_ok() {
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
 			Event::<Test>::RewardDistributionStarted { round_index: 2 },
 		));
-		// calculates the rewards
-		assert_ok!(ScoreStaking::distribute_rewards(
+		assert_ok!(ScoreStaking::update_total_staking_amount(
 			RuntimeOrigin::signed(alice()),
-			2,
-			vec![(alice(), 0)]
+			alice(),
+			alice_staking
 		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
+			account: alice(),
+			amount: alice_staking,
+		}));
+
+		// calculates the rewards
+		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+			round_index: 2,
+		}));
 
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
@@ -74,6 +83,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
+				total_staking_amount: alice_staking,
 			}
 		);
 
@@ -97,6 +107,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
+				total_staking_amount: alice_staking,
 			}
 		);
 
@@ -120,6 +131,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
+				total_staking_amount: alice_staking,
 			}
 		);
 
