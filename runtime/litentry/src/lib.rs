@@ -28,8 +28,8 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin,
-		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
+		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, EnsureOrigin, Everything,
+		FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	ConsensusEngineId, PalletId,
@@ -1128,7 +1128,6 @@ impl pallet_score_staking::Config for Runtime {
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<1_000_000>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	type MaxIDGraphAccountsPerCall = ConstU16<1000>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
