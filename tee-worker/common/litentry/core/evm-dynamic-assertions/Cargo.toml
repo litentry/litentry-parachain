@@ -10,7 +10,7 @@ edition = "2021"
 base58 = { workspace = true }
 blake2-rfc = { workspace = true }
 chrono = { workspace = true, optional = true }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 http = { workspace = true, optional = true }
 rust_decimal = { workspace = true }
 ss58-registry = { workspace = true }

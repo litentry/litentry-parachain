@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 arrayvec = { workspace = true }
 bit-vec = { workspace = true }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 hex = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }

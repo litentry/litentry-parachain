@@ -45,10 +45,18 @@ pub mod files {
 	/// Path to the light-client db for the Target B parentchain.
 	pub const TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_b_lcdb";
 
-	// litentry
+	// identity
 	pub const ASSERTIONS_FILE: &str = "assertions_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
+
+	// bitacross
+	pub const RELAYER_REGISTRY_FILE: &str = "relayer_registry_sealed.bin";
+
+	pub const ENCLAVE_REGISTRY_FILE: &str = "enclave_registry_sealed.bin";
+
+	pub const SIGNER_REGISTRY_FILE: &str = "signer_registry_sealed.bin";
+	
 
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";

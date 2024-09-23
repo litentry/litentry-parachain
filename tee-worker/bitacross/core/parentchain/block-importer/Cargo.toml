@@ -21,7 +21,7 @@ itp-ocall-api = { workspace = true }
 thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 sp-runtime = { workspace = true }
 

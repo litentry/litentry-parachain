@@ -16,7 +16,7 @@ use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
 	parentchain::{
-		events::{BalanceTransfer, EnclaveUnauthorized},
+		events::*,
 		FilterEvents, HandleParentchainEvents,
 	},
 	Address, RsaRequest, ShardIdentifier, H256,
@@ -134,16 +134,39 @@ pub struct MockEvents;
 impl FilterEvents for MockEvents {
 	type Error = ();
 
-	fn get_transfer_events(&self) -> Result<Vec<BalanceTransfer>, Self::Error> {
-		let transfer = BalanceTransfer {
-			to: [0u8; 32].into(),
-			from: [0u8; 32].into(),
-			amount: Balance::default(),
-		};
-		Ok(Vec::from([transfer]))
+	fn get_link_identity_events(&self) -> Result<Vec<LinkIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_vc_requested_events(&self) -> Result<Vec<VCRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_deactivate_identity_events(
+		&self,
+	) -> Result<Vec<DeactivateIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_activate_identity_events(&self) -> Result<Vec<ActivateIdentityRequested>, Self::Error> {
+		Ok(Vec::new())
 	}
 
 	fn get_enclave_unauthorized_events(&self) -> Result<Vec<EnclaveUnauthorized>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_opaque_task_posted_events(&self) -> Result<Vec<OpaqueTaskPosted>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_assertion_created_events(&self) -> Result<Vec<AssertionCreated>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_parentchain_block_proccessed_events(
+		&self,
+	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error> {
 		Ok(Vec::new())
 	}
 
@@ -198,7 +221,10 @@ where
 		EnclaveRegistry,
 	>,
 {
+	type Output = Vec<H256>;
+
 	fn handle_events(
+		&self,
 		_: &Executor,
 		_: impl itp_types::parentchain::FilterEvents,
 	) -> core::result::Result<Vec<H256>, Error> {

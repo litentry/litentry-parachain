@@ -5,7 +5,7 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-codec = { workspace = true, features = ["chain-error"] }
+codec = { package = "parity-scale-codec", workspace = true, features = ["chain-error"] }
 derive_more = { workspace = true }
 frame-metadata = { workspace = true }
 hash-db = { workspace = true }

@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 sgx_tstd = { workspace = true, optional = true }
-codec = { workspace = true, features = ["full"] }
+codec = { package = "parity-scale-codec", workspace = true, features = ["full"] }
 litentry-primitives = { workspace = true }
 
 [features]

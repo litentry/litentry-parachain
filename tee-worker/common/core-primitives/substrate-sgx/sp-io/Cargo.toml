@@ -6,7 +6,7 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 libsecp256k1 = { workspace = true, features = ["static-context"] }
 log = { workspace = true }
 

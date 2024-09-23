@@ -50,7 +50,9 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(_executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
+	type Output = Vec<H256>;
+
+	fn handle_events(&self, _executor: &Executor, _events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		debug!("not handling any events for target a");
 		Ok(Vec::new())
 	}

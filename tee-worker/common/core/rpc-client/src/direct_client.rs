@@ -25,12 +25,11 @@ use frame_metadata::RuntimeMetadataPrefixed;
 use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::{DirectRequestStatus, MrEnclave, RsaRequest};
+use itp_types::{DirectRequestStatus, MrEnclave};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sp_core::H256;
 use std::{
 	sync::{
 		mpsc::{channel, Sender as MpscSender},

@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 log = { workspace = true }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 sgx_tstd = { workspace = true, optional = true }
 
 thiserror_sgx = { workspace = true, optional = true }
@@ -26,7 +26,7 @@ itp-types = { workspace = true }
 sp-runtime = { workspace = true }
 
 [dev-dependencies]
-codec = { workspace = true, features = ["std"] }
+codec = { package = "parity-scale-codec", workspace = true, features = ["std"] }
 itc-parentchain-light-client = { workspace = true, features = ["std", "mocks"] }
 itp-extrinsics-factory = { workspace = true, features = ["std", "mocks"] }
 itp-stf-executor = { workspace = true, features = ["std", "mocks"] }

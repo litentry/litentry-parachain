@@ -33,7 +33,6 @@ pub struct StorageEntryVerified<V> {
 	pub value: Option<V>,
 }
 
-#[cfg(feature = "test")]
 impl<V> StorageEntryVerified<V> {
 	pub fn new(key: Vec<u8>, value: Option<V>) -> Self {
 		Self { key, value }

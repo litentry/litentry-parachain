@@ -28,15 +28,8 @@ extern "C" {
 		untrusted_worker_addr_size: u32,
 		encoded_base_dir_str: *const u8,
 		encoded_base_dir_size: u32,
-	) -> sgx_status_t;
-
-	pub fn init_enclave_sidechain_components(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		fail_mode: *const u8,
-		fail_mode_size: u32,
-		fail_at: *const u8,
-		fail_at_size: u32,
+		ceremony_commands_thread_count: u8,
+		ceremony_events_thread_count: u8,
 	) -> sgx_status_t;
 
 	pub fn init_direct_invocation_server(
@@ -82,8 +75,6 @@ extern "C" {
 		creation_size: u32,
 	) -> sgx_status_t;
 
-	pub fn execute_trusted_calls(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
-
 	pub fn sync_parentchain(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -127,6 +118,27 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		pubkey: *mut u8,
 		pubkey_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_bitcoin_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_ethereum_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
+	) -> sgx_status_t;
+
+	pub fn get_ton_wallet_pair(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		pair: *mut u8,
+		pair_size: u32,
 	) -> sgx_status_t;
 
 	pub fn get_mrenclave(
@@ -242,6 +254,17 @@ extern "C" {
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
 		until: *const u32,
+	) -> sgx_status_t;
+
+	pub fn publish_wallets(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
+	pub fn finish_enclave_init(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+
+	pub fn init_wallets(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		encoded_base_dir_str: *const u8,
+		encoded_base_dir_size: u32,
 	) -> sgx_status_t;
 
 }

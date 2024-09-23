@@ -21,7 +21,7 @@ litentry-primitives = { workspace = true }
 jsonrpc-core_sgx = { workspace = true, optional = true }
 jsonrpc-core = { workspace = true, optional = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 derive_more = { workspace = true }
 log = { workspace = true }
 lazy_static = { workspace = true, optional = true }

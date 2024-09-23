@@ -15,7 +15,7 @@ itp-node-api = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-types = { workspace = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 
 substrate-api-client = { workspace = true, optional = true }

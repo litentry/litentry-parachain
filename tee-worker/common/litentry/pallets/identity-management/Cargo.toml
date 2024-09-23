@@ -7,7 +7,7 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
-codec = { workspace = true, features = ["max-encoded-len"] }
+codec = { package = "parity-scale-codec", workspace = true, features = ["max-encoded-len"] }
 hex = { workspace = true }
 log = { workspace = true }
 scale-info = { workspace = true }

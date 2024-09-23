@@ -17,14 +17,11 @@
 
 pub mod events;
 
-use crate::{parentchain::{ParentchainId, events::AssertionCreated}, Block as ParachainBlock, Block as SolochainBlock, OpaqueCall, ShardIdentifier};
+use crate::{parentchain::{events::AssertionCreated}, Block as ParachainBlock, Block as SolochainBlock, OpaqueCall, ShardIdentifier};
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use events::{
-	ActivateIdentityRequested, DeactivateIdentityRequested, EnclaveUnauthorized,
-	LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
-};
+use events::*;
 use itp_stf_primitives::traits::{IndirectExecutor, TrustedCallVerification};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -116,6 +113,16 @@ pub trait FilterEvents {
 	fn get_parentchain_block_proccessed_events(
 		&self,
 	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error>;
+
+    fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
+
+    fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
+
+    fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
+
+    fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
+
+    fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -126,16 +133,18 @@ pub enum ExtrinsicStatus {
 
 pub type ProcessedEventsArtifacts = (Vec<H256>, Vec<H160>, Vec<H160>);
 
-pub trait HandleParentchainEvents<Executor, TCS, Error>
+pub trait HandleParentchainEvents<Executor, TCS, Error, RRU, SRU, ERU>
 where
-	Executor: IndirectExecutor<TCS, Error>,
+	Executor: IndirectExecutor<TCS, Error, RRU, SRU, ERU>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
+	type Output;
+
 	fn handle_events(
 		&self,
 		executor: &Executor,
 		events: impl FilterEvents,
-	) -> Result<ProcessedEventsArtifacts, Error>;
+	) -> Result<Self::Output, Error>;
 }
 
 #[derive(Debug)]
@@ -149,6 +158,11 @@ pub enum ParentchainEventProcessingError {
 	OpaqueTaskPostedFailure,
 	AssertionCreatedFailure,
 	ParentchainBlockProcessedFailure,
+	RelayerAddFailure,
+    RelayerRemoveFailure,
+    EnclaveAddFailure,
+    EnclaveRemoveFailure,
+    BtcWalletGeneratedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -172,6 +186,16 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 				"Parentchain Event Processing Error: AssertionCreatedFailure",
 			ParentchainEventProcessingError::ParentchainBlockProcessedFailure =>
 				"Parentchain Event Processing Error: ParentchainBlockProcessedFailure",
+			ParentchainEventProcessingError::RelayerAddFailure =>
+                "Parentchain Event Processing Error: RelayerAddFailure",
+            ParentchainEventProcessingError::RelayerRemoveFailure =>
+                "Parentchain Event Processing Error: RelayerRemoveFailure",
+            ParentchainEventProcessingError::EnclaveAddFailure =>
+                "Parentchain Event Processing Error: EnclaveAddFailure",
+            ParentchainEventProcessingError::EnclaveRemoveFailure =>
+                "Parentchain Event Processing Error: EnclaveRemoveFailure",
+            ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
+                "Parentchain Event Processing Error: BtcWalletGeneratedFailure",			
 		};
 		write!(f, "{}", message)
 	}
@@ -237,7 +261,6 @@ impl ParentchainCall {
 
 // Moved from `itc_light_client::light_client_init_params` to de-couple deps
 use sp_consensus_grandpa::AuthorityList;
-use std::vec::Vec;
 
 #[derive(Encode, Decode, Clone)]
 pub struct GrandpaParams<Header> {

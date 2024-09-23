@@ -127,7 +127,9 @@ where
 		EnclaveRegistry,
 	>,
 {
-	fn handle_events(executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
+	type Output = Vec<H256>;
+	
+	fn handle_events(&self, executor: &Executor, events: impl FilterEvents) -> Result<Vec<H256>, Error> {
 		let mut handled_events: Vec<H256> = Vec::new();
 
 		if let Ok(events) = events.get_relayer_added_events() {

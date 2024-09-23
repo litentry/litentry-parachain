@@ -39,6 +39,7 @@ pub use bitcoin_signature::*;
 pub use ethereum_signature::*;
 pub use validation_data::*;
 pub use stf_request::*;
+pub use plain_request::*;
 
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};

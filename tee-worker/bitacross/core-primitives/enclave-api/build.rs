@@ -12,8 +12,6 @@
 */
 
 fn main() {
-	use std::env;
-
 	// If the linker failed to find libsgx_dcap_ql.so, please make sure that
 	// (1) libsgx-dcap-ql is installed
 	// (2) libsgx_dcap_ql.so exists. typicall at /usr/lib/x86_64-linux-gnu
@@ -23,15 +21,4 @@ fn main() {
 	println!("cargo:rustc-link-lib=dylib=sgx_dcap_ql");
 	println!("cargo:rustc-link-lib=dylib=sgx_dcap_quoteverify");
 	println!("cargo:rustc-link-lib=dylib=dcap_quoteprov");
-
-	let is_sim = env::var("SGX_MODE").unwrap_or_else(|_| "HW".to_string());
-	match is_sim.as_ref() {
-		"SW" => {
-			println!("cargo:rustc-link-lib=dylib=sgx_epid_sim");
-		},
-		_ => {
-			// HW by default
-			println!("cargo:rustc-link-lib=dylib=sgx_epid");
-		},
-	}
 }

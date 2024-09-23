@@ -8,7 +8,7 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 serde = { workspace = true }
 
 itp-sgx-crypto = { workspace = true }
@@ -18,14 +18,13 @@ itp-utils = { workspace = true }
 
 substrate-api-client = { workspace = true }
 
-# substrate-deps
 frame-system = { workspace = true }
 pallet-balances = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+sp-consensus-grandpa = { workspace = true }
 
-# litentry
 litentry-primitives = { workspace = true }
 
 [features]
@@ -37,14 +36,13 @@ std = [
     "itp-stf-primitives/std",
     "itp-utils/std",
     "substrate-api-client/std",
-    # substrate
     "frame-system/std",
     "pallet-balances/std",
     "serde/std",
     "sp-std/std",
     "sp-core/std",
     "sp-runtime/std",
-    # litentry
+    "sp-consensus-grandpa/std",
     "litentry-primitives/std",
 ]
 test = []

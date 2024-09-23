@@ -5,23 +5,23 @@ edition = "2021"
 
 [dependencies]
 aes = { workspace = true }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 derive_more = { workspace = true }
 log = { workspace = true }
 ofb = { workspace = true }
+hex = { workspace = true }
+k256 = { workspace = true, features = ["ecdsa-core", "schnorr", "alloc"] }
+secp256k1 = { workspace = true, features = ["alloc", "recovery"] }
 serde_json = { workspace = true, optional = true }
 
-# sgx deps
 serde_json-sgx = { workspace = true, optional = true }
 sgx_crypto_helper = { workspace = true }
 sgx_rand = { workspace = true, optional = true }
 sgx_tstd = { workspace = true, optional = true }
 sgx_types = { workspace = true }
 
-# substrate 
 sp-core = { workspace = true }
 
-# local deps
 itp-sgx-io = { workspace = true }
 itp-sgx-temp-dir = { workspace = true, optional = true }
 

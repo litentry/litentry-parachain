@@ -27,7 +27,7 @@ thiserror_sgx = { workspace = true, optional = true }
 rust-base58 = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }
 

@@ -31,6 +31,7 @@ use std::{boxed::Box, string::String};
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
+	// identity
 	SetSidechainBlockHeight(u64),
 	TopPoolSizeSet(u64),
 	TopPoolSizeIncrement,
@@ -50,4 +51,9 @@ pub enum EnclaveMetric {
 	ParentchainEventProcessed(String),
 	DynamicAssertionSaveTime(Duration),
 	DynamicAssertionGetTime(Duration),
+	// bitacross
+    Musig2CeremonyStarted,
+    Musig2CeremonyFailed,
+    Musig2CeremonyTimedout(u8),
+    Musig2CeremonyDuration(Duration),
 }

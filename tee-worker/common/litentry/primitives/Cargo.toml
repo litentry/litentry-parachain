@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 bitcoin = { workspace = true, features = ["secp-recovery", "no-std"] }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 rand = { workspace = true, optional = true }
@@ -23,6 +23,7 @@ sp-std = { workspace = true }
 
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
+itp-sgx-runtime-primitives = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 pallet-teebag = { workspace = true }
 parentchain-primitives = { workspace = true }
@@ -44,6 +45,7 @@ std = [
     "hex/std",
     "serde/std",
     "itp-sgx-crypto/std",
+    "itp-sgx-runtime-primitives/std",
     "sp-core/std",
     "sp-std/std",
     "sp-io/std",

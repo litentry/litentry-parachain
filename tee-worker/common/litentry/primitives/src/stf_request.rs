@@ -16,13 +16,14 @@
 
 // TODO: the sidechain block number type is chaotic from upstream
 use codec::{Decode, Encode};
-use itp_types::{AccountId, BlockNumber as SidechainBlockNumber, H256};
+use itp_sgx_runtime_primitives::types::{AccountId, BlockNumber as SidechainBlockNumber};
 use crate::{
 	Assertion, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
 	ShardIdentifier, Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
+use sp_core::H256;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.

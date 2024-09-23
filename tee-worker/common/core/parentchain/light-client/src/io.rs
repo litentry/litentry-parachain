@@ -18,7 +18,6 @@
 use crate::{
 	error::{Error, Result},
 	finality::{Finality, GrandpaFinality, ParachainFinality},
-	light_client_init_params::{GrandpaParams, SimpleParams},
 	light_validation::{check_validator_set_proof, LightValidation},
 	state::RelayState,
 	LightClientSealing, LightClientState, LightValidationState, NumberFor, Validator,
@@ -28,6 +27,7 @@ use core::{fmt::Debug, marker::PhantomData};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_io::{seal, unseal};
 use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
+use itp_types::parentchain::{GrandpaParams, SimpleParams};
 use log::*;
 use sp_runtime::traits::{Block, Header};
 use std::{

@@ -1,6 +1,6 @@
 [package]
 authors = ["Trust Computing GmbH <info@litentry.com>"]
-name = "litentry-macros"
+name = "litentry-worker-macros"
 version = "0.1.0"
 edition = "2021"
 

@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 sgx_tstd = { workspace = true, optional = true, features = ["net", "thread"] }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 serde_json = { workspace = true }
 sp-runtime = { workspace = true }

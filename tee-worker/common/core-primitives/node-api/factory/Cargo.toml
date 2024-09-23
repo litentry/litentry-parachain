@@ -5,6 +5,6 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-thiserror = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
 sp-core = { workspace = true, features = ["std"] }
 itp-api-client-types = { workspace = true, features = ["std"] }

@@ -16,7 +16,7 @@ itp-types = { workspace = true }
 thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }
 sp-runtime = { workspace = true }

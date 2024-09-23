@@ -13,7 +13,7 @@ musig2_sgx = { workspace = true, optional = true }
 sgx_rand = { workspace = true, optional = true }
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 k256 = { workspace = true, features = ["ecdsa-core", "schnorr", "alloc"] }
 log = { workspace = true }
 

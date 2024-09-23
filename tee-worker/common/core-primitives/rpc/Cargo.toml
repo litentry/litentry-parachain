@@ -5,7 +5,7 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 itp-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

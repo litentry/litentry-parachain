@@ -18,7 +18,7 @@ jsonrpc-core = { workspace = true, optional = true }
 linked-hash-map = { workspace = true, optional = true }
 
 byteorder = { workspace = true }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 derive_more = { workspace = true }
 log = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }

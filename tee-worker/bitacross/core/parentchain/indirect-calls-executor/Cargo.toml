@@ -25,7 +25,7 @@ futures = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
 bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 
 binary-merkle-tree = { workspace = true }
