@@ -66,7 +66,7 @@ fn claim_is_ok() {
 			alice_staking
 		));
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account: alice(),
+			account_id: alice(),
 			amount: alice_staking,
 		}));
 

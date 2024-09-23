@@ -172,7 +172,7 @@ pub mod pallet {
 		ScoreRemoved { who: Identity },
 		ScoreCleared {},
 		RewardDistributionStarted { round_index: RoundIndex },
-		TotalStakingAmountUpdated { account: T::AccountId, amount: BalanceOf<T> },
+		TotalStakingAmountUpdated { account_id: T::AccountId, amount: BalanceOf<T> },
 		RewardDistributionCompleted { round_index: RoundIndex },
 		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
 	}
@@ -432,17 +432,17 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn update_total_staking_amount(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			account_id: T::AccountId,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
-			match Scores::<T>::get(&account) {
+			match Scores::<T>::get(&account_id) {
 				Some(mut s) => {
 					s.total_staking_amount = amount;
-					Scores::<T>::insert(account.clone(), s);
+					Scores::<T>::insert(account_id.clone(), s);
 					Self::deposit_event(Event::TotalStakingAmountUpdated {
-						account: account.clone(),
+						account_id: account_id.clone(),
 						amount,
 					});
 					Ok(Pays::No.into())

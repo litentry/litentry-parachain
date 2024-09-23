@@ -222,7 +222,7 @@ fn score_staking_works() {
 			alice_staking
 		));
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account: alice(),
+			account_id: alice(),
 			amount: alice_staking,
 		}));
 
@@ -341,7 +341,7 @@ fn score_staking_works() {
 			bob_staking
 		));
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account: bob(),
+			account_id: bob(),
 			amount: bob_staking,
 		}));
 
@@ -620,7 +620,7 @@ fn claim_works() {
 			alice_staking
 		));
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account: alice(),
+			account_id: alice(),
 			amount: alice_staking,
 		}));
 
@@ -719,7 +719,7 @@ fn distribute_rewards_works() {
 		));
 		alice_staking = alice_id_graph_staking;
 		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account: alice(),
+			account_id: alice(),
 			amount: alice_staking,
 		}));
 
