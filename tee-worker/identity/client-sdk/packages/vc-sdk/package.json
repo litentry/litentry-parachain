@@ -8,8 +8,8 @@
     "fast-glob": "^3.3.2"
   },
   "peerDependencies": {
-    "@litentry/parachain-api": "0.9.19-7",
-    "@litentry/sidechain-api": "0.9.19-7",
+    "@litentry/parachain-api": "0.9.20-03-next.0",
+    "@litentry/sidechain-api": "0.9.20-03-next.0",
     "@polkadot/api": "^10.9.1",
     "@polkadot/util": "^12.5.1",
     "@polkadot/util-crypto": "^12.5.1",
