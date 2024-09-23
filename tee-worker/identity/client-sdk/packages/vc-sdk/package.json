@@ -1,6 +1,6 @@
 {
   "name": "@litentry/vc-sdk",
-  "version": "3.3.0",
+  "version": "3.3.0-next.0",
   "description": "This library the common functionality to help dApps parse and validate Litentry issued Verifiable Credentials",
   "license": "GPL-3.0-or-later",
   "dependencies": {},
