@@ -21,15 +21,16 @@ pub const SCORE_STAKING: &str = "ScoreStaking";
 
 // we only list the extrinsics that we care
 pub trait ScoreStakingCallIndexes {
-	fn update_token_staking_amount_call_indexes(&self) -> Result<[u8; 2]>;
+	fn distribute_rewards_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn complete_reward_distribution_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl ScoreStakingCallIndexes for NodeMetadata {
-	fn update_token_staking_amount_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(SCORE_STAKING, "update_token_staking_amount")
+	fn distribute_rewards_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(SCORE_STAKING, "distribute_rewards")
 	}
+
 	fn complete_reward_distribution_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(SCORE_STAKING, "complete_reward_distribution")
 	}

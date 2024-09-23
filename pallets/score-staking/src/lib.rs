@@ -47,7 +47,11 @@ use frame_support::{
 };
 use pallet_parachain_staking as ParaStaking;
 use sp_core::crypto::AccountId32;
-use sp_runtime::{traits::CheckedSub, Perbill, SaturatedConversion};
+use sp_runtime::{
+	traits::{CheckedSub, Zero},
+	Perbill, SaturatedConversion,
+};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub use pallet::*;
 
@@ -74,7 +78,6 @@ pub mod pallet {
 
 	use core_primitives::Identity;
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::Zero;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -116,6 +119,8 @@ pub mod pallet {
 		type AccountIdConvert: AccountIdConvert<Self>;
 		// For extrinsics that should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		#[pallet::constant]
+		type MaxIDGraphAccountsPerCall: Get<u16>;
 	}
 
 	#[pallet::error]
@@ -153,44 +158,24 @@ pub mod pallet {
 		// when the score user count would exceed `MaxScoreUserCount`
 		MaxScoreUserCountReached,
 		// the token staking amount has been updated already for the round
-		TokenStakingAmountAlreadyUpdated,
+		RoundRewardsAlreadyDistributed,
+		// the maximum number of IDGraph accounts has been reached
+		MaxIDGraphAccountsPerCallReached,
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PoolStarted {
-			start_block: BlockNumberFor<T>,
-		},
+		PoolStarted { start_block: BlockNumberFor<T> },
 		PoolStopped {},
-		ScoreFeederSet {
-			new_score_feeder: Option<T::AccountId>,
-		},
-		RoundConfigSet {
-			new_config: RoundSetting,
-		},
-		ScoreUpdated {
-			who: Identity,
-			new_score: Score,
-		},
-		ScoreRemoved {
-			who: Identity,
-		},
+		ScoreFeederSet { new_score_feeder: Option<T::AccountId> },
+		RoundConfigSet { new_config: RoundSetting },
+		ScoreUpdated { who: Identity, new_score: Score },
+		ScoreRemoved { who: Identity },
 		ScoreCleared {},
-		TokenStakingAmountUpdated {
-			account: T::AccountId,
-			amount: BalanceOf<T>,
-		},
-		RewardDistributionStarted {
-			total: BalanceOf<T>,
-			distributed: BalanceOf<T>,
-			round_index: RoundIndex,
-		},
-		RewardDistributionCompleted {},
-		RewardClaimed {
-			who: T::AccountId,
-			amount: BalanceOf<T>,
-		},
+		RewardDistributionStarted { round_index: RoundIndex },
+		RewardDistributionCompleted { round_index: RoundIndex },
+		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
 	}
 
 	#[pallet::storage]
@@ -231,6 +216,11 @@ pub mod pallet {
 	#[pallet::getter(fn state)]
 	pub type State<T: Config> = StorageValue<_, PoolState, ValueQuery>;
 
+	/// The round index of the last token distribution
+	#[pallet::storage]
+	#[pallet::getter(fn last_rewards_distribution_round)]
+	pub type LastTokenDistributionRound<T: Config> = StorageValue<_, RoundIndex, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub state: PoolState,
@@ -268,50 +258,14 @@ pub mod pallet {
 			}
 
 			// We are about to start a new round
-			// 1. update round info
+			// - update round info
 			let round_index = r.index.saturating_add(1);
 			r.index = round_index;
 			r.start_block = now;
 			Round::<T>::put(r);
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
 
-			// 2. calculate payout
-			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get()
-				/ YEARS.into()) * Self::round_config().interval.into();
-			let round_reward_u128 = round_reward.saturated_into::<u128>();
-
-			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
-			let total_score = Self::total_score();
-			let n = Self::round_config().stake_coef_n;
-			let m = Self::round_config().stake_coef_m;
-
-			let mut all_user_reward = BalanceOf::<T>::zero();
-
-			for (a, mut p) in Scores::<T>::iter() {
-				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
-					.map(|s| s.total)
-					.unwrap_or_default()
-					.saturated_into::<u128>();
-				let user_reward_u128 = round_reward_u128
-					.saturating_mul(p.score.into())
-					.saturating_div(total_score.into())
-					.saturating_mul(num_integer::Roots::nth_root(&user_stake_u128.pow(n), m))
-					.saturating_div(num_integer::Roots::nth_root(&total_stake_u128.pow(n), m));
-				let user_reward = user_reward_u128.saturated_into::<BalanceOf<T>>();
-
-				p.last_round_reward = user_reward;
-				p.total_reward += user_reward;
-				p.unpaid_reward += user_reward;
-				all_user_reward += user_reward;
-				Scores::<T>::insert(&a, p);
-				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
-			}
-
-			Self::deposit_event(Event::<T>::RewardDistributionStarted {
-				total: round_reward,
-				distributed: all_user_reward,
-				round_index,
-			});
+			Self::deposit_event(Event::<T>::RewardDistributionStarted { round_index });
 
 			weight
 		}
@@ -477,41 +431,70 @@ pub mod pallet {
 
 		#[pallet::call_index(9)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn update_token_staking_amount(
+		pub fn distribute_rewards(
 			origin: OriginFor<T>,
-			account: T::AccountId,
-			amount: BalanceOf<T>,
 			round_index: RoundIndex,
+			id_graphs_staking: Vec<(T::AccountId, BalanceOf<T>)>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
-			match Scores::<T>::get(&account) {
-				Some(mut s) => {
-					if round_index <= s.last_token_distributed_round {
-						return Err(Error::<T>::TokenStakingAmountAlreadyUpdated.into());
-					}
-					let last_round = Round::<T>::get();
-					s.last_round_reward += amount;
-					s.total_reward += amount;
-					s.unpaid_reward += amount;
-					s.last_token_distributed_round = last_round.index;
-					Scores::<T>::insert(account.clone(), s);
-					Self::deposit_event(Event::TokenStakingAmountUpdated {
-						account: account.clone(),
-						amount,
-					});
-					Ok(Pays::No.into())
-				},
-				None => Err(Error::<T>::UserNotExist.into()),
+			ensure!(
+				round_index > LastTokenDistributionRound::<T>::get(),
+				Error::<T>::RoundRewardsAlreadyDistributed
+			);
+
+			let id_graphs_staking_map: BTreeMap<T::AccountId, BalanceOf<T>> =
+				id_graphs_staking.into_iter().collect();
+
+			ensure!(
+				id_graphs_staking_map.len() <= T::MaxIDGraphAccountsPerCall::get() as usize,
+				Error::<T>::MaxIDGraphAccountsPerCallReached
+			);
+
+			let round_reward: BalanceOf<T> = (T::YearlyInflation::get() * T::YearlyIssuance::get()
+				/ YEARS.into()) * Self::round_config().interval.into();
+			let round_reward_u128 = round_reward.saturated_into::<u128>();
+
+			let total_stake_u128 = ParaStaking::Pallet::<T>::total().saturated_into::<u128>();
+			let total_score = Self::total_score();
+			let n = Self::round_config().stake_coef_n;
+			let m = Self::round_config().stake_coef_m;
+
+			for (a, mut p) in Scores::<T>::iter() {
+				let default_staking = BalanceOf::<T>::zero();
+				let id_graph_staking = id_graphs_staking_map.get(&a).unwrap_or(&default_staking);
+				let user_stake_u128 = ParaStaking::Pallet::<T>::delegator_state(&a)
+					.map(|s| s.total)
+					.unwrap_or_default()
+					.saturated_into::<u128>()
+					+ (*id_graph_staking).saturated_into::<u128>();
+				let user_reward_u128 = round_reward_u128
+					.saturating_mul(p.score.into())
+					.saturating_div(total_score.into())
+					.saturating_mul(num_integer::Roots::nth_root(&user_stake_u128.pow(n), m))
+					.saturating_div(num_integer::Roots::nth_root(&total_stake_u128.pow(n), m));
+				let user_reward = user_reward_u128.saturated_into::<BalanceOf<T>>();
+
+				p.last_round_reward = user_reward;
+				p.total_reward += user_reward;
+				p.unpaid_reward += user_reward;
+				Scores::<T>::insert(&a, p);
 			}
+
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(10)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn complete_reward_distribution(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn complete_reward_distribution(
+			origin: OriginFor<T>,
+			round_index: RoundIndex,
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 
-			Self::deposit_event(Event::RewardDistributionCompleted {});
+			LastTokenDistributionRound::<T>::put(round_index);
+
+			Self::deposit_event(Event::RewardDistributionCompleted { round_index });
 
 			Ok(Pays::No.into())
 		}
