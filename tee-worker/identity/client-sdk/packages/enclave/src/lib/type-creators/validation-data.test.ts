@@ -24,7 +24,7 @@ beforeAll(async () => {
   registry.register(types);
 });
 
-describe.only('Bitcoin', () => {
+describe('Bitcoin', () => {
   test('0x prefix is restored for hex encoded challenge code', () => {
     const validationData = createLitentryValidationDataType(
       registry,
