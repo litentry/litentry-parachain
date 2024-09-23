@@ -114,6 +114,8 @@ pub mod pallet {
 		type AdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// AccountId converter
 		type AccountIdConvert: AccountIdConvert<Self>;
+		// For extrinsics that should only be called by origins from TEE
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::error]
@@ -150,20 +152,45 @@ pub mod pallet {
 		ScoreUserCountUnderflow,
 		// when the score user count would exceed `MaxScoreUserCount`
 		MaxScoreUserCountReached,
+		// the token staking amount has been updated already for the round
+		TokenStakingAmountAlreadyUpdated,
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		PoolStarted { start_block: BlockNumberFor<T> },
+		PoolStarted {
+			start_block: BlockNumberFor<T>,
+		},
 		PoolStopped {},
-		ScoreFeederSet { new_score_feeder: Option<T::AccountId> },
-		RoundConfigSet { new_config: RoundSetting },
-		ScoreUpdated { who: Identity, new_score: Score },
-		ScoreRemoved { who: Identity },
+		ScoreFeederSet {
+			new_score_feeder: Option<T::AccountId>,
+		},
+		RoundConfigSet {
+			new_config: RoundSetting,
+		},
+		ScoreUpdated {
+			who: Identity,
+			new_score: Score,
+		},
+		ScoreRemoved {
+			who: Identity,
+		},
 		ScoreCleared {},
-		RewardCalculated { total: BalanceOf<T>, distributed: BalanceOf<T> },
-		RewardClaimed { who: T::AccountId, amount: BalanceOf<T> },
+		TokenStakingAmountUpdated {
+			account: T::AccountId,
+			amount: BalanceOf<T>,
+		},
+		RewardDistributionStarted {
+			total: BalanceOf<T>,
+			distributed: BalanceOf<T>,
+			round_index: RoundIndex,
+		},
+		RewardDistributionCompleted {},
+		RewardClaimed {
+			who: T::AccountId,
+			amount: BalanceOf<T>,
+		},
 	}
 
 	#[pallet::storage]
@@ -242,7 +269,8 @@ pub mod pallet {
 
 			// We are about to start a new round
 			// 1. update round info
-			r.index = r.index.saturating_add(1);
+			let round_index = r.index.saturating_add(1);
+			r.index = round_index;
 			r.start_block = now;
 			Round::<T>::put(r);
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(1, 1));
@@ -279,9 +307,10 @@ pub mod pallet {
 				weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 			}
 
-			Self::deposit_event(Event::<T>::RewardCalculated {
+			Self::deposit_event(Event::<T>::RewardDistributionStarted {
 				total: round_reward,
 				distributed: all_user_reward,
+				round_index,
 			});
 
 			weight
@@ -444,6 +473,47 @@ pub mod pallet {
 			let account = ensure_signed(origin.clone())?;
 			let payment = Scores::<T>::get(&account).ok_or(Error::<T>::UserNotExist)?;
 			Self::claim(origin, payment.unpaid_reward)
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn update_token_staking_amount(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			amount: BalanceOf<T>,
+			round_index: RoundIndex,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+
+			match Scores::<T>::get(&account) {
+				Some(mut s) => {
+					if round_index <= s.last_token_distributed_round {
+						return Err(Error::<T>::TokenStakingAmountAlreadyUpdated.into());
+					}
+					let last_round = Round::<T>::get();
+					s.last_round_reward += amount;
+					s.total_reward += amount;
+					s.unpaid_reward += amount;
+					s.last_token_distributed_round = last_round.index;
+					Scores::<T>::insert(account.clone(), s);
+					Self::deposit_event(Event::TokenStakingAmountUpdated {
+						account: account.clone(),
+						amount,
+					});
+					Ok(Pays::No.into())
+				},
+				None => Err(Error::<T>::UserNotExist.into()),
+			}
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn complete_reward_distribution(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+
+			Self::deposit_event(Event::RewardDistributionCompleted {});
+
+			Ok(Pays::No.into())
 		}
 	}
 }
