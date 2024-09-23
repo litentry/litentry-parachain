@@ -61,6 +61,16 @@ export type DiscordOAuth2Proof = {
 };
 
 /**
+ * Ownership proof for Email
+ *
+ * @see createLitentryValidationDataType
+ */
+export type EmailProof = {
+  email: string;
+  verificationCode: string;
+};
+
+/**
  * Creates the LitentryValidationData given the identity network and its type.
  *
  * The proof to pass depends on the identity network (IIdentityType):
@@ -129,6 +139,8 @@ export function createLitentryValidationDataType<
     ? DiscordProof | DiscordOAuth2Proof
     : IIdentityType extends 'Twitter'
     ? TwitterProof | TwitterOAuth2Proof
+    : IIdentityType extends 'Email'
+    ? EmailProof
     : Web3Proof
 ): LitentryValidationData {
   const identity = createLitentryIdentityType(registry, identityDescriptor);
@@ -189,6 +201,17 @@ export function createLitentryValidationDataType<
         },
       },
     }) as LitentryValidationData;
+  }
+
+  if (isProofEmail(identity, proof)) {
+    return registry.createType('LitentryValidationData', {
+      Web2Validation: {
+        Email: {
+          email: stringToHex(proof.email),
+          verification_code: stringToHex(proof.verificationCode),
+        },
+      },
+    });
   }
 
   if (isProofTwitter(identity, proof)) {
@@ -261,6 +284,7 @@ function isProofWeb3(
     | TwitterOAuth2Proof
     | DiscordProof
     | DiscordOAuth2Proof
+    | EmailProof
 ): proof is Web3Proof {
   const isWeb3 =
     identity.isEvm ||
@@ -323,6 +347,30 @@ function isProofTwitterOAuth2(
     !maybeTwitterProof.state ||
     !maybeTwitterProof.redirectUri
   ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isProofEmail(
+  identity: LitentryIdentity,
+  proof:
+    | Web3Proof
+    | TwitterProof
+    | DiscordProof
+    | DiscordOAuth2Proof
+    | EmailProof
+): proof is EmailProof {
+  const isEmail = identity.isEmail;
+
+  if (!isEmail) {
+    return false;
+  }
+
+  const maybeEmailProof = proof as EmailProof;
+
+  if (!maybeEmailProof.email || !maybeEmailProof.verificationCode) {
     return false;
   }
 

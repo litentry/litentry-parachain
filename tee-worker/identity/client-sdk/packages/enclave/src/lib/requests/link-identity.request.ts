@@ -54,7 +54,11 @@ export async function createChallengeCode(
   const message = u8aConcat(nonce.toU8a(), who.toU8a(), identity.toU8a());
   const challengeCode = blake2AsHex(message, 256);
 
-  const isWeb2 = identity.isTwitter || identity.isDiscord || identity.isGithub;
+  const isWeb2 =
+    identity.isTwitter ||
+    identity.isDiscord ||
+    identity.isGithub ||
+    identity.isEmail;
 
   // support prettify for web3 identities only
   if (!isWeb2 && options?.prettify) {
