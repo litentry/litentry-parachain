@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::alloc::string::String;
+use crate::{CoreHash as Hash, String, Vec};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::{hash::Hash, vec::Vec};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, IntoStaticStr};
 
@@ -66,6 +65,8 @@ pub enum Web3Network {
 	#[codec(index = 2)]
 	Litentry,
 	#[codec(index = 3)]
+	// TODO: we sunset Litmus already, this entry is kept temporarily to not break anything.
+	//       However, it should not be used in any of the vc building logic
 	Litmus,
 	#[codec(index = 4)]
 	LitentryRococo,
@@ -119,10 +120,10 @@ impl Web3Network {
 	pub fn is_substrate(&self) -> bool {
 		matches!(
 			self,
-			Self::Polkadot |
-				Self::Kusama | Self::Litentry |
-				Self::Litmus | Self::LitentryRococo |
-				Self::Khala | Self::SubstrateTestnet
+			Self::Polkadot
+				| Self::Kusama | Self::Litentry
+				| Self::Litmus | Self::LitentryRococo
+				| Self::Khala | Self::SubstrateTestnet
 		)
 	}
 
@@ -133,11 +134,11 @@ impl Web3Network {
 	pub fn is_bitcoin(&self) -> bool {
 		matches!(
 			self,
-			Self::BitcoinP2tr |
-				Self::BitcoinP2pkh |
-				Self::BitcoinP2sh |
-				Self::BitcoinP2wpkh |
-				Self::BitcoinP2wsh
+			Self::BitcoinP2tr
+				| Self::BitcoinP2pkh
+				| Self::BitcoinP2sh
+				| Self::BitcoinP2wpkh
+				| Self::BitcoinP2wsh
 		)
 	}
 

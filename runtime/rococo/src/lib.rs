@@ -28,11 +28,12 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
-		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
+		ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound,
+		EnsureOrigin, Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers,
+		WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
-	ConsensusEngineId, PalletId, RuntimeDebug,
+	ConsensusEngineId, PalletId,
 };
 use frame_system::EnsureRoot;
 use hex_literal::hex;
@@ -45,7 +46,7 @@ pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, RuntimeDebug, H160, H256, U256};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
@@ -67,7 +68,7 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use core_primitives::{
-	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Index, Signature, DAYS,
+	opaque, AccountId, Amount, AssetId, Balance, BlockNumber, Hash, Header, Nonce, Signature, DAYS,
 	HOURS, MINUTES, ROCOCO_PARA_ID, SLOT_DURATION,
 };
 pub use runtime_common::currency::*;
@@ -188,8 +189,9 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) =>
-				call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) => {
+				call.pre_dispatch_self_contained(info, dispatch_info, len)
+			},
 			_ => None,
 		}
 	}
@@ -199,10 +201,11 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => {
 				Some(call.dispatch(RuntimeOrigin::from(
 					pallet_ethereum::RawOrigin::EthereumTransaction(info),
-				))),
+				)))
+			},
 			_ => None,
 		}
 	}
@@ -223,7 +226,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9195,
+	spec_version: 9200,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -247,51 +250,27 @@ parameter_types! {
 }
 
 impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
-	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
-	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
-	/// The type for hashing blocks and tries.
+	type Nonce = Nonce;
+	type Block = Block;
 	type Hash = Hash;
-	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
-	/// The ubiquitous origin type.
 	type RuntimeOrigin = RuntimeOrigin;
-	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
 	type Version = Version;
-	/// Converts a module to an index of this module in the runtime.
 	type PalletInfo = PalletInfo;
-	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
-	/// What to do if a new account is created.
 	type OnNewAccount = ();
-	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
-	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = BaseCallFilter;
-	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
-	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
 	type BlockLength = BlockLength;
-	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
-	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -357,28 +336,28 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
 				c,
-				RuntimeCall::Balances(..) |
-					RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				RuntimeCall::Balances(..)
+					| RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
 			ProxyType::CancelProxy => matches!(
 				c,
-				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-					RuntimeCall::Utility(..) |
-					RuntimeCall::Multisig(..)
+				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. })
+					| RuntimeCall::Utility(..)
+					| RuntimeCall::Multisig(..)
 			),
 			ProxyType::Collator => matches!(
 				c,
-				RuntimeCall::ParachainStaking(..) |
-					RuntimeCall::Utility(..) |
-					RuntimeCall::Multisig(..)
+				RuntimeCall::ParachainStaking(..)
+					| RuntimeCall::Utility(..)
+					| RuntimeCall::Multisig(..)
 			),
 			ProxyType::Governance => matches!(
 				c,
-				RuntimeCall::Democracy(..) |
-					RuntimeCall::Council(..) |
-					RuntimeCall::TechnicalCommittee(..) |
-					RuntimeCall::Treasury(..) |
-					RuntimeCall::DeveloperCommittee(..)
+				RuntimeCall::Democracy(..)
+					| RuntimeCall::Council(..)
+					| RuntimeCall::TechnicalCommittee(..)
+					| RuntimeCall::Treasury(..)
+					| RuntimeCall::DeveloperCommittee(..)
 			),
 		}
 	}
@@ -478,7 +457,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
@@ -779,6 +758,7 @@ impl pallet_identity::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
 }
 
 impl pallet_account_fix::Config for Runtime {
@@ -850,6 +830,7 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = ConstU32<100_000>;
+	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 }
 
 parameter_types! {
@@ -932,14 +913,14 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
-impl pallet_bridge::Config for Runtime {
+impl pallet_chain_bridge::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
 	type Balance = Balance;
 	type ProposalLifetime = ProposalLifetime;
-	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_chain_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -968,7 +949,7 @@ impl SortedMembers<AccountId> for TransferAssetsAnyone {
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type BridgeHandler = AssetsHandler;
-	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type BridgeOrigin = pallet_chain_bridge::EnsureBridge<Runtime>;
 	type TransferAssetsMembers = TransferAssetsAnyone;
 	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
@@ -1123,7 +1104,7 @@ where
 		if let Some(author_index) = pallet_aura::Pallet::<T>::find_author(digests) {
 			let authority_id =
 				<pallet_aura::Pallet<T>>::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]))
+			return Some(H160::from_slice(&authority_id.encode()[4..24]));
 		}
 
 		None
@@ -1193,10 +1174,7 @@ impl runtime_common::BaseRuntimeRequirements for Runtime {}
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
 
 construct_runtime! {
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
 		// Core
 		System: frame_system = 0,
@@ -1256,7 +1234,7 @@ construct_runtime! {
 		Assets: pallet_assets = 56,
 
 		// Rococo pallets
-		ChainBridge: pallet_bridge = 60,
+		ChainBridge: pallet_chain_bridge= 60,
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		IdentityManagement: pallet_identity_management = 64,
@@ -1293,20 +1271,20 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			RuntimeCall::Sudo(_) |
-				RuntimeCall::System(_) |
-				RuntimeCall::Timestamp(_) |
-				RuntimeCall::ParachainSystem(_) |
-				RuntimeCall::ExtrinsicFilter(_) |
-				RuntimeCall::Multisig(_) |
-				RuntimeCall::Council(_) |
-				RuntimeCall::CouncilMembership(_) |
-				RuntimeCall::TechnicalCommittee(_) |
-				RuntimeCall::TechnicalCommitteeMembership(_) |
-				RuntimeCall::Utility(_)
+			RuntimeCall::Sudo(_)
+				| RuntimeCall::System(_)
+				| RuntimeCall::Timestamp(_)
+				| RuntimeCall::ParachainSystem(_)
+				| RuntimeCall::ExtrinsicFilter(_)
+				| RuntimeCall::Multisig(_)
+				| RuntimeCall::Council(_)
+				| RuntimeCall::CouncilMembership(_)
+				| RuntimeCall::TechnicalCommittee(_)
+				| RuntimeCall::TechnicalCommitteeMembership(_)
+				| RuntimeCall::Utility(_)
 		) {
 			// always allow core calls
-			return true
+			return true;
 		}
 
 		pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
@@ -1378,6 +1356,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Ethereum(_) |
 			// AccountFix
 			RuntimeCall::AccountFix(_) |
+			RuntimeCall::AssetsHandler(_) |
 			RuntimeCall::Bitacross(_) |
 			RuntimeCall::EvmAssertions(_) |
 			RuntimeCall::ScoreStaking(_)
@@ -1408,7 +1387,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_vc_management, VCManagement]
-		[pallet_bridge,ChainBridge]
+		[pallet_chain_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
 		[pallet_teebag, Teebag]
 	);
@@ -1501,8 +1480,8 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
-		fn account_nonce(account: AccountId) -> Index {
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
+		fn account_nonce(account: AccountId) -> Nonce {
 			System::account_nonce(account)
 		}
 	}
@@ -1915,26 +1894,25 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_benchmarking::{Benchmarking, BenchmarkBatch, BenchmarkError};
 
 			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			impl frame_system_benchmarking::Config for Runtime {
+				fn setup_set_code_requirements(code: &sp_std::vec::Vec<u8>) -> Result<(), BenchmarkError> {
+					ParachainSystem::initialize_for_set_code_benchmark(code.len() as u32);
+					Ok(())
+				}
+
+				fn verify_set_code() {
+					System::assert_last_event(cumulus_pallet_parachain_system::Event::<Runtime>::ValidationFunctionStored.into());
+				}
+			}
 
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
+			use frame_support::traits::WhitelistedStorageKeys;
+			let whitelist = AllPalletsWithSystem::whitelisted_storage_keys();
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
@@ -1946,6 +1924,7 @@ impl_runtime_apis! {
 	}
 }
 
+#[allow(dead_code)]
 struct CheckInherents;
 
 impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {

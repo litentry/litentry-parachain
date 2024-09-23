@@ -123,7 +123,7 @@ mod tests {
 	fn test_block() -> Block {
 		let header = Header::new(0, H256::random(), H256::random(), Default::default(), 1);
 		let block_data = BlockData::new(
-			ed25519::Pair::from_string("//Alice", None).unwrap().public().into(),
+			ed25519::Pair::from_string("//Alice", None).unwrap().public(),
 			H256::random(),
 			Default::default(),
 			Default::default(),
@@ -138,8 +138,7 @@ mod tests {
 		let block = test_block();
 		let signer = ed25519::Pair::from_string("//Alice", None).unwrap();
 
-		let signature: Signature =
-			Signature::Ed25519(signer.sign(block.encode().as_slice().into()));
+		let signature: Signature = Signature::Ed25519(signer.sign(block.encode().as_slice()));
 		let signed_block: SignedBlock = block.clone().sign_block(&signer);
 
 		assert_eq!(signed_block.block(), &block);

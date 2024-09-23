@@ -194,7 +194,6 @@ pub mod pallet {
 		pub admin: Option<T::AccountId>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { admin: None }
@@ -202,7 +201,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			if let Some(ref admin) = self.admin {
 				Admin::<T>::put(admin);
@@ -373,15 +372,17 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				VCMPError::RequestVCFailed(assertion, detail) =>
+				VCMPError::RequestVCFailed(assertion, detail) => {
 					Self::deposit_event(Event::RequestVCFailed {
 						identity,
 						assertion,
 						detail,
 						req_ext_hash,
-					}),
-				VCMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash }),
+					})
+				},
+				VCMPError::UnclassifiedError(detail) => {
+					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash })
+				},
 			}
 			Ok(Pays::No.into())
 		}

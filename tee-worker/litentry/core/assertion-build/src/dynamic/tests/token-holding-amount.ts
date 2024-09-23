@@ -62,6 +62,16 @@ describe('TokenHoldingAmount', () => {
     })
 
     describe('BRC20', () => {
+        const networkClause = {
+            and: [
+                { src: '$network', op: '==', dst: 'BitcoinP2tr' },
+                { src: '$network', op: '==', dst: 'BitcoinP2pkh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2sh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2wpkh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2wsh' },
+            ],
+        }
+
         const expectOrdiFalseResult = (contract: any, val: any) =>
             expectResult(
                 contract,
@@ -73,6 +83,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'ordi',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GT,
@@ -132,6 +143,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'ordi',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GT,
@@ -176,6 +188,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'ordi',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GTE,
@@ -220,6 +233,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'ordi',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GTE,
@@ -264,6 +278,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'ordi',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GTE,
@@ -334,6 +349,16 @@ describe('TokenHoldingAmount', () => {
     })
 
     describe('Btc', () => {
+        const networkClause = {
+            and: [
+                { src: '$network', op: '==', dst: 'BitcoinP2tr' },
+                { src: '$network', op: '==', dst: 'BitcoinP2pkh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2sh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2wpkh' },
+                { src: '$network', op: '==', dst: 'BitcoinP2wsh' },
+            ],
+        }
+
         it('should return result false when amount = 0', async () => {
             const { TokenMapping } = await loadFixture(deployFixture)
             const val = TokenMapping.execute(
@@ -362,6 +387,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'btc',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GTE,
@@ -405,6 +431,7 @@ describe('TokenHoldingAmount', () => {
                             op: Op.EQ,
                             dst: 'btc',
                         },
+                        networkClause,
                         {
                             src: '$holding_amount',
                             op: Op.GTE,
@@ -425,6 +452,14 @@ describe('TokenHoldingAmount', () => {
     describe('ERC20', () => {
         describe('Atom', () => {
             const tokenName = 'atom'
+
+            const networkClause = {
+                and: [
+                    { src: '$network', op: '==', dst: 'Ethereum' },
+                    { src: '$network', op: '==', dst: 'Bsc' },
+                    { src: '$network', op: '==', dst: 'Polygon' },
+                ],
+            }
 
             it('should return result false when amount = 0', async () => {
                 const { TokenMapping } = await loadFixture(deployFixture)
@@ -450,6 +485,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                         ],
                     },
@@ -481,6 +517,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                             { src: '$holding_amount', op: '<', dst: '1' },
                         ],
@@ -513,6 +550,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '1' },
                             { src: '$holding_amount', op: '<', dst: '5' },
                         ],
@@ -545,6 +583,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '20' },
                             { src: '$holding_amount', op: '<', dst: '50' },
                         ],
@@ -577,6 +616,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '50' },
                             { src: '$holding_amount', op: '<', dst: '80' },
                         ],
@@ -613,6 +653,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '80' },
                         ],
                     },
@@ -623,6 +664,13 @@ describe('TokenHoldingAmount', () => {
 
         describe('Bean', () => {
             const tokenName = 'bean'
+
+            const networkClause = {
+                and: [
+                    { src: '$network', op: '==', dst: 'Bsc' },
+                    { src: '$network', op: '==', dst: 'Combo' },
+                ],
+            }
 
             it('should return result false when amount = 0', async () => {
                 const { TokenMapping } = await loadFixture(deployFixture)
@@ -648,6 +696,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                         ],
                     },
@@ -679,6 +728,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '1500' },
                             { src: '$holding_amount', op: '<', dst: '5000' },
                         ],
@@ -711,6 +761,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>=', dst: '50000' },
                         ],
                     },
@@ -721,6 +772,16 @@ describe('TokenHoldingAmount', () => {
 
         describe('Dai', () => {
             const tokenName = 'dai'
+
+            const networkClause = {
+                and: [
+                    { src: '$network', op: '==', dst: 'Ethereum' },
+                    { src: '$network', op: '==', dst: 'Bsc' },
+                    { src: '$network', op: '==', dst: 'Solana' },
+                    { src: '$network', op: '==', dst: 'Arbitrum' },
+                    { src: '$network', op: '==', dst: 'Polygon' },
+                ],
+            }
 
             it('should return result false when amount = 0', async () => {
                 const { TokenMapping } = await loadFixture(deployFixture)
@@ -746,6 +807,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                         ],
                     },
@@ -777,6 +839,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                             { src: '$holding_amount', op: '<', dst: '10' },
                         ],
@@ -788,6 +851,10 @@ describe('TokenHoldingAmount', () => {
 
         describe('Wbtc', () => {
             const tokenName = 'wbtc'
+
+            const networkClause = {
+                and: [{ src: '$network', op: '==', dst: 'Ethereum' }],
+            }
 
             it('should return result false when amount = 0', async () => {
                 const { TokenMapping } = await loadFixture(deployFixture)
@@ -813,6 +880,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                         ],
                     },
@@ -844,6 +912,7 @@ describe('TokenHoldingAmount', () => {
                     {
                         and: [
                             { src: '$token', op: '==', dst: tokenName },
+                            networkClause,
                             { src: '$holding_amount', op: '>', dst: '0' },
                             { src: '$holding_amount', op: '<', dst: '0.001' },
                         ],

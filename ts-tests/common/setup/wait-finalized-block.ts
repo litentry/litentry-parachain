@@ -5,7 +5,7 @@ import type { ISubmittableResult } from '@polkadot/types/types';
 import { loadConfig } from '../utils';
 
 const FINALIZED_BLOCKS_COUNT = 1;
-const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
+const TIMEOUT_MIN = 5;
 
 /**
  * Connects to the parachain via the config file
@@ -21,7 +21,7 @@ const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
     let unsub: VoidFn;
     let api: ApiPromise;
 
-    const provider = new WsProvider(config.parachain_ws);
+    const provider = new WsProvider(config.parachain_ws, 10000);
 
     console.log(`Connecting to parachain ${config.parachain_ws}`);
 
@@ -35,7 +35,7 @@ const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
             );
             process.exit(1);
         });
-    }, TIMEOUT_MIN);
+    }, TIMEOUT_MIN * 60 * 1000);
 
     api = await ApiPromise.create({
         provider: provider,

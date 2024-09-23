@@ -50,7 +50,7 @@ lc-dynamic-assertion = { path = "../dynamic-assertion", default-features = false
 lc-evm-dynamic-assertions = { path = "../evm-dynamic-assertions", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-pallet-parachain-staking = { path = "../../../../pallets/parachain-staking", default-features = false }
+pallet-parachain-staking = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
 
 [dev-dependencies]
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
@@ -58,6 +58,7 @@ env_logger = "0.10.0"
 lc-mock-server = { path = "../mock-server" }
 litentry-hex-utils = { path = "../../../../primitives/hex" }
 ethabi = { version = "18.0.0", default-features = false }
+itp-test = { path = "../../../core-primitives/test", default-features = false }
 
 [features]
 default = ["std"]
@@ -97,4 +98,5 @@ std = [
     "lc-dynamic-assertion/std",
     "lc-evm-dynamic-assertions/std",
 ]
+test = ["itp-test/sgx"]
 development = []

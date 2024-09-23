@@ -36,7 +36,7 @@
 
 use fp_evm::{ExitError, PrecompileHandle};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{
 		fungibles::{
@@ -48,7 +48,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_runtime::traits::Bounded;
+use sp_runtime::traits::{Bounded, Dispatchable};
 
 use sp_core::{Get, MaxEncodedLen, H160, U256};
 use sp_std::{
@@ -129,7 +129,7 @@ where
 	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
 		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
 		if gas < extra_cost {
-			return DiscriminantResult::OutOfGas
+			return DiscriminantResult::OutOfGas;
 		}
 
 		let asset_id = match Runtime::address_to_asset_id(address) {
@@ -257,8 +257,8 @@ where
 		handle.record_db_read::<Runtime>(148)?;
 
 		// If previous approval exists, we need to clean it
-		if pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id, &owner, &spender) !=
-			0u32.into()
+		if pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id, &owner, &spender)
+			!= 0u32.into()
 		{
 			RuntimeHelper::<Runtime>::try_dispatch(
 				handle,

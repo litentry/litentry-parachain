@@ -29,6 +29,10 @@ pub use assertion::Assertion;
 pub mod identity;
 pub use identity::*;
 
+extern crate alloc;
+extern crate core;
+use alloc::{format, str, str::FromStr, string::String, vec, vec::Vec};
+use core::hash::Hash as CoreHash;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
 pub use constants::*;
@@ -61,7 +65,7 @@ mod types {
 	pub type Balance = u128;
 
 	/// Index of a transaction in the chain.
-	pub type Index = u32;
+	pub type Nonce = u32;
 
 	/// A hash of some data used by the chain.
 	pub type Hash = sp_core::H256;
@@ -78,8 +82,8 @@ mod constants {
 	use super::types::BlockNumber;
 
 	pub const LITENTRY_PARA_ID: u32 = 2013;
-	pub const LITMUS_PARA_ID: u32 = 2106; // will be deprecated soon
 	pub const ROCOCO_PARA_ID: u32 = 2106; // will be replaced by paseo
+	pub const PASEO_PARA_ID: u32 = 2106; // will be replaced by paseo
 
 	/// This determines the average expected block time that we are targeting.
 	/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.

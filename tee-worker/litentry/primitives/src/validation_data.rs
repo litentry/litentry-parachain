@@ -22,8 +22,8 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub type MaxStringLength = ConstU32<128>;
-pub type ValidationString = BoundedVec<u8, MaxStringLength>;
+// The size limit value should be 128 otherwise the message size will exceed the limit while link identity.
+pub type ValidationString = BoundedVec<u8, ConstU32<128>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -48,6 +48,13 @@ pub enum DiscordValidationData {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct EmailValidationData {
+	pub email: ValidationString,
+	pub verification_code: ValidationString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Web3CommonValidationData {
 	pub message: ValidationString, // or String if under std
 	pub signature: LitentryMultiSignature,
@@ -61,6 +68,8 @@ pub enum Web2ValidationData {
 	Twitter(TwitterValidationData),
 	#[codec(index = 1)]
 	Discord(DiscordValidationData),
+	#[codec(index = 2)]
+	Email(EmailValidationData),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

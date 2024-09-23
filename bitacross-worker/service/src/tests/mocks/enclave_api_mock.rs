@@ -105,6 +105,10 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
+	fn get_ton_wallet_pair(&self) -> EnclaveResult<ed25519::Pair> {
+		unreachable!()
+	}
+
 	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}

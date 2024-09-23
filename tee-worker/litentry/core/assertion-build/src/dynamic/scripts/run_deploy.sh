@@ -52,7 +52,7 @@ fi
 
 if [ ${#SECRET_VALUES[@]} -gt 0 ]; then
 	# Join array elements with line break for the environment variable
-    export SECRETS=$(IFS=$'\n'; echo ${SECRET_VALUES[*]})
+    export SECRETS=$(printf "%s\n" ${SECRET_VALUES[*]})
 else
     unset SECRETS
 fi

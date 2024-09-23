@@ -282,7 +282,7 @@ pub mod tests {
 
 	impl RpcClient for MockedRpcClient {
 		fn send(&mut self, _request: &RpcRequest) -> Result<(), Box<dyn Error>> {
-			self.sent_requests = self.sent_requests + 1;
+			self.sent_requests += 1;
 			Ok(())
 		}
 	}
@@ -317,7 +317,7 @@ pub mod tests {
 
 		//when
 		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost"], factory, rpc_responder);
+			DirectRpcBroadcaster::new(&["localhost"], factory, rpc_responder);
 
 		//then
 		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
@@ -332,7 +332,7 @@ pub mod tests {
 		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
 
 		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost", "localhost2"], factory, rpc_responder);
+			DirectRpcBroadcaster::new(&["localhost", "localhost2"], factory, rpc_responder);
 
 		//when
 		broadcaster.broadcast(BroadcastedRequest {
@@ -366,7 +366,7 @@ pub mod tests {
 		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
 
 		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec![retained_peer, removed_peer], factory, rpc_responder);
+			DirectRpcBroadcaster::new(&[retained_peer, removed_peer], factory, rpc_responder);
 
 		//when
 		broadcaster.update(vec![retained_peer.to_string(), added_peer.to_string()]);

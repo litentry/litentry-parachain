@@ -506,11 +506,11 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.83"
+version = "1.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1174fb0b6ec23863f8b971027804a42614e347eafb0a95bf0b12cdae21fc4d0"
+checksum = "e9d013ecb737093c0e86b151a7b837993cf9ec6c502946cfb44bedc392421e0b"
 dependencies = [
- "libc",
+ "shlex",
 ]
 
 [[package]]
@@ -600,12 +600,13 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 [[package]]
 name = "core-primitives"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "base58",
  "frame-support",
- "litentry-hex-utils",
- "litentry-macros",
- "litentry-proc-macros",
+ "litentry-hex-utils 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
+ "litentry-macros 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
+ "litentry-proc-macros 0.1.0 (git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19)",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "scale-info",
@@ -726,9 +727,9 @@ dependencies = [
 
 [[package]]
 name = "data-encoding"
-version = "2.4.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
+checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
 name = "der"
@@ -931,10 +932,10 @@ dependencies = [
  "lc-parachain-extrinsic-task-receiver",
  "lc-stf-task-receiver",
  "lc-vc-task-receiver",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.1.0",
+ "litentry-macros 0.1.0",
  "litentry-primitives",
- "litentry-proc-macros",
+ "litentry-proc-macros 0.1.0",
  "log",
  "multibase",
  "once_cell 1.4.0",
@@ -1969,7 +1970,9 @@ dependencies = [
  "ita-stf",
  "itc-parentchain-indirect-calls-executor",
  "itp-api-client-types",
+ "itp-enclave-metrics",
  "itp-node-api",
+ "itp-ocall-api",
  "itp-stf-primitives",
  "itp-types",
  "lc-dynamic-assertion",
@@ -2027,8 +2030,8 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "litentry-hex-utils",
- "litentry-macros",
+ "litentry-hex-utils 0.1.0",
+ "litentry-macros 0.1.0",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -2716,7 +2719,7 @@ name = "itp-utils"
 version = "0.1.0"
 dependencies = [
  "hex",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.1.0",
  "parity-scale-codec",
 ]
 
@@ -2786,7 +2789,7 @@ dependencies = [
  "its-primitives",
  "its-state",
  "its-validateer-fetch",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.1.0",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2812,7 +2815,7 @@ dependencies = [
  "its-block-verification",
  "its-primitives",
  "its-state",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.1.0",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -3017,7 +3020,7 @@ dependencies = [
  "lc-credentials-v2",
  "lc-service",
  "lc-stf-task-sender",
- "litentry-hex-utils",
+ "litentry-hex-utils 0.1.0",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3109,6 +3112,8 @@ dependencies = [
  "hex",
  "http",
  "itc-rest-client",
+ "itp-enclave-metrics",
+ "itp-ocall-api",
  "itp-settings",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
@@ -3133,6 +3138,7 @@ dependencies = [
  "hex",
  "http",
  "http_req",
+ "itc-rest-client",
  "itp-sgx-crypto",
  "itp-utils",
  "lazy_static",
@@ -3142,10 +3148,13 @@ dependencies = [
  "log",
  "lru",
  "parity-scale-codec",
+ "serde 1.0.204",
+ "serde_json 1.0.103",
  "sgx_rand",
  "sgx_tstd",
  "sp-core",
  "thiserror",
+ "url 2.5.0",
 ]
 
 [[package]]
@@ -3265,7 +3274,7 @@ dependencies = [
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
- "litentry-macros",
+ "litentry-macros 0.1.0",
  "litentry-primitives",
  "log",
  "pallet-identity-management-tee",
@@ -3351,8 +3360,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-hex-utils"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
+dependencies = [
+ "hex",
+]
+
+[[package]]
 name = "litentry-macros"
 version = "0.1.0"
+
+[[package]]
+name = "litentry-macros"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 
 [[package]]
 name = "litentry-primitives"
@@ -3380,6 +3402,17 @@ dependencies = [
 [[package]]
 name = "litentry-proc-macros"
 version = "0.1.0"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "quote 1.0.36",
+ "syn 2.0.72",
+]
+
+[[package]]
+name = "litentry-proc-macros"
+version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "cargo_toml",
  "proc-macro2",
@@ -3772,6 +3805,7 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "core-primitives",
  "frame-support",
@@ -3838,6 +3872,7 @@ dependencies = [
 [[package]]
 name = "pallet-teebag"
 version = "0.1.0"
+source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9.19#cdbe9b02c1c58ca3d0063bf2eaf26a1f9da314e9"
 dependencies = [
  "base64 0.13.1",
  "chrono 0.4.31",
@@ -4963,6 +4998,12 @@ dependencies = [
  "digest 0.10.7",
  "keccak",
 ]
+
+[[package]]
+name = "shlex"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "signature"

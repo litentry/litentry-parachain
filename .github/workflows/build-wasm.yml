@@ -7,9 +7,9 @@ on:
         type: choice
         description: The chain whose runtime-wasm is built
         options:
-          - litmus
           - litentry
           - rococo
+          - paseo
       ref:
         description: The commit SHA or tag for checking out code
         default: ""
@@ -39,7 +39,7 @@ jobs:
         with:
           chain: ${{ github.event.inputs.chain }}-parachain
           runtime_dir: runtime/${{ github.event.inputs.chain }}
-          tag: "1.73.0"
+          profile: production
 
       - name: Summary
         run: |

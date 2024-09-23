@@ -16,15 +16,13 @@
 
 #![allow(clippy::result_large_err)]
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
+use crate::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, StfTaskContext};
 use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
-use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
@@ -45,91 +43,6 @@ use std::{
 	vec::Vec,
 };
 
-pub(crate) struct AssertionHandler<
-	ShieldingKeyRepository,
-	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
-	S: StfEnclaveSigning<TrustedCallSigned>,
-	H: HandleState,
-	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
-> where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
-{
-	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O, AR>>,
-}
-
-impl<ShieldingKeyRepository, A, S, H, O, AR> TaskHandler
-	for AssertionHandler<ShieldingKeyRepository, A, S, H, O, AR>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
-	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
-	S: StfEnclaveSigning<TrustedCallSigned>,
-	H: HandleState,
-	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi,
-	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
-{
-	type Error = VCMPError;
-	type Result = (Vec<u8>, Option<Vec<u8>>); // (vc_byte_array, optional vc_log_byte_array)
-
-	fn on_process(&self) -> Result<Self::Result, Self::Error> {
-		// create the initial credential
-		// TODO: maybe we can further simplify this
-		create_credential_str(&self.req, &self.context)
-	}
-
-	fn on_success(
-		&self,
-		result: Self::Result,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
-	) {
-		debug!("Assertion build OK");
-		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
-		// using enclave's shielding key is encrypted in chunks
-		let vc_payload = result.0;
-		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
-			let c = TrustedCall::request_vc_callback(
-				enclave_signer_account.into(),
-				self.req.who.clone(),
-				self.req.assertion.clone(),
-				vc_payload,
-				self.req.maybe_key,
-				self.req.should_create_id_graph,
-				self.req.req_ext_hash,
-			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
-				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
-			}
-		} else {
-			error!("can't get enclave signer");
-		}
-	}
-
-	fn on_failure(
-		&self,
-		error: Self::Error,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
-	) {
-		error!("Assertion build error: {error:?}");
-		if let Ok(enclave_signer_account) = self.context.enclave_signer.get_enclave_account() {
-			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer_account.into(),
-				Some(self.req.who.clone()),
-				error,
-				self.req.req_ext_hash,
-			);
-			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
-				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
-			}
-		} else {
-			error!("can't get enclave signer");
-		}
-	}
-}
-
 fn build_holding_time(
 	req: &AssertionBuildRequest,
 	htype: AmountHoldingTimeType,
@@ -144,7 +57,7 @@ pub fn create_credential_str<
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	AR: AssertionLogicRepository<Id = H160, Item = AssertionRepositoryItem>,
 >(
 	req: &AssertionBuildRequest,
@@ -289,11 +202,13 @@ where
 				req,
 				params,
 				context.assertion_repository.clone(),
+				context.ocall_api.clone(),
 			)?;
 			vc_logs = Some(result.1);
 			Ok(result.0)
 		},
-		Assertion::LinkedIdentities => todo!(),
+
+		Assertion::LinkedIdentities => lc_assertion_build_v2::linked_identities::build(req),
 	}?;
 
 	// post-process the credential

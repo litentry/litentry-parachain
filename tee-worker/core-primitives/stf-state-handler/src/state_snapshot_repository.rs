@@ -350,7 +350,7 @@ mod tests {
 			vec![ShardIdentifier::random(), ShardIdentifier::random(), ShardIdentifier::random()];
 		let file_io = create_test_file_io(shards.as_slice());
 
-		assert!(TestSnapshotRepository::empty(file_io.clone(), 0usize).is_err());
+		assert!(TestSnapshotRepository::empty(file_io, 0usize).is_err());
 	}
 
 	#[test]
@@ -388,7 +388,7 @@ mod tests {
 
 		let new_state = TestState(1234u64);
 
-		let _ = state_snapshot_repository
+		state_snapshot_repository
 			.update(shard_to_update, &new_state, Default::default())
 			.unwrap();
 
@@ -406,11 +406,11 @@ mod tests {
 			create_state_snapshot_repository(&[shard_id], TEST_SNAPSHOT_REPOSITORY_CACHE_SIZE);
 
 		let states: Vec<TestState> =
-			[1u64, 2u64, 3u64, 4u64, 5u64, 6u64].into_iter().map(|i| TestState(i)).collect();
+			[1u64, 2u64, 3u64, 4u64, 5u64, 6u64].into_iter().map(TestState).collect();
 		assert!(states.len() > TEST_SNAPSHOT_REPOSITORY_CACHE_SIZE); // ensures we have pruning
 
 		states.iter().for_each(|state| {
-			let _ = state_snapshot_repository.update(&shard_id, state, Default::default()).unwrap();
+			state_snapshot_repository.update(&shard_id, state, Default::default()).unwrap();
 		});
 
 		let snapshot_history = state_snapshot_repository.snapshot_history.get(&shard_id).unwrap();
@@ -449,7 +449,7 @@ mod tests {
 			create_state_snapshot_repository(&[shard_id], 6);
 
 		let states: Vec<TestState> =
-			[1u64, 2u64, 3u64, 4u64, 5u64].into_iter().map(|i| TestState(i)).collect();
+			[1u64, 2u64, 3u64, 4u64, 5u64].into_iter().map(TestState).collect();
 
 		let state_hashes = states
 			.iter()

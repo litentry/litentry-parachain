@@ -198,7 +198,7 @@ mod tests {
 
 		fs::File::create(&root_directory.join(ASSERTIONS_FILE)).unwrap();
 
-		purge_files(&root_directory).unwrap();
+		purge_files(root_directory).unwrap();
 
 		assert!(!shards_path.exists());
 		assert!(!sidechain_db_path.exists());
@@ -216,7 +216,7 @@ mod tests {
 		));
 		let root_directory = test_directory_handle.path();
 
-		assert!(purge_files(&root_directory).is_ok());
+		assert!(purge_files(root_directory).is_ok());
 	}
 
 	#[test]

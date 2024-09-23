@@ -26,9 +26,9 @@ use crate::{
 use frame_support::traits::Currency;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::{PerThing, Perbill, RuntimeDebug};
+use sp_core::RuntimeDebug;
+use sp_runtime::{PerThing, Perbill};
 use substrate_fixed::{transcendental::pow as floatpow, types::I64F64};
 
 use core_primitives::*;
@@ -39,9 +39,19 @@ fn rounds_per_year<T: Config>() -> u32 {
 	BLOCKS_PER_YEAR / blocks_per_round
 }
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(
-	Eq, PartialEq, Clone, Copy, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
+	Eq,
+	PartialEq,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	Default,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 pub struct Range<T> {
 	pub min: T,
@@ -99,8 +109,9 @@ pub fn round_issuance_range<T: Config>(round: Range<Perbill>) -> Range<BalanceOf
 	}
 }
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+#[derive(
+	Eq, PartialEq, Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo, Serialize, Deserialize,
+)]
 pub struct InflationInfo<Balance> {
 	/// Staking expectations
 	pub expect: Range<Balance>,

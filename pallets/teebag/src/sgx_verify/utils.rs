@@ -6,8 +6,8 @@ fn safe_indexing_one(data: &[u8], idx: usize) -> Result<usize, &'static str> {
 pub fn length_from_raw_data(data: &[u8], offset: &mut usize) -> Result<usize, &'static str> {
 	let mut len = safe_indexing_one(data, *offset)?;
 	if len > 0x80 {
-		len = (safe_indexing_one(data, *offset + 1)?) * 0x100 +
-			(safe_indexing_one(data, *offset + 2)?);
+		len = (safe_indexing_one(data, *offset + 1)?) * 0x100
+			+ (safe_indexing_one(data, *offset + 2)?);
 		*offset += 2;
 	}
 	Ok(len)

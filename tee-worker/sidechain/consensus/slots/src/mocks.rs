@@ -20,7 +20,7 @@ pub use itp_test::mock::handle_state_mock::HandleStateMock;
 use its_consensus_common::{Proposal, Proposer, Result};
 use its_primitives::{traits::ShardIdentifierFor, types::SignedBlock as SignedSidechainBlock};
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{marker::PhantomData, sync::Arc, thread, time::Duration};
+use std::{marker::PhantomData, thread, time::Duration};
 
 #[derive(Default)]
 pub(crate) struct ProposerMock<ParentchainBlock> {

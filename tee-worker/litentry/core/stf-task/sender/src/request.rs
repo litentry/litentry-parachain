@@ -84,18 +84,10 @@ pub struct AssertionBuildRequest {
 pub enum RequestType {
 	#[codec(index = 0)]
 	IdentityVerification(Web2IdentityVerificationRequest),
-	#[codec(index = 1)]
-	AssertionVerification(AssertionBuildRequest),
 }
 
 impl From<Web2IdentityVerificationRequest> for RequestType {
 	fn from(r: Web2IdentityVerificationRequest) -> Self {
 		RequestType::IdentityVerification(r)
-	}
-}
-
-impl From<AssertionBuildRequest> for RequestType {
-	fn from(r: AssertionBuildRequest) -> Self {
-		RequestType::AssertionVerification(r)
 	}
 }

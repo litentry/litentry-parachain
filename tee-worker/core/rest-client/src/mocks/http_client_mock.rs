@@ -41,7 +41,7 @@ pub struct ResponseBodyMock {
 
 impl RestPath<String> for ResponseBodyMock {
 	fn get_path(path: String) -> Result<String, Error> {
-		Ok(format!("{}", path))
+		Ok(path)
 	}
 }
 
@@ -77,7 +77,7 @@ impl SendHttpRequest for HttpClientMock {
 
 		let query_parameters = query
 			.map(|q| q.iter().map(|(key, value)| (key.to_string(), value.to_string())).collect())
-			.unwrap_or_else(|| Vec::<(String, String)>::new());
+			.unwrap_or_else(Vec::<(String, String)>::new);
 
 		let response_body = ResponseBodyMock {
 			base_url: base_url_str,

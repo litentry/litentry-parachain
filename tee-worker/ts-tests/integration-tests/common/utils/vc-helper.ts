@@ -119,7 +119,7 @@ export const mockAssertions = [
             Achainable: {
                 AmountToken: {
                     name: 'LIT Holding Amount',
-                    chain: ['Litentry', 'Litmus'],
+                    chain: ['Litentry'],
                     amount: '0',
                 },
             },
@@ -343,6 +343,14 @@ export const mockAssertions = [
         description: 'You are WeirdoGhostGang NFT holder',
         assertion: {
             WeirdoGhostGangHolder: [],
+        },
+    },
+
+    // LinkedIdentities
+    {
+        description: 'All web2 and web3 identities you linked',
+        assertion: {
+            LinkedIdentities: [],
         },
     },
 ];

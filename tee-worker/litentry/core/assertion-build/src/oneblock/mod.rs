@@ -231,7 +231,7 @@ mod tests {
 		let outstanding = check_oneblock_data(
 			&oneblock_response,
 			&OneBlockCourseType::CourseOutstanding,
-			vec![address.clone()],
+			vec![address],
 		);
 		assert!(outstanding);
 	}

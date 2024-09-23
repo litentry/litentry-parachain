@@ -198,14 +198,14 @@ where
 			assert_ok!(Vesting::<R>::vested_transfer(
 				Origin::signed(alice()),
 				bob().into(),
-				pallet_vesting::VestingInfo::new(10 * UNIT, UNIT, 0,),
+				pallet_vesting::VestingInfo::new(10 * UNIT, UNIT, 0u32.into()),
 			));
 			let call: Call = pallet_vesting::Call::vest {}.into();
 			assert_ok!(call.clone().dispatch(Origin::signed(bob())));
 			assert_eq!(Balances::<R>::free_balance(&bob()), 10 * UNIT);
 			assert_eq!(Balances::<R>::usable_balance(&bob()), UNIT);
 
-			System::<R>::set_block_number(2);
+			System::<R>::set_block_number(2u32.into());
 			assert_eq!(Vesting::<R>::vesting_balance(&bob()), Some(8 * UNIT));
 
 			// try to block Vesting call, which is a non-core call

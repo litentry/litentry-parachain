@@ -6,17 +6,16 @@ import { CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
 import type { HexString } from '@polkadot/util/types';
-import { aesKey } from '../call';
+import { nextRequestId } from '../helpers';
+import { aesKey, sendRequest } from '../call';
 import colors from 'colors';
 import { WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { decryptWithAes } from './crypto';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { base58Encode, blake2AsHex } from '@polkadot/util-crypto';
 import { validateVcSchema } from '@litentry/vc-schema-validator';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
-import * as base58 from 'micro-base58';
-import { fail } from 'assert';
 
 export function assertIdGraph(
     actual: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
@@ -134,7 +133,7 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     assert.equal(
         vcPayloadJson.issuer.mrenclave,
-        base58.encode(registeredEnclave.mrenclave),
+        base58Encode(registeredEnclave.mrenclave),
         "Check VC mrenclave: it should equal enclave's mrenclave from parachains enclave registry"
     );
 
@@ -146,9 +145,27 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 7
     // check runtime version is present
+    const [parachainSpecVersion, sidechainSpecVersion] = await Promise.all([
+        context.api.rpc.state.getRuntimeVersion(),
+        sendRequest(
+            context.tee,
+            {
+                jsonrpc: '2.0',
+                id: nextRequestId(context),
+                method: 'state_getRuntimeVersion',
+                params: [],
+            },
+            context.api
+        ),
+    ]).then(([parachainRuntime, sidechainReturnValue]) => {
+        const sidechainRuntime = context.api.createType('RuntimeVersion', sidechainReturnValue.value);
+
+        return [parachainRuntime.specVersion.toNumber(), sidechainRuntime.specVersion.toNumber()];
+    });
+
     assert.deepEqual(
         vcPayloadJson.issuer.runtimeVersion,
-        { parachain: 9195, sidechain: 109 },
+        { parachain: parachainSpecVersion, sidechain: sidechainSpecVersion },
         'Check VC runtime version: it should equal the current defined versions'
     );
 

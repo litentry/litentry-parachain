@@ -435,7 +435,7 @@ where
 
 	// The `call` should always be `TrustedCall:request_vc`. Once decided to remove 'request_vc', this part can be refactored regarding the parameters.
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = call {
-		info!(
+		debug!(
 			"Processing vc request for {}, assertion: {:?}",
 			who.to_did().unwrap_or_default(),
 			assertion

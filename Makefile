@@ -38,25 +38,13 @@ build-node:
 build-runtime-litentry:
 	cargo build --locked -p $(call pkgid, litentry-parachain-runtime) --release
 
-.PHONY: build-runtime-litmus ## Build litmus release runtime
-build-runtime-litmus:
-	cargo build --locked -p $(call pkgid, litmus-parachain-runtime) --release
-
 .PHONY: build-runtime-rococo ## Build rococo release runtime
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
-.PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
-srtool-build-wasm-litentry:
-	@./scripts/build-wasm.sh litentry
-
-.PHONY: srtool-build-wasm-litmus ## Build litmus wasm with srtools
-srtool-build-wasm-litmus:
-	@./scripts/build-wasm.sh litmus
-
-.PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
-srtool-build-wasm-rococo:
-	@./scripts/build-wasm.sh rococo
+.PHONY: build-runtime-paseo ## Build paseo release runtime
+build-runtime-paseo:
+	cargo build --locked -p $(call pkgid, paseo-parachain-runtime) --release
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
@@ -80,37 +68,17 @@ build-node-tryruntime:
 launch-standalone:
 	@./scripts/launch-standalone.sh
 
-.PHONY: launch-docker-bridge
-launch-docker-bridge:
-	@./scripts/launch-local-bridge-docker.sh
+.PHONY: launch-network-rococo ## Launch a local rococo network with relaychain network
+launch-network-rococo:
+	@./scripts/launch-network.sh rococo
 
-.PHONY: launch-docker-litentry ## Launch a local litentry-parachain network with docker
-launch-docker-litentry: generate-docker-compose-litentry
-	@./scripts/launch-local-docker.sh litentry
+.PHONY: launch-network-litentry ## Launch a local litentry network with relaychain network
+launch-network-litentry:
+	@./scripts/launch-network.sh litentry
 
-.PHONY: launch-docker-litmus ## Launch a local litmus-parachain network with docker
-launch-docker-litmus: generate-docker-compose-litmus
-	@./scripts/launch-local-docker.sh litmus
-
-.PHONY: launch-docker-rococo ## Launch a local rococo-parachain network with docker
-launch-docker-rococo: generate-docker-compose-rococo
-	@./scripts/launch-local-docker.sh rococo
-
-.PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
-launch-binary-litentry:
-	@./scripts/launch-local-binary.sh litentry
-
-.PHONY: launch-binary-litmus ## Launch a local litmus-parachain network with binaries
-launch-binary-litmus:
-	@./scripts/launch-local-binary.sh litmus
-
-.PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
-launch-binary-rococo:
-	@./scripts/launch-local-binary.sh rococo
-
-.PHONY: launch-custom-binary-rococo ## Launch a local rococo-parachain network with binary already built under target files
-launch-custom-binary-rococo:
-	@./scripts/launch-local-custom-binary.sh rococo
+.PHONY: launch-network-paseo ## Launch a local litentry network with relaychain network
+launch-network-paseo:
+	@./scripts/launch-network.sh paseo
 
 # run tests
 
@@ -122,70 +90,29 @@ test-cargo-all:
 test-cargo-all-benchmarks:
 	@cargo test --release --all --features runtime-benchmarks
 
-.PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
-test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
+.PHONY: test-ts-litentry ## Run litentry ts tests without clean-up
+test-ts-litentry: launch-network-litentry
 	@./scripts/run-ts-test.sh litentry bridge evm
 
-.PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
-test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
-	@./scripts/run-ts-test.sh litmus bridge no_evm
-
-.PHONY: test-ts-docker-rococo ## Run rococo ts tests with docker without clean-up
-test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
+.PHONY: test-ts-rococo ## Run rococo ts tests without clean-up
+test-ts-rococo: launch-network-rococo
 	@./scripts/run-ts-test.sh rococo bridge evm
 
-.PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
-test-ts-binary-litentry: launch-binary-litentry
-	@./scripts/run-ts-test.sh litentry no_bridge evm
-
-.PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
-test-ts-binary-litmus: launch-binary-litmus
-	@./scripts/run-ts-test.sh litmus no_bridge no_evm
-
-.PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
-test-ts-binary-rococo: launch-binary-rococo
-	@./scripts/run-ts-test.sh rococo no_bridge evm
+.PHONY: test-ts-paseo ## Run paseo ts tests without clean-up
+test-ts-paseo: launch-network-paseo
+	@./scripts/run-ts-test.sh paseo bridge evm
 
 # clean up
-
-.PHONY: clean-docker-litentry ## Clean up litentry docker images, containers, volumes, etc
-clean-docker-litentry:
-	@./scripts/clean-local-docker.sh litentry
-
-.PHONY: clean-docker-litmus ## Clean up litmus docker images, containers, volumes, etc
-clean-docker-litmus:
-	@./scripts/clean-local-docker.sh litmus
-
-.PHONY: clean-docker-rococo ## Clean up rococo docker images, containers, volumes, etc
-clean-docker-rococo:
-	@./scripts/clean-local-docker.sh rococo
-
-.PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
-clean-binary:
-	@./scripts/clean-local-binary.sh
-
-# generate docker-compose files
-
-.PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry local network
-generate-docker-compose-litentry:
-	@./scripts/generate-docker-files.sh litentry
-
-.PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus local network
-generate-docker-compose-litmus:
-	@./scripts/generate-docker-files.sh litmus
-
-.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
-generate-docker-compose-rococo:
-	@./scripts/generate-docker-files.sh rococo
+.PHONY: clean-network ## Clean up the network launched by 'launch-network'
+clean-network:
+	@./scripts/clean-network.sh
 
 # update dependencies
-
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
 	@cd ts-tests && pnpm dlx npm-check-updates -u && pnpm install
 
 # format
-
 .PHONY: fmt ## (cargo, taplo, ts, solidity) fmt
 fmt: fmt-cargo fmt-taplo fmt-ts fmt-contract
 
@@ -217,7 +144,6 @@ githooks:
 	git config core.hooksPath .githooks
 
 # clippy
-
 .PHONY: clippy ## cargo clippy
 clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
