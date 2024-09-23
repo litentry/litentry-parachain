@@ -171,7 +171,6 @@ impl pallet_score_staking::Config for Test {
 	type YearlyInflation = DefaultYearlyInflation;
 	type MaxScoreUserCount = ConstU32<2>;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
-	type MaxIDGraphAccountsPerCall = ConstU16<2>;
 }
 
 parameter_types! {
