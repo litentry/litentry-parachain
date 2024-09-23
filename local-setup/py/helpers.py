@@ -95,6 +95,6 @@ class GracefulKiller:
             shutil.copytree(f"log", new_folder_name)
             print(f"Backup log into " + new_folder_name)
         print("Cleaning up litentry-parachain...")
-        subprocess.run(["./scripts/clean-network.sh", "||", "true"])
+        subprocess.run(["./parachain/scripts/clean-network.sh", "||", "true"])
 
         sys.exit(0)
