@@ -19,6 +19,7 @@
 
 use crate::{error::Result, ImportParentchainBlocks};
 
+use ita_stf::ParentchainHeader;
 use itc_parentchain_indirect_calls_executor::ExecuteIndirectCalls;
 use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, Validator,
@@ -30,7 +31,7 @@ use itp_stf_executor::traits::StfUpdateState;
 use itp_stf_interface::ShardCreationInfo;
 use itp_types::{
 	parentchain::{IdentifyParentchain, ParentchainId},
-	OpaqueCall, H256, Header as ParentchainHeader,
+	OpaqueCall, H256,
 };
 use log::*;
 use sp_runtime::{
@@ -178,13 +179,12 @@ impl<
 
 			// Execute indirect calls that were found in the extrinsics of the block,
 			// incl. shielding and unshielding.
-			match self.indirect_calls_executor.execute_indirect_calls_in_block(
-				&block,
-				&raw_events,
-				self.ocall_api.clone(),
-			) {
-				Ok(Some(opaque_calls)) => {
-					calls.extend(opaque_calls);
+			match self
+				.indirect_calls_executor
+				.execute_indirect_calls_in_block(&block, &raw_events)
+			{
+				Ok(Some(confirm_processed_parentchain_block_call)) => {
+					calls.push(confirm_processed_parentchain_block_call);
 				},
 				Ok(None) => trace!("omitting confirmation call to non-integritee parentchain"),
 				Err(e) => error!("[{:?}] Error executing relevant events: {:?}", id, e),

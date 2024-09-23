@@ -9,10 +9,9 @@ sgx_tstd = { workspace = true, optional = true }
 sgx_types = { workspace = true }
 
 itp-api-client-types = { workspace = true }
-itp-enclave-metrics = { workspace = true }
 itp-node-api = { workspace = true }
-itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
+itp-sgx-runtime-primitives = { workspace = true }
 itp-stf-executor = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-test = { workspace = true }
@@ -25,13 +24,17 @@ thiserror_sgx = { workspace = true, optional = true }
 futures = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
 
+bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
 codec = { workspace = true }
 log = { workspace = true }
 
 binary-merkle-tree = { workspace = true }
-sp-core = { workspace = true, features = ["full_crypto"] }
 sp-runtime = { workspace = true }
 
+# litentry
+bc-enclave-registry = { path = "../../../bitacross/core/bc-enclave-registry", default-features = false }
+bc-relayer-registry = { path = "../../../bitacross/core/bc-relayer-registry", default-features = false }
+bc-signer-registry = { path = "../../../bitacross/core/bc-signer-registry", default-features = false }
 litentry-primitives = { workspace = true }
 
 [dev-dependencies]
@@ -42,12 +45,11 @@ itp-stf-executor = { workspace = true, features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
 itp-top-pool-author = { workspace = true, features = ["std", "mocks"] }
 itc-parentchain-test = { workspace = true, features = ["std"] }
-ita-parentchain-interface = { workspace = true, features = ["std"] }
-lc-evm-dynamic-assertions = { pworkspace = true, features = ["std"] }
 
 [features]
 default = ["std"]
 std = [
+    "bs58/std",
     "codec/std",
     "futures",
     "itp-node-api/std",
@@ -57,15 +59,17 @@ std = [
     "itp-api-client-types/std",
     "itp-test/std",
     "itp-types/std",
-    "itp-enclave-metrics/std",
+    "itp-sgx-runtime-primitives/std",
     "log/std",
     #substrate
     "binary-merkle-tree/std",
-    "sp-core/std",
     "sp-runtime/std",
     "thiserror",
     # litentry
     "litentry-primitives/std",
+    "bc-relayer-registry/std",
+    "bc-signer-registry/std",
+    "bc-enclave-registry/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -74,9 +78,11 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "itp-stf-executor/sgx",
     "itp-top-pool-author/sgx",
-    "itp-enclave-metrics/sgx",
     "itp-test/sgx",
     "thiserror_sgx",
     # litentry
     "litentry-primitives/sgx",
+    "bc-relayer-registry/sgx",
+    "bc-signer-registry/sgx",
+    "bc-enclave-registry/sgx",
 ]

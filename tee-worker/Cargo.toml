@@ -3,33 +3,49 @@ resolver = "2"
 members = [
     # common
     "common/core-primitives/*",
-    "common/core-primitives/sgx/*",
-    "common/core-primitives/substrate-sgx/*",
-    "common/core-primitives/node-api/*",
-    "common/litentry/core/*",
-    "common/litentry/core/parachain-extrinsic-task/*",
-    "common/litentry/core/stf-task/*",
+    "common/core-primitives/sgx/crypto",
+    "common/core-primitives/sgx/io",
+    "common/core-primitives/sgx/temp-dir",
+    "common/core-primitives/substrate-sgx/environmental",
+    "common/core-primitives/substrate-sgx/externalities",
+    "common/core-primitives/substrate-sgx/sp-io",
+    "common/core-primitives/node-api",
+    "common/core-primitives/node-api/api-client-extensions",
+    "common/core-primitives/node-api/api-client-types",
+    "common/core-primitives/node-api/factory",
+    "common/core-primitives/node-api/metadata",
+    "common/core-primitives/node-api/metadata-provider",
+
+    "common/litentry/core/parachain-extrinsic-task/sender",
+    "common/litentry/core/parachain-extrinsic-task/receiver",
     "common/litentry/macros",
-    "common/litentry/pallets/*",
+    "common/litentry/pallets/identity-management",
     "common/litentry/primitives",
-    "common/core/*",
-    "common/core/parentchain/*",
+
+    "common/core/direct-rpc-client",
+    "common/core/direct-rpc-server",
+    "common/core/offchain-worker-executor",
+    "common/core/parentchain/light-client",
+    "common/core/parentchain/test",
+    "common/core/rest-client",
+    "common/core/rpc-client",
+    "common/core/tls-websocket-server",
 
     # identity-worker
 
     # bitacross-worker
     "bitacross/app-libs/*",
     "bitacross/cli",
+    "bitacross/core/parentchain/block-import-dispatcher",
+    "bitacross/core/parentchain/block-importer",
+    "bitacross/core/parentchain/indirect-calls-executor",
+    "bitacross/core/parentchain/parentchain-crate",
     "bitacross/service",
     "bitacross/litentry/core/direct-call",
     "bitacross/bitacross/core/*",
 ]
 
 exclude = [
-    "common/core/parentchain",
-    "common/litentry/core/parachain-extrinsic-task",
-    "common/litentry/core/stf-task",
-    "common/core-primitives/node-api/src",
     "common/core-primitives/sgx",
     "common/core-primitives/substrate-sgx",
 ]
@@ -85,7 +101,7 @@ tungstenite = { version = "0.15.0" }
 yasna = { version = "0.4" }
 musig2 = { git = "https://github.com/kziemianek/musig2", branch = "master", features = ["k256"] }
 
-url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
+url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false }
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0", default-features = false, features = ["sync-api"] }
 
 # substrate
@@ -156,11 +172,7 @@ mio-extras = { git = "https://github.com/integritee-network/mio-extras-sgx", rev
 tungstenite_sgx = { package = "tungstenite", git = "https://github.com/integritee-network/tungstenite-rs-sgx", branch = "sgx-experimental", features = ["rustls-tls-webpki-roots"] }
 
 # local
-itc-parentchain-block-import-dispatcher = { path = "common/core/parentchain/block-import-dispatcher", default-features = false }
-itc-parentchain-block-importer = { path = "common/core/parentchain/block-importer", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "common/core/parentchain/indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { path = "common/core/parentchain/light-client", default-features = false }
-itc-parentchain = { path = "common/core/parentchain/parentchain-crate", default-features = false }
 itc-parentchain-test = { path = "common/core/parentchain/test", default-features = false }
 itc-rest-client = { path = "common/core/rest-client", default-features = false }
 itc-rpc-client = { path = "common/core/rpc-client" }

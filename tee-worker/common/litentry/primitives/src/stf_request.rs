@@ -17,7 +17,7 @@
 // TODO: the sidechain block number type is chaotic from upstream
 use codec::{Decode, Encode};
 use itp_types::{AccountId, BlockNumber as SidechainBlockNumber, H256};
-use litentry_primitives::{
+use crate::{
 	Assertion, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
 	ShardIdentifier, Web2ValidationData, Web3Network,
 };

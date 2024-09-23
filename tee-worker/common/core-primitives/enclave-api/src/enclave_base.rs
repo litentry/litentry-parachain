@@ -19,9 +19,8 @@
 use crate::EnclaveResult;
 use codec::Decode;
 use core::fmt::Debug;
-use itc_parentchain::primitives::{ParentchainId, ParentchainInitParams};
 use itp_stf_interface::ShardCreationInfo;
-use itp_types::{parentchain::Header, ShardIdentifier};
+use itp_types::{parentchain::{Header, ParentchainId, ParentchainInitParams}, ShardIdentifier};
 use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;

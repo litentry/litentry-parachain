@@ -367,7 +367,8 @@ mod tests {
 		let events_import_queue = ImportQueue::<RawEventsPerBlock>::default();
 		let import_queue = ImportQueue::<SignedBlockType>::default();
 		let block_importer = ParentchainBlockImporterMock::<SignedBlockType>::default();
-
-		TriggeredDispatcher::new(block_importer, import_queue, events_import_queue)
+		let dispatcher =
+			TriggeredDispatcher::new(block_importer, import_queue, events_import_queue);
+		dispatcher
 	}
 }

@@ -9,7 +9,7 @@ edition = "2021"
 
 [dependencies]
 itp-types = { workspace = true }
-sp-runtime = { dworkspace = true }
+sp-runtime = { workspace = true }
 
 [features]
 default = ["std"]

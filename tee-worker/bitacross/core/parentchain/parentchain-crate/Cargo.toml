@@ -6,11 +6,12 @@ edition = "2021"
 
 [dependencies]
 codec = { workspace = true, features = ["chain-error"] }
+
 sp-runtime = { workspace = true }
 
-itc-parentchain-block-import-dispatcher = { workspace = true }
-itc-parentchain-block-importer = { workspace = true }
-itc-parentchain-indirect-calls-executor = { workspace = true }
+itc-parentchain-block-import-dispatcher = { path = "../block-import-dispatcher", default-features = false }
+itc-parentchain-block-importer = { path = "../block-importer", default-features = false }
+itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { workspace = true }
 itp-types = { workspace = true }
 

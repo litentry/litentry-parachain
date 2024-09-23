@@ -35,7 +35,7 @@ itp-sgx-crypto = { workspace = true, features = ["mocks"] }
 itp-test = { workspace = true, features = ["std"] }
 itp-top-pool = { workspace = true, features = ["std", "mocks"] }
 sgx_crypto_helper = { workspace = true }
-sp-keyring = { workspace = true, features = ["std"] }
+sp-keyring = { workspace = true }
 
 [features]
 default = ["std"]

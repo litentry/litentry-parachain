@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 sgx_tstd = { workspace = true, optional = true }
 codec = { workspace = true, features = ["full"] }
-lc-stf-task-sender = { workspace = true }
 litentry-primitives = { workspace = true }
 
 [features]
@@ -15,11 +14,8 @@ default = ["std"]
 std = [
     "codec/std",
     "litentry-primitives/std",
-    "lc-stf-task-sender/std",
-
 ]
 sgx = [
     "sgx_tstd",
     "litentry-primitives/sgx",
-    "lc-stf-task-sender/sgx",
 ]

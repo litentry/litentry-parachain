@@ -26,8 +26,7 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use core::time::Duration;
-use lc_stf_task_sender::RequestType;
-use litentry_primitives::Assertion;
+use litentry_primitives::{RequestType, Assertion};
 use std::{boxed::Box, string::String};
 
 #[derive(Encode, Decode, Debug)]

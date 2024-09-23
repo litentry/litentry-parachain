@@ -12,7 +12,7 @@ thiserror = { workspace = true, optional = true }
 
 sgx_tstd = { workspace = true, features = ["untrusted_fs"], optional = true }
 sgx_types = { workspace = true }
-thiserror-sgx = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 itp-ocall-api = { workspace = true }
 itp-sgx-io = { workspace = true }
@@ -55,7 +55,7 @@ std = [
 ]
 sgx = [
     "sgx_tstd",
-    "thiserror-sgx",
+    "thiserror_sgx",
     "itp-sgx-io/sgx",
     "itp-storage/sgx",
     "itp-sgx-temp-dir/sgx",

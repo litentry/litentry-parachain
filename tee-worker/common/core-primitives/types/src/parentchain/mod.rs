@@ -17,7 +17,7 @@
 
 pub mod events;
 
-use crate::{parentchain::events::AssertionCreated, OpaqueCall};
+use crate::{parentchain::{ParentchainId, events::AssertionCreated}, Block as ParachainBlock, Block as SolochainBlock, OpaqueCall, ShardIdentifier};
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -232,5 +232,81 @@ impl ParentchainCall {
 					None
 				},
 		}
+	}
+}
+
+// Moved from `itc_light_client::light_client_init_params` to de-couple deps
+use sp_consensus_grandpa::AuthorityList;
+use std::vec::Vec;
+
+#[derive(Encode, Decode, Clone)]
+pub struct GrandpaParams<Header> {
+	pub genesis_header: Header,
+	pub authorities: AuthorityList,
+	pub authority_proof: Vec<Vec<u8>>,
+}
+
+impl<Header> GrandpaParams<Header> {
+	pub fn new(
+		genesis_header: Header,
+		authorities: AuthorityList,
+		authority_proof: Vec<Vec<u8>>,
+	) -> Self {
+		Self { genesis_header, authorities, authority_proof }
+	}
+}
+
+#[derive(Encode, Decode, Clone)]
+pub struct SimpleParams<Header> {
+	pub genesis_header: Header,
+}
+
+impl<Header> SimpleParams<Header> {
+	pub fn new(genesis_header: Header) -> Self {
+		Self { genesis_header }
+	}
+}
+
+// Moved from `itc_parent::primitives`
+use sp_runtime::traits::Block;
+
+pub type HeaderFor<B> = <B as Block>::Header;
+pub type SolochainHeader = HeaderFor<SolochainBlock>;
+pub type ParachainHeader = HeaderFor<ParachainBlock>;
+pub type SolochainParams = GrandpaParams<SolochainHeader>;
+pub type ParachainParams = SimpleParams<ParachainHeader>;
+
+/// Initialization primitives, used by both service and enclave.
+/// Allows to use a single E-call for the initialization of different parentchain types.
+#[derive(Encode, Decode, Clone)]
+pub enum ParentchainInitParams {
+	Solochain { id: ParentchainId, shard: ShardIdentifier, params: SolochainParams },
+	Parachain { id: ParentchainId, shard: ShardIdentifier, params: ParachainParams },
+}
+
+impl ParentchainInitParams {
+	pub fn id(&self) -> &ParentchainId {
+		match self {
+			Self::Solochain { id, .. } => id,
+			Self::Parachain { id, .. } => id,
+		}
+	}
+	pub fn is_solochain(&self) -> bool {
+		matches!(self, Self::Solochain { .. })
+	}
+	pub fn is_parachain(&self) -> bool {
+		matches!(self, Self::Parachain { .. })
+	}
+}
+
+impl From<(ParentchainId, ShardIdentifier, SolochainParams)> for ParentchainInitParams {
+	fn from(value: (ParentchainId, ShardIdentifier, SolochainParams)) -> Self {
+		Self::Solochain { id: value.0, shard: value.1, params: value.2 }
+	}
+}
+
+impl From<(ParentchainId, ShardIdentifier, ParachainParams)> for ParentchainInitParams {
+	fn from(value: (ParentchainId, ShardIdentifier, ParachainParams)) -> Self {
+		Self::Parachain { id: value.0, shard: value.1, params: value.2 }
 	}
 }

@@ -5,7 +5,7 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-base58 = { workspace = true, features = ["std"] }
+base58 = { workspace = true }
 codec =  { workspace = true, features = ["std"] }
 log =  { workspace = true, features = ["std"] }
 openssl = "0.10"

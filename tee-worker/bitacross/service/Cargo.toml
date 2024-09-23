@@ -39,7 +39,7 @@ sgx_crypto_helper = { workspace = true }
 sgx_types = { workspace = true }
 
 ita-parentchain-interface = { path = "../app-libs/parentchain-interface" }
-itc-parentchain = { workspace = true, features = ["std"] }
+itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { workspace = true, features = ["std"] }
 itc-rpc-client = { workspace = true, features = ["std"] }
 itp-api-client-types = { workspace = true, features = ["std"] }
