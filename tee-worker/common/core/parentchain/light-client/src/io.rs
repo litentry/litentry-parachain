@@ -26,8 +26,7 @@ use codec::{Decode, Encode};
 use core::{fmt::Debug, marker::PhantomData};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_io::{seal, unseal};
-use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
-use itp_types::parentchain::{GrandpaParams, SimpleParams};
+use itp_types::parentchain::{GrandpaParams, IdentifyParentchain, ParentchainId, SimpleParams};
 use log::*;
 use sp_runtime::traits::{Block, Header};
 use std::{

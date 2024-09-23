@@ -21,10 +21,7 @@ use itp_api_client_types::Events;
 use itp_node_api::api_client::StaticEvent;
 
 use itp_types::{
-	parentchain::{
-		events::*,
-		FilterEvents,
-	},
+	parentchain::{events::*, FilterEvents},
 	H256,
 };
 use std::vec::Vec;

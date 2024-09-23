@@ -26,7 +26,7 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use core::time::Duration;
-use litentry_primitives::{RequestType, Assertion};
+use litentry_primitives::{Assertion, RequestType};
 use std::{boxed::Box, string::String};
 
 #[derive(Encode, Decode, Debug)]
@@ -52,8 +52,8 @@ pub enum EnclaveMetric {
 	DynamicAssertionSaveTime(Duration),
 	DynamicAssertionGetTime(Duration),
 	// bitacross
-    Musig2CeremonyStarted,
-    Musig2CeremonyFailed,
-    Musig2CeremonyTimedout(u8),
-    Musig2CeremonyDuration(Duration),
+	Musig2CeremonyStarted,
+	Musig2CeremonyFailed,
+	Musig2CeremonyTimedout(u8),
+	Musig2CeremonyDuration(Duration),
 }

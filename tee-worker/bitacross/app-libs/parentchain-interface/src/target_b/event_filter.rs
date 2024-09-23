@@ -20,10 +20,7 @@ use itc_parentchain_indirect_calls_executor::event_filter::ToEvents;
 use itp_api_client_types::Events;
 use itp_node_api::api_client::StaticEvent;
 use itp_types::{
-	parentchain::{
-		events::*,
-		FilterEvents,
-	},
+	parentchain::{events::*, FilterEvents},
 	H256,
 };
 use std::vec::Vec;

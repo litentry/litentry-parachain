@@ -79,15 +79,15 @@ where
 		shard: &ShardIdentifier,
 	) -> Result<TCS, Error>;
 
-    fn get_relayer_registry_updater(&self) -> &RRU {
+	fn get_relayer_registry_updater(&self) -> &RRU {
 		unimplemented!()
 	}
 
-    fn get_signer_registry_updater(&self) -> &SRU {
+	fn get_signer_registry_updater(&self) -> &SRU {
 		unimplemented!()
 	}
 
-    fn get_enclave_registry_updater(&self) -> &ERU {
+	fn get_enclave_registry_updater(&self) -> &ERU {
 		unimplemented!()
 	}
 }

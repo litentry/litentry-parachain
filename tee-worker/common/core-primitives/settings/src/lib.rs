@@ -56,7 +56,6 @@ pub mod files {
 	pub const ENCLAVE_REGISTRY_FILE: &str = "enclave_registry_sealed.bin";
 
 	pub const SIGNER_REGISTRY_FILE: &str = "signer_registry_sealed.bin";
-	
 
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";

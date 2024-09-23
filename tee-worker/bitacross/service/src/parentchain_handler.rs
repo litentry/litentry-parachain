@@ -25,8 +25,10 @@ use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
 use itp_time_utils::duration_now;
-use itp_types::ShardIdentifier;
-use itp_types::parentchain::{GrandpaParams, SimpleParams, ParentchainId, ParentchainInitParams};
+use itp_types::{
+	parentchain::{GrandpaParams, ParentchainId, ParentchainInitParams, SimpleParams},
+	ShardIdentifier,
+};
 use log::*;
 use rayon::prelude::*;
 use sp_consensus_grandpa::VersionedAuthorityList;

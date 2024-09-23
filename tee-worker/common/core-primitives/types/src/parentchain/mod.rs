@@ -17,7 +17,10 @@
 
 pub mod events;
 
-use crate::{parentchain::{events::AssertionCreated}, Block as ParachainBlock, Block as SolochainBlock, OpaqueCall, ShardIdentifier};
+use crate::{
+	parentchain::events::AssertionCreated, Block as ParachainBlock, Block as SolochainBlock,
+	OpaqueCall, ShardIdentifier,
+};
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -114,15 +117,15 @@ pub trait FilterEvents {
 		&self,
 	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error>;
 
-    fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
+	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error>;
 
-    fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
+	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error>;
 
-    fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
+	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error>;
 
-    fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
+	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error>;
 
-    fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
+	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error>;
 }
 
 #[derive(Debug)]
@@ -159,10 +162,10 @@ pub enum ParentchainEventProcessingError {
 	AssertionCreatedFailure,
 	ParentchainBlockProcessedFailure,
 	RelayerAddFailure,
-    RelayerRemoveFailure,
-    EnclaveAddFailure,
-    EnclaveRemoveFailure,
-    BtcWalletGeneratedFailure,
+	RelayerRemoveFailure,
+	EnclaveAddFailure,
+	EnclaveRemoveFailure,
+	BtcWalletGeneratedFailure,
 }
 
 impl core::fmt::Display for ParentchainEventProcessingError {
@@ -187,15 +190,15 @@ impl core::fmt::Display for ParentchainEventProcessingError {
 			ParentchainEventProcessingError::ParentchainBlockProcessedFailure =>
 				"Parentchain Event Processing Error: ParentchainBlockProcessedFailure",
 			ParentchainEventProcessingError::RelayerAddFailure =>
-                "Parentchain Event Processing Error: RelayerAddFailure",
-            ParentchainEventProcessingError::RelayerRemoveFailure =>
-                "Parentchain Event Processing Error: RelayerRemoveFailure",
-            ParentchainEventProcessingError::EnclaveAddFailure =>
-                "Parentchain Event Processing Error: EnclaveAddFailure",
-            ParentchainEventProcessingError::EnclaveRemoveFailure =>
-                "Parentchain Event Processing Error: EnclaveRemoveFailure",
-            ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
-                "Parentchain Event Processing Error: BtcWalletGeneratedFailure",			
+				"Parentchain Event Processing Error: RelayerAddFailure",
+			ParentchainEventProcessingError::RelayerRemoveFailure =>
+				"Parentchain Event Processing Error: RelayerRemoveFailure",
+			ParentchainEventProcessingError::EnclaveAddFailure =>
+				"Parentchain Event Processing Error: EnclaveAddFailure",
+			ParentchainEventProcessingError::EnclaveRemoveFailure =>
+				"Parentchain Event Processing Error: EnclaveRemoveFailure",
+			ParentchainEventProcessingError::BtcWalletGeneratedFailure =>
+				"Parentchain Event Processing Error: BtcWalletGeneratedFailure",
 		};
 		write!(f, "{}", message)
 	}

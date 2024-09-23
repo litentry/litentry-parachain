@@ -15,10 +15,7 @@ use itp_sgx_runtime_primitives::types::{AccountId, Balance};
 use itp_stf_primitives::{traits::IndirectExecutor, types::Signature};
 use itp_test::mock::stf_mock::{GetterMock, TrustedCallMock, TrustedCallSignedMock};
 use itp_types::{
-	parentchain::{
-		events::*,
-		FilterEvents, HandleParentchainEvents,
-	},
+	parentchain::{events::*, FilterEvents, HandleParentchainEvents},
 	Address, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;

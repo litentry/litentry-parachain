@@ -167,7 +167,8 @@ impl<
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
-	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error, RRU, SRU, ERU, Output = Vec<H256>>,
+	ParentchainEventHandler:
+		HandleParentchainEvents<Self, TCS, Error, RRU, SRU, ERU, Output = Vec<H256>>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	RRU: RelayerRegistryUpdater,
