@@ -45,20 +45,24 @@ pub struct VerificationCodeStore;
 impl VerificationCodeStore {
 	pub fn insert(
 		account_id: AccountId,
+		email: String,
 		verification_code: String,
 	) -> Result<(), VerificationCodeStoreError> {
 		STORE
 			.write()
 			.map_err(|_| VerificationCodeStoreError::LockPoisoning)?
-			.put(hex::encode(account_id.encode()), verification_code);
+			.put(hex::encode((account_id, email).encode()), verification_code);
 		Ok(())
 	}
 
-	pub fn get(account_id: &AccountId) -> Result<Option<String>, VerificationCodeStoreError> {
+	pub fn get(
+		account_id: &AccountId,
+		email: &str,
+	) -> Result<Option<String>, VerificationCodeStoreError> {
 		let code = STORE
 			.write()
 			.map_err(|_| VerificationCodeStoreError::LockPoisoning)?
-			.pop(hex::encode(account_id.encode()).as_str());
+			.pop(hex::encode((account_id, email).encode()).as_str());
 		Ok(code)
 	}
 }
