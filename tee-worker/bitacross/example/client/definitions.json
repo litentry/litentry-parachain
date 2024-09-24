@@ -95,6 +95,13 @@
       ["SigningError", "()"]
     ]
   },
+  "SignTonError": {
+    "type": "enum",
+    "type_mapping": [
+      ["InvalidSigner", "()"],
+      ["SigningError", "()"]
+    ]
+  },
   "PrehashedEthereumMessage": "[u8; 32]",
   "PlainRequest": {
     "type": "struct",
