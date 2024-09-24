@@ -220,19 +220,22 @@ pub fn verify(
 			let Some(account_id) = who.to_account_id() else {
 					return Err(Error::LinkIdentityFailed(ErrorDetail::ParseError));
 				};
-			let stored_verification_code = match email::VerificationCodeStore::get(&account_id) {
-				Ok(data) => data.ok_or_else(|| {
-					Error::LinkIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
-						std::format!(
-							"no verification code found for {}",
-							account_id_to_string(&account_id)
-						)
-						.as_bytes()
-						.to_vec(),
-					)))
-				})?,
-				Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
-			};
+			let stored_verification_code =
+				match email::VerificationCodeStore::get(&account_id, &email) {
+					Ok(data) => data.ok_or_else(|| {
+						Error::LinkIdentityFailed(ErrorDetail::StfError(
+							ErrorString::truncate_from(
+								std::format!(
+									"no verification code found for {}",
+									account_id_to_string(&account_id)
+								)
+								.as_bytes()
+								.to_vec(),
+							),
+						))
+					})?,
+					Err(e) => return Err(Error::LinkIdentityFailed(e.into_error_detail())),
+				};
 
 			ensure!(
 				verification_code == stored_verification_code,
