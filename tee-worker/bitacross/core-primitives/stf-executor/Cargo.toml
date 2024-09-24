@@ -17,14 +17,14 @@ itp-sgx-crypto = { workspace = true }
 itp-sgx-externalities = { workspace = true }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }
-itp-stf-state-handler = {workspace = true }
+itp-stf-state-handler = { workspace = true }
 itp-stf-state-observer = { workspace = true }
 itp-time-utils = { workspace = true }
-itp-top-pool-author = { path = "../top-pool-author", default-features= false }
+itp-top-pool-author = { path = "../top-pool-author", default-features = false }
 itp-types = { workspace = true }
 
-thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }

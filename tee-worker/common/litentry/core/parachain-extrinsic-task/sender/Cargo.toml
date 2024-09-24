@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-log = { workspace = true }
 lazy_static = { workspace = true }
+log = { workspace = true }
 
-sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 itp-types = { workspace = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 [features]
 default = ["std"]

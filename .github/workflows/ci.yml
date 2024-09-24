@@ -175,8 +175,8 @@ jobs:
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: identity-worker fmt check
-        working-directory: ./tee-worker/identity
+      - name: tee-worker fmt check
+        working-directory: ./tee-worker
         run: |
           cargo fmt --all -- --check
           taplo fmt --check
@@ -185,12 +185,6 @@ jobs:
         working-directory: ./tee-worker/identity/enclave-runtime
         run: |
           cargo fmt --all -- --check
-
-      - name: bitacross-worker fmt check
-        working-directory: ./tee-worker/bitacross
-        run: |
-          cargo fmt --all -- --check
-          taplo fmt --check
 
       - name: bitacross-worker enclave-runtime fmt check
         working-directory: ./tee-worker/bitacross/enclave-runtime

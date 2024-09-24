@@ -17,10 +17,10 @@ itp-rpc = { workspace = true }
 itp-types = { workspace = true }
 itp-utils = { workspace = true }
 
-jsonrpc-core_sgx = { workspace = true, optional = true }
 jsonrpc-core = { workspace = true, optional = true }
-thiserror_sgx = { workspace = true, optional = true }
+jsonrpc-core_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 [features]
 default = ["std"]

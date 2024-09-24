@@ -32,9 +32,9 @@ sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-runtime = { workspace = true, features = ["std"] }
 
-ita-stf = { path = "../app-libs/stf" }
-ita-parentchain-interface = { path = "../app-libs/parentchain-interface" }
 bc-musig2-ceremony = { path = "../bitacross/core/bc-musig2-ceremony" }
+ita-parentchain-interface = { path = "../app-libs/parentchain-interface" }
+ita-stf = { path = "../app-libs/stf" }
 lc-direct-call = { path = "../litentry/core/direct-call" }
 
 itc-rpc-client = { workspace = true }

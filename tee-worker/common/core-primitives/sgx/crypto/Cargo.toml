@@ -7,10 +7,10 @@ edition = "2021"
 aes = { workspace = true }
 codec = { package = "parity-scale-codec", workspace = true }
 derive_more = { workspace = true }
-log = { workspace = true }
-ofb = { workspace = true }
 hex = { workspace = true }
 k256 = { workspace = true, features = ["ecdsa-core", "schnorr", "alloc"] }
+log = { workspace = true }
+ofb = { workspace = true }
 secp256k1 = { workspace = true, features = ["alloc", "recovery"] }
 serde_json = { workspace = true, optional = true }
 

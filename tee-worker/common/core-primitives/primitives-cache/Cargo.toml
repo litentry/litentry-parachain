@@ -5,10 +5,10 @@ authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@int
 edition = "2021"
 
 [dependencies]
-sgx_tstd = { workspace = true, optional = true }
-thiserror_sgx = { workspace = true, optional = true }
-thiserror = { workspace = true, optional = true }
 lazy_static = { workspace = true }
+sgx_tstd = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 [features]
 default = ["std"]

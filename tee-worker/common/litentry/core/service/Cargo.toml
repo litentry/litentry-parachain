@@ -5,8 +5,8 @@ name = "lc-service"
 version = "0.1.0"
 
 [dependencies]
-sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 log = { workspace = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 # litentry
 lc-common = { workspace = true }

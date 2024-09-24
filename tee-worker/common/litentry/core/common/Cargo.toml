@@ -4,8 +4,8 @@ name = "lc-common"
 version = "0.1.0"
 
 [dependencies]
-sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 litentry-primitives = { workspace = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 [features]
 default = ["std"]

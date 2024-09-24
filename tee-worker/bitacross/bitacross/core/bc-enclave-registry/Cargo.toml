@@ -11,8 +11,8 @@ sp-std = { workspace = true }
 
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
-thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 itp-settings = { workspace = true }
 itp-sgx-io = { workspace = true }

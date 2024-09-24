@@ -32,8 +32,8 @@ sp-core = { workspace = true, features = ["full_crypto"] }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
-litentry-primitives = { workspace = true }
 litentry-macros = { path = "../../../../common/primitives/core/macros", default-features = false }
+litentry-primitives = { workspace = true }
 pallet-parentchain = { path = "../../../../parachain/worker-pallets/parentchain", default-features = false }
 
 [dev-dependencies]

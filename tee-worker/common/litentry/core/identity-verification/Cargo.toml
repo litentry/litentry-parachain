@@ -27,8 +27,8 @@ url = { workspace = true }
 
 itc-rest-client = { workspace = true }
 itp-sgx-crypto = { workspace = true }
-itp-utils = { workspace = true }
 itp-types = { workspace = true }
+itp-utils = { workspace = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
 frame-support = { workspace = true }

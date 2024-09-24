@@ -18,9 +18,9 @@ itp-types = { workspace = true }
 codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 
-substrate-api-client = { workspace = true, optional = true }
 sp-core = { workspace = true, features = ["full_crypto"] }
 sp-runtime = { workspace = true }
+substrate-api-client = { workspace = true, optional = true }
 
 # litentry
 bc-enclave-registry = { path = "../../bitacross/core/bc-enclave-registry", default-features = false }

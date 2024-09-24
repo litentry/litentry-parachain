@@ -14,8 +14,8 @@ sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 threadpool_sgx = { workspace = true, optional = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
-log = { workspace = true }
 frame-support = { workspace = true }
+log = { workspace = true }
 
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itp-enclave-metrics = { workspace = true }
@@ -31,9 +31,9 @@ bc-musig2-event = { path = "../bc-musig2-event", default-features = false }
 bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 bc-signer-registry = { path = "../bc-signer-registry", default-features = false }
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
-lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
 itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
+lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { workspace = true }
 
 sgx_crypto_helper = { workspace = true }

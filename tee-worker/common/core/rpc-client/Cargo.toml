@@ -11,7 +11,7 @@ log = { workspace = true, features = ["std"] }
 openssl = "0.10"
 parking_lot = "0.12.1"
 serde_json = { workspace = true, features = ["std"] }
-sgx_crypto_helper =  { workspace = true, features = ["ucrypto_help"] }
+sgx_crypto_helper = { workspace = true, features = ["ucrypto_help"] }
 thiserror = { workspace = true }
 url = { version = "2.0.0" }
 ws = { version = "0.9.1", features = ["ssl"] }
@@ -21,9 +21,9 @@ sp-core = { workspace = true, features = ["std"] }
 
 itp-api-client-types = { workspace = true, features = ["std"] }
 itp-rpc = { workspace = true, features = ["std"] }
+itp-stf-primitives = { workspace = true, features = ["std"] }
 itp-types = { workspace = true, features = ["std"] }
 itp-utils = { workspace = true, features = ["std"] }
-itp-stf-primitives = { workspace = true, features = ["std"] }
 litentry-primitives = { workspace = true }
 
 [dev-dependencies]

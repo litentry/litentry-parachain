@@ -23,8 +23,8 @@ sp-std = { workspace = true }
 
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
-itp-sgx-runtime-primitives = { workspace = true }
 itp-sgx-crypto = { workspace = true }
+itp-sgx-runtime-primitives = { workspace = true }
 pallet-teebag = { workspace = true }
 parentchain-primitives = { workspace = true }
 

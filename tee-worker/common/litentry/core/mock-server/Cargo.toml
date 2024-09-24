@@ -7,11 +7,11 @@ version = "0.1.0"
 hex = { workspace = true, features = ["std"] }
 log = { workspace = true, features = ["std"] }
 serde_json = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std"] }
 tokio = { version = "1.5", features = ["full"] }
 warp = "0.3"
-sp-core = { workspace = true, features = ["std"] }
 
-lc-identity-verification = { workspace = true, features = ["std"] }
 itp-rpc = { workspace = true, features = ["std"] }
 lc-data-providers = { workspace = true, features = ["std"] }
+lc-identity-verification = { workspace = true, features = ["std"] }
 litentry-primitives = { workspace = true, features = ["std"] }

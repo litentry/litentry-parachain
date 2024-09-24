@@ -9,6 +9,7 @@ edition = '2021'
 async-trait = "0.1.50"
 base58 = "0.2"
 clap = { version = "2.33", features = ["yaml"] }
+codec = { package = "parity-scale-codec", workspace = true }
 dirs = "3.0.2"
 env_logger = { workspace = true }
 futures = { workspace = true, features = ["std"] }
@@ -30,7 +31,6 @@ thiserror = { workspace = true }
 tokio = { version = "1.6.1", features = ["full"] }
 url = "2.5.0"
 warp = "=0.3.5"
-codec = { package = "parity-scale-codec", workspace = true }
 
 # ipfs
 ipfs-api = "0.11.0"

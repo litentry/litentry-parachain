@@ -13,8 +13,8 @@ itp-node-api = { workspace = true }
 itp-nonce-cache = { workspace = true }
 itp-types = { workspace = true }
 
-thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }

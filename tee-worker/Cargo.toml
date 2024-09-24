@@ -212,7 +212,7 @@ itp-binary-merkle-tree = { path = "common/core-primitives/binary-merkle-tree", d
 itp-component-container = { path = "common/core-primitives/component-container", default-features = false }
 itp-rpc = { path = "common/core-primitives/rpc", default-features = false }
 itp-hashing = { path = "common/core-primitives/hashing", default-features = false }
-itp-enclave-metrics =  { path = "common/core-primitives/enclave-metrics", default-features = false }
+itp-enclave-metrics = { path = "common/core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "common/core-primitives/extrinsics-factory", default-features = false }
 itp-nonce-cache = { path = "common/core-primitives/nonce-cache", default-features = false }
 itp-node-api = { path = "common/core-primitives/node-api", default-features = false }

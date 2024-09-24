@@ -11,8 +11,8 @@ sgx_types = { workspace = true }
 itc-parentchain-block-importer = { path = "../block-importer", default-features = false }
 itp-import-queue = { workspace = true }
 
-thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
 
 log = { workspace = true }
 

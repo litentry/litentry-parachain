@@ -7,8 +7,8 @@ edition = "2021"
 [dependencies]
 bit-vec = { workspace = true }
 chrono = { workspace = true }
-rcgen = { workspace = true }
 log = { workspace = true }
+rcgen = { workspace = true }
 
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
@@ -32,7 +32,7 @@ sp-core = { workspace = true, features = ["full_crypto"] }
 [dev-dependencies]
 env_logger = { workspace = true }
 rustls = { workspace = true, features = ["dangerous_configuration"] }
-url = { version = "2.0.0" } # no workspace dep
+url = { version = "2.0.0" }                                           # no workspace dep
 
 [features]
 default = ["std"]
