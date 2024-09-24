@@ -481,7 +481,11 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 				);
 				let verification_code = email::generate_verification_code();
 
-				match email::VerificationCodeStore::insert(account_id, verification_code.clone()) {
+				match email::VerificationCodeStore::insert(
+					account_id,
+					email.clone(),
+					verification_code.clone(),
+				) {
 					Ok(_) => {
 						if email::send_verification_email(&mut mailer, email, verification_code)
 							.is_err()

@@ -72,7 +72,7 @@ test('it deterministically hashes a graph', () => {
 
   const hash = calculateIdGraphHash(idGraph);
 
-  const expected = `0xc069ba36419050464d4495ee3f221e70b244c7e1d236210732d510001a3024a4`;
+  const expected = `0x47fb588c1aa067c32087d8ad0c57f8abe6d68d23e6013ad83b10740a1751c697`;
 
   expect(hash).toEqual(expected);
 });

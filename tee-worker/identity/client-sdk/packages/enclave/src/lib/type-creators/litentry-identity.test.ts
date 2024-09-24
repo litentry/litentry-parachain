@@ -122,3 +122,16 @@ test('it creates Discord identity', () => {
   expect(identity.isDiscord).toBeTruthy();
   expect(identity.asDiscord.toHuman()).toEqual(handle);
 });
+
+test('it creates Email identity', () => {
+  const handle = 'test@test.com.not.valid';
+
+  const identity = createLitentryIdentityType(registry, {
+    type: 'Email',
+    addressOrHandle: handle,
+  });
+
+  expect(identity).toBeDefined();
+  expect(identity.isEmail).toBeTruthy();
+  expect(identity.asEmail.toHuman()).toEqual(handle);
+});

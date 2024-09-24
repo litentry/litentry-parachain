@@ -28,6 +28,7 @@ export default {
                 Evm: "Address20",
                 Bitcoin: "Address33",
                 Solana: "Address32",
+                Email: "IdentityString",
             },
         },
         Address32: "[u8;32]",
@@ -66,6 +67,7 @@ export default {
             _enum: {
                 Twitter: "TwitterValidationData",
                 Discord: "DiscordValidationData",
+                Email: "EmailValidationData",
             },
         },
         TwitterValidationData: {
@@ -96,6 +98,10 @@ export default {
         DiscordOAuth2: {
             code: "Vec<u8>",
             redirect_uri: "Vec<u8>",
+        },
+        EmailValidationData: {
+            email: "Text",
+            verification_code: "Text",
         },
         Web3ValidationData: {
             _enum: {

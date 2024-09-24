@@ -22,6 +22,7 @@ use crate::{
 	},
 	initialization::global_components::{
 		EnclaveBitcoinKeyRepository, EnclaveEthereumKeyRepository, EnclaveSigningKeyRepository,
+		EnclaveTonKeyRepository,
 	},
 	std::string::ToString,
 	utils::get_validator_accessor_from_integritee_solo_or_parachain,
@@ -80,6 +81,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, OcallA
 	signing_key_repository: Arc<EnclaveSigningKeyRepository>,
 	bitcoin_key_repository: Arc<EnclaveBitcoinKeyRepository>,
 	ethereum_key_repository: Arc<EnclaveEthereumKeyRepository>,
+	ton_key_repository: Arc<EnclaveTonKeyRepository>,
 	signer_lookup: Arc<SR>,
 ) -> IoHandler
 where
@@ -237,10 +239,16 @@ where
 			Err(_e) => compute_hex_encoded_return_error("Can not obtain ethereum key"),
 		};
 
+		let ton_key = match ton_key_repository.retrieve_key() {
+			Ok(pair) => pair.public().0.to_hex(),
+			Err(_e) => compute_hex_encoded_return_error("Can not obtain ton key"),
+		};
+
 		Ok(json!({
 			"signer": signer,
 			"bitcoin_key": bitcoin_key,
-			"ethereum_key": ethereum_key
+			"ethereum_key": ethereum_key,
+			"ton_key": ton_key
 		}))
 	});
 
