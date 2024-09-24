@@ -47,7 +47,6 @@ members = [
     "bitacross/core-primitives/enclave-api",
     "bitacross/core-primitives/enclave-api/ffi",
     "bitacross/service",
-    # "bitacross/enclave-runtime",
     "bitacross/litentry/core/direct-call",
     "bitacross/bitacross/core/*",
 ]
@@ -55,6 +54,8 @@ members = [
 exclude = [
     "common/core-primitives/sgx",
     "common/core-primitives/substrate-sgx",
+
+    # enclave-runtime needs to have its own workspace root for patching
     "bitacross/enclave-runtime",
 ]
 
@@ -190,7 +191,6 @@ itc-parentchain-light-client = { path = "common/core/parentchain/light-client", 
 itc-parentchain-test = { path = "common/core/parentchain/test", default-features = false }
 itc-rest-client = { path = "common/core/rest-client", default-features = false }
 itc-rpc-client = { path = "common/core/rpc-client" }
-itc-direct-rpc-server = { path = "common/core/direct-rpc-server", default-features = false }
 itc-tls-websocket-server = { path = "common/core/tls-websocket-server", default-features = false }
 itc-offchain-worker-executor = { path = "common/core/offchain-worker-executor", default-features = false }
 
@@ -223,7 +223,6 @@ itp-node-api-metadata = { path = "common/core-primitives/node-api/metadata", def
 itp-node-api-metadata-provider = { path = "common/core-primitives/node-api/metadata-provider", default-features = false }
 itp-networking-utils = { path = "common/core-primitives/networking-utils", default-features = false }
 itp-primitives-cache = { path = "common/core-primitives/primitives-cache", default-features = false }
-itp-stf-executor = { path = "common/core-primitives/stf-executor", default-features = false }
 itp-stf-interface = { path = "common/core-primitives/stf-interface", default-features = false }
 itp-stf-state-handler = { path = "common/core-primitives/stf-state-handler", default-features = false }
 itp-stf-state-observer = { path = "common/core-primitives/stf-state-observer", default-features = false }
