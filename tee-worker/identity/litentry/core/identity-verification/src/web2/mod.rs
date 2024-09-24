@@ -227,7 +227,8 @@ pub fn verify(
 							ErrorString::truncate_from(
 								std::format!(
 									"no verification code found for {}:{}",
-									account_id_to_string(&account_id, &email)
+									account_id_to_string(&account_id),
+									&email
 								)
 								.as_bytes()
 								.to_vec(),
