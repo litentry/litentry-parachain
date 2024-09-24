@@ -19,7 +19,7 @@
 use crate::{
 	initialization::global_components::{
 		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_TON_KEY_REPOSITORY_COMPONENT,
 	},
 	rpc::worker_api_direct::public_api_rpc_handler,
 	test::{
@@ -89,6 +89,7 @@ pub fn state_get_mrenclave_works() {
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_TON_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		signer_lookup,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
@@ -143,6 +144,7 @@ pub fn get_state_request_works() {
 		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get().unwrap(),
+		GLOBAL_TON_KEY_REPOSITORY_COMPONENT.get().unwrap(),
 		signer_lookup,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));

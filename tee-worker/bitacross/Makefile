@@ -27,7 +27,7 @@ SGX_PRODUCTION ?= 0
 ######## Worker Feature Settings ########
 # Set offchain-worker as default feature mode
 WORKER_MODE ?= offchain-worker
-RA_METHOD ?= dcap
+RA_METHOD ?=
 
 SKIP_WASM_BUILD = 1
 # include the build settings from rust-sgx-sdk

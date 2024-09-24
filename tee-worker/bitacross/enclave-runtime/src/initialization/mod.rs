@@ -259,6 +259,7 @@ pub(crate) fn init_enclave(
 		signing_key_repository,
 		bitcoin_key_repository,
 		ethereum_key_repository,
+		ton_key_repository,
 		signer_registry,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
