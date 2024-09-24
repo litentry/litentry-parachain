@@ -24,7 +24,7 @@ beforeAll(async () => {
   registry.register(types);
 });
 
-describe.only('Bitcoin', () => {
+describe('Bitcoin', () => {
   test('0x prefix is restored for hex encoded challenge code', () => {
     const validationData = createLitentryValidationDataType(
       registry,
@@ -278,5 +278,30 @@ describe('Discord', () => {
     const data = validationData.asWeb2Validation.asDiscord.asOAuth2;
     expect(data.code.toHuman()).toEqual('my_discord_code');
     expect(data.redirect_uri.toHuman()).toEqual('http://test-redirect-uri');
+  });
+});
+
+describe('Email', () => {
+  test('it works', () => {
+    const validationData = createLitentryValidationDataType(
+      registry,
+      {
+        addressOrHandle: 'test@my.wrong.email', // not validated
+        type: 'Email',
+      },
+      {
+        email: 'test@my.wrong.email',
+        verificationCode: '123',
+      }
+    );
+
+    expect(validationData).toBeDefined();
+    expect(validationData.isWeb2Validation).toBeTruthy();
+    expect(validationData.asWeb2Validation.isEmail).toBeTruthy();
+
+    const data = validationData.asWeb2Validation.asEmail;
+
+    expect(data.email.toHuman()).toEqual('test@my.wrong.email');
+    expect(data.verification_code.toHuman()).toEqual('123');
   });
 });
