@@ -24,11 +24,9 @@ url = { workspace = true }
 [features]
 default = ["std"]
 std = [
-    # std only
     "http",
     "http_req",
     "thiserror",
-    # no_std
     "base64/std",
     "serde/std",
     "serde_json/std",

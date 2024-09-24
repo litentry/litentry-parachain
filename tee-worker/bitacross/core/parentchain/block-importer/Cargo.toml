@@ -13,7 +13,7 @@ itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor",
 itc-parentchain-light-client = { workspace = true }
 itp-enclave-metrics = { workspace = true }
 itp-extrinsics-factory = { workspace = true }
-itp-stf-executor = { workspace = true }
+itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-interface = { workspace = true }
 itp-types = { workspace = true }
 itp-ocall-api = { workspace = true }

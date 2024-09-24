@@ -17,10 +17,7 @@
 
 pub mod events;
 
-use crate::{
-	parentchain::events::AssertionCreated, Block as ParachainBlock, Block as SolochainBlock,
-	OpaqueCall, ShardIdentifier,
-};
+use crate::{parentchain::events::AssertionCreated, OpaqueCall, ShardIdentifier};
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
@@ -296,6 +293,8 @@ impl<Header> SimpleParams<Header> {
 // Moved from `itc_parent::primitives`
 use sp_runtime::traits::Block;
 
+pub type ParachainBlock = crate::Block;
+pub type SolochainBlock = crate::Block;
 pub type HeaderFor<B> = <B as Block>::Header;
 pub type SolochainHeader = HeaderFor<SolochainBlock>;
 pub type ParachainHeader = HeaderFor<ParachainBlock>;

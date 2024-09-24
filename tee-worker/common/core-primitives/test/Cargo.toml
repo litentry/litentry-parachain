@@ -53,6 +53,7 @@ std = [
     "sp-std/std",
     "litentry-primitives/std",
     "lc-teebag-storage/std",
+    "sgx_crypto_helper/default",
 ]
 sgx = [
     "itp-node-api/sgx",
@@ -63,4 +64,5 @@ sgx = [
     "jsonrpc-core_sgx",
     "sgx_tstd",
     "litentry-primitives/sgx",
+    "sgx_crypto_helper/mesalock_sgx",
 ]

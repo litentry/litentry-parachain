@@ -22,7 +22,7 @@ itp-enclave-metrics = { workspace = true }
 itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-sgx-externalities = { workspace = true }
-itp-stf-executor = { workspace = true }
+itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { workspace = true }
 
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
@@ -32,9 +32,8 @@ bc-relayer-registry = { path = "../bc-relayer-registry", default-features = fals
 bc-signer-registry = { path = "../bc-signer-registry", default-features = false }
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
-
-itc-direct-rpc-client = { workspace = true }
-itc-direct-rpc-server = { workspace = true }
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
 litentry-primitives = { workspace = true }
 
 sgx_crypto_helper = { workspace = true }
@@ -86,5 +85,6 @@ std = [
     "thiserror",
     "itc-direct-rpc-server/std",
     "itc-direct-rpc-client/std",
+    "sgx_crypto_helper/default",
 ]
 development = []

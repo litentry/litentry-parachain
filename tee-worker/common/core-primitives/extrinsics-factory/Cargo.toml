@@ -30,6 +30,9 @@ std = [
     "log/std",
     "substrate-api-client/std",
     "thiserror",
+    "codec/std",
+    "sp-core/std",
+    "sp-runtime/std",
 ]
 sgx = [
     "itp-node-api/sgx",

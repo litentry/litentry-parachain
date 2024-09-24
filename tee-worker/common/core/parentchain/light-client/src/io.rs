@@ -369,14 +369,11 @@ where
 #[cfg(feature = "test")]
 pub mod sgx_tests {
 	use super::{read_or_init_parachain_validator, Arc, LightClientStateSeal, RelayState};
-	use crate::{
-		light_client_init_params::SimpleParams, LightClientSealing, LightClientState,
-		LightValidationState,
-	};
+	use crate::{LightClientSealing, LightClientState, LightValidationState};
 	use itc_parentchain_test::{Block, Header, ParentchainHeaderBuilder};
 	use itp_sgx_temp_dir::TempDir;
 	use itp_test::mock::onchain_mock::OnchainMock;
-	use itp_types::parentchain::ParentchainId;
+	use itp_types::parentchain::{ParentchainId, SimpleParams};
 	use sp_runtime::OpaqueExtrinsic;
 
 	type TestBlock = Block<Header, OpaqueExtrinsic>;

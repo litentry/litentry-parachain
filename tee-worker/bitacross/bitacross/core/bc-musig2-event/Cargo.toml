@@ -13,14 +13,15 @@ threadpool_sgx = { workspace = true, optional = true }
 
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
 bc-musig2-ceremony = { path = "../bc-musig2-ceremony", default-features = false }
-itc-direct-rpc-client = { workspace = true }
-itc-direct-rpc-server = { workspace = true }
+lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
+
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
 itp-ocall-api = { workspace = true }
 itp-rpc = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-types = { workspace = true }
 itp-utils = { workspace = true }
-lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { workspace = true }
 rand = { version = "0.8.5", optional = true }
 sgx_rand = { workspace = true, optional = true }

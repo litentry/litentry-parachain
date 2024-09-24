@@ -35,7 +35,7 @@ codec = { package = "parity-scale-codec", workspace = true }
 # ipfs
 ipfs-api = "0.11.0"
 
-sgx_crypto_helper = { workspace = true }
+sgx_crypto_helper = { workspace = true, features = ["ucrypto_help"] }
 sgx_types = { workspace = true }
 
 ita-parentchain-interface = { path = "../app-libs/parentchain-interface" }

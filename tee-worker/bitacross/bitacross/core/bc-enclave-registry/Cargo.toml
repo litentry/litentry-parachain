@@ -4,14 +4,12 @@ authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 sp-std = { workspace = true }
 
-sgx_tstd = { workspace = true, optional = true, features = ["net", "thread"] }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 thiserror_sgx = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
@@ -25,8 +23,7 @@ base64 = { workspace = true, features = ["alloc"] }
 
 [features]
 default = ["std"]
-production = [
-]
+production = []
 sgx = [
     "sgx_tstd",
     "thiserror_sgx",

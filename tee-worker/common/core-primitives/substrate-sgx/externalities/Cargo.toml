@@ -31,7 +31,6 @@ std = [
     "postcard/use-std",
     "serde/std",
     "itp-storage/std",
-    # substrate
     "sp-core/std",
 ]
 sgx = [

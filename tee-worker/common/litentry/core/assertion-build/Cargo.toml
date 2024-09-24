@@ -15,7 +15,7 @@ http-sgx = { workspace = true, optional = true }
 http_req-sgx = { workspace = true, optional = true }
 rust-base58-sgx = { workspace = true, optional = true }
 thiserror_sgx = { workspace = true, optional = true }
-sgx_tstd = { workspace = true, optional = true, features = ["net", "thread"] }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 codec = { package = "parity-scale-codec", workspace = true }
 hex = { workspace = true }

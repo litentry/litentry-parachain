@@ -7,7 +7,7 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
-sgx_tstd = { workspace = true, optional = true, features = ["thread"] }
+sgx_tstd = { workspace = true, features = ["thread"], optional = true }
 
 [features]
 default = ["std"]

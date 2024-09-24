@@ -20,7 +20,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
 	pallet_evm_assertion::EvmAssertionsCallIndexes, pallet_imp::IMPCallIndexes,
 	pallet_proxy::ProxyCallIndexes, pallet_system::SystemConstants,
 	pallet_teebag::TeebagCallIndexes, pallet_timestamp::TimestampCallIndexes,
@@ -34,6 +34,7 @@ pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
 pub mod pallet_balances;
+pub mod pallet_bitacross;
 pub mod pallet_evm_assertion;
 pub mod pallet_imp;
 pub mod pallet_proxy;
@@ -58,6 +59,7 @@ pub trait NodeMetadataTrait:
 	+ BalancesCallIndexes
 	+ TimestampCallIndexes
 	+ EvmAssertionsCallIndexes
+	+ BitAcrossCallIndexes
 {
 }
 
@@ -70,7 +72,8 @@ impl<
 			+ ProxyCallIndexes
 			+ BalancesCallIndexes
 			+ TimestampCallIndexes
-			+ EvmAssertionsCallIndexes,
+			+ EvmAssertionsCallIndexes
+			+ BitAcrossCallIndexes,
 	> NodeMetadataTrait for T
 {
 }

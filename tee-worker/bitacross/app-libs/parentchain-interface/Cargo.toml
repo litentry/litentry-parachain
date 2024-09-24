@@ -33,9 +33,9 @@ sp-std = { workspace = true }
 env_logger = { workspace = true }
 itp-node-api = { workspace = true, features = ["std", "mocks"] }
 itp-sgx-crypto = { workspace = true, features = ["std", "mocks"] }
-itp-stf-executor = { workspace = true, features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
-itp-top-pool-author = { workspace = true, features = ["std", "mocks"] }
+itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["std", "mocks"] }
+itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["std", "mocks"] }
 itc-parentchain-test = { workspace = true, features = ["std"] }
 
 [features]

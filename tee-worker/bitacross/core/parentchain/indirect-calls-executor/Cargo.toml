@@ -12,10 +12,10 @@ itp-api-client-types = { workspace = true }
 itp-node-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-sgx-runtime-primitives = { workspace = true }
-itp-stf-executor = { workspace = true }
+itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-primitives = { workspace = true }
 itp-test = { workspace = true }
-itp-top-pool-author = { workspace = true }
+itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { workspace = true }
 
 futures_sgx = { workspace = true, optional = true }
@@ -41,9 +41,9 @@ litentry-primitives = { workspace = true }
 env_logger = { workspace = true }
 itp-node-api = { workspace = true, features = ["std", "mocks"] }
 itp-sgx-crypto = { workspace = true, features = ["std", "mocks"] }
-itp-stf-executor = { workspace = true, features = ["std", "mocks"] }
+itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
-itp-top-pool-author = { workspace = true, features = ["std", "mocks"] }
+itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["std", "mocks"] }
 itc-parentchain-test = { workspace = true, features = ["std"] }
 
 [features]

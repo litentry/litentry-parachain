@@ -14,7 +14,7 @@ k256 = { workspace = true, features = ["ecdsa-core", "schnorr", "alloc"] }
 secp256k1 = { workspace = true, features = ["alloc", "recovery"] }
 serde_json = { workspace = true, optional = true }
 
-serde_json-sgx = { workspace = true, optional = true }
+serde_json_sgx = { workspace = true, optional = true }
 sgx_crypto_helper = { workspace = true }
 sgx_rand = { workspace = true, optional = true }
 sgx_tstd = { workspace = true, optional = true }
@@ -40,13 +40,11 @@ sgx = [
     "sgx_tstd",
     "sgx_rand",
     "itp-sgx-io/sgx",
-    "serde_json-sgx",
+    "serde_json_sgx",
 ]
 mocks = []
 test = [
-    # features
     "mocks",
     "sgx",
-    # deps
     "itp-sgx-temp-dir",
 ]

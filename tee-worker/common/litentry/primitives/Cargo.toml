@@ -43,7 +43,9 @@ sgx = [
 ]
 std = [
     "hex/std",
+    "codec/std",
     "serde/std",
+    "scale-info/std",
     "itp-sgx-crypto/std",
     "itp-sgx-runtime-primitives/std",
     "sp-core/std",
