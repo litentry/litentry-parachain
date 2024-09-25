@@ -58,8 +58,8 @@ FROM ubuntu:22.04 AS chain-aio
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
-ENV NVM_DIR /opt/nvm
-ENV ZOMBIENET_VERSION v1.3.109
+ENV NVM_DIR=/opt/nvm
+ENV ZOMBIENET_VERSION=v1.3.109
 
 # install netcat for healthcheck
 RUN apt-get update && \
@@ -84,7 +84,7 @@ RUN apt-get update && \
     nvm install 18 && \
     nvm use 18 && \
     apt-get clean && \
-    rm -rf /var/cache/apt/lists 
+    rm -rf /var/cache/apt/lists
 
 RUN echo "downloading zombienet-linux-x64 ..." && \
     curl -L -s -O "https://github.com/paritytech/zombienet/releases/download/$ZOMBIENET_VERSION/zombienet-linux-x64" && \
