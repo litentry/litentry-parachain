@@ -42,6 +42,7 @@ echo "PROFILE: $PROFILE"
 echo "TAG: $TAG"
 echo "ARGS: $ARGS"
 
+# ===================================================================================
 GITUSER=litentry
 GITREPO=litentry-parachain
 PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
@@ -69,6 +70,7 @@ echo "Image is ready"
 echo "------------------------------------------------------------"
 docker images | grep ${GITREPO}
 
+# ===================================================================================
 GITUSER=litentry
 GITREPO=litentry-chain-aio
 PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
