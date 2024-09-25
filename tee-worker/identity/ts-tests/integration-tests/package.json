@@ -7,9 +7,7 @@
         "format": "prettier --write .",
         "pretest": "eslint .",
         "test": "mocha --exit --sort -r ts-node/register --loader=ts-node/esm",
-        "check-types": "tsc --noEmit",
-        "compile-contracts": "cd ../../litentry/core/assertion-build/src/dynamic && pnpm i && pnpm clean && pnpm compile",
-        "link-contracts": "ln -s ../../litentry/core/assertion-build/src/dynamic/artifacts/contracts ./contracts"
+        "check-types": "tsc --noEmit"
     },
     "dependencies": {
         "@litentry/vc-schema-validator": "^0.0.1",

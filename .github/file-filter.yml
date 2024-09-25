@@ -31,13 +31,6 @@ identity_src: &identity_src
   - 'tee-worker/identity/build.Dockerfile'
   - 'tee-worker/identity/enclave-runtime/**'
 
-identity_test: &identity_test
-  - 'tee-worker/identity/ts-tests/**'
-  - 'tee-worker/identity/cli/*.sh'
-  - 'parachain/docker/**'
-  - 'tee-worker/identity/docker/*.yml'
-  - 'tee-worker/identity/litentry/core/assertion-build/src/dynamic/contracts/**'
-
 bitacross_src: &bitacross_src
   - 'common/**'
   - 'tee-worker/Cargo.toml'
