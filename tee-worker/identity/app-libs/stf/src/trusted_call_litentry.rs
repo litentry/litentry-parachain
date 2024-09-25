@@ -29,6 +29,7 @@ use ita_sgx_runtime::{RuntimeOrigin, System};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
+use itp_sgx_crypto::{key_repository::AccessKey, Aes};
 use itp_stf_primitives::{
 	error::{StfError, StfResult},
 	types::{AccountId, ShardIdentifier},
@@ -169,9 +170,10 @@ impl TrustedCallSigned {
 
 	// common handler for both web2 and web3 identity verification
 	#[allow(clippy::too_many_arguments)]
-	pub fn handle_link_identity_callback<NodeMetadataRepository>(
+	pub fn handle_link_identity_callback<NodeMetadataRepository, StateKeyRepository>(
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		state_key_repository: Arc<StateKeyRepository>,
 		signer: Identity,
 		who: Identity,
 		identity: Identity,
@@ -182,6 +184,7 @@ impl TrustedCallSigned {
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+		StateKeyRepository: AccessKey<KeyType = Aes>,
 	{
 		debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 		// the pallet extrinsic doesn't accept customised return type, so

@@ -28,7 +28,8 @@ use crate::{
 			EnclaveExtrinsicsFactory, EnclaveNodeMetadataRepository, EnclaveOCallApi,
 			EnclaveStfExecutor, EnclaveValidatorAccessor, TargetBParentchainBlockImportDispatcher,
 			GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-			GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE,
+			GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+			GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE,
 		},
 		parentchain::common::{
 			create_extrinsics_factory, create_sidechain_triggered_import_dispatcher_for_target_b,
@@ -84,10 +85,13 @@ impl TargetBParachainHandler {
 			node_metadata_repository.clone(),
 		)?;
 
+		let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
+
 		let stf_executor = Arc::new(EnclaveStfExecutor::new(
 			ocall_api,
 			state_handler,
 			node_metadata_repository.clone(),
+			state_key_repository,
 		));
 
 		let block_importer = create_target_b_parentchain_block_importer(

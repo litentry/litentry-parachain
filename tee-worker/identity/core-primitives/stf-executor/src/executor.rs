@@ -24,6 +24,7 @@ use codec::{Decode, Encode};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_crypto::{aes::Aes, key_repository::AccessKey};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInstancesInterface,
@@ -47,20 +48,29 @@ use std::{
 	time::Duration, vec, vec::Vec,
 };
 
-pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
-where
+pub struct StfExecutor<
+	OCallApi,
+	StateHandler,
+	NodeMetadataRepository,
+	Stf,
+	TCS,
+	G,
+	StateKeyRepository,
+	PH,
+> where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
 	ocall_api: Arc<OCallApi>,
 	state_handler: Arc<StateHandler>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
+	state_key_repository: Arc<StateKeyRepository>,
 	_phantom: PhantomData<(Stf, TCS, G, PH)>,
 }
 
 // maybe we need concrete types here
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
-	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
+	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
@@ -70,7 +80,14 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>,
+		> + StateCallInterface<
+			TCS,
+			StateHandler::StateT,
+			NodeMetadataRepository,
+			OCallApi,
+			StateKeyRepository,
+			PH,
+		>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)> + From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
 	<Stf as StateCallInterface<
@@ -78,18 +95,27 @@ where
 		StateHandler::StateT,
 		NodeMetadataRepository,
 		OCallApi,
+		StateKeyRepository,
 		PH,
 	>>::Error: Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	PH: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	pub fn new(
 		ocall_api: Arc<OCallApi>,
 		state_handler: Arc<StateHandler>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
+		state_key_repository: Arc<StateKeyRepository>,
 	) -> Self {
-		StfExecutor { ocall_api, state_handler, node_metadata_repo, _phantom: PhantomData }
+		StfExecutor {
+			ocall_api,
+			state_handler,
+			node_metadata_repo,
+			state_key_repository,
+			_phantom: PhantomData,
+		}
 	}
 
 	/// Execute a trusted call on the STF
@@ -105,8 +131,7 @@ where
 		parentchain_header: &PH,
 		shard: &ShardIdentifier,
 		post_processing: StatePostProcessing,
-	) -> Result<ExecutedOperation<TCS, G>>
-	{
+	) -> Result<ExecutedOperation<TCS, G>> {
 		debug!("query mrenclave of self");
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
 
@@ -139,6 +164,7 @@ where
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),
 			self.ocall_api.clone(),
+			self.state_key_repository.clone(),
 			parentchain_header,
 		) {
 			Err(e) => {
@@ -188,9 +214,9 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
 	StfUpdateState<PH, ParentchainId>
-	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
 	StateHandler: HandleState<HashType = H256> + QueryShardState,
@@ -208,6 +234,7 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	PH: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	fn update_states(&self, header: &PH, parentchain_id: &ParentchainId) -> Result<()> {
 		debug!("Update STF storage upon block import!");
@@ -249,8 +276,8 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
-	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
+	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
 where
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>> + IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
@@ -267,6 +294,7 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	PH: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	fn initialize_new_shards(
 		&self,
@@ -299,8 +327,9 @@ where
 	}
 }
 
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH> StateUpdateProposer<TCS, G, PH>
-	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, PH>
+impl<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
+	StateUpdateProposer<TCS, G, PH>
+	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G, StateKeyRepository, PH>
 where
 	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
@@ -311,18 +340,31 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>
-		+ RuntimeUpgradeInterface<StateHandler::StateT>,
+		> + StateCallInterface<
+			TCS,
+			StateHandler::StateT,
+			NodeMetadataRepository,
+			OCallApi,
+			StateKeyRepository,
+			PH,
+		> + RuntimeUpgradeInterface<StateHandler::StateT>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
-	<Stf as StateCallInterface<TCS, StateHandler::StateT, NodeMetadataRepository, OCallApi, PH>>::Error:
-		Debug,
+	<Stf as StateCallInterface<
+		TCS,
+		StateHandler::StateT,
+		NodeMetadataRepository,
+		OCallApi,
+		StateKeyRepository,
+		PH,
+	>>::Error: Debug,
 	<Stf as RuntimeUpgradeInterface<StateHandler::StateT>>::Error: Debug,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	PH: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Externalities = StateHandler::StateT;
 

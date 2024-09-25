@@ -129,6 +129,7 @@ pub type EnclaveStfExecutor = StfExecutor<
 	EnclaveStf,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
+	EnclaveStateKeyRepository,
 	ParentchainHeader,
 >;
 pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<

@@ -23,7 +23,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 itp-node-api = { path = "../node-api", default-features = false }
 itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
-itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
+itp-sgx-crypto = { path = "../sgx/crypto", default-features = false, features = ["mocks"] }
 itp-sgx-externalities = { default-features = false, path = "../substrate-sgx/externalities" }
 itp-stf-interface = { path = "../stf-interface", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }

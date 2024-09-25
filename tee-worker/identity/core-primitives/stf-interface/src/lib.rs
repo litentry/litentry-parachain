@@ -28,6 +28,7 @@ use core::fmt::Debug;
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_sgx_crypto::{aes::Aes, key_repository::AccessKey};
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{BlockHash, BlockNumber, ParentchainCall, ParentchainId},
@@ -64,12 +65,19 @@ pub trait UpdateState<State, StateDiff> {
 }
 
 /// Interface to execute state mutating calls on a state.
-pub trait StateCallInterface<TCS, State, NodeMetadataRepository, OCallApi, ParentchainHeader>
-where
+pub trait StateCallInterface<
+	TCS,
+	State,
+	NodeMetadataRepository,
+	OCallApi,
+	StateKeyRepository,
+	ParentchainHeader,
+> where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	OCallApi: EnclaveOnChainOCallApi,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 	ParentchainHeader: HeaderTrait<Hash = H256>,
 {
 	type Error: Encode;
@@ -90,6 +98,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		state_key_repository: Arc<StateKeyRepository>,
 		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error>;
 }
@@ -101,12 +110,13 @@ pub trait StateGetterInterface<G, S> {
 }
 
 /// Trait used to abstract the call execution.
-pub trait ExecuteCall<NodeMetadataRepository, OCallApi, ParentchainHeader>
+pub trait ExecuteCall<NodeMetadataRepository, OCallApi, StateKeyRepository, ParentchainHeader>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	OCallApi: EnclaveOnChainOCallApi,
 	ParentchainHeader: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -122,6 +132,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		state_key_repository: Arc<StateKeyRepository>,
 		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error>;
 

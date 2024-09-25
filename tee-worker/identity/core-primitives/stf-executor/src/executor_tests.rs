@@ -20,7 +20,9 @@ use codec::Encode;
 use itc_parentchain_test::ParentchainHeaderBuilder;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::{SgxExternalities as State, SgxExternalitiesTrait};
+use itp_sgx_io::SealedIO;
 use itp_stf_primitives::{traits::TrustedCallSigning, types::ShardIdentifier};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{
@@ -244,6 +246,7 @@ fn stf_executor() -> (
 		StfMock,
 		TrustedCallSignedMock,
 		GetterMock,
+		KeyRepositoryMock<Aes>,
 		ParentchainHeader,
 	>,
 	Arc<OnchainMock>,
@@ -252,7 +255,14 @@ fn stf_executor() -> (
 	let ocall_api = Arc::new(OnchainMock::default());
 	let state_handler = Arc::new(HandleStateMock::default());
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
-	let executor = StfExecutor::new(ocall_api.clone(), state_handler.clone(), node_metadata_repo);
+	let state_key_repository = Arc::new(KeyRepositoryMock::new(Aes::default()));
+
+	let executor = StfExecutor::new(
+		ocall_api.clone(),
+		state_handler.clone(),
+		node_metadata_repo,
+		state_key_repository,
+	);
 	(executor, ocall_api, state_handler)
 }
 

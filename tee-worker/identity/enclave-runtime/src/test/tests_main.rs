@@ -37,7 +37,7 @@ use ita_stf::{
 	AccountInfo, Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
-use itp_sgx_crypto::{Aes, StateCrypto};
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes, StateCrypto};
 use itp_sgx_externalities::{SgxExternalitiesDiffType, SgxExternalitiesTrait, StateHash};
 use itp_stf_executor::{
 	executor_tests as stf_executor_tests, traits::StateUpdateProposer, BatchExecutionResult,
@@ -578,6 +578,7 @@ pub fn test_retrieve_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
+	let state_key_repository = Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -586,6 +587,7 @@ pub fn test_retrieve_events() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		state_key_repository,
 		&latest_parentchain_header(),
 	)
 	.unwrap();
@@ -614,6 +616,7 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
+	let state_key_repository = Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -622,6 +625,7 @@ pub fn test_retrieve_event_count() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		state_key_repository,
 		&latest_parentchain_header(),
 	)
 	.unwrap();
@@ -648,6 +652,7 @@ pub fn test_reset_events() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
+	let state_key_repository = Arc::new(KeyRepositoryMock::<Aes>::new(Aes::default()));
 	TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -656,6 +661,7 @@ pub fn test_reset_events() {
 		&mut opaque_vec,
 		repo,
 		ocall_api,
+		state_key_repository,
 		&latest_parentchain_header(),
 	)
 	.unwrap();

@@ -87,6 +87,7 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 		ocall_api.clone(),
 		state_handler.clone(),
 		node_metadata_repo,
+		state_key_repo.clone(),
 	));
 	let top_pool = create_top_pool();
 	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);

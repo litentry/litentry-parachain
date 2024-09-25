@@ -20,7 +20,7 @@ use ita_stf::{Getter, Stf, TrustedCall, TrustedCallSigned};
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{
-	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, mocks::KeyRepositoryMock,
+	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, mocks::KeyRepositoryMock, Aes,
 };
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::{enclave_signer::StfEnclaveSigner, traits::StfEnclaveSigning};
@@ -43,6 +43,7 @@ use sp_runtime::traits::Header as HeaderTrait;
 use std::{sync::Arc, vec::Vec};
 
 type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
+type StateKeyRepositoryMock = KeyRepositoryMock<Aes>;
 type TestStf = Stf<TrustedCallSigned, GetterExecutorMock, SgxExternalities, Runtime>;
 
 pub fn latest_parentchain_header() -> Header {
@@ -139,6 +140,7 @@ pub fn nonce_is_computed_correctly() {
 
 	assert_eq!(0, TestStf::get_account_nonce(&mut state, &enclave_account));
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let state_key_repository = Arc::new(StateKeyRepositoryMock::new(Aes::default()));
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
@@ -147,6 +149,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut Vec::new(),
 		repo.clone(),
 		ocall_api.clone(),
+		state_key_repository.clone(),
 		&latest_parentchain_header(),
 	)
 	.is_ok());
@@ -159,6 +162,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut Vec::new(),
 		repo,
 		ocall_api,
+		state_key_repository,
 		&latest_parentchain_header(),
 	)
 	.is_ok());

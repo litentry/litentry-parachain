@@ -24,6 +24,7 @@ itp-stf-state-observer = { path = "../stf-state-observer", default-features = fa
 itp-time-utils = { path = "../time-utils", default-features = false }
 itp-top-pool-author = { path = "../top-pool-author", default-features = false }
 itp-types = { path = "../types", default-features = false }
+itp-sgx-io = { path = "../sgx/io", default-features = false }
 
 # sgx enabled external libraries
 thiserror_sgx = { optional = true, package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }

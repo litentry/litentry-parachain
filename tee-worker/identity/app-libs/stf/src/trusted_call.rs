@@ -40,6 +40,7 @@ pub use ita_sgx_runtime::{
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes};
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_sgx_crypto::{key_repository::AccessKey, Aes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::{
 	error::StfError,
@@ -343,13 +344,15 @@ impl TrustedCallVerification for TrustedCallSigned {
 	}
 }
 
-impl<NodeMetadataRepository, OCallApi, ParentchainHeader>
-	ExecuteCall<NodeMetadataRepository, OCallApi, ParentchainHeader> for TrustedCallSigned
+impl<NodeMetadataRepository, OCallApi, StateKeyRepository, ParentchainHeader>
+	ExecuteCall<NodeMetadataRepository, OCallApi, StateKeyRepository, ParentchainHeader>
+	for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	OCallApi: EnclaveOnChainOCallApi,
 	ParentchainHeader: HeaderTrait<Hash = H256>,
+	StateKeyRepository: AccessKey<KeyType = Aes>,
 {
 	type Error = StfError;
 	type Result = TrustedCallResult;
@@ -394,6 +397,7 @@ where
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		ocall_api: Arc<OCallApi>,
+		state_key_repository: Arc<StateKeyRepository>,
 		parentchain_header: &ParentchainHeader,
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
@@ -648,6 +652,7 @@ where
 					Self::handle_link_identity_callback(
 						calls,
 						node_metadata_repo,
+						state_key_repository,
 						enclave_signer_account::<AccountId>().into(),
 						who,
 						identity,
@@ -776,6 +781,7 @@ where
 			) => Self::handle_link_identity_callback(
 				calls,
 				node_metadata_repo,
+				state_key_repository,
 				signer,
 				who,
 				identity,

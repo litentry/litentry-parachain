@@ -12,6 +12,7 @@ itp-node-api-metadata = { path = "../node-api/metadata", default-features = fals
 itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }
+itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
 itp-types = { default-features = false, path = "../types" }
 
 [features]
@@ -22,8 +23,10 @@ std = [
     "itp-stf-primitives/std",
     "itp-types/std",
     "itp-ocall-api/std",
+    "itp-sgx-crypto/std",
 ]
 sgx = []
 mocks = [
     "itp-ocall-api/mocks",
+    "itp-sgx-crypto/mocks",
 ]

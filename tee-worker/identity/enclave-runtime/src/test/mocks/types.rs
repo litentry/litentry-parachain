@@ -77,6 +77,7 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	TestStateKeyRepo,
 	ParentchainHeader,
 >;
 

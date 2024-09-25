@@ -26,6 +26,7 @@ itp-stf-interface = { default-features = false, path = "../../core-primitives/st
 itp-stf-primitives = { default-features = false, path = "../../core-primitives/stf-primitives" }
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
 itp-storage = { default-features = false, path = "../../core-primitives/storage" }
+itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-types = { default-features = false, path = "../../core-primitives/types" }
 itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 sp-io = { default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
@@ -62,6 +63,7 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "itp-node-api-metadata-provider/sgx",
+    "itp-sgx-crypto/sgx",
 ]
 std = [
     # crates.io
@@ -76,6 +78,7 @@ std = [
     "itp-types/std",
     "itp-node-api/std",
     "itp-node-api-metadata/std",
+    "itp-sgx-crypto/std",
     # substrate
     "sp-core/std",
     "pallet-balances/std",

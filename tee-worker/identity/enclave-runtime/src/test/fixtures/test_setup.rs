@@ -24,7 +24,9 @@ use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State, Stf, TrustedCallSigned};
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, mocks::KeyRepositoryMock};
+use itp_sgx_crypto::{
+	ed25519_derivation::DeriveEd25519, key_repository::KeyRepository, mocks::KeyRepositoryMock, Aes,
+};
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
@@ -61,6 +63,8 @@ pub type TestTopPoolAuthor = Author<
 >;
 pub type TestStf = Stf<TrustedCallSigned, Getter, SgxExternalities, Runtime>;
 
+type TestStateKeyRepository = KeyRepositoryMock<Aes>;
+
 pub type TestStfExecutor = StfExecutor<
 	OcallApi,
 	HandleStateMock,
@@ -68,6 +72,7 @@ pub type TestStfExecutor = StfExecutor<
 	TestStf,
 	TrustedCallSigned,
 	Getter,
+	TestStateKeyRepository,
 	ParentchainHeader,
 >;
 
@@ -93,10 +98,13 @@ pub fn test_setup() -> (
 	let mrenclave = OcallApi.get_mrenclave_of_self().unwrap().m;
 
 	let node_metadata_repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
+	let state_key_repository = KeyRepositoryMock::new(Aes::default());
+
 	let stf_executor = Arc::new(TestStfExecutor::new(
 		Arc::new(OcallApi),
 		state_handler.clone(),
 		node_metadata_repo,
+		Arc::new(state_key_repository),
 	));
 
 	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);

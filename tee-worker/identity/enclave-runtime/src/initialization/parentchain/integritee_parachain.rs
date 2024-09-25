@@ -24,7 +24,7 @@ use crate::{
 			IntegriteeParentchainBlockImportDispatcher,
 			GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 			GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE, GLOBAL_OCALL_API_COMPONENT,
-			GLOBAL_STATE_HANDLER_COMPONENT,
+			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 		},
 		parentchain::common::{
 			create_extrinsics_factory, create_integritee_offchain_immediate_import_dispatcher,
@@ -81,10 +81,13 @@ impl IntegriteeParachainHandler {
 			node_metadata_repository.clone(),
 		)?;
 
+		let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
+
 		let stf_executor = Arc::new(EnclaveStfExecutor::new(
 			ocall_api,
 			state_handler,
 			node_metadata_repository.clone(),
+			state_key_repository,
 		));
 
 		let block_importer = create_integritee_parentchain_block_importer(

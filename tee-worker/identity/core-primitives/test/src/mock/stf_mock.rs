@@ -20,6 +20,7 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_node_api::metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_interface::{
 	runtime_upgrade::RuntimeUpgradeInterface, ExecuteCall, InitState, StateCallInterface,
@@ -74,6 +75,7 @@ impl
 		SgxExternalities,
 		NodeMetadataRepositoryMock,
 		OnchainMock,
+		KeyRepositoryMock<Aes>,
 		ParentchainHeader,
 	> for StfMock
 {
@@ -88,10 +90,19 @@ impl
 		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 		ocall_api: Arc<OnchainMock>,
+		state_key_repository: Arc<KeyRepositoryMock<Aes>>,
 		parentchain_header: &ParentchainHeader,
 	) -> Result<(), Self::Error> {
 		state.execute_with(|| {
-			call.execute(shard, top_hash, calls, node_metadata_repo, ocall_api, parentchain_header)
+			call.execute(
+				shard,
+				top_hash,
+				calls,
+				node_metadata_repo,
+				ocall_api,
+				state_key_repository,
+				parentchain_header,
+			)
 		})
 	}
 }
@@ -185,7 +196,7 @@ impl Default for TrustedCallSignedMock {
 	}
 }
 
-impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock, ParentchainHeader>
+impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock, KeyRepositoryMock<Aes>, ParentchainHeader>
 	for TrustedCallSignedMock
 {
 	type Error = StfMockError;
@@ -198,6 +209,7 @@ impl ExecuteCall<NodeMetadataRepositoryMock, OnchainMock, ParentchainHeader>
 		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 		_ocall_api: Arc<OnchainMock>,
+		_state_key_repository: Arc<KeyRepositoryMock<Aes>>,
 		_parentchain_header: &ParentchainHeader,
 	) -> Result<(), Self::Error> {
 		match self.call {
