@@ -355,6 +355,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
 
 [[package]]
+name = "base64"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -364,7 +370,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 name = "bc-enclave-registry"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "itp-settings",
  "itp-sgx-io",
  "litentry-primitives",
@@ -761,7 +767,7 @@ dependencies = [
 name = "bc-relayer-registry"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "itp-settings",
  "itp-sgx-io",
  "litentry-primitives",
@@ -777,7 +783,7 @@ dependencies = [
 name = "bc-signer-registry"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "itp-settings",
  "itp-sgx-io",
  "litentry-primitives",
@@ -2713,6 +2719,7 @@ dependencies = [
  "futures-core 0.3.8",
  "futures-task 0.3.8",
  "futures-util 0.3.8",
+ "num_cpus 1.13.0",
  "sgx_tstd",
 ]
 
@@ -2725,7 +2732,7 @@ dependencies = [
  "futures-core 0.3.28",
  "futures-task 0.3.28",
  "futures-util 0.3.28",
- "num_cpus",
+ "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -3536,6 +3543,7 @@ dependencies = [
  "itp-api-client-types",
  "itp-enclave-metrics",
  "itp-node-api",
+ "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-primitives",
@@ -3546,6 +3554,7 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
+ "sp-core",
  "sp-runtime",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -3557,7 +3566,6 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "hex",
- "id-itc-parentchain",
  "id-itp-enclave-api-ffi",
  "itp-settings",
  "itp-sgx-crypto",
@@ -3909,7 +3917,7 @@ dependencies = [
 name = "itc-rest-client"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "http 0.2.1",
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
@@ -4051,7 +4059,7 @@ version = "0.8.0"
 dependencies = [
  "arrayvec 0.7.4",
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
- "base64 0.13.1",
+ "base64 0.22.1",
  "bit-vec",
  "chrono 0.4.11",
  "chrono 0.4.26",
@@ -5022,7 +5030,6 @@ dependencies = [
  "lc-dynamic-assertion",
  "lc-evm-dynamic-assertions",
  "lc-mock-server",
- "lc-stf-task-sender",
  "litentry-hex-utils 0.1.0",
  "litentry-primitives",
  "log 0.4.20",
@@ -5055,7 +5062,6 @@ dependencies = [
  "lc-credentials-v2",
  "lc-mock-server",
  "lc-service",
- "lc-stf-task-sender",
  "litentry-hex-utils 0.1.0",
  "litentry-primitives",
  "log 0.4.20",
@@ -5115,7 +5121,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "chrono 0.4.11",
  "chrono 0.4.26",
  "env_logger 0.10.2",
@@ -5206,7 +5212,7 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "frame-support",
  "futures 0.3.8",
  "hex",
@@ -5219,7 +5225,6 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-data-providers",
- "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.20",
  "lru",
@@ -5607,7 +5612,7 @@ source = "git+https://github.com/litentry/litentry-parachain?branch=release-v0.9
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.22.1",
  "bitcoin",
  "core-primitives",
  "hex",
@@ -5656,7 +5661,6 @@ dependencies = [
  "hex",
  "humantime",
  "id-ita-parentchain-interface",
- "id-itc-parentchain",
  "id-itp-enclave-api",
  "ipfs-api",
  "itc-parentchain-test",
@@ -5682,7 +5686,6 @@ dependencies = [
  "lazy_static",
  "lc-data-providers",
  "lc-mock-server",
- "lc-stf-task-sender",
  "litentry-macros 0.1.0",
  "litentry-primitives",
  "log 0.4.20",
@@ -6397,6 +6400,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f30b0abd723be7e2ffca1272140fac1a2f084c77ec3e123c192b66af1ee9e6c2"
 dependencies = [
  "autocfg 1.1.0",
+]
+
+[[package]]
+name = "num_cpus"
+version = "1.13.0"
+source = "git+https://github.com/mesalock-linux/num_cpus-sgx#48fef62b75f6c059c356efb2233b3e884b63dca8"
+dependencies = [
+ "sgx_trts",
 ]
 
 [[package]]
@@ -9554,7 +9565,7 @@ version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
 dependencies = [
- "num_cpus",
+ "num_cpus 1.16.0",
 ]
 
 [[package]]
@@ -9622,7 +9633,7 @@ dependencies = [
  "bytes 1.4.0",
  "libc",
  "mio 0.8.8",
- "num_cpus",
+ "num_cpus 1.16.0",
  "parking_lot 0.12.1",
  "pin-project-lite",
  "signal-hook-registry",

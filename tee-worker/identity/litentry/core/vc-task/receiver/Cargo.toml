@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 futures = { workspace = true, optional = true }
-futures_sgx = { workspace = true, optional = true }
+futures_sgx = { workspace = true, features = ["thread-pool"], optional = true }
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
 codec = { package = "parity-scale-codec", workspace = true }

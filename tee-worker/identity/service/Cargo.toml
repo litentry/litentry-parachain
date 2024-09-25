@@ -40,7 +40,6 @@ sgx_crypto_helper = { workspace = true, features = ["ucrypto_help"] }
 sgx_types = { workspace = true }
 
 ita-parentchain-interface = { package = "id-ita-parentchain-interface", path = "../app-libs/parentchain-interface" }
-itc-parentchain = { package = "id-itc-parentchain", path = "../core/parentchain/parentchain-crate" }
 
 itc-rest-client = { workspace = true, features = ["std"] }
 itc-rpc-client = { workspace = true }
@@ -73,7 +72,6 @@ sp-runtime = { workspace = true, features = ["std"] }
 config = "0.13.3"
 lc-data-providers = { workspace = true, features = ["std"] }
 lc-mock-server = { workspace = true }
-lc-stf-task-sender = { workspace = true }
 litentry-macros = { workspace = true }
 litentry-primitives = { workspace = true, features = ["std"] }
 

@@ -285,7 +285,7 @@ impl pallet_parentchain::Config<crate::ParentchainInstanceTargetB> for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_imt::Config for Runtime {
+impl pallet_identity_management_tee::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxIDGraphLength = ConstU32<64>;
@@ -307,7 +307,7 @@ construct_runtime!(
 		ParentchainLitentry: pallet_parentchain::<Instance1>,
 		ParentchainTargetA: pallet_parentchain::<Instance2>,
 		ParentchainTargetB: pallet_parentchain::<Instance3>,
-		IdentityManagement: pallet_imt,
+		IdentityManagement: pallet_identity_management_tee,
 	}
 );
 
@@ -330,7 +330,7 @@ construct_runtime!(
 		ParentchainLitentry: pallet_parentchain::<Instance1>,
 		ParentchainTargetA: pallet_parentchain::<Instance2>,
 		ParentchainTargetB: pallet_parentchain::<Instance3>,
-		IdentityManagement: pallet_imt,
+		IdentityManagement: pallet_identity_management_tee,
 		Evm: pallet_evm,
 	}
 );

@@ -50,7 +50,7 @@ impl<MetricsApi> ParentchainEventHandler<MetricsApi>
 where
 	MetricsApi: EnclaveMetricsOCallApi,
 {
-	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -86,7 +86,7 @@ where
 		Ok(())
 	}
 
-	fn deactivate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn deactivate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -114,7 +114,7 @@ where
 		Ok(())
 	}
 
-	fn activate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn activate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -142,7 +142,7 @@ where
 		Ok(())
 	}
 
-	fn request_vc<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn request_vc<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		assertion: Assertion,
@@ -168,7 +168,7 @@ where
 		Ok(())
 	}
 
-	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		request: &RsaRequest,
 	) -> Result<(), Error> {
@@ -178,7 +178,7 @@ where
 		Ok(())
 	}
 
-	fn store_assertion<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn store_assertion<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		&self,
 		executor: &Executor,
 		id: H160,
@@ -221,12 +221,13 @@ where
 	}
 }
 
-impl<Executor, MetricsApi> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+impl<Executor, MetricsApi> HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
 	for ParentchainEventHandler<MetricsApi>
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
 	MetricsApi: EnclaveMetricsOCallApi,
 {
+	type Output = ProcessedEventsArtifacts;
 	fn handle_events(
 		&self,
 		executor: &Executor,

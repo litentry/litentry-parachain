@@ -19,7 +19,6 @@ frame-support = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 
-itc-parentchain = { package = "id-itc-parentchain", path = "../../core/parentchain/parentchain-crate" }
 itp-enclave-api-ffi = { package = "id-itp-enclave-api-ffi", path = "ffi" }
 itp-settings = { workspace = true }
 itp-sgx-crypto = { workspace = true }

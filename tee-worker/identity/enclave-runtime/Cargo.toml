@@ -134,7 +134,7 @@ itp-storage = { path = "../../common/core-primitives/storage", default-features 
 itp-test = { path = "../../common/core-primitives/test", default-features = false, optional = true }
 itp-time-utils = { path = "../../common/core-primitives/time-utils", default-features = false, features = ["sgx"] }
 itp-top-pool = { package = "id-itp-top-pool", path = "../core-primitives/top-pool", default-features = false, features = ["sgx"] }
-itp-top-pool-author = { path = "../core-primitives/top-pool-author", default-features = false, features = ["sgx"] }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../core-primitives/top-pool-author", default-features = false, features = ["sgx"] }
 itp-types = { path = "../../common/core-primitives/types", default-features = false }
 itp-utils = { path = "../../common/core-primitives/utils", default-features = false }
 
@@ -173,7 +173,7 @@ ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cl
 log = { git = "https://github.com/integritee-network/log-sgx" }
 
 [patch."https://github.com/paritytech/substrate"]
-sp-io = { path = "../core-primitives/substrate-sgx/sp-io" }
+sp-io = { path = "../../common/core-primitives/substrate-sgx/sp-io" }
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
 sgx_alloc = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }

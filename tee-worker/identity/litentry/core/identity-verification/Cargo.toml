@@ -34,7 +34,6 @@ frame-support = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }
 
 lc-data-providers = { workspace = true }
-lc-stf-task-sender = { workspace = true }
 litentry-primitives = { workspace = true }
 
 [features]
@@ -49,7 +48,6 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "lc-data-providers/sgx",
     "litentry-primitives/sgx",
-    "lc-stf-task-sender/sgx",
 ]
 std = [
     "http",
@@ -62,6 +60,5 @@ std = [
     "frame-support/std",
     "lc-data-providers/std",
     "litentry-primitives/std",
-    "lc-stf-task-sender/std",
     "rand",
 ]

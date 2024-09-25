@@ -23,7 +23,6 @@ lc-assertion-build = { workspace = true }
 lc-common = { workspace = true }
 lc-credentials-v2 = { workspace = true }
 lc-service = { workspace = true }
-lc-stf-task-sender = { workspace = true }
 litentry-hex-utils = { workspace = true }
 litentry-primitives = { workspace = true }
 
@@ -41,7 +40,6 @@ sgx = [
     "lc-assertion-build/sgx",
     "lc-credentials-v2/sgx",
     "lc-service/sgx",
-    "lc-stf-task-sender/sgx",
 ]
 std = [
     "log/std",
@@ -52,5 +50,4 @@ std = [
     "lc-assertion-build/std",
     "lc-credentials-v2/std",
     "lc-service/std",
-    "lc-stf-task-sender/std",
 ]

@@ -11,6 +11,7 @@ sgx_types = { workspace = true }
 itp-api-client-types = { workspace = true }
 itp-enclave-metrics = { workspace = true }
 itp-node-api = { workspace = true }
+itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-sgx-runtime-primitives = { workspace = true }
 itp-stf-executor = { package = "id-itp-stf-executor", path = "../../../core-primitives/stf-executor", default-features = false }
@@ -30,9 +31,9 @@ codec = { package = "parity-scale-codec", workspace = true }
 log = { workspace = true }
 
 binary-merkle-tree = { workspace = true }
-sp-runtime = { workspace = true }
-
 litentry-primitives = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 
 [dev-dependencies]
 env_logger = { workspace = true }
@@ -50,6 +51,7 @@ std = [
     "codec/std",
     "futures",
     "itp-node-api/std",
+    "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-stf-executor/std",
     "itp-top-pool-author/std",
@@ -61,6 +63,7 @@ std = [
     "log/std",
     "binary-merkle-tree/std",
     "sp-runtime/std",
+    "sp-core/std",
     "thiserror",
     "litentry-primitives/std",
 ]

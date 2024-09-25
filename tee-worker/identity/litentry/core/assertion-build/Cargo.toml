@@ -12,7 +12,7 @@ rust-base58 = { workspace = true, optional = true }
 ss58-registry = { workspace = true }
 
 http-sgx = { workspace = true, optional = true }
-http_req-sgx = { workspace = true, optional = true, default-features = false }
+http_req-sgx = { workspace = true, optional = true }
 rust-base58-sgx = { workspace = true, optional = true }
 sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 thiserror_sgx = { workspace = true, optional = true }
@@ -38,7 +38,6 @@ lc-credentials = { workspace = true }
 lc-data-providers = { workspace = true }
 lc-dynamic-assertion = { workspace = true }
 lc-evm-dynamic-assertions = { workspace = true }
-lc-stf-task-sender = { workspace = true }
 litentry-primitives = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 
@@ -60,7 +59,6 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "litentry-primitives/sgx",
-    "lc-stf-task-sender/sgx",
     "lc-common/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
@@ -81,7 +79,6 @@ std = [
     "itp-utils/std",
     "frame-support/std",
     "litentry-primitives/std",
-    "lc-stf-task-sender/std",
     "lc-common/std",
     "lc-credentials/std",
     "lc-data-providers/std",

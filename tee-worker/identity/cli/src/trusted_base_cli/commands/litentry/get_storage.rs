@@ -183,6 +183,10 @@ fn send_get_storage_request(
 						warn!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 						None
 					},
+					DirectRequestStatus::Processing(hash) => {
+						warn!("request status is processing, hash: {:?}", hash);
+						None
+					},
 				}
 			} else {
 				None

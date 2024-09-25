@@ -19,6 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{error::Error, Query, RestPath};
+use base64::engine::{general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use http::{
 	header::{HeaderName, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, USER_AGENT},
 	HeaderValue,
@@ -166,7 +167,7 @@ where
 		let mut s: String = user.to_string();
 		s.push(':');
 		s.push_str(pass);
-		self.authorization = Some(format!("Basic {}", base64::encode(&s)));
+		self.authorization = Some(format!("Basic {}", BASE64_STANDARD.encode(&s)));
 	}
 
 	/// Clear all previously set headers
