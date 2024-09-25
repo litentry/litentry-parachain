@@ -79,7 +79,7 @@ jobs:
           - rococo
           - paseo
           - litentry
-    name: ${{ matrix.chain }}
+    name: runtime-${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -148,7 +148,6 @@ jobs:
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
-          docker save litentry/litentry-chain-aio:${{ env.RELEASE_TAG }} | gzip > litentry-chain-aio.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -158,7 +157,6 @@ jobs:
           path: |
             litentry-collator
             litentry-parachain-dev.tar.gz
-            litentry-chain-aio.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -306,7 +304,7 @@ jobs:
       matrix:
         chain:
           - litentry
-    name: ${{ matrix.chain }}
+    name: ts-tests-${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
@@ -320,8 +318,6 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-chain-aio.tar.gz
-          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
       - name: Enable corepack and pnpm
@@ -330,7 +326,7 @@ jobs:
       - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 20
         run: |
-          make test-ts-docker-${{ matrix.chain }}
+          make test-ts-${{ matrix.chain }}
 
       - name: Archive logs if test fails
         uses: actions/upload-artifact@v4
@@ -349,12 +345,11 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-          docker push litentry/litentry-chain-aio:${{ env.RELEASE_TAG }}
 
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}
         run: |
-          make clean-docker-${{ matrix.chain }}
+          make clean-network
 
   ## create the release draft ##
   create-release-draft:
