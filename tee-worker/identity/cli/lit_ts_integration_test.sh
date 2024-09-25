@@ -67,14 +67,6 @@ cd /client-api
 pnpm install
 pnpm run build
 
-if [ "$TEST" = "assertion_contracts.test.ts" ]; then
-    cd /assertion-contracts
-    pnpm install
-    # compile contracts
-    pnpm compile
-    ln -s /assertion-contracts/artifacts/contracts /ts-tests/integration-tests/contracts
-fi
-
 cd /ts-tests
 pnpm install
 
