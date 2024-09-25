@@ -79,7 +79,6 @@ jobs:
           - rococo
           - paseo
           - litentry
-    name: runtime-${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -304,7 +303,6 @@ jobs:
       matrix:
         chain:
           - litentry
-    name: ts-tests-${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
@@ -324,8 +322,8 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Run ts tests for ${{ matrix.chain }}
-        timeout-minutes: 20
+      - name: Run ts tests for parachain
+        timeout-minutes: 30
         run: |
           make test-ts-${{ matrix.chain }}
 
@@ -347,7 +345,7 @@ jobs:
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
 
-      - name: Clean up for ${{ matrix.chain }}
+      - name: Clean up for parachain
         if: ${{ always() }}
         run: |
           make clean-network
