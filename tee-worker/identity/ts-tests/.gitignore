@@ -1,3 +1,2 @@
 .env.local
-integration-tests/contracts
 cache/
