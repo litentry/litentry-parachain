@@ -97,7 +97,7 @@ jobs:
           AUTHORIZE_UPGRADE_PREFIX: "0x02"
         with:
           chain: ${{ matrix.chain }}-parachain
-          runtime_dir: parachain/runtime/${{ matrix.chain }}
+          runtime_dir: runtime/${{ matrix.chain }}
           profile: production
 
       - name: Summary
@@ -131,7 +131,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./parachain/scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
+          ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
           echo "============================="
           docker images
 
@@ -186,7 +186,7 @@ jobs:
       # the key for identity worker enclave shall be renewed when switching to sdk-v2.0.0
       - name: Write enclave signing key
         run: |
-          cat << EOF > tee-worker/identity/enclave_key.pem
+          cat << EOF > tee-worker/enclave_key.pem
           ${{ secrets.IDENTITY_ENCLAVE_STAGING_SIGNING_KEY }}
           EOF
 
@@ -196,7 +196,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/identity/build.Dockerfile
+          file: tee-worker/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -213,7 +213,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/identity/build.Dockerfile
+          file: tee-worker/build.Dockerfile
           tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
@@ -254,7 +254,7 @@ jobs:
 
       - name: Write enclave signing key
         run: |
-          cat << EOF > tee-worker/bitacross/enclave_key.pem
+          cat << EOF > bitacross-worker/enclave_key.pem
           ${{ secrets.BITACROSS_ENCLAVE_PROD_SIGNING_KEY }}
           EOF
 
@@ -264,7 +264,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/bitacross/build.Dockerfile
+          file: bitacross-worker/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -281,7 +281,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/bitacross/build.Dockerfile
+          file: bitacross-worker/build.Dockerfile
           tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
