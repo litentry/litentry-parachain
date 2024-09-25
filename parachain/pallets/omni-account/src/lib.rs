@@ -7,12 +7,13 @@ mod tests;
 
 pub use pallet::*;
 
-use core_primitives::Identity as PrimeIdentity;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use core_primitives::Identity;
+	use frame_support::pallet_prelude::Identity as IdentityHasher;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -34,25 +35,25 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type OpaqueLinkedIdentities<T: Config> =
-		StorageMap<Hasher = Identity, Key = Vec<u8>, Value = ()>;
+		StorageMap<Hasher = IdentityHasher, Key = Vec<u8>, Value = ()>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn opaque_id_graphs)]
 	pub type OpaqueIDGraphs<T: Config> = StorageMap<
 		Hasher = Blake2_128Concat,
-		Key = PrimeIdentity, // prime identity
-		Value = Vec<u8>,     // IDGraph
+		Key = Identity,  // prime identity
+		Value = Vec<u8>, // IDGraph
 	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// IDGraph created
-		IDGraphCreated(PrimeIdentity),
+		IDGraphCreated(Identity),
 		/// IDGraph updated
-		IDGraphUpdated(PrimeIdentity),
+		IDGraphUpdated(Identity),
 		/// IDGraph removed
-		IDGraphRemoved(PrimeIdentity),
+		IDGraphRemoved(Identity),
 		/// LinkedIdentity added
 		LinkedIdentityAdded(Vec<u8>),
 		/// LinkedIdentity removed
@@ -75,7 +76,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
 		pub fn insert_id_graph(
 			origin: OriginFor<T>,
-			prime_identity: PrimeIdentity,
+			prime_identity: Identity,
 			id_graph: Vec<u8>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -91,10 +92,7 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal))]
-		pub fn remove_id_graph(
-			origin: OriginFor<T>,
-			prime_identity: PrimeIdentity,
-		) -> DispatchResult {
+		pub fn remove_id_graph(origin: OriginFor<T>, prime_identity: Identity) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
 				OpaqueIDGraphs::<T>::contains_key(&prime_identity),
