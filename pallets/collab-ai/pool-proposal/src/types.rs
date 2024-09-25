@@ -24,13 +24,13 @@ bitflags! {
 		///
 		/// A valid pool must passing committee/public's audit procedure regarding legal files and other pool parameters.
 		const PUBLIC_VOTE_PASSED = 0b0000_0001;
-		/// Whether the minimum staked amount proposed by curator is satisfied.
+		/// Whether the minimum Investing amount proposed by curator is satisfied.
 		///
 		/// # Note
 		///
 		/// Currently, a full size must be satisfied.
 		///
-		/// Once a pool is satisfied this requirement, all staked amount can no longer be withdrawed
+		/// Once a pool is satisfied this requirement, all Investing amount can no longer be withdrawed
 		/// unless the pool is later denied passing by voting or until the end of pool maturity.
 		///
 		/// Otherwise, the pool will be refunded.
@@ -62,11 +62,11 @@ pub struct PoolProposalInfo<InfoHash, Balance, BlockNumber, AccountId> {
 	pub proposer: AccountId,
 	// Hash of pool info like legal files etc.
 	pub pool_info_hash: InfoHash,
-	// The maximum staking amount that the pool can handle
+	// The maximum investing amount that the pool can handle
 	pub max_pool_size: Balance,
-	// If proposal passed, when the staking pool will start
+	// If proposal passed, when the investing pool will start
 	pub pool_start_time: BlockNumber,
-	// If proposal passed, when the staking pool will end
+	// If proposal passed, when the investing pool will end
 	pub pool_end_time: BlockNumber,
 	// estimated APR, but in percentage form
 	// i.e. 100 => 100%
@@ -118,54 +118,55 @@ impl<Identity: Ord, Balance> PartialEq for Bond<Identity, Balance> {
 }
 
 #[derive(Clone, Encode, Debug, Decode, TypeInfo)]
-pub struct PoolProposalPreStaking<AccountId, Balance, BlockNumber, S: Get<u32>> {
-	pub total_pre_staked_amount: Balance,
+pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>> {
+	// Exluding queued part
+	pub total_pre_investing_amount: Balance,
 	// Ordered by bond owner AccountId
-	pub pre_stakings: BoundedVec<Bond<AccountId, Balance>, S>,
+	pub pre_investings: BoundedVec<Bond<AccountId, Balance>, S>,
 	pub total_queued_amount: Balance,
 	// Ordered by bond owner AccountId
-	pub queued_pre_stakings: BoundedVec<(Bond<AccountId, Balance>, BlockNumber), S>,
+	pub queued_pre_investings: BoundedVec<(Bond<AccountId, Balance>, BlockNumber), S>,
 }
 
 impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
-	PoolProposalPreStaking<AccountId, Balance, BlockNumber, S>
+	PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
 {
 	/// Create a new empty default
 	pub fn new() -> Self {
-		PoolProposalPreStaking {
-			total_pre_staked_amount: Default::default(),
-			pre_stakings: Default::default(),
+		PoolProposalPreInvesting {
+			total_pre_investing_amount: Default::default(),
+			pre_investings: Default::default(),
 			total_queued_amount: Default::default(),
-			queued_pre_stakings: Default::default(),
+			queued_pre_investings: Default::default(),
 		}
 	}
 
-	pub fn get_pre_staking(&self, account: AccountId) -> Option<(usize, Balance)> {
-		match self.pre_stakings.binary_search(&Bond::from_owner(account)) {
-			Ok(loc) => Some((loc, self.pre_stakings.index(loc))),
+	pub fn get_pre_investing(&self, account: AccountId) -> Option<(usize, Balance)> {
+		match self.pre_investings.binary_search(&Bond::from_owner(account)) {
+			Ok(loc) => Some((loc, self.pre_investings.index(loc))),
 			Err(loc) => None,
 		}
 	}
 
-	pub fn add_pre_staking<T: Config>(
+	pub fn add_pre_investing<T: Config>(
 		&mut self,
 		account: AccountId,
 		amount: Balance,
 	) -> Result<(), DispatchError> {
-		if let Some(existing) = self.get_pre_staking(account) {
-			self.pre_stakings.remove(existing.0);
+		if let Some(existing) = self.get_pre_investing(account) {
+			self.pre_investings.remove(existing.0);
 			let new_balance = existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 			let _ = self
-				.pre_stakings
+				.pre_investings
 				.try_insert(existing.0, Bond { owner: account, amount: new_balance })
-				.map_err(|_| Error::<T>::StakingPoolOversized)?;
+				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 		} else {
 			let _ = self
-				.pre_stakings
+				.pre_investings
 				.try_insert(existing.0, Bond { owner: account, amount })
-				.map_err(|_| Error::<T>::StakingPoolOversized)?;
+				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 		}
-		self::total_pre_staked_amount = self::total_pre_staked_amount
+		self::total_pre_investing_amount = self::total_pre_investing_amount
 			.checked_add(&amount)
 			.ok_or(ArithmeticError::Overflow)?;
 		Ok(())
@@ -177,19 +178,19 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 		amount: Balance,
 	) -> Result<(), DispatchError> {
 		// Withdraw Queued one if any
-		if let Some(existing_q) = self.get_queued_staking(account) {
+		if let Some(existing_q) = self.get_queued_investing(account) {
 			if (existing_q.1 > amount) {
 				// Existing queue is larger than target amount
 				// Finish withdrawing and return early
-				self.queued_pre_stakings.remove(existing_q.0);
+				self.queued_pre_investings.remove(existing_q.0);
 				let new_balance_q =
 					existing_q.1.checked_sub(&amount).ok_or(ArithmeticError::Overflow)?;
-				self.queued_pre_stakings
+				self.queued_pre_investings
 					.try_insert(
 						existing_q.0,
 						(Bond { owner: account, amount: new_balance_q }, existing_q.2),
 					)
-					.map_err(|_| Error::<T>::StakingPoolOversized)?;
+					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 
 				self::total_queued_amount = self::total_queued_amount
 					.checked_sub(&amount)
@@ -197,85 +198,88 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 				return Ok(());
 			} else {
 				// Totally remove queued
-				self.queued_pre_stakings.remove(existing_q.0);
+				self.queued_pre_investings.remove(existing_q.0);
 				self::total_queued_amount = self::total_queued_amount
 					.checked_sub(&existing_q.1)
 					.ok_or(ArithmeticError::Overflow)?;
 
 				let left_amount = amount - existing_q.1;
 
-				if let Some(existing_p) = self.get_pre_staking(account) {
-					// Existing pre-staking is larger than left target amount
+				if let Some(existing_p) = self.get_pre_investing(account) {
+					// Existing pre-investing is larger than left target amount
 					// Finish withdrawing and return early
 					if (existing_p.1 > left_amount) {
-						self.pre_stakings.remove(existing_p.0);
+						self.pre_investings.remove(existing_p.0);
 						let new_balance_p = existing_p
 							.1
 							.checked_sub(&left_amount)
 							.ok_or(ArithmeticError::Overflow)?;
-						self.pre_stakings
+						self.pre_investings
 							.try_insert(
 								existing_q.0,
 								Bond { owner: account, amount: new_balance_p },
 							)
-							.map_err(|_| Error::<T>::StakingPoolOversized)?;
-						self::total_pre_staked_amount = self::total_pre_staked_amount
+							.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+						self::total_pre_investing_amount = self::total_pre_investing_amount
 							.checked_sub(&left_amount)
 							.ok_or(ArithmeticError::Overflow)?;
 						return Ok(());
 					} else if (existing_p.1 == left_amount) {
 						// Exact amount to finish everything
-						self.pre_stakings.remove(existing_p.0);
-						self::total_pre_staked_amount = self::total_pre_staked_amount
+						self.pre_investings.remove(existing_p.0);
+						self::total_pre_investing_amount = self::total_pre_investing_amount
 							.checked_sub(&left_amount)
 							.ok_or(ArithmeticError::Overflow)?;
 						return Ok(());
 					} else {
 						// Not enough fund to finish operation
-						return Err(Error::<T>::InsufficientPreStaking);
+						return Err(Error::<T>::InsufficientPreInvesting);
 					}
 				}
 			}
 		}
-		// No pre-staking of all kinds
-		return Err(Error::<T>::InsufficientPreStaking);
+		// No pre-investing of all kinds
+		return Err(Error::<T>::InsufficientPreInvesting);
 	}
 
-	pub fn get_queued_staking(&self, account: AccountId) -> Option<(usize, Balance, BlockNumber)> {
+	pub fn get_queued_investing(
+		&self,
+		account: AccountId,
+	) -> Option<(usize, Balance, BlockNumber)> {
 		match self
-			.queued_pre_stakings
+			.queued_pre_investings
 			.binary_search_by(|p| p.0.cmp(&Bond::from_owner(account)))
 		{
 			Ok(loc) => Some((
 				loc,
-				self.queued_pre_stakings.index(loc).0.amount,
-				self.queued_pre_stakings.index(loc).1,
+				self.queued_pre_investings.index(loc).0.amount,
+				self.queued_pre_investings.index(loc).1,
 			)),
 			Err(loc) => None,
 		}
 	}
 
-	pub fn add_queued_staking<T: Config>(
+	pub fn add_queued_investing<T: Config>(
 		&mut self,
 		account: AccountId,
 		amount: Balance,
 		current_block: BlockNumber,
 	) -> Result<(), DispatchError> {
-		if let Some(existing) = self.get_queued_staking(account) {
-			self.queued_pre_stakings.remove(existing.0);
+		if let Some(existing) = self.get_queued_investing(account) {
+			self.queued_pre_investings.remove(existing.0);
 			let new_balance = existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 			let _ = self
-				.queued_pre_stakings
+				.queued_pre_investings
 				.try_insert(
 					existing.0,
 					(Bond { owner: account, amount: new_balance }, current_block),
 				)
-				.map_err(|_| Error::<T>::StakingPoolOversized)?;
+				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 		} else {
 			let _ = self
-				.queued_pre_stakings
+				.queued_pre_investings
 				.try_insert(existing.0, (Bond { owner: account, amount }, current_block))
-				.map_err(|_| Error::<T>::StakingPoolOversized)?;
+				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 		}
 		self::total_queued_amount = self::total_queued_amount
 			.checked_add(&amount)
@@ -283,37 +287,37 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 		Ok(())
 	}
 
-	// Transfer queued amount into pre staking
-	pub fn move_queued_to_pre_staking_until<T: Config>(
+	// Transfer queued amount into pre investing
+	pub fn move_queued_to_pre_investing_until<T: Config>(
 		&mut self,
-		target_pre_staked_amount: Balance,
+		target_pre_investing_amount: Balance,
 	) -> Result<Vec<Bond<AccountId, Balance>>, DispatchError> {
 		let result: Vec<Bond<AccountId, Balance>> = Vec::new();
 		// Make sure target transfer is possible
 		ensure!(
 			self.total_queued_amount
-				>= target_pre_staked_amount
-					.checked_sub(self.total_pre_staked_amount)
+				>= target_pre_investing_amount
+					.checked_sub(self.total_pre_investing_amount)
 					.ok_or(ArithmeticError::Overflow)?,
-			Error::<T>::InsufficientPreStaking
+			Error::<T>::InsufficientPreInvesting
 		);
 
-		let mut v = self.queued_pre_stakings.into_inner().clone();
+		let mut v = self.queued_pre_investings.into_inner().clone();
 		// temp sorted by blocknumber
 		v.sort_by(|p| p.2);
 
 		for i in v.iter() {
-			let transfer_amount = target_pre_staked_amount
-				.checked_sub(self.total_pre_staked_amount)
+			let transfer_amount = target_pre_investing_amount
+				.checked_sub(self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
 			if (i.0.amount >= transfer_amount) {
 				let _ = self.withdraw(i.0.owner, transfer_amount)?;
-				self.add_pre_staking(i.0.owner, transfer_amount)?;
+				self.add_pre_investing(i.0.owner, transfer_amount)?;
 				result.push(Bond { owner: i.0.owner, amount: transfer_amount });
 				break;
 			} else {
 				let _ = self.withdraw(i.0.owner, i.0.amount)?;
-				self.add_pre_staking(i.0.owner, i.0.amount)?;
+				self.add_pre_investing(i.0.owner, i.0.amount)?;
 				result.push(Bond { owner: i.0.owner, amount: i.0.amount });
 			}
 		}

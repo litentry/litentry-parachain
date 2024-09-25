@@ -21,7 +21,7 @@
 //!
 //! ## Overview
 //!
-//! The Pool Proposal handles the administration of proposed staking pool and pre-staking.
+//! The Pool Proposal handles the administration of proposed investing pool and pre-investing.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod types;
@@ -71,6 +71,8 @@ pub mod pallet {
 
 	use super::*;
 
+	/// CollabAI investing pool proposal
+	const MODULE_ID: PalletId = PalletId(*b"cbai/ipp");
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
@@ -114,8 +116,11 @@ pub mod pallet {
 		/// Origin who can make a pool proposal pass public vote check
 		type PublicVotingOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// System Account holding pre-staking assets
-		type PreStakingPool: Get<Self::AccountId>;
+		/// Origin who can change proposal guardian flag
+		type GuardianFlagOrigin: EnsureOrigin<Self::RuntimeOrigin>;???
+
+		/// System Account holding pre-investing assets
+		type PreInvestingPool: Get<Self::AccountId>;
 	}
 
 	/// The next free Pool Proposal index, aka the number of pool proposed so far.
@@ -134,7 +139,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	// Pending pool proposal status of staking pools
+	// Pending pool proposal status of investing pools
 	// Ordered by expired time
 	#[pallet::storage]
 	#[pallet::getter(fn pending_pool_proposal_status)]
@@ -154,15 +159,15 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	// Prestaking of pool proposal
+	// Preinvesting of pool proposal
 	// This storage will be modified/delete correspondingly when solving pending pool
 	#[pallet::storage]
-	#[pallet::getter(fn staking_pool_pre_stakings)]
-	pub type StakingPoolPrestakings<T: Config> = StorageMap<
+	#[pallet::getter(fn pool_pre_investings)]
+	pub type PoolPreInvestings<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		PoolProposalIndex,
-		PoolProposalPreStaking<
+		PoolProposalPreInvesting<
 			T::AccountId,
 			AssetBalanceOf<T>,
 			BlockNumberFor<T>,
@@ -176,25 +181,25 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A motion has been proposed by a public account.
 		PoolProposed { proposer: T::AccountId, pool_proposal_index: PoolProposalIndex },
-		/// A pre staking becomes valid
-		PoolPreStaked {
+		/// A pre investing becomes valid
+		PoolPreInvested {
 			user: T::AccountId,
 			pool_proposal_index: PoolProposalIndex,
 			amount: AssetBalanceOf<T>,
 		},
-		/// A pre staking queued
+		/// A pre investing queued
 		PoolPreStakeQueued {
 			user: T::AccountId,
 			pool_proposal_index: PoolProposalIndex,
 			amount: AssetBalanceOf<T>,
 		},
-		/// A queued pre staking becomes a valid pre staking
-		PoolQueuedStaked {
+		/// A queued pre investing becomes a valid pre investing
+		PoolQueuedInvested {
 			user: T::AccountId,
 			pool_proposal_index: PoolProposalIndex,
 			amount: AssetBalanceOf<T>,
 		},
-		/// Some amount of pre staking regardless of queue or pre staked, withdrawed (Withdraw queue ones first)
+		/// Some amount of pre investing regardless of queue or pre invested, withdrawed (Withdraw queue ones first)
 		PoolWithdrawed {
 			user: T::AccountId,
 			pool_proposal_index: PoolProposalIndex,
@@ -206,39 +211,40 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		PreStakingOverflow,
+		PreInvestingOverflow,
 		ProposalExpired,
-		ProposalPreStakingLocked,
+		ProposalPreInvestingLocked,
 		ProposalPublicTimeTooShort,
 		ProposalNotExist,
-		StakingPoolOversized,
-		InsufficientPreStaking,
+		InvestingPoolOversized,
+		InsufficientPreInvesting,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		/// Weight: see `begin_block`
 		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-			Self::begin_block(n)
+			// Check proposal expire by order
+
+			// Mature the pool by proposal if qualified, refund/transfer all money based on investing pool logic
 		}
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Curator propose a staking pool
+		/// Curator propose a investing pool
 		///
-		/// max_pool_size: At most this amount of raised money curator/staking pool willing to take
+		/// max_pool_size: At most this amount of raised money curator/investing pool willing to take
 		/// min_pool_size: At least this amount of raised money require for curator willing to fulfill contract
-		/// proposal_last_time: How does the proposal lasts for voting/prestaking.
+		/// proposal_last_time: How does the proposal lasts for voting/preinvesting.
 		///                     All ProposalStatusFlags must be satisfied after this period passed, which is also
 		/// 					the approximate date when pool begins.
-		/// pool_last_time: How long does the staking pool last if passed
+		/// pool_last_time: How long does the investing pool last if passed
 		/// estimated_epoch_reward: This number is only for displaying purpose without any techinical meaning
 		/// pool_info_hash: Hash of pool info for including pool details
 		#[pallet::call_index(0)]
 		#[pallet::weight(W{195_000_000})]
 		#[transactional]
-		pub fn propose_staking_pool(
+		pub fn propose_investing_pool(
 			origin: OriginFor<T>,
 			max_pool_size: AssetBalanceOf<T>,
 			proposal_last_time: BlockNumberFor<T>,
@@ -333,14 +339,14 @@ pub mod pallet {
 			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::transfer(
 				AIUSDAssetId::get(),
 				who,
-				PreStakingPool::get(),
+				PreInvestingPool::get(),
 				amount,
 				Preservation::Expendable,
 			)?;
 
-			let mut pool_proposal_pre_staking =
-				<StakingPoolPrestakings<T>>::take(pool_proposal_index)
-					.unwrap_or(PoolProposalPreStaking::new());
+			let mut pool_proposal_pre_investing =
+				<PoolPreInvestings<T>>::take(pool_proposal_index)
+					.unwrap_or(PoolProposalPreInvesting::new());
 
 			// Check pool maximum size limit and make pool size limit flag change accordingly
 			let mut pool_proposal =
@@ -352,59 +358,59 @@ pub mod pallet {
 					.contains(ProposalStatusFlags::PROPOSAL_EXPIRED),
 				Error::<T>::ProposalExpired
 			);
-			// If proposal is fully pre-staked or partial oversized after this stake
+			// If proposal is fully pre-Investing or partial oversized after this stake
 
 			// Check BoundedVec limit
 			ensure!(
-				!pool_proposal_pre_staking.pre_stakings.is_full
-					&& !pool_proposal_pre_staking.queued_pre_stakings.is_full,
-				Error::<T>::StakingPoolOversized
+				!pool_proposal_pre_investing.pre_investings.is_full
+					&& !pool_proposal_pre_investing.queued_pre_investings.is_full,
+				Error::<T>::InvestingPoolOversized
 			);
 
-			let target_pre_staked_amount = pool_proposal_pre_staking
-				.total_pre_staked_amount
+			let target_pre_investing_amount = pool_proposal_pre_investing
+				.total_pre_investing_amount
 				.checked_add(asset_actual_transfer_amount)
 				.ok_or(ArithmeticError::Overflow)?;
-			if (target_pre_staked_amount <= pool_proposal.max_pool_size) {
-				// take all pre-staking into valid pre-staking line
-				pool_proposal_pre_staking
-					.add_pre_staking::<T>(who, asset_actual_transfer_amount)?;
+			if (target_pre_investing_amount <= pool_proposal.max_pool_size) {
+				// take all pre-investing into valid pre-investing line
+				pool_proposal_pre_investing
+					.add_pre_investing::<T>(who, asset_actual_transfer_amount)?;
 
 				// Emit event only
-				Self::deposit_event(Event::PoolPreStaked {
+				Self::deposit_event(Event::PoolPreInvested {
 					user: who,
 					pool_proposal_index,
 					amount: asset_actual_transfer_amount,
 				});
-				// Flag proposal status if pool is just fully staked
-				if (target_pre_staked_amount == pool_proposal.max_pool_size) {
+				// Flag proposal status if pool is just fully Investing
+				if (target_pre_investing_amount == pool_proposal.max_pool_size) {
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
 						| ProposalStatusFlags::STAKE_AMOUNT_PASSED;
 					PoolProposal::put(pool_proposal_index, pool_proposal);
 				}
 			} else {
 				// Partially
-				let queued_pre_staked_amount = target_pre_staked_amount
+				let queued_pre_investing_amount = target_pre_investing_amount
 					.checked_sub(pool_proposal.max_pool_size)
 					.ok_or(ArithmeticError::Overflow)?;
-				pool_proposal_pre_staking.add_queued_staking::<T>(
+				pool_proposal_pre_investing.add_queued_investing::<T>(
 					who,
-					queued_pre_staked_amount,
+					queued_pre_investing_amount,
 					frame_system::Pallet::<T>::block_number(),
 				)?;
 
 				// If pool not already full, flag proposal status
-				if (asset_actual_transfer_amount > queued_pre_staked_amount) {
-					let actual_pre_staked_amount = asset_actual_transfer_amount
-						.checked_sub(queued_pre_staked_amount)
+				if (asset_actual_transfer_amount > queued_pre_investing_amount) {
+					let actual_pre_investing_amount = asset_actual_transfer_amount
+						.checked_sub(queued_pre_investing_amount)
 						.ok_or(ArithmeticError::Overflow)?;
-					pool_proposal_pre_staking
-						.add_pre_staking::<T>(who, actual_pre_staked_amount)?;
+					pool_proposal_pre_investing
+						.add_pre_investing::<T>(who, actual_pre_investing_amount)?;
 
-					Self::deposit_event(Event::PoolPreStaked {
+					Self::deposit_event(Event::PoolPreInvested {
 						user: who,
 						pool_proposal_index,
-						amount: actual_pre_staked_amount,
+						amount: actual_pre_investing_amount,
 					});
 
 					pool_proposal.proposal_status_flags = pool_proposal.proposal_status_flags
@@ -416,11 +422,11 @@ pub mod pallet {
 				Self::deposit_event(Event::PoolPreStakeQueued {
 					user: who,
 					pool_proposal_index,
-					amount: queued_pre_staked_amount,
+					amount: queued_pre_investing_amount,
 				});
 			}
 
-			<StakingPoolPrestakings<T>>::put(pool_proposal_index, pool_proposal_pre_staking);
+			<PoolPreInvestings<T>>::put(pool_proposal_index, pool_proposal_pre_investing);
 		}
 
 		// Withdraw is not allowed when proposal has STAKE_AMOUNT_PASSED flag
@@ -428,43 +434,44 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(W{195_000_000})]
 		#[transactional]
-		pub fn withdraw_pre_staking(
+		pub fn withdraw_pre_investing(
 			origin: OriginFor<T>,
 			pool_proposal_index: PoolProposalIndex,
 			amount: AssetBalanceOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			let mut pool_proposal_pre_staking =
-				<StakingPoolPrestakings<T>>::take(pool_proposal_index)
-					.unwrap_or(PoolProposalPreStaking::new());
+			let mut pool_proposal_pre_investing =
+				<PoolPreInvestings<T>>::take(pool_proposal_index)
+					.unwrap_or(PoolProposalPreInvesting::new());
 
-			// Either staking pool has not locked yet,
+			// Either investing pool has not locked yet,
 			// Or queued amount is enough to replace the withdrawal
 			ensure!(
 				!pool_proposal
 					.proposal_status_flags
 					.contains(ProposalStatusFlags::STAKE_AMOUNT_PASSED)
-					|| (pool_proposal_pre_staking.total_queued_amount >= amount),
-				Error::<T>::ProposalPreStakingLocked
+					|| (pool_proposal_pre_investing.total_queued_amount >= amount),
+				Error::<T>::ProposalPreInvestingLocked
 			);
 
-			let _ = pool_proposal_pre_staking.withdraw::<T>(who, amount)?;
+			let _ = pool_proposal_pre_investing.withdraw::<T>(who, amount)?;
 			Self::deposit_event(Event::PoolWithdrawed { user: who, pool_proposal_index, amount });
 
 			let mut pool_proposal =
 				PoolProposal::get(pool_proposal_index).ok_or(Error::<T>::ProposalNotExist)?;
-			// Make queued amount fill the missing staked amount if pool staked flag ever reached
-			if ((pool_proposal_pre_staking.total_pre_staked_amount < pool_proposal.max_pool_size)
+			// Make queued amount fill the missing Investing amount if pool Investing flag ever reached
+			if ((pool_proposal_pre_investing.total_pre_investing_amount
+				< pool_proposal.max_pool_size)
 				&& (pool_proposal
 					.proposal_status_flags
 					.contains(ProposalStatusFlags::STAKE_AMOUNT_PASSED)))
 			{
-				let moved_bonds = pool_proposal_pre_staking
-					.move_queued_to_pre_staking_until::<T>(pool_proposal.max_pool_size)?;
+				let moved_bonds = pool_proposal_pre_investing
+					.move_queued_to_pre_investing_until::<T>(pool_proposal.max_pool_size)?;
 				for i in moved_bonds.iter() {
 					// Emit events
-					Self::deposit_event(Event::PoolQueuedStaked {
+					Self::deposit_event(Event::PoolQueuedInvested {
 						user: i.owner,
 						pool_proposal_index,
 						amount: i.amount,
@@ -475,18 +482,18 @@ pub mod pallet {
 			// Return funds
 			let asset_actual_transfer_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::transfer(
 				AIUSDAssetId::get(),
-				PreStakingPool::get(),
+				PreInvestingPool::get(),
 				who,
 				amount,
 				Preservation::Expendable,
 			)?;
 
-			<StakingPoolPrestakings<T>>::put(pool_proposal_index, pool_proposal_pre_staking);
+			<PoolPreInvestings<T>>::put(pool_proposal_index, pool_proposal_pre_investing);
 
 			Ok(())
 		}
 
-		// This is democracy/committe passing check for staking pool proposal
+		// This is democracy/committe passing check for investing pool proposal
 		// TODO: Related logic with "pallet-conviction-voting"
 		#[pallet::call_index(3)]
 		#[pallet::weight(W{195_000_000})]
@@ -513,6 +520,37 @@ pub mod pallet {
 				vote_result: vote,
 			});
 			Ok(())
+		}
+
+		// A guardian has decided to participate the investing pool
+		// When proposal expired, the guardian must have everything ready
+		// Including KYC. Otherwise he will be ignored no matter how much vote he collects
+		#[pallet::call_index(4)]
+		#[pallet::weight(W{195_000_000})]
+		pub fn guardian_participate_proposal(
+			origin: OriginFor<T>,
+			pool_proposal_index: PoolProposalIndex,
+		) -> DispatchResult {
+
+		}
+	}
+
+	/// Simple ensure origin from pallet pool proposal
+	pub struct EnsurePoolProposal<T>(sp_std::marker::PhantomData<T>);
+	impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsurePoolProposal<T> {
+		type Success = T::AccountId;
+		fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+			let sync_account_id = MODULE_ID.into_account_truncating();
+			o.into().and_then(|o| match o {
+				system::RawOrigin::Signed(who) if who == sync_account_id => Ok(sync_account_id),
+				r => Err(T::RuntimeOrigin::from(r)),
+			})
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+			let sync_account_id = MODULE_ID.into_account_truncating();
+			Ok(T::RuntimeOrigin::from(system::RawOrigin::Signed(sync_account_id)))
 		}
 	}
 }

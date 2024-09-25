@@ -22,7 +22,9 @@ use sp_runtime::DispatchError;
 
 pub type InfoHash = H256;
 pub type CuratorIndex = u128;
+pub type GuardianIndex = u128;
 pub type PoolProposalIndex = u128;
+pub type InvestingPoolIndex = u128;
 
 #[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, TypeInfo)]
 pub struct PoolSetting<BlockNumber, Balance> {
@@ -63,6 +65,24 @@ pub enum CandidateStatus {
 	Banned,
 }
 
+#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
+pub enum GuardianVote {
+	/// Does not care if this guardian get selected
+	#[default]
+	#[codec(index = 0)]
+	Neutral,
+	/// Want this guardian no matter which pool proposal
+	#[codec(index = 1)]
+	Aye,
+	/// Against this guardian no matter which pool proposal
+	#[codec(index = 2)]
+	Nay,
+	/// Support this guardian for only specific pool proposal
+	/// And neutral for other pool proposal
+	#[codec(index = 3)]
+	Specific(BoundedVec<PoolProposalIndex>),
+}
+
 /// Some sort of check on the account is from some group.
 pub trait EnsureCurator<AccountId> {
 	/// All curator but banned ones
@@ -96,5 +116,23 @@ where
 	fn try_successful_origin() -> Result<O, ()> {
 		// No promised successful_origin
 		Err(())
+	}
+}
+
+pub const INVESTING_POOL_INDEX_SHIFTER: u128 = 1_000_000_000_000_000;
+pub const INVESTING_POOL_START_MONTH_SHIFTER: u128 = 1_000;
+pub const INVESTING_POOL_END_MONTH_SHIFTER: u128 = 1;
+
+pub struct InvestingPoolAssetId<AssetId>(sp_std::marker::PhantomData<AssetId>);
+impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
+	/// Create a series of new asset id based on pool index and reward epoch
+	/// Return None if impossible to generate. e.g. overflow
+	pub fn get_pool_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<Vec<AssetId>> {
+		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
+
+		let mut vec: Vec<AssetId> = Vec::new();
+		for n in 0..(epoch + 1) {
+			// vec.push(pool_index_prefix + )
+		}
 	}
 }
