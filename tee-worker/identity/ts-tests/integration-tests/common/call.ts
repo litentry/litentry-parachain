@@ -25,7 +25,6 @@ export async function sendRequest(
     const rawRes = await wsClient.sendRequest(request, { requestId: request.id, timeout: 6000 });
 
     const res = api.createType('WorkerRpcReturnValue', rawRes.result);
-    console.log('res: ' + res.toHuman());
     if (res.status.isError) {
         console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }
