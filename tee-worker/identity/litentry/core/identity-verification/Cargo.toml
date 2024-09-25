@@ -5,12 +5,12 @@ name = "lc-identity-verification"
 version = "0.1.0"
 
 [dependencies]
-base64 = { workspace = true }
+base64 = { version = "0.22", default-features = false, features = ["alloc"] } # a newer base64
 hex = { workspace = true }
 http = { workspace = true, optional = true }
 http_req = { workspace = true, optional = true }
 lru = "0.12.3"
-rand = { workspace = true, optional = true }
+rand = { version = "0.8", optional = true }
 
 futures_sgx = { workspace = true, optional = true }
 http-sgx = { workspace = true, optional = true }

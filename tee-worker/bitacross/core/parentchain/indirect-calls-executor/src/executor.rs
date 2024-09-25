@@ -327,9 +327,8 @@ mod test {
 	use bc_signer_registry::SignerRegistry;
 	use codec::Encode;
 
-	use itp_node_api::{
-		api_client::ExtrinsicParams,
-		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
+	use itp_node_api::metadata::{
+		metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository,
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
@@ -357,10 +356,6 @@ mod test {
 		SignerRegistry,
 		EnclaveRegistry,
 	>;
-
-	type Seed = [u8; 32];
-
-	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 	#[test]
 	fn ensure_empty_events_vec_triggers_zero_filled_merkle_root() {

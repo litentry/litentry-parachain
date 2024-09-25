@@ -271,9 +271,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.22.0"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "base64ct"
@@ -2306,7 +2306,7 @@ dependencies = [
 name = "itc-rest-client"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.0",
+ "base64 0.13.1",
  "http",
  "http_req",
  "log",
@@ -3093,7 +3093,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.0",
+ "base64 0.13.1",
  "chrono 0.4.11",
  "http",
  "http_req",
@@ -3150,7 +3150,7 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.0",
+ "base64 0.22.1",
  "frame-support",
  "futures 0.3.8",
  "hex",

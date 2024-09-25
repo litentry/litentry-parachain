@@ -112,7 +112,7 @@ hex-literal = { version = "0.4" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 itertools = { version = "0.10.1", default-features = false }
 base58 = { version = "0.2", default-features = false }
-base64 = { version = "0.22", default-features = false, features = ["alloc"] }
+base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
 derive_more = { version = "0.99" }
 futures = { version = "0.3" }
