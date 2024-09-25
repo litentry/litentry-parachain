@@ -318,6 +318,7 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
       - name: Enable corepack and pnpm
