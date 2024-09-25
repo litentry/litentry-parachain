@@ -1,5 +1,5 @@
 [package]
-name = "itp-enclave-api-ffi"
+name = "bc-itp-enclave-api-ffi"
 version = "0.1.0"
 edition = "2021"
 

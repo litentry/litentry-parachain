@@ -1,5 +1,5 @@
 [package]
-name = "itc-direct-rpc-client"
+name = "bc-itc-direct-rpc-client"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>']
 edition = "2021"

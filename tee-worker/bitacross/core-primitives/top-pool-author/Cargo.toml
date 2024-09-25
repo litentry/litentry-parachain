@@ -1,5 +1,5 @@
 [package]
-name = "itp-top-pool-author"
+name = "bc-itp-top-pool-author"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -13,7 +13,7 @@ itp-sgx-crypto = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-stf-state-handler = { workspace = true }
 itp-test = { workspace = true, optional = true }
-itp-top-pool = { path = "../top-pool", default-features = false }
+itp-top-pool = { package = "bc-itp-top-pool", path = "../top-pool", default-features = false }
 itp-types = { workspace = true }
 itp-utils = { workspace = true }
 litentry-primitives = { workspace = true }
@@ -33,7 +33,7 @@ sp-runtime = { workspace = true }
 futures = { workspace = true }
 itp-sgx-crypto = { workspace = true, features = ["mocks"] }
 itp-test = { workspace = true, features = ["std"] }
-itp-top-pool = { path = "../top-pool", features = ["std", "mocks"] }
+itp-top-pool = { package = "bc-itp-top-pool", path = "../top-pool", features = ["std", "mocks"] }
 sgx_crypto_helper = { workspace = true }
 sp-keyring = { workspace = true }
 

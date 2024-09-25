@@ -1,5 +1,5 @@
 [package]
-name = "itc-parentchain-block-importer"
+name = "bc-itc-parentchain-block-importer"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -8,13 +8,13 @@ edition = "2021"
 sgx_tstd = { workspace = true, optional = true }
 sgx_types = { workspace = true }
 
-ita-stf = { path = "../../../app-libs/stf", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
+ita-stf = { package = "bc-ita-stf", path = "../../../app-libs/stf", default-features = false }
+itc-parentchain-indirect-calls-executor = { package = "bc-itc-parentchain-indirect-calls-executor", path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { workspace = true }
 itp-enclave-metrics = { workspace = true }
 itp-extrinsics-factory = { workspace = true }
 itp-ocall-api = { workspace = true }
-itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-executor = { package = "bc-itp-stf-executor", path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-interface = { workspace = true }
 itp-types = { workspace = true }
 

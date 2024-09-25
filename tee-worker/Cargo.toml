@@ -30,6 +30,42 @@ members = [
     "common/core/tls-websocket-server",
 
     # identity-worker
+    "identity/app-libs/*",
+    "identity/cli",
+    "identity/core/parentchain/block-import-dispatcher",
+    "identity/core/parentchain/block-importer",
+    "identity/core/parentchain/indirect-calls-executor",
+    "identity/core/parentchain/parentchain-crate",
+    "identity/core/direct-rpc-client",
+    "identity/core/direct-rpc-server",
+    "identity/core/offchain-worker-executor",
+    "identity/core/peer-top-broadcaster",
+    "identity/core/rpc-server",
+    "identity/core-primitives/stf-executor",
+    "identity/core-primitives/top-pool",
+    "identity/core-primitives/top-pool-author",
+    "identity/core-primitives/enclave-api",
+    "identity/core-primitives/enclave-api/ffi",
+    "identity/service",
+    "identity/litentry/core/assertion-build",
+    "identity/litentry/core/assertion-build-v2",
+    "identity/litentry/core/common",
+    "identity/litentry/core/data-providers",
+    "identity/litentry/core/vc-task/sender",
+    "identity/litentry/core/vc-task/receiver",
+    "identity/litentry/core/identity-verification",
+    "identity/litentry/core/stf-task/sender",
+    "identity/litentry/core/stf-task/receiver",
+    "identity/litentry/core/service",
+    "identity/litentry/core/mock-server",
+    "identity/litentry/core/credentials-v2",
+    "identity/litentry/core/credentials",
+    "identity/litentry/core/dynamic-assertion",
+    "identity/litentry/core/evm-dynamic-assertions",
+    "identity/sidechain/*",
+    "identity/sidechain/consensus/slots",
+    "identity/sidechain/consensus/common",
+    "identity/sidechain/consensus/aura",
 
     # bitacross-worker
     "bitacross/app-libs/*",
@@ -54,8 +90,10 @@ members = [
 exclude = [
     "common/core-primitives/sgx",
     "common/core-primitives/substrate-sgx",
+    "identity/sidechain/consensus",
 
     # enclave-runtime needs to have its own workspace root for patching
+    "identity/enclave-runtime",
     "bitacross/enclave-runtime",
 ]
 
@@ -109,9 +147,12 @@ mio = { version = "0.6.14" }
 tungstenite = { version = "0.15.0" }
 yasna = { version = "0.4" }
 musig2 = { git = "https://github.com/kziemianek/musig2", branch = "master", features = ["k256"] }
+rlp = { version = "0.5", default-features = false }
+sha3 = { version = "0.10", default-features = false }
 
 url = { git = "https://github.com/domenukk/rust-url", branch = "no_std", default-features = false, features = ["alloc", "no_std_net"] }
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "polkadot-v0.9.42-tag-v0.14.0", default-features = false, features = ["sync-api"] }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate
 finality-grandpa = { version = "0.16.0", default-features = false, features = ["derive-codec"] }
@@ -130,6 +171,7 @@ sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-consensus-slots = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-application-crypto = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -192,7 +234,6 @@ itc-parentchain-test = { path = "common/core/parentchain/test", default-features
 itc-rest-client = { path = "common/core/rest-client", default-features = false }
 itc-rpc-client = { path = "common/core/rpc-client" }
 itc-tls-websocket-server = { path = "common/core/tls-websocket-server", default-features = false }
-itc-offchain-worker-executor = { path = "common/core/offchain-worker-executor", default-features = false }
 
 itp-attestation-handler = { path = "common/core-primitives/attestation-handler", default-features = false }
 itp-import-queue = { path = "common/core-primitives/import-queue", default-features = false }
@@ -226,8 +267,6 @@ itp-primitives-cache = { path = "common/core-primitives/primitives-cache", defau
 itp-stf-interface = { path = "common/core-primitives/stf-interface", default-features = false }
 itp-stf-state-handler = { path = "common/core-primitives/stf-state-handler", default-features = false }
 itp-stf-state-observer = { path = "common/core-primitives/stf-state-observer", default-features = false }
-itp-top-pool = { path = "common/core-primitives/top-pool", default-features = false }
-itp-top-pool-author = { path = "common/core-primitives/top-pool-author", default-features = false }
 itp-test = { path = "common/core-primitives/test", default-features = false }
 
 # litentry
@@ -238,11 +277,46 @@ lc-teebag-storage = { path = "common/litentry/core/teebag-storage", default-feat
 lc-parachain-extrinsic-task-sender = { path = "common/litentry/core/parachain-extrinsic-task/sender", default-features = false }
 lc-parachain-extrinsic-task-receiver = { path = "common/litentry/core/parachain-extrinsic-task/receiver", default-features = false }
 litentry-hex-utils = { path = "../common/utils/hex", default-features = false }
+litentry-macros = { path = "../common/primitives/core/macros" }
 
 pallet-teebag = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
 pallet-parachain-staking = { git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
 parentchain-primitives = { package = "core-primitives", git = "https://github.com/litentry/litentry-parachain", branch = "release-v0.9.19", default-features = false }
 
+# identity
+lc-assertion-build = { path = "identity/litentry/core/assertion-build", default-features = false }
+lc-assertion-build-v2 = { path = "identity/litentry/core/assertion-build-v2", default-features = false }
+lc-common = { path = "identity/litentry/core/common", default-features = false }
+lc-credentials = { path = "identity/litentry/core/credentials", default-features = false }
+lc-credentials-v2 = { path = "identity/litentry/core/credentials-v2", default-features = false }
+lc-data-providers = { path = "identity/litentry/core/data-providers", default-features = false }
+lc-dynamic-assertion = { path = "identity/litentry/core/dynamic-assertion", default-features = false }
+lc-evm-dynamic-assertions = { path = "identity/litentry/core/evm-dynamic-assertions", default-features = false }
+lc-identity-verification = { path = "identity/litentry/core/identity-verification", default-features = false }
+lc-mock-server = { path = "identity/litentry/core/mock-server" }
+lc-service = { path = "identity/litentry/core/service", default-features = false }
+lc-stf-task-sender = { path = "identity/litentry/core/stf-task/sender", default-features = false }
+lc-stf-task-receiver = { path = "identity/litentry/core/stf-task/receiver", default-features = false }
+lc-vc-task-sender = { path = "identity/litentry/core/vc-task/sender", default-features = false }
+lc-vc-task-receiver = { path = "identity/litentry/core/vc-task/receiver", default-features = false }
+
+itc-peer-top-broadcaster = { path = "identity/core/peer-top-broadcaster", default-features = false }
+itc-rpc-server = { path = "identity/core/rpc-server", default-features = false }
+
+its-block-composer = { path = "identity/sidechain/block-composer", default-features = false }
+its-block-verification = { path = "identity/sidechain/block-verification", default-features = false }
+its-consensus-common = { path = "identity/sidechain/consensus/common", default-features = false }
+its-consensus-aura = { path = "identity/sidechain/consensus/aura", default-features = false }
+its-consensus-slots = { path = "identity/sidechain/consensus/slots", default-features = false }
+fork-tree = { path = "identity/sidechain/fork-tree", default-features = false }
+its-peer-fetch = { path = "identity/sidechain/peer-fetch", default-features = false }
+its-primitives = { path = "identity/sidechain/primitives", default-features = false, features = ["full_crypto"] }
+its-rpc-handler = { path = "identity/sidechain/rpc-handler", default-features = false }
+its-sidechain = { path = "identity/sidechain/sidechain-crate", default-features = false }
+its-state = { path = "identity/sidechain/state", default-features = false }
+its-storage = { path = "identity/sidechain/storage" }
+its-test = { path = "identity/sidechain/test", default-features = false }
+its-validateer-fetch = { path = "identity/sidechain/validateer-fetch", default-features = false }
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
 sgx_alloc = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }

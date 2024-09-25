@@ -32,19 +32,17 @@ tokio = { version = "1.6.1", features = ["full"] }
 url = "2.5.0"
 warp = "=0.3.5"
 
-# ipfs
 ipfs-api = "0.11.0"
 
 sgx_crypto_helper = { workspace = true, features = ["ucrypto_help"] }
 sgx_types = { workspace = true }
 
-ita-parentchain-interface = { path = "../app-libs/parentchain-interface" }
-itp-enclave-api = { path = "../core-primitives/enclave-api" }
-
-itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
+ita-parentchain-interface = { package = "bc-ita-parentchain-interface", path = "../app-libs/parentchain-interface" }
+itc-parentchain = { package = "bc-itc-parentchain", path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { workspace = true, features = ["std"] }
 itc-rpc-client = { workspace = true }
 itp-api-client-types = { workspace = true, features = ["std"] }
+itp-enclave-api = { package = "bc-itp-enclave-api", path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { workspace = true, features = ["std"] }
 itp-node-api = { workspace = true, features = ["std"] }
 itp-settings = { workspace = true }

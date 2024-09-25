@@ -1,5 +1,5 @@
 [package]
-name = "itc-offchain-worker-executor"
+name = "bc-itc-offchain-worker-executor"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -16,11 +16,11 @@ thiserror_sgx = { workspace = true, optional = true }
 
 itc-parentchain-light-client = { workspace = true }
 itp-extrinsics-factory = { workspace = true }
-itp-stf-executor = { path = "../../core-primitives/stf-executor", default-features = false }
+itp-stf-executor = { package = "bc-itp-stf-executor", path = "../../core-primitives/stf-executor", default-features = false }
 itp-stf-interface = { workspace = true }
 itp-stf-primitives = { workspace = true }
 itp-stf-state-handler = { workspace = true }
-itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-features = false }
+itp-top-pool-author = { package = "bc-itp-top-pool-author", path = "../../core-primitives/top-pool-author", default-features = false }
 itp-types = { workspace = true }
 
 sp-runtime = { workspace = true }
@@ -29,9 +29,9 @@ sp-runtime = { workspace = true }
 codec = { package = "parity-scale-codec", workspace = true, features = ["std"] }
 itc-parentchain-light-client = { workspace = true, features = ["std", "mocks"] }
 itp-extrinsics-factory = { workspace = true, features = ["std", "mocks"] }
-itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["std", "mocks"] }
+itp-stf-executor = { package = "bc-itp-stf-executor", path = "../../core-primitives/stf-executor", features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
-itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["std", "mocks"] }
+itp-top-pool-author = { package = "bc-itp-top-pool-author", path = "../../core-primitives/top-pool-author", features = ["std", "mocks"] }
 itp-stf-interface = { workspace = true, features = ["std", "mocks"] }
 itp-sgx-externalities = { workspace = true }
 sp-core = { workspace = true, features = ["full_crypto"] }

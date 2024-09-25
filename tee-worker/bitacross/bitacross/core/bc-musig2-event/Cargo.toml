@@ -15,8 +15,8 @@ bc-enclave-registry = { path = "../bc-enclave-registry", default-features = fals
 bc-musig2-ceremony = { path = "../bc-musig2-ceremony", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 
-itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
-itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
+itc-direct-rpc-client = { package = "bc-itc-direct-rpc-client", path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { package = "bc-itc-direct-rpc-server", path = "../../../core/direct-rpc-server", default-features = false }
 itp-ocall-api = { workspace = true }
 itp-rpc = { workspace = true }
 itp-sgx-crypto = { workspace = true }

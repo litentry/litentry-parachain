@@ -1,5 +1,5 @@
 [package]
-name = "ita-parentchain-interface"
+name = "bc-ita-parentchain-interface"
 version = "0.1.0"
 authors = ["Integritee AG <hello@integritee.network>"]
 edition = "2021"
@@ -7,9 +7,9 @@ edition = "2021"
 [dependencies]
 sgx_tstd = { workspace = true, optional = true }
 
-ita-sgx-runtime = { path = "../sgx-runtime", default-features = false }
-ita-stf = { path = "../stf", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "../../core/parentchain/indirect-calls-executor", default-features = false }
+ita-sgx-runtime = { package = "bc-ita-sgx-runtime", path = "../sgx-runtime", default-features = false }
+ita-stf = { package = "bc-ita-stf", path = "../stf", default-features = false }
+itc-parentchain-indirect-calls-executor = { package = "bc-itc-parentchain-indirect-calls-executor", path = "../../core/parentchain/indirect-calls-executor", default-features = false }
 itp-api-client-types = { workspace = true }
 itp-node-api = { workspace = true }
 itp-stf-primitives = { workspace = true }
@@ -34,8 +34,8 @@ env_logger = { workspace = true }
 itp-node-api = { workspace = true, features = ["std", "mocks"] }
 itp-sgx-crypto = { workspace = true, features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
-itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["std", "mocks"] }
-itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["std", "mocks"] }
+itp-stf-executor = { package = "bc-itp-stf-executor", path = "../../core-primitives/stf-executor", features = ["std", "mocks"] }
+itp-top-pool-author = { package = "bc-itp-top-pool-author", path = "../../core-primitives/top-pool-author", features = ["std", "mocks"] }
 itc-parentchain-test = { workspace = true, features = ["std"] }
 
 [features]

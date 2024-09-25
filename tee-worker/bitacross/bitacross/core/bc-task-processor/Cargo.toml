@@ -17,12 +17,12 @@ codec = { package = "parity-scale-codec", workspace = true }
 frame-support = { workspace = true }
 log = { workspace = true }
 
-ita-stf = { path = "../../../app-libs/stf", default-features = false }
+ita-stf = { package = "bc-ita-stf", path = "../../../app-libs/stf", default-features = false }
 itp-enclave-metrics = { workspace = true }
 itp-ocall-api = { workspace = true }
 itp-sgx-crypto = { workspace = true }
 itp-sgx-externalities = { workspace = true }
-itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-executor = { package = "bc-itp-stf-executor", path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { workspace = true }
 
 bc-enclave-registry = { path = "../bc-enclave-registry", default-features = false }
@@ -31,8 +31,8 @@ bc-musig2-event = { path = "../bc-musig2-event", default-features = false }
 bc-relayer-registry = { path = "../bc-relayer-registry", default-features = false }
 bc-signer-registry = { path = "../bc-signer-registry", default-features = false }
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
-itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
-itc-direct-rpc-server = { path = "../../../core/direct-rpc-server", default-features = false }
+itc-direct-rpc-client = { package = "bc-itc-direct-rpc-client", path = "../../../core/direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { package = "bc-itc-direct-rpc-server", path = "../../../core/direct-rpc-server", default-features = false }
 lc-direct-call = { path = "../../../litentry/core/direct-call", default-features = false }
 litentry-primitives = { workspace = true }
 

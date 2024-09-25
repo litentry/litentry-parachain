@@ -1,5 +1,5 @@
 [package]
-name = "itp-stf-executor"
+name = "bc-itp-stf-executor"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -20,7 +20,7 @@ itp-stf-primitives = { workspace = true }
 itp-stf-state-handler = { workspace = true }
 itp-stf-state-observer = { workspace = true }
 itp-time-utils = { workspace = true }
-itp-top-pool-author = { path = "../top-pool-author", default-features = false }
+itp-top-pool-author = { package = "bc-itp-top-pool-author", path = "../top-pool-author", default-features = false }
 itp-types = { workspace = true }
 
 thiserror = { workspace = true, optional = true }
@@ -40,7 +40,7 @@ itp-test = { workspace = true, optional = true }
 [dev-dependencies]
 itp-stf-state-observer = { workspace = true, features = ["std", "mocks"] }
 itp-stf-interface = { workspace = true, features = ["std", "mocks"] }
-itp-top-pool = { path = "../top-pool", features = ["std", "mocks"] }
+itp-top-pool = { package = "bc-itp-top-pool", path = "../top-pool", features = ["std", "mocks"] }
 itp-test = { workspace = true, features = ["std"] }
 
 [features]

@@ -1,5 +1,5 @@
 [package]
-name = "itp-top-pool"
+name = "bc-itp-top-pool"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 sgx_tstd = { workspace = true, features = ["net", "thread", "untrusted_time"], optional = true }
 
-itc-direct-rpc-server = { path = "../../core/direct-rpc-server", default-features = false }
+itc-direct-rpc-server = { package = "bc-itc-direct-rpc-server", path = "../../core/direct-rpc-server", default-features = false }
 itp-stf-primitives = { workspace = true }
 itp-types = { workspace = true }
 

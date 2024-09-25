@@ -1,5 +1,5 @@
 [package]
-name = "itc-parentchain"
+name = "bc-itc-parentchain"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
@@ -9,9 +9,9 @@ codec = { package = "parity-scale-codec", workspace = true, features = ["chain-e
 
 sp-runtime = { workspace = true }
 
-itc-parentchain-block-import-dispatcher = { path = "../block-import-dispatcher", default-features = false }
-itc-parentchain-block-importer = { path = "../block-importer", default-features = false }
-itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
+itc-parentchain-block-import-dispatcher = { package = "bc-itc-parentchain-block-import-dispatcher", path = "../block-import-dispatcher", default-features = false }
+itc-parentchain-block-importer = { package = "bc-itc-parentchain-block-importer", path = "../block-importer", default-features = false }
+itc-parentchain-indirect-calls-executor = { package = "bc-itc-parentchain-indirect-calls-executor", path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { workspace = true }
 itp-types = { workspace = true }
 

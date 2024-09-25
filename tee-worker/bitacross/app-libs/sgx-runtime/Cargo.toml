@@ -1,5 +1,5 @@
 [package]
-name = "ita-sgx-runtime"
+name = "bc-ita-sgx-runtime"
 version = "0.1.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
