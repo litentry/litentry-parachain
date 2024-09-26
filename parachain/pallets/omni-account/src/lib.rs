@@ -14,7 +14,8 @@ pub use pallet::*;
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 use identity_context::*;
-use sp_core::{blake2_256, H256};
+use sp_core::H256;
+use sp_core_hashing::blake2_256;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
