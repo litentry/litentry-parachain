@@ -36,6 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build docker image
+        working-directory: ./parachain
         run: |
           ./scripts/build-docker.sh ${{ github.event.inputs.cargo_profile }} ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
           echo "============================="
@@ -61,3 +62,11 @@ jobs:
           name: litentry-collator
           path: |
             litentry-collator
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: test-ts
+        timeout-minutes: 40
+        run: |
+          make test-ts-litentry
