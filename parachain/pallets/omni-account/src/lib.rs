@@ -43,23 +43,13 @@ pub mod pallet {
 		BoundedVec<(OmniAccountIdentity, IdentityContext<T>), <T as Config>::MaxIDGraphLength>;
 
 	#[pallet::storage]
-	pub type LinkedIdentities<T: Config> = StorageMap<
-		Hasher = Blake2_128Concat,
-		// Identity Hash
-		Key = H256,
-		// Identity
-		Value = (),
-	>;
+	pub type LinkedIdentities<T: Config> =
+		StorageMap<Hasher = Blake2_128Concat, Key = H256, Value = ()>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
-	pub type IDGraphs<T: Config> = StorageMap<
-		Hasher = Blake2_128Concat,
-		// Prime identity
-		Key = Identity,
-		// IDGraph (Identity, IdentityContext)
-		Value = IDGraphLinks<T>,
-	>;
+	pub type IDGraphs<T: Config> =
+		StorageMap<Hasher = Blake2_128Concat, Key = Identity, Value = IDGraphLinks<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
