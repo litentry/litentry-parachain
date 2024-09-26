@@ -994,6 +994,12 @@ impl pallet_identity_management::Config for Runtime {
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
 }
 
+impl pallet_omni_account::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type MaxIDGraphLength = ConstU32<64>;
+}
+
 impl pallet_bitacross::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
@@ -1253,6 +1259,8 @@ construct_runtime! {
 
 		// New Bridge Added
 		AssetsHandler: pallet_assets_handler = 76,
+
+		OmniAccount: pallet_omni_account = 84,
 
 		// TEE
 		Teebag: pallet_teebag = 93,

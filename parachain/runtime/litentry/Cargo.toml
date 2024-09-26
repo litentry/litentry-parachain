@@ -87,6 +87,7 @@ pallet-evm-assertions = { workspace = true }
 pallet-extrinsic-filter = { workspace = true }
 pallet-group = { workspace = true }
 pallet-identity-management = { workspace = true }
+pallet-omni-account = { workspace = true }
 pallet-parachain-staking = { workspace = true }
 pallet-score-staking = { workspace = true }
 pallet-teebag = { workspace = true }
