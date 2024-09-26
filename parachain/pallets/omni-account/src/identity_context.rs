@@ -41,10 +41,6 @@ impl<T: Config> IdentityContext<T> {
 		self.status = IdentityStatus::Active
 	}
 
-	pub fn is_active(&self) -> bool {
-		self.status == IdentityStatus::Active
-	}
-
 	// a small helper fn to apply mutable changes
 	fn dedup(mut web3networks: Vec<Web3Network>) -> Vec<Web3Network> {
 		web3networks.sort();
