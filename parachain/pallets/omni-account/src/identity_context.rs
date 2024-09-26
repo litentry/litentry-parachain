@@ -16,7 +16,7 @@ pub enum IdentityStatus {
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct IdentityContext<T: Config> {
-	// the sidechain block number at which the identity is linked
+	// the block number at which the identity is linked
 	pub link_block: BlockNumberFor<T>,
 	// a list of web3 networks on which the identity should be used
 	pub web3networks: Vec<Web3Network>,
