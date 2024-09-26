@@ -133,6 +133,7 @@ impl pallet_teebag::Config for TestRuntime {
 impl pallet_omni_account::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
+	type MaxIDGraphLength = ConstU32<3>;
 }
 
 pub fn get_tee_signer() -> SystemAccountId {
