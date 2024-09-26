@@ -69,31 +69,3 @@ docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
 echo "Image is ready"
 echo "------------------------------------------------------------"
 docker images | grep ${GITREPO}
-
-# ===================================================================================
-GITUSER=litentry
-GITREPO=litentry-chain-aio
-PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
-
-# Build the image
-echo "------------------------------------------------------------"
-echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
-    --build-arg PROFILE="$PROFILE" \
-    --build-arg BUILD_ARGS="$ARGS" \
-    --build-arg HTTP_PROXY="$PROXY" \
-    --build-arg HTTPS_PROXY="$PROXY" \
-    --build-arg http_proxy="$PROXY" \
-    --build-arg https_proxy="$PROXY" \
-    --add-host=host.docker.internal:host-gateway \
-    --network host \
-    --target chain-aio \
-    -t ${GITUSER}/${GITREPO}:${TAG} .
-
-# Tag it with latest if no tag parameter was provided
-[ -z "$2" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
-
-# Show the list of available images for this repo
-echo "Image is ready"
-echo "------------------------------------------------------------"
-docker images | grep ${GITREPO}
