@@ -45,19 +45,19 @@ on:
       - ready_for_review
   workflow_dispatch:
     inputs:
-      rebuild-parachain-docker:
+      rebuild-parachain:
         type: boolean
-        description: rebuild-parachain-docker
+        description: rebuild-parachain
         required: true
         default: true
-      rebuild-tee-docker:
+      rebuild-identity:
         type: boolean
-        description: rebuild-tee-docker
+        description: rebuild-identity
         required: true
         default: true
-      rebuild-bitacross-docker:
+      rebuild-bitacross:
         type: boolean
-        description: rebuild-bitacross-docker
+        description: rebuild-bitacross
         required: true
         default: true
       run-multi-worker-test:
@@ -93,11 +93,11 @@ jobs:
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
-      rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
+      rebuild_identity: ${{ steps.env.outputs.rebuild_identity }}
       rebuild_bitacross: ${{ steps.env.outputs.rebuild_bitacross }}
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
-      run_tee_test: ${{ steps.env.outputs.run_tee_test }}
+      run_identity_test: ${{ steps.env.outputs.run_identity_test }}
       run_bitacross_test: ${{ steps.env.outputs.run_bitacross_test }}
     steps:
       - uses: actions/checkout@v4
@@ -116,18 +116,18 @@ jobs:
         id: env
         run: |
           rebuild_parachain=false
-          rebuild_tee=false
+          rebuild_identity=false
           rebuild_bitacross=false
           push_docker=false
           run_parachain_test=false
-          run_tee_test=false
-          if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
+          run_identity_test=false
+          if [ "${{ github.event.inputs.rebuild-parachain }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
             rebuild_parachain=true
           fi
-          if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
-            rebuild_tee=true
+          if [ "${{ github.event.inputs.rebuild-identity }}" = "true" ] || [ "${{ steps.filter.outputs.identity_src }}" = "true" ]; then
+            rebuild_identity=true
           fi
-          if [ "${{ github.event.inputs.rebuild-bitacross-docker }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
+          if [ "${{ github.event.inputs.rebuild-bitacross }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
             rebuild_bitacross=true
           fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
@@ -138,18 +138,18 @@ jobs:
           if [ "${{ steps.filter.outputs.parachain_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ]; then
             run_parachain_test=true
           fi
-          if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
-            run_tee_test=true
+          if [ "${{ steps.filter.outputs.identity_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_identity" = "true" ]; then
+            run_identity_test=true
           fi
           if [ "${{ steps.filter.outputs.bitacross_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_bitacross" = "true" ]; then
             run_bitacross_test=true
           fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
-          echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_identity=$rebuild_identity" | tee -a $GITHUB_OUTPUT
           echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
-          echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
+          echo "run_identity_test=$run_identity_test" | tee -a $GITHUB_OUTPUT
           echo "run_bitacross_test=$run_bitacross_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
@@ -170,50 +170,43 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Parachain fmt check
+        working-directory: ./parachain
         run: |
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: Tee-worker fmt check
-        working-directory: ./tee-worker
+      - name: identity-worker fmt check
+        working-directory: ./tee-worker/identity
         run: |
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: Tee-worker enclave-runtime fmt check
-        working-directory: ./tee-worker/enclave-runtime
+      - name: identity-worker enclave-runtime fmt check
+        working-directory: ./tee-worker/identity/enclave-runtime
         run: |
           cargo fmt --all -- --check
 
       - name: bitacross-worker fmt check
-        working-directory: ./bitacross-worker
+        working-directory: ./tee-worker/bitacross
         run: |
           cargo fmt --all -- --check
           taplo fmt --check
 
       - name: bitacross-worker enclave-runtime fmt check
-        working-directory: ./bitacross-worker/enclave-runtime
+        working-directory: ./tee-worker/bitacross/enclave-runtime
         run: |
           cargo fmt --all -- --check
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Tee-worker ts-tests install npm deps
-        working-directory: ./tee-worker/ts-tests
+      - name: identity-worker ts-tests install npm deps
+        working-directory: ./tee-worker/identity/ts-tests
         # We can't update the lockfile here because the client-api hasn't been generated yet.
         run: pnpm install --frozen-lockfile
 
-      - name: Tee-worker check ts code format
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm run check-format
-
-      - name: Dynamic-contract install npm deps
-        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
-        run: pnpm install
-
-      - name: Dynamic-contract check code format
-        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
+      - name: identity-worker check ts code format
+        working-directory: ./tee-worker/identity/ts-tests
         run: pnpm run check-format
 
       - name: Fail early
@@ -268,7 +261,7 @@ jobs:
     strategy:
       matrix:
         type:
-          - tee # TODO: switch to identity
+          - identity
           - bitacross
     name: ${{ matrix.type }}
     steps:
@@ -280,12 +273,12 @@ jobs:
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Cargo test
-        working-directory: ./${{ matrix.type }}-worker
+        working-directory: ./tee-worker/${{ matrix.type }}
         run: |
           cargo test --release
 
       - name: Worker common clippy
-        working-directory: ./${{ matrix.type }}-worker
+        working-directory: ./tee-worker/${{ matrix.type }}
         shell: bash
         run: |
           for d in . enclave-runtime; do
@@ -305,8 +298,8 @@ jobs:
           done
 
       - name: Identity-worker specific clippy
-        if: matrix.type == 'tee'
-        working-directory: ./tee-worker
+        if: matrix.type == 'identity'
+        working-directory: ./tee-worker/identity
         shell: bash
         run: |
           for d in . enclave-runtime; do
@@ -344,6 +337,7 @@ jobs:
         uses: ./.github/actions/disk-cleanup
 
       - name: Build docker image
+        working-directory: ./parachain
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           echo "::group::build docker image"
@@ -396,18 +390,18 @@ jobs:
           driver: docker
 
       - name: Cache worker-cache
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         uses: actions/cache@v4
         with:
           path: |
             worker-cache
-          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/identity/**/Cargo.lock', 'tee-worker/identity/**/Cargo.toml') }}
           restore-keys: |
             worker-cache-${{ env.REF_VERSION }}-
             worker-cache-
 
       - name: Create cache folder if not exist
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         run: |
           for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
             [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
@@ -419,6 +413,7 @@ jobs:
           echo "::group::Show disk usage"
           df -h .
           echo "::endgroup::"
+
       # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
       # https://github.com/moby/buildkit/issues/1512
       # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
@@ -433,11 +428,11 @@ jobs:
       # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
       # is "atomic" and can't be broken into layers.
       - name: Build local builder
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: tee-worker/build.Dockerfile
+          file: tee-worker/identity/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -447,7 +442,7 @@ jobs:
             ADDITIONAL_FEATURES_ARG=
 
       - name: Copy caches from the built image
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         run: |
           echo "::group::Show disk usage"
           df -h .
@@ -470,25 +465,25 @@ jobs:
           echo "::endgroup::"
 
       - name: Build worker
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: tee-worker/build.Dockerfile
+          file: tee-worker/identity/build.Dockerfile
           tags: litentry/identity-worker:latest
           target: deployed-worker
 
       - name: Build cli
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: tee-worker/build.Dockerfile
+          file: tee-worker/identity/build.Dockerfile
           tags: litentry/identity-cli:latest
           target: deployed-client
 
       - name: Pull and tag worker and cli image optionally
-        if: needs.set-condition.outputs.rebuild_tee == 'false'
+        if: needs.set-condition.outputs.rebuild_identity == 'false'
         run: |
           docker pull litentry/identity-worker:latest
           docker pull litentry/identity-cli:latest
@@ -496,7 +491,7 @@ jobs:
       - run: docker images --all
 
       - name: Test enclave
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: docker run litentry/identity-worker:latest test --all
@@ -540,7 +535,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: bitacross-worker/build.Dockerfile
+          file: tee-worker/bitacross/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -552,7 +547,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: bitacross-worker/build.Dockerfile
+          file: tee-worker/bitacross/build.Dockerfile
           tags: litentry/bitacross-worker:latest
           target: deployed-worker
 
@@ -561,7 +556,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: bitacross-worker/build.Dockerfile
+          file: tee-worker/bitacross/build.Dockerfile
           tags: litentry/bitacross-cli:latest
           target: deployed-client
 
@@ -602,6 +597,7 @@ jobs:
         chain:
           - litentry
           - rococo
+          - paseo
     name: ${{ matrix.chain }}
     steps:
       - uses: actions/checkout@v4
@@ -653,26 +649,6 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.5
 
-  parachain-dynamic-contract-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Install npm deps
-        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
-        run: pnpm install
-
-      - name: Run all unittests
-        working-directory: ./tee-worker/litentry/core/assertion-build/src/dynamic
-        run: pnpm run test
-
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.5
-
   parachain-unit-test:
     runs-on: ubuntu-latest
     needs:
@@ -685,6 +661,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run all unittests
+        working-directory: ./parachain
         run: |
           echo "::group::core-primitives unittest"
           cargo test --locked -p core-primitives --lib
@@ -715,6 +692,7 @@ jobs:
         uses: ./.github/actions/disk-cleanup
 
       - name: Install toolchain
+        working-directory: ./parachain
         run: rustup show
 
       - name: Install dependencies
@@ -725,6 +703,7 @@ jobs:
       # We could have used matrix but the runtime tests are executed sequentially for a cleaner GHA visualisation graph.
       # It won't take much longer as we run them back to back.
       - name: Run runtime tests
+        working-directory: ./parachain
         run: |
           echo "::group::rococo runtime test"
           cargo test --locked -p rococo-parachain-runtime --lib
@@ -756,7 +735,6 @@ jobs:
           - test_name: lit-test-failed-parentchain-extrinsic
           - test_name: lit-twitter-identity-test
           - test_name: lit-discord-identity-test
-          - test_name: lit-assertion-contracts-test
     name: ${{ matrix.test_name }}
     steps:
       - uses: actions/checkout@v4
@@ -783,16 +761,16 @@ jobs:
           make launch-network-litentry
 
       - name: Integration single worker test ${{ matrix.test_name }}
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        working-directory: ./tee-worker/identity/docker
+        if: needs.set-condition.outputs.run_identity_test == 'true'
         timeout-minutes: 40
         run: |
-          cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop integration single worker docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        working-directory: ./tee-worker/identity/docker
+        if: needs.set-condition.outputs.run_identity_test == 'true'
         run: |
-          cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails
@@ -856,16 +834,16 @@ jobs:
           make launch-network-litentry
 
       - name: Integration multi worker test ${{ matrix.test_name }}
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        working-directory: ./tee-worker/identity/docker
+        if: needs.set-condition.outputs.run_identity_test == 'true'
         timeout-minutes: 40
         run: |
-          cd tee-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop integration multi worker docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+        working-directory: ./tee-worker/identity/docker
+        if: needs.set-condition.outputs.run_identity_test == 'true'
         run: |
-          cd tee-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails
@@ -922,16 +900,16 @@ jobs:
           make launch-network-litentry
 
       - name: Integration bitacross worker test ${{ matrix.test_name }}
+        working-directory: ./tee-worker/bitacross/docker
         if: needs.set-condition.outputs.run_bitacross_test == 'true'
         timeout-minutes: 40
         run: |
-          cd bitacross-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop integration multi worker docker containers
+        working-directory: ./tee-worker/bitacross/docker
         if: needs.set-condition.outputs.run_bitacross_test == 'true'
         run: |
-          cd bitacross-worker/docker
           docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails
@@ -1005,7 +983,7 @@ jobs:
           docker push litentry/litentry-chain-aio
 
       - name: Push tee-worker image
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        if: needs.set-condition.outputs.rebuild_identity == 'true'
         run: |
           docker push litentry/identity-worker
           docker push litentry/identity-cli

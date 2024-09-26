@@ -18,5 +18,5 @@ for p in ${CollatorWSPort:-9944} ${CollatorPort:-30333} ${UntrustedHttpPort:-454
 done
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR"
+cd "$ROOTDIR/parachain"
 make launch-docker-rococo

@@ -1,0 +1,125 @@
+[package]
+authors = ['Trust Computing GmbH <info@litentry.com>']
+build = 'build.rs'
+description = 'Litentry parachain collator implementation.'
+edition = '2021'
+homepage = 'https://litentry.com/'
+license = 'GPL-3.0'
+name = 'litentry-collator'
+repository = 'https://github.com/litentry/litentry-parachain'
+version = '0.9.20'
+
+[[bin]]
+name = 'litentry-collator'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+async-trait = { workspace = true }
+clap = { workspace = true }
+futures = { workspace = true }
+jsonrpsee = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+pallet-transaction-payment-rpc = { workspace = true }
+sc-basic-authorship = { workspace = true }
+sc-chain-spec = { workspace = true }
+sc-cli = { workspace = true }
+sc-client-api = { workspace = true }
+sc-consensus = { workspace = true }
+sc-consensus-aura = { workspace = true }
+sc-executor = { workspace = true }
+sc-network = { workspace = true }
+sc-network-sync = { workspace = true }
+sc-rpc = { workspace = true }
+sc-service = { workspace = true }
+sc-sysinfo = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-tracing = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+sp-api = { workspace = true, features = ["std"] }
+sp-block-builder = { workspace = true, features = ["std"] }
+sp-blockchain = { workspace = true }
+sp-consensus-aura = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
+sp-keystore = { workspace = true, features = ["std"] }
+sp-offchain = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+sp-session = { workspace = true, features = ["std"] }
+sp-timestamp = { workspace = true, features = ["std"] }
+sp-transaction-pool = { workspace = true, features = ["std"] }
+substrate-frame-rpc-system = { workspace = true }
+substrate-prometheus-endpoint = { workspace = true }
+
+fc-api = { workspace = true }
+fc-consensus = { workspace = true }
+fc-db = { workspace = true }
+fc-mapping-sync = { workspace = true }
+fc-rpc = { workspace = true }
+fc-rpc-core = { workspace = true }
+fc-storage = { workspace = true }
+fp-rpc = { workspace = true }
+
+moonbeam-primitives-ext = { workspace = true, features = ["std"] }
+moonbeam-rpc-debug = { workspace = true }
+moonbeam-rpc-primitives-debug = { workspace = true, features = ["std"] }
+moonbeam-rpc-primitives-txpool = { workspace = true, features = ["std"] }
+moonbeam-rpc-trace = { workspace = true }
+moonbeam-rpc-txpool = { workspace = true }
+
+cumulus-client-cli = { workspace = true }
+cumulus-client-consensus-aura = { workspace = true }
+cumulus-client-consensus-common = { workspace = true }
+cumulus-client-network = { workspace = true }
+cumulus-client-service = { workspace = true }
+cumulus-primitives-core = { workspace = true, features = ["std"] }
+cumulus-primitives-parachain-inherent = { workspace = true, features = ["std"] }
+cumulus-relay-chain-inprocess-interface = { workspace = true }
+cumulus-relay-chain-interface = { workspace = true }
+cumulus-relay-chain-minimal-node = { workspace = true }
+cumulus-test-relay-sproof-builder = { workspace = true, features = ["std"] }
+
+polkadot-cli = { workspace = true }
+polkadot-primitives = { workspace = true, features = ["std"] }
+polkadot-service = { workspace = true }
+xcm = { workspace = true }
+
+frame-benchmarking = { workspace = true }
+frame-benchmarking-cli = { workspace = true }
+try-runtime-cli = { workspace = true }
+
+core-primitives = { workspace = true, features = ["std"] }
+litentry-parachain-runtime = { workspace = true, features = ["std"] }
+paseo-parachain-runtime = { workspace = true, features = ["std"] }
+rococo-parachain-runtime = { workspace = true, features = ["std"] }
+
+[build-dependencies]
+substrate-build-script-utils = { workspace = true }
+
+[features]
+default = []
+fast-runtime = [
+    "litentry-parachain-runtime/fast-runtime",
+    "rococo-parachain-runtime/fast-runtime",
+    "paseo-parachain-runtime/fast-runtime",
+]
+runtime-benchmarks = [
+    "litentry-parachain-runtime/runtime-benchmarks",
+    "rococo-parachain-runtime/runtime-benchmarks",
+    "paseo-parachain-runtime/runtime-benchmarks",
+    "polkadot-service/runtime-benchmarks",
+    "polkadot-cli/runtime-benchmarks",
+]
+try-runtime = [
+    "litentry-parachain-runtime/try-runtime",
+    "rococo-parachain-runtime/try-runtime",
+    "paseo-parachain-runtime/try-runtime",
+    "polkadot-service/try-runtime",
+    "polkadot-cli/try-runtime",
+]
