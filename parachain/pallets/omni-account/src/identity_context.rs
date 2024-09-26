@@ -1,6 +1,7 @@
 use crate::{BlockNumberFor, Config, Web3Network};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo)]
 pub enum IdentityStatus {
