@@ -1003,6 +1003,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bridge-pallet"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10764,6 +10778,7 @@ dependencies = [
 name = "rococo-parachain-runtime"
 version = "0.1.0"
 dependencies = [
+ "bridge-pallet",
  "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",

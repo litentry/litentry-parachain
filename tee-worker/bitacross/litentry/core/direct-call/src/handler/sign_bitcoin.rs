@@ -130,7 +130,7 @@ pub mod test {
 			SignBitcoinPayload::Derived(vec![]),
 			&relayer_registry,
 			signers_registry,
-			&enclave_registry,
+				&enclave_registry,
 			false,
 		);
 

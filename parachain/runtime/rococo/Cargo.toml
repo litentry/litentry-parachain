@@ -51,6 +51,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-vesting = { workspace = true }
+bridge-pallet = { workspace = true }
 
 cumulus-pallet-aura-ext = { workspace = true }
 cumulus-pallet-dmp-queue = { workspace = true }
@@ -273,6 +274,7 @@ std = [
     "moonbeam-rpc-primitives-txpool/std",
     "pallet-bitacross/std",
     "precompile-utils/std",
+    "bridge-pallet/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",

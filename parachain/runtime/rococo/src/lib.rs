@@ -292,6 +292,12 @@ impl pallet_multisig::Config for Runtime {
 	type WeightInfo = weights::pallet_multisig::WeightInfo<Runtime>;
 }
 
+impl bridge_pallet::pallet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type SetAdminOrigin = EnsureRootOrAllCouncil;
+}
+
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
 	Copy,
@@ -1254,7 +1260,8 @@ construct_runtime! {
 		AssetsHandler: pallet_assets_handler = 76,
 
 		// TEE
-		Teebag: pallet_teebag = 93,
+		Teebag: pallet_teebag::pallet = 93,
+		PalletBridge: bridge_pallet::pallet = 101,
 
 		// Frontier
 		EVM: pallet_evm = 120,
@@ -1336,6 +1343,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::VCManagement(_) |
 			// TEE pallets
 			RuntimeCall::Teebag(_) |
+			RuntimeCall::PalletBridge(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
