@@ -18,13 +18,12 @@
 
 use crate::test::mocks::types::TestBlockImporter;
 use codec::{Decode, Encode};
-use itc_parentchain::primitives::ParentchainId;
 use itp_ocall_api::{
 	EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, EnclaveSidechainOCallApi, Result,
 };
 use itp_types::{
-	storage::StorageEntryVerified, BlockHash, Header as ParentchainHeader, ShardIdentifier,
-	WorkerRequest, WorkerResponse, H256,
+	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash,
+	Header as ParentchainHeader, ShardIdentifier, WorkerRequest, WorkerResponse, H256,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlockType;
 use its_sidechain::consensus_common::BlockImport;

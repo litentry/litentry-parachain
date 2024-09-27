@@ -63,7 +63,6 @@ use core::ffi::c_int;
 use itc_parentchain::{
 	block_import_dispatcher::DispatchBlockImport,
 	light_client::{concurrent_access::ValidatorAccess, Validator},
-	primitives::ParentchainId,
 };
 use itp_component_container::ComponentGetter;
 
@@ -73,7 +72,7 @@ use itp_nonce_cache::{MutateNonce, Nonce};
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
-use itp_types::{ShardIdentifier, SignedBlock};
+use itp_types::{parentchain::ParentchainId, ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
 use litentry_macros::if_development_or;
 use log::*;

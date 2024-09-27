@@ -81,15 +81,15 @@ impl ExecutionStatus {
 
 	pub fn get_executed_operation_hash(&self) -> Option<H256> {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _, _) => Some(*operation_hash),
+			ExecutionStatus::Success(operation_hash, ..) => Some(*operation_hash),
 			_ => None,
 		}
 	}
 
 	pub fn get_operation_hash(&self) -> H256 {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _, _) => *operation_hash,
-			ExecutionStatus::Failure(operation_hash, _, _) => *operation_hash,
+			ExecutionStatus::Success(operation_hash, ..) => *operation_hash,
+			ExecutionStatus::Failure(operation_hash, ..) => *operation_hash,
 		}
 	}
 
