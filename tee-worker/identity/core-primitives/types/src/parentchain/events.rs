@@ -248,12 +248,19 @@ impl StaticEvent for AssertionCreated {
 #[derive(Encode, Decode, Debug)]
 pub struct RewardDistributionStarted {
 	pub round_index: u32,
+	pub total_stake: Balance,
+	pub total_score: Balance,
 }
 
 impl core::fmt::Display for RewardDistributionStarted {
 	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		let message =
-			format!("{:?} :: round_index: {}", RewardDistributionStarted::EVENT, self.round_index);
+		let message = format!(
+			"{:?} :: round_index: {}, total_stake: {}, total_score: {}",
+			RewardDistributionStarted::EVENT,
+			self.round_index,
+			self.total_stake,
+			self.total_score
+		);
 		write!(f, "{}", message)
 	}
 }

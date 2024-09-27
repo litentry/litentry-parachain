@@ -32,8 +32,9 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{key_to_account_id, storage_map_key, StorageHasher};
 use itp_types::{
 	parentchain::{
-		events::ParentchainBlockProcessed, AccountId, FilterEvents, HandleParentchainEvents,
-		ParentchainEventProcessingError, ParentchainId, ProcessedEventsArtifacts,
+		events::{ParentchainBlockProcessed, RewardDistributionStarted},
+		AccountId, FilterEvents, HandleParentchainEvents, ParentchainEventProcessingError,
+		ParentchainId, ProcessedEventsArtifacts,
 	},
 	Delegator, OpaqueCall, RsaRequest, H256,
 };
@@ -236,7 +237,7 @@ where
 		&self,
 		executor: &Executor,
 		block_header: impl Header<Hash = H256>,
-		round_index: u32,
+		event: &RewardDistributionStarted,
 	) -> Result<(), Error> {
 		let scores_key_prefix = storage_prefix(b"ScoreStaking", b"Scores");
 		let scores_storage_keys_response = self
@@ -315,13 +316,11 @@ where
 
 		let extrinsic_sender = ParachainExtrinsicSender::new();
 
-		let update_total_staking_amount_call_index = self
+		let distribute_rewards_call_index = self
 			.node_metadata_repository
-			.get_from_metadata(|m| m.update_total_staking_amount_call_indexes())
+			.get_from_metadata(|m| m.distribute_rewards_call_indexes())
 			.map_err(|_| {
-				Error::Other(
-					"Metadata retrieval for update_token_staking_amount_call_indexes failed".into(),
-				)
+				Error::Other("Metadata retrieval for distribute_rewards_call_indexes failed".into())
 			})?
 			.map_err(|_| Error::Other("Invalid metadata".into()))?;
 
@@ -340,23 +339,30 @@ where
 				},
 			};
 			let call = OpaqueCall::from_tuple(&(
-				update_total_staking_amount_call_index,
+				distribute_rewards_call_index,
 				account_id,
 				staking_amount,
+				event.round_index,
+				event.total_stake,
+				event.total_score,
 			));
 			extrinsic_sender
 				.send(call)
 				.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
 		}
 
-		let distribute_rewards_call_index = self
+		let complete_rewards_distribution_call_index = self
 			.node_metadata_repository
-			.get_from_metadata(|m| m.distribute_rewards_call_indexes())
+			.get_from_metadata(|m| m.complete_rewards_distribution_call_indexes())
 			.map_err(|_| {
-				Error::Other("Metadata retrieval for distribute_rewards_call_indexes failed".into())
+				Error::Other(
+					"Metadata retrieval for complete_rewards_distribution_call_indexes failed"
+						.into(),
+				)
 			})?
 			.map_err(|_| Error::Other("Invalid metadata".into()))?;
-		let call = OpaqueCall::from_tuple(&(distribute_rewards_call_index, round_index));
+		let call =
+			OpaqueCall::from_tuple(&(complete_rewards_distribution_call_index, event.round_index));
 		extrinsic_sender
 			.send(call)
 			.map_err(|_| Error::Other("Failed to send extrinsic".into()))?;
@@ -508,11 +514,8 @@ where
 				.iter()
 				.try_for_each(|event| {
 					let event_hash = hash_of(&event);
-					let result = self.distribute_staking_rewards(
-						executor,
-						block_header.clone(),
-						event.round_index,
-					);
+					let result =
+						self.distribute_staking_rewards(executor, block_header.clone(), event);
 					handled_events.push(event_hash);
 
 					result

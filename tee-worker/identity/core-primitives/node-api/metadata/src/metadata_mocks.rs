@@ -92,8 +92,8 @@ pub struct NodeMetadataMock {
 
 	//ScoreStaking
 	score_staking_module: u8,
-	update_total_staking_amount: u8,
 	distribute_rewards: u8,
+	complete_rewards_distribution: u8,
 }
 
 impl NodeMetadataMock {
@@ -151,8 +151,8 @@ impl NodeMetadataMock {
 			runtime_transaction_version: 4,
 
 			score_staking_module: 100u8,
-			update_total_staking_amount: 9u8,
 			distribute_rewards: 10u8,
+			complete_rewards_distribution: 11u8,
 		}
 	}
 }
@@ -192,8 +192,8 @@ impl ScoreStakingCallIndexes for NodeMetadataMock {
 		Ok([self.score_staking_module, self.distribute_rewards])
 	}
 
-	fn update_total_staking_amount_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.score_staking_module, self.update_total_staking_amount])
+	fn complete_rewards_distribution_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.score_staking_module, self.complete_rewards_distribution])
 	}
 }
 
