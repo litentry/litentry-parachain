@@ -49,7 +49,7 @@ PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
 
 # Build the local-builder image
 echo "------------------------------------------------------------"
-echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
+echo "Building local-builder:latest docker image ..."
 docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
@@ -61,6 +61,8 @@ docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
     --network host \
     --target builder \
     --tag local-builder:latest .
+
+docker images 
 
 # Build the image
 echo "------------------------------------------------------------"
