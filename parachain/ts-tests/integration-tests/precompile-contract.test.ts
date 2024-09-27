@@ -1,6 +1,13 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import { signAndSend, describeLitentry, loadConfig, subscribeToEvents, sudoWrapperGC } from '../common/utils';
+import {
+    signAndSend,
+    describeLitentry,
+    loadConfig,
+    subscribeToEvents,
+    sudoWrapperGC,
+    sudoWrapperTC,
+} from '../common/utils';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
 const BN = require('bn.js');
@@ -104,6 +111,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const collators = response.toJSON() as { address: string; value: number }[];
         return collators[0];
     };
+
+    step('Set ExtrinsicFilter mode to Test', async function () {
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
+        await signAndSend(extrinsic, context.alice);
+    });
 
     step('Address with insufficient amount of tokens', async function () {
         const randomEvmWallet = ethers.Wallet.createRandom();
@@ -347,5 +359,10 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         }
 
         console.timeEnd('Test precompile staking contract');
+    });
+
+    step('Set ExtrinsicFilter mode to Normal', async function () {
+        let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Normal'));
+        await signAndSend(extrinsic, context.alice);
     });
 });
