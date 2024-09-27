@@ -53,7 +53,9 @@ if is_client_release; then
 
   NODE_VERSION=$(grep version node/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   NODE_BIN=litentry-collator
-  NODE_SHA1SUM=$(shasum litentry-collator/"$NODE_BIN" | awk '{print $1}')
+  # if is_client_release, files are downloaded in the upper layer
+  NODE_SHA1SUM=$(shasum ../litentry-collator/"$NODE_BIN" | awk '{print $1}')
+  rm ../litentry-collator/*.tar.gz
   if [ -f rust-toolchain.toml ]; then
     NODE_RUSTC_VERSION=$(rustc --version)
   else
