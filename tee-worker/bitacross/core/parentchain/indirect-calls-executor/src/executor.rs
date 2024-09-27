@@ -42,7 +42,7 @@ use itp_stf_primitives::{
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::{HandleParentchainEvents, ParentchainId},
-	OpaqueCall, RsaRequest, ShardIdentifier, H256,
+	MrEnclave, OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -70,6 +70,7 @@ pub struct IndirectCallsExecutor<
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 	pub parentchain_id: ParentchainId,
+	parentchain_event_handler: ParentchainEventHandler,
 	pub relayer_registry_updater: Arc<RRU>,
 	pub signer_registry_updater: Arc<SRU>,
 	pub enclave_registry_updater: Arc<ERU>,
@@ -112,6 +113,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 		parentchain_id: ParentchainId,
+		parentchain_event_handler: ParentchainEventHandler,
 		relayer_registry_updater: Arc<RRU>,
 		signer_registry_updater: Arc<SRU>,
 		enclave_registry_updater: Arc<ERU>,
@@ -122,6 +124,7 @@ impl<
 			top_pool_author,
 			node_meta_data_provider,
 			parentchain_id,
+			parentchain_event_handler,
 			relayer_registry_updater,
 			signer_registry_updater,
 			enclave_registry_updater,
@@ -164,7 +167,8 @@ impl<
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
-	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error, RRU, SRU, ERU>,
+	ParentchainEventHandler:
+		HandleParentchainEvents<Self, TCS, Error, RRU, SRU, ERU, Output = Vec<H256>>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	RRU: RelayerRegistryUpdater,
@@ -191,9 +195,7 @@ impl<
 			})?
 			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
 
-		let processed_events = ParentchainEventHandler::handle_events(self, events)?;
-
-		debug!("successfully processed {} indirect invocations", processed_events.len());
+		let processed_events = self.parentchain_event_handler.handle_events(self, events)?;
 
 		if self.parentchain_id == ParentchainId::Litentry {
 			// Include a processed parentchain block confirmation for each block.
@@ -287,6 +289,10 @@ impl<
 		Ok(self.stf_enclave_signer.get_enclave_account()?)
 	}
 
+	fn get_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(self.stf_enclave_signer.get_mrenclave()?)
+	}
+
 	fn get_default_shard(&self) -> ShardIdentifier {
 		self.top_pool_author.list_handled_shards().first().copied().unwrap_or_default()
 	}
@@ -321,9 +327,8 @@ mod test {
 	use bc_signer_registry::SignerRegistry;
 	use codec::Encode;
 
-	use itp_node_api::{
-		api_client::ExtrinsicParams,
-		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
+	use itp_node_api::metadata::{
+		metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository,
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
 	use itp_stf_executor::mocks::StfEnclaveSignerMock;
@@ -351,10 +356,6 @@ mod test {
 		SignerRegistry,
 		EnclaveRegistry,
 	>;
-
-	type Seed = [u8; 32];
-
-	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 	#[test]
 	fn ensure_empty_events_vec_triggers_zero_filled_merkle_root() {
@@ -409,6 +410,7 @@ mod test {
 		let stf_enclave_signer = Arc::new(TestStfEnclaveSigner::new(mr_enclave));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
 		let node_metadata_repo = Arc::new(NodeMetadataRepository::new(metadata));
+		let parentchain_event_handler = MockParentchainEventHandler {};
 		let relayer_registry = Arc::new(RelayerRegistry::new(Default::default()));
 		let signer_registry = Arc::new(SignerRegistry::new(Default::default()));
 		let enclave_registry = Arc::new(EnclaveRegistry::new(Default::default()));
@@ -419,6 +421,7 @@ mod test {
 			top_pool_author.clone(),
 			node_metadata_repo,
 			ParentchainId::Litentry,
+			parentchain_event_handler,
 			relayer_registry,
 			signer_registry,
 			enclave_registry,

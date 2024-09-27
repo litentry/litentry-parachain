@@ -8,7 +8,7 @@ use crate::{
 };
 use clap::Parser;
 use core::time::Duration;
-use ita_sgx_runtime::pallet_imt::Identity;
+use ita_sgx_runtime::pallet_identity_management_tee::Identity;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::DirectClient;
 use itp_stf_primitives::{
