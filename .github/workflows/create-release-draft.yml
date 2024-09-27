@@ -378,7 +378,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
+          ./parachain/scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
