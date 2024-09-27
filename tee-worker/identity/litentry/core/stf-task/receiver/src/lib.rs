@@ -52,7 +52,8 @@ use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
-use lc_stf_task_sender::{init_stf_task_sender_storage, RequestType};
+use lc_stf_task_sender::init_stf_task_sender_storage;
+use litentry_primitives::RequestType;
 use log::*;
 use sp_core::{ed25519::Pair as Ed25519Pair, H160};
 use std::{

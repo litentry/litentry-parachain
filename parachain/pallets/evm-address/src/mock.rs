@@ -233,7 +233,7 @@ impl pallet_ethereum::Config for Test {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	// Maximum length (in bytes) of revert message to include in Executed event
-	type ExtraDataLength = ConstU32<30>;
+	type ExtraDataLength = ConstU32<256>;
 }
 
 impl pallet_evm_address::Config for Test {

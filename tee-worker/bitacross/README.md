@@ -25,7 +25,7 @@ Rust code used in CLI module can also be used as a reference and can be found [h
 
 ```bash
 make SGX_MODE=SW
-cd .. && local-setup/launch.py -w bitacross -wn 3 --parachain local-binary-standalone
+cd ../.. && local-setup/launch.py -w bitacross -wn 3 -p standalone
 ```
 
 ### Step by step guide for request preparing/sending and response handling. 

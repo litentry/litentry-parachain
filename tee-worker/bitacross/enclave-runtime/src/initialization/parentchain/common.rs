@@ -36,6 +36,11 @@ use crate::{
 		GLOBAL_SIGNER_REGISTRY,
 	},
 };
+use ita_parentchain_interface::{
+	integritee::ParentchainEventHandler as LitentryParentchainEventHandler,
+	target_a::ParentchainEventHandler as TargetAParentchainEventHandler,
+	target_b::ParentchainEventHandler as TargetBParentchainEventHandler,
+};
 use itp_component_container::ComponentGetter;
 use itp_nonce_cache::NonceCache;
 use itp_sgx_crypto::key_repository::AccessKey;
@@ -60,6 +65,8 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
+	let parentchain_event_handler = LitentryParentchainEventHandler {};
+
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
@@ -72,6 +79,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::Litentry,
+		parentchain_event_handler,
 		relayer_registry,
 		signer_registry,
 		enclave_registry,
@@ -102,6 +110,8 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
+	let parentchain_event_handler = TargetAParentchainEventHandler {};
+
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
@@ -114,6 +124,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::TargetA,
+		parentchain_event_handler,
 		relayer_registry,
 		signer_registry,
 		enclave_registry,
@@ -144,6 +155,8 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 	let signer_registry = GLOBAL_SIGNER_REGISTRY.get()?;
 	let enclave_registry = GLOBAL_ENCLAVE_REGISTRY.get()?;
 
+	let parentchain_event_handler = TargetBParentchainEventHandler {};
+
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
@@ -156,6 +169,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 		ParentchainId::TargetB,
+		parentchain_event_handler,
 		relayer_registry,
 		signer_registry,
 		enclave_registry,
