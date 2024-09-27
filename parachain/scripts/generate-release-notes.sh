@@ -55,7 +55,6 @@ if is_client_release; then
   NODE_BIN=litentry-collator
   # if is_client_release, files are downloaded in the upper layer
   NODE_SHA1SUM=$(shasum ../litentry-collator/"$NODE_BIN" | awk '{print $1}')
-  rm ../litentry-collator/*.tar.gz
   if [ -f rust-toolchain.toml ]; then
     NODE_RUSTC_VERSION=$(rustc --version)
   else
