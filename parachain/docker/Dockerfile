@@ -26,7 +26,7 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
 
-COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
+COPY --from=local-builder:latest /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
 
 # install netcat for healthcheck
 RUN apt-get update && \
@@ -95,8 +95,8 @@ RUN echo "downloading zombienet-linux-x64 ..." && \
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /opt/litentry/parachain /code && \
 	chown -R litentry:litentry /opt/litentry
-	
-COPY --from=builder /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
+
+COPY --from=local-builder:latest /litentry/parachain/target/$PROFILE/litentry-collator /usr/local/bin/
 RUN chmod +x /usr/local/bin/litentry-collator && \
     # check if executable works in this container
     /usr/local/bin/litentry-collator --version
