@@ -130,7 +130,11 @@ fn default_mint_works() {
 		// run to next reward distribution round
 		run_to_block(7);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: 0,
+				total_score: 0,
+			},
 		));
 	});
 }
@@ -181,7 +185,7 @@ fn score_staking_works() {
 				total_reward: 0,
 				last_round_reward: 0,
 				unpaid_reward: 0,
-				total_staking_amount: 0
+				last_token_distribution_round: 0,
 			}
 		);
 
@@ -202,7 +206,11 @@ fn score_staking_works() {
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: alice_staking,
+				total_score: alice_score,
+			},
 		));
 		// total reward first distribution
 		let mut alice_total_reward = 0;
@@ -216,18 +224,17 @@ fn score_staking_works() {
 		);
 		alice_total_reward += round_reward;
 
-		assert_ok!(ScoreStaking::update_total_staking_amount(
+		assert_ok!(ScoreStaking::distribute_rewards(
 			RuntimeOrigin::signed(alice()),
 			alice(),
-			alice_staking
+			alice_staking,
+			2,
+			total_staking,
+			total_score
 		));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account_id: alice(),
-			amount: alice_staking,
-		}));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
 			round_index: 2,
 		}));
 
@@ -238,18 +245,22 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 2,
 			}
 		);
 
 		// alice's winning should accumulate
 		run_to_block(12);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 3 },
-		));
-		// total reward second distribution
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 3,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+		// total reward second distribution
 		let round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
@@ -258,8 +269,17 @@ fn score_staking_works() {
 		);
 		alice_total_reward += round_reward;
 
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 3));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			3,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
 			round_index: 3,
 		}));
 
@@ -270,7 +290,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 3,
 			}
 		);
 
@@ -281,23 +301,37 @@ fn score_staking_works() {
 		pallet_parachain_staking::Total::<Test>::put(alice_staking + other_staking);
 
 		run_to_block(17);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 4 },
-		));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 4));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 4,
-		}));
-
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 4,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+
 		let round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
+
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			4,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
+			round_index: 4,
+		}));
+
 		// total reward third distribution
 		alice_total_reward += round_reward;
 
@@ -308,7 +342,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 4,
 			}
 		);
 
@@ -332,43 +366,59 @@ fn score_staking_works() {
 		assert_eq!(ScoreStaking::score_user_count(), 2);
 
 		run_to_block(22);
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 5 },
-		));
-		assert_ok!(ScoreStaking::update_total_staking_amount(
-			RuntimeOrigin::signed(alice()),
-			bob(),
-			bob_staking
-		));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account_id: bob(),
-			amount: bob_staking,
-		}));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 5));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 5,
-		}));
-
-		// total rewards fourth distribution
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
 
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 5,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			5,
+			total_staking,
+			total_score
+		));
 		let alice_round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
-		alice_total_reward += alice_round_reward;
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: alice_round_reward,
+			round_index: 5,
+		}));
 
-		let mut bob_total_reward = 0;
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			bob(),
+			bob_staking,
+			5,
+			total_staking,
+			total_score
+		));
 		let bob_round_reward = calculate_round_reward(
 			bob_score.into(),
 			total_score.into(),
 			bob_staking,
 			total_staking,
 		);
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: bob(),
+			amount: bob_round_reward,
+			round_index: 5,
+		}));
+
+		alice_total_reward += alice_round_reward;
+		let mut bob_total_reward = 0;
 		bob_total_reward += bob_round_reward;
 
 		assert_eq!(
@@ -378,7 +428,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: alice_round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 5,
 			}
 		);
 		assert_eq!(
@@ -388,7 +438,7 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: bob_round_reward,
 				unpaid_reward: bob_total_reward,
-				total_staking_amount: bob_staking
+				last_token_distribution_round: 5,
 			}
 		);
 
@@ -411,32 +461,58 @@ fn score_staking_works() {
 
 		run_to_block(27);
 
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 6 },
-		));
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 6));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 6,
-		}));
-
-		// total rewards fifth distribution
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 6,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
 
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			6,
+			total_staking,
+			total_score
+		));
 		let alice_round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
-		alice_total_reward += alice_round_reward;
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: alice_round_reward,
+			round_index: 6,
+		}));
 
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			bob(),
+			bob_staking,
+			6,
+			total_staking,
+			total_score
+		));
 		let bob_round_reward = calculate_round_reward(
 			bob_score.into(),
 			total_score.into(),
 			bob_staking,
 			total_staking,
 		);
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: bob(),
+			amount: bob_round_reward,
+			round_index: 6,
+		}));
+
+		// total rewards fifth distribution
+		alice_total_reward += alice_round_reward;
 		bob_total_reward += bob_round_reward;
 
 		assert_eq!(
@@ -446,7 +522,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: alice_round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 6,
 			}
 		);
 		assert_eq!(
@@ -456,7 +532,7 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: bob_round_reward,
 				unpaid_reward: bob_total_reward,
-				total_staking_amount: bob_staking
+				last_token_distribution_round: 6,
 			}
 		);
 
@@ -471,32 +547,54 @@ fn score_staking_works() {
 
 		run_to_block(33);
 
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 7 },
-		));
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 7));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 7,
-		}));
-
-		// total reward sixth distribution
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
 
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 7,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			7,
+			total_staking,
+			total_score
+		));
 		let alice_round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
-		alice_total_reward += alice_round_reward;
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
+			round_index: 7,
+		}));
 
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			bob(),
+			bob_staking,
+			7,
+			total_staking,
+			total_score
+		));
 		let bob_round_reward = calculate_round_reward(
 			bob_score.into(),
 			total_score.into(),
 			bob_staking,
 			total_staking,
 		);
+
+		// total reward sixth distribution
+		alice_total_reward += alice_round_reward;
 		bob_total_reward += bob_round_reward;
 
 		assert_eq!(
@@ -506,7 +604,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: alice_round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 7,
 			}
 		);
 		assert_eq!(
@@ -516,7 +614,7 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: bob_round_reward,
 				unpaid_reward: bob_total_reward,
-				total_staking_amount: bob_staking
+				last_token_distribution_round: 7,
 			}
 		);
 
@@ -525,24 +623,51 @@ fn score_staking_works() {
 
 		run_to_block(37);
 
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 8 },
-		));
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 8));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 8,
-		}));
-
-		// total reward sixth distribution
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 8,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
 
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			8,
+			total_staking,
+			total_score
+		));
 		let alice_round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: alice_round_reward,
+			round_index: 8,
+		}));
+
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			bob(),
+			bob_staking,
+			8,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: bob(),
+			amount: 0,
+			round_index: 8,
+		}));
+
+		// total reward sixth distribution
 		alice_total_reward += alice_round_reward;
 
 		assert_eq!(
@@ -552,7 +677,7 @@ fn score_staking_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: alice_round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 8,
 			}
 		);
 		// bob should not participate in the reward calculation
@@ -563,7 +688,7 @@ fn score_staking_works() {
 				total_reward: bob_total_reward,
 				last_round_reward: 0,
 				unpaid_reward: bob_total_reward,
-				total_staking_amount: bob_staking
+				last_token_distribution_round: 8,
 			}
 		);
 		assert_eq!(ScoreStaking::total_score(), alice_score);
@@ -601,9 +726,16 @@ fn claim_works() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
+		let total_staking = pallet_parachain_staking::Total::<Test>::get();
+		let total_score = ScoreStaking::total_score();
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: total_staking,
+				total_score,
+			},
 		));
+
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -611,23 +743,24 @@ fn claim_works() {
 				total_reward: 0,
 				last_round_reward: 0,
 				unpaid_reward: 0,
-				total_staking_amount: 0
+				last_token_distribution_round: 0,
 			}
 		);
-		assert_ok!(ScoreStaking::update_total_staking_amount(
+
+		assert_ok!(ScoreStaking::distribute_rewards(
 			RuntimeOrigin::signed(alice()),
 			alice(),
-			alice_staking
+			alice_staking,
+			2,
+			total_staking,
+			total_score
 		));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account_id: alice(),
-			amount: alice_staking,
-		}));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward(),
 			round_index: 2,
 		}));
+
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
 			ScorePayment {
@@ -635,7 +768,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -651,7 +784,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -667,7 +800,7 @@ fn claim_works() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -706,37 +839,40 @@ fn distribute_rewards_works() {
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
 
+		let total_staking = pallet_parachain_staking::Total::<Test>::get();
+		let total_score = ScoreStaking::total_score();
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: total_staking,
+				total_score,
+			},
 		));
 
 		let alice_id_graph_staking = 1900;
+		alice_staking = alice_id_graph_staking;
 
-		assert_ok!(ScoreStaking::update_total_staking_amount(
+		assert_ok!(ScoreStaking::distribute_rewards(
 			RuntimeOrigin::signed(alice()),
 			alice(),
-			alice_id_graph_staking
+			alice_staking,
+			2,
+			total_staking,
+			total_score
 		));
-		alice_staking = alice_id_graph_staking;
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account_id: alice(),
-			amount: alice_staking,
-		}));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 2,
-		}));
-
-		let mut alice_total_reward = 0;
-		let total_staking = pallet_parachain_staking::Total::<Test>::get();
-		let total_score = ScoreStaking::total_score();
 		let round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
+			round_index: 2,
+		}));
+
+		let mut alice_total_reward = 0;
 		alice_total_reward += round_reward;
 
 		assert_eq!(
@@ -746,34 +882,42 @@ fn distribute_rewards_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 2,
 			}
 		);
 
 		run_to_block(12);
 
-		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 3 },
-		));
-
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 3));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
-			round_index: 3,
-		}));
-
 		let total_staking = pallet_parachain_staking::Total::<Test>::get();
 		let total_score = ScoreStaking::total_score();
+		System::assert_last_event(RuntimeEvent::ScoreStaking(
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 3,
+				total_stake: total_staking,
+				total_score,
+			},
+		));
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			3,
+			total_staking,
+			total_score
+		));
 		let round_reward = calculate_round_reward(
 			alice_score.into(),
 			total_score.into(),
 			alice_staking,
 			total_staking,
 		);
-		alice_total_reward += round_reward;
-
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward,
 			round_index: 3,
 		}));
+
+		alice_total_reward += round_reward;
 
 		assert_eq!(
 			ScoreStaking::scores(alice()).unwrap(),
@@ -782,7 +926,7 @@ fn distribute_rewards_works() {
 				total_reward: alice_total_reward,
 				last_round_reward: round_reward,
 				unpaid_reward: alice_total_reward,
-				total_staking_amount: alice_staking
+				last_token_distribution_round: 3,
 			}
 		);
 	})
@@ -814,17 +958,39 @@ fn distribute_rewards_round_rewards_already_distributed_works() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
-
+		let total_staking = pallet_parachain_staking::Total::<Test>::get();
+		let total_score = ScoreStaking::total_score();
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: total_staking,
+				total_score,
+			},
 		));
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			2,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward(),
 			round_index: 2,
 		}));
 
 		assert_noop!(
-			ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2),
+			ScoreStaking::distribute_rewards(
+				RuntimeOrigin::signed(alice()),
+				alice(),
+				alice_staking,
+				2,
+				total_staking,
+				total_score
+			),
 			Error::<Test>::RoundRewardsAlreadyDistributed
 		);
 	})
@@ -834,7 +1000,7 @@ fn distribute_rewards_round_rewards_already_distributed_works() {
 fn distribute_rewards_origin_check_works() {
 	new_test_ext(false).execute_with(|| {
 		assert_noop!(
-			ScoreStaking::distribute_rewards(RuntimeOrigin::signed(bob()), 1),
+			ScoreStaking::distribute_rewards(RuntimeOrigin::signed(bob()), alice(), 10, 1, 10, 10),
 			sp_runtime::DispatchError::BadOrigin
 		);
 	})

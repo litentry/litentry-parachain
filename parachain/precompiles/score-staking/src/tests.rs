@@ -57,22 +57,28 @@ fn claim_is_ok() {
 
 		// run to next reward distribution round, alice should win all rewards
 		run_to_block(7);
+		let total_staking = pallet_parachain_staking::Total::<Test>::get();
+		let total_score = ScoreStaking::total_score();
 		System::assert_last_event(RuntimeEvent::ScoreStaking(
-			Event::<Test>::RewardDistributionStarted { round_index: 2 },
+			Event::<Test>::RewardDistributionStarted {
+				round_index: 2,
+				total_stake: total_staking,
+				total_score,
+			},
 		));
-		assert_ok!(ScoreStaking::update_total_staking_amount(
-			RuntimeOrigin::signed(alice()),
-			alice(),
-			alice_staking
-		));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::TotalStakingAmountUpdated {
-			account_id: alice(),
-			amount: alice_staking,
-		}));
 
 		// calculates the rewards
-		assert_ok!(ScoreStaking::distribute_rewards(RuntimeOrigin::signed(alice()), 2));
-		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributionCompleted {
+		assert_ok!(ScoreStaking::distribute_rewards(
+			RuntimeOrigin::signed(alice()),
+			alice(),
+			alice_staking,
+			2,
+			total_staking,
+			total_score
+		));
+		System::assert_last_event(RuntimeEvent::ScoreStaking(Event::RewardDistributed {
+			who: alice(),
+			amount: round_reward(),
 			round_index: 2,
 		}));
 
@@ -83,7 +89,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward(),
-				total_staking_amount: alice_staking,
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -107,7 +113,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: round_reward() - 200,
-				total_staking_amount: alice_staking,
+				last_token_distribution_round: 2,
 			}
 		);
 
@@ -131,7 +137,7 @@ fn claim_is_ok() {
 				total_reward: round_reward(),
 				last_round_reward: round_reward(),
 				unpaid_reward: 0,
-				total_staking_amount: alice_staking,
+				last_token_distribution_round: 2,
 			}
 		);
 
