@@ -21,6 +21,7 @@ use crate::{
 	BatchExecutionResult, ExecutedOperation,
 };
 use codec::{Decode, Encode};
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
@@ -42,8 +43,8 @@ use itp_types::{
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec,
-	vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, string::ToString, sync::Arc,
+	time::Duration, vec, vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
@@ -122,6 +123,7 @@ where
 		}
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce());
+
 		let mut extrinsic_call_backs: Vec<ParentchainCall> = Vec::new();
 		return match Stf::execute_call(
 			state,
@@ -132,6 +134,12 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
+				if let Err(e) =
+					self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement(
+						trusted_call.metric_name().to_string(),
+					)) {
+					warn!("Failed to update metric for failed trusted operations: {:?}", e);
+				}
 				error!("Stf execute failed: {:?}", e);
 				let rpc_response_value: Vec<u8> = e.encode();
 				Ok(ExecutedOperation::failed(
@@ -142,8 +150,15 @@ where
 				))
 			},
 			Ok(result) => {
+				if let Err(e) = self.ocall_api.update_metric(
+					EnclaveMetric::SuccessfulTrustedOperationIncrement(
+						trusted_call.metric_name().to_string(),
+					),
+				) {
+					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
+				}
 				let force_connection_wait = result.force_connection_wait();
-				let rpc_response_value: Vec<u8> = result.get_encoded_result();
+				let rpc_response_value = result.get_encoded_result();
 				if let StatePostProcessing::Prune = post_processing {
 					state.prune_state_diff();
 				}

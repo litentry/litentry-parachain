@@ -17,16 +17,15 @@
 
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use itc_parentchain::primitives::{
-	ParentchainId, ParentchainInitParams,
-	ParentchainInitParams::{Parachain, Solochain},
-};
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_stf_interface::ShardCreationInfo;
 use itp_storage::StorageProof;
 use itp_types::{
-	parentchain::{Balance, Header},
+	parentchain::{
+		Balance, Header, ParentchainId, ParentchainInitParams,
+		ParentchainInitParams::{Parachain, Solochain},
+	},
 	EnclaveFingerprint, ShardIdentifier,
 };
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;

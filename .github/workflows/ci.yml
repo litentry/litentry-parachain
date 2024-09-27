@@ -175,8 +175,8 @@ jobs:
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: identity-worker fmt check
-        working-directory: ./tee-worker/identity
+      - name: tee-worker fmt check
+        working-directory: ./tee-worker
         run: |
           cargo fmt --all -- --check
           taplo fmt --check
@@ -185,12 +185,6 @@ jobs:
         working-directory: ./tee-worker/identity/enclave-runtime
         run: |
           cargo fmt --all -- --check
-
-      - name: bitacross-worker fmt check
-        working-directory: ./tee-worker/bitacross
-        run: |
-          cargo fmt --all -- --check
-          taplo fmt --check
 
       - name: bitacross-worker enclave-runtime fmt check
         working-directory: ./tee-worker/bitacross/enclave-runtime
@@ -258,12 +252,6 @@ jobs:
       - set-condition
       - sequentialise
     container: "litentry/litentry-tee-dev:latest"
-    strategy:
-      matrix:
-        type:
-          - identity
-          - bitacross
-    name: ${{ matrix.type }}
     steps:
       - uses: actions/checkout@v4
 
@@ -273,15 +261,15 @@ jobs:
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Cargo test
-        working-directory: ./tee-worker/${{ matrix.type }}
+        working-directory: ./tee-worker
         run: |
           cargo test --release
 
-      - name: Worker common clippy
-        working-directory: ./tee-worker/${{ matrix.type }}
+      - name: Check clippy
+        working-directory: ./tee-worker
         shell: bash
         run: |
-          for d in . enclave-runtime; do
+          for d in . identity/enclave-runtime bitacross/enclave-runtime; do
             pushd "$d"
             echo "::group::cargo clippy all"
             cargo clippy --release -- -D warnings
@@ -298,26 +286,21 @@ jobs:
           done
 
       - name: Identity-worker specific clippy
-        if: matrix.type == 'identity'
-        working-directory: ./tee-worker/identity
+        working-directory: ./tee-worker/identity/enclave-runtime
         shell: bash
         run: |
-          for d in . enclave-runtime; do
-            pushd "$d"
-            echo "::group::cargo clippy sidechain"
-            cargo clippy --release --features sidechain -- -D warnings
-            echo "::endgroup::"
-            echo "::group::cargo clippy evm"
-            cargo clippy --release --features evm -- -D warnings
-            echo "::endgroup::"
-            echo "::group::cargo clippy sidechain development"
-            cargo clippy --release --features sidechain,development -- -D warnings
-            echo "::endgroup::"
-            echo "::group::cargo clippy evm development"
-            cargo clippy --release --features evm,development -- -D warnings
-            echo "::endgroup::"
-            popd
-          done
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain development"
+          cargo clippy --release --features sidechain,development -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm development"
+          cargo clippy --release --features evm,development -- -D warnings
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()

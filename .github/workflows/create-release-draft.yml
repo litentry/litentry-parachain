@@ -79,6 +79,7 @@ jobs:
           - rococo
           - paseo
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -303,6 +304,7 @@ jobs:
       matrix:
         chain:
           - litentry
+    name: ${{ matrix.chain }}
     steps:
       - name: Checkout codes
         uses: actions/checkout@v4
@@ -322,7 +324,7 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Run ts tests for parachain
+      - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 30
         run: |
           make test-ts-${{ matrix.chain }}
@@ -345,7 +347,7 @@ jobs:
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
 
-      - name: Clean up for parachain
+      - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}
         run: |
           make clean-network
@@ -376,7 +378,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
+          ./parachain/scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

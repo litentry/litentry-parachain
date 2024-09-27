@@ -24,7 +24,72 @@
         "()"
       ],
       [
+        "TrustedOperationStatus",
+        "(TrustedOperationStatus, H256)"
+      ],
+      [
         "Error",
+        "()"
+      ],
+      [
+        "Processing",
+        "H256"
+      ]
+    ]
+  },
+  "TrustedOperationStatus": {
+    "type": "enum",
+    "type_mapping": [
+      [
+        "Submitted",
+        "()"
+      ],
+      [
+        "Future",
+        "()"
+      ],
+      [
+        "Ready",
+        "()"
+      ],
+      [
+        "Broadcast",
+        "()"
+      ],
+      [
+        "InSidechainBlock",
+        "H256"
+      ],
+      [
+        "Retracted",
+        "()"
+      ],
+      [
+        "FinalityTimeout",
+        "()"
+      ],
+      [
+        "Finalized",
+        "()"
+      ],
+      [
+        "Usurped",
+        "()"
+      ],
+      [
+        "Dropped",
+        "()"
+      ],
+      [
+        "Invalid",
+        "()"
+      ],
+      [
+        "TopExecuted",
+        "(Vec<u8>, bool)"
+      ],
+      [
+        "SuccessorExecuted",
         "()"
       ]
     ]
