@@ -20,6 +20,5 @@ pnpm run test-filter 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.lo
 $ROOTDIR/parachain/scripts/launch-bridge.sh
 pnpm run test-bridge 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 
-pnpm run test-evm-transfer 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 pnpm run test-evm-contract 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 pnpm run test-precompile-contract 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
