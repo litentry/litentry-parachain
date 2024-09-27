@@ -13,7 +13,7 @@ cd "$ROOTDIR/parachain/ts-tests"
 LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 
-[ -f .env ] || echo "NODE_ENV=ci" >.env
+[ -f .env ] || echo "NODE_ENV=ci" > .env
 pnpm install
 pnpm run test-filter 2>&1 | tee -a "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 

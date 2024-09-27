@@ -16,84 +16,6 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
     };
 
-    step('Deploy and test contract by EVM external account', async function () {
-        // Get the bytecode and API
-        const bytecode = compiled.evm.bytecode.object;
-        const abi = compiled.abi;
-        const web3 = new Web3(config.parachain_ws);
-
-        const deploy = async (accountFrom: any) => {
-            console.log(`Attempting to deploy from account ${accountFrom.address}`);
-            const hello = new web3.eth.Contract(abi);
-
-            const helloTx = hello.deploy({
-                data: bytecode,
-                arguments: [],
-            });
-
-            const createTransaction = await web3.eth.accounts.signTransaction(
-                {
-                    data: helloTx.encodeABI(),
-                    gas: await helloTx.estimateGas(),
-                    gasPrice: await web3.eth.getGasPrice(),
-                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
-                },
-                accountFrom.privateKey
-            );
-
-            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
-            console.log(`Contract deployed at address: ${createReceipt.contractAddress}`);
-
-            return createReceipt;
-        };
-
-        const deployed = await deploy(evmAccountRaw);
-        if (!deployed.contractAddress) {
-            console.log('deployed', deployed);
-        }
-
-        // Test get message contract method
-        const sayMessage = async (contractAddress: string): Promise<string> => {
-            const hello = new web3.eth.Contract(abi, contractAddress);
-            console.log(`Making a call to contract at address: ${contractAddress}`);
-
-            const data: string = await hello.methods.sayMessage().call();
-            console.log(`The current message is: ${data}`);
-
-            return data;
-        };
-
-        const message = await sayMessage(deployed.contractAddress!);
-        const initialResult = message === 'Hello World' ? 1 : 0;
-        assert.equal(1, initialResult, 'Contract initial storage query mismatch');
-
-        // Test set message contract method
-        const setMessage = async (contractAddress: string, accountFrom: any, message: string) => {
-            console.log(`Calling the setMessage function in contract at address: ${contractAddress}`);
-
-            const hello = new web3.eth.Contract(abi, contractAddress);
-            const helloTx = hello.methods.setMessage(message);
-
-            const createTransaction = await web3.eth.accounts.signTransaction(
-                {
-                    to: contractAddress,
-                    data: helloTx.encodeABI(),
-                    gas: await helloTx.estimateGas(),
-                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
-                    gasPrice: await web3.eth.getGasPrice(),
-                },
-                accountFrom.privateKey
-            );
-
-            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
-            console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
-        };
-        const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
-        const sayMsg = await sayMessage(deployed.contractAddress!);
-        const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
-        assert.equal(1, setResult, 'Contract modified storage query mismatch');
-    });
-
     step('Set ExtrinsicFilter mode to Test', async function () {
         let extrinsic = await sudoWrapperTC(context.api, context.api.tx.extrinsicFilter.setMode('Test'));
         await signAndSend(extrinsic, context.alice);
@@ -209,6 +131,84 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         // Which means balance unchanged
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
+    });
+
+    step('Deploy and test contract by EVM external account', async function () {
+        // Get the bytecode and API
+        const bytecode = compiled.evm.bytecode.object;
+        const abi = compiled.abi;
+        const web3 = new Web3(config.parachain_ws);
+
+        const deploy = async (accountFrom: any) => {
+            console.log(`Attempting to deploy from account ${accountFrom.address}`);
+            const hello = new web3.eth.Contract(abi);
+
+            const helloTx = hello.deploy({
+                data: bytecode,
+                arguments: [],
+            });
+
+            const createTransaction = await web3.eth.accounts.signTransaction(
+                {
+                    data: helloTx.encodeABI(),
+                    gas: await helloTx.estimateGas(),
+                    gasPrice: await web3.eth.getGasPrice(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
+                },
+                accountFrom.privateKey
+            );
+
+            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
+            console.log(`Contract deployed at address: ${createReceipt.contractAddress}`);
+
+            return createReceipt;
+        };
+
+        const deployed = await deploy(evmAccountRaw);
+        if (!deployed.contractAddress) {
+            console.log('deployed', deployed);
+        }
+
+        // Test get message contract method
+        const sayMessage = async (contractAddress: string): Promise<string> => {
+            const hello = new web3.eth.Contract(abi, contractAddress);
+            console.log(`Making a call to contract at address: ${contractAddress}`);
+
+            const data: string = await hello.methods.sayMessage().call();
+            console.log(`The current message is: ${data}`);
+
+            return data;
+        };
+
+        const message = await sayMessage(deployed.contractAddress!);
+        const initialResult = message === 'Hello World' ? 1 : 0;
+        assert.equal(1, initialResult, 'Contract initial storage query mismatch');
+
+        // Test set message contract method
+        const setMessage = async (contractAddress: string, accountFrom: any, message: string) => {
+            console.log(`Calling the setMessage function in contract at address: ${contractAddress}`);
+
+            const hello = new web3.eth.Contract(abi, contractAddress);
+            const helloTx = hello.methods.setMessage(message);
+
+            const createTransaction = await web3.eth.accounts.signTransaction(
+                {
+                    to: contractAddress,
+                    data: helloTx.encodeABI(),
+                    gas: await helloTx.estimateGas(),
+                    nonce: await web3.eth.getTransactionCount(accountFrom.address),
+                    gasPrice: await web3.eth.getGasPrice(),
+                },
+                accountFrom.privateKey
+            );
+
+            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
+            console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
+        };
+        const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
+        const sayMsg = await sayMessage(deployed.contractAddress!);
+        const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
+        assert.equal(1, setResult, 'Contract modified storage query mismatch');
     });
 
     step('Set ExtrinsicFilter mode to Normal', async function () {
