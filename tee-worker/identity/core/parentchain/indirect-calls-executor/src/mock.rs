@@ -2,13 +2,7 @@ use crate::{error::Error, filter_metadata::EventsFromMetadata};
 use itp_stf_primitives::traits::IndirectExecutor;
 use itp_test::mock::stf_mock::TrustedCallSignedMock;
 use itp_types::{
-	parentchain::{
-		events::{
-			ActivateIdentityRequested, AssertionCreated, DeactivateIdentityRequested,
-			EnclaveUnauthorized, LinkIdentityRequested, OpaqueTaskPosted, VCRequested,
-		},
-		FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts,
-	},
+	parentchain::{events::*, FilterEvents, HandleParentchainEvents, ProcessedEventsArtifacts},
 	RsaRequest, H256,
 };
 use sp_core::H160;
@@ -67,18 +61,39 @@ impl FilterEvents for MockEvents {
 
 	fn get_parentchain_block_proccessed_events(
 		&self,
-	) -> Result<Vec<itp_types::parentchain::events::ParentchainBlockProcessed>, Self::Error> {
+	) -> Result<Vec<ParentchainBlockProcessed>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_btc_wallet_generated_events(&self) -> Result<Vec<BtcWalletGenerated>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_added_events(&self) -> Result<Vec<EnclaveAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_enclave_removed_events(&self) -> Result<Vec<EnclaveRemoved>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayer_added_events(&self) -> Result<Vec<RelayerAdded>, Self::Error> {
+		Ok(Vec::new())
+	}
+
+	fn get_relayers_removed_events(&self) -> Result<Vec<RelayerRemoved>, Self::Error> {
 		Ok(Vec::new())
 	}
 }
 
 pub struct MockParentchainEventHandler {}
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error>
+impl<Executor> HandleParentchainEvents<Executor, TrustedCallSignedMock, Error, (), (), ()>
 	for MockParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSignedMock, Error>,
+	Executor: IndirectExecutor<TrustedCallSignedMock, Error, (), (), ()>,
 {
+	type Output = ProcessedEventsArtifacts;
 	fn handle_events(
 		&self,
 		_: &Executor,

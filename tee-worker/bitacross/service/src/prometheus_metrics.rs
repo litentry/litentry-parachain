@@ -150,6 +150,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				},
 			EnclaveMetric::Musig2CeremonyDuration(time) =>
 				MUSIG2_CEREMONY_DURATION.observe(time.as_secs_f64()),
+			_ => warn!("Not supported metric: {:?}", metric),
 		}
 		Ok(())
 	}

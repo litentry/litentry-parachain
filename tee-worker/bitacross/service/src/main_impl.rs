@@ -52,8 +52,7 @@ use substrate_api_client::{
 use litentry_primitives::extract_tcb_info_from_raw_dcap_quote;
 
 use crate::error::ServiceResult;
-use itc_parentchain::primitives::ParentchainId;
-use itp_types::parentchain::{AccountId, Balance};
+use itp_types::parentchain::{AccountId, Balance, ParentchainId};
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
 	Pair,
