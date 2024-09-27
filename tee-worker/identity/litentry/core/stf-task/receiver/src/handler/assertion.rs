@@ -28,10 +28,9 @@ use lc_credentials::credential_schema;
 use lc_data_providers::DataProviderConfig;
 use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
-use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
-	VCMPError,
+	AmountHoldingTimeType, Assertion, AssertionBuildRequest, ErrorDetail, ErrorString, Identity,
+	ParameterString, VCMPError,
 };
 use log::*;
 use sp_core::{Pair, H160};

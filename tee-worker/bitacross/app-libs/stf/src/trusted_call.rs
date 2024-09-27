@@ -150,6 +150,10 @@ impl TrustedCallVerification for TrustedCallSigned {
 		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
 			|| self.signature.verify(&payload, self.call.sender_identity())
 	}
+
+	fn metric_name(&self) -> &'static str {
+		"unsupported_trusted_call"
+	}
 }
 
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned

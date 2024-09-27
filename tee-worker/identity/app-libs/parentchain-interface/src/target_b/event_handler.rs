@@ -27,11 +27,12 @@ use sp_std::vec::Vec;
 
 pub struct ParentchainEventHandler {}
 
-impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+impl<Executor> HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
 	for ParentchainEventHandler
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
 {
+	type Output = ProcessedEventsArtifacts;
 	fn handle_events(
 		&self,
 		_executor: &Executor,

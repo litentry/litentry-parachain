@@ -64,7 +64,7 @@ where
 	NMR: AccessNodeMetadata,
 	NMR::MetadataType: NodeMetadataTrait,
 {
-	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn link_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -100,7 +100,7 @@ where
 		Ok(())
 	}
 
-	fn deactivate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn deactivate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -128,7 +128,7 @@ where
 		Ok(())
 	}
 
-	fn activate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn activate_identity<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		encrypted_identity: Vec<u8>,
@@ -156,7 +156,7 @@ where
 		Ok(())
 	}
 
-	fn request_vc<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn request_vc<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		account: &AccountId,
 		assertion: Assertion,
@@ -182,7 +182,7 @@ where
 		Ok(())
 	}
 
-	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn post_opaque_task<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		executor: &Executor,
 		request: &RsaRequest,
 	) -> Result<(), Error> {
@@ -192,7 +192,7 @@ where
 		Ok(())
 	}
 
-	fn store_assertion<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn store_assertion<Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>>(
 		&self,
 		executor: &Executor,
 		id: H160,
@@ -233,7 +233,9 @@ where
 		Ok(())
 	}
 
-	fn distribute_staking_rewards<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
+	fn distribute_staking_rewards<
+		Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
+	>(
 		&self,
 		executor: &Executor,
 		block_header: impl Header<Hash = H256>,
@@ -376,15 +378,17 @@ fn decode_storage_key(raw_key: Vec<u8>) -> Option<Vec<u8>> {
 	decode_hex(hex_key).ok()
 }
 
-impl<Executor, OCallApi, HS, NMR> HandleParentchainEvents<Executor, TrustedCallSigned, Error>
+impl<Executor, OCallApi, HS, NMR>
+	HandleParentchainEvents<Executor, TrustedCallSigned, Error, (), (), ()>
 	for ParentchainEventHandler<OCallApi, HS, NMR>
 where
-	Executor: IndirectExecutor<TrustedCallSigned, Error>,
+	Executor: IndirectExecutor<TrustedCallSigned, Error, (), (), ()>,
 	OCallApi: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	HS: HandleState<StateT = SgxExternalities>,
 	NMR: AccessNodeMetadata,
 	NMR::MetadataType: NodeMetadataTrait,
 {
+	type Output = ProcessedEventsArtifacts;
 	fn handle_events(
 		&self,
 		executor: &Executor,

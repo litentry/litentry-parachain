@@ -42,7 +42,10 @@ use itp_stf_primitives::{
 };
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	parentchain::{events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId},
+	parentchain::{
+		events::ParentchainBlockProcessed, HandleParentchainEvents, ParentchainId,
+		ProcessedEventsArtifacts,
+	},
 	MrEnclave, OpaqueCall, RsaRequest, ShardIdentifier, H256,
 };
 use log::*;
@@ -141,7 +144,8 @@ impl<
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
 	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
-	ParentchainEventHandler: HandleParentchainEvents<Self, TCS, Error>,
+	ParentchainEventHandler:
+		HandleParentchainEvents<Self, TCS, Error, (), (), (), Output = ProcessedEventsArtifacts>,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
@@ -275,7 +279,7 @@ impl<
 		PrivacySidechain,
 		TCS,
 		G,
-	> IndirectExecutor<TCS, Error>
+	> IndirectExecutor<TCS, Error, (), (), ()>
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,

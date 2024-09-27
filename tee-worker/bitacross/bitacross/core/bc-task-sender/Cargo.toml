@@ -4,22 +4,16 @@ authors = ["Trust Computing GmbH <info@litentry.com>"]
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# std dependencies
-futures = { version = "0.3.8", optional = true }
+futures = { workspace = true, optional = true }
 
-# sgx dependencies
-futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
-sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["net", "thread"], optional = true }
+futures_sgx = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
 
-# no_std dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
+codec = { package = "parity-scale-codec", workspace = true }
+lazy_static = { workspace = true }
 
-# litentry primities 
-litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
+litentry-primitives = { workspace = true }
 
 [features]
 default = ["std"]

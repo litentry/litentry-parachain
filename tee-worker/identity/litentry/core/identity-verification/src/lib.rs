@@ -34,7 +34,7 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use frame_support::pallet_prelude::*;
-use lc_stf_task_sender::Web2IdentityVerificationRequest;
+use litentry_primitives::Web2IdentityVerificationRequest;
 
 pub mod web2;
 

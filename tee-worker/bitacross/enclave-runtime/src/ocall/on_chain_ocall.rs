@@ -19,10 +19,11 @@
 use crate::ocall::{ffi, OcallApi};
 use codec::{Decode, Encode};
 use frame_support::ensure;
-use itc_parentchain::primitives::ParentchainId;
 use itp_ocall_api::{EnclaveOnChainOCallApi, Result};
 use itp_storage::{verify_storage_entries, Error as StorageError};
-use itp_types::{storage::StorageEntryVerified, WorkerRequest, WorkerResponse, H256};
+use itp_types::{
+	parentchain::ParentchainId, storage::StorageEntryVerified, WorkerRequest, WorkerResponse, H256,
+};
 use log::*;
 use sgx_types::*;
 use sp_runtime::{traits::Header, OpaqueExtrinsic};
