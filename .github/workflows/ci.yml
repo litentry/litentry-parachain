@@ -599,8 +599,6 @@ jobs:
       - name: Run ts tests for ${{ matrix.chain }}
         if: needs.set-condition.outputs.run_parachain_test == 'true'
         timeout-minutes: 35
-        env:
-          NODE_ENV: prod
         run: |
           make test-ts-${{ matrix.chain }}
 
