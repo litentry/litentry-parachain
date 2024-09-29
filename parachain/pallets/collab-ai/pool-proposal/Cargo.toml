@@ -9,15 +9,15 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
+bitflags = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
-bitflags = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+orml-utilities = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
-orml-utilities = { workspace = true }
 
 pallet-collab-ai-common = { workspace = true }
 
