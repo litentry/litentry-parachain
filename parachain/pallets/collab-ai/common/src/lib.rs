@@ -69,7 +69,7 @@ pub enum CandidateStatus {
 	Banned,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, Debug, TypeInfo)]
 pub enum GuardianVote<S: Get<u32>> {
 	/// Does not care if this guardian get selected
 	/// Please be aware Neutral will increase participate percentage
@@ -112,7 +112,7 @@ where
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
 			RawOrigin::Signed(who) => {
-				if EC::is_curator(who) {
+				if EC::is_curator(who.clone()) {
 					Ok(who)
 				} else {
 					Err(O::from(RawOrigin::Signed(who)))
@@ -133,20 +133,20 @@ pub const INVESTING_POOL_INDEX_SHIFTER: u128 = 1_000_000_000_000_000;
 pub const INVESTING_POOL_START_MONTH_SHIFTER: u128 = 1_000;
 pub const INVESTING_POOL_END_MONTH_SHIFTER: u128 = 1;
 
-pub struct InvestingPoolAssetIdGenerator<AssetId>(PhantomData<AssetId>);
-impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
-	/// Create a series of new asset id based on pool index and reward epoch
-	/// Return None if impossible to generate. e.g. overflow
-	pub fn get_pool_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<Vec<AssetId>> {
-		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
+// pub struct InvestingPoolAssetIdGenerator<AssetId>(PhantomData<AssetId>);
+// impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
+// 	/// Create a series of new asset id based on pool index and reward epoch
+// 	/// Return None if impossible to generate. e.g. overflow
+// 	pub fn get_pool_token(pool_index: InvestingPoolIndex, epoch: u128) -> Option<Vec<AssetId>> {
+// 		let pool_index_prefix = pool_index.checked_mul(INVESTING_POOL_INDEX_SHIFTER)?;
 
-		let mut vec: Vec<AssetId> = Vec::new();
-		for n in 0..(epoch + 1) {
-			// vec.push(pool_index_prefix + )
-		}
-		None
-	}
-}
+// 		let mut vec: Vec<AssetId> = Vec::new();
+// 		for n in 0..(epoch + 1) {
+// 			// vec.push(pool_index_prefix + )
+// 		}
+// 		None
+// 	}
+// }
 
 /// Some sort of check on the account is from some group.
 pub trait GuardianQuery<AccountId, S: Get<u32>> {
