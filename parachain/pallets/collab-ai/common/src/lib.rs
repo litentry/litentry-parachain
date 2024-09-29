@@ -102,7 +102,7 @@ pub trait CuratorQuery<AccountId> {
 pub struct EnsureSignedAndCurator<AccountId, EC>(PhantomData<(AccountId, EC)>);
 impl<
 		O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
-		AccountId: Decode,
+		AccountId: Decode + Clone,
 		EC,
 	> EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
 where
