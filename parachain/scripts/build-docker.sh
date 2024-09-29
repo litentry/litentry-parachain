@@ -67,7 +67,7 @@ docker images
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
+docker build ${NOCACHE_FLAG} -f ./parachain/docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     --build-arg HTTP_PROXY="$PROXY" \
@@ -96,7 +96,7 @@ if [ -z "$TAG" ] || [ "$TAG" = "latest" ]; then
     # Build the image
     echo "------------------------------------------------------------"
     echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-    docker build ${NOCACHE_FLAG} --pull -f ./parachain/docker/Dockerfile \
+    docker build ${NOCACHE_FLAG} -f ./parachain/docker/Dockerfile \
         --build-arg PROFILE="$PROFILE" \
         --build-arg BUILD_ARGS="$ARGS" \
         --build-arg HTTP_PROXY="$PROXY" \
