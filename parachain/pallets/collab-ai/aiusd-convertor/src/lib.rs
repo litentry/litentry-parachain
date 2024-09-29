@@ -155,7 +155,7 @@ pub mod pallet {
 
 		// Burn aiusd and get target_asset_id token released
 		// Failed if pool does not have enough token of one type
-		#[pallet::call_index(0)]
+		#[pallet::call_index(1)]
 		#[pallet::weight({195_000_000})]
 		pub fn burn_aiusd(
 			origin: OriginFor<T>,
@@ -200,7 +200,7 @@ pub mod pallet {
 		}
 
 		/// Enable a specific type of token available for switching
-		#[pallet::call_index(1)]
+		#[pallet::call_index(2)]
 		#[pallet::weight({195_000_000})]
 		pub fn enable_token(
 			origin: OriginFor<T>,
@@ -214,7 +214,7 @@ pub mod pallet {
 		}
 
 		/// disable a specific type of token available for switching
-		#[pallet::call_index(2)]
+		#[pallet::call_index(3)]
 		#[pallet::weight({195_000_000})]
 		pub fn disable_token(
 			origin: OriginFor<T>,

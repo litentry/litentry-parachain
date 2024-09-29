@@ -311,10 +311,11 @@ pub mod pallet {
 							ensure!(
 								ordered_set.insert(Bond {
 									owner: next_proposal_index,
-									value: reserved_amount,
+									amount: reserved_amount,
 								}),
 								Error::<T>::ProposalDepositDuplicatedOrOversized
 							);
+							Ok(())
 						},
 						None => {
 							let mut new_ordered_set = OrderedSet::new();
@@ -322,11 +323,12 @@ pub mod pallet {
 							ensure!(
 								new_ordered_set.insert(Bond {
 									owner: next_proposal_index,
-									value: reserved_amount,
+									amount: reserved_amount,
 								}),
 								Error::<T>::ProposalDepositDuplicatedOrOversized
 							);
-							*maybe_ordered_set = Some(new_ordered_set)
+							*maybe_ordered_set = Some(new_ordered_set);
+							Ok(())
 						},
 					}
 				},
@@ -452,6 +454,7 @@ pub mod pallet {
 			}
 
 			<PoolPreInvestings<T>>::put(pool_proposal_index, pool_proposal_pre_investing);
+			Ok(())
 		}
 
 		// Withdraw is not allowed when proposal has STAKE_AMOUNT_PASSED flag
@@ -567,6 +570,7 @@ pub mod pallet {
 								ordered_set.insert(who),
 								Error::<T>::GuardianDuplicatedOrOversized
 							);
+							Ok(())
 						},
 						None => {
 							let mut new_ordered_set = OrderedSet::new();
@@ -575,11 +579,13 @@ pub mod pallet {
 								new_ordered_set.insert(who),
 								Error::<T>::GuardianDuplicatedOrOversized
 							);
-							*maybe_ordered_set = Some(new_ordered_set)
+							*maybe_ordered_set = Some(new_ordered_set);
+							Ok(())
 						},
 					}
 				},
 			);
+			Ok(())
 		}
 	}
 
