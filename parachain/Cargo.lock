@@ -7148,10 +7148,12 @@ name = "pallet-collab-ai-common"
 version = "0.1.0"
 dependencies = [
  "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
