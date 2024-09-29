@@ -187,7 +187,6 @@ pub mod pallet {
 		}
 
 		/// Clean a curator legal info
-		/// Impossible when there is a staking pool proposal ongoing
 		#[pallet::call_index(2)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn clean_curator(origin: OriginFor<T>) -> DispatchResult {
@@ -253,10 +252,10 @@ pub mod pallet {
 }
 
 /// Some sort of check on the origin is from curator.
-impl<T: Config> EnsureCurator<T::AccountId> for Pallet<T> {
+impl<T: Config> CuratorQuery<T::AccountId> for Pallet<T> {
 	fn is_curator(account: T::AccountId) -> bool {
-		if let some(curator_index) = PublicCuratorToIndex::<T>::get(account) {
-			if let some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
+		if let Some(curator_index) = PublicCuratorToIndex::<T>::get(&account) {
+			if let Some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
 				if (info.3 != CandidateStatus::Banned) {
 					return true;
 				}
@@ -267,8 +266,8 @@ impl<T: Config> EnsureCurator<T::AccountId> for Pallet<T> {
 	}
 
 	fn is_verified_curator(account: T::AccountId) -> bool {
-		if let some(curator_index) = PublicCuratorToIndex::<T>::get(account) {
-			if let some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
+		if let Some(curator_index) = PublicCuratorToIndex::<T>::get(&account) {
+			if let Some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
 				if (info.3 == CandidateStatus::Verified) {
 					return true;
 				}

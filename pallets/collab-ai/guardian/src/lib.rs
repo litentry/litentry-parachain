@@ -98,7 +98,7 @@ pub mod pallet {
 		Twox64Concat,
 		GuardianIndex,
 		GuardianVote,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	#[pallet::event]
@@ -123,6 +123,13 @@ pub mod pallet {
 			guardian_index: GuardianIndex,
 			status: CandidateStatus,
 		},
+		VoteGuardian {
+			voter: T::AccountId
+			guardian_index: GuardianIndex,
+			guardian: T::AccountId,
+			status: Option<GuardianVote>,
+		},
+		RemoveAllVote {},
 	}
 
 	#[pallet::error]
@@ -200,7 +207,6 @@ pub mod pallet {
 		}
 
 		/// Clean a guardian legal info
-		/// Impossible when there is a staking pool proposal ongoing
 		#[pallet::call_index(2)]
 		#[pallet::weight(W{195_000_000})]
 		pub fn clean_guardian(origin: OriginFor<T>) -> DispatchResult {
@@ -271,30 +277,49 @@ pub mod pallet {
 		pub fn vote(
 			origin: OriginFor<T>,
 			guardian: T::AccountId,
-			status: GuardianVote,
+			status: Option<GuardianVote>,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			// Ensure existing
+			let guardian_index =
+				PublicGuardianToIndex::<T>::get(&guardian).ok_or(Error::<T>::GuardianNotRegistered)?;
+			if let Some(i) == status {
+				GuardianVotes::<T>::insert(&who, guardian_index, status);
+			} else {
+				GuardianVotes::<T>::remove(&who, guardian_index);
+			}
 
+			Self::deposit_event(Event::VoteGuardian {
+				voter: who
+				guardian_index,
+				guardian,
+				status,
+			});
+			Ok(())
 		}
 
-		/// Remove vote to default: Neutral
+		/// Remove vote to None
 		#[pallet::call_index(5)]
 		#[pallet::weight(W{195_000_000})]
-		pub fn remove_vote(
+		pub fn remove_all_votes(
 			origin: OriginFor<T>,
 			guardian: T::AccountId,
 		) -> DispatchResult {
-
+			let who = ensure_signed(origin)?;
+			let _ = GuardianVotes::<T>::clear_prefix(&who, u32::MAX, None);
+			Self::deposit_event(Event::RemoveAllVote {
+				voter: who,
+			});
+			Ok(())
 		}
-
-		/// 
 	}
 }
 
 /// Some sort of check on the origin is from guardian.
-impl<T: Config> EnsureGuardian<T::AccountId> for Pallet<T> {
+impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
 	fn is_guardian(account: T::AccountId) -> bool {
-		if let some(guardian_index) = PublicGuardianToIndex::<T>::get(account) {
-			if let some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
+		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
+			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
 				if (info.3 != CandidateStatus::Banned) {
 					return true;
 				}
@@ -305,8 +330,8 @@ impl<T: Config> EnsureGuardian<T::AccountId> for Pallet<T> {
 	}
 
 	fn is_verified_guardian(account: T::AccountId) -> bool {
-		if let some(guardian_index) = PublicGuardianToIndex::<T>::get(account) {
-			if let some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
+		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
+			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
 				if (info.3 == CandidateStatus::Verified) {
 					return true;
 				}
@@ -314,5 +339,13 @@ impl<T: Config> EnsureGuardian<T::AccountId> for Pallet<T> {
 		}
 
 		false
+	}
+
+	fn get_vote(voter: T::AccountId, guardian: T::AccountId) -> Option<GuardianVote> {
+		// Ensure existing
+		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&guardian) {
+			return GuardianVotes::<T>::get(&voter, guardian_index);
+		}
+		None
 	}
 }

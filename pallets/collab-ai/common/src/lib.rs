@@ -68,6 +68,9 @@ pub enum CandidateStatus {
 #[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
 pub enum GuardianVote {
 	/// Does not care if this guardian get selected
+	/// Please be aware Neutral will increase participate percentage
+	/// which will increase the winning rate of guardian selection
+	/// given a large amount of guardian competitor
 	#[default]
 	#[codec(index = 0)]
 	Neutral,
@@ -84,7 +87,7 @@ pub enum GuardianVote {
 }
 
 /// Some sort of check on the account is from some group.
-pub trait EnsureCurator<AccountId> {
+pub trait CuratorQuery<AccountId> {
 	/// All curator but banned ones
 	fn is_curator(account: AccountId) -> bool;
 
@@ -96,7 +99,7 @@ pub struct EnsureSignedAndCurator<AccountId, EC>(sp_std::marker::PhantomData<(Ac
 impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, AccountId: Decode>
 	EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
 where
-	EC: EnsureCurator<AccountId>,
+	EC: CuratorQuery<AccountId>,
 {
 	type Success = AccountId;
 	fn try_origin(o: O) -> Result<Self::Success, O> {
@@ -135,4 +138,16 @@ impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
 			// vec.push(pool_index_prefix + )
 		}
 	}
+}
+
+/// Some sort of check on the account is from some group.
+pub trait GuardianQuery<AccountId> {
+	/// All guardian but banned ones
+	fn is_guardian(account: AccountId) -> bool;
+
+	/// Only verified one
+	fn is_verified_guardian(account: AccountId) -> bool;
+
+	/// Get vote
+	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote>;
 }

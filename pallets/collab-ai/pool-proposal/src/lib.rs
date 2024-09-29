@@ -116,8 +116,12 @@ pub mod pallet {
 		/// Origin who can make a pool proposal pass public vote check
 		type PublicVotingOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// Origin who can change proposal guardian flag
-		type GuardianFlagOrigin: EnsureOrigin<Self::RuntimeOrigin>;???
+		/// Guardian vote resource
+		type GuardianVote: GuardianQuery<Self::AccountId>;
+
+		/// The maximum amount of guardian allowed for a proposal
+		#[pallet::constant]
+		type MaxGuardianPerProposal: Get<u32>;
 
 		/// System Account holding pre-investing assets
 		type PreInvestingPool: Get<Self::AccountId>;
@@ -176,6 +180,17 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// Guardian willingness of proposal
+	#[pallet::storage]
+	#[pallet::getter(fn pool_pre_investings)]
+	pub type PoolGuardian<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		PoolProposalIndex,
+		OrderedSet<T::AccountId, MaxGuardianPerProposal>,
+		OptionQuery,
+	>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -212,12 +227,15 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		PreInvestingOverflow,
+		ProposalDepositDuplicatedOrOversized,
 		ProposalExpired,
 		ProposalPreInvestingLocked,
 		ProposalPublicTimeTooShort,
 		ProposalNotExist,
 		InvestingPoolOversized,
 		InsufficientPreInvesting,
+		GuardianDuplicatedOrOversized,
+		GuardianInvalid,
 	}
 
 	#[pallet::hooks]
@@ -290,16 +308,24 @@ pub mod pallet {
 					// We should not care about duplicating since the proposal index is auto-increment
 					match maybe_ordered_set.as_mut() {
 						Some(ordered_set) => {
-							ordered_set.insert(Bond {
-								owner: next_proposal_index,
-								value: reserved_amount,
-							});
+							ensure!(
+								ordered_set.insert(Bond {
+									owner: next_proposal_index,
+									value: reserved_amount,
+								}),
+								Error::<T>::ProposalDepositDuplicatedOrOversized
+							);
 						},
 						None => {
-							let new_ordered_set = OrderedSet::new().insert(Bond {
-								owner: next_proposal_index,
-								value: reserved_amount,
-							});
+							let mut new_ordered_set = OrderedSet::new();
+
+							ensure!(
+								new_ordered_set.insert(Bond {
+									owner: next_proposal_index,
+									value: reserved_amount,
+								}),
+								Error::<T>::ProposalDepositDuplicatedOrOversized
+							);
 							*maybe_ordered_set = Some(new_ordered_set)
 						},
 					}
@@ -344,9 +370,8 @@ pub mod pallet {
 				Preservation::Expendable,
 			)?;
 
-			let mut pool_proposal_pre_investing =
-				<PoolPreInvestings<T>>::take(pool_proposal_index)
-					.unwrap_or(PoolProposalPreInvesting::new());
+			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
+				.unwrap_or(PoolProposalPreInvesting::new());
 
 			// Check pool maximum size limit and make pool size limit flag change accordingly
 			let mut pool_proposal =
@@ -441,9 +466,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			let mut pool_proposal_pre_investing =
-				<PoolPreInvestings<T>>::take(pool_proposal_index)
-					.unwrap_or(PoolProposalPreInvesting::new());
+			let mut pool_proposal_pre_investing = <PoolPreInvestings<T>>::take(pool_proposal_index)
+				.unwrap_or(PoolProposalPreInvesting::new());
 
 			// Either investing pool has not locked yet,
 			// Or queued amount is enough to replace the withdrawal
@@ -531,7 +555,31 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			pool_proposal_index: PoolProposalIndex,
 		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			// Ensure guardian exists when participate, will double check if verified when mature the proposal)
+			ensure!(GuardianVote::is_guardian(who), Error::<T>::GuardianInvalid);
+			PoolGuardian::<T>::try_mutate_exists(
+				&pool_proposal_index,
+				|maybe_ordered_set| -> Result<(), DispatchError> {
+					match maybe_ordered_set.as_mut() {
+						Some(ordered_set) => {
+							ensure!(
+								ordered_set.insert(who),
+								Error::<T>::GuardianDuplicatedOrOversized
+							);
+						},
+						None => {
+							let mut new_ordered_set = OrderedSet::new();
 
+							ensure!(
+								new_ordered_set.insert(who),
+								Error::<T>::GuardianDuplicatedOrOversized
+							);
+							*maybe_ordered_set = Some(new_ordered_set)
+						},
+					}
+				},
+			);
 		}
 	}
 
