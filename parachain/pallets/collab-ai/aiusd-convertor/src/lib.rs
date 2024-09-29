@@ -110,7 +110,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// Lock target_asset_id token and mint AIUSD
 		#[pallet::call_index(0)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn mint_aiusd(
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,
@@ -156,7 +156,7 @@ pub mod pallet {
 		// Burn aiusd and get target_asset_id token released
 		// Failed if pool does not have enough token of one type
 		#[pallet::call_index(0)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn burn_aiusd(
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,

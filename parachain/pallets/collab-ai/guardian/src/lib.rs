@@ -147,7 +147,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Registing a guardian legal info
 		#[pallet::call_index(0)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn regist_guardian(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -180,7 +180,7 @@ pub mod pallet {
 
 		/// Updating a guardian legal info
 		#[pallet::call_index(1)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn update_guardian(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -216,7 +216,7 @@ pub mod pallet {
 
 		/// Clean a guardian legal info
 		#[pallet::call_index(2)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn clean_guardian(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -249,7 +249,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn judge_guardian_status(
 			origin: OriginFor<T>,
 			guardian: T::AccountId,
@@ -281,7 +281,7 @@ pub mod pallet {
 		/// However if voter is not participating the staking pool
 		/// then its vote will never effecting guardian selection procedure
 		#[pallet::call_index(4)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn vote(
 			origin: OriginFor<T>,
 			guardian: T::AccountId,
@@ -308,7 +308,7 @@ pub mod pallet {
 
 		/// Remove vote to None
 		#[pallet::call_index(5)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn remove_all_votes(origin: OriginFor<T>, guardian: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = GuardianVotes::<T>::clear_prefix(&who, u32::MAX, None);

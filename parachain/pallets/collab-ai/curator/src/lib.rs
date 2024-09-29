@@ -123,7 +123,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Registing a curator legal info
 		#[pallet::call_index(0)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn regist_curator(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -152,7 +152,7 @@ pub mod pallet {
 
 		/// Updating a curator legal info
 		#[pallet::call_index(1)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn update_curator(origin: OriginFor<T>, info_hash: InfoHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -188,7 +188,7 @@ pub mod pallet {
 
 		/// Clean a curator legal info
 		#[pallet::call_index(2)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn clean_curator(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -221,7 +221,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn judge_curator_status(
 			origin: OriginFor<T>,
 			curator: T::AccountId,

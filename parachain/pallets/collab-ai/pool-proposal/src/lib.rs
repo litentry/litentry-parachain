@@ -260,7 +260,7 @@ pub mod pallet {
 		/// estimated_epoch_reward: This number is only for displaying purpose without any techinical meaning
 		/// pool_info_hash: Hash of pool info for including pool details
 		#[pallet::call_index(0)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		#[transactional]
 		pub fn propose_investing_pool(
 			origin: OriginFor<T>,
@@ -353,7 +353,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		#[transactional]
 		pub fn pre_stake_proposal(
 			origin: OriginFor<T>,
@@ -457,7 +457,7 @@ pub mod pallet {
 		// Withdraw is not allowed when proposal has STAKE_AMOUNT_PASSED flag
 		// unless there is queued amount pending
 		#[pallet::call_index(2)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		#[transactional]
 		pub fn withdraw_pre_investing(
 			origin: OriginFor<T>,
@@ -520,7 +520,7 @@ pub mod pallet {
 		// This is democracy/committe passing check for investing pool proposal
 		// TODO: Related logic with "pallet-conviction-voting"
 		#[pallet::call_index(3)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn public_vote_proposal(
 			origin: OriginFor<T>,
 			pool_proposal_index: PoolProposalIndex,
@@ -550,7 +550,7 @@ pub mod pallet {
 		// When proposal expired, the guardian must have everything ready
 		// Including KYC. Otherwise he will be ignored no matter how much vote he collects
 		#[pallet::call_index(4)]
-		#[pallet::weight(W{195_000_000})]
+		#[pallet::weight({195_000_000})]
 		pub fn guardian_participate_proposal(
 			origin: OriginFor<T>,
 			pool_proposal_index: PoolProposalIndex,
