@@ -1,0 +1,53 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-assertion-build-v2"
+version = "0.1.0"
+
+[dependencies]
+base58 = { workspace = true }
+thiserror = { workspace = true, optional = true }
+
+codec = { package = "parity-scale-codec", workspace = true }
+log = { workspace = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+itc-rest-client = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
+
+lc-assertion-build = { workspace = true }
+lc-common = { workspace = true }
+lc-credentials-v2 = { workspace = true }
+lc-service = { workspace = true }
+litentry-hex-utils = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[dev-dependencies]
+env_logger = { workspace = true }
+lc-mock-server = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
+    "litentry-primitives/sgx",
+    "lc-common/sgx",
+    "lc-assertion-build/sgx",
+    "lc-credentials-v2/sgx",
+    "lc-service/sgx",
+]
+std = [
+    "log/std",
+    "itp-types/std",
+    "itp-utils/std",
+    "litentry-primitives/std",
+    "lc-common/std",
+    "lc-assertion-build/std",
+    "lc-credentials-v2/std",
+    "lc-service/std",
+]

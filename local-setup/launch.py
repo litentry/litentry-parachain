@@ -113,7 +113,7 @@ def generate_config_local_json(parachain_dir):
         "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
         "bridge_path": "/tmp/parachain_dev/chainbridge",
     }
-    config_file = "./ts-tests/config.local.json"
+    config_file = "./parachain/ts-tests/config.local.json"
 
     with open(config_file, "w") as f:
         json.dump(data, f, indent=4)
@@ -222,31 +222,25 @@ def add_collator_ports():
 def main(processes, worker, workers_number, parachain_type, log_config_path, offset, parachain_dir):
     # Litentry
     if worker == "identity":
-        worker_dir = "tee-worker"
+        worker_dir = "tee-worker/identity"
         worker_bin = "litentry-worker"
     elif worker == "bitacross":
-        worker_dir = "bitacross-worker"
+        worker_dir = "tee-worker/bitacross"
         worker_bin = "bitacross-worker"
     else:
         sys.exit("Unsupported worker")
 
     print("Starting litentry parachain in background ...")
-    if parachain_type == "local-docker":
-        add_collator_ports()
-        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
-        setup_environment(offset, parachain_dir, worker_dir)
-        # TODO: use Popen and copy the stdout also to node.log
-        run(["./local-setup/start_parachain.sh"], check=True)
-    elif parachain_type == "local-binary-standalone":
+    if parachain_type == "standalone":
         add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
-        run(["./scripts/launch-standalone.sh"], check=True)
-    elif parachain_type == "local-binary":
+        run(["./parachain/scripts/launch-standalone.sh"], check=True)
+    elif parachain_type == "network":
         add_collator_ports()        
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, parachain_dir, worker_dir)
-        run(["./scripts/launch-local-binary.sh", "rococo"], check=True)
+        run(["./parachain/scripts/launch-network.sh", "litentry"], check=True)
     elif parachain_type == "remote":
         setup_environment(offset, "", worker_dir)
         print("Litentry parachain should be started remotely")
@@ -317,9 +311,9 @@ if __name__ == "__main__":
         "-p",
         "--parachain",
         nargs="?",
-        default="local-binary-standalone",
+        default="standalone",
         type=str,
-        help="Config for parachain selection: local-binary-standalone / local-docker / local-binary / remote",
+        help="Config for parachain selection: standalone / network / remote",
     )
     parser.add_argument(
         "-l",

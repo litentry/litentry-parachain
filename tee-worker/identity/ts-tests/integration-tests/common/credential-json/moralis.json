@@ -1,0 +1,16 @@
+[
+    {
+        "id": "token-holding-amount-sol",
+        "name": "SOL Holding Amount",
+        "description": "The number of SOL tokens you hold > 0",
+        "assertion": {
+            "id": "TokenHoldingAmount",
+            "payload": "SOL"
+        },
+        "dataProvider": "moralis",
+        "network": "solana",
+        "mockDid": "litentry:solana:6xJ8xjUu6rY7kQS4kJodG4NcNgMtubUXGbhdBb7gqJMn",
+        "mockWeb3Network": "solana",
+        "expectedCredentialValue": true
+    }
+]

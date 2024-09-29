@@ -1,0 +1,58 @@
+[package]
+name = "its-block-composer"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
+
+itp-node-api = { workspace = true }
+itp-settings = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-sgx-externalities = { workspace = true }
+itp-stf-executor = { package = "id-itp-stf-executor", path = "../../core-primitives/stf-executor", default-features = false }
+itp-stf-primitives = { workspace = true }
+itp-time-utils = { workspace = true }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../core-primitives/top-pool-author", default-features = false }
+itp-types = { workspace = true }
+
+its-primitives = { workspace = true }
+its-state = { workspace = true }
+
+thiserror = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+codec = { package = "parity-scale-codec", workspace = true }
+log = { workspace = true }
+sp-core = { workspace = true, features = ["full_crypto"] }
+sp-runtime = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "itp-node-api/std",
+    "itp-sgx-crypto/std",
+    "itp-sgx-externalities/std",
+    "itp-stf-executor/std",
+    "itp-stf-primitives/std",
+    "itp-time-utils/std",
+    "itp-top-pool-author/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "its-state/std",
+    "log/std",
+    "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-executor/sgx",
+    "itp-time-utils/sgx",
+    "itp-top-pool-author/sgx",
+    "its-state/sgx",
+    "thiserror_sgx",
+]

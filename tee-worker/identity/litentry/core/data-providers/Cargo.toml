@@ -1,0 +1,64 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-data-providers"
+version = "0.1.0"
+
+[dependencies]
+base64 = { workspace = true }
+chrono = { workspace = true, optional = true }
+codec = { package = "parity-scale-codec", workspace = true }
+http = { workspace = true, optional = true }
+http_req = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+url = { workspace = true }
+
+itc-rest-client = { workspace = true }
+itp-rpc = { workspace = true }
+
+chrono_sgx = { workspace = true, optional = true }
+http-sgx = { workspace = true, optional = true }
+http_req-sgx = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+lc-common = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[dev-dependencies]
+env_logger = { workspace = true }
+lc-mock-server = { workspace = true }
+itp-stf-primitives = { workspace = true, features = ["std"] }
+
+[features]
+default = ["std"]
+sgx = [
+    "http-sgx",
+    "http_req-sgx",
+    "thiserror_sgx",
+    "sgx_tstd",
+    "chrono_sgx",
+    "itc-rest-client/sgx",
+    "litentry-primitives/sgx",
+    "lc-common/sgx",
+]
+std = [
+    "http",
+    "http_req",
+    "thiserror",
+    "itc-rest-client/std",
+    "itp-rpc/std",
+    "log/std",
+    "serde/std",
+    "serde_json/std",
+    "url/std",
+    "litentry-primitives/std",
+    "chrono",
+    "lc-common/std",
+]
+development = []
+env-data-providers-config = []

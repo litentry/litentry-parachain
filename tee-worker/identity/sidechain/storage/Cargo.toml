@@ -1,0 +1,28 @@
+[package]
+name = "its-storage"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true, features = ["std"] }
+log = { workspace = true, features = ["std"] }
+parking_lot = "0.12.1"
+rocksdb = { version = "0.20.1", default_features = false }
+serde = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+
+itp-settings = { workspace = true }
+its-primitives = { workspace = true, features = ["std"] }
+
+sp-core = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+mockall = "0.11"
+temp-dir = "0.1"
+itp-time-utils = { workspace = true, features = ["std"] }
+its-test = { workspace = true, features = ["std"] }
+itp-types = { workspace = true, features = ["std"] }
+
+[features]
+mocks = []

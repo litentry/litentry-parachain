@@ -1,0 +1,54 @@
+[package]
+name = "its-consensus-slots"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true }
+derive_more = { workspace = true }
+futures-timer = { version = "3.0", optional = true }
+lazy_static = { workspace = true }
+log = { workspace = true }
+
+itp-settings = { workspace = true }
+itp-time-utils = { workspace = true }
+itp-types = { workspace = true }
+its-block-verification = { workspace = true }
+its-consensus-common = { workspace = true }
+its-primitives = { workspace = true }
+
+sgx_tstd = { workspace = true, features = ["untrusted_time"], optional = true }
+
+sp-consensus-slots = { workspace = true }
+sp-runtime = { workspace = true }
+
+[dev-dependencies]
+itc-parentchain-test = { workspace = true, features = ["std"] }
+its-test = { workspace = true, features = ["std"] }
+sp-keyring = { workspace = true }
+itp-test = { workspace = true, features = ["std"] }
+tokio = { version = "1.6.1", features = ["full"] }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "log/std",
+    # only for slot-stream
+    "futures-timer",
+    # substrate
+    "sp-consensus-slots/std",
+    "sp-runtime/std",
+    # local
+    "itp-time-utils/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "its-block-verification/std",
+    "its-consensus-common/std",
+]
+sgx = [
+    "itp-time-utils/sgx",
+    "its-consensus-common/sgx",
+    "sgx_tstd",
+]

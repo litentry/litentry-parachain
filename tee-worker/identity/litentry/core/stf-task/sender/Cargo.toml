@@ -1,0 +1,36 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-stf-task-sender"
+version = "0.1.0"
+
+[dependencies]
+thiserror = { workspace = true, optional = true }
+
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+codec = { package = "parity-scale-codec", workspace = true }
+lazy_static = { workspace = true }
+log = { workspace = true }
+
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+itp-types = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
+]
+std = [
+    "log/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "thiserror",
+    "itp-types/std",
+    "litentry-primitives/std",
+]

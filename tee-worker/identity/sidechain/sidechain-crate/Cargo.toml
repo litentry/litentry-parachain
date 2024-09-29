@@ -1,0 +1,36 @@
+[package]
+name = "its-sidechain"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+its-block-composer = { workspace = true }
+its-consensus-aura = { workspace = true }
+its-consensus-common = { workspace = true }
+its-consensus-slots = { workspace = true }
+its-primitives = { workspace = true }
+its-rpc-handler = { workspace = true }
+its-state = { workspace = true }
+its-validateer-fetch = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "its-block-composer/std",
+    "its-consensus-aura/std",
+    "its-consensus-common/std",
+    "its-consensus-slots/std",
+    "its-rpc-handler/std",
+    "its-primitives/std",
+    "its-state/std",
+    "its-validateer-fetch/std",
+]
+sgx = [
+    "its-block-composer/sgx",
+    "its-consensus-aura/sgx",
+    "its-consensus-common/sgx",
+    "its-consensus-slots/sgx",
+    "its-rpc-handler/sgx",
+    "its-state/sgx",
+]

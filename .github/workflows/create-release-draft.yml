@@ -36,6 +36,7 @@ on:
         options:
           - none
           - rococo
+          - paseo
           - litentry
 
 env:
@@ -76,6 +77,7 @@ jobs:
       matrix:
         chain:
           - rococo
+          - paseo
           - litentry
     name: ${{ matrix.chain }}
     steps:
@@ -95,7 +97,7 @@ jobs:
           AUTHORIZE_UPGRADE_PREFIX: "0x02"
         with:
           chain: ${{ matrix.chain }}-parachain
-          runtime_dir: runtime/${{ matrix.chain }}
+          runtime_dir: parachain/runtime/${{ matrix.chain }}
           profile: production
 
       - name: Summary
@@ -129,7 +131,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
+          ./parachain/scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
           echo "============================="
           docker images
 
@@ -146,7 +148,6 @@ jobs:
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:${{ env.RELEASE_TAG }} | gzip > litentry-parachain-dev.tar.gz
-          docker save litentry/litentry-chain-aio:${{ env.RELEASE_TAG }} | gzip > litentry-chain-aio.tar.gz
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v4
@@ -156,7 +157,6 @@ jobs:
           path: |
             litentry-collator
             litentry-parachain-dev.tar.gz
-            litentry-chain-aio.tar.gz
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
@@ -186,7 +186,7 @@ jobs:
       # the key for identity worker enclave shall be renewed when switching to sdk-v2.0.0
       - name: Write enclave signing key
         run: |
-          cat << EOF > tee-worker/enclave_key.pem
+          cat << EOF > tee-worker/identity/enclave_key.pem
           ${{ secrets.IDENTITY_ENCLAVE_STAGING_SIGNING_KEY }}
           EOF
 
@@ -196,7 +196,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/build.Dockerfile
+          file: tee-worker/identity/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -213,7 +213,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: tee-worker/build.Dockerfile
+          file: tee-worker/identity/build.Dockerfile
           tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
@@ -254,7 +254,7 @@ jobs:
 
       - name: Write enclave signing key
         run: |
-          cat << EOF > bitacross-worker/enclave_key.pem
+          cat << EOF > tee-worker/bitacross/enclave_key.pem
           ${{ secrets.BITACROSS_ENCLAVE_PROD_SIGNING_KEY }}
           EOF
 
@@ -264,7 +264,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: bitacross-worker/build.Dockerfile
+          file: tee-worker/bitacross/build.Dockerfile
           tags: local-builder:latest
           target: builder
           build-args: |
@@ -281,7 +281,7 @@ jobs:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
-          file: bitacross-worker/build.Dockerfile
+          file: tee-worker/bitacross/build.Dockerfile
           tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
           target: worker-release
 
@@ -318,7 +318,6 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-chain-aio.tar.gz
           docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
           docker images
 
@@ -326,9 +325,9 @@ jobs:
         run: corepack enable && corepack enable pnpm
 
       - name: Run ts tests for ${{ matrix.chain }}
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
-          make test-ts-docker-${{ matrix.chain }}
+          make test-ts-${{ matrix.chain }}
 
       - name: Archive logs if test fails
         uses: actions/upload-artifact@v4
@@ -347,12 +346,11 @@ jobs:
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-          docker push litentry/litentry-chain-aio:${{ env.RELEASE_TAG }}
 
       - name: Clean up for ${{ matrix.chain }}
         if: ${{ always() }}
         run: |
-          make clean-docker-${{ matrix.chain }}
+          make clean-network
 
   ## create the release draft ##
   create-release-draft:
@@ -380,7 +378,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
+          ./parachain/scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -395,4 +393,6 @@ jobs:
           files: |
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
-            litentry-collator/*
+            litentry-collator/litentry-collator
+            litentry-collator/*-genesis-state
+            litentry-collator/*-genesis-wasm

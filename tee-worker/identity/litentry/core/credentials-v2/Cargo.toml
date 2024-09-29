@@ -1,0 +1,26 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-credentials-v2"
+version = "0.1.0"
+
+[dependencies]
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+
+lc-common = { workspace = true }
+lc-credentials = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "litentry-primitives/sgx",
+    "lc-common/sgx",
+    "lc-credentials/sgx",
+]
+std = [
+    "litentry-primitives/std",
+    "lc-common/std",
+    "lc-credentials/std",
+]

@@ -1,0 +1,58 @@
+[package]
+name = "its-rpc-handler"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+
+itp-import-queue = { workspace = true }
+itp-rpc = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../core-primitives/top-pool-author", default-features = false }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
+its-primitives = { workspace = true }
+
+lc-vc-task-sender = { workspace = true }
+litentry-primitives = { workspace = true }
+
+futures_sgx = { workspace = true, optional = true }
+jsonrpc-core_sgx = { workspace = true, optional = true }
+rust-base58_sgx = { workspace = true, optional = true }
+
+futures = { workspace = true, optional = true }
+jsonrpc-core = { workspace = true, optional = true }
+rust-base58 = { workspace = true, optional = true }
+
+codec = { package = "parity-scale-codec", workspace = true }
+log = { workspace = true }
+sp-core = { workspace = true, features = ["full_crypto"] }
+
+[features]
+default = ["std"]
+std = [
+    "futures",
+    "itp-import-queue/std",
+    "itp-rpc/std",
+    "itp-stf-primitives/std",
+    "itp-top-pool-author/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "litentry-primitives/std",
+    "jsonrpc-core",
+    "log/std",
+    "rust-base58",
+    "lc-vc-task-sender/std",
+]
+sgx = [
+    "futures_sgx",
+    "sgx_tstd",
+    "itp-import-queue/sgx",
+    "itp-rpc/sgx",
+    "itp-top-pool-author/sgx",
+    "jsonrpc-core_sgx",
+    "rust-base58_sgx",
+    "lc-vc-task-sender/sgx",
+]

@@ -1,0 +1,97 @@
+[package]
+name = "its-consensus-aura"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true, features = ["chain-error"] }
+finality-grandpa = { workspace = true }
+log = { workspace = true }
+
+sgx_tstd = { workspace = true, optional = true }
+
+sp-core = { workspace = true, features = ["full_crypto"] }
+sp-runtime = { workspace = true }
+
+ita-stf = { package = "id-ita-stf", path = "../../../app-libs/stf", default-features = false }
+itc-parentchain-block-import-dispatcher = { package = "id-itc-parentchain-block-import-dispatcher", path = "../../../core/parentchain/block-import-dispatcher", default-features = false }
+itc-peer-top-broadcaster = { workspace = true }
+itp-enclave-metrics = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-settings = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-sgx-externalities = { workspace = true }
+itp-stf-executor = { package = "id-itp-stf-executor", path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-primitives = { workspace = true }
+itp-stf-state-handler = { workspace = true }
+itp-time-utils = { workspace = true }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../../core-primitives/top-pool-author", default-features = false }
+itp-types = { workspace = true }
+its-block-composer = { workspace = true }
+its-block-verification = { workspace = true }
+its-consensus-common = { workspace = true }
+its-consensus-slots = { workspace = true }
+its-primitives = { workspace = true }
+its-state = { workspace = true }
+its-validateer-fetch = { workspace = true }
+
+litentry-hex-utils = { workspace = true }
+
+[dev-dependencies]
+env_logger = { workspace = true }
+itc-parentchain-block-import-dispatcher = { package = "id-itc-parentchain-block-import-dispatcher", path = "../../../core/parentchain/block-import-dispatcher", features = ["mocks"] }
+itc-parentchain-test = { workspace = true, features = ["std"] }
+itp-storage = { workspace = true, features = ["std"] }
+itp-test = { workspace = true, features = ["std"] }
+its-test = { workspace = true, features = ["std"] }
+sp-keyring = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    #crates.io
+    "codec/std",
+    "finality-grandpa/std",
+    "log/std",
+    #substrate
+    "sp-core/std",
+    "sp-runtime/std",
+    #local
+    "ita-stf/std",
+    "itc-parentchain-block-import-dispatcher/std",
+    "itc-peer-top-broadcaster/std",
+    "itp-enclave-metrics/std",
+    "itp-ocall-api/std",
+    "itp-sgx-crypto/std",
+    "itp-sgx-externalities/std",
+    "itp-stf-executor/std",
+    "itp-stf-primitives/std",
+    "itp-stf-state-handler/std",
+    "itp-time-utils/std",
+    "itp-types/std",
+    "its-block-composer/std",
+    "its-block-verification/std",
+    "its-consensus-common/std",
+    "its-consensus-slots/std",
+    "its-state/std",
+    "its-validateer-fetch/std",
+    "its-primitives/std",
+]
+sgx = [
+    "sgx_tstd",
+    "ita-stf/sgx",
+    "itc-parentchain-block-import-dispatcher/sgx",
+    "itc-peer-top-broadcaster/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-executor/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-time-utils/sgx",
+    "its-block-composer/sgx",
+    "its-consensus-common/sgx",
+    "its-consensus-slots/sgx",
+    "its-state/sgx",
+    "its-block-verification/sgx",
+]

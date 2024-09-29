@@ -1,0 +1,41 @@
+[package]
+name = "itc-peer-top-broadcaster"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+
+log = { workspace = true }
+
+itc-direct-rpc-client = { package = "id-itc-direct-rpc-client", path = "../direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { package = "id-itc-direct-rpc-server", path = "../direct-rpc-server", default-features = false }
+itp-rpc = { workspace = true }
+itp-stf-primitives = { workspace = true }
+itp-types = { workspace = true }
+itp-utils = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[dev-dependencies]
+itc-direct-rpc-server = { package = "id-itc-direct-rpc-server", path = "../direct-rpc-server", default-features = false, features = ["mocks"] }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "itc-direct-rpc-server/sgx",
+    "itc-direct-rpc-client/sgx",
+    "itp-rpc/sgx",
+    "litentry-primitives/sgx",
+]
+std = [
+    "itp-stf-primitives/std",
+    "itp-types/std",
+    "itp-utils/std",
+    "log/std",
+    "itc-direct-rpc-server/std",
+    "itc-direct-rpc-client/std",
+    "itp-rpc/std",
+    "litentry-primitives/std",
+]

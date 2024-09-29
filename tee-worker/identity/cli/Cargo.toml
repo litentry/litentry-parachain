@@ -1,0 +1,66 @@
+[package]
+name = "litentry-cli"
+version = "0.0.1"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+array-bytes = { version = "6.0.0" }
+base58 = { workspace = true }
+chrono = "*"
+clap = { version = "=4.1.0", features = ["derive"] }
+codec = { package = "parity-scale-codec", workspace = true, features = ["std"] }
+env_logger = { workspace = true }
+hdrhistogram = "7.5.0"
+hex = { workspace = true, features = ["std"] }
+log = { workspace = true, features = ["std"] }
+rand = "0.8.5"
+rayon = "1.5.1"
+regex = "1.9.5"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+urlencoding = "2.1.3"
+
+pallet-evm = { git = "https://github.com/integritee-network/frontier", branch = "bar/polkadot-v0.9.42", optional = true }
+sgx_crypto_helper = { workspace = true }
+
+substrate-api-client = { workspace = true }
+substrate-client-keystore = { workspace = true }
+
+sp-application-crypto = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std"] }
+sp-keyring = { workspace = true }
+sp-keystore = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+
+ita-parentchain-interface = { package = "id-ita-parentchain-interface", path = "../app-libs/parentchain-interface" }
+ita-sgx-runtime = { package = "id-ita-sgx-runtime", path = "../app-libs/sgx-runtime" }
+ita-stf = { package = "id-ita-stf", path = "../app-libs/stf" }
+itc-rpc-client = { workspace = true }
+itp-node-api = { workspace = true, features = ["std"] }
+itp-rpc = { workspace = true, features = ["std"] }
+itp-sgx-crypto = { workspace = true, features = ["std"] }
+itp-stf-primitives = { workspace = true, features = ["std"] }
+itp-types = { workspace = true, features = ["std"] }
+itp-utils = { workspace = true, features = ["std"] }
+
+frame-metadata = "15.0.0"
+litentry-hex-utils = { workspace = true }
+litentry-primitives = { workspace = true, features = ["std"] }
+scale-value = "0.6.0"
+sp-core-hashing = "6.0.0"
+
+[features]
+default = []
+evm = ["ita-stf/evm", "pallet-evm"]
+teeracle = []
+sidechain = []
+offchain-worker = []
+development = [
+    "ita-sgx-runtime/development",
+    "ita-stf/development",
+]
+# dcap feature flag is not used in this crate, but for easier build purposes only it present here as well
+dcap = []

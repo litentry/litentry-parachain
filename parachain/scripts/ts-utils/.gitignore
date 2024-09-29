@@ -1,0 +1,5 @@
+# Ignore all JSON files
+*.json
+
+# But don't ignore tsconfig.json
+!tsconfig.json

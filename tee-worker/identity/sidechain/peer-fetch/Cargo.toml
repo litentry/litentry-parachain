@@ -1,0 +1,42 @@
+[package]
+name = "its-peer-fetch"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+# crates.io
+async-trait = { version = "0.1.50" }
+jsonrpsee = { version = "0.2.0", features = ["client", "ws-server", "macros"] }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+itc-rpc-client = { workspace = true }
+itp-node-api = { workspace = true }
+itp-types = { workspace = true }
+its-primitives = { workspace = true }
+its-rpc-handler = { workspace = true }
+its-storage = { workspace = true }
+
+[dev-dependencies]
+anyhow = "1.0.40"
+tokio = { version = "1.6.1", features = ["full"] }
+itp-node-api = { workspace = true, features = ["std", "mocks"] }
+itp-test = { workspace = true, features = ["std"] }
+its-storage = { workspace = true, features = ["mocks"] }
+its-test = { workspace = true, features = ["std"] }
+
+[features]
+default = ["std"]
+std = [
+    "log/std",
+    "serde/std",
+    "serde_json/std",
+    "itp-node-api/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "its-rpc-handler/std",
+]
+mocks = []

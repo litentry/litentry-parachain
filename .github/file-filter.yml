@@ -2,53 +2,46 @@
 # Put all defined set of files here, similar to https://github.com/getsentry/sentry/blob/master/.github/workflows/getsentry-dispatch.yml
 
 parachain_src: &parachain_src
-  - 'node/**'
-  - 'pallets/**'
-  - 'primitives/**'
-  - 'runtime/**'
-  - 'mock-tee-primitives/**'
-  - 'docker/Dockerfile'
-  - 'Cargo.lock'
-  - 'Cargo.toml'
-  - 'rust-toolchain.toml'
-  - 'scripts/build-docker.sh'
+  - 'parachain/node/**'
+  - 'parachain/pallets/**'
+  - 'common/**'
+  - 'parachain/runtime/**'
+  - 'parachain/docker/Dockerfile'
+  - 'parachain/Cargo.*'
+  - 'parachain/rust-toolchain.toml'
+  - 'parachain/scripts/build-docker.sh'
 
 parachain_test: &parachain_test
-  - 'ts-tests/**'
-  - 'docker/**'
-  - 'scripts/build-bridge-docker.sh'
-  - 'scripts/launch-local-docker.sh'
-  - 'scripts/launch-local-bridge-docker.sh'
+  - 'parachain/ts-tests/**'
+  - 'parachain/docker/**'
+  - 'parachain/scripts/build-bridge.sh'
+  - 'parachain/scripts/launch-network.sh'
+  - 'parachain/scripts/launch-bridge.sh'
 
 coverage_src: &coverage_src
   - *parachain_src
   - '.github/workflows/coverage.yml'
 
-tee_src: &tee_src
-  - 'tee-worker/**/*.rs'
-  - 'tee-worker/**/Cargo.toml'
-  - 'tee-worker/**/Cargo.lock'
-  - 'tee-worker/**/rust-toolchain.toml'
-  - 'tee-worker/build.Dockerfile'
-  - 'tee-worker/enclave-runtime/**'
-
-tee_test: &tee_test
-  - 'tee-worker/ts-tests/**'
-  - 'tee-worker/cli/*.sh'
-  - 'docker/**'
-  - 'tee-worker/docker/*.yml'
-  - 'tee-worker/litentry/core/assertion-build/src/dynamic/contracts/**'
+identity_src: &identity_src
+  - 'common/**'
+  - 'tee-worker/Cargo.toml'
+  - 'tee-worker/Cargo.lock'
+  - 'tee-worker/identity/**/*.rs'
+  - 'tee-worker/identity/**/rust-toolchain.toml'
+  - 'tee-worker/identity/build.Dockerfile'
+  - 'tee-worker/identity/enclave-runtime/**'
 
 bitacross_src: &bitacross_src
-  - 'bitacross-worker/**/*.rs'
-  - 'bitacross-worker/**/Cargo.toml'
-  - 'bitacross-worker/**/Cargo.lock'
-  - 'bitacross-worker/**/rust-toolchain.toml'
-  - 'bitacross-worker/build.Dockerfile'
-  - 'bitacross-worker/enclave-runtime/**'
+  - 'common/**'
+  - 'tee-worker/Cargo.toml'
+  - 'tee-worker/Cargo.lock'
+  - 'tee-worker/bitacross/**/*.rs'
+  - 'tee-worker/bitacross/**/rust-toolchain.toml'
+  - 'tee-worker/bitacross/build.Dockerfile'
+  - 'tee-worker/bitacross/enclave-runtime/**'
 
 bitacross_test: &bitacross_test
-  - 'bitacross-worker/ts-tests/**'
-  - 'bitacross-worker/cli/*.sh'
-  - 'docker/**'
-  - 'bitacross-worker/docker/*.yml'
+  - 'tee-worker/bitacross/ts-tests/**'
+  - 'tee-worker/bitacross/cli/*.sh'
+  - 'parachain/docker/**'
+  - 'tee-worker/bitacross/docker/*.yml'

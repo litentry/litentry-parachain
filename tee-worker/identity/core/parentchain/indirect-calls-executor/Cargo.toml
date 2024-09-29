@@ -1,0 +1,81 @@
+[package]
+name = "id-itc-parentchain-indirect-calls-executor"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
+
+itp-api-client-types = { workspace = true }
+itp-enclave-metrics = { workspace = true }
+itp-node-api = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-sgx-runtime-primitives = { workspace = true }
+itp-stf-executor = { package = "id-itp-stf-executor", path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-primitives = { workspace = true }
+itp-test = { workspace = true }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../../core-primitives/top-pool-author", default-features = false }
+itp-types = { workspace = true }
+
+futures_sgx = { workspace = true, optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+futures = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+
+bs58 = { version = "0.4.0", default-features = false, features = ["alloc"] }
+codec = { package = "parity-scale-codec", workspace = true }
+log = { workspace = true }
+
+binary-merkle-tree = { workspace = true }
+litentry-primitives = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+
+[dev-dependencies]
+env_logger = { workspace = true }
+itp-node-api = { workspace = true, features = ["std", "mocks"] }
+itp-sgx-crypto = { workspace = true, features = ["std", "mocks"] }
+itp-stf-executor = { package = "id-itp-stf-executor", path = "../../../core-primitives/stf-executor", features = ["std", "mocks"] }
+itp-test = { workspace = true, features = ["std"] }
+itp-top-pool-author = { package = "id-itp-top-pool-author", path = "../../../core-primitives/top-pool-author", features = ["std", "mocks"] }
+itc-parentchain-test = { workspace = true, features = ["std"] }
+
+[features]
+default = ["std"]
+std = [
+    "bs58/std",
+    "codec/std",
+    "futures",
+    "itp-node-api/std",
+    "itp-ocall-api/std",
+    "itp-sgx-crypto/std",
+    "itp-stf-executor/std",
+    "itp-top-pool-author/std",
+    "itp-api-client-types/std",
+    "itp-test/std",
+    "itp-types/std",
+    "itp-enclave-metrics/std",
+    "itp-sgx-runtime-primitives/std",
+    "log/std",
+    "binary-merkle-tree/std",
+    "sp-runtime/std",
+    "sp-core/std",
+    "thiserror",
+    "litentry-primitives/std",
+]
+sgx = [
+    "sgx_tstd",
+    "futures_sgx",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-stf-executor/sgx",
+    "itp-top-pool-author/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-test/sgx",
+    "thiserror_sgx",
+    "litentry-primitives/sgx",
+]

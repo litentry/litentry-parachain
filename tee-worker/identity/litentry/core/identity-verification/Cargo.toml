@@ -1,0 +1,64 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = "2021"
+name = "lc-identity-verification"
+version = "0.1.0"
+
+[dependencies]
+base64 = { version = "0.22", default-features = false, features = ["alloc"] } # a newer base64
+hex = { workspace = true }
+http = { workspace = true, optional = true }
+http_req = { workspace = true, optional = true }
+lru = "0.12.3"
+rand = { version = "0.8", optional = true }
+
+futures_sgx = { workspace = true, optional = true }
+http-sgx = { workspace = true, optional = true }
+http_req-sgx = { workspace = true, optional = true }
+sgx_rand = { workspace = true, optional = true }
+sgx_tstd = { workspace = true, features = ["net", "thread"], optional = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+lazy_static = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+url = { workspace = true }
+
+itc-rest-client = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-utils = { workspace = true }
+
+codec = { package = "parity-scale-codec", workspace = true }
+frame-support = { workspace = true }
+sp-core = { workspace = true, features = ["full_crypto"] }
+
+lc-data-providers = { workspace = true }
+litentry-primitives = { workspace = true }
+
+[features]
+default = ["std"]
+sgx = [
+    "futures_sgx",
+    "http-sgx",
+    "http_req-sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
+    "sgx_rand",
+    "itp-sgx-crypto/sgx",
+    "lc-data-providers/sgx",
+    "litentry-primitives/sgx",
+]
+std = [
+    "http",
+    "http_req",
+    "log/std",
+    "serde/std",
+    "serde_json/std",
+    "url/std",
+    "itp-sgx-crypto/std",
+    "frame-support/std",
+    "lc-data-providers/std",
+    "litentry-primitives/std",
+    "rand",
+]

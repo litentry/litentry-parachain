@@ -1,0 +1,79 @@
+[package]
+name = "its-consensus-common"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true }
+itertools = { version = "0.10.1", default-features = false, features = ["use_alloc"] }
+log = { workspace = true }
+thiserror = { workspace = true, optional = true }
+
+itc-parentchain-light-client = { workspace = true }
+itp-enclave-metrics = { workspace = true }
+itp-extrinsics-factory = { workspace = true }
+itp-import-queue = { workspace = true }
+itp-node-api-metadata = { workspace = true }
+itp-node-api-metadata-provider = { workspace = true }
+itp-ocall-api = { workspace = true }
+itp-settings = { workspace = true }
+itp-sgx-crypto = { workspace = true }
+itp-types = { workspace = true }
+its-block-verification = { workspace = true, optional = true }
+its-primitives = { workspace = true }
+its-state = { workspace = true }
+
+sgx_tstd = { workspace = true, optional = true }
+sgx_types = { workspace = true }
+thiserror_sgx = { workspace = true, optional = true }
+
+sp-runtime = { workspace = true }
+
+litentry-hex-utils = { workspace = true }
+
+[dev-dependencies]
+itc-parentchain-test = { workspace = true, features = ["std"] }
+itp-sgx-externalities = { workspace = true }
+itp-test = { workspace = true, features = ["std"] }
+its-test = { workspace = true, features = ["std"] }
+fork-tree = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["full_crypto"] }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "log/std",
+    "thiserror",
+    "itc-parentchain-light-client/std",
+    "itertools/use_std",
+    "itp-import-queue/std",
+    "itp-enclave-metrics/std",
+    "itp-extrinsics-factory/std",
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
+    "itp-ocall-api/std",
+    "itp-sgx-crypto/std",
+    "itp-sgx-externalities/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "its-block-verification/std",
+    "its-state/std",
+    "fork-tree/std",
+    "sp-runtime/std",
+]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
+    "itc-parentchain-light-client/sgx",
+    "itp-import-queue/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-node-api-metadata-provider/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "its-state/sgx",
+    "fork-tree/sgx",
+    "its-block-verification/sgx",
+]
