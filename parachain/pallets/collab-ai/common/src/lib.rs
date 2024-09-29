@@ -15,10 +15,14 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::H256;
-use sp_runtime::DispatchError;
+use sp_core::{RuntimeDebug, H256};
+use sp_runtime::BoundedVec;
+use sp_std::marker::PhantomData;
+
+use frame_support::pallet_prelude::EnsureOrigin;
+use frame_system::RawOrigin;
 
 pub type InfoHash = H256;
 pub type CuratorIndex = u128;
@@ -95,9 +99,12 @@ pub trait CuratorQuery<AccountId> {
 	fn is_verified_curator(account: AccountId) -> bool;
 }
 
-pub struct EnsureSignedAndCurator<AccountId, EC>(sp_std::marker::PhantomData<(AccountId, EC)>);
-impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, AccountId: Decode>
-	EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
+pub struct EnsureSignedAndCurator<AccountId, EC>(PhantomData<(AccountId, EC)>);
+impl<
+		O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
+		AccountId: Decode,
+		EC,
+	> EnsureOrigin<O> for EnsureSignedAndCurator<AccountId, EC>
 where
 	EC: CuratorQuery<AccountId>,
 {
@@ -108,7 +115,7 @@ where
 				if EC::is_curator() {
 					Ok(who)
 				} else {
-					Err(O::from(r))
+					Err(O::from(RawOrigin::Signed(who)))
 				}
 			},
 			r => Err(O::from(r)),
@@ -126,7 +133,7 @@ pub const INVESTING_POOL_INDEX_SHIFTER: u128 = 1_000_000_000_000_000;
 pub const INVESTING_POOL_START_MONTH_SHIFTER: u128 = 1_000;
 pub const INVESTING_POOL_END_MONTH_SHIFTER: u128 = 1;
 
-pub struct InvestingPoolAssetId<AssetId>(sp_std::marker::PhantomData<AssetId>);
+pub struct InvestingPoolAssetIdGenerator<AssetId>(PhantomData<AssetId>);
 impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
 	/// Create a series of new asset id based on pool index and reward epoch
 	/// Return None if impossible to generate. e.g. overflow
