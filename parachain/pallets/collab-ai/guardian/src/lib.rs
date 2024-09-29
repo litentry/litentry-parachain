@@ -124,7 +124,7 @@ pub mod pallet {
 			status: CandidateStatus,
 		},
 		VoteGuardian {
-			voter: T::AccountId
+			voter: T::AccountId,
 			guardian_index: GuardianIndex,
 			guardian: T::AccountId,
 			status: Option<GuardianVote>,
@@ -166,7 +166,11 @@ pub mod pallet {
 			);
 			PublicGuardianCount::<T>::put(next_guardian_index.checked_add(1u32.into())?);
 
-			Self::deposit_event(Event::GuardianRegisted { guardian: who, guardian_index, info_hash });
+			Self::deposit_event(Event::GuardianRegisted {
+				guardian: who,
+				guardian_index,
+				info_hash,
+			});
 			Ok(())
 		}
 
@@ -177,8 +181,8 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			// Ensure existing
-			let guardian_index =
-				PublicGuardianToIndex::<T>::get(guardian).ok_or(Error::<T>::GuardianNotRegistered)?;
+			let guardian_index = PublicGuardianToIndex::<T>::get(guardian)
+				.ok_or(Error::<T>::GuardianNotRegistered)?;
 
 			// Update guardian
 			// But if banned, then require extra reserve
@@ -248,8 +252,8 @@ pub mod pallet {
 			status: CandidateStatus,
 		) -> DispatchResult {
 			T::GuardianJudgeOrigin::ensure_origin(origin)?;
-			let guardian_index =
-				PublicGuardianToIndex::<T>::get(guardian).ok_or(Error::<T>::GuardianNotRegistered)?;
+			let guardian_index = PublicGuardianToIndex::<T>::get(guardian)
+				.ok_or(Error::<T>::GuardianNotRegistered)?;
 			GuardianIndexToInfo::<T>::try_mutate_exists(
 				guardian_index,
 				|maybe_info| -> Result<(), DispatchError> {
@@ -281,16 +285,16 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			// Ensure existing
-			let guardian_index =
-				PublicGuardianToIndex::<T>::get(&guardian).ok_or(Error::<T>::GuardianNotRegistered)?;
-			if let Some(i) == status {
+			let guardian_index = PublicGuardianToIndex::<T>::get(&guardian)
+				.ok_or(Error::<T>::GuardianNotRegistered)?;
+			if let Some(i) = status {
 				GuardianVotes::<T>::insert(&who, guardian_index, status);
 			} else {
 				GuardianVotes::<T>::remove(&who, guardian_index);
 			}
 
 			Self::deposit_event(Event::VoteGuardian {
-				voter: who
+				voter: who,
 				guardian_index,
 				guardian,
 				status,
@@ -301,15 +305,10 @@ pub mod pallet {
 		/// Remove vote to None
 		#[pallet::call_index(5)]
 		#[pallet::weight(W{195_000_000})]
-		pub fn remove_all_votes(
-			origin: OriginFor<T>,
-			guardian: T::AccountId,
-		) -> DispatchResult {
+		pub fn remove_all_votes(origin: OriginFor<T>, guardian: T::AccountId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = GuardianVotes::<T>::clear_prefix(&who, u32::MAX, None);
-			Self::deposit_event(Event::RemoveAllVote {
-				voter: who,
-			});
+			Self::deposit_event(Event::RemoveAllVote { voter: who });
 			Ok(())
 		}
 	}
