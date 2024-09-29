@@ -62,6 +62,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinimumGuardianDeposit: Get<BalanceOf<Self>>;
 
+		/// The maximum amount of guardian allowed for a proposal
+		#[pallet::constant]
+		type MaxProposalPerGuardian: Get<u32>;
+
 		/// Origin from guardian legal file verified by
 		type GuardianJudgeOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
@@ -97,7 +101,7 @@ pub mod pallet {
 		T::AccountId,
 		Twox64Concat,
 		GuardianIndex,
-		GuardianVote,
+		GuardianVote<T::MaxProposalPerGuardian>,
 		OptionQuery,
 	>;
 
@@ -340,7 +344,10 @@ impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
 		false
 	}
 
-	fn get_vote(voter: T::AccountId, guardian: T::AccountId) -> Option<GuardianVote> {
+	fn get_vote(
+		voter: T::AccountId,
+		guardian: T::AccountId,
+	) -> Option<GuardianVote<T::MaxProposalPerGuardian>> {
 		// Ensure existing
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&guardian) {
 			return GuardianVotes::<T>::get(&voter, guardian_index);

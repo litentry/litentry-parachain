@@ -70,7 +70,7 @@ pub enum CandidateStatus {
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
-pub enum GuardianVote {
+pub enum GuardianVote<S: Get<u32>> {
 	/// Does not care if this guardian get selected
 	/// Please be aware Neutral will increase participate percentage
 	/// which will increase the winning rate of guardian selection
@@ -87,7 +87,7 @@ pub enum GuardianVote {
 	/// Support this guardian for only specific pool proposal
 	/// And neutral for other pool proposal
 	#[codec(index = 3)]
-	Specific(BoundedVec<PoolProposalIndex>),
+	Specific(BoundedVec<PoolProposalIndex, S>),
 }
 
 /// Some sort of check on the account is from some group.
@@ -112,7 +112,7 @@ where
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
 			RawOrigin::Signed(who) => {
-				if EC::is_curator() {
+				if EC::is_curator(who) {
 					Ok(who)
 				} else {
 					Err(O::from(RawOrigin::Signed(who)))
@@ -144,11 +144,12 @@ impl<AssetId: From<u128>> InvestingPoolAssetIdGenerator<AssetId> {
 		for n in 0..(epoch + 1) {
 			// vec.push(pool_index_prefix + )
 		}
+		None
 	}
 }
 
 /// Some sort of check on the account is from some group.
-pub trait GuardianQuery<AccountId> {
+pub trait GuardianQuery<AccountId, S: Get<u32>> {
 	/// All guardian but banned ones
 	fn is_guardian(account: AccountId) -> bool;
 
@@ -156,5 +157,5 @@ pub trait GuardianQuery<AccountId> {
 	fn is_verified_guardian(account: AccountId) -> bool;
 
 	/// Get vote
-	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote>;
+	fn get_vote(voter: AccountId, guardian: AccountId) -> Option<GuardianVote<S>>;
 }

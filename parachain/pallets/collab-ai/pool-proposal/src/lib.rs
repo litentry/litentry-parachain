@@ -117,7 +117,7 @@ pub mod pallet {
 		type PublicVotingOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Guardian vote resource
-		type GuardianVote: GuardianQuery<Self::AccountId>;
+		type GuardianVoteResource: GuardianQuery<Self::AccountId>;
 
 		/// The maximum amount of guardian allowed for a proposal
 		#[pallet::constant]
@@ -557,7 +557,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			// Ensure guardian exists when participate, will double check if verified when mature the proposal)
-			ensure!(GuardianVote::is_guardian(who), Error::<T>::GuardianInvalid);
+			ensure!(GuardianVoteResource::is_guardian(who), Error::<T>::GuardianInvalid);
 			PoolGuardian::<T>::try_mutate_exists(
 				&pool_proposal_index,
 				|maybe_ordered_set| -> Result<(), DispatchError> {
