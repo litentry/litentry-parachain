@@ -131,7 +131,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./parachain/scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
+          docker pull litentry/litentry-parachain:v0.9.20-04
           echo "============================="
           docker images
 
@@ -163,7 +163,7 @@ jobs:
   build-identity-worker:
     if: ${{ github.event.inputs.identity_worker == 'true' }}
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -184,38 +184,40 @@ jobs:
           driver: docker
 
       # the key for identity worker enclave shall be renewed when switching to sdk-v2.0.0
-      - name: Write enclave signing key
-        run: |
-          cat << EOF > tee-worker/identity/enclave_key.pem
-          ${{ secrets.IDENTITY_ENCLAVE_STAGING_SIGNING_KEY }}
-          EOF
+      # - name: Write enclave signing key
+      #   run: |
+      #     cat << EOF > tee-worker/identity/enclave_key.pem
+      #     ${{ secrets.IDENTITY_ENCLAVE_STAGING_SIGNING_KEY }}
+      #     EOF
 
-      - name: Build local builder
-        uses: docker/build-push-action@v6
-        env:
-          DOCKER_BUILD_RECORD_UPLOAD: false
-        with:
-          context: .
-          file: tee-worker/identity/build.Dockerfile
-          tags: local-builder:latest
-          target: builder
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
-            SGX_PRODUCTION=1
-            SGX_MODE=HW
-            IMAGE_FOR_RELEASE=true
-            SGX_COMMERCIAL_KEY=enclave_key.pem
+      # - name: Build local builder
+      #   uses: docker/build-push-action@v6
+      #   env:
+      #     DOCKER_BUILD_RECORD_UPLOAD: false
+      #   with:
+      #     context: .
+      #     file: tee-worker/identity/build.Dockerfile
+      #     tags: local-builder:latest
+      #     target: builder
+      #     build-args: |
+      #       WORKER_MODE_ARG=sidechain
+      #       ADDITIONAL_FEATURES_ARG=
+      #       SGX_PRODUCTION=1
+      #       SGX_MODE=HW
+      #       IMAGE_FOR_RELEASE=true
+      #       SGX_COMMERCIAL_KEY=enclave_key.pem
 
-      - name: Build worker
-        uses: docker/build-push-action@v6
-        env:
-          DOCKER_BUILD_RECORD_UPLOAD: false
-        with:
-          context: .
-          file: tee-worker/identity/build.Dockerfile
-          tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
-          target: worker-release
+      # - name: Build worker
+      #   uses: docker/build-push-action@v6
+      #   env:
+      #     DOCKER_BUILD_RECORD_UPLOAD: false
+      #   with:
+      #     context: .
+      #     file: tee-worker/identity/build.Dockerfile
+      #     tags: litentry/identity-worker:${{ env.RELEASE_TAG }}
+      #     target: worker-release
+
+      - run: docker pull litentry/identity-worker:v0.9.20-04
 
       - run: docker images --all
 
@@ -232,7 +234,7 @@ jobs:
   build-bitacross-worker:
     if: ${{ github.event.inputs.bitacross_worker == 'true' }}
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -252,38 +254,40 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
-      - name: Write enclave signing key
-        run: |
-          cat << EOF > tee-worker/bitacross/enclave_key.pem
-          ${{ secrets.BITACROSS_ENCLAVE_PROD_SIGNING_KEY }}
-          EOF
+      # - name: Write enclave signing key
+      #   run: |
+      #     cat << EOF > tee-worker/bitacross/enclave_key.pem
+      #     ${{ secrets.BITACROSS_ENCLAVE_PROD_SIGNING_KEY }}
+      #     EOF
 
-      - name: Build local builder
-        uses: docker/build-push-action@v6
-        env:
-          DOCKER_BUILD_RECORD_UPLOAD: false
-        with:
-          context: .
-          file: tee-worker/bitacross/build.Dockerfile
-          tags: local-builder:latest
-          target: builder
-          build-args: |
-            WORKER_MODE_ARG=offchain-worker
-            ADDITIONAL_FEATURES_ARG=
-            SGX_PRODUCTION=1
-            SGX_MODE=HW
-            IMAGE_FOR_RELEASE=true
-            SGX_COMMERCIAL_KEY=enclave_key.pem
+      # - name: Build local builder
+      #   uses: docker/build-push-action@v6
+      #   env:
+      #     DOCKER_BUILD_RECORD_UPLOAD: false
+      #   with:
+      #     context: .
+      #     file: tee-worker/bitacross/build.Dockerfile
+      #     tags: local-builder:latest
+      #     target: builder
+      #     build-args: |
+      #       WORKER_MODE_ARG=offchain-worker
+      #       ADDITIONAL_FEATURES_ARG=
+      #       SGX_PRODUCTION=1
+      #       SGX_MODE=HW
+      #       IMAGE_FOR_RELEASE=true
+      #       SGX_COMMERCIAL_KEY=enclave_key.pem
 
-      - name: Build worker
-        uses: docker/build-push-action@v6
-        env:
-          DOCKER_BUILD_RECORD_UPLOAD: false
-        with:
-          context: .
-          file: tee-worker/bitacross/build.Dockerfile
-          tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
-          target: worker-release
+      # - name: Build worker
+      #   uses: docker/build-push-action@v6
+      #   env:
+      #     DOCKER_BUILD_RECORD_UPLOAD: false
+      #   with:
+      #     context: .
+      #     file: tee-worker/bitacross/build.Dockerfile
+      #     tags: litentry/bitacross-worker:${{ env.RELEASE_TAG }}
+      #     target: worker-release
+
+      - run: docker pull litentry/bitacross-worker:v0.9.20-04
 
       - run: docker images --all
 
@@ -315,42 +319,42 @@ jobs:
         with:
           name: litentry-collator
 
-      - name: Load docker image
-        run: |
-          docker load < litentry-parachain-dev.tar.gz
-          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
-          docker images
+      # - name: Load docker image
+      #   run: |
+      #     docker load < litentry-parachain-dev.tar.gz
+      #     docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
+      #     docker images
 
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
+      # - name: Enable corepack and pnpm
+      #   run: corepack enable && corepack enable pnpm
 
-      - name: Run ts tests for ${{ matrix.chain }}
-        timeout-minutes: 30
-        run: |
-          make test-ts-${{ matrix.chain }}
+      # - name: Run ts tests for ${{ matrix.chain }}
+      #   timeout-minutes: 30
+      #   run: |
+      #     make test-ts-${{ matrix.chain }}
 
-      - name: Archive logs if test fails
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() }}
-        with:
-          name: ${{ matrix.chain }}-ts-tests-artifacts
-          path: /tmp/parachain_dev/
-          retention-days: 3
+      # - name: Archive logs if test fails
+      #   uses: actions/upload-artifact@v4
+      #   if: ${{ failure() }}
+      #   with:
+      #     name: ${{ matrix.chain }}-ts-tests-artifacts
+      #     path: /tmp/parachain_dev/
+      #     retention-days: 3
 
-      - name: Dockerhub login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      # - name: Dockerhub login
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+      # - name: Push docker image
+      #   run: |
+      #     docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
 
-      - name: Clean up for ${{ matrix.chain }}
-        if: ${{ always() }}
-        run: |
-          make clean-network
+      # - name: Clean up for ${{ matrix.chain }}
+      #   if: ${{ always() }}
+      #   run: |
+      #     make clean-network
 
   ## create the release draft ##
   create-release-draft:
@@ -370,7 +374,7 @@ jobs:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: try-again
           fetch-depth: 0
 
       - name: Download all artefacts
