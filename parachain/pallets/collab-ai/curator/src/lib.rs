@@ -25,16 +25,16 @@
 //!
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
-use bitflags::bitflags;
-use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
+	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
 	weights::Weight,
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 pub use pallet::*;
 use pallet_collab_ai_common::*;
+use parity_scale_codec::{Decode, Encode};
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;

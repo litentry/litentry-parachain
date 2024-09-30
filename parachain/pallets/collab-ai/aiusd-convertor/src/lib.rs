@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-use sp_runtime::traits::CheckedMul;
+use sp_runtime::traits::{CheckedDiv, CheckedMul};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -138,13 +138,16 @@ pub mod pallet {
 					<InspectFungibles<T>>::mint_into(aiusd_id, &beneficiary, aiusd_amount)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
-				let aseet_target_transfer_amount =
-					aiusd_minted_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
+				let aseet_target_transfer_amount = aiusd_minted_amount
+					.checked_mul(&ratio)
+					.ok_or(Error::<T>::Overflow)?
+					.checked_div(10 ^ 18)
+					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id,
-						beneficiary,
-						T::ConvertingFeeAccount::get(),
+						&beneficiary,
+						&T::ConvertingFeeAccount::get(),
 						aseet_target_transfer_amount,
 						Preservation::Expendable,
 					)?;
@@ -176,7 +179,7 @@ pub mod pallet {
 				let aiusd_id = T::AIUSDAssetId::get();
 				ensure!(
 					InspectFungibles::<T>::asset_exists(&aiusd_id)
-						&& InspectFungibles::<T>::asset_exists(target_asset_id),
+						&& InspectFungibles::<T>::asset_exists(&target_asset_id),
 					Error::<T>::InvalidAssetId
 				);
 				// It will fail if insufficient fund
@@ -189,13 +192,16 @@ pub mod pallet {
 				)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
-				let aseet_target_transfer_amount =
-					aiusd_destroyed_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
+				let aseet_target_transfer_amount = aiusd_destroyed_amount
+					.checked_mul(&ratio)
+					.ok_or(Error::<T>::Overflow)?
+					.checked_div(10 ^ 18)
+					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id,
-						T::ConvertingFeeAccount::get(),
-						beneficiary,
+						&T::ConvertingFeeAccount::get(),
+						&beneficiary,
 						aseet_target_transfer_amount,
 						Preservation::Expendable,
 					)?;
