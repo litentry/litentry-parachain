@@ -13,6 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+use crate::{Config, Error};
+use bitflags::bitflags;
+use frame_support::{ensure, pallet_prelude::*};
+use pallet_collab_ai_common::PoolProposalIndex;
+use sp_runtime::{traits::CheckedAdd, ArithmeticError, BoundedVec};
 
 bitflags! {
 	/// Flags used to record the status of pool proposal
@@ -128,7 +133,7 @@ pub struct PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S: Get<u32>
 	pub queued_pre_investings: BoundedVec<(Bond<AccountId, Balance>, BlockNumber), S>,
 }
 
-impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
+impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 	PoolProposalPreInvesting<AccountId, Balance, BlockNumber, S>
 {
 	/// Create a new empty default
@@ -166,7 +171,8 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 				.try_insert(existing.0, Bond { owner: account, amount })
 				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 		}
-		self::total_pre_investing_amount = self::total_pre_investing_amount
+		self.total_pre_investing_amount = self
+			.total_pre_investing_amount
 			.checked_add(&amount)
 			.ok_or(ArithmeticError::Overflow)?;
 		Ok(())
@@ -179,7 +185,7 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 	) -> Result<(), DispatchError> {
 		// Withdraw Queued one if any
 		if let Some(existing_q) = self.get_queued_investing(account) {
-			if (existing_q.1 > amount) {
+			if existing_q.1 > amount {
 				// Existing queue is larger than target amount
 				// Finish withdrawing and return early
 				self.queued_pre_investings.remove(existing_q.0);
@@ -192,14 +198,16 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 					)
 					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
 
-				self::total_queued_amount = self::total_queued_amount
+				self.total_queued_amount = self
+					.total_queued_amount
 					.checked_sub(&amount)
 					.ok_or(ArithmeticError::Overflow)?;
 				return Ok(());
 			} else {
 				// Totally remove queued
 				self.queued_pre_investings.remove(existing_q.0);
-				self::total_queued_amount = self::total_queued_amount
+				self.total_queued_amount = self
+					.total_queued_amount
 					.checked_sub(&existing_q.1)
 					.ok_or(ArithmeticError::Overflow)?;
 
@@ -208,7 +216,7 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 				if let Some(existing_p) = self.get_pre_investing(account) {
 					// Existing pre-investing is larger than left target amount
 					// Finish withdrawing and return early
-					if (existing_p.1 > left_amount) {
+					if existing_p.1 > left_amount {
 						self.pre_investings.remove(existing_p.0);
 						let new_balance_p = existing_p
 							.1
@@ -220,14 +228,16 @@ impl<AccountId, Balance: Default + CheckedAdd, S: Get<u32>>
 								Bond { owner: account, amount: new_balance_p },
 							)
 							.map_err(|_| Error::<T>::InvestingPoolOversized)?;
-						self::total_pre_investing_amount = self::total_pre_investing_amount
+						self.total_pre_investing_amount = self
+							.total_pre_investing_amount
 							.checked_sub(&left_amount)
 							.ok_or(ArithmeticError::Overflow)?;
 						return Ok(());
-					} else if (existing_p.1 == left_amount) {
+					} else if existing_p.1 == left_amount {
 						// Exact amount to finish everything
 						self.pre_investings.remove(existing_p.0);
-						self::total_pre_investing_amount = self::total_pre_investing_amount
+						self.total_pre_investing_amount = self
+							.total_pre_investing_amount
 							.checked_sub(&left_amount)
 							.ok_or(ArithmeticError::Overflow)?;
 						return Ok(());

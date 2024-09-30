@@ -27,11 +27,11 @@
 pub mod types;
 
 use bitflags::bitflags;
-use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
 	error::BadOrigin,
 	traits::{Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency},
+	transactional,
 	weights::Weight,
 	BoundedVec,
 };
@@ -39,6 +39,7 @@ use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
+use parity_scale_codec::{Decode, Encode};
 use sp_runtime::traits::CheckedAdd;
 use sp_std::{cmp::Ordering, collections::vec_deque::VecDeque};
 
