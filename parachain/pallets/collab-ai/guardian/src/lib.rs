@@ -25,16 +25,16 @@
 //!
 //!
 #![cfg_attr(not(feature = "std"), no_std)]
-use bitflags::bitflags;
-use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
+	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
 	weights::Weight,
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 pub use pallet::*;
 use pallet_collab_ai_common::*;
+use parity_scale_codec::{Decode, Encode};
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -131,9 +131,11 @@ pub mod pallet {
 			voter: T::AccountId,
 			guardian_index: GuardianIndex,
 			guardian: T::AccountId,
-			status: Option<GuardianVote>,
+			status: Option<GuardianVote<T::MaxProposalPerGuardian>>,
 		},
-		RemoveAllVote {},
+		RemoveAllVote {
+			voter: T::AccountId,
+		},
 	}
 
 	#[pallet::error]
@@ -157,7 +159,7 @@ pub mod pallet {
 				Error::<T>::GuardianAlreadyRegistered
 			);
 			// New registed guardian need to make a balance reserve
-			T::Currency::reserve(&who, MinimumGuardianDeposit::get())?;
+			T::Currency::reserve(&who, T::MinimumGuardianDeposit::get())?;
 
 			// Update guardian
 			let current_block = frame_system::Pallet::<T>::block_number();
@@ -195,8 +197,8 @@ pub mod pallet {
 				|maybe_info| -> Result<(), DispatchError> {
 					let mut info = maybe_info.as_mut().ok_or(Error::<T>::GuardianIndexNotExist)?;
 
-					if (info.3 == CandidateStatus::Banned) {
-						T::Currency::reserve(&who, MinimumGuardianDeposit::get())?;
+					if info.3 == CandidateStatus::Banned {
+						T::Currency::reserve(&who, T::MinimumGuardianDeposit::get())?;
 					}
 
 					// Update hash
@@ -236,7 +238,7 @@ pub mod pallet {
 					let info = maybe_info.ok_or(Error::<T>::GuardianIndexNotExist)?;
 
 					if (info.3 != CandidateStatus::Banned) {
-						T::Currency::unreserve(&who, MinimumGuardianDeposit::get())?;
+						T::Currency::unreserve(&who, T::MinimumGuardianDeposit::get())?;
 					}
 
 					// Delete item
@@ -275,6 +277,7 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
+			Ok(())
 		}
 
 		/// Anyone can vote for guardian
@@ -323,7 +326,7 @@ impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
 	fn is_guardian(account: T::AccountId) -> bool {
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
 			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
-				if (info.3 != CandidateStatus::Banned) {
+				if info.3 != CandidateStatus::Banned {
 					return true;
 				}
 			}
@@ -335,7 +338,7 @@ impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
 	fn is_verified_guardian(account: T::AccountId) -> bool {
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
 			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
-				if (info.3 == CandidateStatus::Verified) {
+				if info.3 == CandidateStatus::Verified {
 					return true;
 				}
 			}

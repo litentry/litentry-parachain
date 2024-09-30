@@ -133,7 +133,7 @@ pub mod pallet {
 				Error::<T>::CuratorAlreadyRegistered
 			);
 			// New registed curator need to make a balance reserve
-			T::Currency::reserve(&who, MinimumCuratorDeposit::get())?;
+			T::Currency::reserve(&who, T::MinimumCuratorDeposit::get())?;
 
 			// Update curator
 			let current_block = frame_system::Pallet::<T>::block_number();
@@ -167,8 +167,8 @@ pub mod pallet {
 				|maybe_info| -> Result<(), DispatchError> {
 					let mut info = maybe_info.as_mut().ok_or(Error::<T>::CuratorIndexNotExist)?;
 
-					if (info.3 == CandidateStatus::Banned) {
-						T::Currency::reserve(&who, MinimumCuratorDeposit::get())?;
+					if info.3 == CandidateStatus::Banned {
+						T::Currency::reserve(&who, T::MinimumCuratorDeposit::get())?;
 					}
 
 					// Update hash
@@ -207,8 +207,8 @@ pub mod pallet {
 				|maybe_info| -> Result<(), DispatchError> {
 					let info = maybe_info.ok_or(Error::<T>::CuratorIndexNotExist)?;
 
-					if (info.3 != CandidateStatus::Banned) {
-						T::Currency::unreserve(&who, MinimumCuratorDeposit::get())?;
+					if info.3 != CandidateStatus::Banned {
+						T::Currency::unreserve(&who, T::MinimumCuratorDeposit::get())?;
 					}
 
 					// Delete item
@@ -256,7 +256,7 @@ impl<T: Config> CuratorQuery<T::AccountId> for Pallet<T> {
 	fn is_curator(account: T::AccountId) -> bool {
 		if let Some(curator_index) = PublicCuratorToIndex::<T>::get(&account) {
 			if let Some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
-				if (info.3 != CandidateStatus::Banned) {
+				if info.3 != CandidateStatus::Banned {
 					return true;
 				}
 			}
@@ -268,7 +268,7 @@ impl<T: Config> CuratorQuery<T::AccountId> for Pallet<T> {
 	fn is_verified_curator(account: T::AccountId) -> bool {
 		if let Some(curator_index) = PublicCuratorToIndex::<T>::get(&account) {
 			if let Some(info) = CuratorIndexToInfo::<T>::get(curator_index) {
-				if (info.3 == CandidateStatus::Verified) {
+				if info.3 == CandidateStatus::Verified {
 					return true;
 				}
 			}

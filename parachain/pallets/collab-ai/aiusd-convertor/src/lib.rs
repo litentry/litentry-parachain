@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::pallet_prelude::*;
-
+use sp_runtime::traits::{CheckedAdd, CheckedSub};
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -127,20 +127,24 @@ pub mod pallet {
 					Error::<T>::AssetNotEnabled
 				);
 				let aiusd_id = T::AIUSDAssetId::get();
-				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles::<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
+				ensure!(
+					InspectFungibles::<T>::asset_exists(&aiusd_id)
+						&& InspectFungibles::<T>::asset_exists(&target_asset_id),
+					Error::<T>::InvalidAssetId
+				);
 				// It will fail if insufficient fund
 				let aiusd_minted_amount: AssetBalanceOf<T> =
-					<InspectFungibles<T>>::mint_into(aiusd_id, beneficiary, aiusd_amount)?;
+					<InspectFungibles<T>>::mint_into(aiusd_id, &beneficiary, aiusd_amount)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
 				let aseet_target_transfer_amount =
 					aiusd_minted_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
-					<InspectFungibles<T>>::transfer(
+					<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id,
 						beneficiary,
 						T::ConvertingFeeAccount::get(),
-						aseet_target_mint_amount,
+						aseet_target_transfer_amount,
 						Preservation::Expendable,
 					)?;
 
@@ -171,13 +175,13 @@ pub mod pallet {
 				let aiusd_id = AIUSDAssetId::get();
 				ensure!(
 					InspectFungibles::<T>::asset_exists(&aiusd_id)
-						&& InspectFungibles::<T>::asset_exists(&target_asset_id),
+						&& InspectFungibles::<T>::asset_exists(target_asset_id),
 					Error::<T>::InvalidAssetId
 				);
 				// It will fail if insufficient fund
 				let aiusd_destroyed_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::burn_from(
 					aiusd_id,
-					beneficiary,
+					&beneficiary,
 					aiusd_amount,
 					Precision::Exact,
 					Fortitude::Polite,
@@ -187,7 +191,7 @@ pub mod pallet {
 				let aseet_target_transfer_amount =
 					aiusd_destroyed_amount.checked_mul(ratio)?.checked_div(10 ^ 18)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
-					<InspectFungibles<T>>::transfer(
+					<InspectFungibles<T> as FsInspect<<T as frame_system::Config>::AccountId>>::transfer(
 						target_asset_id,
 						T::ConvertingFeeAccount::get(),
 						beneficiary,
@@ -226,7 +230,7 @@ pub mod pallet {
 		#[pallet::weight({195_000_000})]
 		pub fn disable_token(
 			origin: OriginFor<T>,
-			target_asset_id: AssetId,
+			target_asset_id: AssetIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::ManagerOrigin::ensure_origin(origin)?;
 			EnabledTokens::<T>::remove(&target_asset_id);
