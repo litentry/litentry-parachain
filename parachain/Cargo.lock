@@ -8108,6 +8108,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-timestamp",
+ "pallet-utility",
  "parity-scale-codec",
  "ring 0.16.20",
  "rustls-webpki 0.102.0-alpha.3",
