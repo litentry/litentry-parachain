@@ -138,16 +138,19 @@ pub mod pallet {
 			let mut id_graph_links =
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
 
-			id_graph_links.retain(|(id_hash, _)| !identity_hashes.contains(id_hash));
+			id_graph_links.retain(|(id_hash, _)| {
+				if identity_hashes.contains(id_hash) {
+					LinkedIdentityHashes::<T>::remove(id_hash);
+					false
+				} else {
+					true
+				}
+			});
 
 			if id_graph_links.is_empty() {
 				IDGraphs::<T>::remove(&who);
 			} else {
 				IDGraphs::<T>::insert(who.clone(), id_graph_links);
-			}
-
-			for identity_hash in identity_hashes.iter() {
-				LinkedIdentityHashes::<T>::remove(identity_hash);
 			}
 
 			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
