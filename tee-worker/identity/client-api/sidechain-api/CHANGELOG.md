@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
--   Update for version [parachain-release v0.9.20-03](https://github.com/litentry/litentry-parachain/releases/tag/v0.9.20-03)
+## [0.9.20-04] - 2024-09-30
+
+-   Update for version [parachain-release v0.9.20-04](https://github.com/litentry/litentry-parachain/releases/tag/v0.9.20-04)
 
 ## [0.9.19-07] - 2024-08-26
 
