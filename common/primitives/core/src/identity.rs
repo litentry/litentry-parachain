@@ -525,12 +525,18 @@ impl From<[u8; 33]> for Identity {
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum OmniAccountIdentity {
+pub enum MemberIdentity {
     Public(Identity),
     Private(Vec<u8>),
 }
 
-impl From<Identity> for OmniAccountIdentity {
+impl MemberIdentity {
+    pub fn is_public(&self) -> bool {
+        matches!(self, Self::Public(..))
+    }
+}
+
+impl From<Identity> for MemberIdentity {
     fn from(identity: Identity) -> Self {
         Self::Public(identity)
     }
