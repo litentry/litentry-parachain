@@ -18,6 +18,7 @@ frame-system = { workspace = true }
 orml-utilities = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+pallet-assets = { workspace = true }
 
 pallet-collab-ai-common = { workspace = true }
 
@@ -36,6 +37,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "orml-utilities/std",
+    "pallet-assets/std",
     "pallet-collab-ai-common/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

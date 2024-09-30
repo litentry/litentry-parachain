@@ -17,7 +17,11 @@ use crate::{Config, Error};
 use bitflags::bitflags;
 use frame_support::{ensure, pallet_prelude::*};
 use pallet_collab_ai_common::PoolProposalIndex;
-use sp_runtime::{traits::CheckedAdd, ArithmeticError, BoundedVec};
+use sp_runtime::{
+	traits::{Bounded, CheckedAdd, StaticLookup},
+	ArithmeticError, BoundedVec,
+};
+use sp_std::cmp::Ordering;
 
 bitflags! {
 	/// Flags used to record the status of pool proposal
@@ -146,10 +150,10 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		}
 	}
 
-	pub fn get_pre_investing(&self, account: AccountId) -> Option<(usize, Balance)> {
+	pub fn get_pre_investing(&self, account: AccountId) -> Result<(usize, Balance), usize> {
 		match self.pre_investings.binary_search(&Bond::from_owner(account)) {
-			Ok(loc) => Some((loc, self.pre_investings.index(loc))),
-			Err(loc) => None,
+			Ok(loc) => Ok((loc, self.pre_investings.index(loc))),
+			Err(loc) => Err(loc),
 		}
 	}
 
@@ -158,18 +162,22 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		account: AccountId,
 		amount: Balance,
 	) -> Result<(), DispatchError> {
-		if let Some(existing) = self.get_pre_investing(account) {
-			self.pre_investings.remove(existing.0);
-			let new_balance = existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-			let _ = self
-				.pre_investings
-				.try_insert(existing.0, Bond { owner: account, amount: new_balance })
-				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
-		} else {
-			let _ = self
-				.pre_investings
-				.try_insert(existing.0, Bond { owner: account, amount })
-				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+		match self.get_pre_investing(account) {
+			Ok(existing) => {
+				self.pre_investings.remove(existing.0);
+				let new_balance =
+					existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+				let _ = self
+					.pre_investings
+					.try_insert(existing.0, Bond { owner: account, amount: new_balance })
+					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+			},
+			Err(potential_index) => {
+				let _ = self
+					.pre_investings
+					.try_insert(potential_index, Bond { owner: account, amount })
+					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+			},
 		}
 		self.total_pre_investing_amount = self
 			.total_pre_investing_amount
@@ -184,7 +192,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		amount: Balance,
 	) -> Result<(), DispatchError> {
 		// Withdraw Queued one if any
-		if let Some(existing_q) = self.get_queued_investing(account) {
+		if let Ok(existing_q) = self.get_queued_investing(account) {
 			if existing_q.1 > amount {
 				// Existing queue is larger than target amount
 				// Finish withdrawing and return early
@@ -255,17 +263,17 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 	pub fn get_queued_investing(
 		&self,
 		account: AccountId,
-	) -> Option<(usize, Balance, BlockNumber)> {
+	) -> Result<(usize, Balance, BlockNumber), usize> {
 		match self
 			.queued_pre_investings
 			.binary_search_by(|p| p.0.cmp(&Bond::from_owner(account)))
 		{
-			Ok(loc) => Some((
+			Ok(loc) => Ok((
 				loc,
 				self.queued_pre_investings.index(loc).0.amount,
 				self.queued_pre_investings.index(loc).1,
 			)),
-			Err(loc) => None,
+			Err(loc) => Err(loc),
 		}
 	}
 
@@ -275,21 +283,25 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 		amount: Balance,
 		current_block: BlockNumber,
 	) -> Result<(), DispatchError> {
-		if let Some(existing) = self.get_queued_investing(account) {
-			self.queued_pre_investings.remove(existing.0);
-			let new_balance = existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-			let _ = self
-				.queued_pre_investings
-				.try_insert(
-					existing.0,
-					(Bond { owner: account, amount: new_balance }, current_block),
-				)
-				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
-		} else {
-			let _ = self
-				.queued_pre_investings
-				.try_insert(existing.0, (Bond { owner: account, amount }, current_block))
-				.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+		match self.get_queued_investing(account) {
+			Ok(existing) => {
+				self.queued_pre_investings.remove(existing.0);
+				let new_balance =
+					existing.1.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+				let _ = self
+					.queued_pre_investings
+					.try_insert(
+						existing.0,
+						(Bond { owner: account, amount: new_balance }, current_block),
+					)
+					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+			},
+			Err(potential_index) => {
+				let _ = self
+					.queued_pre_investings
+					.try_insert(potential_index, (Bond { owner: account, amount }, current_block))
+					.map_err(|_| Error::<T>::InvestingPoolOversized)?;
+			},
 		}
 		self::total_queued_amount = self::total_queued_amount
 			.checked_add(&amount)
@@ -320,7 +332,7 @@ impl<AccountId, Balance: Default + CheckedAdd, BlockNumber, S: Get<u32>>
 			let transfer_amount = target_pre_investing_amount
 				.checked_sub(self.total_pre_investing_amount)
 				.ok_or(ArithmeticError::Overflow)?;
-			if (i.0.amount >= transfer_amount) {
+			if i.0.amount >= transfer_amount {
 				let _ = self.withdraw(i.0.owner, transfer_amount)?;
 				self.add_pre_investing(i.0.owner, transfer_amount)?;
 				result.push(Bond { owner: i.0.owner, amount: transfer_amount });

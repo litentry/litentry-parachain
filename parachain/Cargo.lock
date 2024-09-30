@@ -7892,6 +7892,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-utilities",
+ "pallet-assets",
  "pallet-collab-ai-common",
  "parity-scale-codec",
  "scale-info",
