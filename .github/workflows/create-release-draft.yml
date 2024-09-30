@@ -393,4 +393,6 @@ jobs:
           files: |
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
-            litentry-collator/*
+            litentry-collator/litentry-collator
+            litentry-collator/*-genesis-state
+            litentry-collator/*-genesis-wasm

@@ -26,8 +26,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-version = { workspace = true }
 
-# TODO - move to tee-worker pallets
-pallet-parentchain = { path = "../../../../parachain/worker-pallets/parentchain", default-features = false }
+pallet-parentchain = { workspace = true }
 
 [features]
 default = ["std"]
