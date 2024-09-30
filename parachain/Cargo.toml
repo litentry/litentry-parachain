@@ -24,9 +24,7 @@ members = [
     'runtime/paseo',
     'runtime/common',
 ]
-exclude = [
-    'worker-pallets',
-]
+exclude = []
 
 [profile.release]
 opt-level = 3
