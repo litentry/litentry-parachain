@@ -16,9 +16,9 @@ scale-info = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 orml-utilities = { workspace = true }
+pallet-assets = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
-pallet-assets = { workspace = true }
 
 pallet-collab-ai-common = { workspace = true }
 
