@@ -138,10 +138,11 @@ pub mod pallet {
 					<InspectFungibles<T>>::mint_into(aiusd_id, &beneficiary, aiusd_amount)?;
 
 				// Maybe it is better to save decimal of AIUSD somewhere
+				let aiusd_deciaml_unit_expression: T::Balance = 10 ^ 18.try_into()?;
 				let aseet_target_transfer_amount = aiusd_minted_amount
 					.checked_mul(&ratio)
 					.ok_or(Error::<T>::Overflow)?
-					.checked_div(10 ^ 18)
+					.checked_div(&aiusd_deciaml_unit_expression)
 					.ok_or(Error::<T>::Overflow)?;
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T> as FsMutate<<T as frame_system::Config>::AccountId>>::transfer(
@@ -178,8 +179,8 @@ pub mod pallet {
 			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
 				let aiusd_id = T::AIUSDAssetId::get();
 				ensure!(
-					InspectFungibles::<T>::asset_exists(&aiusd_id)
-						&& InspectFungibles::<T>::asset_exists(&target_asset_id),
+					InspectFungibles::<T>::asset_exists(aiusd_id)
+						&& InspectFungibles::<T>::asset_exists(target_asset_id),
 					Error::<T>::InvalidAssetId
 				);
 				// It will fail if insufficient fund
