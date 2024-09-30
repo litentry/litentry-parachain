@@ -18,6 +18,7 @@ members = [
     'pallets/teebag',
     'pallets/vc-management',
     'pallets/xcm-asset-manager',
+    'pallets/halving-mint',
     'precompiles/*',
     'runtime/litentry',
     'runtime/rococo',
@@ -266,6 +267,7 @@ pallet-evm-precompile-bridge-transfer = { path = "precompiles/bridge-transfer", 
 pallet-evm-precompile-parachain-staking = { path = "precompiles/parachain-staking", default-features = false }
 pallet-evm-precompile-score-staking = { path = "precompiles/score-staking", default-features = false }
 pallet-evm-assertions = { path = "pallets/evm-assertions", default-features = false }
+pallet-halving-mint = { path = "pallets/halving-mint", default-features = false }
 
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
