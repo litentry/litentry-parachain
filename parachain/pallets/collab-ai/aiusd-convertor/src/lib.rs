@@ -20,10 +20,14 @@
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		tokens::{fungibles::Inspect as FsInspect, Fortitude, Precision, Preservation},
+		tokens::{
+			fungibles::{Inspect as FsInspect, Mutate as FsMutate},
+			Fortitude, Precision, Preservation,
+		},
 		StorageVersion,
 	},
 };
+use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -115,15 +119,15 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,
 			aiusd_amount: AssetBalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let beneficiary = T::IncConsumerOrigin::ensure_origin(origin)?;
+		) -> DispatchResult {
+			let beneficiary = ensure_signed(origin)?;
 			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
 				ensure!(
 					EnabledTokens::<T>::contains_key(&target_asset_id),
 					Error::<T>::AssetNotEnabled
 				);
-				let aiusd_id = AIUSDAssetId::get();
-				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
+				let aiusd_id = T::AIUSDAssetId::get();
+				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles::<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
 				// It will fail if insufficient fund
 				let aiusd_minted_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T>>::mint_into(aiusd_id, beneficiary, aiusd_amount)?;
@@ -135,7 +139,7 @@ pub mod pallet {
 					<InspectFungibles<T>>::transfer(
 						target_asset_id,
 						beneficiary,
-						ConvertingFeeAccount::get(),
+						T::ConvertingFeeAccount::get(),
 						aseet_target_mint_amount,
 						Preservation::Expendable,
 					)?;
@@ -161,11 +165,15 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,
 			aiusd_amount: AssetBalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let beneficiary = T::IncConsumerOrigin::ensure_origin(origin)?;
+		) -> DispatchResult {
+			let beneficiary = ensure_signed(origin)?;
 			if let Some(ratio) = EnabledTokens::<T>::get(&target_asset_id) {
 				let aiusd_id = AIUSDAssetId::get();
-				ensure!(InspectFungibles<T>::asset_exists(&aiusd_id) && InspectFungibles<T>::asset_exists(&target_asset_id), Error::<T>::InvalidAssetId);
+				ensure!(
+					InspectFungibles::<T>::asset_exists(&aiusd_id)
+						&& InspectFungibles::<T>::asset_exists(&target_asset_id),
+					Error::<T>::InvalidAssetId
+				);
 				// It will fail if insufficient fund
 				let aiusd_destroyed_amount: AssetBalanceOf<T> = <InspectFungibles<T>>::burn_from(
 					aiusd_id,
@@ -181,7 +189,7 @@ pub mod pallet {
 				let asset_actual_transfer_amount: AssetBalanceOf<T> =
 					<InspectFungibles<T>>::transfer(
 						target_asset_id,
-						ConvertingFeeAccount::get(),
+						T::ConvertingFeeAccount::get(),
 						beneficiary,
 						aseet_target_transfer_amount,
 						Preservation::Expendable,
@@ -204,7 +212,7 @@ pub mod pallet {
 		#[pallet::weight({195_000_000})]
 		pub fn enable_token(
 			origin: OriginFor<T>,
-			target_asset_id: AssetId,
+			target_asset_id: AssetIdOf<T>,
 			decimal_ratio: AssetBalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::ManagerOrigin::ensure_origin(origin)?;
