@@ -148,6 +148,8 @@ fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
 		let who = alice();
+		let who_identity_hash =
+			H256::from(blake2_256(&Identity::from(who.clone()).to_did().unwrap().encode()));
 
 		let identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let identity_hash = H256::from(blake2_256(&identity.encode()));
@@ -180,13 +182,40 @@ fn remove_identity_works() {
 		assert_ok!(OmniAccount::remove_identities(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
-			vec![]
+			vec![who_identity_hash],
 		));
 		System::assert_last_event(
-			Event::IdentityRemoved { who: who.clone(), identity_hashes: vec![] }.into(),
+			Event::IdentityRemoved { who: who.clone(), identity_hashes: vec![who_identity_hash] }
+				.into(),
 		);
 
 		assert!(!IDGraphs::<TestRuntime>::contains_key(&who));
+	});
+}
+
+#[test]
+fn remove_identity_empty_identity_check_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+
+		let identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash = H256::from(blake2_256(&identity.encode()));
+
+		assert_ok!(OmniAccount::link_identity(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who.clone(),
+			identity_hash,
+			identity.clone(),
+		));
+		assert_noop!(
+			OmniAccount::remove_identities(
+				RuntimeOrigin::signed(tee_signer.clone()),
+				who.clone(),
+				vec![],
+			),
+			Error::<TestRuntime>::IdentitiesEmpty
+		);
 	});
 }
 

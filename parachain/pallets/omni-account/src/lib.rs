@@ -77,6 +77,8 @@ pub mod pallet {
 		PrimeIdentityInvalid,
 		/// Identity is private
 		IdentityIsPrivate,
+		/// Identities empty
+		IdentitiesEmpty,
 	}
 
 	#[pallet::call]
@@ -131,20 +133,22 @@ pub mod pallet {
 			identity_hashes: Vec<H256>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
 			let mut id_graph_links =
 				IDGraphs::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
 
-			if identity_hashes.is_empty() || identity_hashes.len() == id_graph_links.len() {
+			id_graph_links.retain(|(id_hash, _)| !identity_hashes.contains(id_hash));
+
+			if id_graph_links.is_empty() {
 				IDGraphs::<T>::remove(&who);
 			} else {
-				id_graph_links.retain(|(id_hash, _)| !identity_hashes.contains(id_hash));
 				IDGraphs::<T>::insert(who.clone(), id_graph_links);
 			}
 
-			identity_hashes.iter().for_each(|identity_hash| {
+			for identity_hash in identity_hashes.iter() {
 				LinkedIdentityHashes::<T>::remove(identity_hash);
-			});
+			}
 
 			Self::deposit_event(Event::IdentityRemoved { who, identity_hashes });
 
