@@ -29,10 +29,12 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use rand_sgx as rand;
 	pub use serde_json_sgx as serde_json;
 }
 
 pub mod aes;
+pub mod aes256;
 pub mod ecdsa;
 pub mod ed25519;
 pub mod ed25519_derivation;
@@ -42,7 +44,7 @@ pub mod rsa3072;
 pub mod schnorr;
 pub mod traits;
 
-pub use self::{aes::*, ecdsa::*, ed25519::*, rsa3072::*};
+pub use self::{aes::*, aes256::*, ecdsa::*, ed25519::*, rsa3072::*};
 pub use error::*;
 pub use traits::*;
 

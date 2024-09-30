@@ -23,7 +23,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-mod aes;
 mod aes_request;
 mod bitcoin_address;
 mod bitcoin_signature;
@@ -32,7 +31,6 @@ mod plain_request;
 mod stf_request;
 mod validation_data;
 
-pub use aes::*;
 pub use aes_request::*;
 pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
@@ -43,6 +41,7 @@ pub use validation_data::*;
 
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
+pub use itp_sgx_crypto::aes256::{Aes256Key as RequestAesKey, *};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use log::error;
 pub use pallet_teebag::{

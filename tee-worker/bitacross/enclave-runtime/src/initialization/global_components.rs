@@ -68,7 +68,7 @@ use itp_sgx_crypto::{
 	ecdsa::{Pair as EcdsaPair, Seal as EcdsaSeal},
 	key_repository::KeyRepository,
 	schnorr::{Pair as SchnorrPair, Seal as SchnorrSeal},
-	Aes, AesSeal, Ed25519Seal, Rsa3072Seal,
+	Aes, AesSeal, Ed25519Seal, IDGraphKey, IDGraphKeySeal, Rsa3072Seal,
 };
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
@@ -100,6 +100,7 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
+// pub type EnclaveIDGraphKeyRepository = KeyRepository<, EcdsaSeal>;
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveBitcoinKeyRepository = KeyRepository<SchnorrPair, SchnorrSeal>;
 pub type EnclaveEthereumKeyRepository = KeyRepository<EcdsaPair, EcdsaSeal>;
