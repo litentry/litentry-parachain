@@ -1,5 +1,5 @@
-use crate::{identity_context::*, mock::*, IDGraphs, LinkedIdentities, *};
-use core_primitives::{assertion::network::all_substrate_web3networks, Identity};
+use crate::{mock::*, IDGraphs, LinkedIdentityHashes, *};
+use core_primitives::Identity;
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::BadOrigin;
 use sp_std::vec;
@@ -8,61 +8,60 @@ use sp_std::vec;
 fn link_identity_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
 
-		let private_identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let private_identity_hash = H256::from(blake2_256(&private_identity.encode()));
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = H256::from(blake2_256(&who_identity.to_did().unwrap().encode()));
 
-		let public_identity = OmniAccountIdentity::Public(Identity::from(bob()));
-		let public_identity_hash = H256::from(blake2_256(&public_identity.encode()));
+		let bob_private_identity = MemberIdentity::Private(bob().encode());
+		let bob_did = Identity::from(bob()).to_did().unwrap();
+		let bob_private_identity_hash = H256::from(blake2_256(&bob_did.encode()));
+
+		let charlie_public_identity = MemberIdentity::Public(Identity::from(charlie()));
+		let charlie_did = Identity::from(charlie()).to_did().unwrap();
+		let charlie_public_identity_hash = H256::from(blake2_256(&charlie_did.encode()));
 
 		let expected_id_graph: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
-			(private_identity.clone(), IdentityContext::new(1, all_substrate_web3networks())),
-			(public_identity.clone(), IdentityContext::new(1, all_substrate_web3networks())),
+			(who_identity_hash, MemberIdentity::Public(who_identity.clone())),
+			(bob_private_identity_hash, bob_private_identity.clone()),
+			(charlie_public_identity_hash, charlie_public_identity.clone()),
 		]);
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
-			private_identity,
-			all_substrate_web3networks()
+			bob_private_identity_hash,
+			bob_private_identity,
 		));
 		System::assert_last_event(
-			Event::IdentityLinked { who: who.clone(), identity: private_identity_hash }.into(),
+			Event::IdentityLinked { who: who.clone(), identity: bob_private_identity_hash }.into(),
 		);
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer),
 			who.clone(),
-			public_identity,
-			all_substrate_web3networks()
+			charlie_public_identity_hash,
+			charlie_public_identity,
 		));
 		System::assert_last_event(
-			Event::IdentityLinked { who: who.clone(), identity: public_identity_hash }.into(),
+			Event::IdentityLinked { who: who.clone(), identity: charlie_public_identity_hash }
+				.into(),
 		);
 		assert!(IDGraphs::<TestRuntime>::contains_key(&who));
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
-		assert!(LinkedIdentities::<TestRuntime>::contains_key(private_identity_hash));
-		assert!(LinkedIdentities::<TestRuntime>::contains_key(public_identity_hash));
+		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(bob_private_identity_hash));
+		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(charlie_public_identity_hash));
 	});
 }
 
 #[test]
 fn link_identity_origin_check_works() {
 	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
+		let who = alice();
+		let identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash = H256::from(blake2_256(&identity.encode()));
 
 		assert_noop!(
-			OmniAccount::link_identity(
-				RuntimeOrigin::signed(bob()),
-				who,
-				identity,
-				all_substrate_web3networks()
-			),
+			OmniAccount::link_identity(RuntimeOrigin::signed(bob()), who, identity_hash, identity),
 			BadOrigin
 		);
 	});
@@ -72,33 +71,38 @@ fn link_identity_origin_check_works() {
 fn link_identity_already_linked_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Public(Identity::from(bob()));
+		let who = alice();
+		let identity = Identity::from(bob());
+		let member_identity = MemberIdentity::Public(identity.clone());
+		let identity_hash = H256::from(blake2_256(&identity.to_did().unwrap().encode()));
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
+			identity_hash,
+			member_identity.clone(),
 		));
 		assert_noop!(
 			OmniAccount::link_identity(
 				RuntimeOrigin::signed(tee_signer.clone()),
 				who.clone(),
-				identity,
-				all_substrate_web3networks()
+				identity_hash,
+				member_identity,
 			),
 			Error::<TestRuntime>::IdentityAlreadyLinked
 		);
 
 		// intent to create a new id_graph with an identity that is already linked
-		let who = Identity::from(bob());
+		let who = bob();
+		let identity = Identity::from(alice());
+		let member_identity = MemberIdentity::Public(identity.clone());
+		let identity_hash = H256::from(blake2_256(&identity.to_did().unwrap().encode()));
 		assert_noop!(
 			OmniAccount::link_identity(
 				RuntimeOrigin::signed(tee_signer),
-				who,
-				OmniAccountIdentity::Private(vec![1, 2, 3, 4]),
-				all_substrate_web3networks()
+				who.clone(),
+				identity_hash,
+				member_identity,
 			),
 			Error::<TestRuntime>::IdentityAlreadyLinked
 		);
@@ -109,19 +113,20 @@ fn link_identity_already_linked_works() {
 fn link_identity_ig_graph_len_limit_reached_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+		let who_identity_hash = H256::from(blake2_256(&who_identity.to_did().unwrap().encode()));
+
+		let member_identity_2 = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash_2 = H256::from(blake2_256(&member_identity_2.encode()));
+
+		let member_identity_3 = MemberIdentity::Private(vec![4, 5, 6]);
+		let identity_hash_3 = H256::from(blake2_256(&member_identity_3.encode()));
 
 		let id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
-			(identity.clone(), IdentityContext::new(1, all_substrate_web3networks())),
-			(
-				OmniAccountIdentity::Public(Identity::from(bob())),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
+			(who_identity_hash, MemberIdentity::Public(who_identity.clone())),
+			(identity_hash_2, member_identity_2.clone()),
+			(identity_hash_3, member_identity_3.clone()),
 		]);
 
 		IDGraphs::<TestRuntime>::insert(who.clone(), id_graph_links.clone());
@@ -130,297 +135,10 @@ fn link_identity_ig_graph_len_limit_reached_works() {
 			OmniAccount::link_identity(
 				RuntimeOrigin::signed(tee_signer),
 				who,
-				OmniAccountIdentity::Private(vec![4, 5, 6]),
-				all_substrate_web3networks()
+				H256::from(blake2_256(&[7, 8, 9])),
+				MemberIdentity::Private(vec![7, 8, 9]),
 			),
 			Error::<TestRuntime>::IDGraphLenLimitReached
-		);
-	});
-}
-
-#[test]
-fn deactivate_identity_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = H256::from(blake2_256(&identity.encode()));
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-		assert_ok!(OmniAccount::deactivate_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone()
-		));
-		System::assert_last_event(
-			Event::IdentityDeactivated { who: who.clone(), identity: identity_hash }.into(),
-		);
-
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
-			(
-				identity.clone(),
-				IdentityContext {
-					link_block: 1,
-					web3networks: all_substrate_web3networks(),
-					status: IdentityStatus::Inactive,
-				},
-			),
-		]);
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
-	});
-}
-
-#[test]
-fn deactivate_identity_origin_check_works() {
-	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-
-		assert_noop!(
-			OmniAccount::deactivate_identity(RuntimeOrigin::signed(bob()), who, identity),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
-fn deactivate_identity_identity_not_found_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-
-		assert_noop!(
-			OmniAccount::deactivate_identity(
-				RuntimeOrigin::signed(tee_signer.clone()),
-				who.clone(),
-				identity.clone()
-			),
-			Error::<TestRuntime>::IdentityNotFound
-		);
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-
-		let other_identity = OmniAccountIdentity::Private(vec![4, 5, 6]);
-
-		assert_noop!(
-			OmniAccount::deactivate_identity(
-				RuntimeOrigin::signed(tee_signer),
-				who,
-				other_identity
-			),
-			Error::<TestRuntime>::IdentityNotFound
-		);
-	});
-}
-
-#[test]
-fn activate_identity_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = H256::from(blake2_256(&identity.encode()));
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-		assert_ok!(OmniAccount::deactivate_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone()
-		));
-		assert_ok!(OmniAccount::activate_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone()
-		));
-		System::assert_last_event(
-			Event::IdentityActivated { who: who.clone(), identity: identity_hash }.into(),
-		);
-
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
-			(
-				identity.clone(),
-				IdentityContext {
-					link_block: 1,
-					web3networks: all_substrate_web3networks(),
-					status: IdentityStatus::Active,
-				},
-			),
-		]);
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
-	});
-}
-
-#[test]
-fn activate_identity_origin_check_works() {
-	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-
-		assert_noop!(
-			OmniAccount::activate_identity(RuntimeOrigin::signed(bob()), who, identity),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
-fn activate_identity_identity_not_found_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-
-		assert_noop!(
-			OmniAccount::activate_identity(
-				RuntimeOrigin::signed(tee_signer.clone()),
-				who.clone(),
-				identity.clone()
-			),
-			Error::<TestRuntime>::IdentityNotFound
-		);
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-
-		let other_identity = OmniAccountIdentity::Private(vec![4, 5, 6]);
-
-		assert_noop!(
-			OmniAccount::activate_identity(RuntimeOrigin::signed(tee_signer), who, other_identity),
-			Error::<TestRuntime>::IdentityNotFound
-		);
-	});
-}
-
-#[test]
-fn set_identity_networks_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let identity_hash = H256::from(blake2_256(&identity.encode()));
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-		let mut new_web3networks = vec![Web3Network::Ethereum, Web3Network::Polkadot];
-		assert_ok!(OmniAccount::set_identity_networks(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			new_web3networks.clone()
-		));
-		System::assert_last_event(
-			Event::Web3NetworksUpdated {
-				identity: identity_hash,
-				web3networks: new_web3networks.clone(),
-			}
-			.into(),
-		);
-
-		new_web3networks.sort();
-		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
-			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
-			),
-			(
-				identity.clone(),
-				IdentityContext {
-					link_block: 1,
-					web3networks: new_web3networks,
-					status: IdentityStatus::Active,
-				},
-			),
-		]);
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
-	});
-}
-
-#[test]
-fn set_identity_networks_origin_check_works() {
-	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let new_web3networks = vec![Web3Network::Ethereum, Web3Network::Polkadot];
-
-		assert_noop!(
-			OmniAccount::set_identity_networks(
-				RuntimeOrigin::signed(bob()),
-				who,
-				identity,
-				new_web3networks
-			),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
-fn set_identity_networks_identity_not_found_works() {
-	new_test_ext().execute_with(|| {
-		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let new_web3networks = vec![Web3Network::Ethereum, Web3Network::Polkadot];
-
-		assert_noop!(
-			OmniAccount::set_identity_networks(
-				RuntimeOrigin::signed(tee_signer.clone()),
-				who.clone(),
-				identity.clone(),
-				new_web3networks.clone()
-			),
-			Error::<TestRuntime>::IdentityNotFound
-		);
-
-		assert_ok!(OmniAccount::link_identity(
-			RuntimeOrigin::signed(tee_signer.clone()),
-			who.clone(),
-			identity.clone(),
-			all_substrate_web3networks()
-		));
-
-		let other_identity = OmniAccountIdentity::Private(vec![4, 5, 6]);
-
-		assert_noop!(
-			OmniAccount::set_identity_networks(
-				RuntimeOrigin::signed(tee_signer),
-				who,
-				other_identity,
-				new_web3networks
-			),
-			Error::<TestRuntime>::IdentityNotFound
 		);
 	});
 }
@@ -429,41 +147,43 @@ fn set_identity_networks_identity_not_found_works() {
 fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
+		let who = alice();
+
+		let identity = MemberIdentity::Private(vec![1, 2, 3]);
 		let identity_hash = H256::from(blake2_256(&identity.encode()));
-		let identities_to_remove = vec![identity.clone()];
+		let identities_to_remove = vec![identity_hash];
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
+			identity_hash,
 			identity.clone(),
-			all_substrate_web3networks()
 		));
-		assert_ok!(OmniAccount::remove_identity(
+		assert_ok!(OmniAccount::remove_identities(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
 			identities_to_remove.clone()
 		));
 		System::assert_last_event(
-			Event::IdentityRemoved { who: who.clone(), identities: identities_to_remove }.into(),
+			Event::IdentityRemoved { who: who.clone(), identity_hashes: identities_to_remove }
+				.into(),
 		);
 
 		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![(
-			OmniAccountIdentity::Public(who.clone()),
-			IdentityContext::new(1, all_substrate_web3networks()),
+			H256::from(blake2_256(&Identity::from(who.clone()).to_did().unwrap().encode())),
+			MemberIdentity::Public(Identity::from(who.clone())),
 		)]);
 
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
-		assert!(!LinkedIdentities::<TestRuntime>::contains_key(identity_hash));
+		assert!(!LinkedIdentityHashes::<TestRuntime>::contains_key(identity_hash));
 
-		assert_ok!(OmniAccount::remove_identity(
+		assert_ok!(OmniAccount::remove_identities(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
 			vec![]
 		));
 		System::assert_last_event(
-			Event::IdentityRemoved { who: who.clone(), identities: vec![] }.into(),
+			Event::IdentityRemoved { who: who.clone(), identity_hashes: vec![] }.into(),
 		);
 
 		assert!(!IDGraphs::<TestRuntime>::contains_key(&who));
@@ -473,11 +193,11 @@ fn remove_identity_works() {
 #[test]
 fn remove_identity_origin_check_works() {
 	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let identities = vec![OmniAccountIdentity::Private(vec![1, 2, 3])];
+		let who = alice();
+		let identities_to_remove = vec![H256::from(blake2_256(&[1, 2, 3]))];
 
 		assert_noop!(
-			OmniAccount::remove_identity(RuntimeOrigin::signed(bob()), who, identities),
+			OmniAccount::remove_identities(RuntimeOrigin::signed(bob()), who, identities_to_remove),
 			BadOrigin
 		);
 	});
@@ -487,57 +207,47 @@ fn remove_identity_origin_check_works() {
 fn make_identity_public_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let private_identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let public_identity = OmniAccountIdentity::Public(Identity::from(bob()));
-		let public_identity_hash = H256::from(blake2_256(&public_identity.encode()));
+
+		let who = alice();
+		let who_identity = Identity::from(who.clone());
+
+		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let public_identity = MemberIdentity::Public(Identity::from(bob()));
+		let identity_hash =
+			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
+			identity_hash,
 			private_identity.clone(),
-			all_substrate_web3networks()
 		));
 
 		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
 			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
+				H256::from(blake2_256(&who_identity.to_did().unwrap().encode())),
+				MemberIdentity::Public(who_identity.clone()),
 			),
-			(
-				private_identity.clone(),
-				IdentityContext {
-					link_block: 1,
-					web3networks: all_substrate_web3networks(),
-					status: IdentityStatus::Active,
-				},
-			),
+			(identity_hash, private_identity.clone()),
 		]);
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
 
 		assert_ok!(OmniAccount::make_identity_public(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
-			private_identity,
+			identity_hash,
 			public_identity.clone()
 		));
 		System::assert_last_event(
-			Event::IdentityMadePublic { who: who.clone(), identity: public_identity_hash }.into(),
+			Event::IdentityMadePublic { who: who.clone(), identity_hash }.into(),
 		);
 
 		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
 			(
-				OmniAccountIdentity::Public(who.clone()),
-				IdentityContext::new(1, all_substrate_web3networks()),
+				H256::from(blake2_256(&who_identity.to_did().unwrap().encode())),
+				MemberIdentity::Public(who_identity.clone()),
 			),
-			(
-				public_identity,
-				IdentityContext {
-					link_block: 1,
-					web3networks: all_substrate_web3networks(),
-					status: IdentityStatus::Active,
-				},
-			),
+			(identity_hash, public_identity),
 		]);
 		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
 	});
@@ -546,15 +256,16 @@ fn make_identity_public_works() {
 #[test]
 fn make_identity_public_origin_check_works() {
 	new_test_ext().execute_with(|| {
-		let who = Identity::from(alice());
-		let private_identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let public_identity = OmniAccountIdentity::Public(Identity::from(bob()));
+		let who = alice();
+		let public_identity = MemberIdentity::Public(Identity::from(bob()));
+		let identity_hash =
+			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
 
 		assert_noop!(
 			OmniAccount::make_identity_public(
 				RuntimeOrigin::signed(bob()),
 				who,
-				private_identity,
+				identity_hash,
 				public_identity
 			),
 			BadOrigin
@@ -566,15 +277,17 @@ fn make_identity_public_origin_check_works() {
 fn make_identity_public_identity_not_found_works() {
 	new_test_ext().execute_with(|| {
 		let tee_signer = get_tee_signer();
-		let who = Identity::from(alice());
-		let private_identity = OmniAccountIdentity::Private(vec![1, 2, 3]);
-		let public_identity = OmniAccountIdentity::Public(Identity::from(bob()));
+		let who = alice();
+		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let public_identity = MemberIdentity::Public(Identity::from(bob()));
+		let identity_hash =
+			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
 
 		assert_noop!(
 			OmniAccount::make_identity_public(
 				RuntimeOrigin::signed(tee_signer.clone()),
 				who.clone(),
-				private_identity.clone(),
+				identity_hash,
 				public_identity.clone()
 			),
 			Error::<TestRuntime>::IdentityNotFound
@@ -583,20 +296,52 @@ fn make_identity_public_identity_not_found_works() {
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
+			identity_hash,
 			private_identity.clone(),
-			all_substrate_web3networks()
 		));
 
-		let other_identity = OmniAccountIdentity::Private(vec![4, 5, 6]);
+		let charlie_identity = Identity::from(charlie());
+		let other_identity = MemberIdentity::Public(charlie_identity.clone());
+		let other_identity_hash =
+			H256::from(blake2_256(&charlie_identity.to_did().unwrap().encode()));
 
 		assert_noop!(
 			OmniAccount::make_identity_public(
 				RuntimeOrigin::signed(tee_signer),
 				who,
+				other_identity_hash,
 				other_identity,
-				public_identity
 			),
 			Error::<TestRuntime>::IdentityNotFound
+		);
+	});
+}
+
+#[test]
+fn make_identity_public_identity_is_private_check_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+
+		let private_identity = MemberIdentity::Private(vec![1, 2, 3]);
+		let identity_hash =
+			H256::from(blake2_256(&Identity::from(bob()).to_did().unwrap().encode()));
+
+		assert_ok!(OmniAccount::link_identity(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who.clone(),
+			identity_hash,
+			private_identity.clone(),
+		));
+
+		assert_noop!(
+			OmniAccount::make_identity_public(
+				RuntimeOrigin::signed(tee_signer),
+				who,
+				identity_hash,
+				private_identity,
+			),
+			Error::<TestRuntime>::IdentityIsPrivate
 		);
 	});
 }
