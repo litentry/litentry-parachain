@@ -26,10 +26,9 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-version = { workspace = true }
 
-# TODO - move to tee-worker pallets
 pallet-evm = { git = "https://github.com/integritee-network/frontier", branch = "bar/polkadot-v0.9.42", default-features = false, optional = true }
 pallet-identity-management-tee = { workspace = true }
-pallet-parentchain = { package = "pallet-parentchain", path = "../../../../parachain/worker-pallets/parentchain", default-features = false }
+pallet-parentchain = { workspace = true }
 
 [features]
 default = ["std"]
