@@ -27,6 +27,7 @@ sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
 
 frame-executive = { workspace = true }
+frame-metadata-hash-extension = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
@@ -126,7 +127,7 @@ xcm-simulator = { workspace = true }
 pallet-message-queue = { workspace = true, features = ["std"] }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true }
+substrate-wasm-builder = { workspace = true, features = ["metadata-hash"] }
 
 [features]
 default = ["std"]
@@ -186,6 +187,7 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
     "frame-executive/std",
+    "frame-metadata-hash-extension/std",
     "frame-support/std",
     "frame-system/std",
     "frame-try-runtime?/std",
