@@ -81,6 +81,7 @@ frame_support::construct_runtime!(
 		Timestamp: pallet_timestamp,
 		IdentityManagement: pallet_identity_management,
 		IMPExtrinsicWhitelist: pallet_group,
+		Utility: pallet_utility,
 	}
 );
 
@@ -162,6 +163,13 @@ impl pallet_identity_management::Config for Test {
 impl pallet_group::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
+}
+
+impl pallet_utility::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
