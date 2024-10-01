@@ -73,6 +73,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Teebag: pallet_teebag,
 		Timestamp: pallet_timestamp,
+		Utility: pallet_utility,
 		OmniAccount: pallet_omni_account,
 	}
 );
@@ -123,6 +124,13 @@ impl pallet_timestamp::Config for TestRuntime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<10000>;
+	type WeightInfo = ();
+}
+
+impl pallet_utility::Config for TestRuntime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 }
 
