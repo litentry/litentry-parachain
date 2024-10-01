@@ -80,6 +80,8 @@ pub mod pallet {
 		IdentityNotFound,
 		/// Invalid identity
 		PrimeIdentityInvalid,
+		/// Prime identity not found
+		PrimeIdentityNotFound,
 		/// Identity is private
 		IdentityIsPrivate,
 		/// Identities empty
@@ -109,7 +111,7 @@ pub mod pallet {
 			let mut id_graph_links = match IDGraphs::<T>::get(&who) {
 				Some(id_graph_links) => {
 					let current_id_graph_hash =
-						IDGraphHashes::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
+						IDGraphHashes::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 					if let Some(id_graph_hash) = maybe_id_graph_hash {
 						ensure!(
 							current_id_graph_hash == id_graph_hash,
@@ -163,7 +165,7 @@ pub mod pallet {
 			ensure!(!identity_hashes.is_empty(), Error::<T>::IdentitiesEmpty);
 
 			let mut id_graph_links =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
+				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 
 			id_graph_links.retain(|(id_hash, _)| {
 				if identity_hashes.contains(id_hash) {
@@ -197,7 +199,7 @@ pub mod pallet {
 			ensure!(public_identity.is_public(), Error::<T>::IdentityIsPrivate);
 
 			let mut id_graph_links =
-				IDGraphs::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
+				IDGraphs::<T>::get(&who).ok_or(Error::<T>::PrimeIdentityNotFound)?;
 			let id_graph_link = id_graph_links
 				.iter_mut()
 				.find(|(id_hash, _)| *id_hash == identity_hash)
