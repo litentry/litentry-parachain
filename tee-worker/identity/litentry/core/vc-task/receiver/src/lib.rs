@@ -24,7 +24,8 @@ use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use futures::executor::ThreadPoolBuilder;
 use ita_sgx_runtime::{
-	pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime, VERSION as SIDECHAIN_VERSION,
+	pallet_identity_management_tee::get_eligible_identities, BlockNumber, Hash, Runtime,
+	VERSION as SIDECHAIN_VERSION,
 };
 
 #[cfg(feature = "development")]
@@ -55,10 +56,11 @@ use lc_dynamic_assertion::AssertionLogicRepository;
 use lc_evm_dynamic_assertions::AssertionRepositoryItem;
 use lc_parachain_extrinsic_task_sender::{ParachainExtrinsicSender, SendParachainExtrinsic};
 use lc_stf_task_receiver::{handler::assertion::create_credential_str, StfTaskContext};
-use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender;
 use litentry_macros::if_development_or;
-use litentry_primitives::{Assertion, DecryptableRequest, Identity, ParentchainBlockNumber};
+use litentry_primitives::{
+	Assertion, AssertionBuildRequest, DecryptableRequest, Identity, ParentchainBlockNumber,
+};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use sp_core::{blake2_256, H160};

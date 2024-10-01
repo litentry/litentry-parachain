@@ -227,7 +227,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("paseo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9200,
+	spec_version: 9201,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1146,7 +1146,7 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	// Maximum length (in bytes) of revert message to include in Executed event
-	type ExtraDataLength = ConstU32<30>;
+	type ExtraDataLength = ConstU32<256>;
 }
 
 parameter_types! {

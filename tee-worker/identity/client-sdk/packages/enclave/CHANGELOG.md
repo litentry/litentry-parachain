@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2024-09-30
+
 ### Changed
 
--   Use `@litentry/parachain-api@0.9.20-03.next.0` and `@litentry/sidechain-api@0.9.20-03.next.0`
+-   Use `@litentry/parachain-api@0.9.20-4.1` and `@litentry/sidechain-api@0.9.20-4`
 
 ### Added
 

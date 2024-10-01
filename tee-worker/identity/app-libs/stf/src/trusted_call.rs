@@ -65,7 +65,7 @@ use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::ConstU32, BoundedVec, MultiAddress};
 
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
-pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
+pub type IMT = ita_sgx_runtime::pallet_identity_management_tee::Pallet<Runtime>;
 pub type MaxAssertionLength = ConstU32<128>;
 pub type VecAssertion = BoundedVec<Assertion, MaxAssertionLength>;
 
