@@ -8,5 +8,5 @@
     "parachain_ws": "ws://127.0.0.1:9944",
     "relaychain_ws": "ws://127.0.0.1:9946",
     "bridge_path": "/tmp/parachain_dev/chainbridge",
-    "parachain_fast_runtime": "true"
+    "parachain_fast_runtime": "false"
 }

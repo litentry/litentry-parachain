@@ -166,7 +166,7 @@ where
 				(metadata.clone(), m.get_runtime_version(), m.get_runtime_transaction_version())
 			})?;
 		let batch_call =
-			OpaqueCall::from_tuple(&compose_call!(node_metadata, "Utility", "batch", calls));
+			OpaqueCall::from_tuple(&compose_call!(node_metadata, "Teebag", "batch", calls));
 
 		let mut nonce_lock = self.nonce_cache.load_for_mutation()?;
 		let mut nonce_value = nonce_lock.0;
