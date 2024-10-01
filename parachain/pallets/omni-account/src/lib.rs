@@ -54,6 +54,11 @@ pub mod pallet {
 	pub type IDGraphs<T: Config> =
 		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = IDGraphLinks<T>>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn id_graph_hashes)]
+	pub type IDGraphHashes<T: Config> =
+		StorageMap<Hasher = Blake2_128Concat, Key = T::AccountId, Value = H256>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -79,6 +84,10 @@ pub mod pallet {
 		IdentityIsPrivate,
 		/// Identities empty
 		IdentitiesEmpty,
+		/// IDGraph hash does not match
+		IDGraphHashMismatch,
+		/// Missing IDGraph hash
+		IDGraphHashMissing,
 	}
 
 	#[pallet::call]
@@ -90,6 +99,7 @@ pub mod pallet {
 			who: T::AccountId,
 			identity_hash: H256,
 			identity: MemberIdentity,
+			maybe_id_graph_hash: Option<H256>,
 		) -> DispatchResult {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(
@@ -97,7 +107,19 @@ pub mod pallet {
 				Error::<T>::IdentityAlreadyLinked
 			);
 			let mut id_graph_links = match IDGraphs::<T>::get(&who) {
-				Some(id_graph_links) => id_graph_links,
+				Some(id_graph_links) => {
+					let current_id_graph_hash =
+						IDGraphHashes::<T>::get(&who).ok_or(Error::<T>::IdentityNotFound)?;
+					if let Some(id_graph_hash) = maybe_id_graph_hash {
+						ensure!(
+							current_id_graph_hash == id_graph_hash,
+							Error::<T>::IDGraphHashMismatch
+						);
+					} else {
+						return Err(Error::<T>::IDGraphHashMissing.into());
+					}
+					id_graph_links
+				},
 				None => {
 					let prime_identity = T::AccountIdConverter::convert(who.clone());
 					let prime_did =
@@ -119,7 +141,12 @@ pub mod pallet {
 				.try_push((identity_hash, identity))
 				.map_err(|_| Error::<T>::IDGraphLenLimitReached)?;
 			LinkedIdentityHashes::<T>::insert(identity_hash, ());
+
+			let new_id_graph_hash = H256::from(blake2_256(&id_graph_links.encode()));
+			IDGraphHashes::<T>::insert(who.clone(), new_id_graph_hash);
+
 			IDGraphs::<T>::insert(who.clone(), id_graph_links);
+
 			Self::deposit_event(Event::IdentityLinked { who, identity: identity_hash });
 
 			Ok(())

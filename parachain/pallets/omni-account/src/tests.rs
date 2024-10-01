@@ -21,35 +21,88 @@ fn link_identity_works() {
 		let charlie_did = Identity::from(charlie()).to_did().unwrap();
 		let charlie_public_identity_hash = H256::from(blake2_256(&charlie_did.encode()));
 
-		let expected_id_graph: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
+		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
 			(who_identity_hash, MemberIdentity::Public(who_identity.clone())),
 			(bob_private_identity_hash, bob_private_identity.clone()),
-			(charlie_public_identity_hash, charlie_public_identity.clone()),
 		]);
+		let expected_id_graph_hash = H256::from(blake2_256(&expected_id_graph_links.encode()));
 
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer.clone()),
 			who.clone(),
 			bob_private_identity_hash,
-			bob_private_identity,
+			bob_private_identity.clone(),
+			None
 		));
 		System::assert_last_event(
 			Event::IdentityLinked { who: who.clone(), identity: bob_private_identity_hash }.into(),
 		);
+
+		assert!(IDGraphs::<TestRuntime>::contains_key(&who));
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expected_id_graph_hash);
+
 		assert_ok!(OmniAccount::link_identity(
 			RuntimeOrigin::signed(tee_signer),
 			who.clone(),
 			charlie_public_identity_hash,
-			charlie_public_identity,
+			charlie_public_identity.clone(),
+			Some(expected_id_graph_hash),
 		));
 		System::assert_last_event(
 			Event::IdentityLinked { who: who.clone(), identity: charlie_public_identity_hash }
 				.into(),
 		);
-		assert!(IDGraphs::<TestRuntime>::contains_key(&who));
-		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph);
+
+		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
+			(who_identity_hash, MemberIdentity::Public(who_identity.clone())),
+			(bob_private_identity_hash, bob_private_identity.clone()),
+			(charlie_public_identity_hash, charlie_public_identity.clone()),
+		]);
+		let expectec_id_graph_hash = H256::from(blake2_256(&expected_id_graph_links.encode()));
+
+		assert_eq!(IDGraphs::<TestRuntime>::get(&who).unwrap(), expected_id_graph_links);
+		assert_eq!(IDGraphHashes::<TestRuntime>::get(&who).unwrap(), expectec_id_graph_hash);
+
 		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(bob_private_identity_hash));
 		assert!(LinkedIdentityHashes::<TestRuntime>::contains_key(charlie_public_identity_hash));
+	});
+}
+
+#[test]
+fn link_identity_exising_id_graph_id_graph_hash_missing_works() {
+	new_test_ext().execute_with(|| {
+		let tee_signer = get_tee_signer();
+		let who = alice();
+
+		let bob_private_identity = MemberIdentity::Private(bob().encode());
+		let bob_did = Identity::from(bob()).to_did().unwrap();
+		let bob_private_identity_hash = H256::from(blake2_256(&bob_did.encode()));
+
+		let charlie_public_identity = MemberIdentity::Public(Identity::from(charlie()));
+		let charlie_did = Identity::from(charlie()).to_did().unwrap();
+		let charlie_public_identity_hash = H256::from(blake2_256(&charlie_did.encode()));
+
+		// IDGraph gets created with the first identity
+		assert_ok!(OmniAccount::link_identity(
+			RuntimeOrigin::signed(tee_signer.clone()),
+			who.clone(),
+			bob_private_identity_hash,
+			bob_private_identity.clone(),
+			None
+		));
+
+		// to mutate IDGraph with a new identity, the current id_graph_hash must be provided
+		assert_noop!(
+			OmniAccount::link_identity(
+				RuntimeOrigin::signed(tee_signer),
+				who,
+				charlie_public_identity_hash,
+				charlie_public_identity.clone(),
+				None
+			),
+			Error::<TestRuntime>::IDGraphHashMissing
+		);
 	});
 }
 
@@ -61,7 +114,13 @@ fn link_identity_origin_check_works() {
 		let identity_hash = H256::from(blake2_256(&identity.encode()));
 
 		assert_noop!(
-			OmniAccount::link_identity(RuntimeOrigin::signed(bob()), who, identity_hash, identity),
+			OmniAccount::link_identity(
+				RuntimeOrigin::signed(bob()),
+				who,
+				identity_hash,
+				identity,
+				None
+			),
 			BadOrigin
 		);
 	});
@@ -81,6 +140,7 @@ fn link_identity_already_linked_works() {
 			who.clone(),
 			identity_hash,
 			member_identity.clone(),
+			None
 		));
 		assert_noop!(
 			OmniAccount::link_identity(
@@ -88,6 +148,7 @@ fn link_identity_already_linked_works() {
 				who.clone(),
 				identity_hash,
 				member_identity,
+				None
 			),
 			Error::<TestRuntime>::IdentityAlreadyLinked
 		);
@@ -103,6 +164,7 @@ fn link_identity_already_linked_works() {
 				who.clone(),
 				identity_hash,
 				member_identity,
+				None
 			),
 			Error::<TestRuntime>::IdentityAlreadyLinked
 		);
@@ -128,8 +190,10 @@ fn link_identity_ig_graph_len_limit_reached_works() {
 			(identity_hash_2, member_identity_2.clone()),
 			(identity_hash_3, member_identity_3.clone()),
 		]);
+		let id_graph_hash = H256::from(blake2_256(&id_graph_links.encode()));
 
 		IDGraphs::<TestRuntime>::insert(who.clone(), id_graph_links.clone());
+		IDGraphHashes::<TestRuntime>::insert(who.clone(), id_graph_hash);
 
 		assert_noop!(
 			OmniAccount::link_identity(
@@ -137,6 +201,7 @@ fn link_identity_ig_graph_len_limit_reached_works() {
 				who,
 				H256::from(blake2_256(&[7, 8, 9])),
 				MemberIdentity::Private(vec![7, 8, 9]),
+				Some(id_graph_hash),
 			),
 			Error::<TestRuntime>::IDGraphLenLimitReached
 		);
@@ -160,6 +225,7 @@ fn remove_identity_works() {
 			who.clone(),
 			identity_hash,
 			identity.clone(),
+			None
 		));
 		assert_ok!(OmniAccount::remove_identities(
 			RuntimeOrigin::signed(tee_signer.clone()),
@@ -207,6 +273,7 @@ fn remove_identity_empty_identity_check_works() {
 			who.clone(),
 			identity_hash,
 			identity.clone(),
+			None
 		));
 		assert_noop!(
 			OmniAccount::remove_identities(
@@ -250,6 +317,7 @@ fn make_identity_public_works() {
 			who.clone(),
 			identity_hash,
 			private_identity.clone(),
+			None
 		));
 
 		let expected_id_graph_links: IDGraphLinks<TestRuntime> = BoundedVec::truncate_from(vec![
@@ -327,6 +395,7 @@ fn make_identity_public_identity_not_found_works() {
 			who.clone(),
 			identity_hash,
 			private_identity.clone(),
+			None
 		));
 
 		let charlie_identity = Identity::from(charlie());
@@ -361,6 +430,7 @@ fn make_identity_public_identity_is_private_check_works() {
 			who.clone(),
 			identity_hash,
 			private_identity.clone(),
+			None
 		));
 
 		assert_noop!(
