@@ -49,6 +49,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		Timestamp: pallet_timestamp,
 		Teebag: pallet_teebag,
+		Utility: pallet_utility,
 	}
 );
 
@@ -126,6 +127,13 @@ impl pallet_teebag::Config for Test {
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type MaxEnclaveIdentifier = ConstU32<1>;
 	type MaxAuthorizedEnclave = ConstU32<2>;
+	type WeightInfo = ();
+}
+
+impl pallet_utility::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 }
 
