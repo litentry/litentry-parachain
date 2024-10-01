@@ -65,7 +65,9 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+	pub trait Config:
+		frame_system::Config + pallet_timestamp::Config + pallet_utility::Config
+	{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -666,6 +668,38 @@ pub mod pallet {
 			);
 
 			Self::finalize_block(sender, shard, confirmation);
+			Ok(Pays::No.into())
+		}
+
+		// A wrapper to utility.call to waive the tx fee if the caller is tee-worker
+		// the weight is copied from pallet_utility
+		#[pallet::call_index(23)]
+		#[pallet::weight({
+			use pallet_utility::WeightInfo;
+			let dispatch_infos = calls.iter().map(|call| call.get_dispatch_info()).collect::<Vec<_>>();
+			let dispatch_weight = dispatch_infos.iter()
+				.map(|di| di.weight)
+				.fold(Weight::zero(), |total: Weight, weight: Weight| total.saturating_add(weight))
+				.saturating_add(<T as pallet_utility::Config>::WeightInfo::batch(calls.len() as u32));
+			let dispatch_class = {
+				let all_operational = dispatch_infos.iter()
+					.map(|di| di.class)
+					.all(|class| class == DispatchClass::Operational);
+				if all_operational {
+					DispatchClass::Operational
+				} else {
+					DispatchClass::Normal
+				}
+			};
+			(dispatch_weight, dispatch_class)
+		})]
+		pub fn batch(
+			origin: OriginFor<T>,
+			calls: Vec<<T as pallet_utility::Config>::RuntimeCall>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin.clone())?;
+			let _ = EnclaveRegistry::<T>::get(&sender).ok_or(Error::<T>::EnclaveNotExist)?;
+			let _ = pallet_utility::Pallet::<T>::batch(origin, calls)?;
 			Ok(Pays::No.into())
 		}
 	}
