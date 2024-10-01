@@ -78,6 +78,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Teebag: pallet_teebag,
 		Timestamp: pallet_timestamp,
+		Utility: pallet_utility,
 		VCManagement: pallet_vc_management,
 		VCMPExtrinsicWhitelist: pallet_group,
 	}
@@ -161,6 +162,13 @@ impl pallet_teebag::Config for Test {
 impl pallet_group::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
+}
+
+impl pallet_utility::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
