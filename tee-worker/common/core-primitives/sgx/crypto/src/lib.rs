@@ -65,6 +65,11 @@ pub mod tests {
 		aes_sealing_works, using_get_aes_repository_twice_initializes_key_only_once,
 	};
 
+	pub use super::aes256::sgx_tests::{
+		aes256_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
+		aes256_creating_repository_with_same_path_and_prefix_results_in_same_key,
+	};
+
 	pub use super::ecdsa::sgx_tests::{
 		ecdsa_creating_repository_with_same_path_and_prefix_but_new_key_results_in_new_key,
 		ecdsa_creating_repository_with_same_path_and_prefix_results_in_same_key,

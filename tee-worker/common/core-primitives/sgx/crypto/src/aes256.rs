@@ -266,28 +266,4 @@ pub mod sgx_tests {
 		assert_ne!(first_key, second_key);
 		assert_eq!(second_key, new_key);
 	}
-
-	// pub fn aes_sealing_works() {
-	// 	let temp_dir = TempDir::with_prefix("aes_sealing_works").unwrap();
-	// 	let seal = AesSeal::new(temp_dir.path().to_path_buf());
-
-	// 	// Create new sealed keys and unseal them
-	// 	assert!(!seal.exists());
-	// 	seal.create_sealed_if_absent().unwrap();
-	// 	let key = seal.unseal_key().unwrap();
-
-	// 	assert!(seal.exists());
-
-	// 	// Should not change anything because the key is already there.
-	// 	seal.create_sealed_if_absent().unwrap();
-	// 	let key_same = seal.unseal_key().unwrap();
-
-	// 	assert_eq!(key, key_same);
-
-	// 	// Should overwrite previous keys.
-	// 	seal.create_sealed().unwrap();
-	// 	let key_different = seal.unseal_key().unwrap();
-
-	// 	assert_ne!(key_different, key);
-	// }
 }

@@ -506,6 +506,48 @@ pub fn add_common_api<Author, GetterExecutor, AccessShieldingKey, OcallApi, Stat
 			Err(_) => Ok(json!(compute_hex_encoded_return_error("Could not parse params"))),
 		}
 	});
+
+	let local_state = if_development_or!(state.clone(), state);
+
+	io_handler.add_sync_method("identity_upload_idgraph", move |params: Params| {
+		debug!("worker_api_direct rpc was called: identity_upload_idgraph");
+		let local_state = match local_state.clone() {
+			Some(s) => s,
+			None =>
+				return Ok(json!(compute_hex_encoded_return_error(
+					"identity_upload_idgraph is not avaiable"
+				))),
+		};
+
+		match params.parse::<String>() {
+			Ok(shard_base58) => {
+				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+					Ok(s) => s,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+
+				match local_state.load_cloned(&shard) {
+					Ok((mut state, _)) => {
+
+						// TODO
+					},
+					Err(e) => {
+						let error_msg = format!("load shard failure due to: {:?}", e);
+						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				}
+			},
+			Err(e) => {
+				let error_msg: String =
+					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		};
+	});
 }
 
 #[deprecated(note = "`state_executeAesGetter` should be preferred")]

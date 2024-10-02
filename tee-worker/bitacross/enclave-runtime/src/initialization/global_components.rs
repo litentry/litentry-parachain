@@ -100,7 +100,6 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
-// pub type EnclaveIDGraphKeyRepository = KeyRepository<, EcdsaSeal>;
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveBitcoinKeyRepository = KeyRepository<SchnorrPair, SchnorrSeal>;
 pub type EnclaveEthereumKeyRepository = KeyRepository<EcdsaPair, EcdsaSeal>;

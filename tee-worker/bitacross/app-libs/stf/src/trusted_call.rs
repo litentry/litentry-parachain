@@ -38,7 +38,7 @@ use itp_types::{
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Identity, LitentryMultiSignature, ParentchainBlockNumber,
-	RequestAesKey, RequestAesKeyNonce, ValidationData,
+	RequestAesKey, ValidationData,
 };
 use log::*;
 use sp_core::{
