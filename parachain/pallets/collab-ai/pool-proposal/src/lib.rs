@@ -31,10 +31,8 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		schedule::v3::Named as ScheduleNamed,
-		tokens::{
-			fungibles::Inspect as FsInspect, Bounded, Currency, EnsureOrigin, Get, LockIdentifier,
-			LockableCurrency, Preservation, ReservableCurrency,
-		},
+		tokens::{fungibles::Inspect as FsInspect, Preservation},
+		Bounded, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, ReservableCurrency,
 	},
 	transactional,
 	weights::Weight,
@@ -49,10 +47,7 @@ use orml_utilities::OrderedSet;
 pub use pallet::*;
 use pallet_collab_ai_common::*;
 use parity_scale_codec::Encode;
-use sp_runtime::{
-	traits::{CheckedAdd, StaticLookup},
-	ArithmeticError,
-};
+use sp_runtime::{traits::CheckedAdd, ArithmeticError};
 use sp_std::collections::vec_deque::VecDeque;
 
 pub use types::*;
@@ -60,14 +55,8 @@ pub use types::*;
 pub(crate) const POOL_DEMOCRACY_ID: LockIdentifier = *b"spdemocy";
 pub(crate) const POOL_COMMITTEE_ID: LockIdentifier = *b"spcomtte";
 
-type BalanceOf<T> =
+pub(crate) type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
-	<T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
-pub type CallOf<T> = <T as frame_system::Config>::RuntimeCall;
-pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
-type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 
 pub(crate) type InspectFungibles<T> = pallet_assets::Pallet<T>;
 /// Balance type alias for balances of assets that implement the `fungibles` trait.
@@ -96,8 +85,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_assets::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// The Scheduler.
-		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
+		/// The Make pool mature.
+		// type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
 
 		/// Currency type for this pallet.
 		type Currency: ReservableCurrency<Self::AccountId>
