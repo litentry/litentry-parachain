@@ -30,8 +30,11 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{
-		tokens::Preservation, Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency,
-		ReservableCurrency,
+		schedule::v3::Named as ScheduleNamed,
+		tokens::{
+			fungibles::Inspect as FsInspect, Bounded, Currency, EnsureOrigin, Get, LockIdentifier,
+			LockableCurrency, Preservation, ReservableCurrency,
+		},
 	},
 	transactional,
 	weights::Weight,
@@ -47,7 +50,7 @@ pub use pallet::*;
 use pallet_collab_ai_common::*;
 use parity_scale_codec::Encode;
 use sp_runtime::{
-	traits::{Bounded, CheckedAdd, StaticLookup},
+	traits::{CheckedAdd, StaticLookup},
 	ArithmeticError,
 };
 use sp_std::collections::vec_deque::VecDeque;
@@ -126,7 +129,7 @@ pub mod pallet {
 		type PublicVotingOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Guardian vote resource
-		type GuardianVoteResource: GuardianQuery<Self::AccountId, Get<u32>>;
+		type GuardianVoteResource: GuardianQuery<Self::AccountId>;
 
 		/// The maximum amount of guardian allowed for a proposal
 		#[pallet::constant]

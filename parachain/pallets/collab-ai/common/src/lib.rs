@@ -68,7 +68,7 @@ pub enum CandidateStatus {
 	Banned,
 }
 
-#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, Debug, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, Debug, MaxEncodedLen, TypeInfo)]
 pub enum GuardianVote {
 	/// Does not care if this guardian get selected
 	/// Please be aware Neutral will increase participate percentage
@@ -148,7 +148,7 @@ pub const INVESTING_POOL_END_MONTH_SHIFTER: u128 = 1;
 // }
 
 /// Some sort of check on the account is from some group.
-pub trait GuardianQuery<AccountId, S: Get<u32>> {
+pub trait GuardianQuery<AccountId> {
 	/// All guardian but banned ones
 	fn is_guardian(account: AccountId) -> bool;
 

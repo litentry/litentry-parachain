@@ -26,6 +26,7 @@ use frame_support::{
 		},
 		StorageVersion,
 	},
+	transactional,
 };
 use frame_system::pallet_prelude::*;
 use sp_runtime::traits::{CheckedDiv, CheckedMul};
@@ -116,6 +117,7 @@ pub mod pallet {
 		// Lock target_asset_id token and mint AIUSD
 		#[pallet::call_index(0)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn mint_aiusd(
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,
@@ -170,6 +172,7 @@ pub mod pallet {
 		// Failed if pool does not have enough token of one type
 		#[pallet::call_index(1)]
 		#[pallet::weight({195_000_000})]
+		#[transactional]
 		pub fn burn_aiusd(
 			origin: OriginFor<T>,
 			target_asset_id: AssetIdOf<T>,

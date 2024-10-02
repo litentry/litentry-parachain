@@ -29,6 +29,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
+	transactional,
 	weights::Weight,
 };
 use frame_system::{
@@ -37,7 +38,6 @@ use frame_system::{
 };
 pub use pallet::*;
 use pallet_collab_ai_common::*;
-use parity_scale_codec::{Decode, Encode};
 use sp_runtime::ArithmeticError;
 
 type BalanceOf<T> =

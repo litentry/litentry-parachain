@@ -29,6 +29,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, EnsureOrigin, Get, LockableCurrency, ReservableCurrency},
+	transactional,
 };
 use frame_system::{
 	ensure_signed,
@@ -36,7 +37,6 @@ use frame_system::{
 };
 pub use pallet::*;
 use pallet_collab_ai_common::*;
-use parity_scale_codec::Encode;
 use sp_runtime::ArithmeticError;
 
 type BalanceOf<T> =
@@ -172,7 +172,7 @@ pub mod pallet {
 			PublicGuardianToIndex::<T>::insert(&who, next_guardian_index);
 			GuardianIndexToInfo::<T>::insert(
 				&next_guardian_index,
-				(info_hash, current_block, who, CandidateStatus::Unverified),
+				(info_hash, current_block, who.clone(), CandidateStatus::Unverified),
 			);
 			PublicGuardianCount::<T>::put(
 				next_guardian_index.checked_add(1u32.into()).ok_or(ArithmeticError::Overflow)?,
@@ -194,14 +194,14 @@ pub mod pallet {
 
 			// Ensure existing
 			let guardian_index =
-				PublicGuardianToIndex::<T>::get(who).ok_or(Error::<T>::GuardianNotRegistered)?;
+				PublicGuardianToIndex::<T>::get(&who).ok_or(Error::<T>::GuardianNotRegistered)?;
 
 			// Update guardian
 			// But if banned, then require extra reserve
 			GuardianIndexToInfo::<T>::try_mutate_exists(
 				guardian_index,
 				|maybe_info| -> Result<(), DispatchError> {
-					let mut info = maybe_info.as_mut().ok_or(Error::<T>::GuardianIndexNotExist)?;
+					let info = maybe_info.as_mut().ok_or(Error::<T>::GuardianIndexNotExist)?;
 
 					if info.3 == CandidateStatus::Banned {
 						T::Currency::reserve(&who, T::MinimumGuardianDeposit::get())?;
@@ -241,7 +241,7 @@ pub mod pallet {
 					let info = maybe_info.ok_or(Error::<T>::GuardianIndexNotExist)?;
 
 					if info.3 != CandidateStatus::Banned {
-						T::Currency::unreserve(&who, T::MinimumGuardianDeposit::get())?;
+						let _ = T::Currency::unreserve(&who, T::MinimumGuardianDeposit::get());
 					}
 
 					// Delete item
@@ -298,7 +298,7 @@ pub mod pallet {
 			let guardian_index = PublicGuardianToIndex::<T>::get(&guardian)
 				.ok_or(Error::<T>::GuardianNotRegistered)?;
 			if let Some(i) = status {
-				GuardianVotes::<T>::insert(&who, guardian_index, status);
+				GuardianVotes::<T>::insert(&who, guardian_index, i);
 			} else {
 				GuardianVotes::<T>::remove(&who, guardian_index);
 			}
@@ -315,7 +315,7 @@ pub mod pallet {
 		/// Remove vote to None
 		#[pallet::call_index(5)]
 		#[pallet::weight({195_000_000})]
-		pub fn remove_all_votes(origin: OriginFor<T>, guardian: T::AccountId) -> DispatchResult {
+		pub fn remove_all_votes(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = GuardianVotes::<T>::clear_prefix(&who, u32::MAX, None);
 			Self::deposit_event(Event::RemoveAllVote { voter: who });
@@ -325,7 +325,7 @@ pub mod pallet {
 }
 
 /// Some sort of check on the origin is from guardian.
-impl<T: Config> GuardianQuery<T::AccountId, T::MaxProposalPerGuardian> for Pallet<T> {
+impl<T: Config> GuardianQuery<T::AccountId> for Pallet<T> {
 	fn is_guardian(account: T::AccountId) -> bool {
 		if let Some(guardian_index) = PublicGuardianToIndex::<T>::get(&account) {
 			if let Some(info) = GuardianIndexToInfo::<T>::get(guardian_index) {
