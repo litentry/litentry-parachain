@@ -993,19 +993,10 @@ impl pallet_identity_management::Config for Runtime {
 	type MaxOIDCClientRedirectUris = ConstU32<10>;
 }
 
-pub struct AccountIdIdentityConverter;
-
-impl pallet_omni_account::AccountIdConverter<Runtime> for AccountIdIdentityConverter {
-	fn convert(account_id: <Runtime as frame_system::Config>::AccountId) -> Identity {
-		Identity::from(account_id)
-	}
-}
-
 impl pallet_omni_account::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type MaxIDGraphLength = ConstU32<64>;
-	type AccountIdConverter = AccountIdIdentityConverter;
 }
 
 impl pallet_bitacross::Config for Runtime {
